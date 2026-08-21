@@ -1,7 +1,12 @@
-import { StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, explodeAttributeUsageValue, StorySchemaEntityType } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { attributeValues, AttributeValueInsert, AttributeValueSelect } from '../../db/schema';
+import {
+  attributeValues,
+  AttributeValueInsert,
+  AttributeValueSelect,
+  storySchemaFields,
+} from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
@@ -21,7 +26,7 @@ export interface AttributeValueService {
     storyId: string,
     entityType: StorySchemaEntityType,
     entityId: string,
-    values: Record<string, string | null>
+    values: Record<string, string | null>,
   ): Promise<void>;
 }
 
@@ -29,29 +34,38 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
   const serverService = createServerService(db);
   return {
     async getValuesForEntity(entityId: string): Promise<AttributeValueSelect[]> {
-      return db.select().from(attributeValues)
+      return db
+        .select()
+        .from(attributeValues)
         .where(and(eq(attributeValues.entityId, entityId), eq(attributeValues.isDeleted, false)))
         .all();
     },
 
     async getValueUsageCounts(fieldId: string): Promise<[string, number][]> {
-      const rows = await db.select({
-        value: attributeValues.value,
-        count: sql<number>`count(*)`,
-      })
+      const field = await db.query.storySchemaFields.findFirst({
+        where: eq(storySchemaFields.id, fieldId),
+        columns: { type: true },
+      });
+      const rows = await db
+        .select({ value: attributeValues.value })
         .from(attributeValues)
-        .where(and(
-          eq(attributeValues.fieldId, fieldId),
-          eq(attributeValues.isDeleted, false),
-          sql`${attributeValues.value} IS NOT NULL AND ${attributeValues.value} != ''`
-        ))
-        .groupBy(attributeValues.value)
+        .where(
+          and(
+            eq(attributeValues.fieldId, fieldId),
+            eq(attributeValues.isDeleted, false),
+            sql`${attributeValues.value} IS NOT NULL AND ${attributeValues.value} != ''`,
+          ),
+        )
         .all();
 
-      return rows
-        .filter((row): row is { value: string; count: number } => row.value !== null)
-        .map((row) => [row.value, row.count] as [string, number])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+      const counts = new Map<string, number>();
+      for (const { value } of rows) {
+        if (!value) continue;
+        for (const item of explodeAttributeUsageValue(field?.type as AttributeType, value)) {
+          counts.set(item, (counts.get(item) ?? 0) + 1);
+        }
+      }
+      return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
     },
 
     async saveValuesForEntity(currentUserId, storyId, entityType, entityId, values): Promise<void> {
@@ -60,7 +74,9 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
         return;
       }
 
-      const existingRows = await db.select().from(attributeValues)
+      const existingRows = await db
+        .select()
+        .from(attributeValues)
         .where(and(eq(attributeValues.entityId, entityId), eq(attributeValues.isDeleted, false)))
         .all();
       const existingByFieldId = new Map(existingRows.map((row) => [row.fieldId, row]));
@@ -76,17 +92,30 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
           if (existing.value === rawValue) {
             continue;
           }
-          const [updated] = await db.update(attributeValues)
-            .set({ value: rawValue, updatedAt: new Date(), version: sql`${attributeValues.version} + 1` })
+          const [updated] = await db
+            .update(attributeValues)
+            .set({
+              value: rawValue,
+              updatedAt: new Date(),
+              version: sql`${attributeValues.version} + 1`,
+            })
             .where(eq(attributeValues.id, existing.id))
             .returning({ id: attributeValues.id, version: attributeValues.version });
           if (!updated) {
             continue;
           }
-          await recordLocalOperation(db, storyId, userIdToLog, 'update', 'AttributeValue', existing.id, {
-            value: rawValue,
-            version: updated.version,
-          });
+          await recordLocalOperation(
+            db,
+            storyId,
+            userIdToLog,
+            'update',
+            'AttributeValue',
+            existing.id,
+            {
+              value: rawValue,
+              version: updated.version,
+            },
+          );
           changed = true;
         } else if (rawValue !== null && rawValue !== '') {
           const newRow = prepareNewEntityData<AttributeValueInsert>({
@@ -97,7 +126,15 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
             value: rawValue,
           });
           const result = await db.insert(attributeValues).values(newRow).returning().get();
-          await recordLocalOperation(db, storyId, userIdToLog, 'create', 'AttributeValue', newRow.id, { ...result });
+          await recordLocalOperation(
+            db,
+            storyId,
+            userIdToLog,
+            'create',
+            'AttributeValue',
+            newRow.id,
+            { ...result },
+          );
           changed = true;
         }
       }

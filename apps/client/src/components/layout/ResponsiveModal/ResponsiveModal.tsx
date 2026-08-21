@@ -41,19 +41,18 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   // surface above that measured system area for every modal placement, not only
   // screens that happen to use KeyboardAwareScreen.
   const bottomSystemInset = useFormScrollBottomPadding(0);
-  const resolvedPlacement = placement === 'adaptive'
-    ? (isWide ? 'side' : 'bottom')
-    : placement;
-  const placementStyle: ViewStyle = resolvedPlacement === 'bottom'
-    ? {
-        width: '100%',
-        maxWidth: 1100,
-        borderBottomLeftRadius: 0,
-        borderBottomRightRadius: 0,
-      }
-    : resolvedPlacement === 'side'
-      ? { width: '50%', maxWidth: 600 }
-      : { width: isCompact ? '94%' : '88%', maxWidth: 720 };
+  const resolvedPlacement = placement === 'adaptive' ? (isWide ? 'side' : 'bottom') : placement;
+  const placementStyle: ViewStyle =
+    resolvedPlacement === 'bottom'
+      ? {
+          width: '100%',
+          maxWidth: 1100,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+        }
+      : resolvedPlacement === 'side'
+        ? { width: '50%', maxWidth: 600 }
+        : { width: isCompact ? '94%' : '88%', maxWidth: 720 };
 
   return (
     <Modal
@@ -69,21 +68,26 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
           resolvedPlacement === 'bottom' && styles.bottomOverlay,
           resolvedPlacement === 'side' && styles.sideOverlay,
           {
-            paddingBottom: resolvedPlacement === 'bottom'
-              ? bottomSystemInset
-              : Math.max(16, bottomSystemInset),
+            paddingBottom:
+              resolvedPlacement === 'bottom' ? bottomSystemInset : Math.max(16, bottomSystemInset),
           },
         ]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
           enabled={keyboardAvoiding}
-          behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-          style={[styles.content, {
-            backgroundColor: colors.background,
-            maxHeight,
-            ...placementStyle,
-          }, contentStyle]}
+          behavior={
+            Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
+          }
+          style={[
+            styles.content,
+            {
+              backgroundColor: colors.background,
+              maxHeight,
+              ...placementStyle,
+            },
+            contentStyle,
+          ]}
         >
           {children}
         </KeyboardAvoidingView>

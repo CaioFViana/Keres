@@ -1,21 +1,25 @@
+import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
+import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
+import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
+import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
-import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
-import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
-import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
-import SyncConflictModal from '@/src/components/features/sync/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
-import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
+import { restoreHostedCookieSession } from './services/HostedCookieSession';
+import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import { useUserSettingsStore } from './state/userSettingsStore';
+import {
+  runSqliteWebSmokeProbe,
+  shouldRunSqliteWebSmokeProbe,
+} from './testing/sqliteWebSmokeProbe';
 import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
@@ -25,7 +29,7 @@ import i18n from './utils/i18n';
 // deprecated SafeAreaView from 'react-native' for its modal list mode, even though we
 // always use listMode="SCROLLVIEW" - the warning fires from building that unused JSX
 // branch, not from anything in our own screens, so there's nothing here to actually fix.
-LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 // Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -35,20 +39,21 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
+    <View
+      style={{
+        flex: 1,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        backgroundColor: colors.background,
+      }}
+    >
       <StatusBar style={statusBarStyle} />
       <WebScrollbarTheme />
       {children}
       <DocumentTitleSync />
       <NotificationPopup />
-      {/*
-        Montado aqui, junto das notificações, para poder aparecer sobre qualquer tela: um
-        conflito trava a sincronização daquela entidade e precisa ser decidido onde o
-        usuário estiver, não numa aba que ele talvez nunca abra.
-      */}
-      <SyncConflictModal />
-      {/* Mesmo motivo do SyncConflictModal acima: AppAlert.alert() precisa poder ser chamado
-          de qualquer tela, então o Modal que o renderiza mora aqui, não em cada tela. */}
+      {/* AppAlert.alert() precisa poder ser chamado de qualquer tela, então o Modal que o
+          renderiza mora aqui, não em cada tela. */}
       <AppAlertHost />
     </View>
   );
@@ -59,10 +64,8 @@ const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
   const drizzleClient = useDrizzle(); // Get drizzleClient from context
 
   return (
-    <ThemeProvider drizzleClient={drizzleClient}> 
-      <SafeAreaWrapper>
-        {children}
-      </SafeAreaWrapper>
+    <ThemeProvider drizzleClient={drizzleClient}>
+      <SafeAreaWrapper>{children}</SafeAreaWrapper>
     </ThemeProvider>
   );
 };
@@ -84,6 +87,9 @@ const DatabaseInitializer = () => {
           await hydrateWebMediaStore();
         }
         await migrate(db);
+        if (shouldRunSqliteWebSmokeProbe) {
+          await runSqliteWebSmokeProbe(db);
+        }
         const initializedDrizzle = initializeDrizzle(db);
         setDrizzleClient(initializedDrizzle);
         setDbInitialized(true);
@@ -94,6 +100,7 @@ const DatabaseInitializer = () => {
         await authTokenManager.hydrateTokens();
         // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);
+        await restoreHostedCookieSession(initializedDrizzle);
 
         const settings = await initializeUserSettings(initializedDrizzle);
         if (settings?.language) {
@@ -102,7 +109,6 @@ const DatabaseInitializer = () => {
         }
         setUserSettingsLoaded(true);
         console.log('DatabaseInitializer: User settings loaded and language applied.');
-
       } catch (e) {
         console.error('DatabaseInitializer: Failed to initialize database or load settings', e);
       }
@@ -110,8 +116,7 @@ const DatabaseInitializer = () => {
 
     if (db) {
       initialize();
-    }
-    else {
+    } else {
       console.log('DatabaseInitializer: db context is null, waiting...');
     }
   }, [db, initializeUserSettings]);

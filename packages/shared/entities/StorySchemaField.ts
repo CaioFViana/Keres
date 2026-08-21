@@ -17,10 +17,12 @@ export interface StorySchemaField {
   key: string;
   description: string | null;
   type: AttributeType;
+  /** Alvo fixo de um atributo ENTITY; imutÃ¡vel apÃ³s a criaÃ§Ã£o, como key e entityType. */
+  targetEntityType: StorySchemaEntityType | null;
   isRequired: boolean;
   /** Sempre texto puro, igual a `AttributeValue.value` - ver `attributeValueCodec.ts`. */
   defaultValue: string | null;
-  /** Ordem de exibição em forms/details, crescente. */
+  /** Ordem de exibição em forms/details, crescente. Não é editável. Não é tão importante pra editar ordem! */
   order: number;
   createdAt: Date;
   updatedAt: Date;

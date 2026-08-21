@@ -1,6 +1,15 @@
 import type { TFunction } from 'i18next';
 
-type SceneTimingUnit = 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'millennia' | 'eons';
+type SceneTimingUnit =
+  | 'seconds'
+  | 'minutes'
+  | 'hours'
+  | 'days'
+  | 'weeks'
+  | 'months'
+  | 'years'
+  | 'millennia'
+  | 'eons';
 
 interface SceneTimingSource {
   gap?: number | null;
@@ -21,9 +30,8 @@ const sceneTimingUnits: SceneTimingUnit[] = [
   'seconds',
 ];
 
-const isSceneTimingUnit = (value: string | null | undefined): value is SceneTimingUnit => (
-  value !== null && sceneTimingUnits.includes(value as SceneTimingUnit)
-);
+const isSceneTimingUnit = (value: string | null | undefined): value is SceneTimingUnit =>
+  value !== null && sceneTimingUnits.includes(value as SceneTimingUnit);
 
 const getTimingPart = (value: number | null | undefined, unit: string | null | undefined) => {
   if (!value || !Number.isFinite(value) || value < 0 || !isSceneTimingUnit(unit)) {
@@ -33,11 +41,14 @@ const getTimingPart = (value: number | null | undefined, unit: string | null | u
   return { value, unit };
 };
 
-const formatTimingPart = (value: number, unit: SceneTimingUnit, t: TFunction): string => (
-  t(`scene_time_${unit}`, { count: value })
-);
+const formatTimingPart = (value: number, unit: SceneTimingUnit, t: TFunction): string =>
+  t(`scene_time_${unit}`, { count: value });
 
-const formatTimingTotals = (totals: Map<SceneTimingUnit, number>, t: TFunction, normalize: boolean): string => {
+const formatTimingTotals = (
+  totals: Map<SceneTimingUnit, number>,
+  t: TFunction,
+  normalize: boolean,
+): string => {
   if (normalize) {
     const carry = (from: SceneTimingUnit, to: SceneTimingUnit, amount: number) => {
       const value = totals.get(from) ?? 0;
@@ -67,7 +78,11 @@ const formatTimingTotals = (totals: Map<SceneTimingUnit, number>, t: TFunction, 
 };
 
 /** Formats a scene's own duration, treating incomplete timing data as zero minutes. */
-export const formatSceneUniverseDuration = (scene: SceneTimingSource, t: TFunction, normalize = false): string => {
+export const formatSceneUniverseDuration = (
+  scene: SceneTimingSource,
+  t: TFunction,
+  normalize = false,
+): string => {
   const timing = getTimingPart(scene.duration, scene.durationType);
   const totals = new Map<SceneTimingUnit, number>();
   if (timing) totals.set(timing.unit, timing.value);
@@ -75,7 +90,11 @@ export const formatSceneUniverseDuration = (scene: SceneTimingSource, t: TFuncti
 };
 
 /** Formats the interval that happens before a scene, treating incomplete timing data as zero minutes. */
-export const formatSceneGap = (scene: SceneTimingSource, t: TFunction, normalize = false): string => {
+export const formatSceneGap = (
+  scene: SceneTimingSource,
+  t: TFunction,
+  normalize = false,
+): string => {
   const timing = getTimingPart(scene.gap, scene.gapType);
   const totals = new Map<SceneTimingUnit, number>();
   if (timing) totals.set(timing.unit, timing.value);
@@ -83,16 +102,23 @@ export const formatSceneGap = (scene: SceneTimingSource, t: TFunction, normalize
 };
 
 /** True only when a scene has a duration that should be surfaced in compact lists. */
-export const hasSceneUniverseDuration = (scene: SceneTimingSource): boolean => Boolean(
-  getTimingPart(scene.duration, scene.durationType)
-);
+export const hasSceneUniverseDuration = (scene: SceneTimingSource): boolean =>
+  Boolean(getTimingPart(scene.duration, scene.durationType));
+
+/** True only when a scene has a gap that should be surfaced in compact lists. */
+export const hasSceneGap = (scene: SceneTimingSource): boolean =>
+  Boolean(getTimingPart(scene.gap, scene.gapType));
 
 /**
  * Calculates a linear chapter's elapsed in-universe time. A scene's gap belongs to the
  * transition into that scene, so the first scene's gap is intentionally excluded.
  * Units are kept separate instead of approximating months, years, or fictional eons.
  */
-export const formatChapterUniverseDuration = (scenes: SceneTimingSource[], t: TFunction, normalize = false): string => {
+export const formatChapterUniverseDuration = (
+  scenes: SceneTimingSource[],
+  t: TFunction,
+  normalize = false,
+): string => {
   const totals = new Map<SceneTimingUnit, number>();
   const addTiming = (value: number | null | undefined, unit: string | null | undefined) => {
     const timing = getTimingPart(value, unit);

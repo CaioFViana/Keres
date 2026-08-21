@@ -17,7 +17,12 @@ export interface Edge {
   nextSceneId: string;
 }
 
-export type LinearIncompatibilityKind = 'cross_chapter' | 'bifurcation' | 'convergence' | 'cycle' | 'orphan';
+export type LinearIncompatibilityKind =
+  | 'cross_chapter'
+  | 'bifurcation'
+  | 'convergence'
+  | 'cycle'
+  | 'orphan';
 
 export interface LinearIncompatibilityReason {
   chapterId: string;
@@ -34,21 +39,41 @@ export interface ChapterWithScenes {
   scenes: SceneSelect[];
 }
 
-export async function loadStoryGraph(db: AppDrizzleClient, storyId: string): Promise<{
+export async function loadStoryGraph(
+  db: AppDrizzleClient,
+  storyId: string,
+): Promise<{
   storyChapters: ChapterSelect[];
   storyScenes: SceneSelect[];
   storyChoices: Edge[];
 }> {
   const [storyChapters, storyScenes, storyChoices] = await Promise.all([
-    db.select().from(chapters).where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false))).orderBy(asc(chapters.index)).all(),
-    db.select().from(scenes).where(and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false))).orderBy(asc(scenes.index)).all(),
-    db.select({ sceneId: choices.sceneId, nextSceneId: choices.nextSceneId }).from(choices).where(and(eq(choices.storyId, storyId), eq(choices.isDeleted, false))).all(),
+    db
+      .select()
+      .from(chapters)
+      .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
+      .orderBy(asc(chapters.index))
+      .all(),
+    db
+      .select()
+      .from(scenes)
+      .where(and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)))
+      .orderBy(asc(scenes.index))
+      .all(),
+    db
+      .select({ sceneId: choices.sceneId, nextSceneId: choices.nextSceneId })
+      .from(choices)
+      .where(and(eq(choices.storyId, storyId), eq(choices.isDeleted, false)))
+      .all(),
   ]);
   return { storyChapters, storyScenes, storyChoices };
 }
 
 /** Capítulos com pelo menos uma cena, na ordem de `chapters.index`, cada um com suas cenas na ordem de `scenes.index`. */
-export function groupScenesByChapter(chaptersOrdered: ChapterSelect[], allScenes: SceneSelect[]): ChapterWithScenes[] {
+export function groupScenesByChapter(
+  chaptersOrdered: ChapterSelect[],
+  allScenes: SceneSelect[],
+): ChapterWithScenes[] {
   const scenesByChapter = new Map<string, SceneSelect[]>();
   for (const scene of allScenes) {
     const list = scenesByChapter.get(scene.chapterId) ?? [];
@@ -70,8 +95,11 @@ export function groupScenesByChapter(chaptersOrdered: ChapterSelect[], allScenes
  */
 export function classifyEdges(
   nonEmptyChapters: ChapterWithScenes[],
-  storyChoices: Edge[]
-): { intraEdgesByChapter: Map<string, Edge[]>; illegitimateCrossChapterSourceChapters: Set<string> } {
+  storyChoices: Edge[],
+): {
+  intraEdgesByChapter: Map<string, Edge[]>;
+  illegitimateCrossChapterSourceChapters: Set<string>;
+} {
   const chapterIdByScene = new Map<string, string>();
   for (const { chapter, scenes: chapterScenes } of nonEmptyChapters) {
     for (const scene of chapterScenes) {
@@ -103,9 +131,11 @@ export function classifyEdges(
     const sourceSeq = chapterSequenceIndex.get(sourceChapterId);
     const targetSeq = chapterSequenceIndex.get(targetChapterId);
 
-    const isLastSceneOfSource = !!sourceEntry && sourceEntry.scenes[sourceEntry.scenes.length - 1].id === edge.sceneId;
+    const isLastSceneOfSource =
+      !!sourceEntry && sourceEntry.scenes[sourceEntry.scenes.length - 1].id === edge.sceneId;
     const isFirstSceneOfTarget = !!targetEntry && targetEntry.scenes[0].id === edge.nextSceneId;
-    const isConsecutiveChapters = sourceSeq !== undefined && targetSeq !== undefined && targetSeq === sourceSeq + 1;
+    const isConsecutiveChapters =
+      sourceSeq !== undefined && targetSeq !== undefined && targetSeq === sourceSeq + 1;
 
     if (!(isLastSceneOfSource && isFirstSceneOfTarget && isConsecutiveChapters)) {
       illegitimateCrossChapterSourceChapters.add(sourceChapterId);
@@ -115,10 +145,16 @@ export function classifyEdges(
   return { intraEdgesByChapter, illegitimateCrossChapterSourceChapters };
 }
 
-export async function checkLinearCompatibility(db: AppDrizzleClient, storyId: string): Promise<LinearCompatibilityResult> {
+export async function checkLinearCompatibility(
+  db: AppDrizzleClient,
+  storyId: string,
+): Promise<LinearCompatibilityResult> {
   const { storyChapters, storyScenes, storyChoices } = await loadStoryGraph(db, storyId);
   const nonEmptyChapters = groupScenesByChapter(storyChapters, storyScenes);
-  const { intraEdgesByChapter, illegitimateCrossChapterSourceChapters } = classifyEdges(nonEmptyChapters, storyChoices);
+  const { intraEdgesByChapter, illegitimateCrossChapterSourceChapters } = classifyEdges(
+    nonEmptyChapters,
+    storyChoices,
+  );
 
   const reasons: LinearIncompatibilityReason[] = [];
   const addReason = (chapterId: string, chapterName: string, kind: LinearIncompatibilityKind) => {
@@ -188,7 +224,10 @@ export async function checkLinearCompatibility(db: AppDrizzleClient, storyId: st
  * Ordem da cadeia de um capítulo (só chamar depois de `checkLinearCompatibility` confirmar
  * compatibilidade - assume grau <=1 nos dois sentidos e um único componente conexo).
  */
-export function computeChapterChainOrder(chapterScenes: SceneSelect[], intraEdges: Edge[]): string[] {
+export function computeChapterChainOrder(
+  chapterScenes: SceneSelect[],
+  intraEdges: Edge[],
+): string[] {
   if (chapterScenes.length === 0) return [];
 
   const nextByScene = new Map(intraEdges.map((e) => [e.sceneId, e.nextSceneId]));
@@ -199,7 +238,9 @@ export function computeChapterChainOrder(chapterScenes: SceneSelect[], intraEdge
 
   const start = chapterScenes.find((s) => (inDegree.get(s.id) ?? 0) === 0);
   if (!start) {
-    throw new Error('Chapter has no valid chain start - checkLinearCompatibility should have rejected this conversion.');
+    throw new Error(
+      'Chapter has no valid chain start - checkLinearCompatibility should have rejected this conversion.',
+    );
   }
 
   const order: string[] = [];

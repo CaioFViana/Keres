@@ -1,10 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 
 interface DetailFieldProps {
   label: string;
   value: string;
+  onPress?: () => void;
 }
 
 /**
@@ -12,7 +14,7 @@ interface DetailFieldProps {
  * treatment for every field - short ones (gender) and long free-text ones (biography)
  * alike - so a screen doesn't need to hand-pick styling per field.
  */
-const DetailField: React.FC<DetailFieldProps> = ({ label, value }) => {
+const DetailField: React.FC<DetailFieldProps> = ({ label, value, onPress }) => {
   const { colors } = useTheme();
 
   const styles = StyleSheet.create({
@@ -32,12 +34,31 @@ const DetailField: React.FC<DetailFieldProps> = ({ label, value }) => {
       color: colors.text,
       lineHeight: 22,
     },
+    linkedValue: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+    },
+    linkedValueText: { color: colors.primary, flexShrink: 1 },
+    linkIcon: { marginLeft: 4 },
   });
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+      {onPress ? (
+        <TouchableOpacity style={styles.linkedValue} onPress={onPress}>
+          <Text style={[styles.value, styles.linkedValueText]}>{value}</Text>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={colors.primary}
+            style={styles.linkIcon}
+          />
+        </TouchableOpacity>
+      ) : (
+        <Text style={styles.value}>{value}</Text>
+      )}
     </View>
   );
 };

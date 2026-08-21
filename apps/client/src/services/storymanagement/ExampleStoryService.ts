@@ -1,6 +1,5 @@
 import { FullStoryExportSchema } from '@keres/shared';
 import { AppDrizzleClient } from '../../db';
-import { cloneExampleStoryForInstall } from '../../exampleStories/cloneExampleStory';
 import { exampleStoryRegistry } from '../../exampleStories/generated/registry';
 import { ExampleStoryEntry } from '../../exampleStories/types';
 import { reviveDates } from '../../utils/reviveDates';
@@ -23,7 +22,11 @@ export type InstallExampleStoryResult =
 
 export interface ExampleStoryServiceInterface {
   listExampleStories(): ExampleStoryEntry[];
-  installExampleStory(userId: string, slug: string, language: string): Promise<InstallExampleStoryResult>;
+  installExampleStory(
+    userId: string,
+    slug: string,
+    language: string,
+  ): Promise<InstallExampleStoryResult>;
 }
 
 export const createExampleStoryService = (db: AppDrizzleClient): ExampleStoryServiceInterface => {
@@ -34,9 +37,13 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
       return exampleStoryRegistry;
     },
 
-    async installExampleStory(userId: string, slug: string, language: string): Promise<InstallExampleStoryResult> {
-      const entry = exampleStoryRegistry.find(candidate => candidate.slug === slug);
-      const languageEntry = entry?.languages.find(candidate => candidate.language === language);
+    async installExampleStory(
+      userId: string,
+      slug: string,
+      language: string,
+    ): Promise<InstallExampleStoryResult> {
+      const entry = exampleStoryRegistry.find((candidate) => candidate.slug === slug);
+      const languageEntry = entry?.languages.find((candidate) => candidate.language === language);
       if (!languageEntry) {
         console.error(`ExampleStoryService: example story not found: ${slug}/${language}.`);
         return { status: 'not_found' };
@@ -47,14 +54,15 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
       // `pickStoryExportFile`.
       const parsed = FullStoryExportSchema.safeParse(reviveDates(languageEntry.story));
       if (!parsed.success) {
-        console.error(`ExampleStoryService: bundled content for ${slug}/${language} failed validation.`, parsed.error);
+        console.error(
+          `ExampleStoryService: bundled content for ${slug}/${language} failed validation.`,
+          parsed.error,
+        );
         return { status: 'invalid_content' };
       }
 
-      // Somente o catálogo de exemplos ganha novos IDs; importação e sincronização normais
-      // continuam preservando a identidade dos seus dados.
-      const clonedExample = cloneExampleStoryForInstall(parsed.data, userId);
-      const storyId = await storyService.importFullStory(userId, clonedExample, null);
+      // A importação local cria a cópia e remapeia seus IDs, inclusive para exemplos.
+      const storyId = await storyService.importFullStory(userId, parsed.data, null);
       return { status: 'installed', storyId };
     },
   };

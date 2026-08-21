@@ -1,24 +1,28 @@
-import { apiClient } from './apiClient';
+import { apiClient, assertSafePathSegment } from './apiClient';
 import type { Paginated } from './AdminUserApiService';
 
 export interface DeletedItem {
   entityType: string;
   id: string;
   storyId: string | null;
+  storyTitle: string | null;
   deletedAt: string | null;
   version: number;
-  /** Melhor esforço vindo do servidor (title/name/text/value/fileName); `null` para tabelas de relação. */
+  /** Enriched display name (simple field or shallow composite); null when still unknown. */
   name: string | null;
 }
 
 export interface OperationLogEntry {
   id: string;
   storyId: string;
+  storyTitle: string | null;
   userId: string;
+  username: string | null;
   operationVersion: number;
   operationType: 'create' | 'update' | 'delete' | 'reorder';
   entityType: string;
   entityId: string;
+  entityName: string | null;
   payload: Record<string, unknown>;
   entityVersion: number | null;
   createdAt: string;
@@ -29,17 +33,26 @@ export interface OperationLogFilters {
   entityType?: string;
   userId?: string;
   operationType?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }
 
+export interface DeletedItemsFilters {
+  entityType?: string;
+  storyId?: string;
+  search?: string;
+}
+
 export const RecoveryApiService = {
-  async listDeleted(filters: { entityType?: string; storyId?: string }): Promise<DeletedItem[]> {
+  async listDeleted(filters: DeletedItemsFilters): Promise<DeletedItem[]> {
     const { data } = await apiClient.get('/admin/api/recovery/deleted', { params: filters });
     return data;
   },
   async restore(entityType: string, id: string): Promise<unknown> {
-    const { data } = await apiClient.post(`/admin/api/recovery/${entityType}/${id}/restore`);
+    const safeType = assertSafePathSegment(entityType, 'entityType');
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.post(`/admin/api/recovery/${safeType}/${safeId}/restore`);
     return data;
   },
   async browseOperationLog(filters: OperationLogFilters): Promise<Paginated<OperationLogEntry>> {

@@ -1,12 +1,14 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color';
+export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color' | 'entity';
 
 export interface EntityFieldMetadata {
-  name: string;          // The field name in the entity
-  label: string;         // Translation key for UI display (ignored when `rawLabel` is set)
-  type: FieldType;       // Basic type for rendering input components
+  name: string; // The field name in the entity
+  label: string; // Translation key for UI display (ignored when `rawLabel` is set)
+  type: FieldType; // Basic type for rendering input components
   isSearchable: boolean; // Whether this field should appear in advanced search
   isSuggestion?: boolean; // Whether to use a suggestion component for this field
   suggestionsSource?: string; // Key to fetch suggestions (e.g., 'genderOptions', 'raceOptions')
+  /** Fixed target type when `type` is `entity`. */
+  entityTargetType?: string | null;
   /** Already-resolved display text, used as-is instead of `t(label)` - for synthetic metadata
    *  built from user-defined data (Story Schema custom attributes) that has no translation key,
    *  see `apps/client/src/utils/customAttributeFieldMetadata.ts`. */
@@ -18,9 +20,30 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   Character: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
     { name: 'title', label: 'field_title', type: 'string', isSearchable: true },
-    { name: 'gender', label: 'field_gender', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'character_gender' },
-    { name: 'race', label: 'field_race', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'character_race' },
-    { name: 'subrace', label: 'field_subrace', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'character_subrace' },
+    {
+      name: 'gender',
+      label: 'field_gender',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'character_gender',
+    },
+    {
+      name: 'race',
+      label: 'field_race',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'character_race',
+    },
+    {
+      name: 'subrace',
+      label: 'field_subrace',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'character_subrace',
+    },
     { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
     { name: 'personality', label: 'field_personality', type: 'string', isSearchable: true },
     { name: 'motivation', label: 'field_motivation', type: 'string', isSearchable: true },
@@ -51,8 +74,19 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
+  Mode: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'modeChanges', label: 'field_modeChanges', type: 'string', isSearchable: true },
+  ],
   CharacterRelation: [
-    { name: 'relationType', label: 'field_relationType', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'characterRelation_type' },
+    {
+      name: 'relationType',
+      label: 'field_relationType',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'characterRelation_type',
+    },
   ],
   Location: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
@@ -65,9 +99,23 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   ],
   Item: [
     { name: 'name', label: 'item_name', type: 'string', isSearchable: true },
-    { name: 'category', label: 'category', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_category' },
+    {
+      name: 'category',
+      label: 'category',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'item_category',
+    },
     { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
-    { name: 'initialState', label: 'initial_state', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_initial_state' },
+    {
+      name: 'initialState',
+      label: 'initial_state',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'item_initial_state',
+    },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
@@ -75,7 +123,14 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'itemId', label: 'item', type: 'id', isSearchable: true },
     { name: 'sceneId', label: 'scene', type: 'id', isSearchable: true },
     { name: 'newCharacterOwnerId', label: 'new_character_owner', type: 'id', isSearchable: true },
-    { name: 'newState', label: 'new_state', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_state' },
+    {
+      name: 'newState',
+      label: 'new_state',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'item_state',
+    },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
   Chapter: [
@@ -90,8 +145,6 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
-  Choice: [
-    { name: 'text', label: 'text', type: 'string', isSearchable: true },
-  ],
+  Choice: [{ name: 'text', label: 'text', type: 'string', isSearchable: true }],
   // Add other relevant entities as needed
 };

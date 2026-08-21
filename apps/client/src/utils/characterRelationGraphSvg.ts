@@ -38,7 +38,7 @@ const MIN_CANVAS_WIDTH = 560;
 
 export function renderCharacterRelationMapSvg(
   layout: CharacterRelationGraphLayout,
-  options: CharacterRelationMapSvgOptions
+  options: CharacterRelationMapSvgOptions,
 ): string {
   const canvasWidth = Math.max(layout.width, MIN_CANVAS_WIDTH);
   const hasIsolatedLegend = layout.isolatedCount > 0;
@@ -50,9 +50,9 @@ export function renderCharacterRelationMapSvg(
     renderHeader(options, hasIsolatedLegend),
     `<g transform="translate(0 ${round(headerHeight)})">`,
     // Arestas primeiro: passar por baixo dos nós evita que uma linha risque o nome do personagem.
-    ...layout.edges.map(edge => renderEdge(edge, options)),
-    ...(options.showEdgeLabels ? layout.edges.map(edge => renderEdgeLabel(edge, options)) : []),
-    ...layout.nodes.map(node => renderNode(node, options)),
+    ...layout.edges.map((edge) => renderEdge(edge, options)),
+    ...(options.showEdgeLabels ? layout.edges.map((edge) => renderEdgeLabel(edge, options)) : []),
+    ...layout.nodes.map((node) => renderNode(node, options)),
     '</g>',
   ].join('\n');
 
@@ -79,7 +79,7 @@ function renderHeader(options: CharacterRelationMapSvgOptions, hasIsolatedLegend
     const y = HEADER_TOP + 44;
     parts.push(
       `<rect x="${GRAPH_PADDING}" y="${round(y - 11)}" width="12" height="12" rx="3" fill="none" stroke="${options.colors.textSecondary}" stroke-width="2" stroke-dasharray="3 2"/>`,
-      `<text x="${GRAPH_PADDING + 18}" y="${round(y)}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.labels.isolated)}</text>`
+      `<text x="${GRAPH_PADDING + 18}" y="${round(y)}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.labels.isolated)}</text>`,
     );
   }
 
@@ -115,10 +115,11 @@ function renderNode(node: RelationGraphNode, options: CharacterRelationMapSvgOpt
   ];
 
   const centerX = node.x + node.width / 2;
-  const firstLineY = node.y + (node.labelLines.length > 1 ? node.height / 2 - 4 : node.height / 2 + 4);
+  const firstLineY =
+    node.y + (node.labelLines.length > 1 ? node.height / 2 - 4 : node.height / 2 + 4);
   node.labelLines.forEach((line, index) => {
     parts.push(
-      `<text x="${round(centerX)}" y="${round(firstLineY + index * 14)}" font-size="12" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${escapeXml(line)}</text>`
+      `<text x="${round(centerX)}" y="${round(firstLineY + index * 14)}" font-size="12" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${escapeXml(line)}</text>`,
     );
   });
 

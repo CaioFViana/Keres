@@ -1,3 +1,4 @@
+import { AVATAR_FALLBACK_PALETTE } from '@keres/shared';
 /**
  * Posicionamento do grafo de uma história: cenas viram nós, escolhas viram arestas.
  *
@@ -72,18 +73,8 @@ const SELF_LOOP_BULGE = 46;
  * Puxar do tema daria cores mais integradas, mas o mapa exportado sai do app e é visto em
  * qualquer lugar; daí saturação média em vez de tons extremos.
  */
-export const CHAPTER_PALETTE = [
-  '#4F8DF7',
-  '#E4713C',
-  '#39A867',
-  '#B563D6',
-  '#D8A22B',
-  '#3FA9B8',
-  '#D7566F',
-  '#7C8CF0',
-  '#6FA130',
-  '#C4693F',
-];
+/** A mesma paleta que serve de reserva para avatares - uma cópia só, em `@keres/shared`. */
+export const CHAPTER_PALETTE = AVATAR_FALLBACK_PALETTE;
 
 export interface GraphPoint {
   x: number;
@@ -197,7 +188,11 @@ interface PlacedEdge {
 }
 
 /** Quebra o nome em linhas para caber no nó, com "…" quando não cabe. */
-export function wrapLabel(text: string, maxChars = LABEL_MAX_CHARS, maxLines = LABEL_MAX_LINES): string[] {
+export function wrapLabel(
+  text: string,
+  maxChars = LABEL_MAX_CHARS,
+  maxLines = LABEL_MAX_LINES,
+): string[] {
   const normalized = (text ?? '').trim().replace(/\s+/g, ' ');
   if (!normalized) return [''];
 
@@ -242,9 +237,9 @@ export function wrapLabel(text: string, maxChars = LABEL_MAX_CHARS, maxLines = L
 export function buildStoryGraphLayout(
   scenes: GraphScene[],
   choices: GraphChoice[],
-  chapters: GraphChapter[]
+  chapters: GraphChapter[],
 ): StoryGraphLayout {
-  const chapterById = new Map(chapters.map(chapter => [chapter.id, chapter]));
+  const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const chapterColorById = buildChapterColors(chapters);
   const legend = buildLegend(scenes, chapters, chapterColorById);
 
@@ -294,8 +289,8 @@ export function buildStoryGraphLayout(
   const components = findComponents(allNodes);
   // Uma cena que nenhuma escolha alcança não tem lugar natural no fluxo. Essas vão para uma
   // grade no fim do mapa em vez de virarem N "histórias" de um nó só espalhadas na horizontal.
-  const flows = components.filter(component => component.length > 1);
-  const detached = components.filter(component => component.length === 1).flat();
+  const flows = components.filter((component) => component.length > 1);
+  const detached = components.filter((component) => component.length === 1).flat();
 
   let xOffset = 0;
   let flowHeight = 0;
@@ -306,16 +301,16 @@ export function buildStoryGraphLayout(
     assignHorizontalPositions(layers);
 
     for (const node of flow) node.x += xOffset;
-    const flowWidth = Math.max(...flow.map(node => node.x)) + NODE_WIDTH - xOffset;
+    const flowWidth = Math.max(...flow.map((node) => node.x)) + NODE_WIDTH - xOffset;
     xOffset += flowWidth + COMPONENT_GAP;
     flowHeight = Math.max(flowHeight, layers.length * LAYER_STEP - LAYER_GAP);
   }
 
   const flowWidth = flows.length > 0 ? xOffset - COMPONENT_GAP : 0;
   layOutDetachedNodes(detached, flowWidth, flowHeight);
-  const detachedIds = new Set(detached.map(node => node.scene.id));
+  const detachedIds = new Set(detached.map((node) => node.scene.id));
 
-  const nodes: GraphNode[] = allNodes.map(node => ({
+  const nodes: GraphNode[] = allNodes.map((node) => ({
     id: node.scene.id,
     scene: node.scene,
     labelLines: wrapLabel(node.scene.name),
@@ -332,7 +327,7 @@ export function buildStoryGraphLayout(
     isDetached: detachedIds.has(node.scene.id),
   }));
 
-  const nodesById = new Map(nodes.map(node => [node.id, node]));
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const placedEdges = placeEdges(workEdges, nodesById);
 
   // As curvas de retorno e os laços saem para fora dos nós, então a caixa do desenho só pode
@@ -342,12 +337,14 @@ export function buildStoryGraphLayout(
 
   return {
     nodes,
-    edges: placedEdges.map(placed => serializeEdge(placed, labelAnchors.get(placed) ?? 0.5)),
+    edges: placedEdges.map((placed) => serializeEdge(placed, labelAnchors.get(placed) ?? 0.5)),
     width: offset.width,
     height: offset.height,
     chapters: legend,
     danglingChoiceCount,
-    hasBackwardEdges: placedEdges.some(placed => placed.kind === 'backward' || placed.kind === 'self'),
+    hasBackwardEdges: placedEdges.some(
+      (placed) => placed.kind === 'backward' || placed.kind === 'self',
+    ),
     detachedSceneCount: detached.length,
   };
 }
@@ -360,21 +357,26 @@ function compareByStoryOrder(a: WorkNode, b: WorkNode): number {
 
 export function buildChapterColors(chapters: GraphChapter[]): Map<string, string> {
   const ordered = [...chapters].sort((a, b) => a.index - b.index || a.id.localeCompare(b.id));
-  return new Map(ordered.map((chapter, position) => [chapter.id, CHAPTER_PALETTE[position % CHAPTER_PALETTE.length]]));
+  return new Map(
+    ordered.map((chapter, position) => [
+      chapter.id,
+      CHAPTER_PALETTE[position % CHAPTER_PALETTE.length],
+    ]),
+  );
 }
 
 function buildLegend(
   scenes: GraphScene[],
   chapters: GraphChapter[],
-  colors: Map<string, string>
+  colors: Map<string, string>,
 ): GraphChapterLegendEntry[] {
   const counts = new Map<string, number>();
   for (const scene of scenes) counts.set(scene.chapterId, (counts.get(scene.chapterId) ?? 0) + 1);
 
   return [...chapters]
     .sort((a, b) => a.index - b.index || a.id.localeCompare(b.id))
-    .filter(chapter => (counts.get(chapter.id) ?? 0) > 0)
-    .map(chapter => ({
+    .filter((chapter) => (counts.get(chapter.id) ?? 0) > 0)
+    .map((chapter) => ({
       id: chapter.id,
       name: chapter.name,
       color: colors.get(chapter.id) ?? CHAPTER_PALETTE[0],
@@ -424,10 +426,10 @@ function assignLayers(component: WorkNode[]): void {
   const pendingIncoming = new Map<WorkNode, number>();
   for (const node of component) {
     node.layer = 0;
-    pendingIncoming.set(node, node.incoming.filter(edge => !edge.closesCycle).length);
+    pendingIncoming.set(node, node.incoming.filter((edge) => !edge.closesCycle).length);
   }
 
-  const queue = component.filter(node => pendingIncoming.get(node) === 0);
+  const queue = component.filter((node) => pendingIncoming.get(node) === 0);
   let processed = 0;
 
   while (queue.length > 0) {
@@ -451,8 +453,8 @@ function assignLayers(component: WorkNode[]): void {
   for (const node of component) {
     if (pendingIncoming.get(node) === 0) continue;
     const resolvedPredecessors = node.incoming
-      .filter(edge => !edge.closesCycle && pendingIncoming.get(edge.source) === 0)
-      .map(edge => edge.source.layer);
+      .filter((edge) => !edge.closesCycle && pendingIncoming.get(edge.source) === 0)
+      .map((edge) => edge.source.layer);
     if (resolvedPredecessors.length > 0) node.layer = Math.max(...resolvedPredecessors) + 1;
     pendingIncoming.set(node, 0);
   }
@@ -472,8 +474,8 @@ function markCycleClosingEdges(component: WorkNode[]): void {
   // Começar pelas cenas iniciais faz as voltas serem detectadas onde o autor as enxerga: a
   // aresta "de volta ao começo" é a que fecha o ciclo, não a que segue a história.
   const roots = [
-    ...component.filter(node => node.scene.isStart),
-    ...component.filter(node => !node.scene.isStart && node.incoming.length === 0),
+    ...component.filter((node) => node.scene.isStart),
+    ...component.filter((node) => !node.scene.isStart && node.incoming.length === 0),
     ...component,
   ];
 
@@ -506,12 +508,14 @@ function markCycleClosingEdges(component: WorkNode[]): void {
 }
 
 function groupByLayer(component: WorkNode[]): WorkNode[][] {
-  const layerCount = Math.max(...component.map(node => node.layer)) + 1;
+  const layerCount = Math.max(...component.map((node) => node.layer)) + 1;
   const layers: WorkNode[][] = Array.from({ length: layerCount }, () => []);
   for (const node of component) layers[node.layer].push(node);
   for (const layer of layers) {
     layer.sort(compareByStoryOrder);
-    layer.forEach((node, index) => { node.order = index; });
+    layer.forEach((node, index) => {
+      node.order = index;
+    });
   }
   return layers;
 }
@@ -539,12 +543,14 @@ function orderWithinLayers(layers: WorkNode[][]): void {
           node,
           neighbours.length > 0
             ? neighbours.reduce((sum, neighbour) => sum + neighbour.order, 0) / neighbours.length
-            : node.order
+            : node.order,
         );
       }
 
-      layer.sort((a, b) => (barycenters.get(a)! - barycenters.get(b)!) || (a.order - b.order));
-      layer.forEach((node, index) => { node.order = index; });
+      layer.sort((a, b) => barycenters.get(a)! - barycenters.get(b)! || a.order - b.order);
+      layer.forEach((node, index) => {
+        node.order = index;
+      });
     }
   }
 }
@@ -559,7 +565,9 @@ function orderWithinLayers(layers: WorkNode[][]): void {
  */
 function assignHorizontalPositions(layers: WorkNode[][]): void {
   for (const layer of layers) {
-    layer.forEach((node, index) => { node.x = index * COLUMN_STEP; });
+    layer.forEach((node, index) => {
+      node.x = index * COLUMN_STEP;
+    });
   }
 
   for (let pass = 0; pass < 4; pass += 1) {
@@ -570,7 +578,7 @@ function assignHorizontalPositions(layers: WorkNode[][]): void {
       const adjacentLayer = layerIndex + (goingDown ? -1 : 1);
       if (adjacentLayer < 0 || adjacentLayer >= layers.length) continue;
 
-      const desired = layer.map(node => {
+      const desired = layer.map((node) => {
         const neighbours = neighboursInLayer(node, goingDown, adjacentLayer);
         if (neighbours.length === 0) return node.x;
         return neighbours.reduce((sum, neighbour) => sum + neighbour.x, 0) / neighbours.length;
@@ -581,7 +589,7 @@ function assignHorizontalPositions(layers: WorkNode[][]): void {
   }
 
   const allNodes = layers.flat();
-  const minX = Math.min(...allNodes.map(node => node.x));
+  const minX = Math.min(...allNodes.map((node) => node.x));
   for (const node of allNodes) node.x -= minX;
 }
 
@@ -593,9 +601,9 @@ function sweepOrder(length: number, goingDown: boolean): number[] {
 /** Vizinhos de `node` que estão exatamente na camada `layerIndex`, ignorando ciclos. */
 function neighboursInLayer(node: WorkNode, incoming: boolean, layerIndex: number): WorkNode[] {
   return (incoming ? node.incoming : node.outgoing)
-    .filter(edge => !edge.closesCycle)
-    .map(edge => (incoming ? edge.source : edge.target))
-    .filter(neighbour => neighbour.layer === layerIndex);
+    .filter((edge) => !edge.closesCycle)
+    .map((edge) => (incoming ? edge.source : edge.target))
+    .filter((neighbour) => neighbour.layer === layerIndex);
 }
 
 /**
@@ -614,7 +622,9 @@ function applyWithMinimumSpacing(layer: WorkNode[], desired: number[]): void {
   }
 
   const drift = average(positions) - average(desired);
-  layer.forEach((node, index) => { node.x = positions[index] - drift; });
+  layer.forEach((node, index) => {
+    node.x = positions[index] - drift;
+  });
 }
 
 function average(values: number[]): number {
@@ -684,12 +694,16 @@ function placeEdges(edges: WorkEdge[], nodesById: Map<string, GraphNode>): Place
  */
 function pickLoopSide(node: GraphNode, allNodes: GraphNode[]): 1 | -1 {
   const needed = SELF_LOOP_BULGE + 10;
-  const sameLayer = allNodes.filter(other => other.id !== node.id && other.layer === node.layer);
+  const sameLayer = allNodes.filter((other) => other.id !== node.id && other.layer === node.layer);
 
-  const blockedOnRight = sameLayer.some(other => other.x > node.x && other.x - (node.x + node.width) < needed);
+  const blockedOnRight = sameLayer.some(
+    (other) => other.x > node.x && other.x - (node.x + node.width) < needed,
+  );
   if (!blockedOnRight) return 1;
 
-  const blockedOnLeft = sameLayer.some(other => other.x < node.x && node.x - (other.x + other.width) < needed);
+  const blockedOnLeft = sameLayer.some(
+    (other) => other.x < node.x && node.x - (other.x + other.width) < needed,
+  );
   return blockedOnLeft ? 1 : -1;
 }
 
@@ -729,7 +743,7 @@ function buildCurve(
   target: GraphNode,
   kind: GraphEdgeKind,
   spread: number,
-  loopSide: 1 | -1
+  loopSide: 1 | -1,
 ): Cubic {
   const sourceBottom = { x: source.x + source.width / 2, y: source.y + source.height };
   const targetTop = { x: target.x + target.width / 2, y: target.y };
@@ -759,8 +773,14 @@ function buildCurve(
   if (kind === 'lateral') {
     // Mesma camada: sai por um flanco e entra pelo outro, curvando por baixo dos dois nós.
     const goingRight = target.x >= source.x;
-    const start = { x: goingRight ? source.x + source.width : source.x, y: source.y + source.height * 0.7 };
-    const end = { x: goingRight ? target.x : target.x + target.width, y: target.y + target.height * 0.7 };
+    const start = {
+      x: goingRight ? source.x + source.width : source.x,
+      y: source.y + source.height * 0.7,
+    };
+    const end = {
+      x: goingRight ? target.x : target.x + target.width,
+      y: target.y + target.height * 0.7,
+    };
     const dip = source.height * 0.7 + 26 + Math.abs(spread);
     return {
       start,
@@ -791,7 +811,10 @@ function buildCurve(
  * dos seus pontos de controle, então incluí-los é uma folga segura e barata - garante que a
  * volta desenhada para fora do mapa não seja cortada na exportação.
  */
-function normalizeToPadding(nodes: GraphNode[], edges: PlacedEdge[]): { width: number; height: number } {
+function normalizeToPadding(
+  nodes: GraphNode[],
+  edges: PlacedEdge[],
+): { width: number; height: number } {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -809,7 +832,12 @@ function normalizeToPadding(nodes: GraphNode[], edges: PlacedEdge[]): { width: n
     consider(node.x + node.width, node.y + node.height);
   }
   for (const edge of edges) {
-    for (const point of [edge.curve.start, edge.curve.control1, edge.curve.control2, edge.curve.end]) {
+    for (const point of [
+      edge.curve.start,
+      edge.curve.control1,
+      edge.curve.control2,
+      edge.curve.end,
+    ]) {
       consider(point.x, point.y);
     }
   }
@@ -822,7 +850,12 @@ function normalizeToPadding(nodes: GraphNode[], edges: PlacedEdge[]): { width: n
     node.y += shiftY;
   }
   for (const edge of edges) {
-    for (const point of [edge.curve.start, edge.curve.control1, edge.curve.control2, edge.curve.end]) {
+    for (const point of [
+      edge.curve.start,
+      edge.curve.control1,
+      edge.curve.control2,
+      edge.curve.end,
+    ]) {
       point.x += shiftX;
       point.y += shiftY;
     }

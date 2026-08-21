@@ -27,18 +27,18 @@ const migrateV1ToV2: StoryExportMigration = {
   migrate: (data) => {
     const story = data?.story
       ? {
-        ...data.story,
-        // V1 representava favoritos como estado global da história.
-        favoriteBehavior: data.story.favoriteBehavior ?? 'global',
-        normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
-      }
+          ...data.story,
+          // V1 representava favoritos como estado global da história.
+          favoriteBehavior: data.story.favoriteBehavior ?? 'global',
+          normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
+        }
       : data?.story;
     const suggestions = Array.isArray(data?.suggestions)
       ? data.suggestions.map((rawSuggestion: any) => {
-        const suggestion = { ...rawSuggestion };
-        delete suggestion.isDefault;
-        return suggestion;
-      })
+          const suggestion = { ...rawSuggestion };
+          delete suggestion.isDefault;
+          return suggestion;
+        })
       : data?.suggestions;
 
     return {
@@ -60,7 +60,43 @@ const migrateV2ToV3: StoryExportMigration = {
   }),
 };
 
-const migrations: StoryExportMigration[] = [migrateV1ToV2, migrateV2ToV3];
+/** V3 -> V4: grupos/checks de Choice e effects (Scene/Choice). */
+const migrateV3ToV4: StoryExportMigration = {
+  fromVersion: 3,
+  migrate: (data) => ({
+    ...data,
+    choiceCheckGroups: Array.isArray(data?.choiceCheckGroups) ? data.choiceCheckGroups : [],
+    choiceChecks: Array.isArray(data?.choiceChecks) ? data.choiceChecks : [],
+    effects: Array.isArray(data?.effects) ? data.effects : [],
+  }),
+};
+
+/** V4 -> V5: sistema de status (stats, escadas, valores) e modos de personagem. */
+const migrateV4ToV5: StoryExportMigration = {
+  fromVersion: 4,
+  migrate: (data) => ({
+    ...data,
+    story: data?.story
+      ? {
+          ...data.story,
+          // Pacotes anteriores não tinham o sistema; importá-los não pode ligar a feature.
+          statSystem: data.story.statSystem ?? false,
+          statNotation: data.story.statNotation ?? 'letter',
+        }
+      : data?.story,
+    stats: Array.isArray(data?.stats) ? data.stats : [],
+    statStrengths: Array.isArray(data?.statStrengths) ? data.statStrengths : [],
+    statRelations: Array.isArray(data?.statRelations) ? data.statRelations : [],
+    modes: Array.isArray(data?.modes) ? data.modes : [],
+  }),
+};
+
+const migrations: StoryExportMigration[] = [
+  migrateV1ToV2,
+  migrateV2ToV3,
+  migrateV3ToV4,
+  migrateV4ToV5,
+];
 
 /**
  * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)
@@ -74,7 +110,7 @@ export function migrateStoryExport(raw: any): any {
 
   if (version > CURRENT_STORY_FORMAT_VERSION) {
     throw new StoryExportVersionError(
-      `This story export was created by a newer version of Keres (format ${version}) than this app supports (format ${CURRENT_STORY_FORMAT_VERSION}).`
+      `This story export was created by a newer version of Keres (format ${version}) than this app supports (format ${CURRENT_STORY_FORMAT_VERSION}).`,
     );
   }
 

@@ -1,0 +1,53 @@
+import { ThemeColors } from '../ThemeColors';
+
+const lightColors: ThemeColors = {
+  primary: '#9B4200',
+  primaryVariant: '#793300',
+  primaryContainer: '#FFDBCA',
+  onPrimaryContainer: '#321200',
+  secondary: '#765845',
+  secondaryVariant: '#5C4030',
+  background: '#FFF9F6',
+  surface: '#FFFBFF',
+  error: '#BA1A1A',
+  onPrimary: '#FFFFFF',
+  onSecondary: '#FFFFFF',
+  onBackground: '#211A17',
+  onSurface: '#211A17',
+  onError: '#FFFFFF',
+  text: '#211A17',
+  textSecondary: '#625B56',
+  card: '#FFF0E8',
+  border: '#EFC1AC',
+  notification: '#805B00',
+  accent: '#B55A00',
+  star: '#8A6500',
+  shadow: '#000000',
+};
+
+const darkColors: ThemeColors = {
+  primary: '#FFB68C',
+  primaryVariant: '#FF9B65',
+  primaryContainer: '#783300',
+  onPrimaryContainer: '#FFDBCA',
+  secondary: '#E7BDA7',
+  secondaryVariant: '#CDA48F',
+  background: '#1D1612',
+  surface: '#251C17',
+  error: '#FFB4AB',
+  onPrimary: '#522100',
+  onSecondary: '#442A1B',
+  onBackground: '#EDE0DA',
+  onSurface: '#EDE0DA',
+  onError: '#690005',
+  text: '#EDE0DA',
+  textSecondary: '#D3C4BC',
+  card: '#30241E',
+  border: '#51443C',
+  notification: '#FFD166',
+  accent: '#FFB77D',
+  star: '#FFD166',
+  shadow: '#000000',
+};
+
+export const sunsetTheme = { lightColors, darkColors };

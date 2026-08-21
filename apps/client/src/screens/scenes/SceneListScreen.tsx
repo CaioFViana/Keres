@@ -6,7 +6,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import SceneListItem from '@/src/components/features/list-items/SceneListItem';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal'; // Import the modal
 import { SceneSelect } from '../../db/schema';
@@ -61,29 +64,38 @@ const SceneListScreen = () => {
 
   const [isReorderModalVisible, setIsReorderModalVisible] = useState(false);
 
-  const handleToggleFavorite = useCallback(async (sceneId: string, isFavorite: boolean) => {
-    await toggleFavorite(sceneId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (sceneId: string, isFavorite: boolean) => {
+      await toggleFavorite(sceneId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const handleViewDetails = useCallback((sceneId: string) => {
-    navigation.navigate('SceneDetail', { sceneId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (sceneId: string) => {
+      navigation.navigate('SceneDetail', { sceneId });
+    },
+    [navigation],
+  );
 
-  const memoizedSceneListItem = useCallback(({ item }: { item: SceneSelect }) => (
-    <SceneListItem
-      scene={item}
-      storyType={selectedStory?.type}
-      onViewDetails={handleViewDetails}
-      onToggleFavorite={handleToggleFavorite}
-    />
-  ), [handleViewDetails, handleToggleFavorite, selectedStory?.type]);
+  const memoizedSceneListItem = useCallback(
+    ({ item }: { item: SceneSelect }) => (
+      <SceneListItem
+        scene={item}
+        storyType={selectedStory?.type}
+        onViewDetails={handleViewDetails}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    ),
+    [handleViewDetails, handleToggleFavorite, selectedStory?.type],
+  );
 
   const memoizedSortOptions = useMemo(() => {
     return [
       { label: t('sort_by_name'), value: 'name' },
       { label: t('sort_by_index'), value: 'index' },
       { label: t('sort_by_created_at'), value: 'createdAt' },
-      { label: t('sort_by_updated_at'), value: 'updatedAt' }
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
 
@@ -91,10 +103,13 @@ const SceneListScreen = () => {
     setIsReorderModalVisible(true);
   }, []);
 
-  const handleReorderConfirm = useCallback(async (chapterId: string, newOrder: { id: string, newIndex: number }[]) => {
-    await reorderScenes(chapterId, newOrder);
-    setIsReorderModalVisible(false);
-  }, [reorderScenes]);
+  const handleReorderConfirm = useCallback(
+    async (chapterId: string, newOrder: { id: string; newIndex: number }[]) => {
+      await reorderScenes(chapterId, newOrder);
+      setIsReorderModalVisible(false);
+    },
+    [reorderScenes],
+  );
 
   const styles = StyleSheet.create({
     container: {
@@ -118,10 +133,7 @@ const SceneListScreen = () => {
         headerRight: () => (
           <View style={styles.headerRightContainer}>
             {selectedStory?.type === 'linear' && canEdit && (
-              <TouchableOpacity
-                onPress={handleReorderPress}
-                style={styles.headerButton}
-              >
+              <TouchableOpacity onPress={handleReorderPress} style={styles.headerButton}>
                 <Ionicons name="swap-vertical" size={24} color={colors.text} />
               </TouchableOpacity>
             )}
@@ -136,7 +148,16 @@ const SceneListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, handleReorderPress, selectedStory?.type, styles.headerButton, styles.headerRightContainer, canEdit])
+    }, [
+      navigation,
+      colors.text,
+      t,
+      handleReorderPress,
+      selectedStory?.type,
+      styles.headerButton,
+      styles.headerRightContainer,
+      canEdit,
+    ]),
   );
 
   if (loading && scenes.length === 0) {

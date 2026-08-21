@@ -1,24 +1,38 @@
-import { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
+import { StorySchemaEntityType } from '@keres/shared';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
+import {
+  CommonActions,
+  DrawerActions,
+  getFocusedRouteNameFromRoute,
+  NavigationState,
+  NavigatorScreenParams,
+  StackActions,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
+import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
 } from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import { screenHelpPage } from '../help/contextualHelp';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
+import ChapterDetailScreen, {
+  ChapterDetailScreenParamList,
+} from '../screens/chapters/ChapterDetailScreen';
 import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
 import ChapterListScreen from '../screens/chapters/ChapterListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
-import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
+import CharacterDetailScreen, {
+  CharacterDetailScreenParamList,
+} from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
@@ -26,8 +40,6 @@ import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
-import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
-import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
@@ -37,12 +49,15 @@ import ItemJourneyListScreen from '../screens/itemJourneys/ItemJourneyListScreen
 import ItemDetailScreen from '../screens/items/ItemDetailScreen';
 import ItemFormScreen from '../screens/items/ItemFormScreen';
 import ItemListScreen from '../screens/items/ItemListScreen';
-import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
+import LocationDetailsScreen, {
+  LocationDetailScreenParamList,
+} from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
+import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
-import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
+import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
@@ -57,32 +72,31 @@ import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
-import WorldRuleDetailScreen, { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
+import WorldRuleDetailScreen, {
+  WorldRuleDetailScreenParamList,
+} from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
+import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
+import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
+import StatsStackNavigator, { StatsStackParamList } from './StatsStack';
+import StoryDevicesStackNavigator, { StoryDevicesStackParamList } from './StoryDevicesStack';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
   GlobalSearch: undefined;
-  // Tipado com os parâmetros da pilha interna porque o mapa de relações abre um personagem
-  // específico a partir de outra aba do drawer.
-  CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
-  // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
-  // abre um local específico a partir de outras abas do drawer (ex: a partir de um Personagem).
-  LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   // Todas as pilhas abaixo aceitam `{ screen, params }` opcional pela mesma razão: cada
   // `Drawer.Screen` tem seu próprio `drawerItemPress` (ver mais abaixo) que navega
   // explicitamente para a tela de lista da pilha ao ser tocado no menu, em vez de deixar o
   // Drawer restaurar o estado aninhado como estava.
+  CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
+  LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   ChaptersStack: NavigatorScreenParams<ChapterStackParamList> | undefined;
-  // Tipado com os parâmetros da pilha interna porque o mapa da história abre uma cena
-  // específica a partir de outra aba do drawer.
   ScenesStack: NavigatorScreenParams<SceneStackParamList> | undefined;
   ChoicesStack: NavigatorScreenParams<ChoiceStackParamList> | undefined;
-  // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
-  // abre um item específico a partir de outras abas do drawer (ex: a partir de um Local).
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
   ItemJourneysStack: NavigatorScreenParams<ItemJourneyStackParamList> | undefined;
   TagsStack: NavigatorScreenParams<TagsStackParamList> | undefined;
@@ -98,9 +112,35 @@ export type MainSystemDrawerParamList = {
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
   Suggestions: undefined;
   StorySelection: undefined;
+  StatsDrawer: NavigatorScreenParams<StatsStackParamList>;
+  StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
+  HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
+
+const mainSystemStackRootScreens = new Set([
+  'Characters',
+  'Chapters',
+  'Scenes',
+  'Choices',
+  'Items',
+  'ItemJourneys',
+  'Locations',
+  'CharacterRelations',
+  'GalleryList',
+  'Tags',
+  'Notes',
+  'WorldRules',
+  'OperationLog',
+  'CommentsList',
+  'StorySchemaList',
+  // As raízes dos stacks que o drawer abre direto: sem elas o header desenha uma seta de
+  // voltar em cima da própria lista, que é justamente o lugar de onde não se volta.
+  'StatList',
+  'HelpIndex',
+  'DeviceIndex',
+]);
 
 //#region Character
 
@@ -181,7 +221,7 @@ export type ChoiceStackParamList = {
   Choices: undefined;
   ChoiceDetail: ChoiceDetailScreenParamList['ChoiceDetail'];
   ChoiceForm: { choiceId?: string };
-  ChoiceView: undefined
+  ChoiceView: undefined;
 };
 
 const ChoiceStackNavigator = () => {
@@ -221,7 +261,6 @@ const ItemStackNavigator = () => {
   );
 };
 //#endregion
-
 //#region ItemJourney
 const ItemJourneyStack = createNativeStackNavigator<ItemJourneyStackParamList>();
 
@@ -246,7 +285,6 @@ const ItemJourneyStackNavigator = () => {
   );
 };
 //#endregion
-
 //#region Location
 
 const LocationStack = createNativeStackNavigator<LocationStackParamList>();
@@ -283,8 +321,14 @@ const CharacterRelationsStackNavigator = () => {
   useBackButtonHandler();
   return (
     <CharacterRelationsStack.Navigator screenOptions={{ headerShown: false }}>
-      <CharacterRelationsStack.Screen name="CharacterRelations" component={CharacterRelationsScreen} />
-      <CharacterRelationsStack.Screen name="CharacterRelationView" component={CharacterRelationGraphScreen} />
+      <CharacterRelationsStack.Screen
+        name="CharacterRelations"
+        component={CharacterRelationsScreen}
+      />
+      <CharacterRelationsStack.Screen
+        name="CharacterRelationView"
+        component={CharacterRelationGraphScreen}
+      />
     </CharacterRelationsStack.Navigator>
   );
 };
@@ -432,7 +476,10 @@ type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerPa
 const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
   const { colors } = useTheme();
   return (
-    <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={{ marginLeft: 15 }}>
+    <TouchableOpacity
+      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+      style={{ marginLeft: 15 }}
+    >
       <Ionicons name="menu" size={30} color={colors.text} />
     </TouchableOpacity>
   );
@@ -442,335 +489,471 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
+  const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
+  const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
     <>
-    <Drawer.Navigator
-      defaultStatus={isWide ? 'open' : 'closed'}
-      backBehavior="history"
-      drawerContent={(props) => (
-        <ResizableDrawerContent
-          {...props}
-          drawerWidth={drawerWidth}
-          maximumWidth={maximumWidth}
-          onDrawerWidthChange={setDrawerWidth}
-          resizable={!isCompact}
-        />
-      )}
-      screenOptions={({ navigation }) => ({
-        headerShown: true,
-        headerStatusBarHeight: 0,
-        headerStyle: {
-          backgroundColor: colors.surface,
-        },
-        headerTintColor: colors.text,
-        headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
-        drawerActiveTintColor: colors.primary,
-        drawerInactiveTintColor: colors.text,
-        drawerType: isWide ? 'permanent' : 'front',
-        swipeEnabled: !isWide,
-        drawerStyle: {
-          backgroundColor: colors.surface,
-          minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
-          width: isCompact ? compactDrawerWidth : drawerWidth,
-        },
-      })}
-    >
-      <Drawer.Screen
-        name="MainDashboard"
-        component={MainDashboardScreen}
-        options={{
-          title: selectedStory?.title || t('dashboard_title'),
-          // A história atual precisa se destacar das demais entradas do drawer, que são só
-          // navegação - sem isto, o nome da história some no meio da lista como se fosse mais
-          // um item igual a "Personagens" ou "Locais".
-          drawerLabel: ({ focused }) => (
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: 'bold',
-                color: focused ? colors.primary : colors.text,
-              }}
-              numberOfLines={1}
-            >
-              {selectedStory?.title || t('dashboard_title')}
-            </Text>
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="GlobalSearch"
-        component={GlobalSearchScreen}
-        options={{
-          title: t('global_search_title'),
-          drawerLabel: t('global_search_title'),
-        }}
-      />
-      <Drawer.Screen
-        name="CharactersStack"
-        component={CharacterStackNavigator}
-        options={{
-          title: t('characters_title'),
-          drawerLabel: t('characters_title'),
-        }}
-        listeners={({ navigation }) => ({
-          // O comportamento padrão do Drawer, ao tocar num item, restaura o estado
-          // aninhado exatamente como ele estava (é assim que abas preservam navegação -
-          // é intencional na maioria dos apps). Aqui a gente quer o oposto: tocar "Personagens"
-          // sempre deve levar à lista, não a onde a pilha ficou. `preventDefault` bloqueia essa
-          // restauração, e navegar direto para a rota "Characters" (a raiz da pilha) faz o
-          // stack navigator descartar tudo acima dela - sem depender de um evento global
-          // separado torcendo para a ListScreen estar montada a tempo de escutá-lo.
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('CharactersStack', { screen: 'Characters' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="LocationsStack"
-        component={LocationStackNavigator}
-        options={{
-          title: t('locations_title'),
-          drawerLabel: t('locations_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('LocationsStack', { screen: 'Locations' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="ChaptersStack"
-        component={ChapterStackNavigator}
-        options={{
-          title: t('chapters_title'),
-          drawerLabel: t('chapters_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('ChaptersStack', { screen: 'Chapters' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="ChoicesStack"
-        component={ChoiceStackNavigator}
-        options={{
-          title: t('choices_title'),
-          drawerLabel: t('choices_title'),
-          drawerItemStyle: {
-            height: selectedStory?.type === 'linear' ? 0 : undefined, // Hide if linear
-            overflow: 'hidden', // Ensure content is hidden
-          },
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('ChoicesStack', { screen: 'Choices' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="ItemsStack"
-        component={ItemStackNavigator}
-        options={{
-          title: t('items_title'),
-          drawerLabel: t('items_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('ItemsStack', { screen: 'Items' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="ItemJourneysStack"
-        component={ItemJourneyStackNavigator}
-        options={{
-          title: t('item_journeys_title'),
-          drawerLabel: t('item_journeys_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('ItemJourneysStack', { screen: 'ItemJourneys' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="ScenesStack"
-        component={SceneStackNavigator}
-        options={{
-          title: t('scenes_title'),
-          drawerLabel: t('scenes_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('ScenesStack', { screen: 'Scenes' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="TagsStack"
-        component={TagStackNavigator}
-        options={{
-          title: t('tags_title'),
-          drawerLabel: t('tags_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('TagsStack', { screen: 'Tags' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="WorldRulesStack"
-        component={WorldRuleStackNavigator}
-        options={{
-          title: t('world_rules_title'),
-          drawerLabel: t('world_rules_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('WorldRulesStack', { screen: 'WorldRules' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="NotesStack"
-        component={NoteStackNavigator}
-        options={{
-          title: t('notes_title'),
-          drawerLabel: t('notes_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('NotesStack', { screen: 'Notes' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="GalleryStack"
-        component={GalleryStackNavigator}
-        options={{
-          title: t('gallery_title'),
-          drawerLabel: t('gallery_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('GalleryStack', { screen: 'GalleryList' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="CharacterRelationsStack"
-        component={CharacterRelationsStackNavigator}
-        options={{
-          title: t('character_relations_title'),
-          drawerLabel: t('character_relations_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('CharacterRelationsStack', { screen: 'CharacterRelations' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="StorySchemaStack"
-        component={StorySchemaStackNavigator}
-        options={{
-          title: t('story_schema_management_title'),
-          drawerLabel: t('story_schema_management_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="Suggestions"
-        component={SuggestionsScreen}
-        options={{
-          title: t('standard_suggestions_title'),
-          drawerLabel: t('standard_suggestions_title'),
-        }}
-      />
-      <Drawer.Screen
-        name="OperationLogStack"
-        component={OperationLogStackNavigator}
-        options={{
-          title: t('operation_logs_title'),
-          drawerLabel: t('operation_logs_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="CommentsStack"
-        component={CommentsStackNavigator}
-        options={{
-          title: t('comments_title'),
-          drawerLabel: t('comments_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('CommentsStack', { screen: 'CommentsList' });
-          },
-        })}
-      />
-      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
-      <Drawer.Screen name="StoryAnalysis" component={StoryAnalysisScreen} options={{ title: t('story_analysis_title') }} />
-      <Drawer.Screen
-        name="StorySelection"
-        component={() => <View />} // A dummy component, as it won't be displayed
-        options={{
-          title: t('story_selection_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            const rootStackNavigation = navigation.getParent();
-            if (rootStackNavigation) {
-              rootStackNavigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: 'StorySelection' }],
-                })
-              );
+      <Drawer.Navigator
+        defaultStatus={isWide ? 'open' : 'closed'}
+        backBehavior="history"
+        drawerContent={(props) => (
+          <ResizableDrawerContent
+            {...props}
+            drawerWidth={drawerWidth}
+            maximumWidth={maximumWidth}
+            onDrawerWidthChange={setDrawerWidth}
+            resizable={!isCompact}
+          />
+        )}
+        screenOptions={({ navigation, route }) => {
+          const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
+          const helpPageId = screenHelpPage[activeRouteName];
+          const isHelpPage = activeRouteName === 'HelpPage';
+          const nestedState = (route as typeof route & { state?: NavigationState }).state;
+          const nestedStackKey = nestedState?.key;
+          const isNestedDestination =
+            activeRouteName !== route.name && !mainSystemStackRootScreens.has(activeRouteName);
+          const showNestedBackButton =
+            isNestedDestination ||
+            (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
+          const goBackInNestedStack = () => {
+            // Resolve the nested navigator lazily: the route object received while the header
+            // mounts can hold a partial state, while Drawer navigation always has the live one.
+            const liveDrawerRoute = navigation
+              .getState()
+              .routes.find((drawerRoute) => drawerRoute.key === route.key) as
+              | (typeof route & { state?: NavigationState })
+              | undefined;
+            const target = liveDrawerRoute?.state?.key ?? nestedStackKey;
+
+            if (target) {
+              navigation.dispatch({ ...StackActions.pop(), target });
             } else {
-              console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: 'StorySelection' }],
-                })
-              );
+              navigation.dispatch(StackActions.pop());
             }
-          },
-        })}
-      />
-    </Drawer.Navigator>
-    <GalleryMediaViewerOverlay />
+          };
+
+          return {
+            headerShown: true,
+            headerStatusBarHeight: 0,
+            headerStyle: {
+              backgroundColor: colors.surface,
+            },
+            headerTintColor: colors.text,
+            headerTitleContainerStyle:
+              !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
+                ? { marginLeft: 15 }
+                : undefined,
+            // As telas aninhadas usam headerRight para ações como criar e editar. O atalho de
+            // ajuda fica no lado esquerdo para continuar visível quando essas ações substituem
+            // o lado direito do header do drawer.
+            headerLeft: isHelpPage
+              ? () => (
+                  <NavigationBackButton
+                    onPress={
+                      nestedBackAction ??
+                      (() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }))
+                    }
+                  />
+                )
+              : showNestedBackButton || !isWide || (showContextualHelp && helpPageId)
+                ? () => (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {showNestedBackButton ? (
+                        <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
+                      ) : !isWide ? (
+                        <DrawerToggleButton
+                          navigation={navigation as MainDashboardScreenNavigationProp}
+                        />
+                      ) : null}
+                      {showContextualHelp && helpPageId ? (
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('HelpDrawer', {
+                              screen: 'HelpPage',
+                              params: { pageId: helpPageId },
+                            })
+                          }
+                          style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}
+                          accessibilityLabel={t('help_title')}
+                        >
+                          <Ionicons name="help-circle-outline" size={26} color={colors.text} />
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  )
+                : () => null,
+            headerRight: undefined,
+            drawerActiveTintColor: colors.primary,
+            drawerInactiveTintColor: colors.text,
+            drawerType: isWide ? 'permanent' : 'front',
+            swipeEnabled: !isWide,
+            drawerStyle: {
+              backgroundColor: colors.surface,
+              minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+              width: isCompact ? compactDrawerWidth : drawerWidth,
+            },
+          };
+        }}
+      >
+        <Drawer.Screen
+          name="MainDashboard"
+          component={MainDashboardScreen}
+          options={{
+            title: selectedStory?.title || t('dashboard_title'),
+            // A história atual precisa se destacar das demais entradas do drawer, que são só
+            // navegação - sem isto, o nome da história some no meio da lista como se fosse mais
+            // um item igual a "Personagens" ou "Locais".
+            drawerLabel: ({ focused }) => (
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: 'bold',
+                  color: focused ? colors.primary : colors.text,
+                }}
+                numberOfLines={1}
+              >
+                {selectedStory?.title || t('dashboard_title')}
+              </Text>
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="GlobalSearch"
+          component={GlobalSearchScreen}
+          options={{
+            title: t('global_search_title'),
+            drawerLabel: t('global_search_title'),
+          }}
+        />
+        <Drawer.Screen
+          name="CharactersStack"
+          component={CharacterStackNavigator}
+          options={{
+            title: t('characters_title'),
+            drawerLabel: t('characters_title'),
+          }}
+          listeners={({ navigation }) => ({
+            // O comportamento padrão do Drawer, ao tocar num item, restaura o estado
+            // aninhado exatamente como ele estava (é assim que abas preservam navegação -
+            // é intencional na maioria dos apps). Aqui a gente quer o oposto: tocar "Personagens"
+            // sempre deve levar à lista, não a onde a pilha ficou. `preventDefault` bloqueia essa
+            // restauração, e navegar direto para a rota "Characters" (a raiz da pilha) faz o
+            // stack navigator descartar tudo acima dela - sem depender de um evento global
+            // separado torcendo para a ListScreen estar montada a tempo de escutá-lo.
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('CharactersStack', { screen: 'Characters' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="ChaptersStack"
+          component={ChapterStackNavigator}
+          options={{
+            title: t('chapters_title'),
+            drawerLabel: t('chapters_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('ChaptersStack', { screen: 'Chapters' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="ScenesStack"
+          component={SceneStackNavigator}
+          options={{
+            title: t('scenes_title'),
+            drawerLabel: t('scenes_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('ScenesStack', { screen: 'Scenes' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="ChoicesStack"
+          component={ChoiceStackNavigator}
+          options={{
+            title: t('choices_title'),
+            drawerLabel: t('choices_title'),
+            drawerItemStyle: {
+              height: selectedStory?.type === 'linear' ? 0 : undefined, // Hide if linear
+              overflow: 'hidden', // Ensure content is hidden
+            },
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('ChoicesStack', { screen: 'Choices' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="LocationsStack"
+          component={LocationStackNavigator}
+          options={{
+            title: t('locations_title'),
+            drawerLabel: t('locations_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('LocationsStack', { screen: 'Locations' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="ItemsStack"
+          component={ItemStackNavigator}
+          options={{
+            title: t('items_title'),
+            drawerLabel: t('items_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('ItemsStack', { screen: 'Items' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="ItemJourneysStack"
+          component={ItemJourneyStackNavigator}
+          options={{
+            title: t('item_journeys_title'),
+            drawerLabel: t('item_journeys_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('ItemJourneysStack', { screen: 'ItemJourneys' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="TagsStack"
+          component={TagStackNavigator}
+          options={{
+            title: t('tags_title'),
+            drawerLabel: t('tags_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('TagsStack', { screen: 'Tags' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="WorldRulesStack"
+          component={WorldRuleStackNavigator}
+          options={{
+            title: t('world_rules_title'),
+            drawerLabel: t('world_rules_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('WorldRulesStack', { screen: 'WorldRules' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="NotesStack"
+          component={NoteStackNavigator}
+          options={{
+            title: t('notes_title'),
+            drawerLabel: t('notes_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('NotesStack', { screen: 'Notes' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="GalleryStack"
+          component={GalleryStackNavigator}
+          options={{
+            title: t('gallery_title'),
+            drawerLabel: t('gallery_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('GalleryStack', { screen: 'GalleryList' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="CharacterRelationsStack"
+          component={CharacterRelationsStackNavigator}
+          options={{
+            title: t('character_relations_title'),
+            drawerLabel: t('character_relations_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('CharacterRelationsStack', { screen: 'CharacterRelations' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="StorySchemaStack"
+          component={StorySchemaStackNavigator}
+          options={{
+            title: t('story_schema_management_title'),
+            drawerLabel: t('story_schema_management_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="Suggestions"
+          component={SuggestionsScreen}
+          options={{
+            title: t('standard_suggestions_title'),
+            drawerLabel: t('standard_suggestions_title'),
+          }}
+        />
+        <Drawer.Screen
+          name="StatsDrawer"
+          component={StatsStackNavigator}
+          options={{
+            title: t('stats_title'),
+            drawerLabel: t('stats_title'),
+            // Mesmo idioma de ChoicesStack em história linear: a tela continua registrada, só
+            // o item do menu some quando o sistema está desligado.
+            drawerItemStyle: {
+              height: selectedStory?.statSystem ? undefined : 0,
+              overflow: 'hidden',
+            },
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('StatsDrawer', { screen: 'StatList' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="CommentsStack"
+          component={CommentsStackNavigator}
+          options={{
+            title: t('comments_title'),
+            drawerLabel: t('comments_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('CommentsStack', { screen: 'CommentsList' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="OperationLogStack"
+          component={OperationLogStackNavigator}
+          options={{
+            title: t('operation_logs_title'),
+            drawerLabel: t('operation_logs_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="StoryAnalysis"
+          component={StoryAnalysisScreen}
+          options={{ title: t('story_analysis_title') }}
+        />
+        <Drawer.Screen
+          name="StorySettings"
+          component={StorySettingsScreen}
+          options={{ title: t('story_settings_title') }}
+        />
+        <Drawer.Screen
+          name="StoryDevicesDrawer"
+          component={StoryDevicesStackNavigator}
+          options={{
+            title: t('story_devices_title'),
+            drawerLabel: t('story_devices_title'),
+            // A tela continua registrada quando o ajuste está desligado para que uma navegação
+            // direta ou um link de ajuda não quebre; só o item do menu some.
+            drawerItemStyle: {
+              height: suggestLiteraryDevices ? undefined : 0,
+              overflow: 'hidden',
+            },
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('StoryDevicesDrawer', { screen: 'DeviceIndex' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="HelpDrawer"
+          component={HelpStackNavigator}
+          options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="StorySelection"
+          component={() => <View />} // A dummy component, as it won't be displayed
+          options={{
+            title: t('story_selection_title'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              const rootStackNavigation = navigation.getParent();
+              if (rootStackNavigation) {
+                rootStackNavigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'StorySelection' }],
+                  }),
+                );
+              } else {
+                console.error(
+                  'Could not find root stack navigation to dispatch reset action. This is unexpected.',
+                );
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'StorySelection' }],
+                  }),
+                );
+              }
+            },
+          })}
+        />
+      </Drawer.Navigator>
+      <GalleryMediaViewerOverlay />
     </>
   );
 };

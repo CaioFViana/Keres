@@ -52,9 +52,8 @@ export function useFormScrollBottomPadding(margin = 24): number {
     return () => subscription.remove();
   }, []);
 
-  const bottomAllowance = Platform.OS === 'android'
-    ? Math.max(insets.bottom, measuredAndroidNavBar)
-    : insets.bottom;
+  const bottomAllowance =
+    Platform.OS === 'android' ? Math.max(insets.bottom, measuredAndroidNavBar) : insets.bottom;
 
   return bottomAllowance + margin;
 }

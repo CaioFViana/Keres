@@ -1,0 +1,1 @@
+ALTER TABLE `client_settings` ADD `show_contextual_help` integer DEFAULT true NOT NULL;

@@ -2,15 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
-
 
 interface ColorPickerInputProps {
   onSelectColor: (color: string) => void;
   currentColor: string;
   placeholder?: string;
+  /** Só posicionamento (margem, largura). NÃO passe `commonInputStyles.input` aqui: este
+   *  componente já desenha a moldura do campo, e uma segunda borda/altura por fora desalinha
+   *  o conteúdo interno. */
   style?: any;
 }
 
@@ -22,7 +23,6 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { colors } = useTheme();
-  const commonInputStyles = getCommonInputStyles(colors);
 
   const handleSelectColor = (color: string) => {
     onSelectColor(color);
@@ -30,24 +30,30 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
   };
 
   const styles = StyleSheet.create({
+    // Uma borda só. `commonInputStyles.input` NÃO entra aqui: ele já traz borda + `height: 50`,
+    // e somado à borda deste wrapper desenhava duas molduras encaixadas - e mais alto do que
+    // deveria, porque `customComponentInput` ainda acrescenta `paddingBottom: 50`.
+    // `marginBottom: 0` como `commonInputStyles.input`: o ritmo vertical dos forms vem do
+    // `marginTop` do rótulo seguinte, não do campo.
     container: {
-      marginBottom: 10,
+      marginBottom: 0,
+      width: '100%',
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 50
+      height: 50,
+      overflow: 'hidden',
     },
     colorSwatchButton: {
       width: 50,
       height: '100%',
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: 5,
       backgroundColor: currentColor || colors.border,
     },
     colorSwatchInner: {
@@ -59,9 +65,10 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
     },
     textInput: {
       flex: 1,
-      color: colors.text, // Ensure text is visible
-      paddingHorizontal: 10, // Apply padding here instead of inputWrapper
-      // Remove border, background, and padding from here, as inputWrapper handles it
+      height: '100%',
+      color: colors.text,
+      fontSize: 16,
+      paddingHorizontal: 10,
       borderWidth: 0,
       backgroundColor: 'transparent',
     },
@@ -74,14 +81,18 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
   });
 
   return (
-    <View style={[styles.container, style, commonInputStyles.input, commonInputStyles.customComponentInput]}>
+    <View style={[styles.container, style]}>
       <View style={[styles.inputWrapper]}>
         <Pressable style={styles.colorSwatchButton} onPress={() => setModalVisible(true)}>
-            {/* Display color palette icon */}
-            <Ionicons name={currentColor ? "color-palette" : "color-palette-outline"} size={20} color={colors.text} />
+          {/* Display color palette icon */}
+          <Ionicons
+            name={currentColor ? 'color-palette' : 'color-palette-outline'}
+            size={20}
+            color={colors.text}
+          />
         </Pressable>
         <TextInput
-          style={[commonInputStyles.input, styles.textInput]}
+          style={styles.textInput}
           value={currentColor}
           placeholder={placeholder}
           placeholderTextColor={colors.textSecondary}

@@ -2,7 +2,9 @@ import { eq } from 'drizzle-orm';
 import { AppDrizzleClient, ClientSettingsInsert, ClientSettingsSelect, schema } from '../db';
 import { createULID } from '../utils/entityUtils';
 
-export async function getClientSettings(db: AppDrizzleClient): Promise<ClientSettingsSelect | null> {
+export async function getClientSettings(
+  db: AppDrizzleClient,
+): Promise<ClientSettingsSelect | null> {
   if (!db) {
     throw new Error('getClientSettings: Drizzle client (db) is undefined.');
   }
@@ -10,7 +12,13 @@ export async function getClientSettings(db: AppDrizzleClient): Promise<ClientSet
   return settings || null;
 }
 
-export async function createClientSettings(db: AppDrizzleClient, initialSettings: Omit<ClientSettingsInsert, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>): Promise<ClientSettingsSelect> {
+export async function createClientSettings(
+  db: AppDrizzleClient,
+  initialSettings: Omit<
+    ClientSettingsInsert,
+    'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+  >,
+): Promise<ClientSettingsSelect> {
   if (!db) {
     throw new Error('createClientSettings: Drizzle client (db) is undefined.');
   }
@@ -27,7 +35,10 @@ export async function createClientSettings(db: AppDrizzleClient, initialSettings
   return created;
 }
 
-export async function updateClientSettings(db: AppDrizzleClient, newValues: Partial<ClientSettingsInsert>): Promise<ClientSettingsSelect> {
+export async function updateClientSettings(
+  db: AppDrizzleClient,
+  newValues: Partial<ClientSettingsInsert>,
+): Promise<ClientSettingsSelect> {
   if (!db) {
     throw new Error('updateClientSettings: Drizzle client (db) is undefined.');
   }
@@ -41,7 +52,8 @@ export async function updateClientSettings(db: AppDrizzleClient, newValues: Part
     updatedAt: new Date(),
     version: currentSettings.version + 1,
   };
-  const [updated] = await db.update(schema.clientSettings)
+  const [updated] = await db
+    .update(schema.clientSettings)
     .set(updatedSettings)
     .where(eq(schema.clientSettings.id, currentSettings.id))
     .returning();

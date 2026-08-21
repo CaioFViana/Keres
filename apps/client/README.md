@@ -130,5 +130,5 @@ Não há build iOS de release automatizado no momento: ele exige identificador d
 
 - [Fluxo de telas](../../docs/screen_flow.md)
 - [Estrutura do projeto](../../docs/file_structure.md)
-- [Estratégia de resolução de conflitos](../../docs/conflict_resolution_client_strategy.md)
+- [Sincronização e resolução de conflitos](../../docs/conflict_resolution_client_strategy.md)
 - [Mecânicas de escolhas](../../docs/choice_mechanics.md)

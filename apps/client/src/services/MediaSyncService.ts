@@ -45,7 +45,11 @@ export class MediaSyncService {
    * pendente e é tentada no ciclo seguinte. Um vídeo grande falhando não pode derrubar a
    * sincronização de texto da história inteira.
    */
-  async syncStoryMedia(client: KeresAxiosInstance, server: ServerSelect, storyId: string): Promise<MediaSyncSummary> {
+  async syncStoryMedia(
+    client: KeresAxiosInstance,
+    server: ServerSelect,
+    storyId: string,
+  ): Promise<MediaSyncSummary> {
     const summary: MediaSyncSummary = { uploaded: 0, downloaded: 0, failed: 0, offline: false };
 
     try {
@@ -62,7 +66,11 @@ export class MediaSyncService {
     return summary;
   }
 
-  private async uploadPending(client: KeresAxiosInstance, storyId: string, summary: MediaSyncSummary): Promise<void> {
+  private async uploadPending(
+    client: KeresAxiosInstance,
+    storyId: string,
+    summary: MediaSyncSummary,
+  ): Promise<void> {
     const pending = await this.galleryService.getPendingUploads(storyId);
     if (pending.length === 0) {
       return;
@@ -70,7 +78,11 @@ export class MediaSyncService {
 
     // Um blob que o servidor já tem não precisa subir - seja porque um envio anterior
     // chegou e a resposta se perdeu, seja porque outra pessoa subiu o mesmo arquivo.
-    const status = await this.fetchBlobStatus(client, storyId, pending.map((media) => media.hash));
+    const status = await this.fetchBlobStatus(
+      client,
+      storyId,
+      pending.map((media) => media.hash),
+    );
     const alreadyPresent = new Set(status.present);
 
     const toUpload: GallerySelect[] = [];
@@ -86,7 +98,9 @@ export class MediaSyncService {
       if (!mediaFileService.exists(media.localPath)) {
         // O registro existe mas o arquivo sumiu deste aparelho (limpeza do sistema,
         // reinstalação). Não há o que subir; vira um caso de download.
-        console.warn(`MediaSyncService: local file missing for gallery ${media.id}; will try to download instead.`);
+        console.warn(
+          `MediaSyncService: local file missing for gallery ${media.id}; will try to download instead.`,
+        );
         await this.galleryService.setLocalFileState(media.id, {
           localPath: null,
           uploadState: 'uploaded',
@@ -101,7 +115,11 @@ export class MediaSyncService {
           // Sem equivalente web para o "arquivo" `{uri, name, type}` do React Native -
           // FormData na web só aceita um Blob de verdade.
           const bytes = await mediaFileService.readBytes(media.localPath as string);
-          form.append('file', new Blob([bytes as BlobPart], { type: media.mimeType }), media.fileName);
+          form.append(
+            'file',
+            new Blob([bytes as BlobPart], { type: media.mimeType }),
+            media.fileName,
+          );
         } else {
           // O React Native aceita este formato de "arquivo" em FormData; é como ele expõe
           // um arquivo local para multipart sem carregar tudo em memória.
@@ -130,7 +148,12 @@ export class MediaSyncService {
     }
   }
 
-  private async downloadMissing(client: KeresAxiosInstance, server: ServerSelect, storyId: string, summary: MediaSyncSummary): Promise<void> {
+  private async downloadMissing(
+    client: KeresAxiosInstance,
+    server: ServerSelect,
+    storyId: string,
+    summary: MediaSyncSummary,
+  ): Promise<void> {
     const pending = await this.galleryService.getPendingDownloads(storyId);
     if (pending.length === 0) {
       return;
@@ -166,7 +189,10 @@ export class MediaSyncService {
             responseType: 'arraybuffer',
           });
           downloadedUri = await mediaFileService.writeDownloaded(
-            storyId, media.hash, media.mimeType, new Uint8Array(response.data)
+            storyId,
+            media.hash,
+            media.mimeType,
+            new Uint8Array(response.data),
           );
         } else {
           // Download direto para disco em vez de passar pelo axios: trazer um vídeo para a
@@ -175,7 +201,7 @@ export class MediaSyncService {
           const downloaded = await File.downloadFileAsync(
             `${baseUrl}/media/${storyId}/blobs/${media.hash}`,
             destination,
-            { headers: this.authHeaders(server), idempotent: true }
+            { headers: this.authHeaders(server), idempotent: true },
           );
           downloadedUri = downloaded.uri;
         }
@@ -187,7 +213,10 @@ export class MediaSyncService {
         });
         summary.downloaded += 1;
       } catch (error) {
-        console.log(`MediaSyncService: failed to download media ${media.id} (${media.hash}).`, error);
+        console.log(
+          `MediaSyncService: failed to download media ${media.id} (${media.hash}).`,
+          error,
+        );
         await this.galleryService.setLocalFileState(media.id, { downloadState: 'failed' });
         summary.failed += 1;
       }
@@ -201,7 +230,11 @@ export class MediaSyncService {
    * conteúdo baixado de novo (outra entidade vinculada, um retry) reaproveita o arquivo já
    * extraído em vez de gerar de novo.
    */
-  private async ensureThumbnail(storyId: string, media: GallerySelect, videoUri: string): Promise<string | null | undefined> {
+  private async ensureThumbnail(
+    storyId: string,
+    media: GallerySelect,
+    videoUri: string,
+  ): Promise<string | null | undefined> {
     if (media.mediaType !== 'video') {
       return undefined;
     }
@@ -212,13 +245,20 @@ export class MediaSyncService {
     return (await mediaFileService.generateVideoThumbnail(storyId, media.hash, videoUri)) ?? null;
   }
 
-  private async fetchBlobStatus(client: KeresAxiosInstance, storyId: string, hashes: string[]): Promise<MediaBlobStatusResponseType> {
+  private async fetchBlobStatus(
+    client: KeresAxiosInstance,
+    storyId: string,
+    hashes: string[],
+  ): Promise<MediaBlobStatusResponseType> {
     if (hashes.length === 0) {
       return { present: [], missing: [] };
     }
     // A rota aceita no máximo 500 hashes por chamada.
     const unique = Array.from(new Set(hashes)).slice(0, 500);
-    const response = await client.post<MediaBlobStatusResponseType>(`/media/${storyId}/blobs/status`, { hashes: unique });
+    const response = await client.post<MediaBlobStatusResponseType>(
+      `/media/${storyId}/blobs/status`,
+      { hashes: unique },
+    );
     return response.data;
   }
 

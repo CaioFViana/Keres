@@ -48,9 +48,10 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
   const renderExpandedContent = (n: NoteWithTags) => (
     <View>
       {bodySummary && <Text style={styles.bodyText}>{bodySummary}</Text>}
-      {n.tags && n.tags.length > 0 && ( // Conditionally render TagList
-        <TagList tags={n.tags} />
-      )}
+      {n.tags &&
+        n.tags.length > 0 && ( // Conditionally render TagList
+          <TagList tags={n.tags} />
+        )}
     </View>
   );
 
@@ -66,4 +67,3 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
 };
 
 export default NoteListItem;
-

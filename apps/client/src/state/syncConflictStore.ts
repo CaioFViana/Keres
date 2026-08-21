@@ -4,24 +4,20 @@ import { createSyncConflictService, PendingConflict } from '../services/SyncConf
 
 interface SyncConflictState {
   conflicts: PendingConflict[];
-  /** Índice do conflito aberto na tela de resolução. */
-  activeIndex: number;
+  /** Conflito aberto no drill-in de diff de campos. `null` quando nenhum está aberto. */
+  selectedConflictId: string | null;
   isVisible: boolean;
   isResolving: boolean;
-  /**
-   * Conflitos que o usuário já fechou sem resolver, nesta sessão.
-   *
-   * A tela se abre sozinha quando um conflito aparece - é uma decisão que trava a
-   * sincronização daquela entidade, então deixá-la só num canto esconderia trabalho
-   * parado. Mas reabrir a cada ciclo de 30 segundos algo que a pessoa acabou de fechar
-   * seria hostil, então cada conflito só se impõe uma vez; conflitos novos voltam a abrir.
-   */
-  postponedConflictIds: string[];
   refresh: (db: AppDrizzleClient, storyId?: string) => Promise<void>;
-  open: (index?: number) => void;
+  open: () => void;
   close: () => void;
-  setActiveIndex: (index: number) => void;
-  keepLocal: (db: AppDrizzleClient, conflictId: string, chosenValues?: Record<string, any>) => Promise<void>;
+  selectConflict: (id: string) => void;
+  clearSelection: () => void;
+  keepLocal: (
+    db: AppDrizzleClient,
+    conflictId: string,
+    chosenValues?: Record<string, any>,
+  ) => Promise<void>;
   keepServer: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   dismiss: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   reset: () => void;
@@ -29,46 +25,39 @@ interface SyncConflictState {
 
 export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
   conflicts: [],
-  activeIndex: 0,
+  selectedConflictId: null,
   isVisible: false,
   isResolving: false,
-  postponedConflictIds: [],
 
-  reset: () => set({
-    conflicts: [],
-    activeIndex: 0,
-    isVisible: false,
-    isResolving: false,
-    postponedConflictIds: [],
-  }),
+  reset: () =>
+    set({
+      conflicts: [],
+      selectedConflictId: null,
+      isVisible: false,
+      isResolving: false,
+    }),
 
+  /**
+   * Só recarrega a lista - nunca abre a tela sozinha. Um conflito trava a sincronização
+   * daquela entidade, mas isso não justifica interromper o que o usuário está fazendo agora;
+   * o ponto de entrada (banner no Dashboard) é quem decide quando mostrar isto.
+   */
   refresh: async (db, storyId) => {
     try {
       const conflicts = await createSyncConflictService(db).getPendingConflicts(storyId);
-      set((state) => {
-        const hasUnseenConflict = conflicts.some(conflict => !state.postponedConflictIds.includes(conflict.id));
-        return {
-          conflicts,
-          activeIndex: Math.min(state.activeIndex, Math.max(conflicts.length - 1, 0)),
-          isVisible: conflicts.length === 0 ? false : state.isVisible || hasUnseenConflict,
-        };
-      });
+      set({ conflicts });
     } catch (error) {
       console.log('useSyncConflictStore: failed to load pending conflicts.', error);
     }
   },
 
-  open: (index = 0) => set({ isVisible: true, activeIndex: index }),
+  open: () => set({ isVisible: true }),
 
-  close: () => set((state) => ({
-    isVisible: false,
-    postponedConflictIds: Array.from(new Set([
-      ...state.postponedConflictIds,
-      ...state.conflicts.map(conflict => conflict.id),
-    ])),
-  })),
+  close: () => set({ isVisible: false, selectedConflictId: null }),
 
-  setActiveIndex: (index) => set({ activeIndex: index }),
+  selectConflict: (id) => set({ selectedConflictId: id }),
+
+  clearSelection: () => set({ selectedConflictId: null }),
 
   keepLocal: async (db, conflictId, chosenValues) => {
     set({ isResolving: true });
@@ -77,7 +66,11 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     } catch (error) {
       console.log('useSyncConflictStore: failed to keep local values.', error);
     } finally {
-      set({ isResolving: false });
+      set((state) => ({
+        isResolving: false,
+        selectedConflictId:
+          state.selectedConflictId === conflictId ? null : state.selectedConflictId,
+      }));
       await get().refresh(db);
     }
   },
@@ -89,7 +82,11 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     } catch (error) {
       console.log('useSyncConflictStore: failed to keep server values.', error);
     } finally {
-      set({ isResolving: false });
+      set((state) => ({
+        isResolving: false,
+        selectedConflictId:
+          state.selectedConflictId === conflictId ? null : state.selectedConflictId,
+      }));
       await get().refresh(db);
     }
   },
@@ -100,6 +97,10 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     } catch (error) {
       console.log('useSyncConflictStore: failed to dismiss conflict.', error);
     } finally {
+      set((state) => ({
+        selectedConflictId:
+          state.selectedConflictId === conflictId ? null : state.selectedConflictId,
+      }));
       await get().refresh(db);
     }
   },

@@ -1,4 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, StorySchemaField, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  StorySchemaField,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -46,9 +51,16 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
       return;
     }
 
-    const fieldChanges = update.changes as Partial<StorySchemaField>;
+    const fieldChanges = { ...(update.changes as Partial<StorySchemaField>) };
+    // These values define how existing AttributeValues are interpreted. Match
+    // the API invariant even if an old or tampered operation reaches a client.
+    delete fieldChanges.entityType;
+    delete fieldChanges.key;
+    delete fieldChanges.type;
+    delete fieldChanges.targetEntityType;
 
-    await this.db.update(schema.storySchemaFields)
+    await this.db
+      .update(schema.storySchemaFields)
       .set({
         ...fieldChanges,
         updatedAt: new Date(),
@@ -77,7 +89,8 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
     // StorySchemaFieldService.deleteField): a constraint unique(storyId, entityType, key) local
     // não é filtrada por isDeleted, então sem isto este dispositivo não conseguiria recriar um
     // campo com a mesma chave depois.
-    await this.db.update(schema.storySchemaFields)
+    await this.db
+      .update(schema.storySchemaFields)
       .set({
         key: `${existing.key}__deleted_${createULID()}`,
         isDeleted: true,

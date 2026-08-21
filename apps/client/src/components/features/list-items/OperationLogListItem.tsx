@@ -34,14 +34,15 @@ const getOperationIcon = (operationType: string, color: string, size: number): R
   return <Ionicons name={iconName} size={size} color={color} />;
 };
 
-const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPress }) => { // Destructure onPress
+const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPress }) => {
+  // Destructure onPress
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const { entityName: mainEntityName, loading: mainEntityLoading } = useEntityName(
     log.entityType as OperationLogEntityType,
     log.entityId,
-    log.storyId
+    log.storyId,
   );
 
   const userDisplayName = useUserDisplayName(log.userId, log.storyId); // Use the new hook
@@ -53,30 +54,46 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
   } else if (log.entityType === OperationLogEntityType.TagRelation) {
     // For TagRelation, mainEntityName is now the descriptive string like "TagName related to EntityName (EntityType)"
     if (log.operationType === 'create') {
-      operationDisplayText = t('operation_tag_relation_added', { tagRelationDescription: mainEntityName });
+      operationDisplayText = t('operation_tag_relation_added', {
+        tagRelationDescription: mainEntityName,
+      });
     } else if (log.operationType === 'delete') {
-      operationDisplayText = t('operation_tag_relation_removed', { tagRelationDescription: mainEntityName });
+      operationDisplayText = t('operation_tag_relation_removed', {
+        tagRelationDescription: mainEntityName,
+      });
     } else {
       // Fallback for unexpected operation types on TagRelation
-      operationDisplayText = t('tag_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+      operationDisplayText =
+        t('tag_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
     }
   } else if (log.entityType === OperationLogEntityType.NoteRelation) {
     if (log.operationType === 'create') {
-      operationDisplayText = t('operation_note_relation_added', { noteRelationDescription: mainEntityName });
+      operationDisplayText = t('operation_note_relation_added', {
+        noteRelationDescription: mainEntityName,
+      });
     } else if (log.operationType === 'delete') {
-      operationDisplayText = t('operation_note_relation_removed', { noteRelationDescription: mainEntityName });
+      operationDisplayText = t('operation_note_relation_removed', {
+        noteRelationDescription: mainEntityName,
+      });
     } else {
       // Fallback for unexpected operation types on NoteRelation
-      operationDisplayText = t('note_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+      operationDisplayText =
+        t('note_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
     }
   } else if (log.entityType === OperationLogEntityType.GalleryRelation) {
     if (log.operationType === 'create') {
-      operationDisplayText = t('operation_gallery_relation_added', { galleryRelationDescription: mainEntityName });
+      operationDisplayText = t('operation_gallery_relation_added', {
+        galleryRelationDescription: mainEntityName,
+      });
     } else if (log.operationType === 'delete') {
-      operationDisplayText = t('operation_gallery_relation_removed', { galleryRelationDescription: mainEntityName });
+      operationDisplayText = t('operation_gallery_relation_removed', {
+        galleryRelationDescription: mainEntityName,
+      });
     } else {
       // Fallback for unexpected operation types on GalleryRelation
-      operationDisplayText = t('gallery_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+      operationDisplayText =
+        t('gallery_relation') +
+        `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
     }
   } else {
     // For other entity types, just combine operation and entity name
@@ -126,7 +143,10 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
     },
   });
 
-  const formattedDate = log.createdAt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const formattedDate = log.createdAt.toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 
   return (
     <TouchableOpacity
@@ -136,21 +156,23 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
     >
       <View style={styles.operationTypeContainer}>
         {getOperationIcon(log.operationType, colors.primary, 18)}
-        <Text style={styles.operationTypeText}>
-          {operationDisplayText}
-        </Text>
+        <Text style={styles.operationTypeText}>{operationDisplayText}</Text>
       </View>
       {log.userId && (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-          <Ionicons name="person-circle-outline" size={16} color={colors.textSecondary} style={{ marginRight: 5 }} />
-          <Text style={styles.entityInfo}>
-            {userDisplayName}
-          </Text>
+          <Ionicons
+            name="person-circle-outline"
+            size={16}
+            color={colors.textSecondary}
+            style={{ marginRight: 5 }}
+          />
+          <Text style={styles.entityInfo}>{userDisplayName}</Text>
         </View>
       )}
       <Text style={styles.timestamp}>{formattedDate}</Text>
       <Text style={styles.syncStatus}>
-        {t('sync_status')}: {log.isSynced ? t('synced') : t('pending')} (v{log.serverOperationVersion})
+        {t('sync_status')}: {log.isSynced ? t('synced') : t('pending')} (v
+        {log.serverOperationVersion})
       </Text>
     </TouchableOpacity>
   );

@@ -1,17 +1,17 @@
 // apps/api/src/db/schema/tables/friendships.ts
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { sql } from 'drizzle-orm';
-import { pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { dbEnum, table, text, timestamp, timestampNow, unique } from '../columns';
 import { ulid } from 'ulid';
 import { users } from './users';
 
-export const friendStatusEnum = pgEnum('friend_status', [
+export const friendStatusEnum = dbEnum('friend_status', [
   FriendStatus.PENDING,
   FriendStatus.FRIEND,
   FriendStatus.BLACKLISTED,
 ]);
 
-export const friendships = pgTable(
+export const friendships = table(
   'friendships',
   {
     id: text('id')
@@ -33,13 +33,11 @@ export const friendships = pgTable(
      * unblock themselves.
      */
     blockedById: text('blocked_by_id').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestamp('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
   },
   (table) => ({
     // Unique constraint on senderId and receiverId to ensure only one pending request per direction
     unq: unique('sender_receiver_unq').on(table.senderId, table.receiverId),
-  })
+  }),
 );

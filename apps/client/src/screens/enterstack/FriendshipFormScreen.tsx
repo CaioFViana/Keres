@@ -1,15 +1,15 @@
+import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
-import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ServerSelect } from '../../db/schemas/servers';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
 import { createFriendshipService } from '../../services/FriendshipService';
@@ -19,8 +19,12 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
-type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
+type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
+  FriendshipStackParamList,
+  'FriendshipList'
+>;
 
 /**
  * Add-only: sending a friend request. All status transitions (accept/decline/cancel/unfriend/
@@ -35,6 +39,7 @@ const FriendshipFormScreen = () => {
 
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useDocumentTitle(t('add_new_friendship'));
   const drizzleClient = useDrizzle();
   // Stable references: recreating these every render would change their identity, which sits
   // in the effect/callback dependency arrays below and would otherwise re-trigger them forever.
@@ -69,7 +74,7 @@ const FriendshipFormScreen = () => {
     fetchServers();
   }, [serverService, t]);
 
-  const selectedServer = servers.find(s => s.id === selectedServerId);
+  const selectedServer = servers.find((s) => s.id === selectedServerId);
 
   const handleCheckFriendTag = useCallback(async () => {
     if (!friendTag || friendTag.trim().length < 3) {
@@ -94,7 +99,10 @@ const FriendshipFormScreen = () => {
         setFriendUsername(userDetails.username);
         setResolvedFriendUserId(userDetails.id);
         setFriendFound(true);
-        AppAlert.alert(t('success'), t('user_found_with_username', { username: userDetails.username }));
+        AppAlert.alert(
+          t('success'),
+          t('user_found_with_username', { username: userDetails.username }),
+        );
       } else {
         setFriendFound(false);
         AppAlert.alert(t('error'), t('user_not_found_on_server'));
@@ -117,11 +125,13 @@ const FriendshipFormScreen = () => {
       AppAlert.alert(t('error'), t('all_fields_required'));
       return;
     }
-    if (friendFound === false) { // Prevent saving if friend tag is explicitly not found
+    if (friendFound === false) {
+      // Prevent saving if friend tag is explicitly not found
       AppAlert.alert(t('error'), t('friend_not_found_on_server'));
       return;
     }
-    if (!friendUsername) { // Ensure username is available after check
+    if (!friendUsername) {
+      // Ensure username is available after check
       AppAlert.alert(t('error'), t('please_check_friend_id'));
       return;
     }
@@ -158,8 +168,17 @@ const FriendshipFormScreen = () => {
       console.error('Error saving friendship:', error);
       AppAlert.alert(t('error'), t('failed_to_save_friendship'));
     }
-  }, [currentUserId, resolvedFriendUserId, selectedServerId, selectedServer, friendshipService, navigation, t, friendUsername, friendFound]);
-
+  }, [
+    currentUserId,
+    resolvedFriendUserId,
+    selectedServerId,
+    selectedServer,
+    friendshipService,
+    navigation,
+    t,
+    friendUsername,
+    friendFound,
+  ]);
 
   return (
     <View style={commonContainerStyles.container}>
@@ -207,7 +226,9 @@ const FriendshipFormScreen = () => {
 
       {isCheckingFriend && <ActivityIndicator size="small" color={colors.primary} />}
       {friendFound === true && friendUsername && (
-        <Text style={[styles.friendInfo, { color: colors.primary }]}>{t('user_found')}: {friendUsername}</Text>
+        <Text style={[styles.friendInfo, { color: colors.primary }]}>
+          {t('user_found')}: {friendUsername}
+        </Text>
       )}
       {friendFound === false && (
         <Text style={[styles.friendInfo, { color: colors.error }]}>{t('user_not_found')}</Text>

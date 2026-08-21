@@ -31,10 +31,10 @@ class TokenVault {
 
     let tokens: AuthTokens | null = null;
     if (Platform.OS === 'web') {
-      tokens = await window.keresAuth?.read(serverId) ?? null;
+      tokens = (await window.keresAuth?.read(serverId)) ?? null;
     } else {
       const value = await SecureStore.getItemAsync(keyFor(serverId));
-      tokens = value ? JSON.parse(value) as AuthTokens : null;
+      tokens = value ? (JSON.parse(value) as AuthTokens) : null;
     }
     if (tokens) this.memory.set(serverId, tokens);
     return tokens;

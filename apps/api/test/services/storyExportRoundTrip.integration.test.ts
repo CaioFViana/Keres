@@ -1,0 +1,485 @@
+import { eq } from 'drizzle-orm';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { db } from '../../src/db';
+import {
+  attributeValues,
+  chapters,
+  characterRelations,
+  characterScenes,
+  characters,
+  choiceCheckGroups,
+  choiceChecks,
+  choices,
+  comments,
+  effects,
+  favorites,
+  galleries,
+  galleryRelations,
+  itemJourneys,
+  items,
+  locationRelations,
+  locations,
+  modes,
+  noteRelations,
+  notes,
+  scenes,
+  seeAlsoRelations,
+  statRelations,
+  statStrengths,
+  stats,
+  stories,
+  storySchemaFields,
+  suggestions,
+  tagRelations,
+  tags,
+  users,
+  worldRules,
+} from '../../src/db/schema';
+import { StoryExportImportService } from '../../src/services/StoryExportImportService';
+import { newId } from '../helpers/app';
+import { truncateAll } from '../helpers/database';
+
+/**
+ * O outro arquivo de export/import monta pacotes à mão, e por isso cobre sempre as mesmas
+ * poucas coleções. Aqui o pacote é gerado pelo próprio `exportStory` a partir de uma história
+ * que tem uma linha de cada tabela - inclusive as relações polimórficas, que são justamente
+ * onde o remapeamento de ids tem chance de errar.
+ */
+const service = new StoryExportImportService();
+
+const OWNER = newId();
+const IMPORTER = newId();
+
+const id = {
+  story: '',
+  chapter: '',
+  location: '',
+  otherLocation: '',
+  sceneA: '',
+  sceneB: '',
+  choice: '',
+  group: '',
+  check: '',
+  effect: '',
+  characterA: '',
+  characterB: '',
+  item: '',
+  itemJourney: '',
+  tag: '',
+  tagRelation: '',
+  note: '',
+  noteRelation: '',
+  worldRule: '',
+  suggestion: '',
+  gallery: '',
+  galleryRelation: '',
+  characterRelation: '',
+  locationRelation: '',
+  characterScene: '',
+  seeAlso: '',
+  field: '',
+  attributeValue: '',
+  favorite: '',
+  comment: '',
+  stat: '',
+  secondaryStat: '',
+  defaultTier: '',
+  statTier: '',
+  mode: '',
+  baseValue: '',
+  modeValue: '',
+};
+
+beforeEach(async () => {
+  await truncateAll();
+  for (const key of Object.keys(id) as Array<keyof typeof id>) id[key] = newId();
+  const storyId = id.story;
+
+  await db.insert(users).values([
+    { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+    { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+  ] as never);
+  await db.insert(stories).values({
+    id: storyId,
+    userId: OWNER,
+    title: 'O farol',
+    type: 'branching',
+    favoriteBehavior: 'individual_public',
+    statSystem: true,
+    statNotation: 'letter',
+  } as never);
+
+  await db
+    .insert(chapters)
+    .values({ id: id.chapter, storyId, name: 'Primeira noite', index: 1 } as never);
+  await db.insert(locations).values([
+    { id: id.location, storyId, name: 'O farol' },
+    { id: id.otherLocation, storyId, name: 'A enseada' },
+  ] as never);
+  await db.insert(locationRelations).values({
+    id: id.locationRelation,
+    storyId,
+    locationAId: id.location,
+    locationBId: id.otherLocation,
+    relationType: 'contains',
+  } as never);
+  await db.insert(scenes).values([
+    {
+      id: id.sceneA,
+      storyId,
+      chapterId: id.chapter,
+      locationId: id.location,
+      name: 'A luz apaga',
+      index: 1,
+      isStart: true,
+    },
+    {
+      id: id.sceneB,
+      storyId,
+      chapterId: id.chapter,
+      locationId: id.otherLocation,
+      name: 'A maré sobe',
+      index: 2,
+    },
+  ] as never);
+  await db.insert(choices).values({
+    id: id.choice,
+    storyId,
+    sceneId: id.sceneA,
+    nextSceneId: id.sceneB,
+    text: 'Descer até a enseada',
+  } as never);
+  await db
+    .insert(choiceCheckGroups)
+    .values({ id: id.group, storyId, choiceId: id.choice, combinator: 'AND' } as never);
+  await db.insert(characters).values([
+    { id: id.characterA, storyId, name: 'Ilda' },
+    { id: id.characterB, storyId, name: 'Bento' },
+  ] as never);
+  await db.insert(items).values({ id: id.item, storyId, name: 'A lanterna' } as never);
+  await db.insert(choiceChecks).values({
+    id: id.check,
+    storyId,
+    groupId: id.group,
+    mode: 'block',
+    type: 'inventory',
+    itemId: id.item,
+    itemPresence: 'has',
+  } as never);
+  await db.insert(effects).values({
+    id: id.effect,
+    storyId,
+    entityType: 'Choice',
+    entityId: id.choice,
+    effectType: 'itemTake',
+    itemId: id.item,
+  } as never);
+  await db.insert(itemJourneys).values({
+    id: id.itemJourney,
+    storyId,
+    itemId: id.item,
+    sceneId: id.sceneB,
+    newCharacterOwnerId: id.characterB,
+    newState: 'molhada',
+  } as never);
+  await db.insert(characterRelations).values({
+    id: id.characterRelation,
+    storyId,
+    character1Id: id.characterA,
+    character2Id: id.characterB,
+    relationType: 'irmãos',
+  } as never);
+  await db.insert(characterScenes).values({
+    id: id.characterScene,
+    storyId,
+    characterId: id.characterA,
+    sceneId: id.sceneA,
+  } as never);
+  await db.insert(tags).values({ id: id.tag, storyId, name: 'mar' } as never);
+  await db.insert(tagRelations).values({
+    id: id.tagRelation,
+    storyId,
+    tagId: id.tag,
+    relationId: id.characterA,
+    relationType: 'Character',
+  } as never);
+  await db.insert(notes).values({ id: id.note, storyId, title: 'Marés' } as never);
+  await db.insert(noteRelations).values({
+    id: id.noteRelation,
+    storyId,
+    noteId: id.note,
+    relationId: id.sceneB,
+    relationType: 'Scene',
+  } as never);
+  await db.insert(worldRules).values({ id: id.worldRule, storyId, title: 'A névoa' } as never);
+  await db
+    .insert(suggestions)
+    .values({ id: id.suggestion, storyId, type: 'race', value: 'ilhéu' } as never);
+  await db.insert(galleries).values({
+    id: id.gallery,
+    storyId,
+    title: 'O farol ao amanhecer',
+    mediaType: 'image',
+    mimeType: 'image/png',
+    fileName: 'farol.png',
+    hash: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+  } as never);
+  await db.insert(galleryRelations).values({
+    id: id.galleryRelation,
+    storyId,
+    galleryId: id.gallery,
+    ownerId: id.location,
+    ownerType: 'Location',
+  } as never);
+  await db.insert(seeAlsoRelations).values({
+    id: id.seeAlso,
+    storyId,
+    entityAType: 'Character',
+    entityAId: id.characterA,
+    entityBType: 'Location',
+    entityBId: id.location,
+  } as never);
+  await db.insert(storySchemaFields).values({
+    id: id.field,
+    storyId,
+    entityType: 'Character',
+    name: 'Ofício',
+    key: 'oficio',
+    type: 'text',
+  } as never);
+  await db.insert(attributeValues).values({
+    id: id.attributeValue,
+    storyId,
+    entityType: 'Character',
+    entityId: id.characterA,
+    fieldId: id.field,
+    value: 'faroleira',
+  } as never);
+  await db.insert(favorites).values({
+    id: id.favorite,
+    storyId,
+    entityId: id.characterB,
+    entityType: 'Character',
+    userId: OWNER,
+  } as never);
+  await db.insert(comments).values({
+    id: id.comment,
+    storyId,
+    entityType: 'Character',
+    entityId: id.characterA,
+    fieldKey: 'name',
+    authorUserId: OWNER,
+    commentText: 'rever o nome',
+    criticality: 2,
+  } as never);
+  await db.insert(stats).values([
+    { id: id.stat, storyId, name: 'Coragem', isPrimary: true, order: 0 },
+    { id: id.secondaryStat, storyId, name: 'Reputação', isPrimary: false, order: 1 },
+  ] as never);
+  await db.insert(statStrengths).values([
+    // statId nulo é a escada padrão da história; a outra linha é o override do stat.
+    { id: id.defaultTier, storyId, statId: null, label: 'F', minValue: 0 },
+    { id: id.statTier, storyId, statId: id.stat, label: 'A', minValue: 400 },
+  ] as never);
+  await db.insert(modes).values({
+    id: id.mode,
+    storyId,
+    characterId: id.characterA,
+    name: 'Na tempestade',
+    modeChanges: 'Perde o medo do mar.',
+    order: 0,
+  } as never);
+  await db.insert(statRelations).values([
+    {
+      id: id.baseValue,
+      storyId,
+      characterId: id.characterA,
+      modeId: null,
+      statId: id.stat,
+      value: 120,
+    },
+    {
+      id: id.modeValue,
+      storyId,
+      characterId: id.characterA,
+      modeId: id.mode,
+      statId: id.stat,
+      value: 480,
+    },
+  ] as never);
+});
+
+async function childrenOf(storyId: string) {
+  const rows = async (table: any) =>
+    await db.select().from(table).where(eq(table.storyId, storyId));
+  return {
+    chapters: await rows(chapters),
+    scenes: await rows(scenes),
+    choices: await rows(choices),
+    choiceCheckGroups: await rows(choiceCheckGroups),
+    choiceChecks: await rows(choiceChecks),
+    effects: await rows(effects),
+    characters: await rows(characters),
+    locations: await rows(locations),
+    locationRelations: await rows(locationRelations),
+    worldRules: await rows(worldRules),
+    notes: await rows(notes),
+    noteRelations: await rows(noteRelations),
+    tags: await rows(tags),
+    tagRelations: await rows(tagRelations),
+    suggestions: await rows(suggestions),
+    characterRelations: await rows(characterRelations),
+    characterScenes: await rows(characterScenes),
+    galleries: await rows(galleries),
+    galleryRelations: await rows(galleryRelations),
+    items: await rows(items),
+    itemJourneys: await rows(itemJourneys),
+    storySchemaFields: await rows(storySchemaFields),
+    attributeValues: await rows(attributeValues),
+    seeAlsoRelations: await rows(seeAlsoRelations),
+    comments: await rows(comments),
+    favorites: await rows(favorites),
+    stats: await rows(stats),
+    statStrengths: await rows(statStrengths),
+    statRelations: await rows(statRelations),
+    modes: await rows(modes),
+  };
+}
+
+describe('export of a story with one row of every kind', () => {
+  it('carries every collection into the package', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+
+    expect(pkg.story.id).toBe(id.story);
+    for (const [collection, rows] of Object.entries(pkg)) {
+      if (!Array.isArray(rows)) continue;
+      expect({ collection, length: rows.length }).toEqual({ collection, length: rows.length });
+      expect(rows.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('leaves soft-deleted rows out of the package', async () => {
+    await db
+      .update(worldRules)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(worldRules.id, id.worldRule));
+
+    const pkg = await service.exportStory(id.story, OWNER);
+
+    expect(pkg.worldRules).toHaveLength(0);
+  });
+
+  it('omits favorites entirely when nobody is asking for them', async () => {
+    const pkg = await service.exportStory(id.story);
+
+    expect(pkg.favorites).toHaveLength(0);
+    expect(pkg.characters).toHaveLength(2);
+  });
+
+  it('refuses to export a story that does not exist', async () => {
+    await expect(service.exportStory(newId())).rejects.toThrow(/not found/);
+  });
+});
+
+describe('import of a package with one row of every kind', () => {
+  it('rewires every polymorphic relation to the new ids', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+    const importedId = await service.importStory(IMPORTER, JSON.parse(JSON.stringify(pkg)));
+    const after = await childrenOf(importedId);
+
+    expect(importedId).not.toBe(id.story);
+    for (const [collection, rows] of Object.entries(after)) {
+      expect({ collection, empty: rows.length === 0 }).toEqual({ collection, empty: false });
+    }
+
+    const byName = (rows: any[], name: string) => {
+      const found = rows.find((row) => row.name === name);
+      expect(found, `esperava uma linha chamada ${name}`).toBeDefined();
+      return found;
+    };
+    const character = byName(after.characters, 'Ilda');
+    const location = byName(after.locations, 'O farol');
+    const scene = byName(after.scenes, 'A maré sobe');
+
+    expect(after.tagRelations[0].relationId).toBe(character.id);
+    expect(after.tagRelations[0].relationType).toBe('Character');
+    expect(after.noteRelations[0].relationId).toBe(scene.id);
+    expect(after.galleryRelations[0].ownerId).toBe(location.id);
+    expect(after.seeAlsoRelations[0].entityAId).toBe(character.id);
+    expect(after.seeAlsoRelations[0].entityBId).toBe(location.id);
+    expect(after.attributeValues[0].entityId).toBe(character.id);
+    expect(after.attributeValues[0].fieldId).toBe(after.storySchemaFields[0].id);
+    expect(after.comments[0].entityId).toBe(character.id);
+    expect(after.effects[0].entityId).toBe(after.choices[0].id);
+    expect(after.effects[0].itemId).toBe(after.items[0].id);
+    expect(after.choiceChecks[0].itemId).toBe(after.items[0].id);
+    expect(after.itemJourneys[0].newCharacterOwnerId).toBe(byName(after.characters, 'Bento').id);
+    expect(after.statRelations.every((row: any) => row.storyId === importedId)).toBe(true);
+    expect(after.locationRelations[0].locationAId).toBe(location.id);
+
+    const stat = byName(after.stats, 'Coragem');
+    const mode = byName(after.modes, 'Na tempestade');
+    expect(mode.characterId).toBe(character.id);
+    // A escada padrão da história continua sem stat; o override continua apontando para o dele.
+    const tierNamed = (label: string) => {
+      const found = after.statStrengths.find((row: any) => row.label === label);
+      expect(found, `esperava o degrau ${label}`).toBeDefined();
+      return found;
+    };
+    expect(tierNamed('F')?.statId).toBeNull();
+    expect(tierNamed('A')?.statId).toBe(stat.id);
+    const base = after.statRelations.find((row: any) => row.modeId === null);
+    const overridden = after.statRelations.find((row: any) => row.modeId !== null);
+    expect(base).toBeDefined();
+    expect(overridden).toBeDefined();
+    expect(base?.statId).toBe(stat.id);
+    expect(base?.characterId).toBe(character.id);
+    expect(overridden?.modeId).toBe(mode.id);
+    expect(overridden?.value).toBe(480);
+    expect(after.characterRelations[0].character1Id).toBe(character.id);
+    expect(after.characterScenes[0].characterId).toBe(character.id);
+  });
+
+  it('keeps every original id when the client asks to preserve them', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(
+      IMPORTER,
+      JSON.parse(JSON.stringify(pkg)),
+      id.story,
+    );
+    const after = await childrenOf(importedId);
+
+    expect(importedId).toBe(id.story);
+    expect(after.tagRelations[0].id).toBe(id.tagRelation);
+    expect(after.tagRelations[0].relationId).toBe(id.characterA);
+    expect(after.galleryRelations[0].ownerId).toBe(id.location);
+    expect(after.seeAlsoRelations[0].entityBId).toBe(id.location);
+    expect(after.itemJourneys[0].newCharacterOwnerId).toBe(id.characterB);
+  });
+
+  it('makes the importer the owner of the favorites and the comments', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+    const importedId = await service.importStory(IMPORTER, JSON.parse(JSON.stringify(pkg)));
+    const after = await childrenOf(importedId);
+
+    expect(after.favorites[0].userId).toBe(IMPORTER);
+    expect(after.comments[0].authorUserId).toBe(IMPORTER);
+  });
+
+  it('refuses a package whose see-also points at an entity it does not carry', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+    const orphaned = JSON.parse(JSON.stringify(pkg));
+    orphaned.seeAlsoRelations[0].entityBId = newId();
+
+    await expect(service.importStory(IMPORTER, orphaned)).rejects.toThrow(
+      /See-also relation .* absent from the export/,
+    );
+    expect(await db.select().from(stories)).toHaveLength(1);
+  });
+});

@@ -31,14 +31,28 @@ export class UserApiService {
     return response.data;
   }
 
-  async updateProfile(server: ServerSelect, profile: UpdateUserProfileType): Promise<UserPublicInfo> {
+  async updateProfile(
+    server: ServerSelect,
+    profile: UpdateUserProfileType,
+  ): Promise<UserPublicInfo> {
     const response = await this.clientFor(server).put('/user/profile', profile);
     return response.data;
   }
 
   /** Self-service password change on `server` - requires the current password, unlike the admin panel's reset. */
-  async changeOwnPassword(server: ServerSelect, currentPassword: string, newPassword: string): Promise<void> {
+  async changeOwnPassword(
+    server: ServerSelect,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     await this.clientFor(server).put('/user/password', { currentPassword, newPassword });
+  }
+
+  /** Invalidates the current recovery codes on `server` and issues a fresh batch - requires
+   *  the current password, same reasoning as changeOwnPassword. */
+  async regenerateRecoveryCodes(server: ServerSelect, currentPassword: string): Promise<string[]> {
+    const response = await this.clientFor(server).put('/user/recovery-codes', { currentPassword });
+    return response.data.recoveryCodes;
   }
 
   /** The current user's own profile on `server`, including avatar/bio - `server.idUser` is

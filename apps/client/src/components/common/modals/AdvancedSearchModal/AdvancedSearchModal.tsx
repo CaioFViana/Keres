@@ -11,9 +11,11 @@ import { useTheme } from '../../../../theme';
 import { buildCustomAttributeFieldMetadata } from '../../../../utils/customAttributeFieldMetadata';
 import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
+import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
 
 interface AdvancedSearchModalProps {
   entityName: string;
@@ -38,27 +40,29 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
 
   // Get metadata for the specified entity
   const nativeFieldsMetadata = useMemo(() => {
-    return entityFieldMetadata[entityName]?.filter(field => field.isSearchable) || [];
+    return entityFieldMetadata[entityName]?.filter((field) => field.isSearchable) || [];
   }, [entityName]);
 
   // Campos customizados de Story Schema para este tipo de entidade - vazio (sem custo extra
   // além da própria query, que só encontra 0 linhas) para tipos de entidade fora do escopo
   // suportado, sem precisar de um type guard aqui.
   const customFields = useStorySchemaFields(storyId, entityName as StorySchemaEntityType);
-  const customFieldsMetadata = useMemo(() => buildCustomAttributeFieldMetadata(customFields), [customFields]);
+  const customFieldsMetadata = useMemo(
+    () => buildCustomAttributeFieldMetadata(customFields),
+    [customFields],
+  );
 
   const fieldsMetadata = useMemo(
     () => [...nativeFieldsMetadata, ...customFieldsMetadata],
-    [nativeFieldsMetadata, customFieldsMetadata]
+    [nativeFieldsMetadata, customFieldsMetadata],
   );
-
 
   useEffect(() => {
     setSearchCriteria(initialCriteria);
   }, [initialCriteria]);
 
   const handleInputChange = useCallback((fieldName: string, value: any) => {
-    setSearchCriteria(prev => ({
+    setSearchCriteria((prev) => ({
       ...prev,
       [fieldName]: value,
     }));
@@ -75,121 +79,159 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
     onClose();
   }, [onSearch, searchCriteria, onClose]);
 
-  const renderFieldInput = useCallback((field: EntityFieldMetadata, styleOverrides?: any) => {
-    const value = searchCriteria[field.name];
-    // Campos customizados de Story Schema já vêm com o texto de exibição pronto (`rawLabel`,
-    // definido pelo usuário) - não é uma chave de tradução, então não passa por `t()`.
-    const fieldLabel = field.rawLabel ?? t(field.label);
+  const renderFieldInput = useCallback(
+    (field: EntityFieldMetadata, styleOverrides?: any) => {
+      const value = searchCriteria[field.name];
+      // Campos customizados de Story Schema já vêm com o texto de exibição pronto (`rawLabel`,
+      // definido pelo usuário) - não é uma chave de tradução, então não passa por `t()`.
+      const fieldLabel = field.rawLabel ?? t(field.label);
 
-    if (field.isSuggestion) {
-      return (
-        <View key={field.name} style={[styles.inputContainer, styles.inputContainerSuggestion, styleOverrides]}>
-          <SuggestionTextInput
-            placeholder={fieldLabel}
-            value={value || ''}
-            onChangeText={(text) => handleInputChange(field.name, text)}
-            type={field.suggestionsSource as SuggestionType}
-            storyId={storyId}
-          />
-        </View>
-      );
-    }
-
-    switch (field.type) {
-      case 'string':
-      case 'id': // Treat ID fields as string for search input
+      if (field.isSuggestion) {
         return (
-          <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <TextInput // Custom TextInput
+          <View
+            key={field.name}
+            style={[styles.inputContainer, styles.inputContainerSuggestion, styleOverrides]}
+          >
+            <SuggestionTextInput
+              placeholder={fieldLabel}
               value={value || ''}
               onChangeText={(text) => handleInputChange(field.name, text)}
-              placeholder={fieldLabel}
-              placeholderTextColor={colors.textSecondary}
-              style={{ width: '100%' }} // Explicitly override internal 80% width
+              type={field.suggestionsSource as SuggestionType}
+              storyId={storyId}
             />
           </View>
         );
-      case 'boolean':
-        // For boolean, use the TriStateToggleButton
-        return (
-          <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <View style={styles.booleanRow}>
-              <Text style={[styles.label, { color: colors.text, flex: 1, marginBottom: 0 }]}>{fieldLabel}:</Text>
-              <TriStateToggleButton
-                label={fieldLabel}
-                value={value}
-                onChange={(newValue) => handleInputChange(field.name, newValue)}
-                // style is not needed as size is fixed internally now
+      }
+
+      switch (field.type) {
+        case 'string':
+        case 'id': // Treat ID fields as string for search input
+          return (
+            <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              <TextInput // Custom TextInput
+                value={value || ''}
+                onChangeText={(text) => handleInputChange(field.name, text)}
+                placeholder={fieldLabel}
+                placeholderTextColor={colors.textSecondary}
+                style={{ width: '100%' }} // Explicitly override internal 80% width
               />
             </View>
-          </View>
-        );
-      case 'number':
-        // For numbers, could offer range or exact match. For simplicity, single text input for now.
-        return (
-          <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <TextInput // Custom TextInput
-              value={value !== undefined && value !== null ? String(value) : ''}
-              onChangeText={(text) => handleInputChange(field.name, text ? Number(text) : undefined)}
-              keyboardType="numeric"
-              placeholder={fieldLabel}
-              placeholderTextColor={colors.textSecondary}
-              style={{ width: '100%' }} // Explicitly override internal 80% width
-            />
-          </View>
-        );
-      case 'date':
-        // For dates, typically date pickers or range inputs. For simplicity, text input for now.
-        return (
-          <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <TextInput // Custom TextInput
-              value={value ? String(value) : ''} // Needs date formatting
-              onChangeText={(text) => handleInputChange(field.name, text)} // Needs date parsing
-              placeholder={fieldLabel}
-              placeholderTextColor={colors.textSecondary}
-              style={{ width: '100%' }} // Explicitly override internal 80% width
-            />
-          </View>
-        );
-      case 'color':
-        return (
-          <View key={field.name} style={[styles.inputContainer, styleOverrides, {marginBottom: 20}]}>
-            <ColorPickerInput
-              currentColor={value || ''}
-              onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
-              placeholder={fieldLabel}
-            />
-          </View>
-        );
-      default:
-        return null;
-    }
-  }, [searchCriteria, handleInputChange, colors, t, storyId]);
+          );
+        case 'boolean':
+          // For boolean, use the TriStateToggleButton
+          return (
+            <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              <View style={styles.booleanRow}>
+                <Text style={[styles.label, { color: colors.text, flex: 1, marginBottom: 0 }]}>
+                  {fieldLabel}:
+                </Text>
+                <TriStateToggleButton
+                  label={fieldLabel}
+                  value={value}
+                  onChange={(newValue) => handleInputChange(field.name, newValue)}
+                  // style is not needed as size is fixed internally now
+                />
+              </View>
+            </View>
+          );
+        case 'number':
+          // For numbers, could offer range or exact match. For simplicity, single text input for now.
+          return (
+            <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              <TextInput // Custom TextInput
+                value={value !== undefined && value !== null ? String(value) : ''}
+                onChangeText={(text) =>
+                  handleInputChange(field.name, text ? Number(text) : undefined)
+                }
+                keyboardType="numeric"
+                placeholder={fieldLabel}
+                placeholderTextColor={colors.textSecondary}
+                style={{ width: '100%' }} // Explicitly override internal 80% width
+              />
+            </View>
+          );
+        case 'date':
+          // Nenhum campo NATIVO é `type: 'date'` em `entityFields.ts` - este case só é alcançado
+          // por atributo customizado, então usa o mesmo picker do formulário. O filtro casa por
+          // substring (ver `attributeSearchPredicate`), então uma data completa acha o dia exato.
+          return (
+            <View
+              key={field.name}
+              style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
+            >
+              <DatePickerInput
+                value={value ? String(value) : null}
+                onChange={(newValue) => handleInputChange(field.name, newValue ?? undefined)}
+                placeholder={fieldLabel}
+              />
+            </View>
+          );
+        case 'color':
+          return (
+            <View
+              key={field.name}
+              style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
+            >
+              <ColorPickerInput
+                currentColor={value || ''}
+                onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
+                placeholder={fieldLabel}
+              />
+            </View>
+          );
+        case 'entity':
+          if (!field.entityTargetType) return null;
+          return (
+            <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              <EntityPickerInput
+                storyId={storyId}
+                entityType={field.entityTargetType as StorySchemaEntityType}
+                value={value ?? null}
+                onChange={(newValue) => handleInputChange(field.name, newValue)}
+                placeholder={fieldLabel}
+              />
+            </View>
+          );
+        default:
+          return null;
+      }
+    },
+    [searchCriteria, handleInputChange, colors, t, storyId],
+  );
 
   return (
     <ResponsiveModal
       visible={isVisible}
       onClose={onClose}
-      contentStyle={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      contentStyle={[
+        styles.modalContent,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+      ]}
       maxHeight="86%"
     >
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('advanced_search_title')}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
-            {fieldsMetadata.map(renderFieldInput)}
-          </ScrollView>
-          <View style={styles.modalFooter}>
-            <View style={styles.buttonWrapper}>
-              <Button onPress={handleClear} style={{ backgroundColor: colors.textSecondary }}>{t('common_clear')}</Button>
-            </View>
-            <View style={styles.buttonWrapper}>
-              <Button onPress={handleSubmit} style={{ backgroundColor: colors.primary }}>{t('common_search')}</Button>
-            </View>
-          </View>
+      <View style={styles.modalHeader}>
+        <Text style={[styles.modalTitle, { color: colors.text }]}>
+          {t('advanced_search_title')}
+        </Text>
+        <TouchableOpacity onPress={onClose}>
+          <Ionicons name="close" size={24} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+        {fieldsMetadata.map(renderFieldInput)}
+      </ScrollView>
+      <View style={styles.modalFooter}>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={handleClear} style={{ backgroundColor: colors.textSecondary }}>
+            {t('common_clear')}
+          </Button>
+        </View>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={handleSubmit} style={{ backgroundColor: colors.primary }}>
+            {t('common_search')}
+          </Button>
+        </View>
+      </View>
     </ResponsiveModal>
   );
 };
@@ -218,7 +260,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   inputContainerSuggestion: {
-    marginBottom: 20
+    marginBottom: 20,
   },
   booleanRow: {
     flexDirection: 'row',
@@ -226,7 +268,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  label: { // This style is now only for boolean fields
+  label: {
+    // This style is now only for boolean fields
     fontSize: 14,
     marginBottom: 2,
   },

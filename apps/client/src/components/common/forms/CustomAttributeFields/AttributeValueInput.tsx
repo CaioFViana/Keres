@@ -1,21 +1,31 @@
-import { AttributeType } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  encodeAttributeValue,
+  StorySchemaEntityType,
+} from '@keres/shared';
 import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | null) => void;
   placeholder?: string;
   storyId?: string;
   /** Só usado quando `type === SUGGESTION`. Sem isto (campo recém-criado, ainda sem id salvo),
    *  cai pra texto simples em vez de tentar abrir sugestões de um campo que não existe. */
   suggestionFieldId?: string;
+  /** Declared target of an ENTITY field. */
+  targetEntityType?: StorySchemaEntityType | null;
   style?: any;
 }
 
@@ -32,6 +42,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
   placeholder,
   storyId,
   suggestionFieldId,
+  targetEntityType,
   style,
 }) => {
   const { colors } = useTheme();
@@ -70,15 +81,12 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
       );
 
     case AttributeType.DATE:
-      // Nenhum date picker existe em nenhum lugar do app hoje (nem o próprio AdvancedSearchModal
-      // tem um pra seu filtro de data) - texto livre com um placeholder de formato é o único
-      // precedente existente, não uma escolha nova.
       return (
-        <TextInput
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder || 'YYYY-MM-DD'}
-          style={[commonInputStyles.input, style]}
+        <DatePickerInput
+          value={value || null}
+          onChange={onChange}
+          placeholder={placeholder}
+          style={style}
         />
       );
 
@@ -100,6 +108,42 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
+          style={[commonInputStyles.input, style]}
+        />
+      );
+
+    case AttributeType.SUGGESTION_LIST: {
+      const decoded = decodeAttributeValue(AttributeType.SUGGESTION_LIST, value);
+      const items = Array.isArray(decoded) ? decoded : [];
+      return (
+        <SuggestionListInput
+          values={items}
+          onChange={(next) => onChange(encodeAttributeValue(AttributeType.SUGGESTION_LIST, next))}
+          type={suggestionFieldId ? customAttributeSuggestionType(suggestionFieldId) : ''}
+          storyId={storyId ?? ''}
+          placeholder={placeholder}
+          style={style}
+        />
+      );
+    }
+
+    case AttributeType.ENTITY:
+      if (storyId && targetEntityType) {
+        return (
+          <EntityPickerInput
+            storyId={storyId}
+            entityType={targetEntityType}
+            value={value || null}
+            onChange={onChange}
+            placeholder={placeholder}
+          />
+        );
+      }
+      return (
+        <TextInput
+          value={value}
+          placeholder={placeholder}
+          editable={false}
           style={[commonInputStyles.input, style]}
         />
       );

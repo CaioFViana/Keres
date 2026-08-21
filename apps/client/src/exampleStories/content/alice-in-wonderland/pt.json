@@ -14,7 +14,9 @@
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "version": 1,
     "isDeleted": false,
-    "deletedAt": null
+    "deletedAt": null,
+    "statSystem": false,
+    "statNotation": "letter"
   },
   "chapters": [
     {
@@ -980,6 +982,110 @@
       "relationType": "connected_to"
     }
   ],
+  "comments": [
+    {
+      "id": "01KZZ000000000000000000001",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0BESDGG77MG3F2A721",
+      "fieldId": null,
+      "fieldKey": "description",
+      "contentSnapshot": "Alice é curiosa e prática; mantenha o ponto de vista dela visível.",
+      "excerptText": "Alice é curiosa e prática.",
+      "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
+      "commentText": "Exemplo editorial: preserve a curiosidade de Alice como fio entre as cenas.",
+      "criticality": 2,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "seeAlsoRelations": [
+    {
+      "id": "01KZZ000000000000000000002",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityAType": "Character",
+      "entityAId": "01KYXBHD0BESDGG77MG3F2A721",
+      "entityBType": "Location",
+      "entityBId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "favorites": [
+    {
+      "id": "01KZZ000000000000000000006",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Story",
+      "userId": "EXAMPLEUSERPLACEHOLDER0000",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceCheckGroups": [
+    {
+      "id": "01KZZ000000000000000000003",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "choiceId": "01KYXBHD0B1KYWRWAKMB645XTB",
+      "combinator": "AND",
+      "order": 0,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceChecks": [
+    {
+      "id": "01KZZ000000000000000000004",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "groupId": "01KZZ000000000000000000003",
+      "mode": "enable",
+      "type": "sceneCount",
+      "order": 0,
+      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "minVisits": 1,
+      "itemId": null,
+      "itemPresence": null,
+      "triggerName": null,
+      "triggerState": null,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "effects": [
+    {
+      "id": "01KZZ000000000000000000005",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Choice",
+      "entityId": "01KYXBHD0B1KYWRWAKMB645XTB",
+      "effectType": "triggerSet",
+      "itemId": null,
+      "triggerName": "alice_has_started",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 2
+  "formatVersion": 5,
+  "stats": [],
+  "statStrengths": [],
+  "statRelations": [],
+  "modes": []
 }

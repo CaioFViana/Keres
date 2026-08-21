@@ -50,11 +50,19 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, laneI
   }, [notification.id, laneIndex, clearNotificationLane, progressBarAnim, slideAnim]); // Re-run effect if notification.id or laneIndex changes
 
   // Determine background color based on notification type
-  const backgroundColor = notification.type === 'error' ? colors.error : (notification.type === 'success' ? colors.primary : colors.card);
-  const textColor = (notification.type === 'error' || notification.type === 'success') ? colors.onPrimary : colors.text;
+  const backgroundColor =
+    notification.type === 'error'
+      ? colors.error
+      : notification.type === 'success'
+        ? colors.primary
+        : colors.card;
+  const textColor =
+    notification.type === 'error' || notification.type === 'success'
+      ? colors.onPrimary
+      : colors.text;
 
   // Calculate top position based on laneIndex
-  const topPosition = 50 + (laneIndex * 80); // 50 for initial top margin, 80 for height + margin of each notification
+  const topPosition = 50 + laneIndex * 80; // 50 for initial top margin, 80 for height + margin of each notification
 
   return (
     <Animated.View
@@ -69,15 +77,18 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, laneI
     >
       <View style={styles.content}>
         <Ionicons
-          name={notification.type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'}
+          name={
+            notification.type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'
+          }
           size={24}
           color={textColor}
           style={styles.icon}
         />
-        <Text style={[styles.message, { color: textColor }]}>
-          {notification.message}
-        </Text>
-        <TouchableOpacity onPress={() => clearNotificationLane(laneIndex)} style={styles.closeButton}>
+        <Text style={[styles.message, { color: textColor }]}>{notification.message}</Text>
+        <TouchableOpacity
+          onPress={() => clearNotificationLane(laneIndex)}
+          style={styles.closeButton}
+        >
           <Ionicons name="close-circle-outline" size={20} color={textColor} />
         </TouchableOpacity>
       </View>

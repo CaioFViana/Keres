@@ -1,0 +1,1 @@
+CREATE INDEX "operation_log_entity_type_entity_id_entity_version_idx" ON "operation_log" USING btree ("entity_type","entity_id","entity_version");

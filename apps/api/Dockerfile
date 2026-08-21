@@ -10,8 +10,9 @@ COPY apps/admin/package.json apps/admin/package.json
 # patchedDependencies (root package.json) applies repo-wide during install, regardless of
 # whether this particular image ends up using the patched package - bun still needs the
 # .patch file on disk to apply it. Neither patch here (expo-sqlite, drizzle-orm/expo-sqlite)
-# affects the API at runtime (it uses drizzle-orm/node-postgres, not the expo-sqlite driver;
-# expo-sqlite itself isn't even a dependency of apps/api) - only `bun install` needs this.
+# affects the API at runtime (ela fala com Postgres por node-postgres ou com SQLite por libSQL,
+# nunca pelo driver do expo-sqlite, que nem é dependência de apps/api) - only `bun install`
+# needs this.
 COPY patches patches
 # Not --frozen-lockfile: bun.lock was generated across the whole workspace (including
 # apps/client, deliberately not copied here to keep this image free of the RN/Expo
@@ -23,6 +24,22 @@ FROM deps AS admin-build
 COPY packages/shared packages/shared
 COPY apps/admin apps/admin
 RUN cd apps/admin && bun run build
+
+# ---- client-web-build: Expo web export served by the API at /app ----
+FROM oven/bun:latest AS client-web-build
+WORKDIR /app
+COPY package.json bun.lock ./
+COPY packages/shared/package.json packages/shared/package.json
+COPY apps/api/package.json apps/api/package.json
+COPY apps/admin/package.json apps/admin/package.json
+COPY apps/client/package.json apps/client/package.json
+COPY apps/desktop/package.json apps/desktop/package.json
+COPY apps/site/package.json apps/site/package.json
+COPY patches patches
+RUN bun install
+COPY packages/shared packages/shared
+COPY apps/client apps/client
+RUN bun run --cwd apps/client export:web
 
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
 # Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
@@ -62,15 +79,35 @@ COPY apps/api/package.json apps/api/tsconfig.json ./apps/api/
 COPY apps/api/src ./apps/api/src
 # Needed at runtime, not just dev: `runMigrations()` (src/db/migrate.ts) reads these SQL files
 # and applies whatever's pending on every boot - a fresh database has no tables at all otherwise.
+# Os dois conjuntos entram na imagem: qual deles é aplicado depende de `DATABASE_DRIVER`, que é
+# escolhido em tempo de execução, não de build.
 COPY apps/api/drizzle ./apps/api/drizzle
+COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 
 # apps/api/src/index.ts looks for this at apps/admin/dist relative to its own
 # location (import.meta.dir), regardless of process.cwd() - see the comment there.
 COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
+# Cliente web co-hospedado em /app (o mesmo export que o Electron empacota). Sem
+# este estágio a API sobe, só o /app 404. Expo fica isolado deste stage para o
+# runtime continuar só com Bun.
+COPY --from=client-web-build /app/apps/client/dist ./apps/client/dist
 
 WORKDIR /app/apps/api
 
+# Local media storage (the default driver) writes here at runtime - created ahead of time so
+# a fresh named volume mounted at this path (see docker-compose.deploy.yml) inherits
+# ownership matching the non-root user below, instead of being created root-owned by Docker
+# itself the moment the mount happens. Everything else under /app just needs to be readable
+# by that user, which chowning the whole tree covers in one pass.
+RUN mkdir -p media-storage && chown -R bun:bun /app
+
 EXPOSE 3000
+
+# oven/bun's base image already creates this user (uid/gid 1000) but never switches to it,
+# so the container ran as root by default. Nothing here needs root: migrations write to
+# Postgres, not the filesystem, and the local media driver only needs the directory chowned
+# above.
+USER bun
 
 # `server.ts` is the production entrypoint: it applies pending migrations, reconciles the
 # root admin and only then opens the HTTP port. `index.ts` deliberately only creates the app

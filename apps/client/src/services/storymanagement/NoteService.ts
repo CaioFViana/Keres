@@ -6,11 +6,20 @@ import { tagRelations } from '../../db/schemas/tagRelations';
 import { tags, TagSelect } from '../../db/schemas/tags'; // Import tags schema
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
-import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
+import {
+  decorateFavorite,
+  normalizeFavoriteCreate,
+  normalizeFavoriteUpdate,
+  persistInitialFavorite,
+} from './favoriteBehaviorUtils';
 
 export type NoteWithTags = NoteSelect & {
   tags: TagSelect[];
@@ -30,36 +39,58 @@ export interface NoteService {
   ): Promise<NoteWithTags[]>;
   getById(noteId: string): Promise<NoteWithTags | undefined>;
   createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect>;
-  updateNote(currentUserId: string, noteId: string, noteData: Partial<Omit<NoteInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  updateNote(
+    currentUserId: string,
+    noteId: string,
+    noteData: Partial<
+      Omit<
+        NoteInsert,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >
+    >,
+  ): Promise<void>;
   deleteNote(currentUserId: string, noteId: string): Promise<void>;
 }
 
 export const createNoteService = (db: AppDrizzleClient): NoteService => {
   const serverService = createServerService(db);
   return {
-    async getNotesByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<NoteWithTags[]> {
+    async getNotesByStoryId(
+      storyId,
+      searchTerm,
+      activeFilterTags,
+      sortBy,
+      sortDirection,
+      favoriteFilterState,
+      advancedSearchCriteria,
+    ): Promise<NoteWithTags[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(notes.storyId, storyId) as SQL<boolean>,
         eq(notes.isDeleted, false) as SQL<boolean>,
       ];
 
       if (searchTerm) {
-        conditions.push(sql`${notes.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
+        conditions.push(
+          sql`${notes.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+        );
       }
 
       if (activeFilterTags && activeFilterTags.length > 0) {
         // Filter notes by tags
-        const noteIdsWithActiveTags = await db.select({ noteId: tagRelations.relationId })
+        const noteIdsWithActiveTags = await db
+          .select({ noteId: tagRelations.relationId })
           .from(tagRelations)
-          .where(and(
-            eq(tagRelations.storyId, storyId),
-            eq(tagRelations.relationType, 'Note'),
-            inArray(tagRelations.tagId, activeFilterTags)
-          ))
+          .where(
+            and(
+              eq(tagRelations.storyId, storyId),
+              eq(tagRelations.relationType, 'Note'),
+              inArray(tagRelations.tagId, activeFilterTags),
+            ),
+          )
           .execute();
-        
-        const filteredNoteIds = noteIdsWithActiveTags.map(row => row.noteId);
-        
+
+        const filteredNoteIds = noteIdsWithActiveTags.map((row) => row.noteId);
+
         if (filteredNoteIds.length > 0) {
           conditions.push(inArray(notes.id, filteredNoteIds) as SQL<boolean>);
         } else {
@@ -79,16 +110,23 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
             const value = advancedSearchCriteria[key];
-            const fieldMeta = noteMetadata.find(meta => meta.name === key);
+            const fieldMeta = noteMetadata.find((meta) => meta.name === key);
 
             if (value !== undefined && value !== '' && fieldMeta) {
               if (fieldMeta.type === 'string') {
-                conditions.push(sql`${notes[key as keyof NoteSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
+                conditions.push(
+                  sql`${notes[key as keyof NoteSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
+                );
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(notes[key as keyof NoteSelect], value) as SQL<boolean>);
               }
             } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(db, notes.id, key, value);
+              const customCondition = await buildCustomAttributeSearchCondition(
+                db,
+                notes.id,
+                key,
+                value,
+              );
               if (customCondition) {
                 conditions.push(customCondition);
               }
@@ -99,22 +137,23 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
-      const query = db.select({
-        note: notes,
-        tag: tags,
-      })
-      .from(notes)
-      .leftJoin(tagRelations, and(
-        eq(tagRelations.relationId, notes.id),
-        eq(tagRelations.relationType, 'Note'),
-        eq(tagRelations.isDeleted, false)
-      ))
-      .leftJoin(tags, and(
-        eq(tags.id, tagRelations.tagId),
-        eq(tags.isDeleted, false)
-      ))
-      .where(and(...finalConditions))
-      .$dynamic();
+      const query = db
+        .select({
+          note: notes,
+          tag: tags,
+        })
+        .from(notes)
+        .leftJoin(
+          tagRelations,
+          and(
+            eq(tagRelations.relationId, notes.id),
+            eq(tagRelations.relationType, 'Note'),
+            eq(tagRelations.isDeleted, false),
+          ),
+        )
+        .leftJoin(tags, and(eq(tags.id, tagRelations.tagId), eq(tags.isDeleted, false)))
+        .where(and(...finalConditions))
+        .$dynamic();
 
       let resultQuery = query;
 
@@ -160,22 +199,23 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
     },
 
     async getById(noteId: string): Promise<NoteWithTags | undefined> {
-      const rawResults = await db.select({
-        note: notes,
-        tag: tags,
-      })
-      .from(notes)
-      .leftJoin(tagRelations, and(
-        eq(tagRelations.relationId, notes.id),
-        eq(tagRelations.relationType, 'Note'),
-        eq(tagRelations.isDeleted, false)
-      ))
-      .leftJoin(tags, and(
-        eq(tags.id, tagRelations.tagId),
-        eq(tags.isDeleted, false)
-      ))
-      .where(and(eq(notes.id, noteId), eq(notes.isDeleted, false)))
-      .all();
+      const rawResults = await db
+        .select({
+          note: notes,
+          tag: tags,
+        })
+        .from(notes)
+        .leftJoin(
+          tagRelations,
+          and(
+            eq(tagRelations.relationId, notes.id),
+            eq(tagRelations.relationType, 'Note'),
+            eq(tagRelations.isDeleted, false),
+          ),
+        )
+        .leftJoin(tags, and(eq(tags.id, tagRelations.tagId), eq(tags.isDeleted, false)))
+        .where(and(eq(notes.id, noteId), eq(notes.isDeleted, false)))
+        .all();
 
       if (rawResults.length === 0) {
         return undefined;
@@ -206,22 +246,52 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       const favorite = await normalizeFavoriteCreate(db, newNote.storyId, 'Note', newNote);
       newNote = favorite.data;
       const result = await db.insert(notes).values(newNote).returning().get();
-      await persistInitialFavorite(db, newNote.storyId, newNote.id, 'Note', currentUserId, favorite.individualFavorite);
+      await persistInitialFavorite(
+        db,
+        newNote.storyId,
+        newNote.id,
+        'Note',
+        currentUserId,
+        favorite.individualFavorite,
+      );
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newNote.storyId, currentUserId);
-      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, { ...result });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newNote.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, {
+        ...result,
+      });
       entityEventEmitter.emit('note_changed', newNote.storyId, newNote.id);
 
       return result;
     },
 
-    async updateNote(currentUserId: string, noteId: string, noteData: Partial<Omit<NoteInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+    async updateNote(
+      currentUserId: string,
+      noteId: string,
+      noteData: Partial<
+        Omit<
+          NoteInsert,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        >
+      >,
+    ): Promise<void> {
       const originalNote = await db.query.notes.findFirst({ where: eq(notes.id, noteId) });
       if (!originalNote) {
         throw new Error(`Note with ID ${noteId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalNote.storyId);
-      noteData = await normalizeFavoriteUpdate(db, originalNote.storyId, noteId, 'Note', currentUserId, noteData);
+      noteData = await normalizeFavoriteUpdate(
+        db,
+        originalNote.storyId,
+        noteId,
+        'Note',
+        currentUserId,
+        noteData,
+      );
 
       // Create a potential new state for diffing, including only fields that might change
       const potentialNewState = { ...originalNote, ...noteData };
@@ -230,13 +300,16 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       const changes = getChangedFields(originalNote, potentialNewState);
       delete changes.version;
       delete changes.updatedAt;
-      
+
       if (Object.keys(changes).length === 0) {
-        console.log(`No significant changes detected for note ${noteId}. Skipping update and operation log.`);
+        console.log(
+          `No significant changes detected for note ${noteId}. Skipping update and operation log.`,
+        );
         return; // Return early if no significant changes
       }
 
-      const [updatedNote] = await db.update(notes)
+      const [updatedNote] = await db
+        .update(notes)
         .set({ ...noteData, updatedAt: new Date(), version: sql`${notes.version} + 1` })
         .where(eq(notes.id, noteId))
         .returning({ id: notes.id, storyId: notes.storyId, version: notes.version });
@@ -245,7 +318,12 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         throw new Error(`Failed to update note ${noteId} or note not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedNote.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedNote.storyId,
+        currentUserId,
+      );
       // Log the diff already computed above, not the raw `noteData` input - the input has
       // every field the form sends, changed or not.
       await recordLocalOperation(db, updatedNote.storyId, userIdToLog, 'update', 'Note', noteId, {
@@ -263,16 +341,32 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       }
       await assertStoryIsWritable(db, noteToDelete.storyId);
 
-      const [updatedNote] = await db.update(notes)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${notes.version} + 1` })
+      const [updatedNote] = await db
+        .update(notes)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${notes.version} + 1`,
+        })
         .where(eq(notes.id, noteId))
-        .returning({ id: notes.id, storyId: notes.storyId, isDeleted: notes.isDeleted, version: notes.version });
+        .returning({
+          id: notes.id,
+          storyId: notes.storyId,
+          isDeleted: notes.isDeleted,
+          version: notes.version,
+        });
 
       if (!updatedNote) {
         throw new Error(`Failed to delete note ${noteId} or note not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedNote.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedNote.storyId,
+        currentUserId,
+      );
       await recordLocalOperation(db, updatedNote.storyId, userIdToLog, 'delete', 'Note', noteId, {
         id: updatedNote.id,
         isDeleted: updatedNote.isDeleted,

@@ -11,13 +11,25 @@ export const stories = sqliteTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
-  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
+  favoriteBehavior: text('favorite_behavior', {
+    enum: ['global', 'individual', 'individual_public'],
+  })
+    .notNull()
+    .default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
-  normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' }).notNull().default(false),
+  normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   // Só relevante para histórias vinculadas a um servidor - só lá existe a distinção
   // reader/writer que este campo governa (ver CommentSyncHandler/SyncService no servidor).
-  allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' }).notNull().default(false),
+  allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  statSystem: integer('stat_system', { mode: 'boolean' }).notNull().default(false),
+  /** 'letter' | 'number' - como os valores de status são exibidos. */
+  statNotation: text('stat_notation').notNull().default('letter'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

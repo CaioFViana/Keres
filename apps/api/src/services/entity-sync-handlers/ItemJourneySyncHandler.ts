@@ -1,53 +1,69 @@
-import { CreateItemJourneyDataSchema, CreateItemJourneyDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialItemJourneySchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateItemJourneyDataSchema,
+  CreateItemJourneyDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialItemJourneySchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, itemJourneys, items, scenes } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
-export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateItemJourneyDataSchema, typeof PartialItemJourneySchema> {
+export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
+  typeof CreateItemJourneyDataSchema,
+  typeof PartialItemJourneySchema
+> {
   entityName = 'ItemJourney';
 
   constructor() {
-    super(
-      'itemJourneys',
-      'id',
-      'version',
-      CreateItemJourneyDataSchema,
-      PartialItemJourneySchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      }
-    );
+    super('itemJourneys', 'id', 'version', CreateItemJourneyDataSchema, PartialItemJourneySchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(
     storyId: string,
     itemId: string,
     sceneId: string,
-    newCharacterOwnerId: string | null
+    newCharacterOwnerId: string | null,
   ): Promise<void> {
     const itemExists = await db.query.items.findFirst({
       where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
     });
     if (!itemExists) {
-      throw new Error(`Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
 
     const sceneExists = await db.query.scenes.findFirst({
       where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
     });
     if (!sceneExists) {
-      throw new Error(`Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
 
     if (newCharacterOwnerId) {
       const characterExists = await db.query.characters.findFirst({
-        where: and(eq(characters.id, newCharacterOwnerId), eq(characters.storyId, storyId), eq(characters.isDeleted, false)),
+        where: and(
+          eq(characters.id, newCharacterOwnerId),
+          eq(characters.storyId, storyId),
+          eq(characters.isDeleted, false),
+        ),
       });
       if (!characterExists) {
-        throw new Error(`Validation Error: Character with ID ${newCharacterOwnerId} not found, is deleted, or does not belong to story ${storyId}.`);
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
+          `Validation Error: Character with ID ${newCharacterOwnerId} not found, is deleted, or does not belong to story ${storyId}.`,
+        );
       }
     }
   }
@@ -59,7 +75,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateI
       storyId,
       validatedData.itemId,
       validatedData.sceneId,
-      validatedData.newCharacterOwnerId
+      validatedData.newCharacterOwnerId,
     );
 
     const currentItemJourney = await this.findById(update.id!);
@@ -83,22 +99,37 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateI
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     const newItemId = validatedChanges.itemId ?? currentEntity.itemId;
     const newSceneId = validatedChanges.sceneId ?? currentEntity.sceneId;
-    const newCharacterOwnerId = validatedChanges.newCharacterOwnerId ?? currentEntity.newCharacterOwnerId;
-    
+    const newCharacterOwnerId =
+      validatedChanges.newCharacterOwnerId ?? currentEntity.newCharacterOwnerId;
+
     // Validate related entities if any foreign key is being updated
-    if (validatedChanges.itemId !== undefined || validatedChanges.sceneId !== undefined || validatedChanges.newCharacterOwnerId !== undefined) {
-        await this.validateRelatedEntities(storyId, newItemId, newSceneId, newCharacterOwnerId);
+    if (
+      validatedChanges.itemId !== undefined ||
+      validatedChanges.sceneId !== undefined ||
+      validatedChanges.newCharacterOwnerId !== undefined
+    ) {
+      await this.validateRelatedEntities(storyId, newItemId, newSceneId, newCharacterOwnerId);
     }
 
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

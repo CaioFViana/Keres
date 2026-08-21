@@ -8,15 +8,11 @@ const NotificationPopup = () => {
 
   return (
     <View style={styles.container}>
-      {currentNotifications.map((notification, index) => (
+      {currentNotifications.map((notification, index) =>
         notification ? (
-          <NotificationItem
-            key={notification.id}
-            notification={notification}
-            laneIndex={index}
-          />
-        ) : null
-      ))}
+          <NotificationItem key={notification.id} notification={notification} laneIndex={index} />
+        ) : null,
+      )}
     </View>
   );
 };

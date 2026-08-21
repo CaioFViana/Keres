@@ -11,6 +11,7 @@ export const storySchemaFields = sqliteTable(
     key: text('key').notNull(),
     description: text('description'),
     type: text('type').notNull(),
+    targetEntityType: text('target_entity_type'),
     isRequired: integer('is_required', { mode: 'boolean' }).notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),
@@ -24,7 +25,7 @@ export const storySchemaFields = sqliteTable(
     // Não filtrado por isDeleted - ver StorySchemaFieldService.deleteField, que muta `key` no
     // soft-delete pra liberar o slot, mesma razão do lado API (StorySchemaFieldSyncHandler).
     unique('story_entitytype_key_unq').on(table.storyId, table.entityType, table.key),
-  ]
+  ],
 );
 
 export type StorySchemaFieldInsert = InferInsertModel<typeof storySchemaFields>;

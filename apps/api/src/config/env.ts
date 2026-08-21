@@ -11,31 +11,60 @@ dotenv.config({ path: path.join(environmentDirectory, '..', '..', '.env') });
 // opcionais, vazio deve significar "não configurado", não um endpoint/segredo inválido no
 // modo local.
 const optionalEnvironmentString = z.preprocess(
-  (value) => value === '' ? undefined : value,
+  (value) => (value === '' ? undefined : value),
   z.string().min(1).optional(),
 );
 
 const envSchema = z.object({
-  DATABASE_URL: z.url(),
+  /**
+   * Qual motor de banco usar. `postgres` exige um servidor; `sqlite` guarda tudo num arquivo
+   * local (Keres Server caseiro, sem Docker).
+   */
+  DATABASE_DRIVER: z.enum(['postgres', 'sqlite']).optional().default('postgres'),
+  /**
+   * Com `postgres`, a URL de conexão. Com `sqlite`, o arquivo - `file:./keres.db` ou um
+   * caminho absoluto.
+   *
+   * A validação depende do motor: `z.url()` sozinho aceitaria "localhost:5432" (vira protocolo
+   * "localhost:") e o erro só apareceria como falha de conexão no boot.
+   */
+  DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),
+  /**
+   * Interface HTTP. Ausente deixa o Bun escutar em todas (Compose / `bun run start:api`).
+   * O launcher caseiro preenche `127.0.0.1` ou `0.0.0.0`.
+   */
+  HOST: optionalEnvironmentString,
   SERVER_VERSION: z.string().optional().default('1.0.0'),
-  NODE_ENV: z.string().optional().default("development"),
+  NODE_ENV: z.string().optional().default('development'),
   /** Backend físico da galeria. Não altere em um banco que já possua mídia sem migrá-la. */
   MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).optional().default('local'),
   /** Raiz onde os arquivos de mídia da galeria são gravados (endereçados por hash). */
   MEDIA_STORAGE_PATH: z.string().optional().default('./media-storage'),
   /** Endpoint opcional para provedores S3 compatíveis; ausente usa o endpoint da AWS. */
-  MEDIA_S3_ENDPOINT: z.preprocess((value) => value === '' ? undefined : value, z.url().optional()),
+  MEDIA_S3_ENDPOINT: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.url().optional(),
+  ),
   MEDIA_S3_REGION: z.string().min(1).optional().default('us-east-1'),
   MEDIA_S3_BUCKET: optionalEnvironmentString,
   MEDIA_S3_ACCESS_KEY_ID: optionalEnvironmentString,
   MEDIA_S3_SECRET_ACCESS_KEY: optionalEnvironmentString,
   MEDIA_S3_PREFIX: z.string().optional().default('keres'),
-  MEDIA_S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).optional().default('false').transform((value) => value === 'true'),
+  MEDIA_S3_FORCE_PATH_STYLE: z
+    .enum(['true', 'false'])
+    .optional()
+    .default('false')
+    .transform((value) => value === 'true'),
   /** Teto por arquivo. Vídeo de celular passa fácil de 20 MB, daí o padrão de 50 MB. */
-  MEDIA_MAX_BYTES: z.coerce.number().int().positive().optional().default(50 * 1024 * 1024),
+  MEDIA_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(50 * 1024 * 1024),
   /**
    * Credenciais do admin "root", reconciliadas no banco a cada boot (ver `reconcileRootAdmin`
    * em `index.ts`). Resolve o problema de "e se ninguém for admin": em vez de um script de
@@ -45,22 +74,30 @@ const envSchema = z.object({
    */
   ROOT_ADMIN_USERNAME: z.string().min(1).optional(),
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
-  /**
-   * Valor para o qual o painel admin reseta a senha de um usuário (botão "Reset password").
-   * Sem validação de tamanho mínimo de propósito: é uma escolha do operador via env, não uma
-   * senha que um usuário está cadastrando - o schema não deveria opinar sobre ela.
-   */
-  DEFAULT_PASSWORD_RESET_VALUE: z.string().min(1).optional().default('abc123'),
 });
 
 export const env = envSchema.parse(process.env);
+
+if (env.DATABASE_DRIVER === 'postgres' && !/^postgres(ql)?:\/\//.test(env.DATABASE_URL)) {
+  throw new Error(
+    'DATABASE_URL must start with postgres:// or postgresql:// when DATABASE_DRIVER=postgres.',
+  );
+}
+
+if (env.DATABASE_DRIVER === 'sqlite' && !/^(file:|\/|[A-Za-z]:)/.test(env.DATABASE_URL)) {
+  throw new Error(
+    'DATABASE_URL must be a file path (file:./keres.db, or an absolute path) when DATABASE_DRIVER=sqlite.',
+  );
+}
 
 if (env.MEDIA_STORAGE_DRIVER === 's3') {
   const missing = [
     ['MEDIA_S3_BUCKET', env.MEDIA_S3_BUCKET],
     ['MEDIA_S3_ACCESS_KEY_ID', env.MEDIA_S3_ACCESS_KEY_ID],
     ['MEDIA_S3_SECRET_ACCESS_KEY', env.MEDIA_S3_SECRET_ACCESS_KEY],
-  ].filter(([, value]) => !value).map(([key]) => key);
+  ]
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
 
   if (missing.length > 0) {
     throw new Error(`MEDIA_STORAGE_DRIVER=s3 requires: ${missing.join(', ')}.`);

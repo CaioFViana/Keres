@@ -18,7 +18,8 @@ export const useTagStore = createEntityStore<'tags', TagSelect, TagService>({
       p.favoriteFilterState,
       p.advancedSearchCriteria,
     ),
-  updateFavorite: (service, userId, id, isFavorite) => service.updateTag(userId, id, { isFavorite }),
+  updateFavorite: (service, userId, id, isFavorite) =>
+    service.updateTag(userId, id, { isFavorite }),
   changeEvent: 'tag_changed',
   errorMessages: {
     fetch: 'Failed to load tags.',

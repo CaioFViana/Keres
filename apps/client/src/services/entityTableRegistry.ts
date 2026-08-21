@@ -20,10 +20,14 @@ export const ENTITY_TABLES = {
   Item: schema.items,
   ItemJourney: schema.itemJourneys,
   Location: schema.locations,
+  Mode: schema.modes,
   LocationRelation: schema.locationRelations,
   Note: schema.notes,
   NoteRelation: schema.noteRelations,
   Scene: schema.scenes,
+  Stat: schema.stats,
+  StatRelation: schema.statRelations,
+  StatStrength: schema.statStrengths,
   SeeAlsoRelation: schema.seeAlsoRelations,
   Story: schema.stories,
   Suggestion: schema.suggestions,
@@ -35,7 +39,9 @@ export const ENTITY_TABLES = {
 export type SyncableEntityName = keyof typeof ENTITY_TABLES;
 
 export function getEntityTable(entityType: string) {
-  return (ENTITY_TABLES as Record<string, (typeof ENTITY_TABLES)[SyncableEntityName] | undefined>)[entityType];
+  return (ENTITY_TABLES as Record<string, (typeof ENTITY_TABLES)[SyncableEntityName] | undefined>)[
+    entityType
+  ];
 }
 
 /** Campos de data: chegam como string no JSON e as tabelas locais esperam `Date`. */
@@ -45,13 +51,28 @@ const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'deletedAt']);
  * Campos que nunca devem ser sobrescritos a partir de um payload externo, porque são
  * identidade da linha ou são administrados pelo próprio motor de sincronização.
  */
-const PROTECTED_FIELDS = new Set(['id', 'storyId']);
+const PROTECTED_FIELDS = new Set([
+  'id',
+  'storyId',
+  'serverId',
+  'lastOperationLog',
+  'lastServerSyncedLog',
+  'lastPublicFavoriteLog',
+  'myRole',
+]);
+
+const PROTECTED_BY_ENTITY: Record<string, ReadonlySet<string>> = {
+  Story: new Set(['userId']),
+};
 
 /**
  * Normaliza um objeto vindo de JSON para algo que o drizzle aceite num `.set()`:
  * converte datas, descarta campos protegidos e ignora chaves que não existem na tabela.
  */
-export function toEntityColumns(entityType: string, values: Record<string, any>): Record<string, any> {
+export function toEntityColumns(
+  entityType: string,
+  values: Record<string, any>,
+): Record<string, any> {
   const table = getEntityTable(entityType);
   if (!table) {
     return {};
@@ -61,7 +82,11 @@ export function toEntityColumns(entityType: string, values: Record<string, any>)
   const normalized: Record<string, any> = {};
 
   for (const [key, value] of Object.entries(values)) {
-    if (PROTECTED_FIELDS.has(key) || !columns.has(key)) {
+    if (
+      PROTECTED_FIELDS.has(key) ||
+      PROTECTED_BY_ENTITY[entityType]?.has(key) ||
+      !columns.has(key)
+    ) {
       continue;
     }
     if (DATE_FIELDS.has(key)) {
@@ -72,4 +97,19 @@ export function toEntityColumns(entityType: string, values: Record<string, any>)
   }
 
   return normalized;
+}
+
+/** Descarta colunas de bookkeeping local mesmo quando a entidade não está no registro. */
+export function omitClientProtectedFields(
+  entityType: string,
+  payload: Record<string, any> | undefined,
+): Record<string, any> {
+  const out: Record<string, any> = { ...(payload ?? {}) };
+  for (const key of PROTECTED_FIELDS) {
+    delete out[key];
+  }
+  for (const key of PROTECTED_BY_ENTITY[entityType] ?? []) {
+    delete out[key];
+  }
+  return out;
 }

@@ -1,20 +1,44 @@
 import { StorySchemaEntityType } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { attributeValues, StorySchemaFieldInsert, storySchemaFields, StorySchemaFieldSelect } from '../../db/schema';
+import {
+  attributeValues,
+  StorySchemaFieldInsert,
+  storySchemaFields,
+  StorySchemaFieldSelect,
+  stories,
+} from '../../db/schema';
 import { Create, createULID, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface StorySchemaFieldService {
-  getFieldsByStoryAndEntityType(storyId: string, entityType: StorySchemaEntityType): Promise<StorySchemaFieldSelect[]>;
+  getFieldsByStoryAndEntityType(
+    storyId: string,
+    entityType: StorySchemaEntityType,
+  ): Promise<StorySchemaFieldSelect[]>;
   getById(fieldId: string): Promise<StorySchemaFieldSelect | undefined>;
-  createField(currentUserId: string, fieldData: Create<StorySchemaFieldInsert>): Promise<StorySchemaFieldSelect>;
+  createField(
+    currentUserId: string,
+    fieldData: Create<StorySchemaFieldInsert>,
+  ): Promise<StorySchemaFieldSelect>;
   updateField(
     currentUserId: string,
     fieldId: string,
-    fieldData: Partial<Pick<StorySchemaFieldInsert, 'name' | 'description' | 'isRequired' | 'defaultValue' | 'order'>>
+    fieldData: Partial<
+      Pick<StorySchemaFieldInsert, 'name' | 'description' | 'isRequired' | 'defaultValue' | 'order'>
+    >,
+  ): Promise<void>;
+  reorderFields(
+    currentUserId: string,
+    storyId: string,
+    entityType: StorySchemaEntityType,
+    newOrder: { id: string; order: number }[],
   ): Promise<void>;
   deleteField(currentUserId: string, fieldId: string): Promise<void>;
 }
@@ -23,12 +47,16 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
   const serverService = createServerService(db);
   return {
     async getFieldsByStoryAndEntityType(storyId, entityType): Promise<StorySchemaFieldSelect[]> {
-      return db.select().from(storySchemaFields)
-        .where(and(
-          eq(storySchemaFields.storyId, storyId),
-          eq(storySchemaFields.entityType, entityType),
-          eq(storySchemaFields.isDeleted, false)
-        ))
+      return db
+        .select()
+        .from(storySchemaFields)
+        .where(
+          and(
+            eq(storySchemaFields.storyId, storyId),
+            eq(storySchemaFields.entityType, entityType),
+            eq(storySchemaFields.isDeleted, false),
+          ),
+        )
         .orderBy(asc(storySchemaFields.order))
         .all();
     },
@@ -39,7 +67,10 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       });
     },
 
-    async createField(currentUserId: string, fieldData: Create<StorySchemaFieldInsert>): Promise<StorySchemaFieldSelect> {
+    async createField(
+      currentUserId: string,
+      fieldData: Create<StorySchemaFieldInsert>,
+    ): Promise<StorySchemaFieldSelect> {
       await assertStoryIsWritable(db, fieldData.storyId);
       // Checagem local antes de gravar: sem isto, uma chave duplicada só falharia lá na frente,
       // como um erro de sync opaco em vez de um erro de formulário imediato - Tag/Suggestion não
@@ -50,49 +81,149 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
           eq(storySchemaFields.storyId, fieldData.storyId),
           eq(storySchemaFields.entityType, fieldData.entityType),
           eq(storySchemaFields.key, fieldData.key),
-          eq(storySchemaFields.isDeleted, false)
+          eq(storySchemaFields.isDeleted, false),
         ),
       });
       if (existing) {
-        throw new Error(`An attribute with key "${fieldData.key}" already exists for ${fieldData.entityType} in this story.`);
+        throw new Error(
+          `An attribute with key "${fieldData.key}" already exists for ${fieldData.entityType} in this story.`,
+        );
       }
 
       const newField = prepareNewEntityData<StorySchemaFieldInsert>(fieldData);
       const result = await db.insert(storySchemaFields).values(newField).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newField.storyId, currentUserId);
-      await recordLocalOperation(db, newField.storyId, userIdToLog, 'create', 'StorySchemaField', newField.id, { ...result });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newField.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newField.storyId,
+        userIdToLog,
+        'create',
+        'StorySchemaField',
+        newField.id,
+        { ...result },
+      );
       entityEventEmitter.emit('story_schema_field_changed', newField.storyId, newField.entityType);
 
       return result;
     },
 
     async updateField(currentUserId, fieldId, fieldData): Promise<void> {
-      const original = await db.query.storySchemaFields.findFirst({ where: eq(storySchemaFields.id, fieldId) });
+      const original = await db.query.storySchemaFields.findFirst({
+        where: eq(storySchemaFields.id, fieldId),
+      });
       if (!original) {
         throw new Error(`Attribute field with ID ${fieldId} not found for update.`);
       }
       await assertStoryIsWritable(db, original.storyId);
 
-      const [updated] = await db.update(storySchemaFields)
-        .set({ ...fieldData, updatedAt: new Date(), version: sql`${storySchemaFields.version} + 1` })
+      const [updated] = await db
+        .update(storySchemaFields)
+        .set({
+          ...fieldData,
+          updatedAt: new Date(),
+          version: sql`${storySchemaFields.version} + 1`,
+        })
         .where(eq(storySchemaFields.id, fieldId))
-        .returning({ id: storySchemaFields.id, storyId: storySchemaFields.storyId, entityType: storySchemaFields.entityType, version: storySchemaFields.version });
+        .returning({
+          id: storySchemaFields.id,
+          storyId: storySchemaFields.storyId,
+          entityType: storySchemaFields.entityType,
+          version: storySchemaFields.version,
+        });
 
       if (!updated) {
         throw new Error(`Failed to update attribute field ${fieldId}.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
-      await recordLocalOperation(db, updated.storyId, userIdToLog, 'update', 'StorySchemaField', fieldId, {
-        ...fieldData,
-        version: updated.version,
-      });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updated.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        updated.storyId,
+        userIdToLog,
+        'update',
+        'StorySchemaField',
+        fieldId,
+        {
+          ...fieldData,
+          version: updated.version,
+        },
+      );
       entityEventEmitter.emit('story_schema_field_changed', updated.storyId, updated.entityType);
     },
 
+    async reorderFields(currentUserId, storyId, entityType, newOrder): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
+
+      const fields = await db
+        .select({ id: storySchemaFields.id, order: storySchemaFields.order })
+        .from(storySchemaFields)
+        .where(
+          and(
+            eq(storySchemaFields.storyId, storyId),
+            eq(storySchemaFields.entityType, entityType),
+            eq(storySchemaFields.isDeleted, false),
+          ),
+        )
+        .all();
+      const fieldsById = new Map(fields.map((field) => [field.id, field]));
+
+      const orderValues = newOrder.map(({ order }) => order).sort((a, b) => a - b);
+      const hasSequentialOrder = orderValues.every((order, index) => order === index);
+      if (
+        newOrder.length !== fields.length ||
+        new Set(newOrder.map(({ id }) => id)).size !== fields.length ||
+        newOrder.some(({ id }) => !fieldsById.has(id)) ||
+        !hasSequentialOrder
+      ) {
+        throw new Error('Attribute reorder must contain every field of the selected entity type.');
+      }
+
+      const changedFields = newOrder.filter(({ id, order }) => fieldsById.get(id)?.order !== order);
+      if (changedFields.length === 0) return;
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      for (const field of changedFields) {
+        await db
+          .update(storySchemaFields)
+          .set({
+            order: field.order,
+            updatedAt: new Date(),
+            version: sql`${storySchemaFields.version} + 1`,
+          })
+          .where(eq(storySchemaFields.id, field.id))
+          .run();
+      }
+
+      const [story] = await db
+        .update(stories)
+        .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
+        .where(eq(stories.id, storyId))
+        .returning({ version: stories.version });
+
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
+        reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
+        reorderTarget: 'StorySchemaField',
+        schemaEntityType: entityType,
+        version: story?.version,
+      });
+      entityEventEmitter.emit('story_schema_field_changed', storyId, entityType);
+    },
+
     async deleteField(currentUserId: string, fieldId: string): Promise<void> {
-      const field = await db.query.storySchemaFields.findFirst({ where: eq(storySchemaFields.id, fieldId) });
+      const field = await db.query.storySchemaFields.findFirst({
+        where: eq(storySchemaFields.id, fieldId),
+      });
       if (!field) {
         console.warn(`Attempted to delete non-existent attribute field ${fieldId}.`);
         return;
@@ -103,7 +234,12 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       }
       await assertStoryIsWritable(db, field.storyId);
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, field.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        field.storyId,
+        currentUserId,
+      );
       const now = new Date();
 
       // Muta a key no soft-delete pra liberar o slot de unique(storyId, entityType, key) - a
@@ -112,8 +248,15 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       // valer localmente (o servidor faz sua própria mutação independente ao processar o mesmo
       // delete, ver StorySchemaFieldSyncHandler) - ninguém nunca lê essa key mutada de volta.
       const mangledKey = `${field.key}__deleted_${createULID()}`;
-      const [updatedField] = await db.update(storySchemaFields)
-        .set({ key: mangledKey, isDeleted: true, deletedAt: now, updatedAt: now, version: sql`${storySchemaFields.version} + 1` })
+      const [updatedField] = await db
+        .update(storySchemaFields)
+        .set({
+          key: mangledKey,
+          isDeleted: true,
+          deletedAt: now,
+          updatedAt: now,
+          version: sql`${storySchemaFields.version} + 1`,
+        })
         .where(eq(storySchemaFields.id, fieldId))
         .returning({ id: storySchemaFields.id, version: storySchemaFields.version });
 
@@ -121,11 +264,19 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         throw new Error(`Failed to delete attribute field ${fieldId}.`);
       }
 
-      await recordLocalOperation(db, field.storyId, userIdToLog, 'delete', 'StorySchemaField', fieldId, {
-        id: fieldId,
-        isDeleted: true,
-        version: updatedField.version,
-      });
+      await recordLocalOperation(
+        db,
+        field.storyId,
+        userIdToLog,
+        'delete',
+        'StorySchemaField',
+        fieldId,
+        {
+          id: fieldId,
+          isDeleted: true,
+          version: updatedField.version,
+        },
+      );
 
       // Cascata: um AttributeValue órfão (fieldId apontando pra um campo que não existe mais)
       // não tem type/label pra se renderizar - diferente de outras relações no app, que ficam
@@ -134,14 +285,21 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       // dispositivos realmente saiba da exclusão - ver o comentário em
       // StorySchemaFieldSyncHandler.delete() sobre por que a cascata não pode viver só no
       // servidor.
-      const liveValues = await db.select({ id: attributeValues.id, version: attributeValues.version })
+      const liveValues = await db
+        .select({ id: attributeValues.id, version: attributeValues.version })
         .from(attributeValues)
         .where(and(eq(attributeValues.fieldId, fieldId), eq(attributeValues.isDeleted, false)))
         .all();
 
       for (const value of liveValues) {
-        const [updatedValue] = await db.update(attributeValues)
-          .set({ isDeleted: true, deletedAt: now, updatedAt: now, version: sql`${attributeValues.version} + 1` })
+        const [updatedValue] = await db
+          .update(attributeValues)
+          .set({
+            isDeleted: true,
+            deletedAt: now,
+            updatedAt: now,
+            version: sql`${attributeValues.version} + 1`,
+          })
           .where(eq(attributeValues.id, value.id))
           .returning({ id: attributeValues.id, version: attributeValues.version });
 
@@ -149,15 +307,22 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
           continue;
         }
 
-        await recordLocalOperation(db, field.storyId, userIdToLog, 'delete', 'AttributeValue', value.id, {
-          id: value.id,
-          isDeleted: true,
-          version: updatedValue.version,
-        });
+        await recordLocalOperation(
+          db,
+          field.storyId,
+          userIdToLog,
+          'delete',
+          'AttributeValue',
+          value.id,
+          {
+            id: value.id,
+            isDeleted: true,
+            version: updatedValue.version,
+          },
+        );
       }
 
       entityEventEmitter.emit('story_schema_field_changed', field.storyId, field.entityType);
     },
   };
 };
-

@@ -61,9 +61,9 @@ export function renderStoryMapSvg(layout: StoryGraphLayout, options: StoryMapSvg
     renderHeader(options, canvasWidth, legendRows),
     `<g transform="translate(0 ${round(headerHeight)})">`,
     // Arestas primeiro: passar por baixo dos nós evita que uma curva risque o texto da cena.
-    ...layout.edges.map(edge => renderEdge(edge)),
-    ...(options.showEdgeLabels ? layout.edges.map(edge => renderEdgeLabel(edge, options)) : []),
-    ...layout.nodes.map(node => renderNode(node, options)),
+    ...layout.edges.map((edge) => renderEdge(edge)),
+    ...(options.showEdgeLabels ? layout.edges.map((edge) => renderEdgeLabel(edge, options)) : []),
+    ...layout.nodes.map((node) => renderNode(node, options)),
     '</g>',
   ].join('\n');
 
@@ -93,13 +93,33 @@ function buildLegendItems(layout: StoryGraphLayout, options: StoryMapSvgOptions)
     width: 0,
   }));
 
-  items.push({ label: options.labels.start, color: options.colors.accent, style: 'outline', width: 0 });
-  items.push({ label: options.labels.finish, color: options.colors.error, style: 'outline', width: 0 });
+  items.push({
+    label: options.labels.start,
+    color: options.colors.accent,
+    style: 'outline',
+    width: 0,
+  });
+  items.push({
+    label: options.labels.finish,
+    color: options.colors.error,
+    style: 'outline',
+    width: 0,
+  });
   if (layout.hasBackwardEdges) {
-    items.push({ label: options.labels.loops, color: options.colors.textSecondary, style: 'dashed', width: 0 });
+    items.push({
+      label: options.labels.loops,
+      color: options.colors.textSecondary,
+      style: 'dashed',
+      width: 0,
+    });
   }
   if (layout.detachedSceneCount > 0) {
-    items.push({ label: options.labels.detached, color: options.colors.border, style: 'swatch', width: 0 });
+    items.push({
+      label: options.labels.detached,
+      color: options.colors.border,
+      style: 'swatch',
+      width: 0,
+    });
   }
 
   for (const item of items) {
@@ -128,7 +148,11 @@ function wrapLegendRows(items: LegendItem[], availableWidth: number): LegendItem
   return rows;
 }
 
-function renderHeader(options: StoryMapSvgOptions, canvasWidth: number, legendRows: LegendItem[][]): string {
+function renderHeader(
+  options: StoryMapSvgOptions,
+  canvasWidth: number,
+  legendRows: LegendItem[][],
+): string {
   const parts = [
     `<text x="${GRAPH_PADDING}" y="${HEADER_TOP}" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
     `<text x="${GRAPH_PADDING}" y="${HEADER_TOP + 20}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
@@ -146,7 +170,12 @@ function renderHeader(options: StoryMapSvgOptions, canvasWidth: number, legendRo
   return parts.join('\n');
 }
 
-function renderLegendItem(item: LegendItem, x: number, y: number, options: StoryMapSvgOptions): string {
+function renderLegendItem(
+  item: LegendItem,
+  x: number,
+  y: number,
+  options: StoryMapSvgOptions,
+): string {
   const centerY = y - SWATCH_SIZE / 2 + 1;
   let mark: string;
 
@@ -207,13 +236,13 @@ function renderNode(node: GraphNode, options: StoryMapSvgOptions): string {
   const firstLineY = node.y + (node.labelLines.length > 1 ? 30 : 38);
   node.labelLines.forEach((line, index) => {
     parts.push(
-      `<text x="${round(centerX)}" y="${round(firstLineY + index * 15)}" font-size="12.5" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${escapeXml(line)}</text>`
+      `<text x="${round(centerX)}" y="${round(firstLineY + index * 15)}" font-size="12.5" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${escapeXml(line)}</text>`,
     );
   });
 
   if (node.chapterName) {
     parts.push(
-      `<text x="${round(centerX)}" y="${round(node.y + node.height - 9)}" font-size="9.5" text-anchor="middle" fill="${node.chapterColor}">${escapeXml(truncate(node.chapterName, 24))}</text>`
+      `<text x="${round(centerX)}" y="${round(node.y + node.height - 9)}" font-size="9.5" text-anchor="middle" fill="${node.chapterColor}">${escapeXml(truncate(node.chapterName, 24))}</text>`,
     );
   }
 

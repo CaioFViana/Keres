@@ -1,10 +1,17 @@
-import { CreateStoryUpdate, CreateWorldRuleDataSchema, CreateWorldRuleDataType, PartialWorldRuleSchema, UpdateStoryUpdate } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import {
+  CreateStoryUpdate,
+  CreateWorldRuleDataSchema,
+  CreateWorldRuleDataType,
+  PartialWorldRuleSchema,
+} from '@keres/shared';
 import { db } from '../../db';
 import { worldRules } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWorldRuleDataSchema, typeof PartialWorldRuleSchema> {
+export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateWorldRuleDataSchema,
+  typeof PartialWorldRuleSchema
+> {
   entityName = 'WorldRule';
 
   constructor() {
@@ -18,7 +25,7 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWor
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
@@ -49,20 +56,9 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWor
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
-    const validatedChanges = this.updateSchema.parse(update.changes);
-
-    await this.validateRelatedEntities();
-
-    await db.update(worldRules)
-      .set({
-        ...validatedChanges,
-        updatedAt: new Date(),
-        version: currentEntity.version + 1,
-      })
-      .where(and(
-        eq(worldRules.id, update.id!),
-        eq(worldRules.version, currentEntity.version)
-      ));
-  }
+  // `update` e `delete` vêm da base de propósito. Houve aqui um override que só repetia o
+  // que a base faz, mas sem `checkVersionConflict`, sem a checagem de `deleted_on_server` e
+  // sem honrar o `operationTime` do cliente - o resultado era que uma edição concorrente
+  // sobre esta entidade não gerava conflito nenhum e, quando a cláusula `where version = ...`
+  // não casava, a edição do usuário sumia sem erro e sem aviso.
 }

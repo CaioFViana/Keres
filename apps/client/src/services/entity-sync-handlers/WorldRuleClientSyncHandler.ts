@@ -51,7 +51,8 @@ export class WorldRuleClientSyncHandler implements ClientSyncEntityHandler {
 
     const worldRuleChanges = update.changes as Partial<WorldRule>;
 
-    await this.db.update(schema.worldRules)
+    await this.db
+      .update(schema.worldRules)
       .set({
         ...worldRuleChanges,
         storyId: storyId,
@@ -72,7 +73,8 @@ export class WorldRuleClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.worldRules)
+    await this.db
+      .update(schema.worldRules)
       .set({
         storyId: storyId,
         isDeleted: true,

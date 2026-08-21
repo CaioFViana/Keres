@@ -21,6 +21,7 @@ Keres/
 │ │ │ ├── services/   # lógica de negócio + entity-sync-handlers/
 │ │ │ └── db/         # schema Drizzle (Postgres) e migrations
 │ ├── admin/    # painel administrativo interno (React + Vite), servido pela API em /admin
+│ ├── site/     # landing pública (GitHub Pages)
 │ ├── client/   # frontend (React Native + Expo, mobile e web)
 │ │ └── src/
 │ │   ├── db/        # schema Drizzle (SQLite local) e migrations
@@ -121,6 +122,18 @@ Para campos que requerem listas de valores pré-definidos (como gêneros literá
 - **Raças/Sub-raças:** O sistema pode sugerir "Elfo", "Anão", "Humano", mas o usuário pode adicionar "Draconiano" ou "Meio-Orc", e sub-raças como "Elfo da Floresta" ou "Anão da Montanha".
 - **Tipos de Relação:** Além de "Irmão", "Mãe", "Amigo", o usuário pode adicionar "Mentor", "Rival", "Mestre/Aprendiz".
 
+## Ajuda integrada
+
+O cliente inclui um catálogo de ajuda em português e inglês, com busca local, páginas por tarefa, tabelas de campos visíveis e acesso contextual pelos cabeçalhos das telas.
+
+## Recursos transversais da história
+
+- **Favoritos:** uma história ou elemento pode ser destacado para filtros e listas. Em histórias compartilhadas, o comportamento do favorito é definido nas configurações da história.
+- **Comentários:** colaboradores e leitores autorizados podem comentar um campo ou elemento; a lista de comentários reúne essas conversas em um só lugar.
+- **Veja também:** cria uma ligação livre e recíproca entre elementos relacionados, sem substituir etiquetas ou notas.
+- **Histórias ramificadas:** escolhas podem ter condições (visitas, itens ou marcadores) e efeitos (dar/tirar item ou ligar/desligar marcador). Esses recursos formam o estado do leitor e são analisados junto ao mapa da história.
+- **Colaboração:** uma história ligada a servidor pode ter colaboradores; permissões e comentários de leitores são configurados na própria história.
+
 **Nota sobre Suggestions:**
 > O código está implementado para que o sistema tenha uma lista padrão de sugestões, porém está inutilizado no momento visto que a forma atual permite uma completa customização desta lista ao usuário, sendo populada apenas pelo que o usuário insere. No entanto, pode-se ver como uma melhoria futura adicionar entradas nesta tabela para "persistir mesmo que todas as entidades com o valor X sejam excluidas." Talvez um novo futuro drawer.
 
@@ -183,34 +196,30 @@ graph LR
 
 ### Estratégia de Resolução de Conflitos
 
-Para garantir a integridade dos dados e uma experiência de usuário consistente em um ambiente colaborativo e offline-first, o Keres adotará uma estratégia híbrida de resolução de conflitos:
+O comportamento vigente está em `docs/conflict_resolution_client_strategy.md`. Resumo:
 
-*   **Conflitos de Edição (mesmo campo):** Será aplicada a regra **Última Escrita Vence (Last-Write-Wins - LWW)**, utilizando o campo `updated_at` (timestamp) da entidade. A alteração mais recente prevalecerá. O campo `version`, gerenciado pelo servidor, será usado para garantir atualizações sequenciais e detectar dados de cliente desatualizados.
-*   **Conflitos de Edição (campos diferentes):** Se diferentes clientes editarem campos distintos da mesma entidade, as alterações serão **mescladas** automaticamente.
-*   **Conflitos Envolvendo Exclusões:** A **exclusão sempre vencerá uma edição**. Para isso, as entidades que podem ser excluídas e sincronizadas incluirão os campos `isDeleted: boolean` e `deletedAt: Date | null` (tombstones). Se um item for marcado como excluído por um cliente e editado por outro, a exclusão será priorizada, garantindo que a intenção de remover o item seja respeitada.
+*   **OCC por `version` da entidade.** Update exige `changes.version` (a base lida pelo cliente). Comparação é de igualdade, não `<`. Omitir a base **não** é last-write-wins: o push 422.
+*   **Campos diferentes da mesma entidade** são mesclados automaticamente. O mesmo campo, com valores diferentes, vira um conflito para o usuário (`SyncConflictService`).
+*   **Exclusão vs. edição** não se resolve sozinha: a tela oferece restaurar, aceitar o tombstone ou reenviar o delete local. Tombstones usam `isDeleted` / `deletedAt`.
+*   **Writer ≠ owner.** Só o dono apaga a história ou muda `userId` / `type` / `favoriteBehavior` / `allowReaderComments`. O cliente recusa as mesmas mutações localmente (`assertStoryIsOwned` / campos de política em `StoryService.updateStory`) para não enfileirar um push que o servidor recusaria para sempre.
+*   O log de operações retransmite o payload sanitizado (o que o servidor gravou), não o JSON cru do cliente.
 
 ### Estratégias de Armazenamento de Atualizações para Sincronização
 
-Para otimizar o desempenho e o uso de recursos, a estratégia de armazenamento de atualizações (`StoryUpdates`) variará conforme o estado de sincronização da história:
-
-*   **Histórias Online (Sincronizadas com Servidor):** Para histórias que já foram sincronizadas com um servidor remoto, todas as atualizações desde a última sincronização bem-sucedida devem ser armazenadas. Isso garante que nenhum dado seja perdido e que a replicação seja completa quando a conexão for restabelecida.
-*   **Histórias Offline (Nunca Sincronizadas):** Para histórias que são estritamente locais e nunca foram sincronizadas com um servidor, apenas as últimas 500 atualizações devem ser mantidas. Isso evita o acúmulo excessivo de dados de histórico que não seriam utilizados para sincronização remota, mantendo o banco de dados local leve e eficiente.
+*   **Histórias ligadas a um servidor:** o log local guarda as operações ainda não aceitas (`isSynced = false`) e as já sincronizadas (auditoria / eco do pull). Não há poda automática das aceitas.
+*   **Histórias só locais:** o mesmo log existe para a tela de operações; não há teto de 500 entradas implementado.
 
 ### Mecanismo Detalhado de Sincronização
 
-1.  **Formato das Operações (`StoryUpdates`):** As operações serão definidas como objetos JSON que descrevem a mudança. Exemplos:
-    *   `{"type": "create", "entity": "NomeDaEntidade", "data": {...}}`
-    *   `{"type": "update", "entity": "NomeDaEntidade", "id": "ulid", "changes": {"campo": "novo_valor"}}`
-    *   `{"type": "delete", "entity": "NomeDaEntidade", "id": "ulid"}`
-2.  **Mecanismo de Rastreamento de Mudanças:** O ORM do lado do cliente (ou camada de banco de dados customizada) irá interceptar todas as operações de criação, atualização e exclusão. Para cada operação, ele gerará um registro `StoryUpdate` (conforme definido acima) e o armazenará em uma tabela local de "log de operações". Este log será a fonte para a sincronização.
-3.  **Protocolo de Comunicação:** Uma API REST será empregada para puxar e empurrar informações, permitindo também solicitações manuais de mudanças. Apesar do servidor suportar Websockets, não são utilizados no momento.
-4.  **Autenticação e Autorização:** JWT (JSON Web Tokens) será usado para autenticação. Os clientes usarão login/senha para obter um JWT e um refresh token.
-5.  **Sincronização Inicial (Bootstrapping):** Haverá uma função de importação/exportação de histórias a partir de JSON, permitindo que o servidor envie uma história inteira de uma vez. As tabelas de história são agnósticas ao ID do usuário e utilizam ULIDs para garantir unicidade universal.
-6.  **Lógica de Mesclagem de Campos Diferentes:** Para campos diferentes dentro da mesma entidade, todas as alterações não conflitantes de ambos os lados serão aplicadas. Se houver conflito no *mesmo* campo, a estratégia LWW (Última Escrita Vence), baseada no campo `updated_at` (timestamp), será aplicada.
-7.  **Gerenciamento das "Últimas 500 Atualizações":** Uma tabela dedicada de "log de operações" armazenará as atualizações. Para histórias offline, quando o número de entradas exceder 500, as entradas mais antigas serão excluídas. Isso pode ser determinado usando `ROW_NUMBER()` ordenado por `updated_at` em ordem decrescente.
-8.  **Tratamento de Erros e Retentativas:** Cada operação de sincronização enviada será tratada como uma transação. Se nem todas as operações do servidor forem enviadas com sucesso, nenhuma alteração será aplicada (tudo ou nada).
-9.  **Integração do Banco de Dados Local Customizado:** A pasta `packages/shared/entities` contém o mapeamento inicial e idealizado das tabelas. A implementação do banco de dados local customizado aderirá a essas definições de entidade.
-10. **Detecção de Conflitos Complexos:** Se um campo foi atualizado recentemente (por exemplo, nas últimas horas), uma notificação será exibida na tela para informar o usuário sobre a alteração recente.
+1.  **Formato (`StoryUpdate`):** união Zod em `packages/shared/schemas/SyncSchemas.ts`. Create leva `id` (ULID do cliente) + `data`. Update leva `id` + `changes` com `changes.version` obrigatório. Delete leva `id` e, para entidades filhas, `version`. Reorder leva `reorderItems`.
+2.  **Rastreamento:** cada mutação nos services de `storymanagement/` chama `recordLocalOperation` *depois* da escrita local. O payload de update/delete/reorder inclui a versão *resultante*; o motor deriva a base como `version - 1`.
+3.  **Protocolo:** REST `POST /sync/:storyId` (push, até 200 ops) e `GET /sync/:storyId/pull` (páginas de até 500). WebSocket (`/events`) só notifica que há trabalho novo; o ciclo em si continua sendo pull/push HTTP. JWT + refresh.
+4.  **Autorização:** `owner` / `writer` / `reader`. Reader só escreve Favorite próprio e, se permitido, Comment próprio.
+5.  **Bootstrap:** história local sobe por `POST /stories/import`. História remota desce por `GET /stories/:id/export` + import local. O sync incremental começa depois do vínculo.
+6.  **Mescla:** campos disjuntos no pull e na resposta de `version_conflict` (`changedFields`). Mesmo campo → folha de revisão no painel. Reorder disputa a ordem inteira.
+7.  **Lote:** não é tudo-ou-nada. Cada operação é aplicada e registrada sozinha; a resposta lista `applied` e `conflicts`. O cliente só marca `isSynced` o que veio em `applied`.
+8.  **Cursor:** `lastServerSyncedLog` avança só até a última operação remota realmente aplicada. Uma falha no meio da página não pula aquela operação.
+9.  **Mídia:** bytes sobem/descem por `/media` depois dos metadados. Um hash já existente no storage só pode ser ligado a uma história que já o referencia.
 
 - **Frontend** (`apps/client`)
   - Desenvolvido com React Native, Expo e React Native Web para uma base de código unificada (mobile nativo e web/desktop a partir do mesmo código).
@@ -247,7 +256,6 @@ JWT_SECRET=seu_segredo_jwt_forte_para_online
 JWT_SECRET_REFRESH="seu_segredo_jwt_forte_para_online_refresh"
 ROOT_ADMIN_USERNAME="root"
 ROOT_ADMIN_PASSWORD="password"
-DEFAULT_PASSWORD_RESET_VALUE="abc123"
 ```
 ---
 

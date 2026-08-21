@@ -2,7 +2,11 @@ import { CommentEntityType } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import { CommentSelect } from '../db/schema';
-import { createCommentService, CommentTarget, CreateCommentInput } from '../services/storymanagement/CommentService';
+import {
+  createCommentService,
+  CommentTarget,
+  CreateCommentInput,
+} from '../services/storymanagement/CommentService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useStoryRole } from './useStoryRole';
@@ -16,7 +20,11 @@ import { useStoryRole } from './useStoryRole';
  * só se a história permitir (`stories.allowReaderComments`, só relevante quando vinculada a
  * um servidor - ver plano de implementação/StorySettingsScreen).
  */
-export function useEntityComments(storyId: string | undefined, entityType: CommentEntityType, entityId: string | undefined) {
+export function useEntityComments(
+  storyId: string | undefined,
+  entityType: CommentEntityType,
+  entityId: string | undefined,
+) {
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
   const { role } = useStoryRole(storyId);
@@ -54,8 +62,15 @@ export function useEntityComments(storyId: string | undefined, entityType: Comme
 
   useEffect(() => {
     refresh();
-    const handleChange = (changedStoryId: string, changedEntityType?: CommentEntityType, changedEntityId?: string) => {
-      if (changedStoryId === storyId && (!changedEntityType || (changedEntityType === entityType && changedEntityId === entityId))) {
+    const handleChange = (
+      changedStoryId: string,
+      changedEntityType?: CommentEntityType,
+      changedEntityId?: string,
+    ) => {
+      if (
+        changedStoryId === storyId &&
+        (!changedEntityType || (changedEntityType === entityType && changedEntityId === entityId))
+      ) {
         refresh();
       }
     };
@@ -75,22 +90,35 @@ export function useEntityComments(storyId: string | undefined, entityType: Comme
   }, [comments]);
 
   const isStoryOwner = role === 'owner';
-  const canComment = role === 'owner' || role === 'writer' || (role === 'reader' && allowReaderComments);
+  const canComment =
+    role === 'owner' || role === 'writer' || (role === 'reader' && allowReaderComments);
 
-  const addComment = useCallback(async (target: CommentTarget, input: CreateCommentInput) => {
-    if (!service || !storyId || !userId || !entityId) return;
-    await service.createComment(userId, storyId, entityType, entityId, target, input);
-  }, [service, storyId, userId, entityType, entityId]);
+  const addComment = useCallback(
+    async (target: CommentTarget, input: CreateCommentInput) => {
+      if (!service || !storyId || !userId || !entityId) return;
+      await service.createComment(userId, storyId, entityType, entityId, target, input);
+    },
+    [service, storyId, userId, entityType, entityId],
+  );
 
-  const updateComment = useCallback(async (commentId: string, changes: { commentText?: string; excerptText?: string | null; criticality?: number }) => {
-    if (!service || !userId) return;
-    await service.updateComment(userId, commentId, changes);
-  }, [service, userId]);
+  const updateComment = useCallback(
+    async (
+      commentId: string,
+      changes: { commentText?: string; excerptText?: string | null; criticality?: number },
+    ) => {
+      if (!service || !userId) return;
+      await service.updateComment(userId, commentId, changes);
+    },
+    [service, userId],
+  );
 
-  const deleteComment = useCallback(async (commentId: string) => {
-    if (!service || !userId) return;
-    await service.deleteComment(userId, commentId, isStoryOwner);
-  }, [service, userId, isStoryOwner]);
+  const deleteComment = useCallback(
+    async (commentId: string) => {
+      if (!service || !userId) return;
+      await service.deleteComment(userId, commentId, isStoryOwner);
+    },
+    [service, userId, isStoryOwner],
+  );
 
   return {
     comments,

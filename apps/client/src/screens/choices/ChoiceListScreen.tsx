@@ -6,7 +6,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import Select from '@/src/components/common/inputs/Select/Select';
 import ChoiceListItem from '@/src/components/features/list-items/ChoiceListItem';
 import { useDrizzle } from '../../db';
@@ -58,8 +61,18 @@ const ChoiceListScreen = () => {
   const { canEdit } = useStoryRole(storyId);
 
   // Chapters and scenes feed this screen's own filter dropdowns, so they stay wired here.
-  const { chapters, fetchChapters: fetchAllChapters, setDbAndStoryId: setChapterDb, initializeService: initializeChapterService } = useChapterStore();
-  const { scenes, fetchScenes: fetchAllScenes, setDbAndStoryId: setSceneDb, initializeService: initializeSceneService } = useSceneStore();
+  const {
+    chapters,
+    fetchChapters: fetchAllChapters,
+    setDbAndStoryId: setChapterDb,
+    initializeService: initializeChapterService,
+  } = useChapterStore();
+  const {
+    scenes,
+    fetchScenes: fetchAllScenes,
+    setDbAndStoryId: setSceneDb,
+    initializeService: initializeSceneService,
+  } = useSceneStore();
 
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
@@ -73,7 +86,16 @@ const ChoiceListScreen = () => {
       fetchAllChapters();
       fetchAllScenes();
     }
-  }, [drizzleDb, storyId, setChapterDb, initializeChapterService, setSceneDb, initializeSceneService, fetchAllChapters, fetchAllScenes]);
+  }, [
+    drizzleDb,
+    storyId,
+    setChapterDb,
+    initializeChapterService,
+    setSceneDb,
+    initializeSceneService,
+    fetchAllChapters,
+    fetchAllScenes,
+  ]);
 
   useEffect(() => {
     const criteria: { [key: string]: any } = {};
@@ -99,38 +121,51 @@ const ChoiceListScreen = () => {
     };
   }, [storyId, fetchChoices, fetchAllChapters, fetchAllScenes]);
 
-  const handleViewDetails = useCallback((choiceId: string) => {
-    navigation.navigate('ChoiceDetail', { choiceId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (choiceId: string) => {
+      navigation.navigate('ChoiceDetail', { choiceId });
+    },
+    [navigation],
+  );
 
-  const memoizedChoiceListItem = useCallback(({ item }: { item: ChoiceSelect }) => (
-    <ChoiceListItem choice={item} onViewDetails={handleViewDetails} />
-  ), [handleViewDetails]);
+  const memoizedChoiceListItem = useCallback(
+    ({ item }: { item: ChoiceSelect }) => (
+      <ChoiceListItem choice={item} onViewDetails={handleViewDetails} />
+    ),
+    [handleViewDetails],
+  );
 
-  const chapterOptions = useMemo(() => chapters.map(c => ({ label: c.name, value: c.id })), [chapters]);
+  const chapterOptions = useMemo(
+    () => chapters.map((c) => ({ label: c.name, value: c.id })),
+    [chapters],
+  );
   const sceneOptions = useMemo(() => {
     if (!selectedChapterId) return [];
-    return scenes.filter(s => s.chapterId === selectedChapterId).map(s => ({ label: s.name, value: s.id }));
+    return scenes
+      .filter((s) => s.chapterId === selectedChapterId)
+      .map((s) => ({ label: s.name, value: s.id }));
   }, [scenes, selectedChapterId]);
 
   useEffect(() => {
     setSelectedSceneId(null);
   }, [selectedChapterId]);
 
-  const memoizedSortOptions = useMemo(() => ([
-    { label: t('sort_by_text'), value: 'text' },
-    { label: t('sort_by_created_at'), value: 'createdAt' },
-    { label: t('sort_by_updated_at'), value: 'updatedAt' }
-  ]), [t]);
-
+  const memoizedSortOptions = useMemo(
+    () => [
+      { label: t('sort_by_text'), value: 'text' },
+      { label: t('sort_by_created_at'), value: 'createdAt' },
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
+    ],
+    [t],
+  );
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     headerRightContainer: { flexDirection: 'row', marginRight: 15 },
     headerButton: { marginLeft: 15 },
-    filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
-    selectWrapperLeft: { flex: 1, paddingRight:5},
-    selectWrapperRight: { flex: 1, paddingLeft:5}
+    filterContainer: { flexDirection: 'row', padding: 0, paddingBottom: 10, zIndex: 1000 },
+    selectWrapperLeft: { flex: 1, paddingRight: 5 },
+    selectWrapperRight: { flex: 1, paddingLeft: 5 },
   });
 
   useFocusEffect(
@@ -148,14 +183,17 @@ const ChoiceListScreen = () => {
               <Ionicons name="git-network-outline" size={28} color={colors.text} />
             </TouchableOpacity>
             {canEdit && (
-              <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', {})} style={styles.headerButton}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ChoiceForm', {})}
+                style={styles.headerButton}
+              >
                 <Ionicons name="add" size={30} color={colors.text} />
               </TouchableOpacity>
             )}
           </View>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit]),
   );
 
   const filterComponent = (

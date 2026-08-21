@@ -1,17 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import Button from '@/src/components/common/controls/Button/Button';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
+import RelationRow from '@/src/components/features/relations/RelationManager/RelationRow';
 import { AppAlert } from '../../../../utils/AppAlert';
 
 interface LocationRelationManagerProps {
@@ -29,12 +26,17 @@ type ActivePicker = 'parent' | 'child' | 'connection' | null;
 
 /** Ancestrais de `locationId` (não inclui ele mesmo) - cadeia de pais via 'contains', calculada
  *  em memória a partir da lista já carregada pela tela (evita ida e volta ao banco por toque). */
-const computeAncestorIds = (relations: LocationRelationSelect[], locationId: string): Set<string> => {
+const computeAncestorIds = (
+  relations: LocationRelationSelect[],
+  locationId: string,
+): Set<string> => {
   const ancestors = new Set<string>();
   let currentId: string | undefined = locationId;
 
   while (currentId) {
-    const parentEdge = relations.find(r => r.relationType === 'contains' && r.locationBId === currentId && !r.isDeleted);
+    const parentEdge = relations.find(
+      (r) => r.relationType === 'contains' && r.locationBId === currentId && !r.isDeleted,
+    );
     if (!parentEdge || ancestors.has(parentEdge.locationAId)) break;
     ancestors.add(parentEdge.locationAId);
     currentId = parentEdge.locationAId;
@@ -44,13 +46,18 @@ const computeAncestorIds = (relations: LocationRelationSelect[], locationId: str
 };
 
 /** Descendentes de `locationId` (não inclui ele mesmo), via BFS sobre as arestas 'contains'. */
-const computeDescendantIds = (relations: LocationRelationSelect[], locationId: string): Set<string> => {
+const computeDescendantIds = (
+  relations: LocationRelationSelect[],
+  locationId: string,
+): Set<string> => {
   const descendants = new Set<string>();
   const queue = [locationId];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
-    const children = relations.filter(r => r.relationType === 'contains' && r.locationAId === current && !r.isDeleted);
+    const children = relations.filter(
+      (r) => r.relationType === 'contains' && r.locationAId === current && !r.isDeleted,
+    );
     for (const child of children) {
       if (!descendants.has(child.locationBId)) {
         descendants.add(child.locationBId);
@@ -74,49 +81,92 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
 
-  const liveRelations = useMemo(() => allLocationRelations.filter(r => !r.isDeleted), [allLocationRelations]);
+  const liveRelations = useMemo(
+    () => allLocationRelations.filter((r) => !r.isDeleted),
+    [allLocationRelations],
+  );
 
   const parentRelation = useMemo(
-    () => liveRelations.find(r => r.relationType === 'contains' && r.locationBId === currentLocationId),
-    [liveRelations, currentLocationId]
+    () =>
+      liveRelations.find(
+        (r) => r.relationType === 'contains' && r.locationBId === currentLocationId,
+      ),
+    [liveRelations, currentLocationId],
   );
   const childRelations = useMemo(
-    () => liveRelations.filter(r => r.relationType === 'contains' && r.locationAId === currentLocationId),
-    [liveRelations, currentLocationId]
+    () =>
+      liveRelations.filter(
+        (r) => r.relationType === 'contains' && r.locationAId === currentLocationId,
+      ),
+    [liveRelations, currentLocationId],
   );
   const connectionRelations = useMemo(
-    () => liveRelations.filter(r => r.relationType === 'connected_to' && (r.locationAId === currentLocationId || r.locationBId === currentLocationId)),
-    [liveRelations, currentLocationId]
+    () =>
+      liveRelations.filter(
+        (r) =>
+          r.relationType === 'connected_to' &&
+          (r.locationAId === currentLocationId || r.locationBId === currentLocationId),
+      ),
+    [liveRelations, currentLocationId],
   );
 
-  const ancestorIds = useMemo(() => computeAncestorIds(liveRelations, currentLocationId), [liveRelations, currentLocationId]);
-  const descendantIds = useMemo(() => computeDescendantIds(liveRelations, currentLocationId), [liveRelations, currentLocationId]);
+  const ancestorIds = useMemo(
+    () => computeAncestorIds(liveRelations, currentLocationId),
+    [liveRelations, currentLocationId],
+  );
+  const descendantIds = useMemo(
+    () => computeDescendantIds(liveRelations, currentLocationId),
+    [liveRelations, currentLocationId],
+  );
 
-  const getLocationName = useCallback((locationId: string) => {
-    return allLocations.find(l => l.id === locationId)?.name || t('unknown_location');
-  }, [allLocations, t]);
+  const getLocationName = useCallback(
+    (locationId: string) => {
+      return allLocations.find((l) => l.id === locationId)?.name || t('unknown_location');
+    },
+    [allLocations, t],
+  );
 
-  const handleLocationPress = useCallback((locationId: string) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Location', locationId);
-    }
-  }, [navigation]);
+  const handleLocationPress = useCallback(
+    (locationId: string) => {
+      navigateToDetail('Location', locationId);
+    },
+    [navigateToDetail],
+  );
 
-  const parentPickerCandidates = useMemo(() => allLocations.filter(l =>
-    l.id !== currentLocationId && !descendantIds.has(l.id) && l.id !== parentRelation?.locationAId
-  ), [allLocations, currentLocationId, descendantIds, parentRelation]);
+  const parentPickerCandidates = useMemo(
+    () =>
+      allLocations.filter(
+        (l) =>
+          l.id !== currentLocationId &&
+          !descendantIds.has(l.id) &&
+          l.id !== parentRelation?.locationAId,
+      ),
+    [allLocations, currentLocationId, descendantIds, parentRelation],
+  );
 
-  const childPickerCandidates = useMemo(() => allLocations.filter(l =>
-    l.id !== currentLocationId && !ancestorIds.has(l.id) && !childRelations.some(r => r.locationBId === l.id)
-  ), [allLocations, currentLocationId, ancestorIds, childRelations]);
+  const childPickerCandidates = useMemo(
+    () =>
+      allLocations.filter(
+        (l) =>
+          l.id !== currentLocationId &&
+          !ancestorIds.has(l.id) &&
+          !childRelations.some((r) => r.locationBId === l.id),
+      ),
+    [allLocations, currentLocationId, ancestorIds, childRelations],
+  );
 
-  const connectionPickerCandidates = useMemo(() => allLocations.filter(l =>
-    l.id !== currentLocationId && !connectionRelations.some(r => r.locationAId === l.id || r.locationBId === l.id)
-  ), [allLocations, currentLocationId, connectionRelations]);
+  const connectionPickerCandidates = useMemo(
+    () =>
+      allLocations.filter(
+        (l) =>
+          l.id !== currentLocationId &&
+          !connectionRelations.some((r) => r.locationAId === l.id || r.locationBId === l.id),
+      ),
+    [allLocations, currentLocationId, connectionRelations],
+  );
 
   const handlePickerSelect = (locationId: string) => {
     if (activePicker === 'parent') {
@@ -159,10 +209,6 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
       color: colors.textSecondary,
       marginBottom: 8,
     },
-    actionsRow: {
-      flexDirection: 'row',
-      gap: 12,
-    },
   });
 
   return (
@@ -172,23 +218,22 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
           {/* Parent Location */}
           <Text style={styles.subsectionTitle}>{t('parent_location')}</Text>
           {parentRelation ? (
-            <View style={styles.relationItem}>
-              <TouchableOpacity style={styles.relationItemContent} onPress={() => handleLocationPress(parentRelation.locationAId)} activeOpacity={0.7}>
-                <Text style={styles.relationText}>{getLocationName(parentRelation.locationAId)}</Text>
-              </TouchableOpacity>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
-              {editable && (
-                <TouchableOpacity onPress={handleRemoveParent}>
-                  <Ionicons name="trash-outline" size={22} color={colors.error} />
-                </TouchableOpacity>
-              )}
-            </View>
+            <RelationRow
+              // Em `editable` (form) a linha não navega - sair da tela perderia alterações
+              // não salvas do formulário.
+              onPress={editable ? undefined : () => handleLocationPress(parentRelation.locationAId)}
+              onRemove={editable ? handleRemoveParent : undefined}
+            >
+              <Text style={styles.relationText}>{getLocationName(parentRelation.locationAId)}</Text>
+            </RelationRow>
           ) : (
             <Text style={styles.noRelationsText}>{t('no_parent_location')}</Text>
           )}
           {editable && (
             <View style={styles.buttonContainer}>
-              <Button onPress={() => setActivePicker('parent')}>{parentRelation ? t('change_parent') : t('set_parent')}</Button>
+              <Button onPress={() => setActivePicker('parent')}>
+                {parentRelation ? t('change_parent') : t('set_parent')}
+              </Button>
             </View>
           )}
 
@@ -197,18 +242,23 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
           {childRelations.length === 0 ? (
             <Text style={styles.noRelationsText}>{t('no_child_locations')}</Text>
           ) : (
-            childRelations.map(rel => (
-              <View key={rel.id} style={styles.relationItem}>
-                <TouchableOpacity style={styles.relationItemContent} onPress={() => handleLocationPress(rel.locationBId)} activeOpacity={0.7}>
-                  <Text style={styles.relationText}>{getLocationName(rel.locationBId)}</Text>
-                </TouchableOpacity>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
-                {editable && (
-                  <TouchableOpacity onPress={() => handleRemoveRelation(rel.id, 'remove_child_location_title', 'remove_child_location_message')}>
-                    <Ionicons name="trash-outline" size={22} color={colors.error} />
-                  </TouchableOpacity>
-                )}
-              </View>
+            childRelations.map((rel) => (
+              <RelationRow
+                key={rel.id}
+                onPress={editable ? undefined : () => handleLocationPress(rel.locationBId)}
+                onRemove={
+                  editable
+                    ? () =>
+                        handleRemoveRelation(
+                          rel.id,
+                          'remove_child_location_title',
+                          'remove_child_location_message',
+                        )
+                    : undefined
+                }
+              >
+                <Text style={styles.relationText}>{getLocationName(rel.locationBId)}</Text>
+              </RelationRow>
             ))
           )}
           {editable && (
@@ -222,20 +272,26 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
           {connectionRelations.length === 0 ? (
             <Text style={styles.noRelationsText}>{t('no_connected_locations')}</Text>
           ) : (
-            connectionRelations.map(rel => {
-              const otherId = rel.locationAId === currentLocationId ? rel.locationBId : rel.locationAId;
+            connectionRelations.map((rel) => {
+              const otherId =
+                rel.locationAId === currentLocationId ? rel.locationBId : rel.locationAId;
               return (
-                <View key={rel.id} style={styles.relationItem}>
-                  <TouchableOpacity style={styles.relationItemContent} onPress={() => handleLocationPress(otherId)} activeOpacity={0.7}>
-                    <Text style={styles.relationText}>{getLocationName(otherId)}</Text>
-                  </TouchableOpacity>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
-                  {editable && (
-                    <TouchableOpacity onPress={() => handleRemoveRelation(rel.id, 'remove_connection_title', 'remove_connection_message')}>
-                      <Ionicons name="trash-outline" size={22} color={colors.error} />
-                    </TouchableOpacity>
-                  )}
-                </View>
+                <RelationRow
+                  key={rel.id}
+                  onPress={editable ? undefined : () => handleLocationPress(otherId)}
+                  onRemove={
+                    editable
+                      ? () =>
+                          handleRemoveRelation(
+                            rel.id,
+                            'remove_connection_title',
+                            'remove_connection_message',
+                          )
+                      : undefined
+                  }
+                >
+                  <Text style={styles.relationText}>{getLocationName(otherId)}</Text>
+                </RelationRow>
               );
             })
           )}
@@ -252,14 +308,18 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
         onClose={() => setActivePicker(null)}
         onSelect={handlePickerSelect}
         title={
-          activePicker === 'parent' ? t('select_parent_location')
-            : activePicker === 'child' ? t('select_child_location')
-            : t('select_location_to_connect')
+          activePicker === 'parent'
+            ? t('select_parent_location')
+            : activePicker === 'child'
+              ? t('select_child_location')
+              : t('select_location_to_connect')
         }
         candidates={
-          activePicker === 'parent' ? parentPickerCandidates
-            : activePicker === 'child' ? childPickerCandidates
-            : connectionPickerCandidates
+          activePicker === 'parent'
+            ? parentPickerCandidates
+            : activePicker === 'child'
+              ? childPickerCandidates
+              : connectionPickerCandidates
         }
       />
     </View>

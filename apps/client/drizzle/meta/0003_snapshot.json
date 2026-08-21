@@ -89,10 +89,7 @@
       "indexes": {
         "entity_field_unq": {
           "name": "entity_field_unq",
-          "columns": [
-            "entity_id",
-            "field_id"
-          ],
+          "columns": ["entity_id", "field_id"],
           "isUnique": true
         }
       },
@@ -731,10 +728,7 @@
       "indexes": {
         "sender_receiver_unq": {
           "name": "sender_receiver_unq",
-          "columns": [
-            "sender_id",
-            "receiver_id"
-          ],
+          "columns": ["sender_id", "receiver_id"],
           "isUnique": true
         }
       },
@@ -743,12 +737,8 @@
           "name": "friendships_server_id_servers_id_fk",
           "tableFrom": "friendships",
           "tableTo": "servers",
-          "columnsFrom": [
-            "server_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["server_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -756,12 +746,8 @@
           "name": "friendships_sender_id_users_id_user_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "sender_id"
-          ],
-          "columnsTo": [
-            "id_user"
-          ],
+          "columnsFrom": ["sender_id"],
+          "columnsTo": ["id_user"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -769,12 +755,8 @@
           "name": "friendships_receiver_id_users_id_user_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "receiver_id"
-          ],
-          "columnsTo": [
-            "id_user"
-          ],
+          "columnsFrom": ["receiver_id"],
+          "columnsTo": ["id_user"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -782,12 +764,8 @@
           "name": "friendships_blocked_by_id_users_id_user_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "blocked_by_id"
-          ],
-          "columnsTo": [
-            "id_user"
-          ],
+          "columnsFrom": ["blocked_by_id"],
+          "columnsTo": ["id_user"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1101,12 +1079,7 @@
       "indexes": {
         "favorite_story_entity_user_unq": {
           "name": "favorite_story_entity_user_unq",
-          "columns": [
-            "story_id",
-            "entity_id",
-            "entity_type",
-            "user_id"
-          ],
+          "columns": ["story_id", "entity_id", "entity_type", "user_id"],
           "isUnique": true
         }
       },
@@ -1209,12 +1182,8 @@
           "name": "item_journeys_item_id_items_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1222,12 +1191,8 @@
           "name": "item_journeys_scene_id_scenes_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1235,12 +1200,8 @@
           "name": "item_journeys_new_character_owner_id_characters_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "characters",
-          "columnsFrom": [
-            "new_character_owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["new_character_owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2437,11 +2398,7 @@
       "indexes": {
         "story_entitytype_key_unq": {
           "name": "story_entitytype_key_unq",
-          "columns": [
-            "story_id",
-            "entity_type",
-            "key"
-          ],
+          "columns": ["story_id", "entity_type", "key"],
           "isUnique": true
         }
       },

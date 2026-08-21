@@ -28,13 +28,7 @@ export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = 
     'image/heic',
     'image/heif',
   ],
-  video: [
-    'video/mp4',
-    'video/quicktime',
-    'video/webm',
-    'video/x-m4v',
-    'video/3gpp',
-  ],
+  video: ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v', 'video/3gpp'],
   audio: [
     'audio/mpeg',
     'audio/mp4',
@@ -48,7 +42,7 @@ export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = 
 } as const;
 
 export const ALL_SUPPORTED_MEDIA_MIME_TYPES: readonly string[] = MEDIA_TYPES.flatMap(
-  (type) => SUPPORTED_MEDIA_MIME_TYPES[type]
+  (type) => SUPPORTED_MEDIA_MIME_TYPES[type],
 );
 
 /** Filtro para o seletor de arquivos: `['image/*', 'video/*', 'audio/*']`. */
@@ -112,7 +106,9 @@ export function extensionForMimeType(mimeType: string | null | undefined): strin
  * segurança: o servidor recalcula o hash dos bytes recebidos antes de aceitá-los, então
  * um cliente não consegue registrar um hash que não corresponde ao que enviou.
  */
-export const MediaHashSchema = z.string().regex(/^[a-f0-9]{32}$/, 'Media hash must be a 32-character lowercase hex digest');
+export const MediaHashSchema = z
+  .string()
+  .regex(/^[a-f0-9]{32}$/, 'Media hash must be a 32-character lowercase hex digest');
 
 /**
  * Uma mídia da história.
@@ -155,7 +151,7 @@ export const CreateGalleryDataSchema = GallerySchema.omit({
   extraNotes: z.string().nullable().default(null),
 });
 
-export const PartialGallerySchema = GallerySchema.partial();
+export const PartialGallerySchema = CreateGalleryDataSchema.partial();
 
 export type CreateGalleryDataType = z.infer<typeof CreateGalleryDataSchema>;
 export type GalleryType = z.infer<typeof GallerySchema>;
@@ -190,7 +186,7 @@ export const CreateGalleryRelationDataSchema = GalleryRelationSchema.omit({
   deletedAt: true,
 });
 
-export const PartialGalleryRelationSchema = GalleryRelationSchema.partial();
+export const PartialGalleryRelationSchema = CreateGalleryRelationDataSchema.partial();
 
 export type CreateGalleryRelationDataType = z.infer<typeof CreateGalleryRelationDataSchema>;
 export type GalleryRelationType = z.infer<typeof GalleryRelationSchema>;

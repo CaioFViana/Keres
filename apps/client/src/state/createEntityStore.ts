@@ -52,8 +52,9 @@ type FetchSlice<TKey extends string> = {
   [P in `fetch${Capitalize<TKey>}`]: () => Promise<void>;
 };
 
-export type EntityStore<TKey extends string, TEntity, TService> =
-  EntityStoreCore<TService> & CollectionSlice<TKey, TEntity> & FetchSlice<TKey>;
+export type EntityStore<TKey extends string, TEntity, TService> = EntityStoreCore<TService> &
+  CollectionSlice<TKey, TEntity> &
+  FetchSlice<TKey>;
 
 export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
   /** Plural collection name, e.g. `'tags'`. Drives the public keys: `tags` / `fetchTags`. */
@@ -63,19 +64,16 @@ export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
   /** Maps the shared query params onto this service's own fetch signature. */
   fetchEntities: (service: TService, params: EntityQueryParams) => Promise<TEntity[]>;
   /** Persists a favourite toggle. Omit for entities that have no favourite flag. */
-  updateFavorite?: (service: TService, userId: string, id: string, isFavorite: boolean) => Promise<unknown>;
+  updateFavorite?: (
+    service: TService,
+    userId: string,
+    id: string,
+    isFavorite: boolean,
+  ) => Promise<unknown>;
   /** Emitted after a successful favourite toggle so open screens refresh. */
   changeEvent?: string;
   defaultSort?: string | null;
   defaultSortDirection?: SortDirection;
-  /**
-   * Whether `setSearchTerm` refetches immediately.
-   *
-   * List screens debounce typing locally and drive the fetch from an effect watching
-   * the store's term, so refetching here too fires the query twice per keystroke-burst.
-   * Defaults to false; the stores that currently do it opt in explicitly.
-   */
-  fetchOnSearchTermChange?: boolean;
   errorMessages?: { fetch?: string; toggleFavorite?: string };
   /** Persists the filter/sort selection under this key, via AsyncStorage. */
   persistKey?: string;
@@ -133,6 +131,12 @@ export function createEntityStore<
 
   const creator: StateCreator<Store> = (set, get) => {
     const setPartial = (partial: Record<string, unknown>) => set(partial as Partial<Store>);
+    // Bumped on every fetch (and on reset) so a slower request cannot overwrite a newer
+    // one, or land rows after the user has already left the story.
+    let fetchGeneration = 0;
+
+    const isCurrentFetch = (generation: number, requestedStoryId: string) =>
+      generation === fetchGeneration && get().storyId === requestedStoryId;
 
     const runFetch = async (): Promise<void> => {
       const state = get() as Store;
@@ -143,16 +147,20 @@ export function createEntityStore<
         return;
       }
 
+      const generation = ++fetchGeneration;
+      const requestedStoryId = storyId;
       setPartial({ loading: true, error: null });
       try {
         const localUserId = useUserSettingsStore.getState().userId;
         const favoriteService = state.db ? createFavoriteService(state.db) : null;
         const individualFavorites = !!(
-          config.favoriteEntityType && localUserId && favoriteService
-          && await favoriteService.getBehavior(storyId) !== 'global'
+          config.favoriteEntityType &&
+          localUserId &&
+          favoriteService &&
+          (await favoriteService.getBehavior(requestedStoryId)) !== 'global'
         );
         let entities = await config.fetchEntities(service, {
-          storyId,
+          storyId: requestedStoryId,
           searchTerm: state.searchTerm,
           activeFilterTags: state.activeFilterTags,
           favoriteFilterState: individualFavorites ? 'all' : state.favoriteFilterState,
@@ -160,20 +168,31 @@ export function createEntityStore<
           sortDirection: state.sortDirection,
           advancedSearchCriteria: state.advancedSearchCriteria,
         });
+        if (!isCurrentFetch(generation, requestedStoryId)) {
+          return;
+        }
         if (individualFavorites && favoriteService && localUserId && config.favoriteEntityType) {
-          entities = await favoriteService.decorateEntities(
-            storyId,
+          entities = (await favoriteService.decorateEntities(
+            requestedStoryId,
             config.favoriteEntityType,
             localUserId,
             entities as (TEntity & { isFavorite: boolean })[],
-          ) as TEntity[];
+          )) as TEntity[];
           if (state.favoriteFilterState !== 'all') {
             const expected = state.favoriteFilterState === 'favorite';
-            entities = entities.filter((entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected);
+            entities = entities.filter(
+              (entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected,
+            );
           }
+        }
+        if (!isCurrentFetch(generation, requestedStoryId)) {
+          return;
         }
         setPartial({ [collectionKey]: entities, loading: false });
       } catch (err) {
+        if (!isCurrentFetch(generation, requestedStoryId)) {
+          return;
+        }
         console.error(`Failed to fetch ${label}:`, err);
         setPartial({
           error: config.errorMessages?.fetch ?? `Failed to load ${label}.`,
@@ -210,14 +229,20 @@ export function createEntityStore<
       // Optimistic update, reverted below if the write fails.
       setPartial({
         [collectionKey]: previous.map((entity) =>
-          entity.id === id ? { ...entity, isFavorite } : entity
+          entity.id === id ? { ...entity, isFavorite } : entity,
         ),
       });
 
       try {
         const favoriteService = createFavoriteService((get() as Store).db!);
-        if (await favoriteService.getBehavior(storyId) !== 'global') {
-          await favoriteService.setFavorite(storyId, id, config.favoriteEntityType, userId, isFavorite);
+        if ((await favoriteService.getBehavior(storyId)) !== 'global') {
+          await favoriteService.setFavorite(
+            storyId,
+            id,
+            config.favoriteEntityType,
+            userId,
+            isFavorite,
+          );
         } else {
           await config.updateFavorite(service, userId, id, isFavorite);
         }
@@ -247,15 +272,12 @@ export function createEntityStore<
       },
 
       setSearchTerm: (term: string) => {
-        if (config.fetchOnSearchTermChange) {
-          setAndRefetch({ searchTerm: term });
-        } else {
-          setPartial({ searchTerm: term });
-        }
+        setPartial({ searchTerm: term });
       },
 
       setFilterTags: (tagIds: string[]) => setAndRefetch({ activeFilterTags: tagIds }),
-      setFavoriteFilter: (state: FavoriteFilterState) => setAndRefetch({ favoriteFilterState: state }),
+      setFavoriteFilter: (state: FavoriteFilterState) =>
+        setAndRefetch({ favoriteFilterState: state }),
       setSort: (sortBy: string | null, direction: SortDirection) =>
         setAndRefetch({ activeSort: sortBy, sortDirection: direction }),
       setAdvancedSearchCriteria: (criteria: AdvancedSearchCriteria) =>
@@ -263,7 +285,10 @@ export function createEntityStore<
 
       toggleFavorite,
 
-      resetStore: () => setPartial(defaultState),
+      resetStore: () => {
+        fetchGeneration += 1;
+        setPartial(defaultState);
+      },
 
       ...config.extraActions?.({
         get: () => get() as EntityStore<TKey, TEntity, TService>,
@@ -293,6 +318,6 @@ export function createEntityStore<
           favoriteFilterState: state.favoriteFilterState,
           advancedSearchCriteria: state.advancedSearchCriteria,
         }) as unknown as Store,
-    })
+    }),
   );
 }

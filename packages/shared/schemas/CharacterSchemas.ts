@@ -42,4 +42,4 @@ export const CreateCharacterDataSchema = z.object({
   extraNotes: z.string().nullable().optional(),
 });
 
-export const PartialCharacterSchema = CharacterSchema.partial();
+export const PartialCharacterSchema = CreateCharacterDataSchema.partial();

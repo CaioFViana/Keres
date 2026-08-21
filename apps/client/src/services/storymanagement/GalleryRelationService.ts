@@ -4,7 +4,11 @@ import { AppDrizzleClient } from '../../db';
 import { galleryRelations, GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 /** Uma entidade à qual uma mídia está (ou pode ser) vinculada. */
@@ -17,13 +21,37 @@ export interface GalleryRelationService {
   /** Os vínculos ativos de uma mídia — a quais entidades ela pertence. */
   getOwnersForGallery(storyId: string, galleryId: string): Promise<GalleryRelationSelect[]>;
   /** Os vínculos ativos de uma entidade — quais mídias ela tem. */
-  getRelationsForOwner(storyId: string, ownerId: string, ownerType: GalleryOwnerEntity): Promise<GalleryRelationSelect[]>;
-  linkGalleryToOwner(currentUserId: string, storyId: string, galleryId: string, owner: GalleryOwnerRef): Promise<void>;
-  unlinkGalleryFromOwner(currentUserId: string, storyId: string, galleryId: string, owner: GalleryOwnerRef): Promise<void>;
+  getRelationsForOwner(
+    storyId: string,
+    ownerId: string,
+    ownerType: GalleryOwnerEntity,
+  ): Promise<GalleryRelationSelect[]>;
+  linkGalleryToOwner(
+    currentUserId: string,
+    storyId: string,
+    galleryId: string,
+    owner: GalleryOwnerRef,
+  ): Promise<void>;
+  unlinkGalleryFromOwner(
+    currentUserId: string,
+    storyId: string,
+    galleryId: string,
+    owner: GalleryOwnerRef,
+  ): Promise<void>;
   /** Reconcilia os donos de uma mídia para exatamente esta lista. */
-  setOwnersForGallery(currentUserId: string, storyId: string, galleryId: string, owners: GalleryOwnerRef[]): Promise<void>;
+  setOwnersForGallery(
+    currentUserId: string,
+    storyId: string,
+    galleryId: string,
+    owners: GalleryOwnerRef[],
+  ): Promise<void>;
   /** Reconcilia as mídias de uma entidade para exatamente esta lista. */
-  setGalleriesForOwner(currentUserId: string, storyId: string, owner: GalleryOwnerRef, galleryIds: string[]): Promise<void>;
+  setGalleriesForOwner(
+    currentUserId: string,
+    storyId: string,
+    owner: GalleryOwnerRef,
+    galleryIds: string[],
+  ): Promise<void>;
 }
 
 export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelationService => {
@@ -37,7 +65,7 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
         where: and(
           eq(galleryRelations.storyId, storyId),
           eq(galleryRelations.galleryId, galleryId),
-          eq(galleryRelations.isDeleted, false)
+          eq(galleryRelations.isDeleted, false),
         ),
       });
     },
@@ -48,7 +76,7 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
           eq(galleryRelations.storyId, storyId),
           eq(galleryRelations.ownerId, ownerId),
           eq(galleryRelations.ownerType, ownerType),
-          eq(galleryRelations.isDeleted, false)
+          eq(galleryRelations.isDeleted, false),
         ),
       });
     },
@@ -61,7 +89,7 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
           eq(galleryRelations.galleryId, galleryId),
           eq(galleryRelations.ownerId, owner.ownerId),
           eq(galleryRelations.ownerType, owner.ownerType),
-          eq(galleryRelations.isDeleted, false)
+          eq(galleryRelations.isDeleted, false),
         ),
       });
 
@@ -78,13 +106,19 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
           eq(galleryRelations.galleryId, galleryId),
           eq(galleryRelations.ownerId, owner.ownerId),
           eq(galleryRelations.ownerType, owner.ownerType),
-          eq(galleryRelations.isDeleted, true)
+          eq(galleryRelations.isDeleted, true),
         ),
       });
 
       if (tombstone) {
-        const [revived] = await db.update(galleryRelations)
-          .set({ isDeleted: false, deletedAt: null, updatedAt: new Date(), version: sql`${galleryRelations.version} + 1` })
+        const [revived] = await db
+          .update(galleryRelations)
+          .set({
+            isDeleted: false,
+            deletedAt: null,
+            updatedAt: new Date(),
+            version: sql`${galleryRelations.version} + 1`,
+          })
           .where(eq(galleryRelations.id, tombstone.id))
           .returning();
 
@@ -93,10 +127,18 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
         }
 
         const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-        await recordLocalOperation(db, storyId, userIdToLog, 'update', 'GalleryRelation', revived.id, {
-          isDeleted: false,
-          version: revived.version,
-        });
+        await recordLocalOperation(
+          db,
+          storyId,
+          userIdToLog,
+          'update',
+          'GalleryRelation',
+          revived.id,
+          {
+            isDeleted: false,
+            version: revived.version,
+          },
+        );
         entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
         return;
       }
@@ -111,7 +153,9 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
       const result = await db.insert(galleryRelations).values(newRelation).returning().get();
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'GalleryRelation', result.id, { ...result });
+      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'GalleryRelation', result.id, {
+        ...result,
+      });
       entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
     },
 
@@ -123,17 +167,25 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
           eq(galleryRelations.galleryId, galleryId),
           eq(galleryRelations.ownerId, owner.ownerId),
           eq(galleryRelations.ownerType, owner.ownerType),
-          eq(galleryRelations.isDeleted, false)
+          eq(galleryRelations.isDeleted, false),
         ),
       });
 
       if (!relation) {
-        console.warn(`Gallery relation between ${galleryId} and ${owner.ownerType} ${owner.ownerId} not found or already removed.`);
+        console.warn(
+          `Gallery relation between ${galleryId} and ${owner.ownerType} ${owner.ownerId} not found or already removed.`,
+        );
         return;
       }
 
-      const [updated] = await db.update(galleryRelations)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${galleryRelations.version} + 1` })
+      const [updated] = await db
+        .update(galleryRelations)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${galleryRelations.version} + 1`,
+        })
         .where(eq(galleryRelations.id, relation.id))
         .returning();
 
@@ -142,17 +194,27 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'delete', 'GalleryRelation', updated.id, {
-        id: updated.id,
-        isDeleted: true,
-        version: updated.version,
-      });
+      await recordLocalOperation(
+        db,
+        storyId,
+        userIdToLog,
+        'delete',
+        'GalleryRelation',
+        updated.id,
+        {
+          id: updated.id,
+          isDeleted: true,
+          version: updated.version,
+        },
+      );
       entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
     },
 
     async setOwnersForGallery(currentUserId, storyId, galleryId, owners): Promise<void> {
       const current = await this.getOwnersForGallery(storyId, galleryId);
-      const currentKeys = new Set(current.map((relation) => `${relation.ownerType}:${relation.ownerId}`));
+      const currentKeys = new Set(
+        current.map((relation) => `${relation.ownerType}:${relation.ownerId}`),
+      );
       const desiredKeys = new Set(owners.map(ownerKey));
 
       for (const owner of owners) {

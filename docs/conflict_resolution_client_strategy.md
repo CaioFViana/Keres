@@ -1,63 +1,84 @@
-# Estratégia de Resolução de Conflitos no Lado do Cliente
+# Sincronização e resolução de conflitos
 
-Este documento descreve a estratégia recomendada para o lado do cliente resolver conflitos em um ambiente colaborativo, especialmente para reordenação de cenas em histórias lineares e modificações de escolhas em histórias ramificadas. A abordagem é construída sobre a estratégia Last-Write-Wins (LWW) no servidor, onde o servidor prioriza a última alteração válida e rejeita atualizações baseadas em dados desatualizados.
+Documento do comportamento **atual** (`SyncService` / `SyncEngineService` / `SyncConflictService`). Não é um plano: o que está aqui é o que o código faz.
 
-## 1. Cenários de Conflito
+## Visão geral
 
-Conflitos surgem quando múltiplos usuários modificam a mesma entidade ou um conjunto interdependente de entidades simultaneamente.
+Cada entidade sincronizável tem um `version` (concorrência otimista da *linha*, não do log). Cada escrita local vira uma linha no log de operações. O ciclo de sync:
 
-*   **Reordenação de Cenas (`index` da entidade `Scene` em histórias lineares):** Se dois usuários reordenarem cenas dentro do mesmo capítulo, suas atualizações para os campos `index` das `Scene`s podem colidir. A LWW no servidor garantirá que apenas uma série de atualizações de `index` para uma `Scene` específica prevaleça.
-*   **Modificação de Escolhas (`Choice` em histórias ramificadas):**
-    *   Se dois usuários editarem o mesmo campo (ex: `text` ou `nextSceneId`) de uma `Choice` existente, a LWW no servidor aplicará a última alteração válida.
-    *   A criação de novas `Choice`s não gera conflitos de ID, pois ULIDs são usados.
+1. **Pull** das operações do servidor desde o cursor (`lastServerSyncedLog`).
+2. Aplica as remotas, mesclando em silêncio campos que não disputam com edições locais pendentes.
+3. **Push** das operações locais ainda não aceitas.
+4. Transfere mídia depois dos metadados.
 
-## 2. Papel do Servidor (Resumo)
+O servidor é a fonte da verdade. O log só retransmite o que o handler de fato gravou, não o JSON cru do cliente.
 
-O servidor atua como árbitro final, aplicando a regra Last-Write-Wins (LWW) e garantindo a consistência dos dados através de:
+## Papéis
 
-*   **Bloqueio Otimista:** Cada entidade possui um campo `version`. O servidor rejeita qualquer atualização se a `version` fornecida pelo cliente for menor do que a `version` atual do servidor para aquela entidade (`clientVersion < serverVersion`).
-*   **Processamento de `index` de Cena:** O `SceneSyncHandler` processa as atualizações de `index` para cenas individuais e regenera as `Choices` implícitas para o capítulo, mantendo a consistência.
-*   **Rejeições Claras:** Em caso de conflito de `version`, o servidor retorna um erro explícito ao cliente.
+| Papel | Pode escrever conteúdo | Pode apagar a história / mudar dono, `type`, `favoriteBehavior`, `allowReaderComments` |
+|---|---|---|
+| `owner` | sim | sim |
+| `writer` | sim | não |
+| `reader` | só `Favorite` próprio e, se a história permitir, `Comment` próprio | não |
 
-## 3. Fluxo de Resolução de Conflitos no Lado do Cliente
+Create de `Story` com id diferente do da URL é recusado. Transplante de entidade (`changes.storyId` / `userId`) é recusado.
 
-A responsabilidade de uma experiência de usuário fluida em face de conflitos recai sobre o cliente.
+## Protocolo
 
-### 3.1. Quando o Cliente Envia Atualizações (Push)
+Rotas autenticadas por JWT: `POST /sync/:storyId`, `GET /sync/:storyId/pull`, `GET /sync/pullpreviews`.
 
-1.  **Geração de `StoryUpdate`:** O cliente gera operações `UPDATE` individuais para cada `Scene` ou `Choice` cujo `index` ou propriedades foram alteradas. Cada `UPDATE` inclui o `id` da entidade, as `changes` (por exemplo, `index`, `text`, `nextSceneId`) e a `version` da entidade *conhecida pelo cliente naquele momento*.
-2.  **Push para o Servidor:** O motor de sincronização do cliente envia essas operações para o servidor.
-3.  **Captura de Rejeições:** O cliente deve capturar as respostas do servidor:
-    *   **Sucesso:** A atualização foi aplicada no servidor.
-    *   **Rejeição por Conflito:** O servidor retornou um erro (ex: `Conflict: Scene <ID> is outdated...`). O cliente deve registrar o `id` da entidade conflitante e a mensagem de erro.
+Envelope comum: `type`, `entity`, `id` (ULID; obrigatório em create/update/delete/reorder), `version` da *entidade*, `operationTime` (ISO), `clientOperationId` (id local, ecoado na resposta).
 
-### 3.2. Após Push e Durante Pull de Alterações
+| Tipo | Campos extras | Base do OCC |
+|---|---|---|
+| `create` | `data` | — (id novo; reenvio do mesmo id com os mesmos dados é idempotente) |
+| `update` | `changes` **com `changes.version` obrigatório** | `changes.version` é a base que o cliente leu, não o envelope |
+| `delete` | — | `version` no envelope. Obrigatório para entidades filhas. O dono pode omitir ao apagar a *própria* Story (`deleteStory` / `unlinkFromServer`); o servidor preenche a versão atual |
+| `reorder` | `reorderItems` (`id` + `newIndex` 1-based) | `version` da Story (capítulos / atributos) ou do Chapter (cenas) |
 
-1.  **Recebimento de Alterações (Pull):** O cliente periodicamente (ou após um push falho) realiza um pull para receber as `StoryUpdate`s que ocorreram no servidor desde a última sincronização. Como o pull "passa apenas as alterações que ocorreram", o cliente aplica essas operações à sua base de dados local, garantindo que sua visão dos dados seja eventualmente consistente com a do servidor.
-2.  **Identificação de Conflitos Locais:** O cliente mantém um registro das suas próprias `StoryUpdate`s que foram rejeitadas pelo servidor.
+Omitir `changes.version` num update **não** vira last-write-wins: o schema responde 422 e o lote inteiro é recusado. O motor do cliente deriva a base como `payload.version - 1` (o log local guarda a versão *resultante*).
 
-### 3.3. Reconciliação e Reaplicação Inteligente (O Coração da Resolução)
+Limites: push no máximo 200 operações por POST (`MAX_SYNC_BATCH_SIZE`); pull no máximo 500 por página (`MAX_SYNC_PULL_BATCH`). Rate limit ~120 req/min por usuário.
 
-Esta é a etapa crucial para a experiência do usuário:
+## Servidor
 
-1.  **Notificação ao Usuário:** Para cada `Scene` ou `Choice` que teve sua atualização rejeitada:
-    *   **Alerta:** O cliente deve notificar o usuário de forma clara (ex: um banner, um ícone de conflito, uma mensagem toast) que "Suas alterações para [Nome da Cena/Escolha] não puderam ser salvas diretamente porque foram modificadas por outra pessoa."
-    *   **Visibilidade do Estado Atual:** A UI deve exibir o estado *atual* (o que veio do servidor) da entidade afetada.
+`SyncService.processAndRecordUpdates` aplica o lote **operação a operação**, não tudo-ou-nada. Cada escrita de entidade e a linha do log rodam na mesma transação. O contador `stories.lastOperationVersion` é incrementado atomicamente.
 
-2.  **Armazenamento da Intenção do Usuário:** Para permitir a reaplicação inteligente, o cliente deve armazenar a *intenção* original do usuário, não apenas os valores absolutos.
-    *   **Exemplo de Intenção para Reordenação de Cenas:** Em vez de "Cena X tem `index = 5`", armazenar "Cena X deve estar imediatamente antes da Cena Y" ou "Cena Z deve ser a primeira no Capítulo".
+OCC compara **igualdade** da base com a versão atual (`checkVersionConflict`). O `UPDATE` / tombstone também usa `WHERE version = :base`. Sem base (exceto delete de Story pelo dono) a operação é recusada com `validation`.
 
-3.  **Reapreciação da Intenção:** Quando o usuário decide resolver um conflito ou o cliente tenta resolver automaticamente:
-    *   O cliente reavalia a *intenção* original do usuário contra o *novo estado local* da entidade (que já incorporou as alterações do servidor via pull).
-    *   **Exemplo:** Se a intenção era "Cena A antes da Cena B", e a Cena B foi movida por outro usuário, o cliente encontra a nova posição da Cena B e calcula a nova posição para a Cena A.
-    *   **Geração de Novas `StoryUpdate`s:** Novas operações `UPDATE` são geradas com os `index` (ou outros campos) recalculados e as *novas `version`s* das entidades (obtidas via pull).
+Resposta do push: `applied[]` + `conflicts[]`. Só as aceitas devem ser marcadas `isSynced` no cliente. Operações seguintes da mesma entidade no mesmo lote, depois de um conflito, são bloqueadas (`blockedEntities`).
 
-4.  **Novo Push:** As novas operações `UPDATE` são enviadas ao servidor. Como elas agora se baseiam na `version` mais recente, elas devem ser aceitas, resolvendo o conflito.
+O payload gravado no log é o sanitizado (campos de identidade/`version`/`storyId`/`userId` não viajam). O pull reconstrói o `StoryUpdate` a partir desse payload + metadados do log (`entityVersion`, `originatingUser`).
 
-## 4. Considerações de UI/UX
+Mídia: create/update de Gallery com um hash **já existente no storage** só passa se esta história já o referencia. Hash ainda inexistente é mídia nova cujo upload vem depois.
 
-*   **Feedback Visual:** Elementos visuais claros para indicar que uma entidade está em estado de conflito ou foi recentemente alterada por outro usuário.
-*   **Opções de Resolução:** Dar ao usuário opções como "Aceitar Alterações do Servidor" (descartar suas próprias alterações) ou "Manter Minhas Alterações" (tentar reaplicar sua intenção).
-*   **Rollback/Undo:** A capacidade de desfazer as próprias alterações locais pode ser útil antes de tentar uma reaplicação.
+## Cliente
 
-Ao implementar esta estratégia no lado do cliente, será possível oferecer uma experiência colaborativa robusta e previsível, mesmo com um modelo de sincronização LWW no servidor.
+`SyncEngineService.performSync`:
+
+- Mutações de política da Story (`type`, `favoriteBehavior`, `allowReaderComments`) e o delete/unlink da história são recusadas localmente se o papel não for `owner` (`assertStoryIsOwned` / `StoryService.updateStory` / `convertStoryType`), para não enfileirar um push que o servidor recusaria para sempre. Writer continua podendo editar conteúdo.
+- Pull em páginas até a resposta vir incompleta. O cursor avança só até a última operação **aplicada**. Uma falha no meio da página **não** pula a operação: o ciclo para nela.
+- Timer e `requestSync` (websocket / escrita local) compartilham o mesmo cadeado; os ciclos não se sobrepõem.
+- Push fatia a fila em blocos de 200, na ordem de `operationVersion`. Depois de cada bloco processa `applied`/`conflicts` antes do próximo, para não reenviar o que o servidor recusou. Sem progresso no lote, para.
+- Update local sem `version` no payload é pulado (não envenena o lote).
+
+### Mescla automática vs. tela de conflito
+
+Campos de bookkeeping (`id`, `storyId`, `version`, timestamps) nunca entram no comparativo.
+
+- **Campos disjuntos:** o lado que não disputa é aplicado; a operação local é rebaseada na versão nova e vai no próximo push sem perguntar. Vale no pull e na resposta de `version_conflict` quando o servidor manda `changedFields`.
+- **Mesmo campo, valores diferentes:** conflito `concurrent_edit`. A faixa no painel abre a folha de revisão (`SyncConflictService`).
+- **Exclusão vs. edição:** não é “exclusão sempre vence”. O usuário escolhe restaurar, aceitar a exclusão ou manter o delete local (reenviado sobre a versão atual do servidor).
+- **Reorder:** a ordem inteira é o valor em disputa, não um campo escalar. “Manter o meu” só atualiza a base da operação de reorder pendente.
+
+Opções na UI: manter o local, manter o servidor, mesclar campo a campo, restaurar, adiar. Um conflito pendente tira aquelas operações da fila de push; o resto da história continua sincronizando.
+
+## O que não é mais verdade
+
+Documentos e comentários antigos falavam em last-write-wins por `updated_at`, lote tudo-ou-nada, comparação `clientVersion < serverVersion`, e “omitir versão desliga o OCC”. Nada disso vale. A exclusão também não ganha automaticamente de uma edição concorrente.
+
+## Código de referência
+
+- Servidor: `apps/api/src/services/SyncService.ts`, `apps/api/src/services/entity-sync-handlers/BaseSyncEntityHandler.ts`, `apps/api/src/modules/sync/sync.route.ts`
+- Cliente: `apps/client/src/services/SyncEngineService.ts`, `apps/client/src/services/SyncConflictService.ts`, `apps/client/src/utils/syncUtils.ts`
+- Contrato: `packages/shared/schemas/SyncSchemas.ts`

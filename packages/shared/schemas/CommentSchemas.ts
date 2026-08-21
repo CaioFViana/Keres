@@ -31,12 +31,26 @@ export const CreateCommentDataSchema = CommentSchema.omit({
   version: true,
   isDeleted: true,
   deletedAt: true,
-}).refine(data => (data.fieldId === null) !== (data.fieldKey === null), {
+}).refine((data) => (data.fieldId === null) !== (data.fieldKey === null), {
   message: 'Exactly one of fieldId or fieldKey must be set.',
   path: ['fieldKey'],
 });
 
-export const PartialCommentSchema = CommentSchema.partial();
+export const PartialCommentSchema = CommentSchema.omit({
+  id: true,
+  storyId: true,
+  authorUserId: true,
+  entityType: true,
+  entityId: true,
+  fieldId: true,
+  fieldKey: true,
+  contentSnapshot: true,
+  createdAt: true,
+  updatedAt: true,
+  version: true,
+  isDeleted: true,
+  deletedAt: true,
+}).partial();
 
 export type CreateCommentDataType = z.infer<typeof CreateCommentDataSchema>;
 export type CommentSchemaType = z.infer<typeof CommentSchema>;

@@ -1,10 +1,12 @@
 import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { friendships, ServerInsert, ServerSelect, servers, stories } from '../db/schema';
+import { useConnectivityStore } from '../state/connectivityStore';
 import { useNotificationStore } from '../state/notificationStore';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
+import { normalizeServerUrl } from '../utils/serverUrl';
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 
@@ -20,11 +22,24 @@ export class ServerHasOwnedStoriesError extends Error {
   }
 }
 
+export class ServerUrlAlreadyRegisteredError extends Error {
+  constructor(public readonly existingServer: ServerSelect) {
+    super('A server with this URL is already registered.');
+    this.name = 'ServerUrlAlreadyRegisteredError';
+  }
+}
+
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
   getServerById(serverId: string): Promise<ServerSelect | undefined>;
+  getServerByUrl(url: string): Promise<ServerSelect | undefined>;
   createServer(serverData: Create<ServerInsert>): Promise<ServerSelect>;
-  updateServer(serverId: string, serverData: Partial<Omit<ServerInsert, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  updateServer(
+    serverId: string,
+    serverData: Partial<
+      Omit<ServerInsert, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
+    >,
+  ): Promise<void>;
   getOwnedStories(serverId: string): Promise<OwnedServerStory[]>;
   deleteServer(serverId: string): Promise<void>;
   refreshServerToken(server: ServerSelect): Promise<ServerSelect>; // Added
@@ -35,7 +50,8 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
 
   return {
     async getAllServers(): Promise<ServerSelect[]> {
-      const fetchedServers = await db.query.servers.findMany({ // Added await here
+      const fetchedServers = await db.query.servers.findMany({
+        // Added await here
         where: eq(servers.isDeleted, false),
       });
       return fetchedServers;
@@ -47,27 +63,56 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       });
     },
 
+    async getServerByUrl(url: string): Promise<ServerSelect | undefined> {
+      const canonical = normalizeServerUrl(url);
+      const live = await this.getAllServers();
+      return live.find((server) => normalizeServerUrl(server.url) === canonical);
+    },
+
     async createServer(serverData): Promise<ServerSelect> {
-      const newServer = prepareNewEntityData<ServerInsert>(serverData);
+      const url = normalizeServerUrl(serverData.url);
+      const existing = await this.getServerByUrl(url);
+      if (existing) {
+        throw new ServerUrlAlreadyRegisteredError(existing);
+      }
+      const newServer = prepareNewEntityData<ServerInsert>({ ...serverData, url });
       const result = await db.insert(servers).values(newServer).returning().get();
       return result;
     },
 
     async updateServer(serverId: string, serverData): Promise<void> {
-      await db.update(servers)
-        .set({ ...serverData, updatedAt: new Date() })
+      const nextData =
+        serverData.url === undefined
+          ? serverData
+          : { ...serverData, url: normalizeServerUrl(serverData.url) };
+      if (nextData.url !== undefined) {
+        const current = await this.getServerById(serverId);
+        const urlChanged = !current || normalizeServerUrl(current.url) !== nextData.url;
+        if (urlChanged) {
+          const existing = await this.getServerByUrl(nextData.url);
+          if (existing && existing.id !== serverId) {
+            throw new ServerUrlAlreadyRegisteredError(existing);
+          }
+        }
+      }
+      await db
+        .update(servers)
+        .set({ ...nextData, updatedAt: new Date() })
         .where(eq(servers.id, serverId))
         .run();
     },
 
     async getOwnedStories(serverId: string): Promise<OwnedServerStory[]> {
-      return db.select({ id: stories.id, title: stories.title })
+      return db
+        .select({ id: stories.id, title: stories.title })
         .from(stories)
-        .where(and(
-          eq(stories.serverId, serverId),
-          eq(stories.myRole, 'owner'),
-          eq(stories.isDeleted, false),
-        ))
+        .where(
+          and(
+            eq(stories.serverId, serverId),
+            eq(stories.myRole, 'owner'),
+            eq(stories.isDeleted, false),
+          ),
+        )
         .all();
     },
 
@@ -81,7 +126,8 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         // Friendships are a local cache of server state. Leaving the server must remove
         // only this local copy; logging in again will repopulate it from the unchanged API.
         await tx.delete(friendships).where(eq(friendships.serverId, serverId)).run();
-        await tx.update(servers)
+        await tx
+          .update(servers)
           .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
           .where(eq(servers.id, serverId))
           .run();
@@ -97,7 +143,9 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       if (!tokens) {
         // Persistent state (the server was never authenticated), re-evaluated on every
         // sync cycle - log it, but don't notify the user every interval.
-        console.log(`Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`);
+        console.log(
+          `Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`,
+        );
         return server;
       }
 
@@ -111,9 +159,20 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       try {
         // Trigger the token refresh via the AuthTokenManager
         // This will update the tokens in the database and the user settings store
-        const refreshedTokens = await authTokenManager.refreshAccessToken(server.id, tokens.refreshToken);
+        const refreshedTokens = await authTokenManager.refreshAccessToken(
+          server.id,
+          tokens.refreshToken,
+        );
 
         if (!refreshedTokens) {
+          // `refreshAccessToken` itself swallows an offline failure into this same `null`
+          // return (it can't tell "unreachable" from "credentials rejected" apart from in
+          // here) - the request's own interceptor already reported the server unreachable
+          // to `connectivityStore` before returning, so that's the signal to tell them apart.
+          if (useConnectivityStore.getState().isOffline(server.id)) {
+            console.log(`Server ${server.name} is unreachable; deferring token refresh.`);
+            return server;
+          }
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
           console.log(message);
           showNotification(message, 'error');
@@ -123,7 +182,6 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         console.log(`Successfully refreshed tokens for server ${server.name}.`);
         showNotification(`Tokens for ${server.name} refreshed successfully.`, 'success');
         return server;
-
       } catch (error) {
         if (isOfflineError(error)) {
           // Can't refresh while the server is unreachable - not a credentials problem.

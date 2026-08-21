@@ -1,7 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedReaction, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useTheme } from '../../../../theme';
 
 interface GenericListItemProps {
@@ -43,7 +48,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
         animatedHeight.value = withTiming(0, { duration: 300 });
       }
     },
-    [isOpen] 
+    [isOpen],
   );
 
   const animatedContainerStyle = useAnimatedStyle(() => {
@@ -55,7 +60,9 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
   const animatedContentStyle = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
-      transform: [{ translateY: withTiming(isOpen ? 0 : -contentHeight.value * 0.1, { duration: 300 }) }],
+      transform: [
+        { translateY: withTiming(isOpen ? 0 : -contentHeight.value * 0.1, { duration: 300 }) },
+      ],
     };
   });
 
@@ -100,18 +107,21 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     },
     expandedContentInner: {
       padding: 10,
-    }
+    },
   });
 
-  const onLayout = React.useCallback((event: LayoutChangeEvent) => {
-    const measuredHeight = event.nativeEvent.layout.height;
-    if (contentHeight.value !== measuredHeight) {
-      contentHeight.value = measuredHeight;
-      if (isOpen) {
-        animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
+  const onLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const measuredHeight = event.nativeEvent.layout.height;
+      if (contentHeight.value !== measuredHeight) {
+        contentHeight.value = measuredHeight;
+        if (isOpen) {
+          animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
+        }
       }
-    }
-  }, [isOpen, animatedHeight, contentHeight]);
+    },
+    [isOpen, animatedHeight, contentHeight],
+  );
 
   return (
     <View style={styles.container}>
@@ -136,9 +146,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
 
       <Animated.View style={[styles.animatedWrapper, animatedContainerStyle]}>
         <Animated.View style={animatedContentStyle}>
-          <View style={styles.expandedContentInner}>
-            {expandedContent}
-          </View>
+          <View style={styles.expandedContentInner}>{expandedContent}</View>
         </Animated.View>
       </Animated.View>
     </View>

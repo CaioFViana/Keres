@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
+import { BCRYPT_COST } from '../config/bcrypt';
 import { env } from '../config/env';
 import { db } from '../db';
 import { users } from '../db/schema';
@@ -24,7 +25,7 @@ export async function reconcileRootAdmin(): Promise<void> {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(env.ROOT_ADMIN_PASSWORD, 10);
+  const hashedPassword = await bcrypt.hash(env.ROOT_ADMIN_PASSWORD, BCRYPT_COST);
   const existing = await db.query.users.findFirst({
     where: eq(users.username, env.ROOT_ADMIN_USERNAME),
   });
@@ -34,7 +35,9 @@ export async function reconcileRootAdmin(): Promise<void> {
       .update(users)
       .set({ password: hashedPassword, isAdmin: true, updatedAt: new Date() })
       .where(eq(users.id, existing.id));
-    logger.info(`Root admin '${env.ROOT_ADMIN_USERNAME}' reconciled (isAdmin enforced, password refreshed from env).`);
+    logger.info(
+      `Root admin '${env.ROOT_ADMIN_USERNAME}' reconciled (isAdmin enforced, password refreshed from env).`,
+    );
     return;
   }
 

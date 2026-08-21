@@ -1,17 +1,29 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Chapter } from '@keres/shared/entities/Chapter';
-import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  RouteProp,
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -25,13 +37,16 @@ import { createChapterService } from '../../services/storymanagement/ChapterServ
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type ChapterFormScreenRouteProp = RouteProp<ChapterStackParamList, 'ChapterForm'>;
-type ChapterFormScreenNavigationProp = NativeStackNavigationProp<ChapterStackParamList, 'ChapterForm'>;
+type ChapterFormScreenNavigationProp = NativeStackNavigationProp<
+  ChapterStackParamList,
+  'ChapterForm'
+>;
 
 const ChapterFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -50,6 +65,7 @@ const ChapterFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
   useEffect(() => {
     if (drizzleDb && !chapterServiceRef.current) {
@@ -72,6 +88,7 @@ const ChapterFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Chapter', entityId: currentChapterId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Chapter');
@@ -87,9 +104,9 @@ const ChapterFormScreen = () => {
       setDocumentTitle(isEditing ? t('edit_chapter_title') : t('create_chapter_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_chapter_title') : t('create_chapter_title'),
-        headerRight: () => <View/>
+        headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -110,7 +127,9 @@ const ChapterFormScreen = () => {
             setIsFavorite(fetchedChapter.isFavorite);
             setExtraNotes(fetchedChapter.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentChapterId!);
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
+              currentChapterId!,
+            );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Chapter not found:', currentChapterId);
@@ -154,7 +173,17 @@ const ChapterFormScreen = () => {
     setLoading(true);
 
     try {
-      let chapterData: Omit<Chapter, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'> = {
+      let chapterData: Omit<
+        Chapter,
+        | 'id'
+        | 'storyId'
+        | 'createdAt'
+        | 'updatedAt'
+        | 'version'
+        | 'isDeleted'
+        | 'deletedAt'
+        | 'index'
+      > = {
         name: name.trim(),
         summary,
         isFavorite,
@@ -164,22 +193,38 @@ const ChapterFormScreen = () => {
       let savedChapter: ChapterSelect;
 
       if (isEditing) {
-        savedChapter = await chapterServiceRef.current!.updateChapter(userId, currentChapterId!, chapterData);
+        savedChapter = await chapterServiceRef.current!.updateChapter(
+          userId,
+          currentChapterId!,
+          chapterData,
+        );
         AppAlert.alert(t('success'), t('chapter_updated_successfully'));
       } else {
         // For new chapters, determine the next index
         const allChapters = await chapterServiceRef.current!.getAllByStoryId(selectedStory.id);
-        const nextIndex = allChapters.length > 0 ? Math.max(...allChapters.map(c => c.index || 0)) + 1 : 1;
-        savedChapter = await chapterServiceRef.current!.createChapter(userId, { ...chapterData, storyId: selectedStory.id, index: nextIndex });
+        const nextIndex =
+          allChapters.length > 0 ? Math.max(...allChapters.map((c) => c.index || 0)) + 1 : 1;
+        savedChapter = await chapterServiceRef.current!.createChapter(userId, {
+          ...chapterData,
+          storyId: selectedStory.id,
+          index: nextIndex,
+        });
         AppAlert.alert(t('success'), t('chapter_created_successfully'));
         setCurrentChapterId(savedChapter.id);
       }
-      
+
       if (savedChapter.id) {
         await persistTagRelations(savedChapter.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Chapter', savedChapter.id, customValues);
+        await persistNoteRelations(savedChapter.id);
+        await seeAlsoManagerRef.current?.persistPending(savedChapter.id);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(
+          userId,
+          selectedStory.id,
+          'Chapter',
+          savedChapter.id,
+          customValues,
+        );
       }
-
 
       entityEventEmitter.emit('chapter_changed', selectedStory.id, savedChapter.id);
 
@@ -188,7 +233,6 @@ const ChapterFormScreen = () => {
       } else {
         navigation.goBack();
       }
-
     } catch (err) {
       console.error('Failed to save chapter:', err);
       AppAlert.alert(t('error'), t('failed_to_save_chapter'));
@@ -221,9 +265,12 @@ const ChapterFormScreen = () => {
     });
   };
 
-  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
-    setSelectedTagIds(newSelection);
-  }, [setSelectedTagIds]);
+  const handleTagSelectionChange = useCallback(
+    (newSelection: string[]) => {
+      setSelectedTagIds(newSelection);
+    },
+    [setSelectedTagIds],
+  );
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -250,25 +297,26 @@ const ChapterFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
       backgroundColor: 'red',
-      marginBottom: 15
+      marginBottom: 15,
     },
     centered: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    noteSection: { // Renamed from tagSection for clarity, though it might contain tags in other forms
+    noteSection: {
+      // Renamed from tagSection for clarity.
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: -10,
     },
     tagSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: 0,
     },
     sectionTitle: {
       fontSize: 18,
@@ -287,98 +335,113 @@ const ChapterFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_chapter_title') : t('create_chapter_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('chapter_form_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_chapter_title') : t('create_chapter_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('chapter_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-          <TextInput
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
+      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
+      <TextInput
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('summary')}</Text>
+      <TextInput
+        placeholder={t('summary_placeholder')}
+        value={summary || ''}
+        onChangeText={setSummary}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <CustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+      />
+
+      {selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <MultiSelectPill
+            options={availableTags.map((tag) => ({
+              label: tag.name,
+              value: tag.id,
+              color: tag.color || colors.primaryContainer,
+            }))}
+            selectedValues={selectedTagIds}
+            onSelectionChange={handleTagSelectionChange}
+            placeholder={t('select_tags_for_chapter')}
+            label={t('chapter_tags')}
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('summary')}</Text>
-          <TextInput
-            placeholder={t('summary_placeholder')}
-            value={summary || ""}
-            onChangeText={setSummary}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
+      {selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <NoteManager
+            noteRelations={chapterNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentEntityId={currentChapterId ?? ''}
+            currentEntityType="Chapter"
           />
+        </View>
+      )}
 
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
+      {selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <SeeAlsoManager
+            ref={seeAlsoManagerRef}
+            storyId={selectedStory.id}
+            entityType="Chapter"
+            entityId={currentChapterId ?? ''}
+            editable={true}
           />
+        </View>
+      )}
 
-          <CustomAttributeFields
-            storyId={selectedStory?.id || ''}
-            fields={customFields}
-            values={customValues}
-            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-          />
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {t('save_chapter')}
+      </Button>
 
-          {currentChapterId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-              <MultiSelectPill
-                options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
-                selectedValues={selectedTagIds}
-                onSelectionChange={handleTagSelectionChange}
-                placeholder={t('select_tags_for_chapter')}
-                label={t('chapter_tags')}
-              />
-            </View>
-          )}
-
-          {currentChapterId && selectedStory?.id && (
-            <View style={styles.noteSection}>
-              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-              <NoteManager
-                noteRelations={chapterNoteRelations}
-                availableNotes={allNotes}
-                onSave={saveNoteRelation}
-                onDelete={deleteNoteRelation}
-                editable={true}
-                currentStoryId={selectedStory.id}
-                currentEntityId={currentChapterId}
-                currentEntityType="Chapter"
-              />
-            </View>
-          )}
-
-          {currentChapterId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <SeeAlsoManager storyId={selectedStory.id} entityType="Chapter" entityId={currentChapterId} editable={true} />
-            </View>
-          )}
-
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {t('save_chapter')}
-          </Button>
-
-          {isEditing && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_chapter_title')}
-            </Button>
-          )}
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_chapter_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

@@ -1,4 +1,9 @@
-import { CURRENT_STORY_FORMAT_VERSION, EffectiveStoryRole, FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
+import {
+  CURRENT_STORY_FORMAT_VERSION,
+  EffectiveStoryRole,
+  FullStoryExportSchema,
+  FullStoryExportType,
+} from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import {
@@ -14,11 +19,17 @@ import {
   CharacterSceneInsert,
   characterScenes,
   CharacterSelect,
+  ChoiceCheckGroupInsert,
+  choiceCheckGroups,
+  ChoiceCheckInsert,
+  choiceChecks,
   ChoiceInsert,
   choices,
   ChoiceSelect,
   CommentInsert,
   comments,
+  EffectInsert,
+  effects,
   galleries,
   GalleryInsert,
   favorites,
@@ -46,9 +57,18 @@ import {
   seeAlsoRelations,
   servers,
   stories,
-  StoryInsert, StorySelect,
+  StoryInsert,
+  StorySelect,
   storyPermissions,
   StorySchemaFieldInsert,
+  ModeInsert,
+  modes,
+  StatInsert,
+  StatRelationInsert,
+  statRelations,
+  stats,
+  StatStrengthInsert,
+  statStrengths,
   storySchemaFields,
   SuggestionInsert,
   suggestions,
@@ -59,11 +79,18 @@ import {
   tags,
   WorldRuleInsert,
   worldRules,
-  WorldRuleSelect
+  WorldRuleSelect,
 } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import i18n from '../../utils/i18n';
+import {
+  assertStoryIsOwned,
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+  StoryOwnerOnlyError,
+} from '../../utils/syncUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
@@ -71,6 +98,7 @@ import { createServerService } from '../ServerService';
 import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import { createFavoriteService } from './FavoriteService';
+import { cloneStoryForLocalImport } from './cloneStoryForLocalImport';
 import {
   checkLinearCompatibility as checkLinearCompatibilityGraph,
   classifyEdges,
@@ -104,7 +132,10 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
   await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
+  await tx.delete(choiceChecks).where(eq(choiceChecks.storyId, storyId)).run();
+  await tx.delete(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, storyId)).run();
   await tx.delete(choices).where(eq(choices.storyId, storyId)).run();
+  await tx.delete(effects).where(eq(effects.storyId, storyId)).run();
   await tx.delete(galleryRelations).where(eq(galleryRelations.storyId, storyId)).run();
   await tx.delete(galleries).where(eq(galleries.storyId, storyId)).run();
   await tx.delete(itemJourneys).where(eq(itemJourneys.storyId, storyId)).run();
@@ -117,6 +148,10 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
   await tx.delete(seeAlsoRelations).where(eq(seeAlsoRelations.storyId, storyId)).run();
   await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
+  await tx.delete(statRelations).where(eq(statRelations.storyId, storyId)).run();
+  await tx.delete(statStrengths).where(eq(statStrengths.storyId, storyId)).run();
+  await tx.delete(stats).where(eq(stats.storyId, storyId)).run();
+  await tx.delete(modes).where(eq(modes.storyId, storyId)).run();
   await tx.delete(storySchemaFields).where(eq(storySchemaFields.storyId, storyId)).run();
   await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
   await tx.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
@@ -136,7 +171,16 @@ export interface StoryService {
   getAllStories(currentLocalUserId?: string): Promise<StorySelect[]>;
   getStoryById(storyId: string, currentLocalUserId?: string): Promise<StorySelect | undefined>;
   createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect>;
-  updateStory(currentUserId: string, storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  updateStory(
+    currentUserId: string,
+    storyId: string,
+    storyData: Partial<
+      Omit<
+        StoryInsert,
+        'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >
+    >,
+  ): Promise<void>;
   getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }>;
   getCharacterCount(storyId?: string): Promise<number>;
   getChoiceCount(storyId?: string): Promise<number>;
@@ -151,21 +195,45 @@ export interface StoryService {
   getCustomAttributeCount(storyId?: string): Promise<number>;
 
   // New creation methods using Create<T>
-  createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>;
+  createCharacter(
+    currentUserId: string,
+    characterData: Create<CharacterInsert>,
+  ): Promise<CharacterSelect>;
   createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect>;
-  createLocation(currentUserId: string, locationData: Create<LocationInsert>): Promise<LocationSelect>;
+  createLocation(
+    currentUserId: string,
+    locationData: Create<LocationInsert>,
+  ): Promise<LocationSelect>;
   createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
   createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect>;
-  createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect>;
+  createWorldRule(
+    currentUserId: string,
+    worldRuleData: Create<WorldRuleInsert>,
+  ): Promise<WorldRuleSelect>;
   createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
 
-  updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void>;
+  updateStoryFavoriteStatus(
+    currentUserId: string,
+    storyId: string,
+    isFavorite: boolean,
+  ): Promise<void>;
   deleteStory(storyId: string): Promise<void>;
   checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult>;
-  convertStoryType(currentUserId: string, storyId: string, targetType: 'linear' | 'branching'): Promise<void>;
+  convertStoryType(
+    currentUserId: string,
+    storyId: string,
+    targetType: 'linear' | 'branching',
+  ): Promise<void>;
   unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
   getBranchingStoryForkCount(storyId?: string): Promise<number>;
-  importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, role?: EffectiveStoryRole | null, localMediaPaths?: Map<string, string>): Promise<string>;
+  importFullStory(
+    userId: string,
+    fullStoryData: FullStoryExportType,
+    queriedServerId: string | null,
+    role?: EffectiveStoryRole | null,
+    localMediaPaths?: Map<string, string>,
+    localImportStoryId?: string,
+  ): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
 
@@ -176,18 +244,39 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     async getAllStories(currentLocalUserId?: string): Promise<StorySelect[]> {
       const rows = await db.select().from(stories).where(eq(stories.isDeleted, false)).all();
       if (!currentLocalUserId) return rows;
-      return Promise.all(rows.map(async (story) => ({
-        ...story,
-        isFavorite: await favoriteService.isFavorite(story.id, story.id, 'Story', currentLocalUserId, story.isFavorite),
-      })));
+      return Promise.all(
+        rows.map(async (story) => ({
+          ...story,
+          isFavorite: await favoriteService.isFavorite(
+            story.id,
+            story.id,
+            'Story',
+            currentLocalUserId,
+            story.isFavorite,
+          ),
+        })),
+      );
     },
 
-    async getStoryById(storyId: string, currentLocalUserId?: string): Promise<StorySelect | undefined> {
-      const story = await db.select().from(stories).where(and(eq(stories.id, storyId), eq(stories.isDeleted, false))).get();
+    async getStoryById(
+      storyId: string,
+      currentLocalUserId?: string,
+    ): Promise<StorySelect | undefined> {
+      const story = await db
+        .select()
+        .from(stories)
+        .where(and(eq(stories.id, storyId), eq(stories.isDeleted, false)))
+        .get();
       if (!story || !currentLocalUserId) return story;
       return {
         ...story,
-        isFavorite: await favoriteService.isFavorite(story.id, story.id, 'Story', currentLocalUserId, story.isFavorite),
+        isFavorite: await favoriteService.isFavorite(
+          story.id,
+          story.id,
+          'Story',
+          currentLocalUserId,
+          story.isFavorite,
+        ),
       };
     },
 
@@ -195,13 +284,29 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newStory = prepareNewEntityData<StoryInsert>({ ...storyData, userId: currentUserId });
       const result = await db.insert(stories).values(newStory).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newStory.id, currentUserId);
-      await recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, { ...newStory }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newStory.id,
+        currentUserId,
+      );
+      await recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, {
+        ...newStory,
+      }); // Pass serializable data
 
       return result;
     },
 
-    async updateStory(currentUserId: string, storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+    async updateStory(
+      currentUserId: string,
+      storyId: string,
+      storyData: Partial<
+        Omit<
+          StoryInsert,
+          'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        >
+      >,
+    ): Promise<void> {
       const originalStory = await this.getStoryById(storyId);
 
       if (!originalStory) {
@@ -210,9 +315,33 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await assertStoryIsWritable(db, storyId);
 
       const dataToPersist = { ...storyData };
-      const targetFavoriteBehavior = dataToPersist.favoriteBehavior ?? originalStory.favoriteBehavior;
+      // Same owner-only fields the server rejects on Story update (`SyncService`). A writer
+      // sending an unchanged value is stripped so it never lands in the op-log; a real
+      // change is refused so we don't persist a policy the push would bounce forever.
+      if (originalStory.serverId && originalStory.myRole !== 'owner') {
+        const ownerOnlyFields = ['type', 'favoriteBehavior', 'allowReaderComments'] as const;
+        const attempted = ownerOnlyFields.filter(
+          (field) =>
+            dataToPersist[field] !== undefined && dataToPersist[field] !== originalStory[field],
+        );
+        if (attempted.length > 0) {
+          throw new StoryOwnerOnlyError(i18n.t('story_owner_only_error'));
+        }
+        for (const field of ownerOnlyFields) {
+          delete dataToPersist[field];
+        }
+      }
+
+      const targetFavoriteBehavior =
+        dataToPersist.favoriteBehavior ?? originalStory.favoriteBehavior;
       if (targetFavoriteBehavior !== 'global' && dataToPersist.isFavorite !== undefined) {
-        await favoriteService.setFavorite(storyId, storyId, 'Story', currentUserId, dataToPersist.isFavorite);
+        await favoriteService.setFavorite(
+          storyId,
+          storyId,
+          'Story',
+          currentUserId,
+          dataToPersist.isFavorite,
+        );
         delete dataToPersist.isFavorite;
       }
 
@@ -225,11 +354,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       delete preCheckChanges.updatedAt;
 
       if (Object.keys(preCheckChanges).length === 0) {
-        console.log(`No significant changes detected for story ${storyId}. Skipping update and operation log.`);
+        console.log(
+          `No significant changes detected for story ${storyId}. Skipping update and operation log.`,
+        );
         return;
       }
 
-      const [updatedStory] = await db.update(stories)
+      const [updatedStory] = await db
+        .update(stories)
         .set({ ...dataToPersist, updatedAt: new Date(), version: sql`${stories.version} + 1` })
         .where(eq(stories.id, storyId))
         .returning();
@@ -243,15 +375,22 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // input directly would record every field the form sends (title, description, genre...)
       // as "changed" even when only one of them actually was.
       const changes = getChangedFields(originalStory, updatedStory);
-      delete changes.version;
       delete changes.updatedAt;
       await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, changes);
       entityEventEmitter.emit('story_changed', storyId, storyId);
     },
 
     async getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }> {
-      const totalStoriesResult = await db.select({ count: count() }).from(stories).where(eq(stories.isDeleted, false)).get();
-      const branchingStoriesResult = await db.select({ count: count() }).from(stories).where(and(eq(stories.type, 'branching'), eq(stories.isDeleted, false))).get();
+      const totalStoriesResult = await db
+        .select({ count: count() })
+        .from(stories)
+        .where(eq(stories.isDeleted, false))
+        .get();
+      const branchingStoriesResult = await db
+        .select({ count: count() })
+        .from(stories)
+        .where(and(eq(stories.type, 'branching'), eq(stories.isDeleted, false)))
+        .get();
       return {
         totalStories: totalStoriesResult?.count || 0,
         branchingStories: branchingStoriesResult?.count || 0,
@@ -259,124 +398,279 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async getCharacterCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(characters)
+      const result = await db
+        .select({ count: count() })
+        .from(characters)
         .innerJoin(stories, eq(characters.storyId, stories.id))
-        .where(storyId ? and(eq(characters.storyId, storyId), eq(stories.isDeleted, false), eq(characters.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(characters.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(characters.storyId, storyId),
+                eq(stories.isDeleted, false),
+                eq(characters.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(characters.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getChoiceCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(choices)
+      const result = await db
+        .select({ count: count() })
+        .from(choices)
         .innerJoin(scenes, eq(choices.sceneId, scenes.id))
         .innerJoin(stories, eq(scenes.storyId, stories.id))
-        .where(storyId
-          ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(scenes.isDeleted, false), eq(choices.isDeleted, false))
-          : and(eq(stories.isDeleted, false), eq(scenes.isDeleted, false), eq(choices.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(stories.id, storyId),
+                eq(stories.isDeleted, false),
+                eq(scenes.isDeleted, false),
+                eq(choices.isDeleted, false),
+              )
+            : and(
+                eq(stories.isDeleted, false),
+                eq(scenes.isDeleted, false),
+                eq(choices.isDeleted, false),
+              ),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getLocationCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(locations)
+      const result = await db
+        .select({ count: count() })
+        .from(locations)
         .innerJoin(stories, eq(locations.storyId, stories.id))
-        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(locations.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(locations.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(stories.id, storyId),
+                eq(stories.isDeleted, false),
+                eq(locations.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(locations.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getChapterCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(chapters)
+      const result = await db
+        .select({ count: count() })
+        .from(chapters)
         .innerJoin(stories, eq(chapters.storyId, stories.id))
-        .where(storyId ? and(eq(chapters.storyId, storyId), eq(stories.isDeleted, false), eq(chapters.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(chapters.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(chapters.storyId, storyId),
+                eq(stories.isDeleted, false),
+                eq(chapters.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(chapters.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getSceneCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(scenes)
+      const result = await db
+        .select({ count: count() })
+        .from(scenes)
         .innerJoin(stories, eq(scenes.storyId, stories.id))
-        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(scenes.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(scenes.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(stories.id, storyId),
+                eq(stories.isDeleted, false),
+                eq(scenes.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(scenes.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getNoteCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(notes)
+      const result = await db
+        .select({ count: count() })
+        .from(notes)
         .innerJoin(stories, eq(notes.storyId, stories.id))
-        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(notes.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(notes.isDeleted, false)))
+        .where(
+          storyId
+            ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(notes.isDeleted, false))
+            : and(eq(stories.isDeleted, false), eq(notes.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getWorldRuleCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(worldRules)
+      const result = await db
+        .select({ count: count() })
+        .from(worldRules)
         .innerJoin(stories, eq(worldRules.storyId, stories.id))
-        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(worldRules.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(worldRules.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(stories.id, storyId),
+                eq(stories.isDeleted, false),
+                eq(worldRules.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(worldRules.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getItemCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(items)
+      const result = await db
+        .select({ count: count() })
+        .from(items)
         .innerJoin(stories, eq(items.storyId, stories.id))
-        .where(storyId ? and(eq(items.storyId, storyId), eq(stories.isDeleted, false), eq(items.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(items.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(items.storyId, storyId),
+                eq(stories.isDeleted, false),
+                eq(items.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(items.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getGalleryCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(galleries)
+      const result = await db
+        .select({ count: count() })
+        .from(galleries)
         .innerJoin(stories, eq(galleries.storyId, stories.id))
-        .where(storyId ? and(eq(galleries.storyId, storyId), eq(stories.isDeleted, false), eq(galleries.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(galleries.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(galleries.storyId, storyId),
+                eq(stories.isDeleted, false),
+                eq(galleries.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(galleries.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getTagCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(tags)
+      const result = await db
+        .select({ count: count() })
+        .from(tags)
         .innerJoin(stories, eq(tags.storyId, stories.id))
-        .where(storyId ? and(eq(tags.storyId, storyId), eq(stories.isDeleted, false), eq(tags.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(tags.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(tags.storyId, storyId),
+                eq(stories.isDeleted, false),
+                eq(tags.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(tags.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
     async getCustomAttributeCount(storyId?: string): Promise<number> {
-      const result = await db.select({ count: count() }).from(storySchemaFields)
+      const result = await db
+        .select({ count: count() })
+        .from(storySchemaFields)
         .innerJoin(stories, eq(storySchemaFields.storyId, stories.id))
-        .where(storyId
-          ? and(eq(storySchemaFields.storyId, storyId), eq(stories.isDeleted, false), eq(storySchemaFields.isDeleted, false))
-          : and(eq(stories.isDeleted, false), eq(storySchemaFields.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(storySchemaFields.storyId, storyId),
+                eq(stories.isDeleted, false),
+                eq(storySchemaFields.isDeleted, false),
+              )
+            : and(eq(stories.isDeleted, false), eq(storySchemaFields.isDeleted, false)),
+        )
         .get();
       return result?.count || 0;
     },
 
-    async createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect> {
+    async createCharacter(
+      currentUserId: string,
+      characterData: Create<CharacterInsert>,
+    ): Promise<CharacterSelect> {
       const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
       const result = await db.insert(characters).values(newCharacter).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newCharacter.storyId, currentUserId);
-      await recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, { ...newCharacter }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newCharacter.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newCharacter.storyId,
+        userIdToLog,
+        'create',
+        'Character',
+        newCharacter.id,
+        { ...newCharacter },
+      ); // Pass serializable data
 
       return result;
     },
 
-    async createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect> {
+    async createChapter(
+      currentUserId: string,
+      chapterData: Create<ChapterInsert>,
+    ): Promise<ChapterSelect> {
       const newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
       const result = await db.insert(chapters).values(newChapter).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newChapter.storyId, currentUserId);
-      await recordLocalOperation(db, newChapter.storyId, userIdToLog, 'create', 'Chapter', newChapter.id, { ...newChapter }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newChapter.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newChapter.storyId,
+        userIdToLog,
+        'create',
+        'Chapter',
+        newChapter.id,
+        { ...newChapter },
+      ); // Pass serializable data
 
       return result;
     },
 
-    async createLocation(currentUserId: string, locationData: Create<LocationInsert>): Promise<LocationSelect> {
+    async createLocation(
+      currentUserId: string,
+      locationData: Create<LocationInsert>,
+    ): Promise<LocationSelect> {
       const newLocation = prepareNewEntityData<LocationInsert>(locationData);
       const result = await db.insert(locations).values(newLocation).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newLocation.storyId, currentUserId);
-      await recordLocalOperation(db, newLocation.storyId, userIdToLog, 'create', 'Location', newLocation.id, { ...newLocation }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newLocation.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newLocation.storyId,
+        userIdToLog,
+        'create',
+        'Location',
+        newLocation.id,
+        { ...newLocation },
+      ); // Pass serializable data
 
       return result;
     },
@@ -385,8 +679,21 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newScene = prepareNewEntityData<SceneInsert>(sceneData);
       const result = await db.insert(scenes).values(newScene).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newScene.storyId, currentUserId);
-      await recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, { ...newScene }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newScene.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newScene.storyId,
+        userIdToLog,
+        'create',
+        'Scene',
+        newScene.id,
+        { ...newScene },
+      ); // Pass serializable data
 
       return result;
     },
@@ -395,28 +702,67 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newNote = prepareNewEntityData<NoteInsert>(noteData);
       const result = await db.insert(notes).values(newNote).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newNote.storyId, currentUserId);
-      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, { ...newNote }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newNote.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, {
+        ...newNote,
+      }); // Pass serializable data
 
       return result;
     },
 
-    async createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect> {
+    async createWorldRule(
+      currentUserId: string,
+      worldRuleData: Create<WorldRuleInsert>,
+    ): Promise<WorldRuleSelect> {
       const newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
       const result = await db.insert(worldRules).values(newWorldRule).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newWorldRule.storyId, currentUserId);
-      await recordLocalOperation(db, newWorldRule.storyId, userIdToLog, 'create', 'WorldRule', newWorldRule.id, { ...newWorldRule }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newWorldRule.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newWorldRule.storyId,
+        userIdToLog,
+        'create',
+        'WorldRule',
+        newWorldRule.id,
+        { ...newWorldRule },
+      ); // Pass serializable data
 
       return result;
     },
 
-    async createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect> {
+    async createChoice(
+      currentUserId: string,
+      choiceData: Create<ChoiceInsert>,
+    ): Promise<ChoiceSelect> {
       const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
       const result = await db.insert(choices).values(newChoice).returning().get();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newChoice.storyId, currentUserId);
-      await recordLocalOperation(db, newChoice.storyId, userIdToLog, 'create', 'Choice', newChoice.id, { ...newChoice }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newChoice.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newChoice.storyId,
+        userIdToLog,
+        'create',
+        'Choice',
+        newChoice.id,
+        { ...newChoice },
+      ); // Pass serializable data
 
       return result;
     },
@@ -425,11 +771,17 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       return checkLinearCompatibilityGraph(db, storyId);
     },
 
-    async convertStoryType(currentUserId: string, storyId: string, targetType: 'linear' | 'branching'): Promise<void> {
+    async convertStoryType(
+      currentUserId: string,
+      storyId: string,
+      targetType: 'linear' | 'branching',
+    ): Promise<void> {
       const story = await this.getStoryById(storyId);
       if (!story) {
         throw new Error(`Story with ID ${storyId} not found.`);
       }
+      await assertStoryIsWritable(db, storyId);
+      await assertStoryIsOwned(db, storyId);
       if (story.type === targetType) {
         return;
       }
@@ -453,7 +805,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
         for (let i = 0; i < nonEmptyChapters.length - 1; i++) {
-          const lastSceneOfCurrent = nonEmptyChapters[i].scenes[nonEmptyChapters[i].scenes.length - 1];
+          const lastSceneOfCurrent =
+            nonEmptyChapters[i].scenes[nonEmptyChapters[i].scenes.length - 1];
           const firstSceneOfNext = nonEmptyChapters[i + 1].scenes[0];
           await this.createChoice(currentUserId, {
             storyId,
@@ -473,7 +826,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const compatibility = await checkLinearCompatibilityGraph(db, storyId);
       if (!compatibility.compatible) {
         throw new Error(
-          `Story is not compatible with Linear conversion: ${compatibility.reasons.map((r) => `${r.chapterName} (${r.kind})`).join(', ')}`
+          `Story is not compatible with Linear conversion: ${compatibility.reasons.map((r) => `${r.chapterName} (${r.kind})`).join(', ')}`,
         );
       }
 
@@ -503,8 +856,11 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // Todas as escolhas somem na conversão pra Linear - o modo linear nunca guarda dados de
       // navegação por Choice, e uma futura reconversão pra Branching gera escolhas novas a
       // partir da ordem das cenas (ver o ramo acima).
-      const remainingChoices = await db.select({ id: choices.id }).from(choices)
-        .where(and(eq(choices.storyId, storyId), eq(choices.isDeleted, false))).all();
+      const remainingChoices = await db
+        .select({ id: choices.id })
+        .from(choices)
+        .where(and(eq(choices.storyId, storyId), eq(choices.isDeleted, false)))
+        .all();
       for (const choice of remainingChoices) {
         await choiceService.deleteChoice(currentUserId, choice.id);
       }
@@ -512,7 +868,11 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await this.updateStory(currentUserId, storyId, { type: 'linear' });
     },
 
-    async updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void> {
+    async updateStoryFavoriteStatus(
+      currentUserId: string,
+      storyId: string,
+      isFavorite: boolean,
+    ): Promise<void> {
       const originalStory = await this.getStoryById(storyId, currentUserId);
 
       if (!originalStory) {
@@ -521,7 +881,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
       // If the favorite status hasn't actually changed, skip the update and logging
       if (originalStory.isFavorite === isFavorite) {
-        console.log(`Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`);
+        console.log(
+          `Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`,
+        );
         return;
       }
       if (originalStory.favoriteBehavior !== 'global') {
@@ -530,15 +892,18 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
       await assertStoryIsWritable(db, storyId);
 
-      const [updatedStory] = await db.update(stories)
+      const [updatedStory] = await db
+        .update(stories)
         .set({ isFavorite, updatedAt: new Date(), version: sql`${stories.version} + 1` })
         .where(eq(stories.id, storyId))
         .returning({ isFavorite: stories.isFavorite, version: stories.version });
 
       if (!updatedStory) {
-        throw new Error(`Failed to update favorite status for story ${storyId} or story not found.`);
+        throw new Error(
+          `Failed to update favorite status for story ${storyId} or story not found.`,
+        );
       }
-      
+
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
       await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, {
         isFavorite: updatedStory.isFavorite,
@@ -556,6 +921,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         return;
       }
       await assertStoryIsWritable(db, storyId);
+      await assertStoryIsOwned(db, storyId);
 
       // Story deletion is always permanent and always local-first (see purgeStoryLocally).
       // If the story is attached to a server, make a best-effort attempt to tell it first
@@ -563,35 +929,45 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // failed/offline attempt never blocks the local purge; deleting a story here is the
       // end of it on this device regardless of connectivity.
       if (storyToDelete.serverId) {
-        const server = await db.query.servers.findFirst({ where: eq(servers.id, storyToDelete.serverId) });
+        const server = await db.query.servers.findFirst({
+          where: eq(servers.id, storyToDelete.serverId),
+        });
         if (server?.url) {
           try {
             const client = createKeresAxiosInstance({ baseURL: server.url });
             client.setTokenProvider(authTokenManager);
             client.setActiveServer(server);
-            // Sem `version`: o objetivo aqui é apagar independente do que o servidor ache que
-            // é a versão atual (o local já decidiu apagar, incondicionalmente) - mandar a
-            // versão local faria o servidor tratar quase toda chamada como conflito de
-            // concorrência (`checkVersionConflict`) e devolver 200 sem aplicar nada, porque o
-            // contador local de versão nunca ficou de fato em lockstep com o do servidor.
+            // Sem `version`: o `stories.version` local nunca ficou em lockstep com o do
+            // servidor, então mandar o número daqui faria o OCC recusar o delete. O servidor
+            // preenche a versão atual quando o dono omite a base (só para delete de Story).
             // Sem `operationTime` também: o servidor recusa qualquer horário mais de 1s à
             // frente do próprio relógio dele (`parseOperationTime`), e o relógio do
             // aparelho/emulador não tem garantia nenhuma de estar sincronizado com o do
             // servidor. Omitir deixa o servidor usar o `new Date()` dele mesmo - o único
             // relógio que essa checagem pode comparar com segurança.
-            const response = await client.post(`/sync/${storyId}`, [{
-              entity: 'Story',
-              id: storyId,
-              type: 'delete',
-            }]);
-            const conflict = (response.data?.conflicts as { entity: string; entityId: string; message?: string; reason?: string }[] | undefined)
-              ?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+            const response = await client.post(`/sync/${storyId}`, [
+              {
+                entity: 'Story',
+                id: storyId,
+                type: 'delete',
+              },
+            ]);
+            const conflict = (
+              response.data?.conflicts as
+                | { entity: string; entityId: string; message?: string; reason?: string }[]
+                | undefined
+            )?.find((c) => c.entity === 'Story' && c.entityId === storyId);
             if (conflict) {
-              console.warn(`Server rejected deletion for story ${storyId} (proceeding with local deletion regardless): ${conflict.message || conflict.reason}`);
+              console.warn(
+                `Server rejected deletion for story ${storyId} (proceeding with local deletion regardless): ${conflict.message || conflict.reason}`,
+              );
             }
           } catch (err) {
             if (!isOfflineError(err)) {
-              console.warn(`Failed to notify server of deletion for story ${storyId} (proceeding with local deletion regardless):`, (err as Error)?.message || err);
+              console.warn(
+                `Failed to notify server of deletion for story ${storyId} (proceeding with local deletion regardless):`,
+                (err as Error)?.message || err,
+              );
             }
           }
         }
@@ -613,6 +989,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       if (!story.serverId) {
         return; // Already fully local.
       }
+      await assertStoryIsWritable(db, storyId);
+      await assertStoryIsOwned(db, storyId);
 
       const server = await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) });
       if (!server?.url) {
@@ -622,7 +1000,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         } else {
           // A história baixada guarda apenas os favoritos da própria conta. Se o cadastro do
           // servidor sumiu, essas linhas são a única fonte restante para recuperar a identidade.
-          const formerUserIds = await db.selectDistinct({ userId: favorites.userId })
+          const formerUserIds = await db
+            .selectDistinct({ userId: favorites.userId })
             .from(favorites)
             .where(eq(favorites.storyId, storyId))
             .all();
@@ -630,7 +1009,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await favoriteService.migrateUserIdentity(storyId, userId, currentUserId);
           }
         }
-        await this.updateStory(currentUserId, storyId, { serverId: null, lastPublicFavoriteLog: 0 });
+        await this.updateStory(currentUserId, storyId, {
+          serverId: null,
+          lastPublicFavoriteLog: 0,
+        });
         return;
       }
 
@@ -641,14 +1023,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // before offering this action at all.
       //
       // No `version` in the payload, same reasoning as deleteStory: local `stories.version`
-      // was never kept in lockstep with the server's copy (nothing pushes plain Story-field
-      // edits through a version-checked path today), so sending it would make the server
-      // reject this as a concurrency conflict almost every time - a 200 response whose
-      // `conflicts` array says the delete never actually applied, silently defeating the
-      // whole point of this action. Omitting it opts into last-write-wins on the server
-      // (`checkVersionConflict` short-circuits when the client doesn't state a base version),
-      // which is exactly the semantics wanted here: this action means "delete it, whatever
-      // state it's in."
+      // was never kept in lockstep with the server's copy, so sending it would make OCC
+      // reject this almost every time. The server fills in the live version when the owner
+      // omits the base on a Story delete.
       //
       // No `operationTime` either: the server rejects any timestamp more than 1s ahead of
       // its own clock (`parseOperationTime`), and a device/emulator's clock has no guarantee
@@ -657,19 +1034,26 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const client = createKeresAxiosInstance({ baseURL: server.url });
       client.setTokenProvider(authTokenManager);
       client.setActiveServer(server);
-      const response = await client.post(`/sync/${storyId}`, [{
-        entity: 'Story',
-        id: storyId,
-        type: 'delete',
-      }]);
+      const response = await client.post(`/sync/${storyId}`, [
+        {
+          entity: 'Story',
+          id: storyId,
+          type: 'delete',
+        },
+      ]);
 
       // The route always answers 200 and reports per-operation outcome in the body - a
       // rejected operation never throws, so this check is the only way to actually know
       // whether the server's copy is gone.
-      const conflict = (response.data?.conflicts as { entity: string; entityId: string; message?: string; reason?: string }[] | undefined)
-        ?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+      const conflict = (
+        response.data?.conflicts as
+          | { entity: string; entityId: string; message?: string; reason?: string }[]
+          | undefined
+      )?.find((c) => c.entity === 'Story' && c.entityId === storyId);
       if (conflict) {
-        throw new Error(`Server rejected the delete: ${conflict.message || conflict.reason || 'unknown reason'}`);
+        throw new Error(
+          `Server rejected the delete: ${conflict.message || conflict.reason || 'unknown reason'}`,
+        );
       }
 
       await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
@@ -677,15 +1061,27 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async getBranchingStoryForkCount(storyId?: string): Promise<number> {
-      const result = await db.select({
-        count: count(scenes.id)
-      })
+      const result = await db
+        .select({
+          count: count(scenes.id),
+        })
         .from(scenes)
         .innerJoin(stories, eq(scenes.storyId, stories.id))
         .leftJoin(choices, and(eq(scenes.id, choices.sceneId), eq(choices.isDeleted, false)))
-        .where(storyId
-          ? and(eq(stories.id, storyId), eq(stories.type, 'branching'), eq(stories.isDeleted, false), eq(scenes.isDeleted, false))
-          : and(eq(stories.type, 'branching'), eq(stories.isDeleted, false), eq(scenes.isDeleted, false)))
+        .where(
+          storyId
+            ? and(
+                eq(stories.id, storyId),
+                eq(stories.type, 'branching'),
+                eq(stories.isDeleted, false),
+                eq(scenes.isDeleted, false),
+              )
+            : and(
+                eq(stories.type, 'branching'),
+                eq(stories.isDeleted, false),
+                eq(scenes.isDeleted, false),
+              ),
+        )
         .groupBy(scenes.id)
         .having(sql`count(${choices.id}) > 1`)
         .all();
@@ -712,12 +1108,33 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         and(eq(table.storyId, storyId), eq(table.isDeleted, false));
 
       const [
-        storyChapters, storyScenes, storyChoices, storyCharacters, storyLocations,
+        storyChapters,
+        storyScenes,
+        storyChoices,
+        storyCharacters,
+        storyLocations,
         storyLocationRelations,
-        storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
-        storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
-        storyGalleryRelations, storyItems, storyItemJourneys,
-        storySchemaFieldRows, storyAttributeValues, storyFavorites, storyComments, storySeeAlsoRelations,
+        storyWorldRules,
+        storyNotes,
+        storyNoteRelations,
+        storyTags,
+        storyTagRelations,
+        storySuggestions,
+        storyCharacterRelations,
+        storyCharacterScenes,
+        storyGalleryItems,
+        storyGalleryRelations,
+        storyItems,
+        storyItemJourneys,
+        storySchemaFieldRows,
+        storyAttributeValues,
+        storyFavorites,
+        storyComments,
+        storySeeAlsoRelations,
+        storyStats,
+        storyStatStrengths,
+        storyStatRelations,
+        storyModes,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -742,6 +1159,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.favorites.findMany({ where: belongsToStory(favorites) }),
         db.query.comments.findMany({ where: belongsToStory(comments) }),
         db.query.seeAlsoRelations.findMany({ where: belongsToStory(seeAlsoRelations) }),
+        db.query.stats.findMany({ where: belongsToStory(stats) }),
+        db.query.statStrengths.findMany({ where: belongsToStory(statStrengths) }),
+        db.query.statRelations.findMany({ where: belongsToStory(statRelations) }),
+        db.query.modes.findMany({ where: belongsToStory(modes) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -758,15 +1179,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         tags: storyTags,
         tagRelations: storyTagRelations,
         suggestions: storySuggestions,
-        // A tabela local chama os lados da relação de `charId1`/`charId2`, mas o formato de
-        // arquivo (e o servidor) usa `character1Id`/`character2Id`. `importFullStory` faz a
-        // tradução na entrada; sem a simétrica aqui, o arquivo gerado seria recusado na
-        // volta.
-        characterRelations: storyCharacterRelations.map(relation => ({
-          ...relation,
-          character1Id: relation.charId1,
-          character2Id: relation.charId2,
-        })),
+        characterRelations: storyCharacterRelations,
         characterScenes: storyCharacterScenes,
         galleryItems: storyGalleryItems,
         galleryRelations: storyGalleryRelations,
@@ -777,6 +1190,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         favorites: storyFavorites,
         comments: storyComments,
         seeAlsoRelations: storySeeAlsoRelations,
+        stats: storyStats,
+        statStrengths: storyStatStrengths,
+        statRelations: storyStatRelations,
+        modes: storyModes,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -784,7 +1201,20 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       });
     },
 
-    async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, role: EffectiveStoryRole | null = null, localMediaPaths?: Map<string, string>): Promise<string> {
+    async importFullStory(
+      userId: string,
+      fullStoryData: FullStoryExportType,
+      queriedServerId: string | null,
+      role: EffectiveStoryRole | null = null,
+      localMediaPaths?: Map<string, string>,
+      localImportStoryId?: string,
+    ): Promise<string> {
+      // A file import is a new local copy. A server download keeps remote IDs because those
+      // IDs are the synchronization identity for that shared story.
+      const importedStoryData = queriedServerId
+        ? fullStoryData
+        : cloneStoryForLocalImport(fullStoryData, userId, localImportStoryId);
+      fullStoryData = importedStoryData;
       return db.transaction(async (tx) => {
         // Defensive: the caller already confirmed there's no `stories` row for this id (the
         // "already imported" check in ImportExportScreen/ExampleStoryService), but that alone
@@ -792,10 +1222,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // a deletion made before deleteStoryChildRows covered every table would collide with
         // the fresh inserts below (e.g. a stale locationRelations row hitting its UNIQUE
         // constraint on id). Clearing first makes a retry self-healing either way.
-        await deleteStoryChildRows(tx, fullStoryData.story.id);
+        await deleteStoryChildRows(tx, importedStoryData.story.id);
 
         // 1. Process Story
-        const originalStory = fullStoryData.story;
+        const originalStory = importedStoryData.story;
         const storyToInsert: StoryInsert = {
           ...originalStory,
           userId: userId, // Assign to the current user
@@ -859,7 +1289,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               firstIsStartFound = true;
             } else if (scene.isStart && firstIsStartFound) {
               // This is a duplicate isStart, unset it
-              await tx.update(scenes)
+              await tx
+                .update(scenes)
                 .set({ isStart: false, updatedAt: now, version: scene.version + 1 })
                 .where(eq(scenes.id, scene.id));
             }
@@ -871,13 +1302,13 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               firstIsFinishFound = true;
             } else if (scene.isFinish && firstIsFinishFound) {
               // This is a duplicate isFinish, unset it
-              await tx.update(scenes)
+              await tx
+                .update(scenes)
                 .set({ isFinish: false, updatedAt: now, version: scene.version + 1 })
                 .where(eq(scenes.id, scene.id));
             }
           }
         }
-
 
         // 4. Process Choices
         for (const choice of fullStoryData.choices) {
@@ -893,6 +1324,56 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             deletedAt: null,
           };
           await tx.insert(choices).values(choiceToInsert).run();
+        }
+
+        // 4.1 Process ChoiceCheckGroups/ChoiceChecks/Effects (Optional) - novos na história,
+        // arrays opcionais pelo mesmo motivo de locationRelations acima: um export antigo (ou
+        // uma história de exemplo empacotada antes desses campos existirem) não os tem.
+        if (fullStoryData.choiceCheckGroups) {
+          for (const group of fullStoryData.choiceCheckGroups) {
+            const groupToInsert: ChoiceCheckGroupInsert = {
+              ...group,
+              storyId: group.storyId,
+              choiceId: group.choiceId,
+              createdAt: new Date(group.createdAt),
+              updatedAt: new Date(),
+              version: group.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(choiceCheckGroups).values(groupToInsert).run();
+          }
+        }
+        if (fullStoryData.choiceChecks) {
+          for (const check of fullStoryData.choiceChecks) {
+            const checkToInsert: ChoiceCheckInsert = {
+              ...check,
+              storyId: check.storyId,
+              groupId: check.groupId,
+              createdAt: new Date(check.createdAt),
+              updatedAt: new Date(),
+              version: check.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(choiceChecks).values(checkToInsert).run();
+          }
+        }
+        if (fullStoryData.effects) {
+          for (const effect of fullStoryData.effects) {
+            const effectToInsert: EffectInsert = {
+              ...effect,
+              storyId: effect.storyId,
+              entityType: effect.entityType,
+              entityId: effect.entityId,
+              createdAt: new Date(effect.createdAt),
+              updatedAt: new Date(),
+              version: effect.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(effects).values(effectToInsert).run();
+          }
         }
 
         // 5. Process Characters
@@ -1001,8 +1482,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           const charRelationToInsert: CharacterRelationInsert = {
             ...charRelation,
             storyId: charRelation.storyId,
-            charId1: charRelation.character1Id,
-            charId2: charRelation.character2Id,
             createdAt: new Date(charRelation.createdAt),
             updatedAt: new Date(),
             version: charRelation.version,
@@ -1027,7 +1506,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           };
           await tx.insert(characterScenes).values(charSceneToInsert).run();
         }
-        
+
         // 13. Process TagRelations
         if (fullStoryData.tagRelations) {
           for (const tagRelation of fullStoryData.tagRelations) {
@@ -1046,7 +1525,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await tx.insert(tagRelations).values(tagRelationToInsert).run();
           }
         }
-        
+
         // 14. Process GalleryItems
         if (fullStoryData.galleryItems) {
           for (const galleryItem of fullStoryData.galleryItems) {
@@ -1089,7 +1568,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-
         // 15. Process Items (if optional) - Assuming there's an 'items' table
         if (fullStoryData.items) {
           for (const item of fullStoryData.items) {
@@ -1106,7 +1584,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await tx.insert(items).values(itemToInsert).run();
           }
         }
-        
+
         // 16. Process ItemJourneys - Assuming there's an 'itemJourneys' table
         if (fullStoryData.itemJourneys) {
           for (const itemJourney of fullStoryData.itemJourneys) {
@@ -1125,7 +1603,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await tx.insert(itemJourneys).values(itemJourneyToInsert).run();
           }
         }
-        
+
         // 17. Process NoteRelations
         if (fullStoryData.noteRelations) {
           for (const noteRelation of fullStoryData.noteRelations) {
@@ -1163,8 +1641,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
         // 19. Process AttributeValues (Optional) - por último de propósito: entityId pode
         // apontar pra qualquer um dos 7 tipos de entidade suportados, todos já inseridos acima,
-        // e fieldId depende do bloco de StorySchemaFields logo acima. IDs preservados como
-        // vieram do arquivo (sem idMap, mesmo tratamento de todo bloco anterior neste método).
+        // e fieldId depende do bloco de StorySchemaFields logo acima. Em importações locais,
+        // os IDs já chegaram remapeados por cloneStoryForLocalImport.
         if (fullStoryData.attributeValues) {
           for (const attributeValue of fullStoryData.attributeValues) {
             const attributeValueToInsert: AttributeValueInsert = {
@@ -1183,7 +1661,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         }
 
         // Relações "Veja também" só entram depois das entidades às quais apontam. A relação
-        // já vem canonicalizada pelo serviço que a criou; manter os IDs preserva a simetria.
+        // já vem canonicalizada pelo serviço que a criou; a cópia local já remapeou ambos os lados.
         if (fullStoryData.seeAlsoRelations) {
           for (const relation of fullStoryData.seeAlsoRelations) {
             const relationToInsert: SeeAlsoRelationInsert = {
@@ -1216,21 +1694,82 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-        if (fullStoryData.favorites) {
-          for (const favorite of fullStoryData.favorites) {
-            await tx.insert(favorites).values({
-              ...favorite,
+        // Sistema de status: Stat e Mode antes de StatStrength/StatRelation, que os referenciam.
+        if (fullStoryData.stats) {
+          for (const stat of fullStoryData.stats) {
+            const statToInsert: StatInsert = {
+              ...stat,
               storyId: originalStory.id,
-              userId: queriedServerId ? favorite.userId : userId,
-              createdAt: new Date(favorite.createdAt),
+              createdAt: new Date(stat.createdAt),
               updatedAt: new Date(),
               isDeleted: false,
               deletedAt: null,
-            }).onConflictDoNothing().run();
+            };
+            await tx.insert(stats).values(statToInsert).run();
           }
         }
 
-        return originalStory.id; // Return the original story ID
+        if (fullStoryData.modes) {
+          for (const mode of fullStoryData.modes) {
+            const modeToInsert: ModeInsert = {
+              ...mode,
+              storyId: originalStory.id,
+              createdAt: new Date(mode.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(modes).values(modeToInsert).run();
+          }
+        }
+
+        if (fullStoryData.statStrengths) {
+          for (const strength of fullStoryData.statStrengths) {
+            const strengthToInsert: StatStrengthInsert = {
+              ...strength,
+              storyId: originalStory.id,
+              createdAt: new Date(strength.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(statStrengths).values(strengthToInsert).run();
+          }
+        }
+
+        if (fullStoryData.statRelations) {
+          for (const value of fullStoryData.statRelations) {
+            const valueToInsert: StatRelationInsert = {
+              ...value,
+              storyId: originalStory.id,
+              createdAt: new Date(value.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(statRelations).values(valueToInsert).run();
+          }
+        }
+
+        if (fullStoryData.favorites) {
+          for (const favorite of fullStoryData.favorites) {
+            await tx
+              .insert(favorites)
+              .values({
+                ...favorite,
+                storyId: originalStory.id,
+                userId: queriedServerId ? favorite.userId : userId,
+                createdAt: new Date(favorite.createdAt),
+                updatedAt: new Date(),
+                isDeleted: false,
+                deletedAt: null,
+              })
+              .onConflictDoNothing()
+              .run();
+          }
+        }
+
+        return originalStory.id;
       });
     },
   };

@@ -1,21 +1,27 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { characters } from './characters';
 import { items } from './items';
 import { scenes } from './scenes';
 import { stories } from './stories';
 
-export const itemJourneys = pgTable('item_journeys', {
+export const itemJourneys = table('item_journeys', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  itemId: text('item_id').notNull().references(() => items.id),
-  sceneId: text('scene_id').notNull().references(() => scenes.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  itemId: text('item_id')
+    .notNull()
+    .references(() => items.id),
+  sceneId: text('scene_id')
+    .notNull()
+    .references(() => scenes.id),
   newCharacterOwnerId: text('new_character_owner_id').references(() => characters.id),
   newState: text('new_state').notNull(),
 
   extraNotes: text('extra_notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

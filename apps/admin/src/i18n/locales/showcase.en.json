@@ -1,0 +1,66 @@
+{
+  "language": {
+    "label": "Language"
+  },
+  "theme": {
+    "system": "Theme: System",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark"
+  },
+  "nav": {
+    "stories": "Stories",
+    "about": "About"
+  },
+  "footer": {
+    "disclaimer": "Keres is a writing companion for planning stories. It is not affiliated with the server hosting this page, nor with the stories published on it, and it does not endorse or moderate them. Every story here belongs to the person who published it."
+  },
+  "home": {
+    "eyebrow": "Keres Showcase",
+    "title": "Stories, laid open.",
+    "intro": "Every story below was written in Keres and published here by its author. Open one to read what it is about, then download the whole thing - characters, chapters, scenes, locations and all - and open it in your own copy of Keres.",
+    "publishedStories": "Published stories",
+    "loading": "Loading…",
+    "empty": "Nothing has been published on this server yet. When an author publishes a story, it shows up here.",
+    "loadFailed": "Could not load the stories."
+  },
+  "story": {
+    "back": "← All stories",
+    "publishedThis": "published this story",
+    "publishedThisShort": "published this",
+    "publishedBy": "published by {{username}}#{{tag}}",
+    "author": "Author",
+    "genre": "Genre",
+    "language": "Language",
+    "structure": "Structure",
+    "linear": "Linear",
+    "branching": "Branching",
+    "theme": "Theme",
+    "loading": "Loading…",
+    "loadFailed": "Could not load this story.",
+    "downloadTitle": "Download",
+    "downloadIntro": "Each version is a complete Keres package - the story and its media - that imports straight back into the app.",
+    "downloadLatest": "Download latest",
+    "download": "Download",
+    "preparing": "Preparing…",
+    "downloadFailed": "Could not start the download.",
+    "mediaCount": "{{included}}/{{total}} media"
+  },
+  "gate": {
+    "title": "This story is private",
+    "intro": "Its author published it without listing it. Enter the password they gave you to open the page.",
+    "password": "Password",
+    "open": "Open story",
+    "opening": "Opening…",
+    "failed": "Incorrect password."
+  },
+  "about": {
+    "title": "About this page",
+    "intro": "Keres is a tool for planning stories: characters, chapters, scenes, locations, items, world rules, and how they all connect. This page is the public face of one Keres server - a place where the people writing on it can put a story where anyone can see it.",
+    "downloadTitle": "What you can download here",
+    "downloadBody": "Each published version is a complete package of a story's Keres base: its structure and everything written around it, plus the media the author attached. It is not the story as a finished work - Keres is always a companion to whatever the story is actually being made in, whether that is a novel, a game, or a campaign.",
+    "importBody": "Open a package in Keres through <strong>Import / Export</strong>. Importing makes a separate copy on your device; it does not join the author's story or send anything back to them.",
+    "responsibilityTitle": "Who is responsible for what",
+    "responsibilityBody": "The stories here belong to the people who published them, and this server is run by whoever chose to run it. Keres, the application, is not affiliated with either, does not host or moderate these stories, and takes no position on them.",
+    "serverVersion": "Server version {{version}}"
+  }
+}

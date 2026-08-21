@@ -1,6 +1,11 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import RelatedEntitiesList, {
+  RelatedEntityItem,
+} from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,9 +63,17 @@ const TagDetailScreen = () => {
   }, [drizzleDb]);
 
   const [tag, setTag] = useState<TagSelect | null>(null);
-  const { canComment, isStoryOwner, currentUserId, commentsByField, addComment, deleteComment, updateComment } = useEntityComments(selectedStory?.id, 'Tag', tagId);
+  const {
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    commentsByField,
+    addComment,
+    deleteComment,
+    updateComment,
+  } = useEntityComments(selectedStory?.id, 'Tag', tagId);
   const [allTagRelations, setAllTagRelations] = useState<TagRelation[]>([]);
-  const [groupedEntities, setGroupedEntities] = useState<Record<string, string[]>>({
+  const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
     chapter: [],
     character: [],
     choice: [],
@@ -114,7 +127,13 @@ const TagDetailScreen = () => {
     buttonContainer: {
       marginTop: 20,
     },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 15,
+      marginBottom: 5,
+    },
   });
 
   const fetchTag = useCallback(async () => {
@@ -129,9 +148,8 @@ const TagDetailScreen = () => {
         setTag(fetchedTag);
         setHeaderTitle(fetchedTag.name || t('tag_details_title'));
       } else if (fetchedTag && fetchedTag.isDeleted) {
-        navigation.goBack()
-      }
-      else {
+        navigation.goBack();
+      } else {
         setError(t('tag_not_found'));
         setHeaderTitle(t('tag_not_found'));
       }
@@ -150,7 +168,10 @@ const TagDetailScreen = () => {
       return;
     }
     try {
-      const relations = await tagRelationServiceRef.current.getRelationsForTag(selectedStory.id, tagId);
+      const relations = await tagRelationServiceRef.current.getRelationsForTag(
+        selectedStory.id,
+        tagId,
+      );
       setAllTagRelations(relations);
     } catch (err) {
       console.error('Failed to fetch tag relations:', err);
@@ -160,7 +181,7 @@ const TagDetailScreen = () => {
   const processTagRelations = useCallback(async () => {
     if (!drizzleDb || !selectedStory?.id) return;
 
-    const newGroupedEntities: Record<string, string[]> = {
+    const newGroupedEntities: Record<string, RelatedEntityItem[]> = {
       chapter: [],
       character: [],
       choice: [],
@@ -182,35 +203,50 @@ const TagDetailScreen = () => {
     };
 
     for (const relation of allTagRelations) {
-      const entityName = await EntityService.getEntityIdentifier(drizzleDb, relation.relationType, relation.relationId, selectedStory.id, t);
+      const entityName = await EntityService.getEntityIdentifier(
+        drizzleDb,
+        relation.relationType,
+        relation.relationId,
+        selectedStory.id,
+        t,
+      );
       if (entityName) {
-        newGroupedEntities[relation.relationType.toLowerCase()].push(entityName);
+        newGroupedEntities[relation.relationType.toLowerCase()].push({
+          id: relation.relationId,
+          name: entityName,
+        });
       }
     }
     setGroupedEntities(newGroupedEntities);
   }, [allTagRelations, drizzleDb, selectedStory?.id, t]);
 
-  const handleTagChange = useCallback(async (changedStoryId: string, changedTagId: string) => {
-    if (changedTagId === tagId) {
-      // Re-fetch the tag to get the latest status
-      if (tagServiceRef.current) {
-        const updatedTag = await tagServiceRef.current.getById(tagId);
-        if (!updatedTag || updatedTag.isDeleted) {
-          navigation.goBack(); // Tag was deleted or no longer found
-        } else {
-          setTag(updatedTag); // Update state with latest tag data
-          setHeaderTitle(updatedTag.name || t('tag_details_title'));
+  const handleTagChange = useCallback(
+    async (changedStoryId: string, changedTagId: string) => {
+      if (changedTagId === tagId) {
+        // Re-fetch the tag to get the latest status
+        if (tagServiceRef.current) {
+          const updatedTag = await tagServiceRef.current.getById(tagId);
+          if (!updatedTag || updatedTag.isDeleted) {
+            navigation.goBack(); // Tag was deleted or no longer found
+          } else {
+            setTag(updatedTag); // Update state with latest tag data
+            setHeaderTitle(updatedTag.name || t('tag_details_title'));
+          }
         }
+        fetchTagRelations(); // Also refetch relations if the tag itself changed
       }
-      fetchTagRelations(); // Also refetch relations if the tag itself changed
-    }
-  }, [tagId, navigation, setTag, setHeaderTitle, t, fetchTagRelations]);
+    },
+    [tagId, navigation, setTag, setHeaderTitle, t, fetchTagRelations],
+  );
 
-  const handleTagRelationChange = useCallback((changedStoryId: string, changedTagId: string) => {
-    if (changedTagId === tagId) {
-      fetchTagRelations(); // Refetch relations if a tag relation changed
-    }
-  }, [tagId, fetchTagRelations]);
+  const handleTagRelationChange = useCallback(
+    (changedStoryId: string, changedTagId: string) => {
+      if (changedTagId === tagId) {
+        fetchTagRelations(); // Refetch relations if a tag relation changed
+      }
+    },
+    [tagId, fetchTagRelations],
+  );
 
   useEffect(() => {
     // Only subscribe and fetch if tagServiceRef.current is initialized
@@ -226,7 +262,14 @@ const TagDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [tagId, fetchTag, handleTagChange, selectedStory?.id, fetchTagRelations, handleTagRelationChange]);
+  }, [
+    tagId,
+    fetchTag,
+    handleTagChange,
+    selectedStory?.id,
+    fetchTagRelations,
+    handleTagRelationChange,
+  ]);
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {
@@ -234,15 +277,17 @@ const TagDetailScreen = () => {
     }
   }, [allTagRelations, selectedStory?.id, processTagRelations]);
 
-
-  const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('TagForm', { tagId: tagId })}
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, tagId, colors.text]);
+  const renderHeaderRight = useCallback(
+    () => (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('TagForm', { tagId: tagId })}
+        style={{ marginRight: 15 }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ),
+    [navigation, tagId, colors.text],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -251,7 +296,7 @@ const TagDetailScreen = () => {
         headerRight: renderHeaderRight, // Pass the memoized component
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -263,15 +308,22 @@ const TagDetailScreen = () => {
   }
 
   if (!tag) {
-    return <ScreenError padded message={t('tag_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('tag_data_missing')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       {tag.color && (
         <View style={styles.colorDisplayContainer}>
           <View style={[styles.colorCircle, { backgroundColor: tag.color }]} />
-          <Text style={styles.detailText}>{t('color')}: {tag.color}</Text>
+          <Text style={styles.detailText}>
+            {t('color')}: {tag.color}
+          </Text>
         </View>
       )}
 
@@ -283,7 +335,12 @@ const TagDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: tag.extraNotes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'extraNotes' },
+            { ...input, contentSnapshot: tag.extraNotes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />

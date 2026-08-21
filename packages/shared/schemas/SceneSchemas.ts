@@ -33,14 +33,14 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  name: z.string().min(1, "Scene name cannot be empty"),
-  index: z.number().int().min(0, "Index must be a non-negative integer"),
+  name: z.string().min(1, 'Scene name cannot be empty'),
+  index: z.number().int().min(0, 'Index must be a non-negative integer'),
   isFavorite: z.boolean().default(false),
   isStart: z.boolean().default(false),
   isFinish: z.boolean().default(false),
 });
 
-export const PartialSceneSchema = SceneSchema.partial();
+export const PartialSceneSchema = CreateSceneDataSchema.partial();
 
 export type CreateSceneDataType = z.infer<typeof CreateSceneDataSchema>;
 export type SceneType = z.infer<typeof SceneSchema>;

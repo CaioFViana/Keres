@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const StoryTypeSchema = z.enum(['linear', 'branching']);
 export const FavoriteBehaviorSchema = z.enum(['global', 'individual', 'individual_public']);
+export const StatNotationSchema = z.enum(['letter', 'number']);
 
 // Schema for client-provided input during story creation
 export const StoryCreateInputSchema = z.object({
@@ -19,6 +20,8 @@ export const StoryCreateInputSchema = z.object({
   theme: z.string().nullable().optional(),
   normalizeSceneTiming: z.boolean().default(false),
   allowReaderComments: z.boolean().default(false),
+  statSystem: z.boolean().default(false),
+  statNotation: StatNotationSchema.default('letter'),
 });
 
 // Schema for the 'data' payload when creating a story via sync
@@ -35,6 +38,8 @@ export const CreateStoryDataSchema = z.object({
   theme: z.string().nullable().optional(),
   normalizeSceneTiming: z.boolean().default(false),
   allowReaderComments: z.boolean().default(false),
+  statSystem: z.boolean().default(false),
+  statNotation: StatNotationSchema.default('letter'),
 });
 
 // Full Story Schema, including server-managed fields like userId
@@ -47,4 +52,4 @@ export const StorySchema = StoryCreateInputSchema.extend({
   deletedAt: z.coerce.date().nullable().optional(),
 });
 
-export const PartialStorySchema = StorySchema.partial();
+export const PartialStorySchema = CreateStoryDataSchema.partial();

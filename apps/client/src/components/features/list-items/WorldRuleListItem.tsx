@@ -6,7 +6,8 @@ import { truncate } from '../../../utils/stringUtils';
 import { WorldRuleWithTags } from '../../../db/schemas/worldRules';
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';
-import { createWorldRuleStyles } from '@/src/components/features/list-items/styles/worldRuleListItemStyles';
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import { createSimpleEntityListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface WorldRuleListItemProps {
   worldRule: WorldRuleWithTags;
@@ -14,27 +15,25 @@ interface WorldRuleListItemProps {
   onViewDetails: (worldRuleId: string) => void;
 }
 
-const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({ worldRule, onToggleFavorite, onViewDetails }) => {
+const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({
+  worldRule,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const descriptionSummary = truncate(worldRule.description, 150);
 
-  const styles = createWorldRuleStyles(colors);
+  const styles = createSimpleEntityListItemStyles(colors);
 
   const renderHeaderContent = (rule: WorldRuleWithTags) => (
-    <View style={styles.headerLeft}>
-      <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {rule.title}
-      </Text>
-    </View>
+    <ListItemTitle text={rule.title} headerLeftStyle={styles.headerLeft} nameStyle={styles.name} />
   );
 
   const renderExpandedContent = (rule: WorldRuleWithTags) => (
     <View>
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
-      {rule.tags && rule.tags.length > 0 && (
-        <TagList tags={rule.tags} />
-      )}
+      {rule.tags && rule.tags.length > 0 && <TagList tags={rule.tags} />}
     </View>
   );
 

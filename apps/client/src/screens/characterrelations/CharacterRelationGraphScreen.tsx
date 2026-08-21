@@ -3,19 +3,30 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import CharacterRelationGraphCanvas, { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import CharacterRelationGraphCanvas, {
+  CharacterRelationGraphCanvasHandle,
+} from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createCharacterRelationService, CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
+import {
+  createCharacterRelationService,
+  CharacterRelationWithNames,
+} from '../../services/storymanagement/CharacterRelationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { buildCharacterRelationGraphLayout, RelationGraphNode } from '../../utils/characterRelationGraphLayout';
+import {
+  buildCharacterRelationGraphLayout,
+  RelationGraphNode,
+} from '../../utils/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -81,9 +92,11 @@ const CharacterRelationGraphScreen = () => {
   }, [drizzleDb, storyId, t]);
 
   // Recarrega ao focar: personagens e relações podem ter mudado em outra tela.
-  useFocusEffect(useCallback(() => {
-    loadGraph();
-  }, [loadGraph]));
+  useFocusEffect(
+    useCallback(() => {
+      loadGraph();
+    }, [loadGraph]),
+  );
 
   useEffect(() => {
     const handleRemoteChange = (change: { storyId?: string }) => {
@@ -95,30 +108,34 @@ const CharacterRelationGraphScreen = () => {
     return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
   }, [storyId, loadGraph]);
 
-  useFocusEffect(useCallback(() => {
-    setDocumentTitle(t('character_relation_map_title'));
-    navigation.getParent()?.setOptions({ title: t('character_relation_map_title'), headerRight: undefined });
-  }, [navigation, t]));
+  useFocusEffect(
+    useCallback(() => {
+      setDocumentTitle(t('character_relation_map_title'));
+      navigation
+        .getParent()
+        ?.setOptions({ title: t('character_relation_map_title'), headerRight: undefined });
+    }, [navigation, t]),
+  );
 
   const layout = useMemo(
     () => buildCharacterRelationGraphLayout(characters, relations),
-    [characters, relations]
+    [characters, relations],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
 
   const selectedNode = useMemo(
-    () => layout.nodes.find(node => node.id === selectedNodeId) ?? null,
-    [layout.nodes, selectedNodeId]
+    () => layout.nodes.find((node) => node.id === selectedNodeId) ?? null,
+    [layout.nodes, selectedNodeId],
   );
 
   const connections = useMemo((): CharacterRelationNodeConnection[] => {
     if (!selectedNodeId) return [];
-    const nameById = new Map(layout.nodes.map(node => [node.id, node.character.name]));
+    const nameById = new Map(layout.nodes.map((node) => [node.id, node.character.name]));
 
     return layout.edges
-      .filter(edge => edge.sourceId === selectedNodeId || edge.targetId === selectedNodeId)
-      .map(edge => {
+      .filter((edge) => edge.sourceId === selectedNodeId || edge.targetId === selectedNodeId)
+      .map((edge) => {
         const otherId = edge.sourceId === selectedNodeId ? edge.targetId : edge.sourceId;
         return {
           relationId: edge.id,
@@ -133,18 +150,25 @@ const CharacterRelationGraphScreen = () => {
     setSelectedNodeId(node.id);
   }, []);
 
-  const handleOpenCharacter = useCallback((characterId: string) => {
-    setSelectedNodeId(null);
-    navigation.navigate('CharactersStack', { screen: 'CharacterDetail', params: { characterId } });
-  }, [navigation]);
+  const handleOpenCharacter = useCallback(
+    (characterId: string) => {
+      setSelectedNodeId(null);
+      navigation.navigate('CharactersStack', {
+        screen: 'CharacterDetail',
+        params: { characterId },
+      });
+    },
+    [navigation],
+  );
 
   const mapSubtitle = useMemo(
-    () => t('character_relation_map_subtitle', {
-      characterCount: layout.nodes.length,
-      relationCount: layout.edges.length,
-      isolatedCount: layout.isolatedCount,
-    }),
-    [layout.edges.length, layout.isolatedCount, layout.nodes.length, t]
+    () =>
+      t('character_relation_map_subtitle', {
+        characterCount: layout.nodes.length,
+        relationCount: layout.edges.length,
+        isolatedCount: layout.isolatedCount,
+      }),
+    [layout.edges.length, layout.isolatedCount, layout.nodes.length, t],
   );
 
   const handleExport = useCallback(async () => {
@@ -169,13 +193,24 @@ const CharacterRelationGraphScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(svg, buildCharacterRelationMapFileName(selectedStory.title));
+      const result = await deliverSvgMap(
+        svg,
+        buildCharacterRelationMapFileName(selectedStory.title),
+      );
       if (result.delivered) {
-        showNotification(t('character_relation_map_export_success', { fileName: result.fileName }), 'success');
+        showNotification(
+          t('character_relation_map_export_success', { fileName: result.fileName }),
+          'success',
+        );
       } else {
         // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
         // ele está é mais útil do que alegar sucesso.
-        showNotification(t('character_relation_map_export_no_share_target', { path: result.uri || result.fileName }), 'warning');
+        showNotification(
+          t('character_relation_map_export_no_share_target', {
+            path: result.uri || result.fileName,
+          }),
+          'warning',
+        );
       }
     } catch (exportError) {
       console.log('CharacterRelationGraphScreen: failed to export relation map.', exportError);
@@ -185,60 +220,64 @@ const CharacterRelationGraphScreen = () => {
     }
   }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
 
-  const styles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    header: {
-      backgroundColor: colors.surface,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      paddingVertical: 9,
-    },
-    headerTitle: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      color: colors.text,
-      paddingHorizontal: 12,
-    },
-    headerSubtitle: {
-      fontSize: 11,
-      color: colors.textSecondary,
-      paddingHorizontal: 12,
-      marginTop: 1,
-    },
-    controls: {
-      position: 'absolute',
-      right: 14,
-      bottom: 18,
-    },
-    controlButton: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 9,
-      backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      outlineWidth: 0,
-    },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 21,
-    },
-  }), [colors]);
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        header: {
+          backgroundColor: colors.surface,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+          paddingVertical: 9,
+        },
+        headerTitle: {
+          fontSize: 14,
+          fontWeight: 'bold',
+          color: colors.text,
+          paddingHorizontal: 12,
+        },
+        headerSubtitle: {
+          fontSize: 11,
+          color: colors.textSecondary,
+          paddingHorizontal: 12,
+          marginTop: 1,
+        },
+        controls: {
+          position: 'absolute',
+          right: 14,
+          bottom: 18,
+        },
+        controlButton: {
+          width: 42,
+          height: 42,
+          borderRadius: 21,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 9,
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          outlineWidth: 0,
+        },
+        emptyContainer: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 32,
+        },
+        emptyText: {
+          marginTop: 12,
+          fontSize: 15,
+          color: colors.textSecondary,
+          textAlign: 'center',
+          lineHeight: 21,
+        },
+      }),
+    [colors],
+  );
 
   if (loading) {
     return <ScreenLoading message={t('loading_graph_data')} />;
@@ -263,9 +302,13 @@ const CharacterRelationGraphScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         {!!selectedStory?.title && (
-          <Text style={styles.headerTitle} numberOfLines={1}>{selectedStory.title}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {selectedStory.title}
+          </Text>
         )}
-        <Text style={styles.headerSubtitle} numberOfLines={1}>{mapSubtitle}</Text>
+        <Text style={styles.headerSubtitle} numberOfLines={1}>
+          {mapSubtitle}
+        </Text>
       </View>
 
       <CharacterRelationGraphCanvas
@@ -315,27 +358,35 @@ const CharacterRelationGraphScreen = () => {
           disabled={exporting}
           accessibilityLabel={t('character_relation_map_export')}
         >
-          {exporting
-            ? <ActivityIndicator size="small" color={colors.primary} />
-            : <Ionicons name="image-outline" size={20} color={colors.text} />}
+          {exporting ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="image-outline" size={20} color={colors.text} />
+          )}
         </TouchableOpacity>
       </View>
 
       {selectedNode && (
         <GraphNodeSheet
           title={selectedNode.character.name}
-          badges={selectedNode.isIsolated ? [{ label: t('character_relation_map_badge_isolated'), color: colors.textSecondary }] : undefined}
-          sections={[{
-            title: t('character_relation_map_relations_title'),
-            emptyMessage: t('character_relation_map_no_relations'),
-            items: connections.map(connection => ({
-              id: connection.relationId,
-              icon: 'people-outline' as const,
-              label: connection.characterName,
-              detail: connection.relationType,
-              onPress: () => setSelectedNodeId(connection.characterId),
-            })),
-          }]}
+          badges={
+            selectedNode.isIsolated
+              ? [{ label: t('character_relation_map_badge_isolated'), color: colors.textSecondary }]
+              : undefined
+          }
+          sections={[
+            {
+              title: t('character_relation_map_relations_title'),
+              emptyMessage: t('character_relation_map_no_relations'),
+              items: connections.map((connection) => ({
+                id: connection.relationId,
+                icon: 'people-outline' as const,
+                label: connection.characterName,
+                detail: connection.relationType,
+                onPress: () => setSelectedNodeId(connection.characterId),
+              })),
+            },
+          ]}
           actionLabel={t('character_relation_map_open_character')}
           onAction={() => handleOpenCharacter(selectedNode.id)}
           onClose={() => setSelectedNodeId(null)}

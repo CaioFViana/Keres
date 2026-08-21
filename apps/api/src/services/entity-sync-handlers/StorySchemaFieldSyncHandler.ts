@@ -1,4 +1,5 @@
 import {
+  AttributeType,
   CreateStorySchemaFieldDataSchema,
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
@@ -12,7 +13,10 @@ import { db } from '../../db';
 import { storySchemaFields } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof CreateStorySchemaFieldDataSchema, typeof PartialStorySchemaFieldSchema> {
+export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateStorySchemaFieldDataSchema,
+  typeof PartialStorySchemaFieldSchema
+> {
   entityName = 'StorySchemaField';
 
   constructor() {
@@ -26,7 +30,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof Cr
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
@@ -38,12 +42,18 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof Cr
         eq(storySchemaFields.storyId, storyId),
         eq(storySchemaFields.entityType, validatedData.entityType),
         eq(storySchemaFields.key, validatedData.key),
-        eq(storySchemaFields.isDeleted, false)
+        eq(storySchemaFields.isDeleted, false),
       ),
     });
 
     if (existingField) {
-      throw new Error(`Conflict: Attribute with key "${validatedData.key}" already exists for ${validatedData.entityType} in story ${storyId}.`);
+      throw new Error(
+        `Conflict: Attribute with key "${validatedData.key}" already exists for ${validatedData.entityType} in story ${storyId}.`,
+      );
+    }
+
+    if (validatedData.type === AttributeType.ENTITY && !validatedData.targetEntityType) {
+      throw new Error('Entity attributes require a target entity type.');
     }
 
     await db.insert(storySchemaFields).values({
@@ -54,6 +64,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof Cr
       key: validatedData.key,
       description: validatedData.description,
       type: validatedData.type,
+      targetEntityType: validatedData.targetEntityType,
       isRequired: validatedData.isRequired,
       defaultValue: validatedData.defaultValue,
       order: validatedData.order,
@@ -65,7 +76,12 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof Cr
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     // entityType e key são imutáveis após a criação: AttributeValue referencia o campo por
     // fieldId (não por key), então nada quebraria tecnicamente, mas mudar o tipo de entidade ou
     // a chave por baixo de valores já salvos os deixaria com um rótulo/tipo incoerente sem
@@ -74,11 +90,18 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof Cr
     const changes = { ...update.changes };
     delete changes.entityType;
     delete changes.key;
+    delete changes.type;
+    delete changes.targetEntityType;
 
     await super.update(userId, storyId, { ...update, changes }, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const alreadyDeleted = !!currentEntity.isDeleted;
     await super.delete(userId, storyId, update, currentEntity);
 
@@ -97,7 +120,8 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<typeof Cr
     // operationLog, então outros dispositivos nunca saberiam da cascata via pull - o cliente
     // precisa mandar exclusões explícitas de AttributeValue no mesmo lote, cada uma seguindo o
     // caminho normal (AttributeValueSyncHandler.delete), pra sincronizar corretamente.
-    await db.update(storySchemaFields)
+    await db
+      .update(storySchemaFields)
       .set({ key: sql`${storySchemaFields.key} || '__deleted_' || ${ulid()}` })
       .where(eq(storySchemaFields.id, update.id!));
   }

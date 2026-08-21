@@ -1,10 +1,14 @@
 import { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
-import { and, asc, count, eq, ilike, or } from 'drizzle-orm';
+import { and, asc, count, eq, or } from 'drizzle-orm';
+import { insensitiveLike } from '../db/sqlOperators';
 import { ulid } from 'ulid';
+import { BCRYPT_COST } from '../config/bcrypt';
 import { env } from '../config/env';
 import { db } from '../db';
 import { users } from '../db/schema';
+import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
+import { recoveryCodeService } from './RecoveryCodeService';
 
 export class UsernameAlreadyTakenError extends Error {
   constructor() {
@@ -23,10 +27,16 @@ export class AdminUserNotFoundError extends Error {
 /**
  * Recusa demover/excluir a conta root reconciliada via env (ver RootAdminService) - ela só
  * pode ser removida mudando/removendo as env vars e reiniciando a API, nunca pela UI.
+ *
+ * Só essas duas ações são bloqueadas em `update`/`softDelete` abaixo - tag, avatar, bio e
+ * tierId da conta root passam por edição normal, então a mensagem não deve dizer "modificada"
+ * sem qualificar, isso sobra a impressão de que a conta é imutável por completo.
  */
 export class RootAdminProtectedError extends Error {
   constructor() {
-    super('The root admin account cannot be modified or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.');
+    super(
+      'The root admin account cannot be demoted or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.',
+    );
     this.name = 'RootAdminProtectedError';
   }
 }
@@ -72,10 +82,12 @@ export class AdminUserService {
   async list(query: AdminUserListQuery) {
     const conditions = [];
     if (query.search) {
-      conditions.push(or(
-        ilike(users.username, `%${query.search}%`),
-        ilike(users.tag, `%${query.search}%`),
-      ));
+      conditions.push(
+        or(
+          insensitiveLike(users.username, `%${query.search}%`),
+          insensitiveLike(users.tag, `%${query.search}%`),
+        ),
+      );
     }
     if (query.isAdmin !== undefined) {
       conditions.push(eq(users.isAdmin, query.isAdmin));
@@ -107,12 +119,14 @@ export class AdminUserService {
   }
 
   async create(input: AdminCreateUser) {
-    const existingUsername = await db.query.users.findFirst({ where: eq(users.username, input.username) });
+    const existingUsername = await db.query.users.findFirst({
+      where: eq(users.username, input.username),
+    });
     if (existingUsername) {
       throw new UsernameAlreadyTakenError();
     }
 
-    const hashedPassword = await bcrypt.hash(input.password, 10);
+    const hashedPassword = await bcrypt.hash(input.password, BCRYPT_COST);
     const id = ulid();
     const desiredTag = input.tag ?? input.username;
 
@@ -120,29 +134,63 @@ export class AdminUserService {
     // uso mesmo que o username não esteja, já que as duas colunas não compartilham unicidade.
     let created;
     try {
-      [created] = await db.insert(users).values({
-        id,
-        username: input.username,
-        tag: desiredTag,
-        password: hashedPassword,
-        isAdmin: input.isAdmin,
-        tierId: input.tierId ?? null,
-      }).returning(ADMIN_USER_RETURNING);
-    } catch (error) {
-      if ((error as { code?: string })?.code === '23505') {
-        [created] = await db.insert(users).values({
+      [created] = await db
+        .insert(users)
+        .values({
           id,
           username: input.username,
-          tag: `${desiredTag}${id.slice(-4)}`,
+          tag: desiredTag,
           password: hashedPassword,
           isAdmin: input.isAdmin,
           tierId: input.tierId ?? null,
-        }).returning(ADMIN_USER_RETURNING);
+        })
+        .returning(ADMIN_USER_RETURNING);
+    } catch (error) {
+      if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
+        try {
+          [created] = await db
+            .insert(users)
+            .values({
+              id,
+              username: input.username,
+              tag: `${desiredTag}${id.slice(-4)}`,
+              password: hashedPassword,
+              isAdmin: input.isAdmin,
+              tierId: input.tierId ?? null,
+            })
+            .returning(ADMIN_USER_RETURNING);
+        } catch (retryError) {
+          // Mesmo caso de `auth.route.ts`: a tag era só a primeira restrição reclamada, e o
+          // username também está tomado. Qual delas o banco acusa primeiro varia por motor.
+          if (isUniqueViolation(retryError)) {
+            throw new UsernameAlreadyTakenError();
+          }
+          throw retryError;
+        }
+      } else if (isUniqueViolation(error)) {
+        // Not the tag constraint - a concurrent request created this exact username between
+        // the pre-check above and this insert. Retrying with a suffixed tag (the tag-collision
+        // path) would just fail again on the *username* constraint, unhandled this time.
+        throw new UsernameAlreadyTakenError();
       } else {
         throw error;
       }
     }
-    return created!;
+
+    // O admin está criando a conta em nome de outra pessoa - mostrados aqui pra ele
+    // repassar, já que não há e-mail para enviá-los depois (ver auth.route.ts /register,
+    // mesma lógica do lado do autosserviço).
+    const recoveryCodes = await recoveryCodeService.generateCodes(created!.id);
+    return { ...created!, recoveryCodes };
+  }
+
+  /** Sem confirmação da senha atual - o admin age em nome de outra pessoa, não é autosserviço. */
+  async regenerateRecoveryCodes(id: string): Promise<string[]> {
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    return recoveryCodeService.generateCodes(id);
   }
 
   async update(id: string, patch: AdminUpdateUser) {
@@ -188,29 +236,6 @@ export class AdminUserService {
     const [updated] = await db
       .update(users)
       .set({ isDeleted: false, deletedAt: null, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning(ADMIN_USER_RETURNING);
-    return updated;
-  }
-
-  /**
-   * Reseta a senha para o valor fixo configurado via `DEFAULT_PASSWORD_RESET_VALUE` - ao
-   * contrário de `UserService.changeOwnPassword`, não exige (nem tem como pedir) a senha
-   * atual, já que é o admin agindo em nome de outra pessoa, não o próprio usuário.
-   */
-  async resetPassword(id: string) {
-    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
-    if (!existing) {
-      throw new AdminUserNotFoundError();
-    }
-    if (this.isRootUsername(existing.username)) {
-      throw new RootAdminProtectedError();
-    }
-
-    const hashedPassword = await bcrypt.hash(env.DEFAULT_PASSWORD_RESET_VALUE, 10);
-    const [updated] = await db
-      .update(users)
-      .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
     return updated;

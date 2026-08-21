@@ -23,11 +23,11 @@ export const CreateWorldRuleDataSchema = WorldRuleSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  title: z.string().min(1, "World Rule title cannot be empty"),
+  title: z.string().min(1, 'World Rule title cannot be empty'),
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialWorldRuleSchema = WorldRuleSchema.partial();
+export const PartialWorldRuleSchema = CreateWorldRuleDataSchema.partial();
 
 export type CreateWorldRuleDataType = z.infer<typeof CreateWorldRuleDataSchema>;
 export type WorldRuleType = z.infer<typeof WorldRuleSchema>;

@@ -6,14 +6,29 @@ import migration_2 from './0001_lethal_landau';
 import migration_3 from './0002_purple_bloodscream';
 import migration_4 from './0003_military_rhino';
 import migration_5 from './0004_rapid_rage';
-
+import migration_6 from './0005_fat_ozymandias';
+import migration_7 from './0006_wonderful_goliath';
+import migration_8 from './0007_fair_lenny_balinger';
+import migration_9 from './0008_boring_hannibal_king';
+import migration_10 from './0009_rename_char_id_to_character_id';
+import migration_11 from './0010_orange_blazing_skull';
+import migration_12 from './0011_lumpy_groot';
+import migration_13 from './0012_past_gorgon';
 
 const migrations = [
-{ id: 1, name: '0000_curly_mockingbird', run: migration_1 },
+  { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
   { id: 2, name: '0001_lethal_landau', run: migration_2 },
   { id: 3, name: '0002_purple_bloodscream', run: migration_3 },
   { id: 4, name: '0003_military_rhino', run: migration_4 },
   { id: 5, name: '0004_rapid_rage', run: migration_5 },
+  { id: 6, name: '0005_fat_ozymandias', run: migration_6 },
+  { id: 7, name: '0006_wonderful_goliath', run: migration_7 },
+  { id: 8, name: '0007_fair_lenny_balinger', run: migration_8 },
+  { id: 9, name: '0008_boring_hannibal_king', run: migration_9 },
+  { id: 10, name: '0009_rename_char_id_to_character_id', run: migration_10 },
+  { id: 11, name: '0010_orange_blazing_skull', run: migration_11 },
+  { id: 12, name: '0011_lumpy_groot', run: migration_12 },
+  { id: 13, name: '0012_past_gorgon', run: migration_13 },
 ];
 
 export default migrations;

@@ -1,6 +1,8 @@
 import { Elysia } from 'elysia';
+import { adminApiLogRoutes } from './adminApiLog.route';
 import { adminRecoveryRoutes } from './adminRecovery.route';
 import { adminRegistrationRoutes } from './adminRegistration.route';
+import { adminShowcaseRoutes } from './adminShowcase.route';
 import { adminTierRoutes } from './adminTier.route';
 import { adminUserRoutes } from './adminUser.route';
 
@@ -17,4 +19,6 @@ export const adminRoutes = new Elysia()
   .group('/users', (app) => app.use(adminUserRoutes))
   .group('/tiers', (app) => app.use(adminTierRoutes))
   .group('/registration-settings', (app) => app.use(adminRegistrationRoutes))
-  .group('/recovery', (app) => app.use(adminRecoveryRoutes));
+  .group('/showcase-settings', (app) => app.use(adminShowcaseRoutes))
+  .group('/recovery', (app) => app.use(adminRecoveryRoutes))
+  .group('/logs', (app) => app.use(adminApiLogRoutes));

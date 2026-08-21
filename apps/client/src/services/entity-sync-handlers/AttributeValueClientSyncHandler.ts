@@ -1,4 +1,9 @@
-import { AttributeValue, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import {
+  AttributeValue,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -47,7 +52,8 @@ export class AttributeValueClientSyncHandler implements ClientSyncEntityHandler 
 
     const valueChanges = update.changes as Partial<AttributeValue>;
 
-    await this.db.update(schema.attributeValues)
+    await this.db
+      .update(schema.attributeValues)
       .set({
         ...valueChanges,
         updatedAt: new Date(),
@@ -64,7 +70,8 @@ export class AttributeValueClientSyncHandler implements ClientSyncEntityHandler 
       return;
     }
 
-    await this.db.update(schema.attributeValues)
+    await this.db
+      .update(schema.attributeValues)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

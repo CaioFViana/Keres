@@ -16,6 +16,19 @@ export class StoryReadOnlyError extends Error {
 }
 
 /**
+ * Thrown when a writer (or anyone who is not the owner) tries to change story identity or
+ * policy - `type`, `favoriteBehavior`, `allowReaderComments` - or to delete / unlink the
+ * story. Mirrors the server's owner-only gate so those mutations never land locally and then
+ * bounce as `unauthorized` on every push.
+ */
+export class StoryOwnerOnlyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'StoryOwnerOnlyError';
+  }
+}
+
+/**
  * Refuses a mutation before it ever reaches the entity table or the op-log queue, mirroring
  * the server's write-permission gate (`SyncService.processAndRecordUpdates`). Without this,
  * a reader's local write succeeds instantly (optimistic local-first UX), then gets rejected by
@@ -37,6 +50,22 @@ export async function assertStoryIsWritable(db: AppDrizzleClient, storyId: strin
   }
 }
 
+/**
+ * Same fail-closed idea as `assertStoryIsWritable`, but for operations the server only
+ * accepts from the owner: converting type, changing favorite/comment policy, deleting the
+ * story, unlinking it from the server. A never-linked local story has no collaborators, so
+ * it is treated as owned. A linked story whose role hasn't resolved yet is not.
+ */
+export async function assertStoryIsOwned(db: AppDrizzleClient, storyId: string): Promise<void> {
+  const story = await db.query.stories.findFirst({
+    where: (stories, { eq }) => eq(stories.id, storyId),
+    columns: { myRole: true, serverId: true },
+  });
+  if (story?.serverId && story.myRole !== 'owner') {
+    throw new StoryOwnerOnlyError(i18n.t('story_owner_only_error'));
+  }
+}
+
 export async function recordLocalOperation(
   db: AppDrizzleClient,
   storyId: string,
@@ -44,7 +73,7 @@ export async function recordLocalOperation(
   operationType: StoryUpdateType,
   entityType: string,
   entityId: string,
-  payload: Record<string, any>
+  payload: Record<string, any>,
 ): Promise<void> {
   if (!db) {
     console.error('recordLocalOperation: Drizzle client (db) not set.');
@@ -75,7 +104,8 @@ export async function recordLocalOperation(
   });
 
   // Update the story's lastOperationLog
-  await db.update(schema.stories)
+  await db
+    .update(schema.stories)
     .set({ lastOperationLog: nextOperationVersion, updatedAt: new Date() }) // Also update updatedAt
     .where(eq(schema.stories.id, storyId));
 
@@ -85,14 +115,16 @@ export async function recordLocalOperation(
   // never from the local write path that creates the entry in the first place.
   entityEventEmitter.emit('operation_log_updated', storyId);
 
-  console.log(`Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${nextOperationVersion}`);
+  console.log(
+    `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${nextOperationVersion}`,
+  );
 }
 
 export async function getUserIdForOperation(
   db: AppDrizzleClient,
   serverService: ServerService,
   storyId: string,
-  currentLocalUserId: string
+  currentLocalUserId: string,
 ): Promise<string> {
   const story = await db.query.stories.findFirst({
     where: (stories, { eq }) => eq(stories.id, storyId),

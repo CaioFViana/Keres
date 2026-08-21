@@ -38,9 +38,15 @@ const AnalysisSummaryBanner: React.FC<AnalysisSummaryBannerProps> = ({ issueCoun
 
   return (
     <TouchableOpacity style={styles.banner} onPress={onPress} activeOpacity={0.8}>
-      <Ionicons name={hasIssues ? 'warning-outline' : 'checkmark-circle-outline'} size={22} color={colors.onPrimary} />
+      <Ionicons
+        name={hasIssues ? 'warning-outline' : 'checkmark-circle-outline'}
+        size={22}
+        color={colors.onPrimary}
+      />
       <Text style={styles.text}>
-        {hasIssues ? t('story_analysis_issues_found', { count: issueCount }) : t('story_analysis_no_issues')}
+        {hasIssues
+          ? t('story_analysis_issues_found', { count: issueCount })
+          : t('story_analysis_no_issues')}
       </Text>
       <Ionicons name="chevron-forward" size={20} color={colors.onPrimary} />
     </TouchableOpacity>
@@ -56,7 +62,11 @@ interface SummaryTileProps {
 }
 
 const SummaryTile: React.FC<SummaryTileProps> = ({
-  iconName, label, count, backgroundColor, textColor,
+  iconName,
+  label,
+  count,
+  backgroundColor,
+  textColor,
 }) => {
   const { t } = useTranslation(); // Add useTranslation here
   const styles = StyleSheet.create({
@@ -147,20 +157,38 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     { label: t('items'), count: itemCount, icon: 'cube', color: '#795548' }, // brown
     { label: t('gallery'), count: galleryCount, icon: 'images', color: '#009688' }, // teal
     { label: t('tags_title'), count: tagCount, icon: 'pricetag', color: '#E91E63' }, // pink
-    { label: t('custom_attributes'), count: customAttributeCount, icon: 'options', color: '#673AB7' }, // deep purple
+    {
+      label: t('custom_attributes'),
+      count: customAttributeCount,
+      icon: 'options',
+      color: '#673AB7',
+    }, // deep purple
   ];
 
   // Add "Forks" and "Choices" tiles if it's a branching story or if there are multiple branching stories.
   // The specific tile will only render if its count is provided and not undefined.
   if (isBranchingStory || (branchingStories && branchingStories > 0)) {
-    tilesData.unshift({ label: t('choices'), count: choiceCount, icon: 'shuffle', color: '#FF9800' }); // orange
-    tilesData.unshift({ label: t('forks'), count: branchingStoryForkCount, icon: 'git-branch', color: '#FFD700' }); // gold
+    tilesData.unshift({
+      label: t('choices'),
+      count: choiceCount,
+      icon: 'shuffle',
+      color: '#FF9800',
+    }); // orange
+    tilesData.unshift({
+      label: t('forks'),
+      count: branchingStoryForkCount,
+      icon: 'git-branch',
+      color: '#FFD700',
+    }); // gold
   }
 
   return (
     <View>
       {analysisSummary && (
-        <AnalysisSummaryBanner issueCount={analysisSummary.issueCount} onPress={analysisSummary.onPress} />
+        <AnalysisSummaryBanner
+          issueCount={analysisSummary.issueCount}
+          onPress={analysisSummary.onPress}
+        />
       )}
       <CollapsibleCard
         title={

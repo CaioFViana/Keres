@@ -4,11 +4,20 @@ import { AppDrizzleClient } from '../../db';
 import { ItemInsert, items, ItemSelect } from '../../db/schemas/items';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
-import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
+import {
+  decorateFavorite,
+  normalizeFavoriteCreate,
+  normalizeFavoriteUpdate,
+  persistInitialFavorite,
+} from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -23,7 +32,16 @@ export interface ItemService {
   ): Promise<ItemSelect[]>;
   getById(itemId: string): Promise<ItemSelect | undefined>;
   createItem(currentUserId: string, itemData: Create<ItemInsert>): Promise<ItemSelect>;
-  updateItem(currentUserId: string, itemId: string, itemData: Partial<Omit<ItemInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ItemSelect>;
+  updateItem(
+    currentUserId: string,
+    itemId: string,
+    itemData: Partial<
+      Omit<
+        ItemInsert,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >
+    >,
+  ): Promise<ItemSelect>;
   deleteItem(currentUserId: string, itemId: string): Promise<void>;
   getAllByStoryId(storyId: string): Promise<ItemSelect[]>;
 }
@@ -38,7 +56,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       sortBy,
       sortDirection,
       favoriteFilterState,
-      advancedSearchCriteria
+      advancedSearchCriteria,
     ): Promise<ItemSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(items.storyId, storyId) as SQL<boolean>,
@@ -46,7 +64,9 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       ];
 
       if (searchTerm) {
-        conditions.push(sql`${items.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
+        conditions.push(
+          sql`${items.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+        );
       }
 
       // These were previously compared against 'favorites'/'not-favorites' (plural), which
@@ -62,18 +82,27 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
             const value = advancedSearchCriteria[key];
-            const fieldMeta = itemMetadata.find(meta => meta.name === key);
+            const fieldMeta = itemMetadata.find((meta) => meta.name === key);
 
             if (value !== undefined && value !== '' && fieldMeta) {
               if (fieldMeta.type === 'string') {
-                conditions.push(sql`${items[key as keyof ItemSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
+                conditions.push(
+                  sql`${items[key as keyof ItemSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
+                );
               } else if (fieldMeta.type === 'number') {
                 conditions.push(eq(items[key as keyof ItemSelect], Number(value)) as SQL<boolean>);
               } else if (fieldMeta.type === 'boolean') {
-                conditions.push(eq(items[key as keyof ItemSelect], value === 'true') as SQL<boolean>);
+                conditions.push(
+                  eq(items[key as keyof ItemSelect], value === 'true') as SQL<boolean>,
+                );
               }
             } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(db, items.id, key, value);
+              const customCondition = await buildCustomAttributeSearchCondition(
+                db,
+                items.id,
+                key,
+                value,
+              );
               if (customCondition) {
                 conditions.push(customCondition);
               }
@@ -82,8 +111,12 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         }
       }
 
-      const finalConditions = conditions.filter(c => c !== undefined) as SQL<boolean>[];
-      let query = db.select().from(items).where(and(...finalConditions)).$dynamic();
+      const finalConditions = conditions.filter((c) => c !== undefined) as SQL<boolean>[];
+      let query = db
+        .select()
+        .from(items)
+        .where(and(...finalConditions))
+        .$dynamic();
 
       if (sortBy) {
         const orderBy = sortDirection === 'desc' ? desc : asc;
@@ -113,30 +146,76 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       const favorite = await normalizeFavoriteCreate(db, newItem.storyId, 'Item', newItem);
       newItem = favorite.data;
       const result = await db.insert(items).values(newItem).returning().get();
-      await persistInitialFavorite(db, newItem.storyId, newItem.id, 'Item', currentUserId, favorite.individualFavorite);
-      const userIdToLog = await getUserIdForOperation(db, serverService, newItem.storyId, currentUserId);
-      await recordLocalOperation(db, newItem.storyId, userIdToLog, 'create', 'Item', newItem.id, { ...result });
+      await persistInitialFavorite(
+        db,
+        newItem.storyId,
+        newItem.id,
+        'Item',
+        currentUserId,
+        favorite.individualFavorite,
+      );
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newItem.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(db, newItem.storyId, userIdToLog, 'create', 'Item', newItem.id, {
+        ...result,
+      });
       entityEventEmitter.emit('item_changed', newItem.storyId, newItem.id);
       return result;
     },
 
-    async updateItem(currentUserId: string, itemId: string, itemData: Partial<Omit<ItemInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ItemSelect> {
+    async updateItem(
+      currentUserId: string,
+      itemId: string,
+      itemData: Partial<
+        Omit<
+          ItemInsert,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        >
+      >,
+    ): Promise<ItemSelect> {
       const originalItem = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!originalItem) throw new Error(`Item with ID ${itemId} not found for update.`);
       await assertStoryIsWritable(db, originalItem.storyId);
-      itemData = await normalizeFavoriteUpdate(db, originalItem.storyId, itemId, 'Item', currentUserId, itemData);
+      itemData = await normalizeFavoriteUpdate(
+        db,
+        originalItem.storyId,
+        itemId,
+        'Item',
+        currentUserId,
+        itemData,
+      );
       const potentialNewState = { ...originalItem, ...itemData };
       const changes = getChangedFields(originalItem, potentialNewState);
       delete changes.version;
       delete changes.updatedAt;
       if (Object.keys(changes).length === 0) return originalItem;
 
-      await db.update(items).set({ ...itemData, updatedAt: new Date(), version: sql`${items.version} + 1` }).where(eq(items.id, itemId));
+      await db
+        .update(items)
+        .set({ ...itemData, updatedAt: new Date(), version: sql`${items.version} + 1` })
+        .where(eq(items.id, itemId));
       const updatedItem = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!updatedItem) throw new Error(`Failed to retrieve updated item ${itemId}.`);
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedItem.storyId, currentUserId);
-      await recordLocalOperation(db, updatedItem.storyId, userIdToLog, 'update', 'Item', itemId, getChangedFields(originalItem, updatedItem));
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedItem.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        updatedItem.storyId,
+        userIdToLog,
+        'update',
+        'Item',
+        itemId,
+        getChangedFields(originalItem, updatedItem),
+      );
       entityEventEmitter.emit('item_changed', updatedItem.storyId, updatedItem.id);
       return updatedItem;
     },
@@ -145,12 +224,28 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       const itemToDelete = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!itemToDelete) return;
       await assertStoryIsWritable(db, itemToDelete.storyId);
-      const [updatedItem] = await db.update(items)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${items.version} + 1` })
+      const [updatedItem] = await db
+        .update(items)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${items.version} + 1`,
+        })
         .where(eq(items.id, itemId))
-        .returning({ id: items.id, storyId: items.storyId, isDeleted: items.isDeleted, version: items.version });
+        .returning({
+          id: items.id,
+          storyId: items.storyId,
+          isDeleted: items.isDeleted,
+          version: items.version,
+        });
       if (!updatedItem) throw new Error(`Failed to delete item ${itemId} or item not found.`);
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedItem.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedItem.storyId,
+        currentUserId,
+      );
       await recordLocalOperation(db, updatedItem.storyId, userIdToLog, 'delete', 'Item', itemId, {
         id: updatedItem.id,
         isDeleted: updatedItem.isDeleted,
@@ -162,7 +257,12 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
     async getAllByStoryId(storyId: string): Promise<ItemSelect[]> {
       if (!storyId) return [];
       try {
-        return await db.select().from(items).where(and(eq(items.storyId, storyId), eq(items.isDeleted, false))).orderBy(asc(items.createdAt)).all();
+        return await db
+          .select()
+          .from(items)
+          .where(and(eq(items.storyId, storyId), eq(items.isDeleted, false)))
+          .orderBy(asc(items.createdAt))
+          .all();
       } catch (error) {
         console.error(`Error fetching all items for story ${storyId}:`, error);
         return [];

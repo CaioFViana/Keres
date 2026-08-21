@@ -1,9 +1,25 @@
-import { app, BrowserWindow, ipcMain, Menu, net, protocol, safeStorage, session } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  net,
+  protocol,
+  safeStorage,
+  session,
+  shell,
+} from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
-import { assertValidServerId, isTrustedRendererUrl } from './security';
+import { resolveClientFile, resolveMediaPath as resolveMediaPathIn } from './paths';
+import {
+  assertValidServerId,
+  isExternalBrowserUrl,
+  isInAppNavigation,
+  isTrustedRendererUrl,
+} from './security';
 
 // package.json's "name" is "@keres/desktop" (the workspace naming convention, "@keres/*"
 // everywhere) - Electron otherwise derives the userData path directly from it, and the "/"
@@ -43,7 +59,8 @@ const APP_ICON = app.isPackaged
 
 const SCHEME = 'app';
 
-const APP_NAME = "Keres"
+const APP_NAME = 'Keres';
+const SQLITE_WEB_SMOKE_TEST = process.argv.includes('--sqlite-web-smoke-test');
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -74,33 +91,14 @@ function withIsolationHeaders(response: Response): Response {
   });
 }
 
-/**
- * Resolves a request path to a file under CLIENT_DIST. Expo Router's static web export
- * lays routes out as directories with their own index.html (like Next.js), but we also
- * accept a flat "route.html" export and fall back to the root index.html for anything
- * unmatched, so client-side navigation (History API) keeps working on refresh either way.
- */
-function resolveFile(relativePath: string): string {
-  const candidates = path.extname(relativePath)
-    ? [relativePath]
-    : [
-        path.join(relativePath, 'index.html'),
-        `${relativePath}.html`,
-      ];
-
-  for (const candidate of candidates) {
-    const filePath = path.join(CLIENT_DIST, candidate);
-    if (filePath.startsWith(CLIENT_DIST) && existsSync(filePath)) {
-      return filePath;
-    }
-  }
-  return path.join(CLIENT_DIST, 'index.html');
-}
-
 async function handleAppRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const relativePath = decodeURIComponent(url.pathname);
-  const filePath = resolveFile(relativePath === '/' ? '/index.html' : relativePath);
+  const filePath = resolveClientFile(
+    CLIENT_DIST,
+    relativePath === '/' ? '/index.html' : relativePath,
+    existsSync,
+  );
   const response = await net.fetch(pathToFileURL(filePath).toString());
   return withIsolationHeaders(response);
 }
@@ -116,16 +114,53 @@ async function createWindow() {
     width: 1280,
     height: 800,
     title: APP_NAME,
+    show: !SQLITE_WEB_SMOKE_TEST,
     icon: APP_ICON, // Windows/Linux taskbar + title bar. No-op on macOS - see app.dock.setIcon below.
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js'),
-    }
+    },
   });
   win.webContents.on('render-process-gone', (_e, details) => {
     console.error('[desktop] renderer process gone:', details.reason);
   });
+
+  // Um link para fora (o endereço público de uma história, a documentação, um servidor) vai
+  // para o navegador do sistema, não para dentro desta janela: o app não tem barra de
+  // endereço, botão de voltar nem as sessões que a pessoa já tem no navegador dela.
+  //
+  // Os dois caminhos precisam ser cobertos, porque o `Linking.openURL` do React Native Web
+  // pode virar tanto um `window.open` quanto uma navegação da própria página, dependendo da
+  // plataforma e do alvo:
+  //   - setWindowOpenHandler: `window.open` / `target="_blank"`
+  //   - will-navigate: `location.href = ...` / clique num link comum
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isExternalBrowserUrl(url)) {
+      void shell.openExternal(url);
+    }
+    // `deny` sempre: nem mesmo um esquema recusado deve abrir uma janela nova do Electron.
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isInAppNavigation(url)) {
+      return;
+    }
+    event.preventDefault();
+    if (isExternalBrowserUrl(url)) {
+      void shell.openExternal(url);
+    }
+  });
+  if (SQLITE_WEB_SMOKE_TEST) {
+    win.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+      console.log(`[sqlite-web-smoke][renderer:${level}] ${sourceId}:${line} ${message}`);
+    });
+    win.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+      console.error(
+        `[sqlite-web-smoke] failed to load ${validatedURL}: ${errorCode} ${errorDescription}`,
+      );
+    });
+  }
 
   // apps/client's DocumentTitleSync now keeps document.title in sync with whatever screen is
   // focused ("Keres: Character - Aragorn", "Keres: Story Settings", ...). Electron's default
@@ -133,6 +168,30 @@ async function createWindow() {
   // here, so nothing needs to be done beyond the `title` option above, which only covers the
   // brief window before that first render.
   await win.loadURL(`${SCHEME}://app/`);
+
+  if (SQLITE_WEB_SMOKE_TEST) {
+    try {
+      const result = await win.webContents.executeJavaScript(`
+        new Promise((resolve, reject) => {
+          const deadline = Date.now() + 30000;
+          const poll = () => {
+            const serialized = document.documentElement.dataset.keresSqliteWebSmoke;
+            const result = serialized ? JSON.parse(serialized) : undefined;
+            if (result?.status === 'passed') return resolve(result);
+            if (result?.status === 'failed') return reject(new Error(result.message));
+            if (Date.now() >= deadline) return reject(new Error('Timed out waiting for the SQLite web smoke probe.'));
+            setTimeout(poll, 50);
+          };
+          poll();
+        });
+      `);
+      console.log('[sqlite-web-smoke] passed:', result);
+      app.exit(0);
+    } catch (error) {
+      console.error('[sqlite-web-smoke] failed:', error);
+      app.exit(1);
+    }
+  }
 }
 
 /**
@@ -158,12 +217,14 @@ function assertTrustedRenderer(event: Electron.IpcMainInvokeEvent): void {
 }
 
 async function secureStorageAvailable(): Promise<boolean> {
-  if (!await safeStorage.isAsyncEncryptionAvailable()) return false;
+  if (!(await safeStorage.isAsyncEncryptionAvailable())) return false;
   // Electron exposes the synchronous backend name for AppImage-style environments.
   // Flatpak uses the Secret portal through the asynchronous API instead.
-  return process.platform !== 'linux'
-    || Boolean(process.env.FLATPAK_ID)
-    || safeStorage.getSelectedStorageBackend() !== 'basic_text';
+  return (
+    process.platform !== 'linux' ||
+    Boolean(process.env.FLATPAK_ID) ||
+    safeStorage.getSelectedStorageBackend() !== 'basic_text'
+  );
 }
 
 async function readAuthVault(): Promise<EncryptedTokenVault> {
@@ -176,12 +237,34 @@ async function readAuthVault(): Promise<EncryptedTokenVault> {
 }
 
 async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
-  const tempPath = `${AUTH_VAULT_FILE}.tmp`;
+  // Nome único por escrita: duas chamadas concorrentes (ex.: `saveTokens` de um servidor e
+  // `auth:remove` de outro, disparadas perto o bastante uma da outra) que compartilhassem o
+  // mesmo `.tmp` faziam a segunda `rename` falhar com ENOENT - a primeira já tinha consumido
+  // (movido) o arquivo temporário antes da segunda tentar renomeá-lo.
+  const tempPath = `${AUTH_VAULT_FILE}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
+  await fs.mkdir(path.dirname(AUTH_VAULT_FILE), { recursive: true });
   await fs.writeFile(tempPath, JSON.stringify(vault), { mode: 0o600 });
   await fs.rename(tempPath, AUTH_VAULT_FILE);
 }
 
-function registerAuthIpcHandlers() {
+/**
+ * Serializa toda leitura-modificação-escrita do vault. Nomes de arquivo temporário únicos
+ * (acima) já evitam a colisão de `rename`, mas duas chamadas concorrentes ainda podiam se
+ * pisar de outro jeito: cada uma lê o vault inteiro, muda só a própria entrada, e escreve o
+ * vault inteiro de volta - sem isto, a segunda escrita a terminar sobrescrevia o arquivo
+ * inteiro com uma cópia que não tinha a mudança da primeira (um "lost update" silencioso,
+ * sem qualquer erro no log).
+ */
+let vaultQueue: Promise<unknown> = Promise.resolve();
+
+function withVaultLock<T>(task: () => Promise<T>): Promise<T> {
+  const result = vaultQueue.then(task, task);
+  vaultQueue = result.catch(() => undefined);
+  return result;
+}
+
+/** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
+export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
     assertTrustedRenderer(event);
     return { available: await secureStorageAvailable() };
@@ -190,10 +273,12 @@ function registerAuthIpcHandlers() {
   ipcMain.handle('auth:read', async (event, serverId: string): Promise<TokenPair | null> => {
     assertTrustedRenderer(event);
     assertValidServerId(serverId);
-    if (!await secureStorageAvailable()) return null;
+    if (!(await secureStorageAvailable())) return null;
     const encrypted = (await readAuthVault())[serverId];
     if (!encrypted) return null;
-    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(Buffer.from(encrypted, 'base64'));
+    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(
+      Buffer.from(encrypted, 'base64'),
+    );
     const tokens = JSON.parse(result) as TokenPair;
     if (shouldReEncrypt) await saveTokens(serverId, tokens);
     return tokens;
@@ -209,35 +294,36 @@ function registerAuthIpcHandlers() {
   ipcMain.handle('auth:remove', async (event, serverId: string) => {
     assertTrustedRenderer(event);
     assertValidServerId(serverId);
-    const vault = await readAuthVault();
-    if (serverId in vault) {
-      delete vault[serverId];
-      await writeAuthVault(vault);
-    }
+    await withVaultLock(async () => {
+      const vault = await readAuthVault();
+      if (serverId in vault) {
+        delete vault[serverId];
+        await writeAuthVault(vault);
+      }
+    });
   });
 }
 
 async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
-  if (!await secureStorageAvailable()) {
+  if (!(await secureStorageAvailable())) {
     throw new Error('Secure credential storage is unavailable on this device.');
   }
-  const vault = await readAuthVault();
-  vault[serverId] = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString('base64');
-  await writeAuthVault(vault);
+  const encrypted = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString(
+    'base64',
+  );
+  await withVaultLock(async () => {
+    const vault = await readAuthVault();
+    vault[serverId] = encrypted;
+    await writeAuthVault(vault);
+  });
 }
 
-Menu.setApplicationMenu(null)
+Menu.setApplicationMenu(null);
 
-/** Resolves a "media/<storyId>/<hash>.<ext>"-shaped relative path, rejecting any escape from MEDIA_ROOT. */
-function resolveMediaPath(relativePath: string): string {
-  const resolved = path.join(MEDIA_ROOT, relativePath);
-  if (resolved !== MEDIA_ROOT && !resolved.startsWith(MEDIA_ROOT + path.sep)) {
-    throw new Error(`Refusing to access path outside media storage: "${relativePath}".`);
-  }
-  return resolved;
-}
+const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 
-function registerMediaIpcHandlers() {
+/** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
+export function registerMediaIpcHandlers() {
   ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {
     const filePath = resolveMediaPath(relativePath);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -270,7 +356,9 @@ function registerMediaIpcHandlers() {
       return results;
     }
     for (const storyId of storyDirs) {
-      const entries = await fs.readdir(path.join(mediaDir, storyId), { withFileTypes: true }).catch(() => []);
+      const entries = await fs
+        .readdir(path.join(mediaDir, storyId), { withFileTypes: true })
+        .catch(() => []);
       for (const entry of entries) {
         if (entry.isFile()) {
           results.push(`media/${storyId}/${entry.name}`);

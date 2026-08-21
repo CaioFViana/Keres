@@ -1,7 +1,13 @@
 import { ulid } from 'ulid';
 import { AppDrizzleClient } from '../db';
 
-export type BaseEntityFieldNames = 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt';
+export type BaseEntityFieldNames =
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'version'
+  | 'isDeleted'
+  | 'deletedAt';
 
 export type Create<T> = Omit<T, BaseEntityFieldNames>;
 
@@ -14,9 +20,7 @@ interface BaseEntityFields {
   deletedAt?: Date | null;
 }
 
-export function prepareNewEntityData<T extends BaseEntityFields>(
-  data: Create<T>
-): T {
+export function prepareNewEntityData<T extends BaseEntityFields>(data: Create<T>): T {
   const now = new Date();
   return {
     id: createULID(),
@@ -56,7 +60,10 @@ export function createULID(): string {
  * @param newObject The updated object.
  * @returns An object containing only the fields that have changed, or an empty object if no changes.
  */
-export function getChangedFields<T extends Record<string, any>>(oldObject: T, newObject: T): Partial<T> {
+export function getChangedFields<T extends Record<string, any>>(
+  oldObject: T,
+  newObject: T,
+): Partial<T> {
   const changes: Partial<T> = {};
 
   if (!oldObject && newObject) {
@@ -85,7 +92,14 @@ export function getChangedFields<T extends Record<string, any>>(oldObject: T, ne
       }
     }
     // Handle nested objects
-    else if (typeof oldValue === 'object' && oldValue !== null && typeof newValue === 'object' && newValue !== null && !Array.isArray(oldValue) && !Array.isArray(newValue)) {
+    else if (
+      typeof oldValue === 'object' &&
+      oldValue !== null &&
+      typeof newValue === 'object' &&
+      newValue !== null &&
+      !Array.isArray(oldValue) &&
+      !Array.isArray(newValue)
+    ) {
       const nestedChanges = getChangedFields(oldValue, newValue);
       if (Object.keys(nestedChanges).length > 0) {
         (changes as Record<string, any>)[key] = nestedChanges;
@@ -93,7 +107,10 @@ export function getChangedFields<T extends Record<string, any>>(oldObject: T, ne
     }
     // Handle arrays (shallow comparison for now, can be expanded for deep array diff if needed)
     else if (Array.isArray(oldValue) && Array.isArray(newValue)) {
-      if (oldValue.length !== newValue.length || !oldValue.every((val, index) => val === newValue[index])) {
+      if (
+        oldValue.length !== newValue.length ||
+        !oldValue.every((val, index) => val === newValue[index])
+      ) {
         (changes as Record<string, any>)[key] = newValue;
       }
     }

@@ -21,11 +21,11 @@ export const CreateCharacterSceneDataSchema = CharacterSceneSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  characterId: z.string().min(1, "Character ID cannot be empty"),
-  sceneId: z.string().min(1, "Scene ID cannot be empty"),
+  characterId: z.string().min(1, 'Character ID cannot be empty'),
+  sceneId: z.string().min(1, 'Scene ID cannot be empty'),
 });
 
-export const PartialCharacterSceneSchema = CharacterSceneSchema.partial();
+export const PartialCharacterSceneSchema = CreateCharacterSceneDataSchema.partial();
 
 export type CreateCharacterSceneDataType = z.infer<typeof CreateCharacterSceneDataSchema>;
 export type CharacterSceneType = z.infer<typeof CharacterSceneSchema>;

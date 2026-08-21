@@ -14,7 +14,9 @@
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "version": 1,
     "isDeleted": false,
-    "deletedAt": null
+    "deletedAt": null,
+    "statSystem": false,
+    "statNotation": "letter"
   },
   "chapters": [
     {
@@ -1147,6 +1149,110 @@
       "relationType": "connected_to"
     }
   ],
+  "comments": [
+    {
+      "id": "01KZZ000000000000000000011",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "fieldId": null,
+      "fieldKey": "description",
+      "contentSnapshot": "Beauty chooses compassion under pressure.",
+      "excerptText": "Beauty chooses compassion.",
+      "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
+      "commentText": "Editorial example: let Beauty's choice remain the emotional turning point.",
+      "criticality": 3,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "seeAlsoRelations": [
+    {
+      "id": "01KZZ000000000000000000012",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityAType": "Character",
+      "entityAId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "entityBType": "Location",
+      "entityBId": "01KYXBHD0FT43JJV1HABMERBPA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "favorites": [
+    {
+      "id": "01KZZ000000000000000000016",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Story",
+      "userId": "EXAMPLEUSERPLACEHOLDER0000",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceCheckGroups": [
+    {
+      "id": "01KZZ000000000000000000013",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "choiceId": "01KYXBHD0FYG19BNN68ADCP4Q0",
+      "combinator": "AND",
+      "order": 0,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceChecks": [
+    {
+      "id": "01KZZ000000000000000000014",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "groupId": "01KZZ000000000000000000013",
+      "mode": "enable",
+      "type": "sceneCount",
+      "order": 0,
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "minVisits": 1,
+      "itemId": null,
+      "itemPresence": null,
+      "triggerName": null,
+      "triggerState": null,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "effects": [
+    {
+      "id": "01KZZ000000000000000000015",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Choice",
+      "entityId": "01KYXBHD0FYG19BNN68ADCP4Q0",
+      "effectType": "triggerSet",
+      "itemId": null,
+      "triggerName": "beauty_accepts_the_journey",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 2
+  "formatVersion": 5,
+  "stats": [],
+  "statStrengths": [],
+  "statRelations": [],
+  "modes": []
 }

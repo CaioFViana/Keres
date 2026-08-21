@@ -19,7 +19,12 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
   private absolutePath(key: string): string {
     const absolutePath = path.resolve(this.root, key);
     const relativePath = path.relative(this.root, absolutePath);
-    if (!relativePath || relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
+    if (
+      !relativePath ||
+      relativePath === '..' ||
+      relativePath.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relativePath)
+    ) {
       throw new Error(`Invalid media storage key: ${key}`);
     }
     return absolutePath;

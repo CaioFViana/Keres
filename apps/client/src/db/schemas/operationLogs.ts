@@ -6,7 +6,9 @@ export const operationLogs = sqliteTable('operation_logs', {
   storyId: text('story_id').notNull(),
   userId: text('user_id').notNull(),
   operationVersion: integer('operation_version').notNull(), // Unique per storyId
-  operationType: text('operation_type', { enum: ['create', 'update', 'delete', 'reorder'] }).notNull(), // Add 'reorder'
+  operationType: text('operation_type', {
+    enum: ['create', 'update', 'delete', 'reorder'],
+  }).notNull(), // Add 'reorder'
   entityType: text('entity_type').notNull(),
   entityId: text('entity_id').notNull(),
   payload: text('payload').notNull(), // Stored as JSON string

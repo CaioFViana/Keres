@@ -2,14 +2,23 @@ import { Scene } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { SceneInsert, scenes, SceneSelect } from '../../db/schema';
+import { chapters, SceneInsert, scenes, SceneSelect } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
-import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
+import {
+  decorateFavorite,
+  normalizeFavoriteCreate,
+  normalizeFavoriteUpdate,
+  persistInitialFavorite,
+} from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -24,12 +33,34 @@ export interface SceneService {
   ): Promise<SceneSelect[]>;
   getById(sceneId: string): Promise<SceneSelect | undefined>;
   createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
-  updateScene(currentUserId: string, sceneId: string, sceneData: Partial<Omit<SceneInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<SceneSelect>;
+  updateScene(
+    currentUserId: string,
+    sceneId: string,
+    sceneData: Partial<
+      Omit<
+        SceneInsert,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >
+    >,
+  ): Promise<SceneSelect>;
   deleteScene(currentUserId: string, sceneId: string): Promise<void>;
   getAllByStoryId(storyId: string): Promise<SceneSelect[]>;
-  reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, newIndex: number }[]): Promise<void>;
-  batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void>;
-  getPreviousNextScenes(storyId: string, currentSceneId: string, chapterId: string): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }>;
+  reorderScenes(
+    currentUserId: string,
+    storyId: string,
+    chapterId: string,
+    newOrder: { id: string; newIndex: number }[],
+  ): Promise<void>;
+  batchUpdateScenes(
+    currentUserId: string,
+    storyId: string,
+    updates: { sceneId: string; changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[],
+  ): Promise<void>;
+  getPreviousNextScenes(
+    storyId: string,
+    currentSceneId: string,
+    chapterId: string,
+  ): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }>;
 }
 
 export const createSceneService = (db: AppDrizzleClient): SceneService => {
@@ -41,7 +72,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       sortBy,
       sortDirection,
       favoriteFilterState,
-      advancedSearchCriteria
+      advancedSearchCriteria,
     ): Promise<SceneSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(scenes.storyId, storyId) as SQL<boolean>,
@@ -49,7 +80,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       ];
 
       if (searchTerm) {
-        conditions.push(sql`${scenes.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
+        conditions.push(
+          sql`${scenes.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+        );
       }
 
       if (favoriteFilterState === 'favorite') {
@@ -65,18 +98,27 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
             const value = advancedSearchCriteria[key];
-            const fieldMeta = sceneMetadata.find(meta => meta.name === key);
+            const fieldMeta = sceneMetadata.find((meta) => meta.name === key);
 
             if (value !== undefined && value !== '' && fieldMeta) {
               if (fieldMeta.type === 'string') {
-                conditions.push(sql`${scenes[key as keyof SceneSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
+                conditions.push(
+                  sql`${scenes[key as keyof SceneSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
+                );
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(scenes[key as keyof SceneSelect], value) as SQL<boolean>);
               } else if (fieldMeta.type === 'number') {
-                conditions.push(eq(scenes[key as keyof SceneSelect], Number(value)) as SQL<boolean>);
+                conditions.push(
+                  eq(scenes[key as keyof SceneSelect], Number(value)) as SQL<boolean>,
+                );
               }
             } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(db, scenes.id, key, value);
+              const customCondition = await buildCustomAttributeSearchCondition(
+                db,
+                scenes.id,
+                key,
+                value,
+              );
               if (customCondition) {
                 conditions.push(customCondition);
               }
@@ -87,7 +129,11 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
-      let query = db.select().from(scenes).where(and(...finalConditions)).$dynamic();
+      let query = db
+        .select()
+        .from(scenes)
+        .where(and(...finalConditions))
+        .$dynamic();
 
       if (sortBy) {
         const orderBy = sortDirection === 'desc' ? desc : asc;
@@ -128,22 +174,58 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
       newScene = favorite.data;
       const result = await db.insert(scenes).values(newScene).returning().get();
-      await persistInitialFavorite(db, newScene.storyId, newScene.id, 'Scene', currentUserId, favorite.individualFavorite);
+      await persistInitialFavorite(
+        db,
+        newScene.storyId,
+        newScene.id,
+        'Scene',
+        currentUserId,
+        favorite.individualFavorite,
+      );
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newScene.storyId, currentUserId);
-      await recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, { ...result });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newScene.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        newScene.storyId,
+        userIdToLog,
+        'create',
+        'Scene',
+        newScene.id,
+        { ...result },
+      );
       entityEventEmitter.emit('scene_changed', newScene.storyId, newScene.id);
 
       return result;
     },
 
-    async updateScene(currentUserId: string, sceneId: string, sceneData: Partial<Omit<SceneInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<SceneSelect> {
+    async updateScene(
+      currentUserId: string,
+      sceneId: string,
+      sceneData: Partial<
+        Omit<
+          SceneInsert,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        >
+      >,
+    ): Promise<SceneSelect> {
       const originalScene = await db.query.scenes.findFirst({ where: eq(scenes.id, sceneId) });
       if (!originalScene) {
         throw new Error(`Scene with ID ${sceneId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalScene.storyId);
-      sceneData = await normalizeFavoriteUpdate(db, originalScene.storyId, sceneId, 'Scene', currentUserId, sceneData);
+      sceneData = await normalizeFavoriteUpdate(
+        db,
+        originalScene.storyId,
+        sceneId,
+        'Scene',
+        currentUserId,
+        sceneData,
+      );
 
       const potentialNewState = { ...originalScene, ...sceneData };
 
@@ -152,11 +234,14 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(`No significant changes detected for scene ${sceneId}. Skipping update and operation log.`);
+        console.log(
+          `No significant changes detected for scene ${sceneId}. Skipping update and operation log.`,
+        );
         return originalScene;
       }
 
-      await db.update(scenes)
+      await db
+        .update(scenes)
         .set({ ...sceneData, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
         .where(eq(scenes.id, sceneId));
 
@@ -165,8 +250,21 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         throw new Error(`Failed to retrieve updated scene ${sceneId}.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedScene.storyId, currentUserId);
-      await recordLocalOperation(db, updatedScene.storyId, userIdToLog, 'update', 'Scene', sceneId, getChangedFields(originalScene, updatedScene));
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedScene.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        updatedScene.storyId,
+        userIdToLog,
+        'update',
+        'Scene',
+        sceneId,
+        getChangedFields(originalScene, updatedScene),
+      );
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
 
       return updatedScene;
@@ -180,21 +278,45 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       }
       await assertStoryIsWritable(db, sceneToDelete.storyId);
 
-      const [updatedScene] = await db.update(scenes)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+      const [updatedScene] = await db
+        .update(scenes)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${scenes.version} + 1`,
+        })
         .where(eq(scenes.id, sceneId))
-        .returning({ id: scenes.id, storyId: scenes.storyId, isDeleted: scenes.isDeleted, version: scenes.version });
+        .returning({
+          id: scenes.id,
+          storyId: scenes.storyId,
+          isDeleted: scenes.isDeleted,
+          version: scenes.version,
+        });
 
       if (!updatedScene) {
         throw new Error(`Failed to delete scene ${sceneId} or scene not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedScene.storyId, currentUserId);
-      await recordLocalOperation(db, updatedScene.storyId, userIdToLog, 'delete', 'Scene', sceneId, {
-        id: updatedScene.id,
-        isDeleted: updatedScene.isDeleted,
-        version: updatedScene.version,
-      });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedScene.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        updatedScene.storyId,
+        userIdToLog,
+        'delete',
+        'Scene',
+        sceneId,
+        {
+          id: updatedScene.id,
+          isDeleted: updatedScene.isDeleted,
+          version: updatedScene.version,
+        },
+      );
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
     },
 
@@ -204,7 +326,8 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         return [];
       }
       try {
-        const allScenes = await db.select()
+        const allScenes = await db
+          .select()
           .from(scenes)
           .where(and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)))
           .orderBy(asc(scenes.index))
@@ -216,10 +339,14 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       }
     },
 
-    async reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, newIndex: number }[]): Promise<void> {
+    async reorderScenes(
+      currentUserId: string,
+      storyId: string,
+      chapterId: string,
+      newOrder: { id: string; newIndex: number }[],
+    ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const reorderPayload = { reorderItems: newOrder.map(item => ({ ...item })) };
 
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
@@ -227,60 +354,84 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
             where: and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)),
           });
           if (!originalScene) {
-            console.warn(`Scene with ID ${scene.id} not found in chapter ${chapterId} during reorder.`);
+            console.warn(
+              `Scene with ID ${scene.id} not found in chapter ${chapterId} during reorder.`,
+            );
             continue;
           }
 
           if (originalScene.index !== scene.newIndex) {
-            await tx.update(scenes)
+            await tx
+              .update(scenes)
               .set({
                 index: scene.newIndex,
                 updatedAt: new Date(),
-                version: sql`${scenes.version} + 1`
+                version: sql`${scenes.version} + 1`,
               })
               .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)));
           }
         }
       });
 
-      // Record a single 'reorder' operation for the entire list of scenes within a chapter
-      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Chapter', chapterId, reorderPayload);
+      const [chapter] = await db
+        .update(chapters)
+        .set({ version: sql`${chapters.version} + 1`, updatedAt: new Date() })
+        .where(eq(chapters.id, chapterId))
+        .returning({ version: chapters.version });
+
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Chapter', chapterId, {
+        reorderItems: newOrder.map((item) => ({ ...item })),
+        version: chapter?.version,
+      });
       entityEventEmitter.emit('scene_changed', storyId, 'reorder');
     },
 
-    async batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void> {
+    async batchUpdateScenes(
+      currentUserId: string,
+      storyId: string,
+      updates: { sceneId: string; changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[],
+    ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
 
       await db.transaction(async (tx) => {
-          for (const update of updates) {
-              const { sceneId, changes } = update;
+        for (const update of updates) {
+          const { sceneId, changes } = update;
 
-              const originalScene = await tx.query.scenes.findFirst({
-                  where: eq(scenes.id, sceneId),
-              });
+          const originalScene = await tx.query.scenes.findFirst({
+            where: eq(scenes.id, sceneId),
+          });
 
-              if (!originalScene) {
-                  console.warn(`Scene with ID ${sceneId} not found during batch update.`);
-                  continue; // or throw? continue is safer for a batch.
-              }
-              
-              const [updatedScene] = await tx.update(scenes)
-                  .set({ ...changes, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-                  .where(eq(scenes.id, sceneId))
-                  .returning();
-
-              if (updatedScene) {
-                  const actualChanges = getChangedFields(originalScene, updatedScene);
-
-                  if (Object.keys(actualChanges).length > 0) {
-                      // Pass 'tx' to recordLocalOperation if it supports transactions, otherwise use 'db'
-                      // For now, using 'db' as per existing patterns in the file.
-                      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Scene', sceneId, actualChanges);
-                      entityEventEmitter.emit('scene_changed', storyId, sceneId);
-                  }
-              }
+          if (!originalScene) {
+            console.warn(`Scene with ID ${sceneId} not found during batch update.`);
+            continue; // or throw? continue is safer for a batch.
           }
+
+          const [updatedScene] = await tx
+            .update(scenes)
+            .set({ ...changes, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+            .where(eq(scenes.id, sceneId))
+            .returning();
+
+          if (updatedScene) {
+            const actualChanges = getChangedFields(originalScene, updatedScene);
+
+            if (Object.keys(actualChanges).length > 0) {
+              // Pass 'tx' to recordLocalOperation if it supports transactions, otherwise use 'db'
+              // For now, using 'db' as per existing patterns in the file.
+              await recordLocalOperation(
+                db,
+                storyId,
+                userIdToLog,
+                'update',
+                'Scene',
+                sceneId,
+                actualChanges,
+              );
+              entityEventEmitter.emit('scene_changed', storyId, sceneId);
+            }
+          }
+        }
       });
     },
 
@@ -293,13 +444,13 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         where: and(
           eq(scenes.storyId, storyId),
           eq(scenes.chapterId, chapterId),
-          eq(scenes.isDeleted, false)
+          eq(scenes.isDeleted, false),
         ),
         orderBy: asc(scenes.index),
       });
 
       const currentSceneIndex = allScenesInChapter.findIndex(
-        (scene) => scene.id === currentSceneId
+        (scene) => scene.id === currentSceneId,
       );
 
       let previousScene: SceneSelect | undefined;

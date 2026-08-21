@@ -29,9 +29,25 @@ export interface FavoriteService {
     localUserId: string,
     entities: T[],
   ): Promise<T[]>;
-  isFavorite(storyId: string, entityId: string, entityType: FavoriteEntityType, localUserId: string, globalValue: boolean): Promise<boolean>;
-  getFavoriterIds(storyId: string, entityId: string, entityType: FavoriteEntityType): Promise<string[]>;
-  setFavorite(storyId: string, entityId: string, entityType: FavoriteEntityType, localUserId: string, value: boolean): Promise<void>;
+  isFavorite(
+    storyId: string,
+    entityId: string,
+    entityType: FavoriteEntityType,
+    localUserId: string,
+    globalValue: boolean,
+  ): Promise<boolean>;
+  getFavoriterIds(
+    storyId: string,
+    entityId: string,
+    entityType: FavoriteEntityType,
+  ): Promise<string[]>;
+  setFavorite(
+    storyId: string,
+    entityId: string,
+    entityType: FavoriteEntityType,
+    localUserId: string,
+    value: boolean,
+  ): Promise<void>;
   migrateUserIdentity(storyId: string, fromUserId: string, toUserId: string): Promise<void>;
 }
 
@@ -61,24 +77,30 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
     resolveUserId,
 
     async decorateEntities(storyId, entityType, localUserId, entities) {
-      if (entities.length === 0 || await getBehavior(storyId) === 'global') return entities;
+      if (entities.length === 0 || (await getBehavior(storyId)) === 'global') return entities;
       const userId = await resolveUserId(storyId, localUserId);
-      const rows = await db.select({ entityId: favorites.entityId })
+      const rows = await db
+        .select({ entityId: favorites.entityId })
         .from(favorites)
-        .where(and(
-          eq(favorites.storyId, storyId),
-          eq(favorites.entityType, entityType),
-          eq(favorites.userId, userId),
-          eq(favorites.isDeleted, false),
-          inArray(favorites.entityId, entities.map((entity) => entity.id)),
-        ))
+        .where(
+          and(
+            eq(favorites.storyId, storyId),
+            eq(favorites.entityType, entityType),
+            eq(favorites.userId, userId),
+            eq(favorites.isDeleted, false),
+            inArray(
+              favorites.entityId,
+              entities.map((entity) => entity.id),
+            ),
+          ),
+        )
         .all();
       const favoriteIds = new Set(rows.map((row) => row.entityId));
       return entities.map((entity) => ({ ...entity, isFavorite: favoriteIds.has(entity.id) }));
     },
 
     async isFavorite(storyId, entityId, entityType, localUserId, globalValue) {
-      if (await getBehavior(storyId) === 'global') return globalValue;
+      if ((await getBehavior(storyId)) === 'global') return globalValue;
       const userId = await resolveUserId(storyId, localUserId);
       const row = await db.query.favorites.findFirst({
         where: and(
@@ -94,15 +116,18 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
     },
 
     async getFavoriterIds(storyId, entityId, entityType) {
-      if (await getBehavior(storyId) !== 'individual_public') return [];
-      const rows = await db.select({ userId: favorites.userId })
+      if ((await getBehavior(storyId)) !== 'individual_public') return [];
+      const rows = await db
+        .select({ userId: favorites.userId })
         .from(favorites)
-        .where(and(
-          eq(favorites.storyId, storyId),
-          eq(favorites.entityId, entityId),
-          eq(favorites.entityType, entityType),
-          eq(favorites.isDeleted, false),
-        ))
+        .where(
+          and(
+            eq(favorites.storyId, storyId),
+            eq(favorites.entityId, entityId),
+            eq(favorites.entityType, entityType),
+            eq(favorites.isDeleted, false),
+          ),
+        )
         .all();
       return rows.map((row) => row.userId);
     },
@@ -121,8 +146,14 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
       if (value) {
         if (existing && !existing.isDeleted) return;
         if (existing) {
-          const [restored] = await db.update(favorites)
-            .set({ isDeleted: false, deletedAt: null, updatedAt: new Date(), version: sql`${favorites.version} + 1` })
+          const [restored] = await db
+            .update(favorites)
+            .set({
+              isDeleted: false,
+              deletedAt: null,
+              updatedAt: new Date(),
+              version: sql`${favorites.version} + 1`,
+            })
             .where(eq(favorites.id, existing.id))
             .returning();
           await recordLocalOperation(db, storyId, userId, 'update', 'Favorite', existing.id, {
@@ -145,12 +176,26 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
             deletedAt: null,
           };
           await db.insert(favorites).values(inserted).run();
-          await recordLocalOperation(db, storyId, userId, 'create', 'Favorite', inserted.id, inserted);
+          await recordLocalOperation(
+            db,
+            storyId,
+            userId,
+            'create',
+            'Favorite',
+            inserted.id,
+            inserted,
+          );
         }
       } else {
         if (!existing || existing.isDeleted) return;
-        const [removed] = await db.update(favorites)
-          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${favorites.version} + 1` })
+        const [removed] = await db
+          .update(favorites)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${favorites.version} + 1`,
+          })
           .where(eq(favorites.id, existing.id))
           .returning();
         await recordLocalOperation(db, storyId, userId, 'delete', 'Favorite', existing.id, {
@@ -179,9 +224,17 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
           ),
         });
         if (!target) {
-          await db.update(favorites).set({ userId: toUserId }).where(eq(favorites.id, source.id)).run();
+          await db
+            .update(favorites)
+            .set({ userId: toUserId })
+            .where(eq(favorites.id, source.id))
+            .run();
         } else if (!source.isDeleted && target.isDeleted) {
-          await db.update(favorites).set({ isDeleted: false, deletedAt: null, updatedAt: new Date() }).where(eq(favorites.id, target.id)).run();
+          await db
+            .update(favorites)
+            .set({ isDeleted: false, deletedAt: null, updatedAt: new Date() })
+            .where(eq(favorites.id, target.id))
+            .run();
           await db.delete(favorites).where(eq(favorites.id, source.id)).run();
         } else {
           await db.delete(favorites).where(eq(favorites.id, source.id)).run();

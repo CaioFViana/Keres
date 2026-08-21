@@ -45,7 +45,10 @@ const useScreenStateStyles = (padded: boolean) => {
   };
 };
 
-export const ScreenLoading: React.FC<ScreenStateProps & { message?: string }> = ({ message, padded }) => {
+export const ScreenLoading: React.FC<ScreenStateProps & { message?: string }> = ({
+  message,
+  padded,
+}) => {
   const { t } = useTranslation();
   const { colors, styles } = useScreenStateStyles(!!padded);
 
@@ -57,11 +60,13 @@ export const ScreenLoading: React.FC<ScreenStateProps & { message?: string }> = 
   );
 };
 
-export const ScreenError: React.FC<ScreenStateProps & {
-  message: string;
-  /** Usually `navigation.goBack`. Omit to render the message with no action. */
-  onGoBack?: () => void;
-}> = ({ message, onGoBack, padded }) => {
+export const ScreenError: React.FC<
+  ScreenStateProps & {
+    message: string;
+    /** Usually `navigation.goBack`. Omit to render the message with no action. */
+    onGoBack?: () => void;
+  }
+> = ({ message, onGoBack, padded }) => {
   const { t } = useTranslation();
   const { colors, styles } = useScreenStateStyles(!!padded);
 

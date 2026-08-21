@@ -1,0 +1,349 @@
+{
+  "language": {
+    "label": "Language"
+  },
+  "theme": {
+    "system": "Theme: System",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark"
+  },
+  "meta": {
+    "title": "Keres — Organize universes, connect narratives",
+    "description": "An offline-first story planning platform for phone, desktop, and the browser, served by the Keres server itself."
+  },
+  "nav": {
+    "product": "Product",
+    "universe": "Universe",
+    "platforms": "Platforms",
+    "download": "Download",
+    "github": "GitHub",
+    "menu": "Menu"
+  },
+  "hero": {
+    "eyebrow": "Story planning",
+    "title": "Organize universes, connect narratives, and write anywhere.",
+    "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
+    "ctaDownload": "Download",
+    "ctaGithub": "View on GitHub",
+    "ctaFeatures": "See what's included"
+  },
+  "pillars": {
+    "offline": {
+      "title": "Offline-first for real",
+      "body": "Every story lives in a local SQLite database. Plan on a train, a plane, or the sofa. When a network and a server are there, sync ships the changes and handles version conflicts."
+    },
+    "universe": {
+      "title": "The universe, not the manuscript",
+      "body": "Keres is not a text editor. You write the chapter wherever you prefer, and record here who was in the scene, what changed hands, and which world rule that respects."
+    },
+    "anywhere": {
+      "title": "Phone, desktop, and browser",
+      "body": "The same client on Android, iOS, and the desktop app for Windows, macOS, and Linux. In the browser, the API serves the client at the server root — only on that server's origin."
+    }
+  },
+  "product": {
+    "title": "One place for the whole story",
+    "lead": "Open a story and the side menu lists every kind of element. Lists with search, filters, and favorites; records with relationships; graphs when space or choices ask for a map."
+  },
+  "features": {
+    "universe": {
+      "title": "The narrative universe",
+      "lead": "Everything a story needs to keep, linked together.",
+      "items": {
+        "characters": {
+          "title": "Characters",
+          "body": "Who takes part, what describes them, and how they stay coherent across the work."
+        },
+        "relations": {
+          "title": "Relationships",
+          "body": "Bonds between people — family, rivalry, mentorship — and a graph of the cast."
+        },
+        "modes": {
+          "title": "Modes",
+          "body": "The forms a character takes: transformations, disguises, lasting states."
+        },
+        "stats": {
+          "title": "Stats",
+          "body": "Axes you define and a radar chart to compare the cast, with letter or number notation."
+        },
+        "chapters": {
+          "title": "Chapters",
+          "body": "Group scenes in reading order or in the chronology you choose."
+        },
+        "scenes": {
+          "title": "Scenes",
+          "body": "Each event: where it happens, who is there, and what takes place."
+        },
+        "timing": {
+          "title": "Scene timing",
+          "body": "How long each event lasts and the gap until the next one."
+        },
+        "locations": {
+          "title": "Locations",
+          "body": "The spaces of the story, with containment and path relationships."
+        },
+        "locationMap": {
+          "title": "Location map",
+          "body": "A graph of places inside places and the links between them."
+        },
+        "items": {
+          "title": "Items",
+          "body": "Important objects, their initial state, and who holds them."
+        },
+        "itemJourneys": {
+          "title": "Item journeys",
+          "body": "Scene by scene, when an object changes state or owner."
+        },
+        "worldRules": {
+          "title": "World rules",
+          "body": "Limits and facts the universe must respect to stay coherent."
+        },
+        "notes": {
+          "title": "Notes",
+          "body": "Free writing, loose or anchored to any story element."
+        },
+        "tags": {
+          "title": "Tags",
+          "body": "Colored labels, applicable to any kind of element."
+        },
+        "gallery": {
+          "title": "Gallery",
+          "body": "Images, audio, and video, reusable across records."
+        },
+        "favorites": {
+          "title": "Favorites",
+          "body": "Highlight what matters now and filter lists by it."
+        }
+      }
+    },
+    "branching": {
+      "title": "Branching stories",
+      "lead": "For CYOA, games, and any narrative with more than one path.",
+      "items": {
+        "type": {
+          "title": "Linear or branching",
+          "body": "A linear story follows scene order. A branching one links scenes through choices."
+        },
+        "choices": {
+          "title": "Choices",
+          "body": "The decision text, the source scene, and the destination."
+        },
+        "storyMap": {
+          "title": "Story map",
+          "body": "A navigable diagram of scenes and transitions, so the graph is visible at once."
+        },
+        "conditions": {
+          "title": "Conditions",
+          "body": "A choice only appears if the reader visited a scene, holds an item, or flipped a flag."
+        },
+        "effects": {
+          "title": "Effects",
+          "body": "Give or take an item, turn a flag on or off, when passing through a scene or a decision."
+        },
+        "storyState": {
+          "title": "Reader state",
+          "body": "What the reader carries — visits, inventory, flags — analyzed together with the map."
+        }
+      }
+    },
+    "craft": {
+      "title": "Craft tools",
+      "lead": "Find, extend, and review the plan without leaving the app.",
+      "items": {
+        "customAttributes": {
+          "title": "Custom attributes",
+          "body": "Your own fields on characters, locations, items, scenes, chapters, notes, and rules: text, number, date, boolean, or suggestion."
+        },
+        "suggestions": {
+          "title": "Suggestions",
+          "body": "Per-story lists for races, genders, relationship types, and whatever else repeats."
+        },
+        "search": {
+          "title": "Search",
+          "body": "Global search across every field, including custom attributes, and advanced search on each list."
+        },
+        "analysis": {
+          "title": "Story analysis",
+          "body": "Orphan scenes, broken choices, and other structural issues an author rarely spots alone."
+        },
+        "dashboard": {
+          "title": "Story dashboard",
+          "body": "A snapshot of what is already planned and shortcuts to what still needs review."
+        },
+        "comments": {
+          "title": "Comments",
+          "body": "Threads anchored to a field or an element, also gathered in one list."
+        },
+        "seeAlso": {
+          "title": "See also",
+          "body": "A free, reciprocal link between two elements, without replacing tags or notes."
+        },
+        "storyDevices": {
+          "title": "Literary devices",
+          "body": "A reference list of narrative techniques — foreshadowing, hooks, ticking clocks — kept apart from your story."
+        },
+        "help": {
+          "title": "Built-in help",
+          "body": "A Portuguese and English catalog, with local search and a help icon on every screen."
+        },
+        "exampleStories": {
+          "title": "Example stories",
+          "body": "Install a ready-made copy to explore Keres without touching your own work."
+        }
+      }
+    },
+    "together": {
+      "title": "Sync, collaborate, publish",
+      "lead": "The server is optional. When it exists, it is the bridge between devices and between people.",
+      "items": {
+        "offlineSync": {
+          "title": "Synchronization",
+          "body": "Work offline. When you connect, the engine replicates creates, edits, and deletes with version checks."
+        },
+        "servers": {
+          "title": "Servers",
+          "body": "Register a Keres Server URL or a Docker API and bind stories to it."
+        },
+        "friends": {
+          "title": "Friends",
+          "body": "Friend requests on the same server, the first step to inviting someone."
+        },
+        "collaborators": {
+          "title": "Collaborators",
+          "body": "Invite friends to read or edit a synced story, with permissions on the story itself."
+        },
+        "conflicts": {
+          "title": "Conflicts",
+          "body": "If two edits start from the same version, Keres surfaces the conflict instead of silently dropping one."
+        },
+        "activityLog": {
+          "title": "Operation log",
+          "body": "An auditable history of what was created, changed, or deleted during sync."
+        },
+        "publish": {
+          "title": "Publish",
+          "body": "Some servers run a showcase: a frozen copy of the Keres database, for anyone to download and import."
+        },
+        "importExport": {
+          "title": "Import and export",
+          "body": "A story package on the device, for backup, handing off, or publishing."
+        }
+      }
+    }
+  },
+  "platforms": {
+    "title": "Where Keres runs",
+    "lead": "One client, several ways to reach it. A server, when you want one.",
+    "items": {
+      "android": {
+        "title": "Android",
+        "body": "APK and AAB on each release. The same app as on iOS, with local SQLite."
+      },
+      "ios": {
+        "title": "iOS",
+        "body": "Native Expo client. Plan on the phone and sync with the PC at home."
+      },
+      "web": {
+        "title": "Browser",
+        "body": "The API serves the client at the server root, on the same origin. That page only talks to the server it was loaded from: pointing it at another API would be cross-origin, and SQLite in the browser would stop working."
+      },
+      "windows": {
+        "title": "Windows",
+        "body": "Installer and portable executable, produced with every version."
+      },
+      "macos": {
+        "title": "macOS",
+        "body": "DMG for Apple Silicon and Intel, unsigned until a certificate exists."
+      },
+      "linux": {
+        "title": "Linux",
+        "body": "AppImage and Flatpak on the same releases as everything else."
+      },
+      "keresServer": {
+        "title": "Keres Server",
+        "body": "The API on SQLite, with a Portuguese and English wizard. No Docker, no Postgres: unzip and run. The web client is at the root of this same process; published stories are at /showcase."
+      },
+      "docker": {
+        "title": "Docker",
+        "body": "An image on GHCR with PostgreSQL, the /admin panel, the web client at the root, the showcase at /showcase, and media storage. For whoever runs a real server."
+      }
+    }
+  },
+  "download": {
+    "title": "Download and start",
+    "lead": "Official builds ship on GitHub Releases, together with Keres Server and the Docker image.",
+    "items": {
+      "releases": {
+        "title": "Client",
+        "body": "Desktop for Windows, macOS, and Linux, plus Android. Open the latest release and pick the file for your system.",
+        "cta": "Open releases"
+      },
+      "server": {
+        "title": "Keres Server",
+        "body": "Zips for Windows x64, Linux x64, and macOS Apple Silicon. On first run the wizard asks for the database, media, and port.",
+        "cta": "Download the server"
+      },
+      "docker": {
+        "title": "Docker image",
+        "body": "ghcr.io/caiofviana/keres — prefer an immutable tag in production. The repo ships a deploy Compose file.",
+        "cta": "View on GitHub"
+      },
+      "source": {
+        "title": "Source code",
+        "body": "An open monorepo: client, API, admin panel, desktop, and this landing page. Bun, TypeScript, tests in CI.",
+        "cta": "Open the repository"
+      }
+    }
+  },
+  "stack": {
+    "title": "How it is built",
+    "lead": "The same pieces described in the repository documentation.",
+    "client": "React Native + Expo, local SQLite, Zustand stores, and a custom sync engine.",
+    "desktop": "Electron wraps the client's web build for the desktop app. The same build, on the API, is the client at the server root.",
+    "api": "Bun, Elysia, Drizzle. PostgreSQL in Docker; SQLite in the home Keres Server. Serves the web client at the root, on the same origin.",
+    "admin": "A React panel served by the API at /admin, for accounts, plans, and registration.",
+    "shared": "Entities, Zod contracts, and palettes shared across the apps."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "items": {
+      "editor": {
+        "q": "Does Keres replace my text editor?",
+        "a": "No. It organizes the narrative universe. The manuscript, script, or campaign stays where you already write."
+      },
+      "browser": {
+        "q": "Does it run in the browser?",
+        "a": "Yes, at the Keres server itself (Docker or Keres Server), at the root. That client only connects to the API it was loaded from. Registering another server in the browser would be cross-origin again: web SQLite needs isolation on the same origin. On phone and desktop you can register any URL. Published stories live at /showcase."
+      },
+      "offline": {
+        "q": "Do I need the internet?",
+        "a": "Not to plan. The client keeps everything on the device. A network is only needed to sync, collaborate, or publish on a server."
+      },
+      "server": {
+        "q": "Do I need a server?",
+        "a": "No. A story can live only on the device. A server comes in when you want the same universe on the phone and the PC, or when you want to collaborate."
+      },
+      "languages": {
+        "q": "Which languages is the app in?",
+        "a": "Portuguese and English, in the client, the help, Keres Server, and this page."
+      },
+      "collaborate": {
+        "q": "Can more than one person write it?",
+        "a": "With a server: invite friends, choose whether they read or edit, and comment on records. Without a server, you can hand off an import/export package."
+      },
+      "cost": {
+        "q": "What does it cost?",
+        "a": "Keres is open software. You download the client and, if you want, run your own server. An operator of a public server may apply account limits — that is their decision, not the application's."
+      },
+      "showcase": {
+        "q": "Does this page publish stories?",
+        "a": "No. This is the project landing page. The showcase of published stories is a separate site, served by a Keres Server someone chose to run."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "A writing companion for planning stories.",
+    "source": "Open source on GitHub",
+    "docs": "Documentation in the repository"
+  }
+}

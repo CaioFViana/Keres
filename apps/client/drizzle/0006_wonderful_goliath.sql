@@ -1,0 +1,1 @@
+ALTER TABLE `story_schema_fields` ADD `target_entity_type` text;

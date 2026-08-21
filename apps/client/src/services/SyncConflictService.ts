@@ -1,5 +1,9 @@
-import { SyncConflictReason } from '@keres/shared';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import {
+  ChapterReorderingStoryUpdate,
+  StoryReorderingStoryUpdate,
+  SyncConflictReason,
+} from '@keres/shared';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import { OperationLogSelect, SyncConflictSelect } from '../db/schema';
@@ -12,7 +16,14 @@ import { getEntityTable, toEntityColumns } from './entityTableRegistry';
  * mudam em toda escrita e portanto apareceriam como "divergentes" em todo conflito sem
  * que o usuário tenha qualquer decisão a tomar sobre eles.
  */
-const BOOKKEEPING_FIELDS = new Set(['id', 'storyId', 'version', 'createdAt', 'updatedAt', 'deletedAt']);
+const BOOKKEEPING_FIELDS = new Set([
+  'id',
+  'storyId',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+]);
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -105,15 +116,15 @@ function valuesDiffer(a: any, b: any): boolean {
  */
 export function findContestedFields(
   localValues: Record<string, any>,
-  serverValues: Record<string, any> | null
+  serverValues: Record<string, any> | null,
 ): string[] {
   if (!serverValues) {
-    return Object.keys(localValues).filter(key => !BOOKKEEPING_FIELDS.has(key));
+    return Object.keys(localValues).filter((key) => !BOOKKEEPING_FIELDS.has(key));
   }
   return Object.keys(localValues)
-    .filter(key => !BOOKKEEPING_FIELDS.has(key))
-    .filter(key => key in serverValues)
-    .filter(key => valuesDiffer(localValues[key], serverValues[key]));
+    .filter((key) => !BOOKKEEPING_FIELDS.has(key))
+    .filter((key) => key in serverValues)
+    .filter((key) => valuesDiffer(localValues[key], serverValues[key]));
 }
 
 /** Une os payloads das operações locais pendentes num único conjunto de valores desejados. */
@@ -128,6 +139,59 @@ export function mergeLocalOperationPayloads(operations: OperationLogSelect[]): R
     }
   }
   return merged;
+}
+
+/**
+ * Aplica uma reordenação remota (ou a versão do servidor de uma que conflitou) ao banco
+ * local. Fica aqui, e não em `SyncEngineService`, porque `resolveKeepServer` também precisa
+ * dela para o caso de reorder - e este arquivo não pode depender de volta de
+ * `SyncEngineService`, que já depende deste (ver `conflictService` lá).
+ */
+export async function applyReorderToLocalDb(
+  db: AppDrizzleClient,
+  update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+  operationTime: Date,
+): Promise<void> {
+  const { reorderItems } = update;
+  if (!reorderItems || reorderItems.length === 0) return;
+
+  await db.transaction(async (tx) => {
+    for (const item of reorderItems) {
+      if (update.entity === 'Chapter') {
+        // Reordering scenes within a chapter
+        await tx
+          .update(schema.scenes)
+          .set({
+            index: item.newIndex,
+            updatedAt: operationTime,
+            version: sql`${schema.scenes.version} + 1`,
+          })
+          .where(eq(schema.scenes.id, item.id));
+      } else if (
+        update.entity === 'Story' &&
+        (update as StoryReorderingStoryUpdate).reorderTarget === 'StorySchemaField'
+      ) {
+        await tx
+          .update(schema.storySchemaFields)
+          .set({
+            order: item.newIndex - 1,
+            updatedAt: operationTime,
+            version: sql`${schema.storySchemaFields.version} + 1`,
+          })
+          .where(eq(schema.storySchemaFields.id, item.id));
+      } else if (update.entity === 'Story') {
+        // Reordering chapters within a story
+        await tx
+          .update(schema.chapters)
+          .set({
+            index: item.newIndex,
+            updatedAt: operationTime,
+            version: sql`${schema.chapters.version} + 1`,
+          })
+          .where(eq(schema.chapters.id, item.id));
+      }
+    }
+  });
 }
 
 export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictService => {
@@ -149,7 +213,12 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       serverVersion: row.serverVersion,
       message: row.message,
       detectedAt: row.detectedAt,
-      contestedFields: findContestedFields(localValues, serverValues),
+      // Um reorder não tem "campos" no sentido em que o resto do conflito entende - o valor
+      // em disputa é a ordem inteira (`reorderItems`), não algo pra comparar item a item.
+      // Forçar vazio aqui faz a tela cair no fallback binário (manter a minha ordem / usar a
+      // do servidor) em vez de tentar montar um seletor de campo com JSON cru dentro.
+      contestedFields:
+        row.localOperationType === 'reorder' ? [] : findContestedFields(localValues, serverValues),
       isDeletedOnServer: row.reason === 'deleted_on_server' || !!serverValues?.isDeleted,
       isLocalDelete: row.localOperationType === 'delete',
     };
@@ -162,14 +231,16 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
    */
   const blockOperations = async (operationIds: string[]) => {
     if (operationIds.length === 0) return;
-    await db.update(schema.operationLogs)
+    await db
+      .update(schema.operationLogs)
       .set({ conflictState: 'conflicted' })
       .where(inArray(schema.operationLogs.id, operationIds));
   };
 
   const abandonOperations = async (operationIds: string[]) => {
     if (operationIds.length === 0) return;
-    await db.update(schema.operationLogs)
+    await db
+      .update(schema.operationLogs)
       .set({ conflictState: 'abandoned', isSynced: true })
       .where(inArray(schema.operationLogs.id, operationIds));
   };
@@ -182,7 +253,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   };
 
   const closeConflict = async (conflictId: string, resolution: ConflictResolution) => {
-    await db.update(schema.syncConflicts)
+    await db
+      .update(schema.syncConflicts)
       .set({ status: 'resolved', resolution, resolvedAt: new Date() })
       .where(eq(schema.syncConflicts.id, conflictId));
   };
@@ -198,7 +270,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     conflict: PendingConflict,
     operationType: 'create' | 'update' | 'delete',
     values: Record<string, any>,
-    baseVersion: number
+    baseVersion: number,
   ) => {
     const story = await db.query.stories.findFirst({
       where: eq(schema.stories.id, conflict.storyId),
@@ -220,16 +292,24 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       conflictState: null,
     });
 
-    await db.update(schema.stories)
+    await db
+      .update(schema.stories)
       .set({ lastOperationLog: nextOperationVersion })
       .where(eq(schema.stories.id, conflict.storyId));
   };
 
   /** Leitura genérica da entidade local, usada ao recriar algo removido no servidor. */
-  const readLocalEntity = async (entityType: string, entityId: string): Promise<Record<string, any> | undefined> => {
+  const readLocalEntity = async (
+    entityType: string,
+    entityId: string,
+  ): Promise<Record<string, any> | undefined> => {
     const table = getEntityTable(entityType);
     if (!table) return undefined;
-    const rows = await db.select().from(table).where(eq((table as any).id, entityId)).limit(1);
+    const rows = await db
+      .select()
+      .from(table)
+      .where(eq((table as any).id, entityId))
+      .limit(1);
     return rows.at(0) as Record<string, any> | undefined;
   };
 
@@ -238,7 +318,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     entityType: string,
     entityId: string,
     values: Record<string, any>,
-    version: number
+    version: number,
   ) => {
     const table = getEntityTable(entityType);
     if (!table) {
@@ -247,7 +327,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     }
 
     const columns = toEntityColumns(entityType, values);
-    await db.update(table)
+    await db
+      .update(table)
       .set({ ...columns, version, updatedAt: new Date() })
       .where(eq((table as any).id, entityId));
   };
@@ -263,22 +344,31 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
           eq(schema.syncConflicts.storyId, input.storyId),
           eq(schema.syncConflicts.entityType, input.entityType),
           eq(schema.syncConflicts.entityId, input.entityId),
-          eq(schema.syncConflicts.status, 'pending')
+          eq(schema.syncConflicts.status, 'pending'),
         ),
       });
 
       if (existing) {
-        const mergedOperationIds = Array.from(new Set([
-          ...parseJson<string[]>(existing.localOperationIds, []),
-          ...input.localOperationIds,
-        ]));
-        await db.update(schema.syncConflicts)
+        const mergedOperationIds = Array.from(
+          new Set([
+            ...parseJson<string[]>(existing.localOperationIds, []),
+            ...input.localOperationIds,
+          ]),
+        );
+        await db
+          .update(schema.syncConflicts)
           .set({
             reason: input.reason,
             localOperationType: input.localOperationType,
             localOperationIds: JSON.stringify(mergedOperationIds),
-            localValues: JSON.stringify({ ...parseJson<Record<string, any>>(existing.localValues, {}), ...input.localValues }),
-            serverValues: input.serverValues === undefined ? existing.serverValues : JSON.stringify(input.serverValues),
+            localValues: JSON.stringify({
+              ...parseJson<Record<string, any>>(existing.localValues, {}),
+              ...input.localValues,
+            }),
+            serverValues:
+              input.serverValues === undefined
+                ? existing.serverValues
+                : JSON.stringify(input.serverValues),
             clientVersion: input.clientVersion ?? existing.clientVersion,
             serverVersion: input.serverVersion ?? existing.serverVersion,
             message: input.message ?? existing.message,
@@ -297,9 +387,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         localOperationType: input.localOperationType,
         localOperationIds: JSON.stringify(input.localOperationIds),
         localValues: JSON.stringify(input.localValues),
-        serverValues: input.serverValues === undefined || input.serverValues === null
-          ? null
-          : JSON.stringify(input.serverValues),
+        serverValues:
+          input.serverValues === undefined || input.serverValues === null
+            ? null
+            : JSON.stringify(input.serverValues),
         clientVersion: input.clientVersion ?? null,
         serverVersion: input.serverVersion ?? null,
         message: input.message ?? null,
@@ -313,7 +404,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     async getPendingConflicts(storyId?: string): Promise<PendingConflict[]> {
       const rows = await db.query.syncConflicts.findMany({
         where: storyId
-          ? and(eq(schema.syncConflicts.status, 'pending'), eq(schema.syncConflicts.storyId, storyId))
+          ? and(
+              eq(schema.syncConflicts.status, 'pending'),
+              eq(schema.syncConflicts.storyId, storyId),
+            )
           : eq(schema.syncConflicts.status, 'pending'),
         orderBy: asc(schema.syncConflicts.detectedAt),
       });
@@ -323,7 +417,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     async countPendingConflicts(storyId?: string): Promise<number> {
       const rows = await db.query.syncConflicts.findMany({
         where: storyId
-          ? and(eq(schema.syncConflicts.status, 'pending'), eq(schema.syncConflicts.storyId, storyId))
+          ? and(
+              eq(schema.syncConflicts.status, 'pending'),
+              eq(schema.syncConflicts.storyId, storyId),
+            )
           : eq(schema.syncConflicts.status, 'pending'),
         columns: { id: true },
       });
@@ -337,8 +434,34 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         return;
       }
 
-      // Sem versão do servidor não há em que rebasear; 0 faz o servidor tratar como
-      // last-write-wins, que é o resultado desejado quando ele não informou a versão.
+      if (conflict.localOperationType === 'reorder') {
+        // Diferente dos outros tipos, não há uma linha de entidade só pra "a ordem" - a
+        // operação de reorder pendente já tem os índices certos, só precisa ser reapoiada na
+        // versão atual do servidor e liberada pra ir no próximo push. Não passa por
+        // `abandonOperations`/`recordRebasedOperation` (que descartam e recriam a operação):
+        // aqui a mesma operação continua, só com a base atualizada.
+        const baseVersion = conflict.serverVersion ?? 0;
+        for (const opId of conflict.localOperationIds) {
+          const op = await db.query.operationLogs.findFirst({
+            where: eq(schema.operationLogs.id, opId),
+          });
+          if (!op) continue;
+          const payload = parseJson<Record<string, any>>(op.payload, {});
+          payload.version = baseVersion + 1;
+          await db
+            .update(schema.operationLogs)
+            .set({ payload: JSON.stringify(payload), conflictState: null })
+            .where(eq(schema.operationLogs.id, opId));
+        }
+        await closeConflict(conflictId, 'keep_local');
+        entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
+        entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+        return;
+      }
+
+      // Sem versão do servidor não há em que rebasear. 0 só serve quando a entidade
+      // ainda não existe lá (create); num update/delete contra uma linha viva isso
+      // volta como `version_conflict` em vez de last-write-wins.
       const baseVersion = conflict.serverVersion ?? 0;
       const values = chosenValues ?? conflict.localValues;
 
@@ -347,9 +470,23 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       if (conflict.isLocalDelete) {
         // O usuário excluiu; manter a decisão dele significa reenviar a exclusão sobre a
         // versão atual do servidor.
-        await writeEntity(conflict.entityType, conflict.entityId, { isDeleted: true, deletedAt: new Date() }, baseVersion + 1);
-        await recordRebasedOperation(conflict, 'delete', { id: conflict.entityId, isDeleted: true }, baseVersion);
-      } else if (conflict.localOperationType === 'create' || conflict.reason === 'not_found' || conflict.reason === 'limit_exceeded') {
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { isDeleted: true, deletedAt: new Date() },
+          baseVersion + 1,
+        );
+        await recordRebasedOperation(
+          conflict,
+          'delete',
+          { id: conflict.entityId, isDeleted: true },
+          baseVersion,
+        );
+      } else if (
+        conflict.localOperationType === 'create' ||
+        conflict.reason === 'not_found' ||
+        conflict.reason === 'limit_exceeded'
+      ) {
         // A entidade não existe no servidor - por a operação local original já ser um
         // `create` (qualquer que seja o motivo recusado - `not_found` de uma dependência
         // ausente, `limit_exceeded` do teto do plano, ou até `unknown` de uma falha de
@@ -360,14 +497,41 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // tentativa uma chance real de passar - exatamente o loop que deixava uma
         // GalleryRelation presa pra sempre quando seu dono ainda não existia no servidor.
         const local = await readLocalEntity(conflict.entityType, conflict.entityId);
-        await recordRebasedOperation(conflict, 'create', { ...(local ?? {}), ...values, isDeleted: false }, 0);
-        await writeEntity(conflict.entityType, conflict.entityId, { ...values, isDeleted: false, deletedAt: null }, 1);
+        await recordRebasedOperation(
+          conflict,
+          'create',
+          { ...(local ?? {}), ...values, isDeleted: false },
+          0,
+        );
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { ...values, isDeleted: false, deletedAt: null },
+          1,
+        );
       } else {
         // Inclui o caso `deleted_on_server`: mandar `isDeleted: false` restaura a entidade
         // no servidor junto com os valores que o usuário escreveu.
         const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
-        await writeEntity(conflict.entityType, conflict.entityId, { ...values, ...restoreFields, deletedAt: null }, baseVersion + 1);
-        await recordRebasedOperation(conflict, 'update', { ...values, ...restoreFields }, baseVersion);
+        const nextValues = { ...values, ...restoreFields };
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { ...nextValues, deletedAt: null },
+          baseVersion + 1,
+        );
+        // Só reenvia os campos que realmente divergem do que o servidor tem agora. Sem isto,
+        // "manter o meu" reenviava o valor inteiro mesmo quando ele já batia com o que está
+        // lá (ex.: os dois lados renomearam pra o mesmo texto) - uma operação nova no log
+        // sem nenhuma informação de fato nova, só ruído.
+        const changedValues = Object.fromEntries(
+          Object.entries(nextValues).filter(([field, value]) =>
+            valuesDiffer(value, conflict.serverValues?.[field]),
+          ),
+        );
+        if (Object.keys(changedValues).length > 0) {
+          await recordRebasedOperation(conflict, 'update', changedValues, baseVersion);
+        }
       }
 
       await closeConflict(conflictId, chosenValues ? 'merge' : 'keep_local');
@@ -384,21 +548,39 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
 
       await abandonOperations(conflict.localOperationIds);
 
-      if (!conflict.serverValues) {
+      if (conflict.localOperationType === 'reorder') {
+        // Idem: não é uma linha de entidade a escrever, é a ordem de N outras linhas -
+        // aplica a ordem que o servidor tem, com a mesma lógica usada ao aplicar um reorder
+        // remoto normal (ver `SyncEngineService`).
+        const reorderItems = conflict.serverValues?.reorderItems as
+          | { id: string; newIndex: number }[]
+          | undefined;
+        if (reorderItems && reorderItems.length > 0) {
+          await applyReorderToLocalDb(
+            db,
+            {
+              entity: conflict.entityType,
+              reorderItems,
+              reorderTarget: conflict.serverValues?.reorderTarget,
+            } as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+            new Date(),
+          );
+        }
+      } else if (!conflict.serverValues) {
         // O servidor não tem a entidade. Aceitar isso é removê-la aqui - e sem gravar
         // operação, porque não há nada a informar a quem já não a tem.
         await writeEntity(
           conflict.entityType,
           conflict.entityId,
           { isDeleted: true, deletedAt: new Date() },
-          (conflict.serverVersion ?? 0) + 1
+          (conflict.serverVersion ?? 0) + 1,
         );
       } else {
         await writeEntity(
           conflict.entityType,
           conflict.entityId,
           conflict.serverValues,
-          conflict.serverVersion ?? conflict.serverValues.version ?? 1
+          conflict.serverVersion ?? conflict.serverValues.version ?? 1,
         );
       }
 
@@ -416,7 +598,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       if (conflict) {
         await abandonOperations(conflict.localOperationIds);
       }
-      await db.update(schema.syncConflicts)
+      await db
+        .update(schema.syncConflicts)
         .set({ status: 'dismissed', resolvedAt: new Date() })
         .where(eq(schema.syncConflicts.id, conflictId));
       if (conflict) {

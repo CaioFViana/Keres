@@ -1,4 +1,8 @@
-import { createNoteService, NoteService, NoteWithTags } from '../services/storymanagement/NoteService';
+import {
+  createNoteService,
+  NoteService,
+  NoteWithTags,
+} from '../services/storymanagement/NoteService';
 import { createEntityStore } from './createEntityStore';
 
 export type { FavoriteFilterState } from '../types/entityFilters';
@@ -17,7 +21,8 @@ export const useNoteStore = createEntityStore<'notes', NoteWithTags, NoteService
       p.favoriteFilterState,
       p.advancedSearchCriteria,
     ),
-  updateFavorite: (service, userId, id, isFavorite) => service.updateNote(userId, id, { isFavorite }),
+  updateFavorite: (service, userId, id, isFavorite) =>
+    service.updateNote(userId, id, { isFavorite }),
   changeEvent: 'note_changed',
   errorMessages: {
     fetch: 'Failed to load notes.',

@@ -32,7 +32,6 @@ services:
       JWT_SECRET_REFRESH: ${JWT_SECRET_REFRESH:?Define JWT_SECRET_REFRESH no arquivo .env}
       ROOT_ADMIN_USERNAME: ${ROOT_ADMIN_USERNAME:-root}
       ROOT_ADMIN_PASSWORD: ${ROOT_ADMIN_PASSWORD:?Define ROOT_ADMIN_PASSWORD no arquivo .env}
-      DEFAULT_PASSWORD_RESET_VALUE: ${DEFAULT_PASSWORD_RESET_VALUE:?Define DEFAULT_PASSWORD_RESET_VALUE no arquivo .env}
       # Local é o padrão. Para S3, preencha MEDIA_S3_* no .env de deploy; o servidor bloqueia
       # uma troca de backend quando o banco já contém mídia, para evitar perda de arquivos.
       MEDIA_STORAGE_DRIVER: ${MEDIA_STORAGE_DRIVER:-local}

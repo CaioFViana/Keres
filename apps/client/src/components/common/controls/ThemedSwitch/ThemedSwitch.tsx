@@ -9,22 +9,40 @@ interface ThemedSwitchProps {
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 /** Switch acessível com cores controladas pelo tema, sem recorrer ao thumb nativo do Android. */
-const ThemedSwitch: React.FC<ThemedSwitchProps> = ({ value, onValueChange, disabled = false, style }) => {
+const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
+  value,
+  onValueChange,
+  disabled = false,
+  style,
+  testID,
+}) => {
   const { colors } = useTheme();
   const thumbPosition = useRef(new Animated.Value(value ? 1 : 0)).current;
+  const isInitialRender = useRef(true);
 
   useEffect(() => {
-    Animated.timing(thumbPosition, {
+    // The initial value is already represented by `thumbPosition`; animating it on mount only
+    // schedules needless frames (and causes React test updates outside the initiating act).
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    const animation = Animated.timing(thumbPosition, {
       toValue: value ? 1 : 0,
       duration: 180,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
+    });
+
+    animation.start();
+    return () => animation.stop();
   }, [thumbPosition, value]);
 
   const translateX = thumbPosition.interpolate({
@@ -47,6 +65,7 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({ value, onValueChange, disab
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled }}
       disabled={disabled}
+      testID={testID}
       onPress={() => onValueChange(!value)}
       style={[
         styles.track,
@@ -58,14 +77,16 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({ value, onValueChange, disab
         style,
       ]}
     >
-      <Animated.View style={[
-        styles.thumb,
-        {
-          backgroundColor: thumbColor,
-          shadowColor: colors.shadow,
-          transform: [{ translateX }],
-        },
-      ]}>
+      <Animated.View
+        style={[
+          styles.thumb,
+          {
+            backgroundColor: thumbColor,
+            shadowColor: colors.shadow,
+            transform: [{ translateX }],
+          },
+        ]}
+      >
         <Ionicons
           name={value ? 'checkmark' : 'close'}
           size={17}

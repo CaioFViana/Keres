@@ -1,20 +1,25 @@
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createStoryService } from '../../services/storymanagement/StoryService';
 import { StorySelect } from '../../db/schema';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { mediaFileService } from '../../services/MediaFileService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
+import { createULID } from '../../utils/entityUtils';
+import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
 import {
   buildExportFileName,
   buildExportZipFileName,
@@ -26,6 +31,7 @@ import {
 
 const ImportExportScreen = () => {
   const { t } = useTranslation();
+  useDocumentTitle(t('import_export_title'));
   const { colors } = useTheme();
   useBackButtonHandler();
   const drizzleDb = useDrizzle();
@@ -55,75 +61,95 @@ const ImportExportScreen = () => {
   }, [drizzleDb, t]);
 
   // A lista precisa refletir importações e exclusões feitas em outras telas.
-  useFocusEffect(useCallback(() => {
-    loadStories();
-  }, [loadStories]));
+  useFocusEffect(
+    useCallback(() => {
+      loadStories();
+    }, [loadStories]),
+  );
 
   /** Só os metadados - título, notas, vínculos de galeria... - sem os bytes da mídia. */
-  const handleExportJson = useCallback(async (story: StorySelect) => {
-    setExportingStoryId(story.id);
-    try {
-      const storyService = createStoryService(drizzleDb);
-      const storyExport = await storyService.exportFullStory(story.id);
-      const fileName = buildExportFileName(story.title);
-      const result = await deliverStoryExport(storyExport, fileName);
+  const handleExportJson = useCallback(
+    async (story: StorySelect) => {
+      setExportingStoryId(story.id);
+      try {
+        const storyService = createStoryService(drizzleDb);
+        const storyExport = await storyService.exportFullStory(story.id);
+        const fileName = buildExportFileName(story.title);
+        const result = await deliverStoryExport(storyExport, fileName);
 
-      if (result.delivered) {
-        showNotification(t('export_story_success', { fileName: result.fileName }), 'success');
-      } else {
-        // Sem share sheet disponível o arquivo existe, mas o usuário não tem como alcançá-lo.
-        // Dizer onde ele está é mais útil do que alegar sucesso.
-        showNotification(t('export_story_no_share_target', { path: result.uri || result.fileName }), 'warning');
+        if (result.delivered) {
+          showNotification(t('export_story_success', { fileName: result.fileName }), 'success');
+        } else {
+          // Sem share sheet disponível o arquivo existe, mas o usuário não tem como alcançá-lo.
+          // Dizer onde ele está é mais útil do que alegar sucesso.
+          showNotification(
+            t('export_story_no_share_target', { path: result.uri || result.fileName }),
+            'warning',
+          );
+        }
+      } catch (exportError) {
+        console.log(`ImportExportScreen: failed to export story ${story.id}.`, exportError);
+        showNotification(t('export_story_failed'), 'error');
+      } finally {
+        setExportingStoryId(null);
       }
-    } catch (exportError) {
-      console.log(`ImportExportScreen: failed to export story ${story.id}.`, exportError);
-      showNotification(t('export_story_failed'), 'error');
-    } finally {
-      setExportingStoryId(null);
-    }
-  }, [drizzleDb, showNotification, t]);
+    },
+    [drizzleDb, showNotification, t],
+  );
 
   /** Um `.zip` com os metadados e os arquivos de mídia que já estão baixados neste aparelho. */
-  const handleExportZip = useCallback(async (story: StorySelect) => {
-    setExportingStoryId(story.id);
-    try {
-      const storyService = createStoryService(drizzleDb);
-      const storyExport = await storyService.exportFullStory(story.id);
-      const { bytes, includedCount, totalCount } = await buildStoryZipBytes(storyExport, story.id);
-      const fileName = buildExportZipFileName(story.title);
-      const result = await deliverStoryZipExport(bytes, fileName);
-
-      if (!result.delivered) {
-        showNotification(t('export_story_no_share_target', { path: result.uri || result.fileName }), 'warning');
-      } else if (totalCount > 0 && includedCount < totalCount) {
-        // Mídia que este aparelho ainda não baixou não pode entrar no pacote; a pessoa
-        // precisa saber que o .zip está incompleto, não achar que está tudo lá.
-        showNotification(
-          t('export_story_zip_success_partial', { fileName: result.fileName, included: includedCount, total: totalCount }),
-          'warning'
+  const handleExportZip = useCallback(
+    async (story: StorySelect) => {
+      setExportingStoryId(story.id);
+      try {
+        const storyService = createStoryService(drizzleDb);
+        const storyExport = await storyService.exportFullStory(story.id);
+        const { bytes, includedCount, totalCount } = await buildStoryZipBytes(
+          storyExport,
+          story.id,
         );
-      } else {
-        showNotification(t('export_story_success', { fileName: result.fileName }), 'success');
-      }
-    } catch (exportError) {
-      console.log(`ImportExportScreen: failed to export story ${story.id} as zip.`, exportError);
-      showNotification(t('export_story_failed'), 'error');
-    } finally {
-      setExportingStoryId(null);
-    }
-  }, [drizzleDb, showNotification, t]);
+        const fileName = buildExportZipFileName(story.title);
+        const result = await deliverStoryZipExport(bytes, fileName);
 
-  const handleExportPress = useCallback((story: StorySelect) => {
-    AppAlert.alert(
-      t('export_story_choose_title'),
-      t('export_story_choose_message'),
-      [
+        if (!result.delivered) {
+          showNotification(
+            t('export_story_no_share_target', { path: result.uri || result.fileName }),
+            'warning',
+          );
+        } else if (totalCount > 0 && includedCount < totalCount) {
+          // Mídia que este aparelho ainda não baixou não pode entrar no pacote; a pessoa
+          // precisa saber que o .zip está incompleto, não achar que está tudo lá.
+          showNotification(
+            t('export_story_zip_success_partial', {
+              fileName: result.fileName,
+              included: includedCount,
+              total: totalCount,
+            }),
+            'warning',
+          );
+        } else {
+          showNotification(t('export_story_success', { fileName: result.fileName }), 'success');
+        }
+      } catch (exportError) {
+        console.log(`ImportExportScreen: failed to export story ${story.id} as zip.`, exportError);
+        showNotification(t('export_story_failed'), 'error');
+      } finally {
+        setExportingStoryId(null);
+      }
+    },
+    [drizzleDb, showNotification, t],
+  );
+
+  const handleExportPress = useCallback(
+    (story: StorySelect) => {
+      AppAlert.alert(t('export_story_choose_title'), t('export_story_choose_message'), [
         { text: t('export_story_choose_json'), onPress: () => handleExportJson(story) },
         { text: t('export_story_choose_zip'), onPress: () => handleExportZip(story) },
         { text: t('cancel'), style: 'cancel' },
-      ]
-    );
-  }, [handleExportJson, handleExportZip, t]);
+      ]);
+    },
+    [handleExportJson, handleExportZip, t],
+  );
 
   const handleImport = useCallback(async () => {
     if (!userId) {
@@ -141,26 +167,33 @@ const ImportExportScreen = () => {
 
       const storyService = createStoryService(drizzleDb);
 
-      // O importador insere com os ids originais, então uma história já presente colidiria na
-      // chave primária. Avisar antes é melhor do que deixar o insert falhar sem explicação.
-      const existing = await storyService.getStoryById(storyExport.story.id);
-      if (existing) {
-        showNotification(t('import_story_already_exists', { title: existing.title }), 'warning');
-        return;
-      }
+      // O importador insere com ids refeitos. Portanto pode ser usado para restaurar um backup paralelo.
+      const importedStoryId = createULID();
 
       // Grava os arquivos de mídia do .zip no armazenamento do aparelho antes de criar os
       // registros - a galeria já nasce com o arquivo local, sem depender de sincronizar com
       // um servidor depois. Vazio para uma importação só de `.json`.
       const localMediaPaths = new Map<string, string>();
       for (const item of media) {
-        const localPath = await mediaFileService.writeDownloaded(storyExport.story.id, item.hash, item.mimeType, item.bytes);
+        const localPath = await mediaFileService.writeDownloaded(
+          importedStoryId,
+          item.hash,
+          item.mimeType,
+          item.bytes,
+        );
         localMediaPaths.set(item.hash, localPath);
       }
 
       // `serverId` nulo: o arquivo é uma cópia local. Vincular a um servidor é uma decisão
       // separada, feita na tela de seleção de histórias.
-      await storyService.importFullStory(userId, storyExport, null, null, localMediaPaths);
+      await storyService.importFullStory(
+        userId,
+        storyExport,
+        null,
+        null,
+        localMediaPaths,
+        importedStoryId,
+      );
 
       showNotification(t('import_story_success', { title: storyExport.story.title }), 'success');
       await loadStories();
@@ -168,11 +201,12 @@ const ImportExportScreen = () => {
     } catch (importError) {
       if (importError instanceof StoryImportError) {
         console.log('ImportExportScreen: import rejected.', importError.message);
-        const messageKey = importError.reason === 'future_format_version'
-          ? 'import_story_future_version'
-          : importError.reason === 'invalid_format'
-            ? 'import_story_invalid_file'
-            : 'import_story_unreadable_file';
+        const messageKey =
+          importError.reason === 'future_format_version'
+            ? 'import_story_future_version'
+            : importError.reason === 'invalid_format'
+              ? 'import_story_invalid_file'
+              : 'import_story_unreadable_file';
         showNotification(t(messageKey), 'error');
         return;
       }
@@ -287,7 +321,7 @@ const ImportExportScreen = () => {
       {stories.length === 0 ? (
         <Text style={styles.emptyText}>{t('export_story_no_stories')}</Text>
       ) : (
-        stories.map(story => {
+        stories.map((story) => {
           const isExporting = exportingStoryId === story.id;
           return (
             <TouchableOpacity
@@ -299,7 +333,9 @@ const ImportExportScreen = () => {
               <View style={styles.storyInfo}>
                 <Text style={styles.storyTitle}>{story.title}</Text>
                 <Text style={styles.storyMeta}>
-                  {isExporting ? t('export_story_in_progress') : t(story.type === 'linear' ? 'linear' : 'branching')}
+                  {isExporting
+                    ? t('export_story_in_progress')
+                    : t(story.type === 'linear' ? 'linear' : 'branching')}
                 </Text>
               </View>
               <Ionicons name="share-outline" size={22} color={colors.primary} />

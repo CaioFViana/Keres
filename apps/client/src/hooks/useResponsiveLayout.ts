@@ -34,4 +34,3 @@ export function useResponsiveLayout() {
     isWide: breakpoint === 'wide',
   };
 }
-

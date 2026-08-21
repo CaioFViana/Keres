@@ -1,3 +1,5 @@
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { Platform } from 'react-native';
 
 /**
@@ -14,4 +16,19 @@ import { Platform } from 'react-native';
 export function setDocumentTitle(title: string) {
   if (Platform.OS !== 'web') return;
   document.title = title ? `Keres: ${title}` : 'Keres';
+}
+
+/**
+ * Keeps the Electron/browser title in lockstep with a screen while it is focused.
+ *
+ * React Navigation leaves screens mounted when another route is pushed or when a nested
+ * drawer is selected. A plain mount effect therefore preserves the previous screen's title
+ * when returning. This hook deliberately follows the navigation focus lifecycle instead.
+ */
+export function useDocumentTitle(title: string) {
+  useFocusEffect(
+    useCallback(() => {
+      setDocumentTitle(title);
+    }, [title]),
+  );
 }

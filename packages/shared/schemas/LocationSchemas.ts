@@ -26,11 +26,11 @@ export const CreateLocationDataSchema = LocationSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  name: z.string().min(1, "Location name cannot be empty"),
+  name: z.string().min(1, 'Location name cannot be empty'),
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialLocationSchema = LocationSchema.partial();
+export const PartialLocationSchema = CreateLocationDataSchema.partial();
 
 export type CreateLocationDataType = z.infer<typeof CreateLocationDataSchema>;
 export type LocationType = z.infer<typeof LocationSchema>;

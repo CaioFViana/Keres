@@ -1,9 +1,18 @@
-import { CreateCommentDataSchema, CreateCommentDataType, CreateStoryUpdate, PartialCommentSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateCommentDataSchema,
+  CreateCommentDataType,
+  CreateStoryUpdate,
+  PartialCommentSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { db } from '../../db';
 import { comments } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
-export class CommentSyncHandler extends BaseSyncEntityHandler<typeof CreateCommentDataSchema, typeof PartialCommentSchema> {
+export class CommentSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateCommentDataSchema,
+  typeof PartialCommentSchema
+> {
   entityName = 'Comment';
 
   constructor() {
@@ -18,7 +27,10 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<typeof CreateComme
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     const data: CreateCommentDataType = this.createSchema.parse(update.data);
     if (data.authorUserId !== userId) {
-      throw new SyncConflictError('unauthorized', 'A user can only create comments under their own identity.');
+      throw new SyncConflictError(
+        'unauthorized',
+        'A user can only create comments under their own identity.',
+      );
     }
     // O portão reader/allowReaderComments já foi aplicado em SyncService.processAndRecordUpdates
     // antes deste método ser chamado - nada extra a checar aqui quanto a isso.
@@ -43,7 +55,12 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<typeof CreateComme
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     // Editar o texto/trecho/criticidade é sempre restrito ao autor, mesmo para o dono da
     // história - o dono só tem um privilégio elevado de *exclusão* (ver SyncService.ts),
     // não de edição do conteúdo escrito por outra pessoa.

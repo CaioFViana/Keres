@@ -25,7 +25,7 @@ export function orderItemJourneysByNarrative<T extends OrderableItemJourney>(
   storyType: 'linear' | 'branching',
   scenes: GraphScene[],
   choices: GraphChoice[],
-  chapters: GraphChapter[]
+  chapters: GraphChapter[],
 ): T[] {
   const sceneById = new Map(scenes.map((scene) => [scene.id, scene]));
   const chapterIndexById = new Map(chapters.map((chapter) => [chapter.id, chapter.index]));
@@ -40,12 +40,15 @@ export function orderItemJourneysByNarrative<T extends OrderableItemJourney>(
 
   const orderKey = (journey: T): [number, number, number, number] => {
     const scene = sceneById.get(journey.sceneId);
-    const chapterIndex = scene ? chapterIndexById.get(scene.chapterId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+    const chapterIndex = scene
+      ? (chapterIndexById.get(scene.chapterId) ?? Number.MAX_SAFE_INTEGER)
+      : Number.MAX_SAFE_INTEGER;
     const sceneIndex = scene?.index ?? Number.MAX_SAFE_INTEGER;
     // Cena desconhecida (referência solta) cai por último, junto do resto do que não resolveu.
-    const layer = storyType === 'branching'
-      ? layerBySceneId.get(journey.sceneId) ?? Number.MAX_SAFE_INTEGER
-      : 0;
+    const layer =
+      storyType === 'branching'
+        ? (layerBySceneId.get(journey.sceneId) ?? Number.MAX_SAFE_INTEGER)
+        : 0;
     return [layer, chapterIndex, sceneIndex, journey.createdAt.getTime()];
   };
 

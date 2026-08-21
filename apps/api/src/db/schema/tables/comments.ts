@@ -1,12 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 import { storySchemaFields } from './storySchemaFields';
 import { users } from './users';
 
-export const comments = pgTable('comments', {
+export const comments = table('comments', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   // Polimórfico (Character/Location/Chapter/Scene/Item/ItemJourney/WorldRule/Choice/Note/Tag)
   // - sem FK de banco, mesmo padrão de AttributeValue.entityId/NoteRelation.relationId.
   entityType: text('entity_type').notNull(),
@@ -16,11 +18,13 @@ export const comments = pgTable('comments', {
   fieldKey: text('field_key'),
   contentSnapshot: text('content_snapshot'),
   excerptText: text('excerpt_text'),
-  authorUserId: text('author_user_id').notNull().references(() => users.id),
+  authorUserId: text('author_user_id')
+    .notNull()
+    .references(() => users.id),
   commentText: text('comment_text').notNull(),
   criticality: integer('criticality').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

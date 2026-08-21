@@ -1,10 +1,10 @@
+import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, StyleSheet, Text, View } from 'react-native';
-import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { setAuthDb } from '../../services/AuthTokenManager';
@@ -15,6 +15,7 @@ import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles'; // Import common styles
+import { useDocumentTitle } from '../../utils/documentTitle';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
 type RootStackParamList = {
@@ -30,6 +31,7 @@ const ColdInstallScreen = () => {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [languageError, setLanguageError] = useState<string | null>(null);
   const { t } = useTranslation();
+  useDocumentTitle(t('welcome'));
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
   const { colors } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
@@ -64,7 +66,6 @@ const ColdInstallScreen = () => {
     return () => backHandler.remove();
   }, [t, showNotification]);
 
-
   const handleProceed = async () => {
     let isValid = true;
 
@@ -96,10 +97,14 @@ const ColdInstallScreen = () => {
     SyncEngineService.getInstance().setDbInstance(drizzleDb);
 
     // Create initial client settings in SQLite
-    await createClientSettings(drizzleDb, { // Pass drizzleDb
+    await createClientSettings(drizzleDb, {
+      // Pass drizzleDb
       localUsername: username,
       language: selectedLanguage || 'en', // Default to English if not selected
       darkMode: false, // Default to light mode
+      use24HourTime: true, // Default to 24-hour clock
+      showContextualHelp: true,
+      suggestLiteraryDevices: true,
     });
 
     // Initialize stores with the newly created settings
@@ -140,24 +145,26 @@ const ColdInstallScreen = () => {
 
   return (
     <FormContainer style={commonContainerStyles.container}>
-          <Text style={styles.title}>{t('welcome')}</Text>
-          <TextInput
-            placeholder={t('enter_username')}
-            value={username}
-            onChangeText={setUsername}
-            style={[commonInputStyles.input, { width: '80%', marginBottom: 20 }]}
-          />
-          {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
-          <View style={styles.pickerContainer}>
-            <Select
-              options={languageOptions}
-              value={selectedLanguage}
-              onValueChange={handleLanguageChange}
-              placeholder={t('select_language')}
-            />
-          </View>
-          {languageError && <Text style={styles.errorText}>{languageError}</Text>}
-          <Button onPress={handleProceed} disabled={isProceedDisabled}>{t('proceed')}</Button>
+      <Text style={styles.title}>{t('welcome')}</Text>
+      <TextInput
+        placeholder={t('enter_username')}
+        value={username}
+        onChangeText={setUsername}
+        style={[commonInputStyles.input, { width: '80%', marginBottom: 20 }]}
+      />
+      {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
+      <View style={styles.pickerContainer}>
+        <Select
+          options={languageOptions}
+          value={selectedLanguage}
+          onValueChange={handleLanguageChange}
+          placeholder={t('select_language')}
+        />
+      </View>
+      {languageError && <Text style={styles.errorText}>{languageError}</Text>}
+      <Button onPress={handleProceed} disabled={isProceedDisabled}>
+        {t('proceed')}
+      </Button>
     </FormContainer>
   );
 };

@@ -5,21 +5,24 @@ import { useTheme } from '../../../../theme';
 
 /**
  * Renderiza o que `AppAlert.alert()` pediu (ver utils/AppAlert.ts). Montado uma vez perto da
- * raiz do app (`App.tsx`), do mesmo jeito que `SyncConflictModal`/`NotificationPopup` - um
- * `Modal` só, isolado do resto da árvore de telas, para qualquer tela poder disparar um
- * alerta sem precisar montar nada localmente.
+ * raiz do app (`App.tsx`), do mesmo jeito que `NotificationPopup` - um `Modal` só, isolado do
+ * resto da árvore de telas, para qualquer tela poder disparar um alerta sem precisar montar
+ * nada localmente.
  */
 const AppAlertHost: React.FC = () => {
   const { colors } = useTheme();
   const current = useAppAlertStore((state) => state.current);
   const dismiss = useAppAlertStore((state) => state.dismiss);
 
-  const handlePress = useCallback((button: AppAlertButton) => {
-    // Fecha antes de acionar o botão: o próprio `onPress` costuma abrir outro alerta (erro
-    // de exclusão, por exemplo), que precisa substituir este, não empilhar sobre ele.
-    dismiss();
-    button.onPress?.();
-  }, [dismiss]);
+  const handlePress = useCallback(
+    (button: AppAlertButton) => {
+      // Fecha antes de acionar o botão: o próprio `onPress` costuma abrir outro alerta (erro
+      // de exclusão, por exemplo), que precisa substituir este, não empilhar sobre ele.
+      dismiss();
+      button.onPress?.();
+    },
+    [dismiss],
+  );
 
   const styles = StyleSheet.create({
     backdrop: {
@@ -112,16 +115,18 @@ const AppAlertHost: React.FC = () => {
 
           <View style={styles.buttonRow}>
             {current.buttons.map((button, index) => {
-              const variantStyle = button.style === 'destructive'
-                ? styles.destructiveButton
-                : button.style === 'cancel'
-                  ? styles.cancelButton
-                  : styles.defaultButton;
-              const variantTextStyle = button.style === 'destructive'
-                ? styles.destructiveButtonText
-                : button.style === 'cancel'
-                  ? styles.cancelButtonText
-                  : styles.defaultButtonText;
+              const variantStyle =
+                button.style === 'destructive'
+                  ? styles.destructiveButton
+                  : button.style === 'cancel'
+                    ? styles.cancelButton
+                    : styles.defaultButton;
+              const variantTextStyle =
+                button.style === 'destructive'
+                  ? styles.destructiveButtonText
+                  : button.style === 'cancel'
+                    ? styles.cancelButtonText
+                    : styles.defaultButtonText;
 
               return (
                 <TouchableOpacity

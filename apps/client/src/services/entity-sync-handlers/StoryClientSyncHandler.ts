@@ -2,6 +2,7 @@ import { CreateStoryUpdate, DeleteStoryUpdate, Story, UpdateStoryUpdate } from '
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
+import { omitClientProtectedFields, toEntityColumns } from '../entityTableRegistry';
 import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StoryClientSyncHandler implements ClientSyncEntityHandler {
@@ -28,17 +29,24 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    // Assuming update.data contains the full story object
-    const storyData = update.data as Story;
+    const storyData = omitClientProtectedFields(this.entityName, update.data as Story);
 
-    // Create the story locally
     await this.db.insert(schema.stories).values({
-      ...storyData,
-      id: update.id, // Use the ID from the update object
+      ...toEntityColumns(this.entityName, storyData),
+      id: update.id,
+      userId: update.originatingUser || (update.data as Story)?.userId,
+      title: storyData.title,
+      type: storyData.type,
       createdAt: new Date(storyData.createdAt),
       updatedAt: new Date(storyData.updatedAt),
       deletedAt: storyData.deletedAt ? new Date(storyData.deletedAt) : null,
-      lastServerSyncedLog: 0 // Initialize to 0 for newly created client-side story
+      version: storyData.version ?? 1,
+      isDeleted: storyData.isDeleted ?? false,
+      lastOperationLog: 0,
+      lastServerSyncedLog: 0,
+      lastPublicFavoriteLog: 0,
+      myRole: null,
+      serverId: null,
     });
     console.log(`Applied create for Story ${update.id}`);
   }
@@ -53,15 +61,16 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     }
 
     // Assuming update.changes contains partial story object with updated fields
-    const storyChanges = update.changes as Partial<Story>;
+    const storyChanges = toEntityColumns(
+      this.entityName,
+      omitClientProtectedFields(this.entityName, update.changes as Partial<Story>),
+    );
 
-    await this.db.update(schema.stories)
+    await this.db
+      .update(schema.stories)
       .set({
         ...storyChanges,
-        updatedAt: new Date(), // Always update updatedAt on change
-        // Ensure date fields are correctly converted if they come as strings
-        createdAt: storyChanges.createdAt ? new Date(storyChanges.createdAt) : undefined,
-        deletedAt: storyChanges.deletedAt ? new Date(storyChanges.deletedAt) : undefined,
+        updatedAt: new Date(),
       })
       .where(eq(schema.stories.id, update.id));
     console.log(`Applied update for Story ${update.id}`);
@@ -77,7 +86,8 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     }
 
     // Mark the story as deleted locally (tombstone pattern)
-    await this.db.update(schema.stories)
+    await this.db
+      .update(schema.stories)
       .set({
         isDeleted: true,
         deletedAt: new Date(),
@@ -91,6 +101,8 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     const story = await this.db.query.stories.findFirst({
       where: eq(schema.stories.id, id),
     });
-    return story;
+    // `stat_notation` é uma coluna de texto no SQLite local (o dialeto não tem ENUM), então o
+    // tipo inferido é `string`; a união vem da entidade compartilhada.
+    return story as Story | undefined;
   }
 }

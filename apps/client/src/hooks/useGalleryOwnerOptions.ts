@@ -3,7 +3,7 @@ import { GALLERY_OWNER_ENTITIES, GalleryOwnerEntity } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GroupedMultiSelectGroup } from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
 import * as schema from '../db/schema';
 
@@ -46,7 +46,9 @@ export function encodeOwnerValue(ownerType: GalleryOwnerEntity, ownerId: string)
   return `${ownerType}:${ownerId}`;
 }
 
-export function decodeOwnerValue(value: string): { ownerType: GalleryOwnerEntity; ownerId: string } | null {
+export function decodeOwnerValue(
+  value: string,
+): { ownerType: GalleryOwnerEntity; ownerId: string } | null {
   const separator = value.indexOf(':');
   if (separator < 0) {
     return null;
@@ -75,20 +77,27 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
     setLoading(true);
     try {
       const [characters, locations, notes, scenes, items] = await Promise.all([
-        db.select({ id: schema.characters.id, name: schema.characters.name })
+        db
+          .select({ id: schema.characters.id, name: schema.characters.name })
           .from(schema.characters)
-          .where(and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false))),
-        db.select({ id: schema.locations.id, name: schema.locations.name })
+          .where(
+            and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
+          ),
+        db
+          .select({ id: schema.locations.id, name: schema.locations.name })
           .from(schema.locations)
           .where(and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false))),
         // Notas usam `title` onde as outras usam `name`.
-        db.select({ id: schema.notes.id, name: schema.notes.title })
+        db
+          .select({ id: schema.notes.id, name: schema.notes.title })
           .from(schema.notes)
           .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false))),
-        db.select({ id: schema.scenes.id, name: schema.scenes.name })
+        db
+          .select({ id: schema.scenes.id, name: schema.scenes.name })
           .from(schema.scenes)
           .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false))),
-        db.select({ id: schema.items.id, name: schema.items.name })
+        db
+          .select({ id: schema.items.id, name: schema.items.name })
           .from(schema.items)
           .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
       ]);
@@ -132,7 +141,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
 
   const optionsByValue = useMemo(
     () => new Map(options.map((option) => [option.value, option])),
-    [options]
+    [options],
   );
 
   /**
@@ -140,7 +149,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
    * primeiro o tipo de entidade, só depois a lista - que senão cresce junto com a história e vira
    * uma rolagem só, sem filtro, misturando os cinco tipos.
    */
-  const groupedOptions: GroupedMultiSelectGroup[] = useMemo(() => {
+  const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({
       key: ownerType,
       label: t(`${ownerType.toLowerCase()}s`),

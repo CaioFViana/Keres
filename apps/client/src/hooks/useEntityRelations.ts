@@ -4,12 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
-import { createNoteRelationService, SaveNoteRelation } from '../services/storymanagement/NoteRelationService';
+import {
+  createNoteRelationService,
+  SaveNoteRelation,
+} from '../services/storymanagement/NoteRelationService';
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';
 import { createTagService } from '../services/storymanagement/TagService';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { AppAlert } from '../utils/AppAlert';
 
@@ -33,7 +37,11 @@ export interface UseEntityRelationsOptions {
  * save/delete handlers with their alerts and change events - around 120 lines per
  * screen, across nineteen screens, differing only in the entity name.
  */
-export function useEntityRelations({ entityType, entityId, withNotes = true }: UseEntityRelationsOptions) {
+export function useEntityRelations({
+  entityType,
+  entityId,
+  withNotes = true,
+}: UseEntityRelationsOptions) {
   const drizzleDb = useDrizzle();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
@@ -58,6 +66,9 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [allNotes, setAllNotes] = useState<Note[]>([]);
   const [noteRelations, setNoteRelations] = useState<NoteRelation[]>([]);
+  // Enquanto `entityId` é undefined (criando), não há entidade real pra gravar a relação -
+  // guardado aqui até `persistNoteRelations` ser chamado com o id de verdade depois do save.
+  const [pendingNoteRelations, setPendingNoteRelations] = useState<NoteRelation[]>([]);
 
   const refreshAvailableTags = useCallback(async () => {
     if (!services || !storyId) {
@@ -165,7 +176,15 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
       entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       entityEventEmitter.off('tag_changed', handleTagChange);
     };
-  }, [withNotes, storyId, entityId, refreshNotes, refreshNoteRelations, refreshSelectedTags, refreshAvailableTags]);
+  }, [
+    withNotes,
+    storyId,
+    entityId,
+    refreshNotes,
+    refreshNoteRelations,
+    refreshSelectedTags,
+    refreshAvailableTags,
+  ]);
 
   /**
    * Writes the current tag selection to the entity. Takes an explicit id because on
@@ -189,6 +208,22 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
 
   const saveNoteRelation = useCallback(
     async (relation: SaveNoteRelation) => {
+      if (!entityId) {
+        // Ainda criando - guarda localmente com um id sintético só pra a UI (lista, key,
+        // remover) funcionar igual; `relationId` de verdade só existe no replay.
+        const draft: NoteRelation = {
+          ...relation,
+          id: `pending-${createULID()}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          version: 1,
+          isDeleted: false,
+          deletedAt: null,
+        };
+        setPendingNoteRelations((prev) => [...prev, draft]);
+        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        return;
+      }
       if (!services || !storyId || !userId) {
         AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
@@ -197,9 +232,7 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
         const saved = await services.noteRelation.saveNoteRelation(userId, relation);
         setNoteRelations((prev) => {
           const index = prev.findIndex((r) => r.id === saved.id);
-          return index > -1
-            ? prev.map((r, i) => (i === index ? saved : r))
-            : [...prev, saved];
+          return index > -1 ? prev.map((r, i) => (i === index ? saved : r)) : [...prev, saved];
         });
         entityEventEmitter.emit('note_relation_changed', storyId, entityId);
         AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
@@ -213,6 +246,11 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
 
   const deleteNoteRelation = useCallback(
     async (relationId: string) => {
+      if (!entityId) {
+        setPendingNoteRelations((prev) => prev.filter((r) => r.id !== relationId));
+        AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
+        return;
+      }
       if (!services || !storyId || !userId) {
         AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
@@ -235,6 +273,30 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
   );
 
   /**
+   * Grava de verdade as relações de nota acumuladas enquanto a entidade ainda não existia.
+   * Mesmo padrão de `persistTagRelations`: chamado pelo form logo depois do save principal,
+   * com o id que só existe a partir dali.
+   */
+  const persistNoteRelations = useCallback(
+    async (targetEntityId: string) => {
+      if (!services || !storyId || !userId || pendingNoteRelations.length === 0) {
+        return;
+      }
+      for (const pending of pendingNoteRelations) {
+        await services.noteRelation.saveNoteRelation(userId, {
+          storyId,
+          noteId: pending.noteId,
+          relationId: targetEntityId,
+          relationType: pending.relationType,
+        });
+      }
+      setPendingNoteRelations([]);
+      entityEventEmitter.emit('note_relation_changed', storyId, targetEntityId);
+    },
+    [services, storyId, userId, pendingNoteRelations],
+  );
+
+  /**
    * The selected tags as full records. Detail screens render tag chips (name, colour)
    * rather than editing a selection, so ids alone aren't enough for them.
    */
@@ -249,10 +311,13 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
     setSelectedTagIds,
     selectedTags,
     allNotes,
-    noteRelations,
+    // Sem entidade ainda, `noteRelations` fetched fica sempre vazia - mostra o buffer local
+    // no lugar, transparente pra quem consome (NoteRelationManager não sabe a diferença).
+    noteRelations: entityId ? noteRelations : pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
     refresh,
     refreshNotes,
     refreshNoteRelations,

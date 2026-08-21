@@ -43,7 +43,10 @@ export class TierService {
     if (existing) {
       throw new TierNameAlreadyTakenError();
     }
-    const [created] = await db.insert(tiers).values({ id: ulid(), ...input }).returning();
+    const [created] = await db
+      .insert(tiers)
+      .values({ id: ulid(), ...input })
+      .returning();
     return created;
   }
 

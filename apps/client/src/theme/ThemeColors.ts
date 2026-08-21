@@ -1,24 +1,6 @@
-export interface ThemeColors {
-  primary: string;
-  primaryVariant: string;
-  primaryContainer: string; // Added
-  onPrimaryContainer: string; // Added
-  secondary: string;
-  secondaryVariant: string;
-  background: string;
-  surface: string;
-  error: string;
-  onPrimary: string;
-  onSecondary: string;
-  onBackground: string;
-  onSurface: string;
-  onError: string;
-  text: string;
-  textSecondary: string;
-  card: string;
-  border: string;
-  notification: string;
-  accent: string;
-  star: string;
-  shadow: string; // Added shadow property
-}
+/**
+ * O contrato de cores mora em `@keres/shared/theme` desde que o site público (Showcase)
+ * passou a pintar a página de uma história com a mesma paleta que o app usa. Este arquivo
+ * continua existindo só para os imports antigos (`../../theme/ThemeColors`) não quebrarem.
+ */
+export type { ThemeColors } from '@keres/shared';

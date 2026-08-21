@@ -1,6 +1,9 @@
 import { orderItemJourneysByNarrative } from '../../src/utils/itemJourneyOrder';
 
-const chapters = [{ id: 'c1', name: 'One', index: 0 }, { id: 'c2', name: 'Two', index: 1 }];
+const chapters = [
+  { id: 'c1', name: 'One', index: 0 },
+  { id: 'c2', name: 'Two', index: 1 },
+];
 const scenes = [
   { id: 's1', name: 'First', chapterId: 'c1', index: 0, isStart: true, isFinish: false },
   { id: 's2', name: 'Second', chapterId: 'c1', index: 1, isStart: false, isFinish: false },
@@ -16,8 +19,11 @@ describe('orderItemJourneysByNarrative', () => {
       { id: 'second', sceneId: 's2', createdAt: new Date('2026-01-01') },
     ];
 
-    expect(orderItemJourneysByNarrative(journeys, 'linear', scenes, [], chapters).map(journey => journey.id))
-      .toEqual(['first', 'second', 'third', 'unknown']);
+    expect(
+      orderItemJourneysByNarrative(journeys, 'linear', scenes, [], chapters).map(
+        (journey) => journey.id,
+      ),
+    ).toEqual(['first', 'second', 'third', 'unknown']);
     expect(journeys[0].id).toBe('third');
   });
 
@@ -28,7 +34,10 @@ describe('orderItemJourneysByNarrative', () => {
     ];
     const choices = [{ id: 'choice', sceneId: 's1', nextSceneId: 's3', text: 'Continue' }];
 
-    expect(orderItemJourneysByNarrative(journeys, 'branching', scenes, choices, chapters).map(journey => journey.id))
-      .toEqual(['start', 'finish']);
+    expect(
+      orderItemJourneysByNarrative(journeys, 'branching', scenes, choices, chapters).map(
+        (journey) => journey.id,
+      ),
+    ).toEqual(['start', 'finish']);
   });
 });

@@ -30,7 +30,11 @@ export class MediaStorageService {
     // concorrência para não produzir um pico desnecessário no provedor nem no servidor.
     for (let start = 0; start < hashes.length; start += 20) {
       const batch = hashes.slice(start, start + 20);
-      results.push(...await Promise.all(batch.map(async (hash) => ({ hash, present: await this.has(hash) }))));
+      results.push(
+        ...(await Promise.all(
+          batch.map(async (hash) => ({ hash, present: await this.has(hash) })),
+        )),
+      );
     }
     return {
       present: results.filter((result) => result.present).map((result) => result.hash),
@@ -38,28 +42,41 @@ export class MediaStorageService {
     };
   }
 
-  async store(expectedHash: string, mimeType: string, bytes: ArrayBuffer): Promise<{ hash: string; sizeBytes: number }> {
+  async store(
+    expectedHash: string,
+    mimeType: string,
+    bytes: ArrayBuffer,
+  ): Promise<{ hash: string; sizeBytes: number }> {
     const actualHash = new Bun.CryptoHasher('md5').update(bytes).digest('hex');
     if (actualHash !== expectedHash) {
-      throw new Error(`Media hash mismatch: declared ${expectedHash}, received content hashes to ${actualHash}.`);
+      throw new Error(
+        `Media hash mismatch: declared ${expectedHash}, received content hashes to ${actualHash}.`,
+      );
     }
 
     const storagePath = this.storageKeyFor(actualHash);
     // Registrar primeiro evita um arquivo final órfão se o banco falhar. Até o backend físico
     // receber os bytes, `has()` continua respondendo "missing" e o cliente pode reenviar.
-    await db.insert(mediaBlobs).values({
-      hash: actualHash,
-      mimeType,
-      sizeBytes: bytes.byteLength,
-      storagePath,
-      createdAt: new Date(),
-    }).onConflictDoNothing();
+    await db
+      .insert(mediaBlobs)
+      .values({
+        hash: actualHash,
+        mimeType,
+        sizeBytes: bytes.byteLength,
+        storagePath,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing();
     await this.blobStorage.put(storagePath, bytes, mimeType);
 
     return { hash: actualHash, sizeBytes: bytes.byteLength };
   }
 
-  async read(hash: string): Promise<{ body: Blob | ReadableStream<Uint8Array>; mimeType: string; sizeBytes: number } | null> {
+  async read(hash: string): Promise<{
+    body: Blob | ReadableStream<Uint8Array>;
+    mimeType: string;
+    sizeBytes: number;
+  } | null> {
     const record = await db.query.mediaBlobs.findFirst({ where: eq(mediaBlobs.hash, hash) });
     if (!record) {
       return null;
@@ -69,10 +86,13 @@ export class MediaStorageService {
   }
 
   async deleteBlobIfUnreferenced(hash: string): Promise<void> {
-    const stillReferenced = await db.select({ id: galleries.id })
+    const stillReferenced = await db
+      .select({ id: galleries.id })
       .from(galleries)
       .innerJoin(stories, eq(galleries.storyId, stories.id))
-      .where(and(eq(galleries.hash, hash), eq(galleries.isDeleted, false), eq(stories.isDeleted, false)))
+      .where(
+        and(eq(galleries.hash, hash), eq(galleries.isDeleted, false), eq(stories.isDeleted, false)),
+      )
       .limit(1);
     if (stillReferenced.length > 0) {
       return;

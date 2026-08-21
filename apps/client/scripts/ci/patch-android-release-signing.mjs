@@ -29,8 +29,8 @@ const debugSigningConfigBlock = `    signingConfigs {
 if (!contents.includes(debugSigningConfigBlock)) {
   console.error(
     'patch-android-release-signing: expected signingConfigs block not found in android/app/build.gradle - ' +
-    'the Expo prebuild template must have changed shape. Update this script to match before continuing ' +
-    '(do NOT skip this check - it exists specifically so a release build never silently ships debug-signed).'
+      'the Expo prebuild template must have changed shape. Update this script to match before continuing ' +
+      '(do NOT skip this check - it exists specifically so a release build never silently ships debug-signed).',
   );
   process.exit(1);
 }
@@ -62,7 +62,7 @@ const releaseUsesDebugSigning = `        release {
 if (!contents.includes(releaseUsesDebugSigning)) {
   console.error(
     'patch-android-release-signing: expected release buildType block not found in android/app/build.gradle - ' +
-    'the Expo prebuild template must have changed shape. Update this script to match before continuing.'
+      'the Expo prebuild template must have changed shape. Update this script to match before continuing.',
   );
   process.exit(1);
 }
@@ -70,8 +70,10 @@ if (!contents.includes(releaseUsesDebugSigning)) {
 contents = contents.replace(
   releaseUsesDebugSigning,
   `        release {
-            signingConfig signingConfigs.release`
+            signingConfig signingConfigs.release`,
 );
 
 writeFileSync(gradlePath, contents);
-console.log('Patched android/app/build.gradle: release builds now sign with signingConfigs.release.');
+console.log(
+  'Patched android/app/build.gradle: release builds now sign with signingConfigs.release.',
+);

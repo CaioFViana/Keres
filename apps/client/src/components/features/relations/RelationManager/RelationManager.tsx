@@ -10,7 +10,7 @@ import { relationSectionStyleDefs } from '@/src/components/features/relations/Re
 import { AppAlert } from '../../../../utils/AppAlert';
 
 // Generic types for items and relations
-export type BaseItem = { id: string; isDeleted: boolean; };
+export type BaseItem = { id: string; isDeleted: boolean };
 export type BaseRelation = {
   id: string;
   storyId: string;
@@ -29,18 +29,29 @@ interface RelationManagerProps<TItem extends BaseItem, TRelation extends BaseRel
   editable: boolean;
   currentStoryId: string;
   currentEntityId: string; // The ID of the entity this relation is tied to (e.g., SceneId, CharacterId)
-  createRelationObject: (selectedItemId: string, storyId: string, currentEntityId: string) => TRelation;
+  createRelationObject: (
+    selectedItemId: string,
+    storyId: string,
+    currentEntityId: string,
+  ) => TRelation;
   getRelationItemId: (relation: TRelation) => string; // Returns the ID of the TItem in the TRelation
   getItemDisplayName: (item: TItem) => string; // Returns the name/title of the TItem for display
   getItemSearchValue: (item: TItem) => string; // Returns the value of the TItem for searching
-  filterAvailableItems: (item: TItem, relations: TRelation[], getRelationItemId: (relation: TRelation) => string) => boolean;
+  filterAvailableItems: (
+    item: TItem,
+    relations: TRelation[],
+    getRelationItemId: (relation: TRelation) => string,
+  ) => boolean;
   selectItemPlaceholder: string;
   noItemsAssignedMessage: string;
   itemAlreadyAddedMessage: string;
   selectItemToAddMessage: string;
   deleteConfirmationTitle: string;
   deleteConfirmationMessage: string;
-  renderRelationItemExtraContent?: (relation: TRelation, availableItems: TItem[]) => React.ReactNode;
+  renderRelationItemExtraContent?: (
+    relation: TRelation,
+    availableItems: TItem[],
+  ) => React.ReactNode;
   title: string; // Add title prop for the collapsible header
   /** Same opt-in navigation affordance as GenericRelationDisplay: row becomes tappable, with a chevron, and navigates to the related item's own Detail screen. Independent of `editable` - the delete button (if any) is its own touch target and doesn't trigger this. */
   onItemPress?: (item: TItem) => void;
@@ -134,7 +145,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     },
   });
 
-  const activeRelations = relations.filter(relation => !relation.isDeleted);
+  const activeRelations = relations.filter((relation) => !relation.isDeleted);
 
   const handleAddRelation = useCallback(async () => {
     if (!selectedItemIdToAdd) {
@@ -143,7 +154,9 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     }
 
     // Check for duplicates using the generic getRelationItemId
-    const itemExists = activeRelations.some(rel => getRelationItemId(rel) === selectedItemIdToAdd);
+    const itemExists = activeRelations.some(
+      (rel) => getRelationItemId(rel) === selectedItemIdToAdd,
+    );
     if (itemExists) {
       AppAlert.alert(t('error'), itemAlreadyAddedMessage);
       return;
@@ -154,40 +167,54 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     await onSave(newRelation);
     setSelectedItemIdToAdd(null);
     setSearchTerm(''); // Clear search term after adding
-  }, [selectedItemIdToAdd, activeRelations, currentStoryId, currentEntityId, createRelationObject, getRelationItemId, onSave, t, selectItemToAddMessage, itemAlreadyAddedMessage]);
+  }, [
+    selectedItemIdToAdd,
+    activeRelations,
+    currentStoryId,
+    currentEntityId,
+    createRelationObject,
+    getRelationItemId,
+    onSave,
+    t,
+    selectItemToAddMessage,
+    itemAlreadyAddedMessage,
+  ]);
 
-  const handleDeleteRelation = useCallback(async (relationId: string) => {
-    AppAlert.alert(
-      deleteConfirmationTitle,
-      deleteConfirmationMessage,
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            await onDelete(relationId);
+  const handleDeleteRelation = useCallback(
+    async (relationId: string) => {
+      AppAlert.alert(
+        deleteConfirmationTitle,
+        deleteConfirmationMessage,
+        [
+          {
+            text: t('cancel'),
+            style: 'cancel',
           },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
-  }, [onDelete, t, deleteConfirmationTitle, deleteConfirmationMessage]);
+          {
+            text: t('delete'),
+            onPress: async () => {
+              await onDelete(relationId);
+            },
+            style: 'destructive',
+          },
+        ],
+        { cancelable: true },
+      );
+    },
+    [onDelete, t, deleteConfirmationTitle, deleteConfirmationMessage],
+  );
 
   const filteredAvailableItems = availableItems
-    .filter(item => filterAvailableItems(item, activeRelations, getRelationItemId))
-    .filter(item => getItemSearchValue(item).toLowerCase().includes(searchTerm.toLowerCase()));
+    .filter((item) => filterAvailableItems(item, activeRelations, getRelationItemId))
+    .filter((item) => getItemSearchValue(item).toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const availableItemOptions = filteredAvailableItems.map(item => ({
-      label: getItemDisplayName(item),
-      value: item.id,
+  const availableItemOptions = filteredAvailableItems.map((item) => ({
+    label: getItemDisplayName(item),
+    value: item.id,
   }));
 
   const renderRelationItem = (relation: TRelation) => {
-    const relatedItem = availableItems.find(item => item.id === getRelationItemId(relation));
+    const relatedItem = availableItems.find((item) => item.id === getRelationItemId(relation));
     if (!relatedItem) return null;
 
     const content = renderRelationItemExtraContent ? (
@@ -198,18 +225,32 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
     return (
       <View key={relation.id} style={styles.relationItem}>
-        {onItemPress ? (
-          <TouchableOpacity style={styles.relationItemContent} onPress={() => onItemPress(relatedItem)} activeOpacity={0.7}>
+        {/* Só navega fora de um form: em `editable`, sair da tela perderia alterações não
+            salvas do formulário - mesma regra que já esconde o chevron abaixo. */}
+        {onItemPress && !editable ? (
+          <TouchableOpacity
+            style={styles.relationItemContent}
+            onPress={() => onItemPress(relatedItem)}
+            activeOpacity={0.7}
+          >
             {content}
           </TouchableOpacity>
         ) : (
           <View style={styles.relationItemContent}>{content}</View>
         )}
         {onItemPress && !editable && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={colors.textSecondary}
+            style={styles.chevron}
+          />
         )}
         {editable && (
-          <TouchableOpacity onPress={() => handleDeleteRelation(relation.id)} style={styles.deleteButton}>
+          <TouchableOpacity
+            onPress={() => handleDeleteRelation(relation.id)}
+            style={styles.deleteButton}
+          >
             <Ionicons name="trash-outline" size={24} color={colors.error} />
           </TouchableOpacity>
         )}
@@ -231,17 +272,17 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
               />
               <View style={styles.selectAddRow}>
                 <View style={styles.dropdown}>
-                    <Select
+                  <Select
                     options={availableItemOptions}
                     value={selectedItemIdToAdd}
                     onValueChange={(value: string | null) => setSelectedItemIdToAdd(value)}
                     placeholder={selectItemPlaceholder}
                     multiple={false}
                     allowDeselect={true}
-                    />
+                  />
                 </View>
                 <TouchableOpacity onPress={handleAddRelation} style={styles.addButton}>
-                    <Text style={styles.addButtonText}>{t('add')}</Text>
+                  <Text style={styles.addButtonText}>{t('add')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -250,9 +291,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
           {activeRelations.length === 0 ? (
             <Text style={{ color: colors.textSecondary }}>{noItemsAssignedMessage}</Text>
           ) : (
-            <View style={styles.assignedItems}>
-              {activeRelations.map(renderRelationItem)}
-            </View>
+            <View style={styles.assignedItems}>{activeRelations.map(renderRelationItem)}</View>
           )}
         </View>
       </CollapsibleCard>

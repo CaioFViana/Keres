@@ -1,4 +1,10 @@
-import { AttributeType, decodeAttributeValue, OperationLogEntityType, StorySchemaEntityType } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  OperationLogEntityType,
+  StorySchemaEntityType,
+  suggestionDisplayValue,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { TFunction } from 'i18next';
 import { AppDrizzleClient } from '../db';
@@ -8,8 +14,11 @@ import {
   characterRelations,
   characters,
   characterScenes,
+  choiceCheckGroups,
+  choiceChecks,
   choices,
   comments,
+  effects,
   favorites,
   galleries,
   galleryRelations,
@@ -17,18 +26,22 @@ import {
   items,
   locations,
   locationRelations,
+  modes,
   noteRelations,
   notes,
   operationLogs,
   scenes,
   seeAlsoRelations,
+  statRelations,
+  stats,
+  statStrengths,
   suggestions,
   stories,
   storySchemaFields,
   tagRelations,
   tags,
   users,
-  worldRules
+  worldRules,
 } from '../db/schemas';
 
 /** Chave de tradução singular já usada neste arquivo para cada tipo de entidade que pode
@@ -67,6 +80,22 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   favorite: OperationLogEntityType.Favorite,
   seealsorelation: OperationLogEntityType.SeeAlsoRelation,
   comment: OperationLogEntityType.Comment,
+  choicecheckgroup: OperationLogEntityType.ChoiceCheckGroup,
+  choicecheck: OperationLogEntityType.ChoiceCheck,
+  effect: OperationLogEntityType.Effect,
+  stat: OperationLogEntityType.Stat,
+  statstrength: OperationLogEntityType.StatStrength,
+  statrelation: OperationLogEntityType.StatRelation,
+  mode: OperationLogEntityType.Mode,
+};
+
+/** Chaves de tradução do rótulo de cada tipo de Effect - usadas para montar o nome legível
+ *  de um Effect a partir do seu effectType (entidade sem nome próprio). */
+const EFFECT_TYPE_LABEL_KEYS: Record<string, string> = {
+  itemGrant: 'effect_item_grant',
+  itemTake: 'effect_item_take',
+  triggerSet: 'effect_trigger_set',
+  triggerUnset: 'effect_trigger_unset',
 };
 
 export class EntityService {
@@ -75,7 +104,7 @@ export class EntityService {
     entityType: OperationLogEntityType,
     entityId: string,
     storyId: string,
-    t: TFunction
+    t: TFunction,
   ): Promise<string | undefined> {
     let translatedEntityType: string | undefined;
     let entitySpecificName: string | undefined;
@@ -87,7 +116,7 @@ export class EntityService {
           columns: { title: true },
         });
         entitySpecificName = story?.title;
-        translatedEntityType = t('story')
+        translatedEntityType = t('story');
         break;
       case OperationLogEntityType.Character:
         const character = await db.query.characters.findFirst({
@@ -95,7 +124,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = character?.name;
-        translatedEntityType = t('character')
+        translatedEntityType = t('character');
         break;
       case OperationLogEntityType.Note:
         const note = await db.query.notes.findFirst({
@@ -103,7 +132,7 @@ export class EntityService {
           columns: { title: true },
         });
         entitySpecificName = note?.title;
-        translatedEntityType = t('note')
+        translatedEntityType = t('note');
         break;
       case OperationLogEntityType.Location:
         const location = await db.query.locations.findFirst({
@@ -111,7 +140,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = location?.name;
-        translatedEntityType = t('location')
+        translatedEntityType = t('location');
         break;
       case OperationLogEntityType.WorldRule:
         const worldRule = await db.query.worldRules.findFirst({
@@ -119,7 +148,7 @@ export class EntityService {
           columns: { title: true },
         });
         entitySpecificName = worldRule?.title;
-        translatedEntityType = t('world_rule')
+        translatedEntityType = t('world_rule');
         break;
       case OperationLogEntityType.Tag:
         const tag = await db.query.tags.findFirst({
@@ -127,7 +156,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = tag?.name;
-        translatedEntityType = t('tag')
+        translatedEntityType = t('tag');
         break;
       case OperationLogEntityType.User:
         const user = await db.query.users.findFirst({
@@ -135,7 +164,7 @@ export class EntityService {
           columns: { displayName: true },
         });
         entitySpecificName = user?.displayName ?? undefined;
-        translatedEntityType = t('user')
+        translatedEntityType = t('user');
         break;
       case OperationLogEntityType.Chapter:
         const chapter = await db.query.chapters.findFirst({
@@ -143,7 +172,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = chapter?.name;
-        translatedEntityType = t('chapter')
+        translatedEntityType = t('chapter');
         break;
       case OperationLogEntityType.Scene:
         const scene = await db.query.scenes.findFirst({
@@ -151,7 +180,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = scene?.name;
-        translatedEntityType = t('scene')
+        translatedEntityType = t('scene');
         break;
       case OperationLogEntityType.Choice:
         const choice = await db.query.choices.findFirst({
@@ -167,7 +196,7 @@ export class EntityService {
         } else {
           entitySpecificName = `${t('unknown_choice')} ${t('id')}: ${entityId}`;
         }
-        translatedEntityType = t('choice')
+        translatedEntityType = t('choice');
         break;
       case OperationLogEntityType.Gallery:
         const gallery = await db.query.galleries.findFirst({
@@ -175,14 +204,14 @@ export class EntityService {
           columns: { title: true, fileName: true },
         });
         entitySpecificName = gallery?.title || gallery?.fileName;
-        translatedEntityType = t('gallery')
+        translatedEntityType = t('gallery');
         break;
       case OperationLogEntityType.Suggestion:
         const suggestion = await db.query.suggestions.findFirst({
           where: and(eq(suggestions.id, entityId), eq(suggestions.storyId, storyId)),
           columns: { value: true },
         });
-        entitySpecificName = suggestion?.value;
+        entitySpecificName = suggestionDisplayValue(suggestion?.value) ?? undefined;
         translatedEntityType = t('suggestion');
         break;
       case OperationLogEntityType.Favorite:
@@ -203,7 +232,11 @@ export class EntityService {
         break;
       case OperationLogEntityType.GalleryRelation:
         const galleryRelation = await db.query.galleryRelations.findFirst({
-          where: and(eq(galleryRelations.id, entityId), eq(galleryRelations.storyId, storyId), eq(galleryRelations.isDeleted, false)),
+          where: and(
+            eq(galleryRelations.id, entityId),
+            eq(galleryRelations.storyId, storyId),
+            eq(galleryRelations.isDeleted, false),
+          ),
           columns: { galleryId: true, ownerId: true, ownerType: true },
         });
 
@@ -217,12 +250,12 @@ export class EntityService {
             galleryRelation.ownerType as OperationLogEntityType,
             galleryRelation.ownerId,
             storyId,
-            t
+            t,
           );
           entitySpecificName = t('gallery_attributed_to_entity', {
             medianame: relatedGallery?.title || relatedGallery?.fileName || t('unknown_gallery'),
             entityname: relatedOwner.name || t('unknown_entity'),
-            entitytype: relatedOwner.type || t('unknown_entity_type')
+            entitytype: relatedOwner.type || t('unknown_entity_type'),
           });
         }
         translatedEntityType = t('gallery_relation');
@@ -233,7 +266,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = item?.name;
-        translatedEntityType = t('item')
+        translatedEntityType = t('item');
         break;
       case OperationLogEntityType.ItemJourney:
         const itemJourney = await db.query.itemJourneys.findFirst({
@@ -256,54 +289,79 @@ export class EntityService {
       case OperationLogEntityType.CharacterRelation:
         const charRelation = await db.query.characterRelations.findFirst({
           where: and(eq(characterRelations.id, entityId), eq(characterRelations.isDeleted, false)),
-          columns: { charId1: true, charId2: true },
+          columns: { character1Id: true, character2Id: true },
         });
 
         if (charRelation) {
           const char1 = await db.query.characters.findFirst({
-            where: and(eq(characters.id, charRelation.charId1), eq(characters.isDeleted, false)),
+            where: and(
+              eq(characters.id, charRelation.character1Id),
+              eq(characters.isDeleted, false),
+            ),
             columns: { name: true },
           });
           const char2 = await db.query.characters.findFirst({
-            where: and(eq(characters.id, charRelation.charId2), eq(characters.isDeleted, false)),
+            where: and(
+              eq(characters.id, charRelation.character2Id),
+              eq(characters.isDeleted, false),
+            ),
             columns: { name: true },
           });
           entitySpecificName = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
         }
-        translatedEntityType = t('character_relation')
+        translatedEntityType = t('character_relation');
         break;
       case OperationLogEntityType.LocationRelation:
         const locationRelation = await db.query.locationRelations.findFirst({
-          where: and(eq(locationRelations.id, entityId), eq(locationRelations.storyId, storyId), eq(locationRelations.isDeleted, false)),
+          where: and(
+            eq(locationRelations.id, entityId),
+            eq(locationRelations.storyId, storyId),
+            eq(locationRelations.isDeleted, false),
+          ),
           columns: { locationAId: true, locationBId: true, relationType: true },
         });
 
         if (locationRelation) {
           const locationA = await db.query.locations.findFirst({
-            where: and(eq(locations.id, locationRelation.locationAId), eq(locations.isDeleted, false)),
+            where: and(
+              eq(locations.id, locationRelation.locationAId),
+              eq(locations.isDeleted, false),
+            ),
             columns: { name: true },
           });
           const locationB = await db.query.locations.findFirst({
-            where: and(eq(locations.id, locationRelation.locationBId), eq(locations.isDeleted, false)),
+            where: and(
+              eq(locations.id, locationRelation.locationBId),
+              eq(locations.isDeleted, false),
+            ),
             columns: { name: true },
           });
           const nameA = locationA?.name || t('unknown_location');
           const nameB = locationB?.name || t('unknown_location');
-          entitySpecificName = locationRelation.relationType === 'contains'
-            ? t('location_contains_location', { parentName: nameA, childName: nameB })
-            : t('location_connected_to_location', { locationAName: nameA, locationBName: nameB });
+          entitySpecificName =
+            locationRelation.relationType === 'contains'
+              ? t('location_contains_location', { parentName: nameA, childName: nameB })
+              : t('location_connected_to_location', { locationAName: nameA, locationBName: nameB });
         }
         translatedEntityType = t('location_relation');
         break;
       case OperationLogEntityType.TagRelation:
         const tagRel = await db.query.tagRelations.findFirst({
-          where: and(eq(tagRelations.id, entityId), eq(tagRelations.storyId, storyId), eq(tagRelations.isDeleted, false)),
+          where: and(
+            eq(tagRelations.id, entityId),
+            eq(tagRelations.storyId, storyId),
+            eq(tagRelations.isDeleted, false),
+          ),
           columns: { tagId: true, relationId: true, relationType: true },
         });
 
         if (tagRel) {
           const tag = await db.query.tags.findFirst({
-            where: and(eq(tags.id, tagRel.tagId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)),
+            where: and(
+              eq(tags.id, tagRel.tagId),
+              eq(tags.storyId, storyId),
+              eq(tags.isDeleted, false),
+            ),
             columns: { name: true },
           });
           const related = await EntityService._resolveRelationEntityName(
@@ -311,26 +369,34 @@ export class EntityService {
             tagRel.relationType as OperationLogEntityType,
             tagRel.relationId,
             storyId,
-            t
+            t,
           );
           // Correctly pass string values for entityname and entitytype to the translation function
           entitySpecificName = t('tag_attributed_to_entity', {
             tagname: tag?.name || t('unknown_tag'),
             entityname: related.name || t('unknown_entity'),
-            entitytype: related.type || t('unknown_entity_type')
+            entitytype: related.type || t('unknown_entity_type'),
           });
         }
         translatedEntityType = t('tag_relation'); // Assuming 'tag_relation' is a translation key
         break;
       case OperationLogEntityType.NoteRelation:
         const noteRel = await db.query.noteRelations.findFirst({
-          where: and(eq(noteRelations.id, entityId), eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)),
+          where: and(
+            eq(noteRelations.id, entityId),
+            eq(noteRelations.storyId, storyId),
+            eq(noteRelations.isDeleted, false),
+          ),
           columns: { noteId: true, relationId: true, relationType: true },
         });
 
         if (noteRel) {
           const note = await db.query.notes.findFirst({
-            where: and(eq(notes.id, noteRel.noteId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)),
+            where: and(
+              eq(notes.id, noteRel.noteId),
+              eq(notes.storyId, storyId),
+              eq(notes.isDeleted, false),
+            ),
             columns: { title: true },
           });
           const related = await EntityService._resolveRelationEntityName(
@@ -338,12 +404,12 @@ export class EntityService {
             noteRel.relationType as OperationLogEntityType,
             noteRel.relationId,
             storyId,
-            t
+            t,
           );
           entitySpecificName = t('note_attributed_to_entity', {
             notename: note?.title || t('unknown_note'),
             entityname: related.name || t('unknown_entity'),
-            entitytype: related.type || t('unknown_entity_type')
+            entitytype: related.type || t('unknown_entity_type'),
           });
         }
         translatedEntityType = t('note_relation');
@@ -354,7 +420,7 @@ export class EntityService {
           columns: { id: true },
         });
         entitySpecificName = `${t('operation_logs_title')} ${t('id')}: ${opLog?.id || entityId}`; // Use t() for title and ID
-        translatedEntityType = t('operation_log')
+        translatedEntityType = t('operation_log');
         break;
       case OperationLogEntityType.CharacterScene:
         const characterScene = await db.query.characterScenes.findFirst({
@@ -364,7 +430,10 @@ export class EntityService {
 
         if (characterScene) {
           const character = await db.query.characters.findFirst({
-            where: and(eq(characters.id, characterScene.characterId), eq(characters.isDeleted, false)),
+            where: and(
+              eq(characters.id, characterScene.characterId),
+              eq(characters.isDeleted, false),
+            ),
             columns: { name: true },
           });
           const scene = await db.query.scenes.findFirst({
@@ -384,7 +453,8 @@ export class EntityService {
           columns: { name: true, entityType: true },
         });
         if (schemaField) {
-          const entityTypeLabelKey = STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS[schemaField.entityType as StorySchemaEntityType];
+          const entityTypeLabelKey =
+            STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS[schemaField.entityType as StorySchemaEntityType];
           entitySpecificName = `${schemaField.name} (${entityTypeLabelKey ? t(entityTypeLabelKey) : schemaField.entityType})`;
         }
         translatedEntityType = t('custom_attribute');
@@ -397,19 +467,37 @@ export class EntityService {
         if (attributeValue) {
           const field = await db.query.storySchemaFields.findFirst({
             where: eq(storySchemaFields.id, attributeValue.fieldId),
-            columns: { name: true, type: true },
+            columns: { name: true, type: true, targetEntityType: true },
           });
           const owner = await EntityService._resolveRelationEntityName(
             db,
             attributeValue.entityType as OperationLogEntityType,
             attributeValue.entityId,
             storyId,
-            t
+            t,
           );
-          const decodedValue = field ? decodeAttributeValue(field.type as AttributeType, attributeValue.value) : attributeValue.value;
+          const decodedValue = field
+            ? decodeAttributeValue(field.type as AttributeType, attributeValue.value)
+            : attributeValue.value;
+          const entityReferenceName =
+            field?.type === AttributeType.ENTITY &&
+            field.targetEntityType &&
+            typeof decodedValue === 'string'
+              ? await EntityService.getEntityIdentifier(
+                  db,
+                  field.targetEntityType,
+                  decodedValue,
+                  storyId,
+                  t,
+                )
+              : undefined;
           entitySpecificName = t('attribute_value_attributed_to_entity', {
             fieldname: field?.name || t('unknown_attribute'),
-            value: decodedValue === null || decodedValue === undefined ? t('common_na') : String(decodedValue),
+            value:
+              decodedValue === null || decodedValue === undefined
+                ? t('common_na')
+                : entityReferenceName ||
+                  (Array.isArray(decodedValue) ? decodedValue.join(', ') : String(decodedValue)),
             entityname: owner.name || t('unknown_entity'),
             entitytype: owner.type || t('unknown_entity_type'),
           });
@@ -418,34 +506,210 @@ export class EntityService {
         break;
       case OperationLogEntityType.SeeAlsoRelation:
         const seeAlsoRelation = await db.query.seeAlsoRelations.findFirst({
-          where: and(eq(seeAlsoRelations.id, entityId), eq(seeAlsoRelations.storyId, storyId), eq(seeAlsoRelations.isDeleted, false)),
+          where: and(
+            eq(seeAlsoRelations.id, entityId),
+            eq(seeAlsoRelations.storyId, storyId),
+            eq(seeAlsoRelations.isDeleted, false),
+          ),
           columns: { entityAType: true, entityAId: true, entityBType: true, entityBId: true },
         });
         if (seeAlsoRelation) {
-          const sideA = await EntityService._resolveRelationEntityName(db, seeAlsoRelation.entityAType as OperationLogEntityType, seeAlsoRelation.entityAId, storyId, t);
-          const sideB = await EntityService._resolveRelationEntityName(db, seeAlsoRelation.entityBType as OperationLogEntityType, seeAlsoRelation.entityBId, storyId, t);
+          const sideA = await EntityService._resolveRelationEntityName(
+            db,
+            seeAlsoRelation.entityAType as OperationLogEntityType,
+            seeAlsoRelation.entityAId,
+            storyId,
+            t,
+          );
+          const sideB = await EntityService._resolveRelationEntityName(
+            db,
+            seeAlsoRelation.entityBType as OperationLogEntityType,
+            seeAlsoRelation.entityBId,
+            storyId,
+            t,
+          );
           entitySpecificName = `${sideA.name || t('unknown_entity')} (${sideA.type || t('unknown_entity_type')}) - ${sideB.name || t('unknown_entity')} (${sideB.type || t('unknown_entity_type')})`;
         }
         translatedEntityType = t('see_also_relation');
         break;
       case OperationLogEntityType.Comment:
         const comment = await db.query.comments.findFirst({
-          where: and(eq(comments.id, entityId), eq(comments.storyId, storyId), eq(comments.isDeleted, false)),
-          columns: { entityType: true, entityId: true, fieldId: true, fieldKey: true, commentText: true },
+          where: and(
+            eq(comments.id, entityId),
+            eq(comments.storyId, storyId),
+            eq(comments.isDeleted, false),
+          ),
+          columns: {
+            entityType: true,
+            entityId: true,
+            fieldId: true,
+            fieldKey: true,
+            commentText: true,
+          },
         });
         if (comment) {
-          const target = await EntityService._resolveRelationEntityName(db, comment.entityType as OperationLogEntityType, comment.entityId, storyId, t);
+          const target = await EntityService._resolveRelationEntityName(
+            db,
+            comment.entityType as OperationLogEntityType,
+            comment.entityId,
+            storyId,
+            t,
+          );
           let fieldLabel = comment.fieldKey || '';
           if (comment.fieldId) {
-            const field = await db.query.storySchemaFields.findFirst({ where: eq(storySchemaFields.id, comment.fieldId), columns: { name: true } });
+            const field = await db.query.storySchemaFields.findFirst({
+              where: eq(storySchemaFields.id, comment.fieldId),
+              columns: { name: true },
+            });
             fieldLabel = field?.name || fieldLabel;
           }
-          const snippet = comment.commentText.length > 60 ? `${comment.commentText.slice(0, 60)}...` : comment.commentText;
+          const snippet =
+            comment.commentText.length > 60
+              ? `${comment.commentText.slice(0, 60)}...`
+              : comment.commentText;
           entitySpecificName = `${target.name || t('unknown_entity')} (${target.type || t('unknown_entity_type')}) - ${fieldLabel}: "${snippet}"`;
         }
         translatedEntityType = t('comment');
         break;
-      }
+      case OperationLogEntityType.ChoiceCheckGroup:
+        const choiceCheckGroup = await db.query.choiceCheckGroups.findFirst({
+          where: and(eq(choiceCheckGroups.id, entityId), eq(choiceCheckGroups.isDeleted, false)),
+          columns: { choiceId: true },
+        });
+        if (choiceCheckGroup) {
+          const groupChoice = await db.query.choices.findFirst({
+            where: and(eq(choices.id, choiceCheckGroup.choiceId), eq(choices.isDeleted, false)),
+            columns: { text: true },
+          });
+          entitySpecificName = groupChoice?.text || t('unknown_choice');
+        }
+        translatedEntityType = t('choice_check_group');
+        break;
+      case OperationLogEntityType.ChoiceCheck:
+        const choiceCheck = await db.query.choiceChecks.findFirst({
+          where: and(eq(choiceChecks.id, entityId), eq(choiceChecks.isDeleted, false)),
+          columns: { groupId: true },
+        });
+        if (choiceCheck) {
+          const checkGroup = await db.query.choiceCheckGroups.findFirst({
+            where: and(
+              eq(choiceCheckGroups.id, choiceCheck.groupId),
+              eq(choiceCheckGroups.isDeleted, false),
+            ),
+            columns: { choiceId: true },
+          });
+          const checkChoice = checkGroup
+            ? await db.query.choices.findFirst({
+                where: and(eq(choices.id, checkGroup.choiceId), eq(choices.isDeleted, false)),
+                columns: { text: true },
+              })
+            : undefined;
+          entitySpecificName = checkChoice?.text || t('unknown_choice');
+        }
+        translatedEntityType = t('choice_check');
+        break;
+      case OperationLogEntityType.Effect:
+        const effect = await db.query.effects.findFirst({
+          where: and(eq(effects.id, entityId), eq(effects.isDeleted, false)),
+          columns: { effectType: true, itemId: true, triggerName: true },
+        });
+        if (effect) {
+          const effectLabel = t(EFFECT_TYPE_LABEL_KEYS[effect.effectType] || effect.effectType);
+          let target: string | undefined;
+          if (effect.effectType === 'itemGrant' || effect.effectType === 'itemTake') {
+            const effectItem = effect.itemId
+              ? await db.query.items.findFirst({
+                  where: and(eq(items.id, effect.itemId), eq(items.isDeleted, false)),
+                  columns: { name: true },
+                })
+              : undefined;
+            target = effectItem?.name || t('unknown_item');
+          } else {
+            target = effect.triggerName || t('unknown_trigger');
+          }
+          entitySpecificName = `${effectLabel}: ${target}`;
+        }
+        translatedEntityType = t('effect');
+        break;
+      case OperationLogEntityType.Stat:
+        const stat = await db.query.stats.findFirst({
+          where: and(eq(stats.id, entityId), eq(stats.isDeleted, false)),
+          columns: { name: true },
+        });
+        entitySpecificName = stat?.name;
+        translatedEntityType = t('stat');
+        break;
+      case OperationLogEntityType.Mode:
+        const mode = await db.query.modes.findFirst({
+          where: and(eq(modes.id, entityId), eq(modes.isDeleted, false)),
+          columns: { name: true, characterId: true },
+        });
+        if (mode) {
+          const modeOwner = await db.query.characters.findFirst({
+            where: and(eq(characters.id, mode.characterId), eq(characters.isDeleted, false)),
+            columns: { name: true },
+          });
+          entitySpecificName = t('mode_of_character', {
+            modename: mode.name,
+            charactername: modeOwner?.name || t('unknown_character'),
+          });
+        }
+        translatedEntityType = t('mode');
+        break;
+      case OperationLogEntityType.StatStrength:
+        const statStrength = await db.query.statStrengths.findFirst({
+          where: and(eq(statStrengths.id, entityId), eq(statStrengths.isDeleted, false)),
+          columns: { statId: true, label: true, minValue: true },
+        });
+        if (statStrength) {
+          // `statId` nulo é a escada padrão da história, que não pertence a status nenhum.
+          const ladderStat = statStrength.statId
+            ? await db.query.stats.findFirst({
+                where: and(eq(stats.id, statStrength.statId), eq(stats.isDeleted, false)),
+                columns: { name: true },
+              })
+            : undefined;
+          const ladderName = statStrength.statId
+            ? t('stat_ladder_of_stat', { statname: ladderStat?.name || t('unknown_stat') })
+            : t('stat_ladder_story_default');
+          entitySpecificName = `${ladderName} - ${statStrength.label} (${statStrength.minValue})`;
+        }
+        translatedEntityType = t('stat_strength');
+        break;
+      case OperationLogEntityType.StatRelation:
+        const statRelation = await db.query.statRelations.findFirst({
+          where: and(eq(statRelations.id, entityId), eq(statRelations.isDeleted, false)),
+          columns: { characterId: true, modeId: true, statId: true, value: true },
+        });
+        if (statRelation) {
+          const valueStat = await db.query.stats.findFirst({
+            where: and(eq(stats.id, statRelation.statId), eq(stats.isDeleted, false)),
+            columns: { name: true },
+          });
+          const valueOwner = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, statRelation.characterId),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const valueMode = statRelation.modeId
+            ? await db.query.modes.findFirst({
+                where: and(eq(modes.id, statRelation.modeId), eq(modes.isDeleted, false)),
+                columns: { name: true },
+              })
+            : undefined;
+          const ownerName = valueMode
+            ? `${valueOwner?.name || t('unknown_character')} · ${valueMode.name}`
+            : valueOwner?.name || t('unknown_character');
+          entitySpecificName = `${t('stat_value_of_entity', {
+            statname: valueStat?.name || t('unknown_stat'),
+            entityname: ownerName,
+          })}: ${statRelation.value}`;
+        }
+        translatedEntityType = t('stat_relation');
+        break;
+    }
     if (entitySpecificName) {
       return `${translatedEntityType} - ${entitySpecificName}`;
     } else {
@@ -460,70 +724,147 @@ export class EntityService {
     relationType: OperationLogEntityType,
     relationId: string,
     storyId: string,
-    t: TFunction
+    t: TFunction,
   ): Promise<{ name: string | undefined; type: string | undefined }> {
     let name: string | undefined;
     let type: string | undefined;
 
     switch (relationType) {
       case OperationLogEntityType.Story:
-        const story = await db.query.stories.findFirst({ where: and(eq(stories.id, relationId), eq(stories.id, storyId), eq(stories.isDeleted, false)), columns: { title: true } });
+        const story = await db.query.stories.findFirst({
+          where: and(
+            eq(stories.id, relationId),
+            eq(stories.id, storyId),
+            eq(stories.isDeleted, false),
+          ),
+          columns: { title: true },
+        });
         name = story?.title;
         type = t('story');
         break;
       case OperationLogEntityType.Character:
-        const character = await db.query.characters.findFirst({ where: and(eq(characters.id, relationId), eq(characters.storyId, storyId), eq(characters.isDeleted, false)), columns: { name: true } });
+        const character = await db.query.characters.findFirst({
+          where: and(
+            eq(characters.id, relationId),
+            eq(characters.storyId, storyId),
+            eq(characters.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
         name = character?.name;
         type = t('character');
         break;
       case OperationLogEntityType.Note:
-        const note = await db.query.notes.findFirst({ where: and(eq(notes.id, relationId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)), columns: { title: true } });
+        const note = await db.query.notes.findFirst({
+          where: and(
+            eq(notes.id, relationId),
+            eq(notes.storyId, storyId),
+            eq(notes.isDeleted, false),
+          ),
+          columns: { title: true },
+        });
         name = note?.title;
         type = t('note');
         break;
       case OperationLogEntityType.Location:
-        const location = await db.query.locations.findFirst({ where: and(eq(locations.id, relationId), eq(locations.storyId, storyId), eq(locations.isDeleted, false)), columns: { name: true } });
+        const location = await db.query.locations.findFirst({
+          where: and(
+            eq(locations.id, relationId),
+            eq(locations.storyId, storyId),
+            eq(locations.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
         name = location?.name;
         type = t('location');
         break;
       case OperationLogEntityType.WorldRule:
-        const worldRule = await db.query.worldRules.findFirst({ where: and(eq(worldRules.id, relationId), eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)), columns: { title: true } });
+        const worldRule = await db.query.worldRules.findFirst({
+          where: and(
+            eq(worldRules.id, relationId),
+            eq(worldRules.storyId, storyId),
+            eq(worldRules.isDeleted, false),
+          ),
+          columns: { title: true },
+        });
         name = worldRule?.title;
         type = t('world_rule');
         break;
       case OperationLogEntityType.Chapter:
-        const chapter = await db.query.chapters.findFirst({ where: and(eq(chapters.id, relationId), eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)), columns: { name: true } });
+        const chapter = await db.query.chapters.findFirst({
+          where: and(
+            eq(chapters.id, relationId),
+            eq(chapters.storyId, storyId),
+            eq(chapters.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
         name = chapter?.name;
         type = t('chapter');
         break;
       case OperationLogEntityType.Scene:
-        const scene = await db.query.scenes.findFirst({ where: and(eq(scenes.id, relationId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)), columns: { name: true } });
+        const scene = await db.query.scenes.findFirst({
+          where: and(
+            eq(scenes.id, relationId),
+            eq(scenes.storyId, storyId),
+            eq(scenes.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
         name = scene?.name;
         type = t('scene');
         break;
       case OperationLogEntityType.Item:
-        const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId), eq(items.isDeleted, false)), columns: { name: true } });
+        const item = await db.query.items.findFirst({
+          where: and(
+            eq(items.id, relationId),
+            eq(items.storyId, storyId),
+            eq(items.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
         name = item?.name;
         type = t('item');
         break;
       case OperationLogEntityType.Choice:
-        const relatedChoice = await db.query.choices.findFirst({ where: and(eq(choices.id, relationId), eq(choices.storyId, storyId), eq(choices.isDeleted, false)), columns: { text: true } });
+        const relatedChoice = await db.query.choices.findFirst({
+          where: and(
+            eq(choices.id, relationId),
+            eq(choices.storyId, storyId),
+            eq(choices.isDeleted, false),
+          ),
+          columns: { text: true },
+        });
         name = relatedChoice?.text;
         type = t('choice');
         break;
       case OperationLogEntityType.Tag:
-        const relatedTag = await db.query.tags.findFirst({ where: and(eq(tags.id, relationId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)), columns: { name: true } });
+        const relatedTag = await db.query.tags.findFirst({
+          where: and(eq(tags.id, relationId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)),
+          columns: { name: true },
+        });
         name = relatedTag?.name;
         type = t('tag');
         break;
       case OperationLogEntityType.Gallery:
-        const gallery = await db.query.galleries.findFirst({ where: and(eq(galleries.id, relationId), eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)), columns: { title: true, fileName: true } });
+        const gallery = await db.query.galleries.findFirst({
+          where: and(
+            eq(galleries.id, relationId),
+            eq(galleries.storyId, storyId),
+            eq(galleries.isDeleted, false),
+          ),
+          columns: { title: true, fileName: true },
+        });
         name = gallery?.title || gallery?.fileName;
         type = t('gallery');
         break;
       case OperationLogEntityType.ItemJourney:
         const itemJourney = await db.query.itemJourneys.findFirst({
-          where: and(eq(itemJourneys.id, relationId), eq(itemJourneys.storyId, storyId), eq(itemJourneys.isDeleted, false)),
+          where: and(
+            eq(itemJourneys.id, relationId),
+            eq(itemJourneys.storyId, storyId),
+            eq(itemJourneys.isDeleted, false),
+          ),
           columns: { itemId: true, sceneId: true },
         });
         if (itemJourney) {
@@ -540,23 +881,247 @@ export class EntityService {
         type = t('item_journey');
         break;
       case OperationLogEntityType.NoteRelation:
-        const noteRelation = await db.query.noteRelations.findFirst({ where: and(eq(noteRelations.id, relationId), eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)), columns: { noteId: true, relationId: true, relationType: true } });
+        const noteRelation = await db.query.noteRelations.findFirst({
+          where: and(
+            eq(noteRelations.id, relationId),
+            eq(noteRelations.storyId, storyId),
+            eq(noteRelations.isDeleted, false),
+          ),
+          columns: { noteId: true, relationId: true, relationType: true },
+        });
         if (noteRelation) {
-          const note = await db.query.notes.findFirst({ where: and(eq(notes.id, noteRelation.noteId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)), columns: { title: true } });
+          const note = await db.query.notes.findFirst({
+            where: and(
+              eq(notes.id, noteRelation.noteId),
+              eq(notes.storyId, storyId),
+              eq(notes.isDeleted, false),
+            ),
+            columns: { title: true },
+          });
           const relatedEntity = await EntityService._resolveRelationEntityName(
             db,
             noteRelation.relationType as OperationLogEntityType,
             noteRelation.relationId,
             storyId,
-            t
+            t,
           );
           name = t('note_attributed_to_entity_short', {
             notename: note?.title || t('unknown_note'),
             entityname: relatedEntity.name || t('unknown_entity'),
-            entitytype: relatedEntity.type || t('unknown_entity_type')
+            entitytype: relatedEntity.type || t('unknown_entity_type'),
           });
           type = t('note_relation');
         }
+        break;
+      case OperationLogEntityType.CharacterRelation:
+        const characterRelation = await db.query.characterRelations.findFirst({
+          where: and(
+            eq(characterRelations.id, relationId),
+            eq(characterRelations.isDeleted, false),
+          ),
+          columns: { character1Id: true, character2Id: true },
+        });
+        if (characterRelation) {
+          const char1 = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, characterRelation.character1Id),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const char2 = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, characterRelation.character2Id),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          name = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
+        }
+        type = t('character_relation');
+        break;
+      case OperationLogEntityType.LocationRelation:
+        const locationRelation = await db.query.locationRelations.findFirst({
+          where: and(
+            eq(locationRelations.id, relationId),
+            eq(locationRelations.storyId, storyId),
+            eq(locationRelations.isDeleted, false),
+          ),
+          columns: { locationAId: true, locationBId: true, relationType: true },
+        });
+        if (locationRelation) {
+          const locationA = await db.query.locations.findFirst({
+            where: and(
+              eq(locations.id, locationRelation.locationAId),
+              eq(locations.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const locationB = await db.query.locations.findFirst({
+            where: and(
+              eq(locations.id, locationRelation.locationBId),
+              eq(locations.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const nameA = locationA?.name || t('unknown_location');
+          const nameB = locationB?.name || t('unknown_location');
+          name =
+            locationRelation.relationType === 'contains'
+              ? t('location_contains_location', { parentName: nameA, childName: nameB })
+              : t('location_connected_to_location', { locationAName: nameA, locationBName: nameB });
+        }
+        type = t('location_relation');
+        break;
+      case OperationLogEntityType.TagRelation:
+        const tagRelationForIdentifier = await db.query.tagRelations.findFirst({
+          where: and(
+            eq(tagRelations.id, relationId),
+            eq(tagRelations.storyId, storyId),
+            eq(tagRelations.isDeleted, false),
+          ),
+          columns: { tagId: true, relationId: true, relationType: true },
+        });
+        if (tagRelationForIdentifier) {
+          const relatedTagForIdentifier = await db.query.tags.findFirst({
+            where: and(
+              eq(tags.id, tagRelationForIdentifier.tagId),
+              eq(tags.storyId, storyId),
+              eq(tags.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const relatedForTag = await EntityService._resolveRelationEntityName(
+            db,
+            tagRelationForIdentifier.relationType as OperationLogEntityType,
+            tagRelationForIdentifier.relationId,
+            storyId,
+            t,
+          );
+          name = t('tag_attributed_to_entity', {
+            tagname: relatedTagForIdentifier?.name || t('unknown_tag'),
+            entityname: relatedForTag.name || t('unknown_entity'),
+            entitytype: relatedForTag.type || t('unknown_entity_type'),
+          });
+        }
+        type = t('tag_relation');
+        break;
+      case OperationLogEntityType.CharacterScene:
+        const characterScene = await db.query.characterScenes.findFirst({
+          where: and(eq(characterScenes.id, relationId), eq(characterScenes.isDeleted, false)),
+          columns: { characterId: true, sceneId: true },
+        });
+        if (characterScene) {
+          const relatedCharacter = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, characterScene.characterId),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const relatedScene = await db.query.scenes.findFirst({
+            where: and(eq(scenes.id, characterScene.sceneId), eq(scenes.isDeleted, false)),
+            columns: { name: true },
+          });
+          name = t('character_attributed_to_scene', {
+            characterName: relatedCharacter?.name || t('unknown_character'),
+            sceneName: relatedScene?.name || t('unknown_scene'),
+          });
+        }
+        type = t('character_scene_relation');
+        break;
+      case OperationLogEntityType.GalleryRelation:
+        const galleryRelation = await db.query.galleryRelations.findFirst({
+          where: and(
+            eq(galleryRelations.id, relationId),
+            eq(galleryRelations.storyId, storyId),
+            eq(galleryRelations.isDeleted, false),
+          ),
+          columns: { galleryId: true, ownerId: true, ownerType: true },
+        });
+        if (galleryRelation) {
+          const relatedGalleryForIdentifier = await db.query.galleries.findFirst({
+            where: and(eq(galleries.id, galleryRelation.galleryId), eq(galleries.isDeleted, false)),
+            columns: { title: true, fileName: true },
+          });
+          const relatedOwnerForGallery = await EntityService._resolveRelationEntityName(
+            db,
+            galleryRelation.ownerType as OperationLogEntityType,
+            galleryRelation.ownerId,
+            storyId,
+            t,
+          );
+          name = t('gallery_attributed_to_entity', {
+            medianame:
+              relatedGalleryForIdentifier?.title ||
+              relatedGalleryForIdentifier?.fileName ||
+              t('unknown_gallery'),
+            entityname: relatedOwnerForGallery.name || t('unknown_entity'),
+            entitytype: relatedOwnerForGallery.type || t('unknown_entity_type'),
+          });
+        }
+        type = t('gallery_relation');
+        break;
+      case OperationLogEntityType.SeeAlsoRelation:
+        const seeAlsoRelation = await db.query.seeAlsoRelations.findFirst({
+          where: and(
+            eq(seeAlsoRelations.id, relationId),
+            eq(seeAlsoRelations.storyId, storyId),
+            eq(seeAlsoRelations.isDeleted, false),
+          ),
+          columns: { entityAType: true, entityAId: true, entityBType: true, entityBId: true },
+        });
+        if (seeAlsoRelation) {
+          const sideA = await EntityService._resolveRelationEntityName(
+            db,
+            seeAlsoRelation.entityAType as OperationLogEntityType,
+            seeAlsoRelation.entityAId,
+            storyId,
+            t,
+          );
+          const sideB = await EntityService._resolveRelationEntityName(
+            db,
+            seeAlsoRelation.entityBType as OperationLogEntityType,
+            seeAlsoRelation.entityBId,
+            storyId,
+            t,
+          );
+          name = `${sideA.name || t('unknown_entity')} (${sideA.type || t('unknown_entity_type')}) - ${sideB.name || t('unknown_entity')} (${sideB.type || t('unknown_entity_type')})`;
+        }
+        type = t('see_also_relation');
+        break;
+      case OperationLogEntityType.Stat:
+        const relatedStat = await db.query.stats.findFirst({
+          where: and(
+            eq(stats.id, relationId),
+            eq(stats.storyId, storyId),
+            eq(stats.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
+        name = relatedStat?.name;
+        type = t('stat');
+        break;
+      case OperationLogEntityType.Mode:
+        const relatedMode = await db.query.modes.findFirst({
+          where: and(
+            eq(modes.id, relationId),
+            eq(modes.storyId, storyId),
+            eq(modes.isDeleted, false),
+          ),
+          columns: { name: true, characterId: true },
+        });
+        if (relatedMode) {
+          const relatedModeOwner = await db.query.characters.findFirst({
+            where: and(eq(characters.id, relatedMode.characterId), eq(characters.isDeleted, false)),
+            columns: { name: true },
+          });
+          name = t('mode_of_character', {
+            modename: relatedMode.name,
+            charactername: relatedModeOwner?.name || t('unknown_character'),
+          });
+        }
+        type = t('mode');
         break;
       default:
         name = undefined;
@@ -564,13 +1129,13 @@ export class EntityService {
     }
     return { name, type };
   }
-    
+
   static async getEntityIdentifier(
     db: AppDrizzleClient,
     entityTypeString: string,
     entityId: string,
     storyId: string,
-    t: TFunction
+    t: TFunction,
   ): Promise<string | undefined> {
     const operationLogEntityType = ENTITY_LOOKUP_MAP[entityTypeString.toLowerCase()];
 
@@ -578,7 +1143,13 @@ export class EntityService {
       throw new Error(`Invalid entityTypeString: ${entityTypeString}`);
     }
 
-    const { name } = await EntityService._resolveRelationEntityName(db, operationLogEntityType, entityId, storyId, t);
+    const { name } = await EntityService._resolveRelationEntityName(
+      db,
+      operationLogEntityType,
+      entityId,
+      storyId,
+      t,
+    );
     return name;
   }
 }

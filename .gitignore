@@ -4,10 +4,18 @@ bun.lockb
 # Build output do painel admin (apps/admin) - gerado por `bun run build`, servido pela API
 # em runtime (ver apps/api/src/index.ts). Não é código-fonte.
 apps/admin/dist
+apps/admin/dist-showcase
 
 # Arquivos de mídia da galeria, gravados em disco pelo servidor e endereçados por hash.
 # São conteúdo de usuário, não código - o caminho é configurável por MEDIA_STORAGE_PATH.
+apps/api/dist-server/
+apps/api/.tools/
+
 apps/api/media-storage/
+# Banco local do modo DATABASE_DRIVER=sqlite (e os arquivos auxiliares do SQLite).
+apps/api/*.db
+apps/api/*.db-wal
+apps/api/*.db-shm
 
 # Build output do client web (apps/client) - gerado por `bun run export:web`, consumido
 # pelo Electron (ver apps/desktop). Não é código-fonte.
@@ -16,3 +24,10 @@ apps/client/dist
 # Build output do Electron (apps/desktop) - main/preload compilados e instaladores gerados.
 apps/desktop/dist-electron
 apps/desktop/release
+
+# Build da landing pública (apps/site), publicada no GitHub Pages pelo workflow pages.yml.
+apps/site/dist
+
+# Relatórios de cobertura, gerados por `bun run test:coverage` em cada workspace.
+coverage/
+coverage-integration/

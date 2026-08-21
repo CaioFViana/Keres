@@ -39,11 +39,8 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   const scrollOffset = React.useRef(0);
   const keyboardTop = React.useRef<number | null>(null);
   const focusScrollTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const behavior = Platform.OS === 'ios'
-    ? 'padding'
-    : Platform.OS === 'android'
-      ? 'height'
-      : undefined;
+  const behavior =
+    Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined;
 
   const scrollToFocusedInput = React.useCallback(() => {
     if (Platform.OS === 'web') return;
@@ -52,23 +49,27 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
       clearTimeout(focusScrollTimer.current);
     }
 
-    focusScrollTimer.current = setTimeout(() => {
-      const focusedInput = RNTextInput.State.currentlyFocusedInput?.();
-      const node = focusedInput ? findNodeHandle(focusedInput as any) : null;
-      if (!node) return;
+    focusScrollTimer.current = setTimeout(
+      () => {
+        const focusedInput = RNTextInput.State.currentlyFocusedInput?.();
+        const node = focusedInput ? findNodeHandle(focusedInput as any) : null;
+        if (!node) return;
 
-      UIManager.measureInWindow(node, (_x, y, _width, height) => {
-        const visibleBottom = (keyboardTop.current ?? Dimensions.get('window').height) - bottomPadding;
-        const overlap = y + height + 24 - visibleBottom;
+        UIManager.measureInWindow(node, (_x, y, _width, height) => {
+          const visibleBottom =
+            (keyboardTop.current ?? Dimensions.get('window').height) - bottomPadding;
+          const overlap = y + height + 24 - visibleBottom;
 
-        if (overlap > 0) {
-          scrollRef.current?.scrollTo({
-            y: Math.max(0, scrollOffset.current + overlap),
-            animated: true,
-          });
-        }
-      });
-    }, Platform.OS === 'android' ? 120 : 60);
+          if (overlap > 0) {
+            scrollRef.current?.scrollTo({
+              y: Math.max(0, scrollOffset.current + overlap),
+              animated: true,
+            });
+          }
+        });
+      },
+      Platform.OS === 'android' ? 120 : 60,
+    );
   }, [bottomPadding]);
 
   React.useEffect(() => {

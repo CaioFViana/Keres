@@ -5,4 +5,4 @@
  */
 export const LOCATION_RELATION_TYPES = ['contains', 'connected_to'] as const;
 
-export type LocationRelationType = typeof LOCATION_RELATION_TYPES[number];
+export type LocationRelationType = (typeof LOCATION_RELATION_TYPES)[number];

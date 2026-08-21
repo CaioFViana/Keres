@@ -1,9 +1,26 @@
-import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncAppliedOperation, SyncConflict, UpdateStoryUpdate } from '@keres/shared';
+import {
+  ChapterReorderingStoryUpdate,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  EffectiveStoryRole,
+  MAX_SYNC_PULL_BATCH,
+  StoryReorderingStoryUpdate,
+  StoryUpdate,
+  SyncAppliedOperation,
+  SyncConflict,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
-import { db } from '../db';
-import { favorites, operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
+import { db, withTransaction } from '../db';
+import {
+  favorites,
+  operationLog,
+  operationTypeEnum,
+  stories,
+  storyPermissions,
+} from '../db/schema';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/errors';
@@ -14,7 +31,10 @@ import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
+import { ChoiceCheckGroupSyncHandler } from './entity-sync-handlers/ChoiceCheckGroupSyncHandler';
+import { ChoiceCheckSyncHandler } from './entity-sync-handlers/ChoiceCheckSyncHandler';
 import { ChoiceSyncHandler } from './entity-sync-handlers/ChoiceSyncHandler';
+import { EffectSyncHandler } from './entity-sync-handlers/EffectSyncHandler';
 import { GalleryRelationSyncHandler } from './entity-sync-handlers/GalleryRelationSyncHandler';
 import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
@@ -33,7 +53,21 @@ import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandle
 import { FavoriteSyncHandler } from './entity-sync-handlers/FavoriteSyncHandler';
 import { SeeAlsoRelationSyncHandler } from './entity-sync-handlers/SeeAlsoRelationSyncHandler';
 import { CommentSyncHandler } from './entity-sync-handlers/CommentSyncHandler';
+import { ModeSyncHandler } from './entity-sync-handlers/ModeSyncHandler';
+import { StatRelationSyncHandler } from './entity-sync-handlers/StatRelationSyncHandler';
+import { StatStrengthSyncHandler } from './entity-sync-handlers/StatStrengthSyncHandler';
+import { StatSyncHandler } from './entity-sync-handlers/StatSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
+
+/** Campos de bookkeeping que nunca contam como "mudança de conteúdo" em `getChangedFieldsSinceVersion`. */
+const CHANGED_FIELDS_BOOKKEEPING = new Set([
+  'id',
+  'storyId',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+]);
 
 export class SyncService {
   private entityHandlers: Map<string, SyncEntityHandler>;
@@ -50,6 +84,9 @@ export class SyncService {
     this.registerEntityHandler(new NoteSyncHandler());
     this.registerEntityHandler(new WorldRuleSyncHandler());
     this.registerEntityHandler(new ChoiceSyncHandler());
+    this.registerEntityHandler(new ChoiceCheckGroupSyncHandler());
+    this.registerEntityHandler(new ChoiceCheckSyncHandler());
+    this.registerEntityHandler(new EffectSyncHandler());
     this.registerEntityHandler(new CharacterSceneSyncHandler());
     this.registerEntityHandler(new CharacterRelationSyncHandler());
     this.registerEntityHandler(new ItemSyncHandler());
@@ -64,6 +101,10 @@ export class SyncService {
     this.registerEntityHandler(new FavoriteSyncHandler());
     this.registerEntityHandler(new SeeAlsoRelationSyncHandler());
     this.registerEntityHandler(new CommentSyncHandler());
+    this.registerEntityHandler(new ModeSyncHandler());
+    this.registerEntityHandler(new StatSyncHandler());
+    this.registerEntityHandler(new StatStrengthSyncHandler());
+    this.registerEntityHandler(new StatRelationSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {
@@ -85,7 +126,11 @@ export class SyncService {
    * operação é aplicada e registrada individualmente, e as recusadas voltam descritas em
    * `conflicts` para o cliente resolver com o usuário.
    */
-  async processAndRecordUpdates(userId: string, storyId: string, updates: StoryUpdate[]): Promise<{
+  async processAndRecordUpdates(
+    userId: string,
+    storyId: string,
+    updates: StoryUpdate[],
+  ): Promise<{
     lastOperationVersion: number;
     applied: SyncAppliedOperation[];
     conflicts: SyncConflict[];
@@ -104,7 +149,10 @@ export class SyncService {
       role = 'owner';
     } else {
       const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
-      if (permission && (permission.permissionType === 'writer' || permission.permissionType === 'reader')) {
+      if (
+        permission &&
+        (permission.permissionType === 'writer' || permission.permissionType === 'reader')
+      ) {
         role = permission.permissionType;
       }
     }
@@ -132,7 +180,7 @@ export class SyncService {
       const recordConflict = (
         reason: SyncConflict['reason'],
         message: string,
-        extra?: Partial<SyncConflict>
+        extra?: Partial<SyncConflict>,
       ) => {
         blockedEntities.add(entityKey);
         conflicts.push({
@@ -157,108 +205,226 @@ export class SyncService {
       // but opt-in per story (`story.allowReaderComments`, only meaningful/shown for
       // server-linked stories) - when off, this check locks a reader out of create/update/
       // delete uniformly, including comments they already posted while it was on.
-      const readerCanWriteEntity = update.entity === 'Favorite'
-        || (update.entity === 'Comment' && story.allowReaderComments);
+      const readerCanWriteEntity =
+        update.entity === 'Favorite' || (update.entity === 'Comment' && story.allowReaderComments);
       if (role === 'reader' && !readerCanWriteEntity) {
-        recordConflict('unauthorized', 'Reader access only permits personal favorite changes' + (story.allowReaderComments ? ' or comments.' : '.'));
+        recordConflict(
+          'unauthorized',
+          'Reader access only permits personal favorite changes' +
+            (story.allowReaderComments ? ' or comments.' : '.'),
+        );
         continue;
       }
 
+      if (update.entity === 'Story' && update.type === 'create' && update.id !== storyId) {
+        recordConflict(
+          'unauthorized',
+          'Cannot create a different story through this sync endpoint.',
+        );
+        continue;
+      }
+
+      if (update.entity === 'Story' && update.type === 'delete' && role !== 'owner') {
+        recordConflict('unauthorized', 'Only the story owner can delete the story.');
+        continue;
+      }
+
+      if (update.entity === 'Story' && update.type === 'update' && role !== 'owner') {
+        const ownerOnlyFields = ['allowReaderComments', 'favoriteBehavior', 'type', 'userId', 'id'];
+        const attempted = ownerOnlyFields.filter(
+          (field) => (update as UpdateStoryUpdate).changes?.[field] !== undefined,
+        );
+        if (attempted.length > 0 || (update as UpdateStoryUpdate).changes?.isDeleted === false) {
+          recordConflict(
+            'unauthorized',
+            'Only the story owner can change story identity or policy.',
+          );
+          continue;
+        }
+      }
+
       if (blockedEntities.has(entityKey)) {
-        recordConflict('version_conflict', `Skipped: an earlier operation on ${entityKey} in this batch conflicted.`);
+        recordConflict(
+          'version_conflict',
+          `Skipped: an earlier operation on ${entityKey} in this batch conflicted.`,
+        );
         continue;
       }
 
       let currentEntity: any;
-      try {
-        currentEntity = await handler.findById(entityId);
-      } catch (error) {
-        recordConflict('unknown', `Failed to load ${entityKey}: ${(error as Error)?.message}`);
-        continue;
-      }
-
-      // Check if the entity belongs to the story (if applicable)
-      if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
-        recordConflict('unauthorized', `Entity ${entityId} does not belong to story ${storyId}.`);
-        continue;
-      }
 
       /** Contexto que a tela de conflito usa para montar o comparativo lado a lado. */
       const conflictContext = (): Partial<SyncConflict> => ({
         serverEntity: currentEntity ? this.serializeEntity(currentEntity) : null,
-        attemptedChanges: update.type === 'create'
-          ? (update as CreateStoryUpdate).data
-          : update.type === 'update'
-            ? (update as UpdateStoryUpdate).changes
-            : undefined,
+        attemptedChanges:
+          update.type === 'create'
+            ? (update as CreateStoryUpdate).data
+            : update.type === 'update'
+              ? (update as UpdateStoryUpdate).changes
+              : undefined,
         serverVersion: currentEntity?.version,
-        clientVersion: update.type === 'update' ? (update as UpdateStoryUpdate).changes?.version : update.version,
+        clientVersion:
+          update.type === 'update'
+            ? (update as UpdateStoryUpdate).changes?.version
+            : update.version,
       });
 
       /** Já estava aplicada: nada a escrever, mas o cliente precisa saber que passou. */
       let alreadyApplied = false;
+      /** Preenchido dentro da transação quando a operação grava algo de novo. */
+      let writeResult: {
+        logged: { id: string; operationVersion: number };
+        entityAfter: any;
+      } | null = null;
 
       try {
-        if (update.type === 'create') {
-          if (currentEntity) {
-            // Reenvio idempotente: o push anterior chegou, só a resposta se perdeu.
-            // Recriar daria erro de chave duplicada e travaria o cliente para sempre.
-            alreadyApplied = true;
-          } else {
-            if (update.entity === 'Story') {
-              await tierEnforcementService.assertCanCreateStory(userId);
-            } else if (update.entity !== 'Favorite' && update.entity !== 'Comment') {
-              // Comments são anotações, não conteúdo da história - não devem consumir nem
-              // ser bloqueados pelo limite de entidades do tier, mesmo padrão de Favorite.
-              await tierEnforcementService.assertCanCreateEntity(userId, storyId);
+        // A escrita da entidade e o registro no log de operações rodam na mesma transação:
+        // sem isto, uma falha entre os dois passos (ex.: o processo cair) deixava a entidade
+        // mudada mas invisível para outros clientes, e um reenvio da mesma operação pelo
+        // próprio cliente que a originou batia um `version_conflict` falso contra o próprio
+        // trabalho dele. `db` resolve para esta transação em qualquer chamada feita durante
+        // `withTransaction`, incluindo dentro dos handlers de entidade - eles não precisam
+        // saber disso.
+        await withTransaction(async () => {
+          // Leitura dentro da transação: a decisão create-vs-alreadyApplied / not_found
+          // tem que ver a mesma linha que o write vai tocar.
+          currentEntity = await handler.findById(entityId);
+
+          if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
+            throw new SyncConflictError(
+              'unauthorized',
+              `Entity ${entityId} does not belong to story ${storyId}.`,
+            );
+          }
+
+          if (update.type === 'create') {
+            if (currentEntity) {
+              // Reenvio idempotente só se o payload descreve a mesma linha. Um create
+              // com o mesmo id e dados diferentes não é retry, é colisão.
+              if (
+                !handler.createPayloadMatches(currentEntity, (update as CreateStoryUpdate).data)
+              ) {
+                throw new SyncConflictError(
+                  'validation',
+                  `An entity with ID ${entityId} already exists with different data.`,
+                );
+              }
+              alreadyApplied = true;
+            } else {
+              if (update.entity === 'Story') {
+                await tierEnforcementService.assertCanCreateStory(userId);
+              } else if (update.entity !== 'Favorite' && update.entity !== 'Comment') {
+                // Comments são anotações, não conteúdo da história - não devem consumir nem
+                // ser bloqueados pelo limite de entidades do tier, mesmo padrão de Favorite.
+                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
+              }
+              await handler.create(userId, storyId, update as CreateStoryUpdate);
             }
-            await handler.create(userId, storyId, update as CreateStoryUpdate);
-          }
-        } else if (update.type === 'update' || update.type === 'reorder') {
-          if (!currentEntity) {
-            recordConflict('not_found', `${update.entity} with ID ${entityId} does not exist on the server.`, conflictContext());
-            continue;
-          }
-          await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
-        } else if (update.type === 'delete') {
-          if (!currentEntity) {
-            // Excluir algo que o servidor não tem é o resultado desejado, não um erro.
-            alreadyApplied = true;
-          } else {
-            // Comentário: o dono da história pode excluir qualquer comentário (moderação);
-            // escritor/leitor só o próprio - mesmo com acesso de leitura a comentários
-            // desligado depois, o autor original (se writer/reader) só perde a capacidade de
-            // excluir o próprio; o dono sempre pode. Verificado aqui, não em
-            // CommentSyncHandler, porque `role` só está disponível nesta função.
-            if (update.entity === 'Comment' && role !== 'owner' && currentEntity.authorUserId !== userId) {
-              recordConflict('unauthorized', 'Only the comment author or the story owner can delete this comment.');
-              continue;
+          } else if (update.type === 'update' || update.type === 'reorder') {
+            if (!currentEntity) {
+              throw new SyncConflictError(
+                'not_found',
+                `${update.entity} with ID ${entityId} does not exist on the server.`,
+              );
             }
-            await handler.delete(userId, storyId, update as DeleteStoryUpdate, currentEntity);
+            await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+          } else if (update.type === 'delete') {
+            if (!currentEntity) {
+              // Excluir algo que o servidor não tem é o resultado desejado, não um erro.
+              alreadyApplied = true;
+            } else {
+              // Comentário: o dono da história pode excluir qualquer comentário (moderação);
+              // escritor/leitor só o próprio - mesmo com acesso de leitura a comentários
+              // desligado depois, o autor original (se writer/reader) só perde a capacidade de
+              // excluir o próprio; o dono sempre pode. Verificado aqui, não em
+              // CommentSyncHandler, porque `role` só está disponível nesta função.
+              if (
+                update.entity === 'Comment' &&
+                role !== 'owner' &&
+                currentEntity.authorUserId !== userId
+              ) {
+                throw new SyncConflictError(
+                  'unauthorized',
+                  'Only the comment author or the story owner can delete this comment.',
+                );
+              }
+              let deleteUpdate = update as DeleteStoryUpdate;
+              if (
+                update.entity === 'Story' &&
+                role === 'owner' &&
+                (update.version === undefined || update.version === null)
+              ) {
+                // deleteStory/unlinkFromServer omit the base on purpose (local Story.version
+                // is not kept in lockstep). Fill in the live server version so OCC still
+                // guards concurrent writers, without making the owner send a stale number.
+                deleteUpdate = { ...deleteUpdate, version: currentEntity.version };
+              }
+              await handler.delete(userId, storyId, deleteUpdate, currentEntity);
+            }
           }
-        }
+
+          if (alreadyApplied) return;
+
+          // Versão da entidade *depois* da operação, lida de volta para que o cliente saiba
+          // sobre qual base as próximas edições dele se apoiam.
+          const entityAfter = await handler.findById(entityId).catch(() => undefined);
+          const logged = await this.appendOperationLog({
+            storyId,
+            userId,
+            update,
+            entityId,
+            entityVersion: entityAfter?.version,
+          });
+          writeResult = { logged, entityAfter };
+        });
       } catch (error) {
         if (error instanceof TierLimitExceededError) {
           recordConflict('limit_exceeded', error.message, conflictContext());
           continue;
         }
         if (error instanceof SyncConflictError) {
+          const context = conflictContext();
+          const clientVersion = error.clientVersion ?? context.clientVersion;
+          // Só faz sentido pra `version_conflict` num `update` de uma entidade que ainda
+          // existe - as outras razões (exclusão, referência quebrada, validação...) não são
+          // "a base ficou velha", não têm um delta de campos pra calcular.
+          const changedFields =
+            error.reason === 'version_conflict' &&
+            update.type === 'update' &&
+            currentEntity &&
+            typeof clientVersion === 'number'
+              ? await this.getChangedFieldsSinceVersion(
+                  storyId,
+                  update.entity,
+                  entityId,
+                  clientVersion,
+                )
+              : undefined;
           recordConflict(error.reason, error.message, {
-            ...conflictContext(),
-            clientVersion: error.clientVersion ?? conflictContext().clientVersion,
-            serverVersion: error.serverVersion ?? conflictContext().serverVersion,
+            ...context,
+            clientVersion,
+            serverVersion: error.serverVersion ?? context.serverVersion,
+            changedFields,
           });
           continue;
         }
         if (error instanceof z.ZodError) {
-          recordConflict('validation', `Invalid payload for ${entityKey}: ${error.message}`, conflictContext());
+          recordConflict(
+            'validation',
+            `Invalid payload for ${entityKey}: ${error.message}`,
+            conflictContext(),
+          );
           continue;
         }
         // Falha inesperada ao aplicar esta operação. Registrada como conflito em vez de
         // derrubar o lote: as outras operações do usuário ainda podem ser salvas, e o
         // cliente para de reenviar em loop uma operação que nunca vai passar.
         logger.error(`SyncService: failed to apply ${update.type} on ${entityKey}`, error);
-        recordConflict('unknown', `Failed to apply ${update.type} on ${entityKey}: ${(error as Error)?.message}`, conflictContext());
+        recordConflict(
+          'unknown',
+          `Failed to apply ${update.type} on ${entityKey}: ${(error as Error)?.message}`,
+          conflictContext(),
+        );
         continue;
       }
 
@@ -273,21 +439,7 @@ export class SyncService {
         continue;
       }
 
-      // Versão da entidade *depois* da operação, lida de volta para que o cliente saiba
-      // sobre qual base as próximas edições dele se apoiam.
-      const entityAfter = await handler.findById(entityId).catch(() => undefined);
-
-      // O log é gravado imediatamente após a escrita da entidade, e não em bloco no fim:
-      // se algo falhar mais adiante no lote, as operações já aplicadas continuam
-      // visíveis para os outros clientes.
-      const logged = await this.appendOperationLog({
-        storyId,
-        userId,
-        update,
-        entityId,
-        entityVersion: entityAfter?.version,
-      });
-
+      const { logged, entityAfter } = writeResult!;
       lastOperationVersion = logged.operationVersion;
       applied.push({
         clientOperationId: update.clientOperationId,
@@ -322,6 +474,59 @@ export class SyncService {
   }
 
   /**
+   * Quais campos realmente mudaram nesta entidade desde a versão que o cliente leu como base -
+   * a diferença entre "a base do cliente ficou velha" (`version_conflict`, que só compara o
+   * número da versão) e "algo que o cliente também editou de fato mudou". Sem isto, o cliente
+   * não tem como saber se um `version_conflict` foi causado por uma edição num campo diferente
+   * do seu (perfeitamente mesclável) ou no mesmo campo (uma decisão real) - `serverEntity`
+   * sozinho não chega a essa resposta, porque o valor atual de um campo que o cliente está
+   * editando sempre "parece" diferente do valor que o cliente quer escrever, tenha o servidor
+   * mexido nele ou não. `entityVersion` (a versão da entidade *depois* de cada operação, ver
+   * `db/schema/tables/operationLog.ts`) é o que permite reconstruir exatamente as operações
+   * ocorridas entre a base do cliente e agora.
+   */
+  private async getChangedFieldsSinceVersion(
+    storyId: string,
+    entityType: string,
+    entityId: string,
+    sinceVersion: number,
+  ): Promise<string[] | undefined> {
+    // Sem filtro por `entityVersion` aqui de propósito: uma linha com `entity_version` nulo
+    // (gravada antes dessa coluna existir, ver seu comentário em `db/schema/tables/operationLog.ts`)
+    // não tem como ser comparada contra `sinceVersion` - `gt(entityVersion, sinceVersion)` no
+    // Postgres nunca é verdadeiro para NULL, então essa linha simplesmente desapareceria da
+    // união sem nenhum aviso, e o conjunto de campos mudados voltaria incompleto (podendo tanto
+    // esconder uma disputa real quanto, na direção oposta, mesclar por cima dela em silêncio).
+    // Buscar tudo e decidir em código deixa esse caso detectável.
+    const rows = await db.query.operationLog.findMany({
+      where: and(
+        eq(operationLog.storyId, storyId),
+        eq(operationLog.entityType, entityType),
+        eq(operationLog.entityId, entityId),
+      ),
+      columns: { payload: true, entityVersion: true },
+    });
+
+    if (rows.some((row) => row.entityVersion === null)) {
+      return undefined;
+    }
+
+    const fields = new Set<string>();
+    for (const row of rows) {
+      if ((row.entityVersion as number) <= sinceVersion) continue;
+      const payload = row.payload as Record<string, unknown> | null;
+      for (const key of Object.keys(payload ?? {})) {
+        // `version` é a base que cada operação declarou, não um campo de conteúdo - está
+        // presente em todo payload de update por construção, então incluí-lo aqui faria
+        // parecer que "a versão" é sempre um campo em disputa.
+        if (CHANGED_FIELDS_BOOKKEEPING.has(key)) continue;
+        fields.add(key);
+      }
+    }
+    return Array.from(fields);
+  }
+
+  /**
    * Histórias enviadas ao servidor como snapshot podem já conter favoritos. Essas linhas
    * não passaram pelo SyncService e, portanto, não possuem uma operação que os outros
    * colaboradores possam receber. Ao tornar os favoritos públicos, materializamos uma
@@ -330,28 +535,41 @@ export class SyncService {
    * O bloqueio da Story serializa dois pulls que tentem fazer a reparação ao mesmo tempo.
    * O id do log continua sendo um ULID normal; a detecção é feita pelo id da entidade.
    */
-  private async ensurePublicFavoriteOperationLogs(storyId: string): Promise<{ count: number; maxOperationVersion: number }> {
+  private async ensurePublicFavoriteOperationLogs(
+    storyId: string,
+  ): Promise<{ count: number; maxOperationVersion: number }> {
     return await db.transaction(async (tx) => {
-      await tx.execute(sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`);
+      await tx.execute(
+        sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
+      );
 
-      const [favoriteRows, loggedFavoriteRows, maxVersionRows] = await Promise.all([
-        tx.select().from(favorites).where(and(
-          eq(favorites.storyId, storyId),
-          eq(favorites.isDeleted, false),
-        )),
-        tx.select({ entityId: operationLog.entityId }).from(operationLog).where(and(
-          eq(operationLog.storyId, storyId),
-          eq(operationLog.entityType, 'Favorite'),
-          eq(operationLog.operationType, 'create'),
-        )),
-        tx.select({ maxVersion: max(operationLog.operationVersion) })
+      const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
+        tx
+          .select()
+          .from(favorites)
+          .where(and(eq(favorites.storyId, storyId), eq(favorites.isDeleted, false))),
+        tx
+          .select({ entityId: operationLog.entityId })
           .from(operationLog)
-          .where(eq(operationLog.storyId, storyId)),
+          .where(
+            and(
+              eq(operationLog.storyId, storyId),
+              eq(operationLog.entityType, 'Favorite'),
+              eq(operationLog.operationType, 'create'),
+            ),
+          ),
+        // Mesmo contador que `appendOperationLog` usa - o `for update` acima garante que os
+        // dois não pisam um no outro: qualquer push concorrente que tente incrementar
+        // `lastOperationVersion` desta história espera esta transação terminar.
+        tx
+          .select({ lastOperationVersion: stories.lastOperationVersion })
+          .from(stories)
+          .where(eq(stories.id, storyId)),
       ]);
 
       const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
       const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
-      let nextOperationVersion = maxVersionRows.at(0)?.maxVersion || 0;
+      let nextOperationVersion = storyRow.at(0)?.lastOperationVersion || 0;
 
       for (const favorite of missingFavorites) {
         nextOperationVersion += 1;
@@ -373,6 +591,13 @@ export class SyncService {
         });
       }
 
+      if (missingFavorites.length > 0) {
+        await tx
+          .update(stories)
+          .set({ lastOperationVersion: nextOperationVersion })
+          .where(eq(stories.id, storyId));
+      }
+
       return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
     });
   }
@@ -380,9 +605,10 @@ export class SyncService {
   /**
    * Grava uma operação no log já com o próximo `operationVersion` da história.
    *
-   * A numeração é calculada dentro do próprio INSERT em vez de lida antes em JavaScript,
-   * para que dois pushes concorrentes na mesma história não recebam o mesmo número (o que
-   * faria um dos dois ficar invisível para os pulls dos outros clientes).
+   * A numeração vem de um `UPDATE` de uma linha só em `stories.lastOperationVersion` (ver
+   * comentário na própria coluna), não mais de `max(operation_log.operation_version)`: dois
+   * pushes concorrentes na mesma história agora nunca recebem o mesmo número, o que antes
+   * fazia um dos dois ficar invisível para sempre nos pulls incrementais de outros clientes.
    *
    * Pública para que AdminRecoveryService possa registrar uma restauração feita pelo
    * painel administrativo com a mesma lógica de numeração, em vez de duplicá-la.
@@ -396,33 +622,53 @@ export class SyncService {
   }): Promise<{ id: string; operationVersion: number }> {
     const { storyId, userId, update, entityId, entityVersion } = args;
 
+    const handler = this.entityHandlers.get(update.entity);
     let payload: Record<string, any> = {};
-    if (update.type === 'create') {
-      payload = (update as CreateStoryUpdate).data;
-    } else if (update.type === 'update') {
-      payload = (update as UpdateStoryUpdate).changes;
+    if (handler) {
+      payload = handler.sanitizePayloadForLog(update, userId);
     } else if (update.type === 'delete') {
-      payload = { id: entityId }; // For delete, store the ID of the deleted entity
+      payload = { id: entityId };
     } else if (update.type === 'reorder') {
-      // Sem isto o pull devolve um reorder sem `reorderItems` e o cliente não tem o que aplicar.
-      payload = { reorderItems: (update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate).reorderItems };
+      payload = {
+        reorderItems: (update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate)
+          .reorderItems,
+        reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
+        schemaEntityType: (update as StoryReorderingStoryUpdate).schemaEntityType,
+      };
+    }
+
+    // Contador atômico em vez de `coalesce(max(...), 0) + 1`: essa subquery deixava duas
+    // chamadas concorrentes para a mesma história calcularem o mesmo próximo número antes de
+    // qualquer uma commitar (nada as serializava). O `UPDATE` de uma linha só é, em si,
+    // serializado pelo lock de linha do Postgres - a segunda chamada concorrente espera a
+    // primeira committar e enxerga o valor já incrementado.
+    const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await db
+      .update(stories)
+      .set({ lastOperationVersion: sql`${stories.lastOperationVersion} + 1` })
+      .where(eq(stories.id, storyId))
+      .returning({ nextOperationVersion: stories.lastOperationVersion });
+
+    if (nextOperationVersion === undefined) {
+      throw new Error(`SyncService: story ${storyId} not found while appending an operation log.`);
     }
 
     const id = ulid();
-    const inserted = await db.insert(operationLog).values({
+    await db.insert(operationLog).values({
       id,
       storyId,
       userId,
-      operationVersion: sql<number>`coalesce((select max(existing.operation_version) from operation_log existing where existing.story_id = ${storyId}), 0) + 1`,
-      operationType: operationTypeEnum.enumValues.includes(update.type as any) ? update.type as any : 'update',
+      operationVersion: nextOperationVersion,
+      operationType: operationTypeEnum.enumValues.includes(update.type as any)
+        ? (update.type as any)
+        : 'update',
       entityType: update.entity,
       entityId: entityId || ulid(),
       payload,
       entityVersion: entityVersion ?? null,
       createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
-    }).returning({ operationVersion: operationLog.operationVersion });
+    });
 
-    return { id, operationVersion: inserted.at(0)?.operationVersion ?? 0 };
+    return { id, operationVersion: nextOperationVersion };
   }
 
   /** Converte Dates em ISO para que a entidade atravesse o JSON da resposta intacta. */
@@ -439,7 +685,12 @@ export class SyncService {
     storyId: string,
     lastOperationVersion: number,
     lastPublicFavoriteVersion: number = 0,
-  ): Promise<{ updates: StoryUpdate[]; publicFavorites: typeof favorites.$inferSelect[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
+  ): Promise<{
+    updates: StoryUpdate[];
+    publicFavorites: (typeof favorites.$inferSelect)[];
+    serverMaxOperationVersion: number;
+    role: EffectiveStoryRole;
+  }> {
     // Authorization check
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -454,7 +705,10 @@ export class SyncService {
       role = 'owner';
     } else {
       const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
-      if (permission && (permission.permissionType === 'reader' || permission.permissionType === 'writer')) {
+      if (
+        permission &&
+        (permission.permissionType === 'reader' || permission.permissionType === 'writer')
+      ) {
         role = permission.permissionType;
       }
     }
@@ -482,195 +736,215 @@ export class SyncService {
     const operationsAfterMainCursor = await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
-        gt(operationLog.operationVersion, lastOperationVersion)
+        gt(operationLog.operationVersion, lastOperationVersion),
       ),
       orderBy: [operationLog.operationVersion],
+      limit: MAX_SYNC_PULL_BATCH,
     });
 
-    const visibleOperations = operationsAfterMainCursor.filter((op) => (
-      op.entityType !== 'Favorite'
-      || story.favoriteBehavior === 'individual_public'
-      || op.userId === userId
-    ));
+    const visibleOperations = operationsAfterMainCursor.filter(
+      (op) =>
+        op.entityType !== 'Favorite' ||
+        story.favoriteBehavior === 'individual_public' ||
+        op.userId === userId,
+    );
 
     // Um cursor próprio permite publicar também favoritos anteriores à troca de comportamento.
     // O Map remove a sobreposição natural com a consulta principal quando ambos os cursores
     // ainda estão próximos.
-    const historicalPublicFavorites = story.favoriteBehavior === 'individual_public'
-      ? await db.query.operationLog.findMany({
-          where: and(
-            eq(operationLog.storyId, storyId),
-            eq(operationLog.entityType, 'Favorite'),
-            gt(operationLog.operationVersion, lastPublicFavoriteVersion),
-          ),
-          orderBy: [operationLog.operationVersion],
-        })
-      : [];
+    const historicalPublicFavorites =
+      story.favoriteBehavior === 'individual_public'
+        ? await db.query.operationLog.findMany({
+            where: and(
+              eq(operationLog.storyId, storyId),
+              eq(operationLog.entityType, 'Favorite'),
+              gt(operationLog.operationVersion, lastPublicFavoriteVersion),
+            ),
+            orderBy: [operationLog.operationVersion],
+          })
+        : [];
     const fetchedOperations = Array.from(
-      new Map([...visibleOperations, ...historicalPublicFavorites].map((operation) => [operation.id, operation])).values(),
+      new Map(
+        [...visibleOperations, ...historicalPublicFavorites].map((operation) => [
+          operation.id,
+          operation,
+        ]),
+      ).values(),
     ).sort((a, b) => a.operationVersion - b.operationVersion);
 
-    const updates: StoryUpdate[] = await Promise.all(fetchedOperations.map(async op => {
-      const payloadAsRecord = op.payload as Record<string, any>; // Client's original payload
+    const updates: StoryUpdate[] = await Promise.all(
+      fetchedOperations.map(async (op) => {
+        const payloadAsRecord = op.payload as Record<string, any>; // Client's original payload
 
-      let finalData: Record<string, any> | undefined;
-      let finalChanges: Record<string, any> | undefined;
-      let finalVersion: number | undefined;
-      let operationTime: Date | undefined;
+        let finalData: Record<string, any> | undefined;
+        let finalChanges: Record<string, any> | undefined;
+        let finalVersion: number | undefined;
+        let operationTime: Date | undefined;
 
-      // Determine the operation time based on the type
-      // op.createdAt is a Date object from the DB.
-      // update.operationTime is a string (if available from incoming client update).
-      // For returned StoryUpdate, operationTime should be a string as per user's instruction.
+        // Determine the operation time based on the type
+        // op.createdAt is a Date object from the DB.
+        // update.operationTime is a string (if available from incoming client update).
+        // For returned StoryUpdate, operationTime should be a string as per user's instruction.
 
-      operationTime = op.createdAt; // Start with Date object from DB
+        operationTime = op.createdAt; // Start with Date object from DB
 
-      /**
-       * A versão da *entidade* após esta operação. `operationVersion` é a posição da
-       * operação na sequência da história - um número muito maior - e mandá-lo no lugar
-       * inflava a versão que o cliente guarda, fazendo toda checagem de conflito passar.
-       *
-       * Linhas gravadas antes da coluna `entityVersion` existir não têm o dado; para elas
-       * o comportamento antigo é mantido, porque não há de onde tirar o valor correto.
-       */
-      const resultingEntityVersion = op.entityVersion ?? op.operationVersion;
+        /**
+         * A versão da *entidade* após esta operação. `operationVersion` é a posição da
+         * operação na sequência da história - um número muito maior - e mandá-lo no lugar
+         * inflava a versão que o cliente guarda, fazendo toda checagem de conflito passar.
+         *
+         * Linhas gravadas antes da coluna `entityVersion` existir não têm o dado; para elas
+         * o comportamento antigo é mantido, porque não há de onde tirar o valor correto.
+         */
+        const resultingEntityVersion = op.entityVersion ?? op.operationVersion;
 
-      // --- Enrich data based on operation type ---
-      if (op.operationType === 'create') {
-        // For 'create', the client original payload contains the base data.
-        // We need to add the generated fields from the operationLog.
-        finalData = {
-          ...payloadAsRecord, // Original client data
-          createdAt: op.createdAt.toISOString(), // Convert to string for client
-          updatedAt: op.createdAt.toISOString(), // For create, updatedAt is same as createdAt, convert to string
-          version: resultingEntityVersion, // Versão da entidade após a criação
-          isDeleted: false,
-          deletedAt: null,
-        };
-        // Explicitly remove storyId if it was somehow in payloadAsRecord
-        delete finalData.storyId;
-        finalVersion = resultingEntityVersion;
-      } else if (op.operationType === 'update') {
-        // For 'update', the changes are directly from the payload.
-        // We need to add the generated fields from the operationLog.
-        finalChanges = {
-          ...payloadAsRecord, // Original client changes
-          updatedAt: op.createdAt.toISOString(), // The time of the update operation, convert to string
-          version: resultingEntityVersion, // The version of the entity after this update
-        };
-        // Explicitly remove storyId if it was somehow in payloadAsRecord
-        delete finalChanges.storyId;
-        finalVersion = resultingEntityVersion;
-      } else if (op.operationType === 'delete') {
-        // For 'delete', payload contains id.
-        // We need to reconstruct the deleted state from the operationLog.
-        finalData = {
-          id: op.entityId,
-          isDeleted: true,
-          updatedAt: op.createdAt.toISOString(), // The time of the delete operation, convert to string
-          deletedAt: op.createdAt.toISOString(), // Convert to string
-          version: resultingEntityVersion, // The version of the entity after this delete
-        };
-        finalVersion = resultingEntityVersion;
-      }
-
-      // Reconstruct the StoryUpdate object with added metadata
-      if (op.operationType === 'create') {
-        return {
-          type: 'create',
-          entity: op.entityType,
-          id: op.entityId,
-          data: finalData!,
-          version: finalVersion,
-          operationVersion: op.operationVersion,
-          operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
-          originatingUser: op.userId, // Add userId
-          operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
-        } as CreateStoryUpdate;
-      } else if (op.operationType === 'update') {
-        return {
-          type: 'update',
-          entity: op.entityType,
-          id: op.entityId,
-          changes: finalChanges!,
-          version: finalVersion,
-          operationVersion: op.operationVersion,
-          operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
-          originatingUser: op.userId, // Add userId
-          operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
-        } as UpdateStoryUpdate;
-      } else if (op.operationType === 'delete') {
-        return {
-          type: 'delete',
-          entity: op.entityType,
-          id: op.entityId,
-          version: finalVersion,
-          operationVersion: op.operationVersion,
-          operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
-          originatingUser: op.userId, // Add userId
-          operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
-        } as DeleteStoryUpdate;
-      } else if (op.operationType === 'reorder') {
-        const reorderPayload = op.payload as { reorderItems: { id: string, newIndex: number }[] };
-
-        if (op.entityType === 'Chapter') { // Reordering scenes within a chapter
-          return {
-            type: 'reorder',
-            entity: 'Chapter',
-            id: op.entityId, // The chapter ID whose scenes are reordered
-            reorderItems: reorderPayload.reorderItems,
-            version: resultingEntityVersion,
-            operationVersion: op.operationVersion,
-            operationTime: operationTime ? operationTime.toISOString() : undefined,
-            originatingUser: op.userId,
-            operationId: op.id,
-          } as ChapterReorderingStoryUpdate;
-        } else if (op.entityType === 'Story') { // Reordering chapters within a story
-          return {
-            type: 'reorder',
-            entity: 'Story',
-            id: op.entityId, // The story ID whose chapters are reordered
-            reorderItems: reorderPayload.reorderItems,
-            version: resultingEntityVersion,
-            operationVersion: op.operationVersion,
-            operationTime: operationTime ? operationTime.toISOString() : undefined,
-            originatingUser: op.userId,
-            operationId: op.id,
-          } as StoryReorderingStoryUpdate;
+        // --- Enrich data based on operation type ---
+        if (op.operationType === 'create') {
+          // For 'create', the client original payload contains the base data.
+          // We need to add the generated fields from the operationLog.
+          finalData = {
+            ...payloadAsRecord, // Original client data
+            createdAt: op.createdAt.toISOString(), // Convert to string for client
+            updatedAt: op.createdAt.toISOString(), // For create, updatedAt is same as createdAt, convert to string
+            version: resultingEntityVersion, // Versão da entidade após a criação
+            isDeleted: false,
+            deletedAt: null,
+          };
+          // Explicitly remove storyId if it was somehow in payloadAsRecord
+          delete finalData.storyId;
+          finalVersion = resultingEntityVersion;
+        } else if (op.operationType === 'update') {
+          // For 'update', the changes are directly from the payload.
+          // We need to add the generated fields from the operationLog.
+          finalChanges = {
+            ...payloadAsRecord, // Original client changes
+            updatedAt: op.createdAt.toISOString(), // The time of the update operation, convert to string
+            version: resultingEntityVersion, // The version of the entity after this update
+          };
+          // Explicitly remove storyId if it was somehow in payloadAsRecord
+          delete finalChanges.storyId;
+          finalVersion = resultingEntityVersion;
+        } else if (op.operationType === 'delete') {
+          // For 'delete', payload contains id.
+          // We need to reconstruct the deleted state from the operationLog.
+          finalData = {
+            id: op.entityId,
+            isDeleted: true,
+            updatedAt: op.createdAt.toISOString(), // The time of the delete operation, convert to string
+            deletedAt: op.createdAt.toISOString(), // Convert to string
+            version: resultingEntityVersion, // The version of the entity after this delete
+          };
+          finalVersion = resultingEntityVersion;
         }
-        throw new Error(`Unhandled reorder entity type: ${op.entityType}`);
-      }
-      throw new Error(`Unknown operation type: ${op.operationType}`);
-    }));
+
+        // Reconstruct the StoryUpdate object with added metadata
+        if (op.operationType === 'create') {
+          return {
+            type: 'create',
+            entity: op.entityType,
+            id: op.entityId,
+            data: finalData!,
+            version: finalVersion,
+            operationVersion: op.operationVersion,
+            operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
+            originatingUser: op.userId, // Add userId
+            operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
+          } as CreateStoryUpdate;
+        } else if (op.operationType === 'update') {
+          return {
+            type: 'update',
+            entity: op.entityType,
+            id: op.entityId,
+            changes: finalChanges!,
+            version: finalVersion,
+            operationVersion: op.operationVersion,
+            operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
+            originatingUser: op.userId, // Add userId
+            operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
+          } as UpdateStoryUpdate;
+        } else if (op.operationType === 'delete') {
+          return {
+            type: 'delete',
+            entity: op.entityType,
+            id: op.entityId,
+            version: finalVersion,
+            operationVersion: op.operationVersion,
+            operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
+            originatingUser: op.userId, // Add userId
+            operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
+          } as DeleteStoryUpdate;
+        } else if (op.operationType === 'reorder') {
+          const reorderPayload = op.payload as {
+            reorderItems: { id: string; newIndex: number }[];
+            reorderTarget?: 'StorySchemaField';
+            schemaEntityType?: string;
+          };
+
+          if (op.entityType === 'Chapter') {
+            // Reordering scenes within a chapter
+            return {
+              type: 'reorder',
+              entity: 'Chapter',
+              id: op.entityId, // The chapter ID whose scenes are reordered
+              reorderItems: reorderPayload.reorderItems,
+              version: resultingEntityVersion,
+              operationVersion: op.operationVersion,
+              operationTime: operationTime ? operationTime.toISOString() : undefined,
+              originatingUser: op.userId,
+              operationId: op.id,
+            } as ChapterReorderingStoryUpdate;
+          } else if (op.entityType === 'Story') {
+            // Reordering chapters within a story
+            return {
+              type: 'reorder',
+              entity: 'Story',
+              id: op.entityId, // The story ID whose chapters are reordered
+              reorderItems: reorderPayload.reorderItems,
+              reorderTarget: reorderPayload.reorderTarget,
+              schemaEntityType: reorderPayload.schemaEntityType,
+              version: resultingEntityVersion,
+              operationVersion: op.operationVersion,
+              operationTime: operationTime ? operationTime.toISOString() : undefined,
+              originatingUser: op.userId,
+              operationId: op.id,
+            } as StoryReorderingStoryUpdate;
+          }
+          throw new Error(`Unhandled reorder entity type: ${op.entityType}`);
+        }
+        throw new Error(`Unknown operation type: ${op.operationType}`);
+      }),
+    );
     // Fetch the current maximum operation version for the story
-    const serverMaxOperationVersion = (await db
-      .select({ maxVersion: max(operationLog.operationVersion) })
-      .from(operationLog)
-      .where(eq(operationLog.storyId, storyId))
-    ).at(0)?.maxVersion || 0;
+    const serverMaxOperationVersion =
+      (
+        await db
+          .select({ maxVersion: max(operationLog.operationVersion) })
+          .from(operationLog)
+          .where(eq(operationLog.storyId, storyId))
+      ).at(0)?.maxVersion || 0;
 
     // O log continua sendo usado para realtime e para a tela de operações, mas não é
     // uma fonte confiável para reconstruir snapshots importados antes da existência dos
     // favoritos públicos. Enviar o estado autoritativo dos *outros* usuários faz cada
     // cliente convergir sem tocar em um favorito próprio que ainda esteja pendente de push.
-    const publicFavorites = story.favoriteBehavior === 'individual_public'
-      ? await db.query.favorites.findMany({
-          where: and(
-            eq(favorites.storyId, storyId),
-            ne(favorites.userId, userId),
-          ),
-        })
-      : [];
+    const publicFavorites =
+      story.favoriteBehavior === 'individual_public'
+        ? await db.query.favorites.findMany({
+            where: and(eq(favorites.storyId, storyId), ne(favorites.userId, userId)),
+          })
+        : [];
 
     return { updates, publicFavorites, serverMaxOperationVersion, role };
   }
 
-  async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number; role: EffectiveStoryRole }[]> {
+  async getStoriesWithLastOperationVersionForUser(
+    userId: string,
+  ): Promise<{ storyId: string; lastOperationVersion: number; role: EffectiveStoryRole }[]> {
     const ownedStories = await db.query.stories.findMany({
       where: and(eq(stories.userId, userId), eq(stories.isDeleted, false)),
       columns: {
         id: true,
-        version: true,
+        lastOperationVersion: true,
       },
     });
 
@@ -678,13 +952,16 @@ export class SyncService {
       where: and(
         eq(storyPermissions.userId, userId),
         eq(storyPermissions.isDeleted, false),
-        or(eq(storyPermissions.permissionType, 'reader'), eq(storyPermissions.permissionType,'writer'))
+        or(
+          eq(storyPermissions.permissionType, 'reader'),
+          eq(storyPermissions.permissionType, 'writer'),
+        ),
       ),
       with: {
         story: {
           columns: {
             id: true,
-            version: true,
+            lastOperationVersion: true,
             isDeleted: true,
           },
         },
@@ -699,13 +976,19 @@ export class SyncService {
      */
     const storyMap = new Map<string, { lastOperationVersion: number; role: EffectiveStoryRole }>();
 
-    ownedStories.forEach(story => {
-      storyMap.set(story.id, { lastOperationVersion: story.version, role: 'owner' });
+    ownedStories.forEach((story) => {
+      storyMap.set(story.id, {
+        lastOperationVersion: story.lastOperationVersion,
+        role: 'owner',
+      });
     });
 
-    permittedStories.forEach(permission => {
+    permittedStories.forEach((permission) => {
       if (permission.story && !permission.story.isDeleted) {
-        storyMap.set(permission.story.id, { lastOperationVersion: permission.story.version, role: permission.permissionType });
+        storyMap.set(permission.story.id, {
+          lastOperationVersion: permission.story.lastOperationVersion,
+          role: permission.permissionType,
+        });
       }
     });
 

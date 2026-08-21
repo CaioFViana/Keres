@@ -1,24 +1,22 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, BackHandler, StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { themeDisplayOptions } from '../../theme/palettes';
-import { getLanguageOptions } from '../../utils/i18n';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type RootStackParamList = {
   StoryForm: { storyId?: string };
@@ -29,18 +27,26 @@ type StoryFormScreenRouteProp = NativeStackScreenProps<RootStackParamList, 'Stor
 type StoryFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StoryForm'>;
 
 const StoryFormScreen = () => {
-  useBackButtonHandler({ showWebBackButton: true })
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
   const route = useRoute<StoryFormScreenRouteProp>();
   const { storyId } = route.params || {};
+  useDocumentTitle(storyId ? t('edit_story') : t('create_new_story_screen_title'));
   const commonContainerStyles = getCommonContainerStyles(colors);
-  const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore(); // Get userId from store
   const scrollBottomPadding = useFormScrollBottomPadding();
+  // Criar é sempre permitido (não existe papel antes de a história existir); editar respeita
+  // o papel real - o botão de editar em StorySelectionScreen não é filtrado por papel, então
+  // um colaborador leitor pode abrir esta tela pra uma história de terceiro. Política
+  // (tipo / favoritos / exclusão) é só do dono; um writer ainda edita título e conteúdo.
+  const { canEdit: canEditExisting, canManageStoryPolicy: canManageExistingPolicy } =
+    useStoryRole(storyId);
+  const canEdit = !storyId || canEditExisting;
+  const canManageStoryPolicy = !storyId || canManageExistingPolicy;
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'linear' | 'branching'>('linear');
@@ -55,15 +61,6 @@ const StoryFormScreen = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const backAction = () => {
-      navigation.goBack();
-      return true;
-    };
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    return () => backHandler.remove();
-  }, [navigation]);
 
   useEffect(() => {
     const loadStory = async () => {
@@ -101,6 +98,8 @@ const StoryFormScreen = () => {
   }, [storyId, storyService, userId, t, applyTheme]);
 
   const handleSave = async () => {
+    if (!canEdit) return;
+
     if (!title.trim()) {
       AppAlert.alert(t('error'), t('title_required'));
       return;
@@ -115,28 +114,48 @@ const StoryFormScreen = () => {
     setError(null);
 
     try {
-      const storyData: Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'> = {
-        userId: userId!, // Include userId here, asserted as non-null
-        title: title.trim(),
-        type,
-        description,
-        genre,
-        language,
-        author,
-        isFavorite,
-        favoriteBehavior,
-        extraNotes,
-        theme,
-        normalizeSceneTiming: false,
-        allowReaderComments: false,
-        lastOperationLog: 0,
-        lastServerSyncedLog: 0,
-      };
-
       if (storyId) {
-        await storyService().updateStory(userId, storyId, storyData);
+        // Update never sends `type` (conversion lives on Story Settings), nor
+        // `allowReaderComments` / `normalizeSceneTiming` / log cursors (this form doesn't
+        // edit them). Sending hardcoded defaults used to reset those fields, and a writer
+        // sending `allowReaderComments: false` would now be rejected as owner-only policy.
+        await storyService().updateStory(userId, storyId, {
+          title: title.trim(),
+          description,
+          genre,
+          language,
+          author,
+          isFavorite,
+          extraNotes,
+          theme,
+          ...(canManageStoryPolicy ? { favoriteBehavior } : {}),
+        });
         AppAlert.alert(t('success'), t('story_updated_successfully'));
       } else {
+        const storyData: Omit<
+          Story,
+          'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'
+        > = {
+          userId: userId!,
+          title: title.trim(),
+          type,
+          description,
+          genre,
+          language,
+          author,
+          isFavorite,
+          favoriteBehavior,
+          extraNotes,
+          theme,
+          normalizeSceneTiming: false,
+          allowReaderComments: false,
+          // O sistema de status é ligado depois, em Configurações da História: uma história
+          // nova nunca nasce com ele.
+          statSystem: false,
+          statNotation: 'letter',
+          lastOperationLog: 0,
+          lastServerSyncedLog: 0,
+        };
         await storyService().createStory(userId, storyData);
         AppAlert.alert(t('success'), t('story_created_successfully'));
       }
@@ -151,6 +170,8 @@ const StoryFormScreen = () => {
   };
 
   const handleDelete = () => {
+    if (!canManageStoryPolicy) return;
+
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;
@@ -185,21 +206,9 @@ const StoryFormScreen = () => {
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
-
-  const storyTypeOptions = [
-    { label: t('linear'), value: 'linear' },
-    { label: t('branching'), value: 'branching' },
-  ];
-
-  const languageOptions = getLanguageOptions(t);
-
-  const themeOptions = themeDisplayOptions.map(theme => ({
-    label: t(theme.labelKey),
-    value: theme.value,
-  }));
 
   if (loading) {
     return (
@@ -210,7 +219,8 @@ const StoryFormScreen = () => {
     );
   }
 
-  if (error && !storyId) { // Only show error if creating a new story and something went wrong
+  if (error && !storyId) {
+    // Only show error if creating a new story and something went wrong
     return (
       <View style={[commonContainerStyles.container, styles.centered]}>
         <Text style={{ color: colors.error }}>{error}</Text>
@@ -220,100 +230,67 @@ const StoryFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
-          <Text style={[styles.title, { color: colors.text }]}>{storyId ? t('edit_story') : t('create_new_story_screen_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {storyId ? t('edit_story') : t('create_new_story_screen_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-          <TextInput
-            placeholder={t('title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
+      {!canEdit && (
+        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+          {t('story_read_only_error')}
+        </Text>
+      )}
+      {canEdit && !canManageStoryPolicy && (
+        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+          {t('story_owner_only_error')}
+        </Text>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('type')}</Text>
-          <Select
-            options={storyTypeOptions}
-            value={type}
-            onValueChange={(value) => setType(value as 'linear' | 'branching')}
-            placeholder={t('select_story_type')}
-            disabled={!!storyId}
-          />
+      <StoryFieldsForm
+        title={title}
+        onTitleChange={setTitle}
+        type={type}
+        onTypeChange={setType}
+        typeDisabled={!!storyId || !canEdit}
+        favoriteBehaviorDisabled={!canManageStoryPolicy}
+        description={description}
+        onDescriptionChange={setDescription}
+        genre={genre}
+        onGenreChange={setGenre}
+        author={author}
+        onAuthorChange={setAuthor}
+        language={language}
+        onLanguageChange={setLanguage}
+        isFavorite={isFavorite}
+        onIsFavoriteChange={setIsFavorite}
+        favoriteBehavior={favoriteBehavior}
+        onFavoriteBehaviorChange={setFavoriteBehavior}
+        extraNotes={extraNotes}
+        onExtraNotesChange={setExtraNotes}
+        theme={theme}
+        onThemeChange={setTheme}
+        editable={canEdit}
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('description_placeholder')}
-            value={description || ""}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
+      <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
+        {storyId ? t('update_story') : t('create_story')}
+      </Button>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('genre')}</Text>
-          <TextInput
-            placeholder={t('genre_placeholder')}
-            value={genre || ""}
-            onChangeText={setGenre}
-            style={commonInputStyles.input}
-          />
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('author')}</Text>
-          <TextInput
-            placeholder={t('author_placeholder')}
-            value={author || ""}
-            onChangeText={setAuthor}
-            style={commonInputStyles.input}
-          />
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('language')}</Text>
-          <Select
-            options={languageOptions}
-            value={language}
-            onValueChange={setLanguage}
-            placeholder={t('select_language')}
-          />
-
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('set_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
-          <Select
-            options={themeOptions}
-            value={theme}
-            onValueChange={(value) => {
-              setTheme(value);
-              applyTheme(value || 'default');
-            }}
-            placeholder={t('select_theme')}
-          />
-
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {storyId ? t('update_story') : t('create_story')}
-          </Button>
-
-          {storyId && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_story_title')}
-            </Button>
-          )}
+      {storyId && (
+        <Button
+          onPress={handleDelete}
+          style={[styles.saveButton, styles.deleteButton]}
+          disabled={!canManageStoryPolicy}
+        >
+          {t('delete_story_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };
@@ -328,24 +305,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 15,
-    marginBottom: 5,
-  },
   saveButton: {
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 35,
+    marginBottom: 0,
   },
   deleteButton: {
+    marginTop: 10,
+    marginBottom: 15,
     backgroundColor: 'red', // Destructive color
   },
   centered: {

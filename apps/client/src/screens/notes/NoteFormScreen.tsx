@@ -1,14 +1,18 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Note } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -21,9 +25,9 @@ import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 type NoteFormScreenRouteProp = RouteProp<NotesStackParamList, 'NoteForm'>;
 
@@ -33,7 +37,7 @@ const NoteFormScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<NoteFormScreenRouteProp>();
   const { t } = useTranslation();
-  const { userId } = useUserSettingsStore()
+  const { userId } = useUserSettingsStore();
   const { noteId } = route.params || {};
   const { selectedStory } = useStoryStore();
 
@@ -50,12 +54,8 @@ const NoteFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
   // Notes can't be attached to other notes, so only the tag half of the hook applies.
-  const {
-    availableTags,
-    selectedTagIds,
-    setSelectedTagIds,
-    persistTagRelations,
-  } = useEntityRelations({ entityType: 'Note', entityId: noteId, withNotes: false });
+  const { availableTags, selectedTagIds, setSelectedTagIds, persistTagRelations } =
+    useEntityRelations({ entityType: 'Note', entityId: noteId, withNotes: false });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Note');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -70,9 +70,9 @@ const NoteFormScreen = () => {
       setDocumentTitle(isEditing ? t('edit_note_title') : t('create_note_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_note_title') : t('create_note_title'),
-        headerRight: () => <View/>
+        headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -90,7 +90,9 @@ const NoteFormScreen = () => {
           setIsFavorite(fetchedNote.isFavorite);
           setExtraNotes(fetchedNote.extraNotes);
 
-          const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(noteId!);
+          const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
+            noteId!,
+          );
           setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
         } else {
           console.warn('Note not found:', noteId);
@@ -133,7 +135,10 @@ const NoteFormScreen = () => {
     setLoading(true);
 
     try {
-      const noteData: Omit<Note, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
+      const noteData: Omit<
+        Note,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      > = {
         title: title.trim(),
         body: body,
         isFavorite: isFavorite,
@@ -146,14 +151,23 @@ const NoteFormScreen = () => {
         await noteService().updateNote(userId, noteId!, noteData);
         AppAlert.alert(t('success'), t('note_updated_successfully'));
       } else {
-        const newNote = await noteService().createNote(userId, { ...noteData, storyId: selectedStory.id });
+        const newNote = await noteService().createNote(userId, {
+          ...noteData,
+          storyId: selectedStory.id,
+        });
         AppAlert.alert(t('success'), t('note_created_successfully'));
         currentNoteId = newNote.id; // Get the ID of the newly created note
       }
 
       if (currentNoteId) {
         await persistTagRelations(currentNoteId);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Note', currentNoteId, customValues);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(
+          userId,
+          selectedStory.id,
+          'Note',
+          currentNoteId,
+          customValues,
+        );
       }
 
       navigation.goBack();
@@ -187,9 +201,12 @@ const NoteFormScreen = () => {
     });
   };
 
-  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
-    setSelectedTagIds(newSelection);
-  }, [setSelectedTagIds]);
+  const handleTagSelectionChange = useCallback(
+    (newSelection: string[]) => {
+      setSelectedTagIds(newSelection);
+    },
+    [setSelectedTagIds],
+  );
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -216,12 +233,12 @@ const NoteFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
       backgroundColor: 'red',
-      marginBottom: 15
+      marginBottom: 15,
     },
     centered: {
       flex: 1,
@@ -249,72 +266,84 @@ const NoteFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_note_title') : t('create_note_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('note_form_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_note_title') : t('create_note_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('note_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-          <TextInput
-            placeholder={t('title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
+      <TextInput
+        placeholder={t('title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
 
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('body')}</Text>
-          <TextInput
-            placeholder={t('body_placeholder')}
-            value={body || ""}
-            onChangeText={setBody}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-          />
-          
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('body')}</Text>
+      <TextInput
+        placeholder={t('body_placeholder')}
+        value={body || ''}
+        onChangeText={setBody}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
 
-          <CustomAttributeFields
-            storyId={selectedStory?.id || ''}
-            fields={customFields}
-            values={customValues}
-            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
 
-          <View style={styles.tagSection}>
-            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-            <MultiSelectPill
-              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
-              selectedValues={selectedTagIds}
-              onSelectionChange={handleTagSelectionChange}
-              placeholder={t('select_tags_for_note')}
-              label={t('note_tags')}
-            />
-          </View>
+      <CustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+      />
 
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {isEditing ? t('save_changes') : t('create_note')}
-          </Button>
+      <View style={styles.tagSection}>
+        <MultiSelectPill
+          options={availableTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color || colors.primaryContainer,
+          }))}
+          selectedValues={selectedTagIds}
+          onSelectionChange={handleTagSelectionChange}
+          placeholder={t('select_tags_for_note')}
+          label={t('note_tags')}
+        />
+      </View>
 
-          {isEditing && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_note_title')}
-            </Button>
-          )}
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {isEditing ? t('save_changes') : t('create_note')}
+      </Button>
+
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_note_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

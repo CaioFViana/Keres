@@ -12,7 +12,9 @@ import path from 'node:path';
 
 const version = process.argv[2];
 if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
-  console.error(`Usage: node set-version.mjs <version>, e.g. "1.2.3" (got: ${JSON.stringify(version)})`);
+  console.error(
+    `Usage: node set-version.mjs <version>, e.g. "1.2.3" (got: ${JSON.stringify(version)})`,
+  );
   process.exit(1);
 }
 

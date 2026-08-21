@@ -1,0 +1,39 @@
+# Discardable infrastructure for API integration tests.
+#
+# docker compose -f apps/api/docker-compose.test.yml up -d
+# bun run test:integration
+# docker compose -f apps/api/docker-compose.test.yml down
+name: keres-test
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: keres_test
+      POSTGRES_PASSWORD: keres_test
+      POSTGRES_DB: keres_test
+    ports:
+      - '55432:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keres_test']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Real S3-compatible storage for S3BlobStorage integration tests.
+  s3-test:
+    image: chrislusf/seaweedfs
+    environment:
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: secret
+      S3_BUCKET: my-bucket
+    ports:
+      - '8333:8333'
+    healthcheck:
+      # SeaweedFS master endpoint is available without S3 authentication.
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:9333/cluster/status']
+      interval: 5s
+      timeout: 5s
+      retries: 10

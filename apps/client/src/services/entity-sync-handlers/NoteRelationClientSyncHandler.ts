@@ -51,13 +51,18 @@ export class NoteRelationClientSyncHandler implements ClientSyncEntityHandler {
 
     const noteRelationChanges = update.changes as Partial<NoteRelation>;
 
-    await this.db.update(schema.noteRelations)
+    await this.db
+      .update(schema.noteRelations)
       .set({
         ...noteRelationChanges,
         storyId: storyId,
         updatedAt: new Date(),
-        createdAt: noteRelationChanges.createdAt ? new Date(noteRelationChanges.createdAt) : undefined,
-        deletedAt: noteRelationChanges.deletedAt ? new Date(noteRelationChanges.deletedAt) : undefined,
+        createdAt: noteRelationChanges.createdAt
+          ? new Date(noteRelationChanges.createdAt)
+          : undefined,
+        deletedAt: noteRelationChanges.deletedAt
+          ? new Date(noteRelationChanges.deletedAt)
+          : undefined,
       })
       .where(eq(schema.noteRelations.id, update.id));
     console.log(`Applied update for NoteRelation ${update.id}`);
@@ -71,7 +76,8 @@ export class NoteRelationClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.noteRelations)
+    await this.db
+      .update(schema.noteRelations)
       .set({
         storyId: storyId,
         isDeleted: true,

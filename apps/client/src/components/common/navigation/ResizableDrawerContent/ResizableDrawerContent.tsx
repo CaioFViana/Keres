@@ -11,9 +11,8 @@ export const DRAWER_MIN_WIDTH = 280;
 export const DRAWER_DEFAULT_WIDTH = 280;
 export const DRAWER_MAX_WIDTH = 520;
 
-const clamp = (value: number, minimum: number, maximum: number) => (
-  Math.min(Math.max(value, minimum), maximum)
-);
+const clamp = (value: number, minimum: number, maximum: number) =>
+  Math.min(Math.max(value, minimum), maximum);
 
 export function useResizableDrawerWidth(viewportWidth: number) {
   const maximumWidth = Math.max(
@@ -51,23 +50,24 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     currentWidthRef.current = drawerWidth;
   }, [drawerWidth]);
 
-  const panResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => resizable,
-    onMoveShouldSetPanResponder: (_, gestureState) => (
-      resizable && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
-    ),
-    onPanResponderGrant: () => {
-      dragStartWidthRef.current = currentWidthRef.current;
-    },
-    onPanResponderMove: (_, gestureState) => {
-      onDrawerWidthChange(clamp(
-        dragStartWidthRef.current + gestureState.dx,
-        DRAWER_MIN_WIDTH,
-        maximumWidth,
-      ));
-    },
-    onPanResponderTerminationRequest: () => false,
-  }), [maximumWidth, onDrawerWidthChange, resizable]);
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => resizable,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          resizable && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+        onPanResponderGrant: () => {
+          dragStartWidthRef.current = currentWidthRef.current;
+        },
+        onPanResponderMove: (_, gestureState) => {
+          onDrawerWidthChange(
+            clamp(dragStartWidthRef.current + gestureState.dx, DRAWER_MIN_WIDTH, maximumWidth),
+          );
+        },
+        onPanResponderTerminationRequest: () => false,
+      }),
+    [maximumWidth, onDrawerWidthChange, resizable],
+  );
 
   const styles = StyleSheet.create({
     container: {
@@ -90,7 +90,7 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
       top: 0,
       width: 10,
       zIndex: 10,
-      ...(Platform.OS === 'web' ? { cursor: 'col-resize', userSelect: 'none' } as any : {}),
+      ...(Platform.OS === 'web' ? ({ cursor: 'col-resize', userSelect: 'none' } as any) : {}),
     },
     resizeIndicator: {
       backgroundColor: colors.border,
@@ -103,7 +103,11 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
 
   return (
     <View style={styles.container}>
-      <DrawerContentScrollView {...drawerProps} style={styles.scrollView} contentContainerStyle={styles.content}>
+      <DrawerContentScrollView
+        {...drawerProps}
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+      >
         <DrawerItemList {...drawerProps} />
       </DrawerContentScrollView>
       {resizable && (

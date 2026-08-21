@@ -1,0 +1,241 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { LogsPage } from '../../src/pages/logs/LogsPage';
+import { RecoveryPage } from '../../src/pages/recovery/RecoveryPage';
+import { RegistrationSettingsPage } from '../../src/pages/settings/RegistrationSettingsPage';
+import { ThemeProvider } from '../../src/theme/ThemeProvider';
+import { TiersPage } from '../../src/pages/tiers/TiersPage';
+import { UserFormPage } from '../../src/pages/users/UserFormPage';
+import { UsersListPage } from '../../src/pages/users/UsersListPage';
+import { changeInput, click, flush, render, submit } from '../helpers/react';
+
+const mocks = vi.hoisted(() => ({
+  listUsers: vi.fn(),
+  createUser: vi.fn(),
+  softDeleteUser: vi.fn(),
+  restoreUser: vi.fn(),
+  getUser: vi.fn(),
+  updateUser: vi.fn(),
+  regenerateRecoveryCodes: vi.fn(),
+  listTiers: vi.fn(),
+  createTier: vi.fn(),
+  updateTier: vi.fn(),
+  softDeleteTier: vi.fn(),
+  getSettings: vi.fn(),
+  getShowcaseSettings: vi.fn(),
+  updateShowcaseSettings: vi.fn(),
+  updateSettings: vi.fn(),
+  listDeleted: vi.fn(),
+  restoreDeleted: vi.fn(),
+  browseOperationLog: vi.fn(),
+  listLogs: vi.fn(),
+}));
+
+vi.mock('../../src/api/AdminUserApiService', () => ({
+  AdminUserApiService: {
+    list: mocks.listUsers,
+    create: mocks.createUser,
+    softDelete: mocks.softDeleteUser,
+    restore: mocks.restoreUser,
+    get: mocks.getUser,
+    update: mocks.updateUser,
+    regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
+  },
+}));
+vi.mock('../../src/api/TierApiService', () => ({
+  TierApiService: {
+    list: mocks.listTiers,
+    create: mocks.createTier,
+    update: mocks.updateTier,
+    softDelete: mocks.softDeleteTier,
+  },
+}));
+vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+  ShowcaseSettingsApiService: {
+    get: mocks.getShowcaseSettings,
+    update: mocks.updateShowcaseSettings,
+  },
+}));
+vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+  RegistrationSettingsApiService: { get: mocks.getSettings, update: mocks.updateSettings },
+}));
+vi.mock('../../src/api/RecoveryApiService', () => ({
+  RecoveryApiService: {
+    listDeleted: mocks.listDeleted,
+    restore: mocks.restoreDeleted,
+    browseOperationLog: mocks.browseOperationLog,
+  },
+}));
+vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+
+// `ThemeProvider` porque a página de settings passou a incluir o cartão de aparência, que lê
+// a paleta escolhida do contexto de tema.
+const withRouter = (page: ReactElement, route = '/') =>
+  render(
+    <MemoryRouter initialEntries={[route]}>
+      <ThemeProvider>{page}</ThemeProvider>
+    </MemoryRouter>,
+  );
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
+  mocks.createUser.mockResolvedValue({ id: 'user-1', recoveryCodes: ['AAAAA-11111'] });
+  mocks.listTiers.mockResolvedValue([]);
+  mocks.getShowcaseSettings.mockResolvedValue({
+    id: 'singleton',
+    isShowcaseEnabled: false,
+    updatedAt: '2026-08-19T00:00:00.000Z',
+  });
+  mocks.getSettings.mockResolvedValue({
+    isRegistrationOpen: true,
+    autoManage: false,
+    maxUsers: null,
+    defaultTierId: null,
+  });
+  mocks.listDeleted.mockResolvedValue([]);
+  mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
+  mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
+  vi.stubGlobal('alert', vi.fn());
+});
+
+describe('admin page actions', () => {
+  it('soft-deletes a selected user after confirmation', async () => {
+    mocks.listUsers.mockResolvedValue({
+      items: [
+        {
+          id: 'user-1',
+          username: 'Ana',
+          tag: 'ana',
+          isAdmin: false,
+          tierId: null,
+          isDeleted: false,
+          createdAt: '2026-01-01',
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    });
+    const view = await withRouter(<UsersListPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Delete',
+      )!,
+    );
+    await flush();
+
+    expect(mocks.softDeleteUser).toHaveBeenCalledWith('user-1');
+    await view.unmount();
+  });
+
+  it('creates a user from the new-user form and shows the recovery codes once', async () => {
+    const view = await withRouter(<UserFormPage />, '/users/new');
+    await flush();
+    const inputs = view.container.querySelectorAll('input');
+
+    await changeInput(inputs[0], 'ana');
+    await changeInput(inputs[1], 'password123');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ username: 'ana', password: 'password123', isAdmin: false }),
+    );
+    // The account has no e-mail, so this screen is the only chance the admin gets to see
+    // (and hand off) the codes - they're never retrievable again after this render.
+    expect(view.container.textContent).toContain('AAAAA-11111');
+    await view.unmount();
+  });
+
+  it('creates a tier and converts blank limits to null', async () => {
+    const view = await withRouter(<TiersPage />);
+    await flush();
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('input')!, 'Pro');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Pro', maxStories: null }),
+    );
+    await view.unmount();
+  });
+
+  it('saves registration settings after loading them', async () => {
+    const view = await withRouter(<RegistrationSettingsPage />);
+    await flush();
+    // O primeiro form da página é o de cadastro; aparência e showcase não são formulários.
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith({
+      isRegistrationOpen: true,
+      autoManage: false,
+      maxUsers: null,
+      defaultTierId: null,
+    });
+    await view.unmount();
+  });
+
+  it('searches and restores deleted records', async () => {
+    mocks.listDeleted.mockResolvedValue([
+      {
+        entityType: 'Character',
+        id: 'char-1',
+        name: 'Ana',
+        storyId: 'story-1',
+        storyTitle: 'Demo Story',
+        deletedAt: '2026-01-01',
+        version: 4,
+      },
+    ]);
+    const view = await withRouter(<RecoveryPage />);
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Search',
+      )!,
+    );
+    await flush();
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Restore',
+      )!,
+    );
+    await flush();
+
+    expect(mocks.listDeleted).toHaveBeenCalledWith({
+      entityType: undefined,
+      storyId: undefined,
+      search: undefined,
+    });
+    expect(mocks.restoreDeleted).toHaveBeenCalledWith('Character', 'char-1');
+    await view.unmount();
+  });
+
+  it('sends log filters when the operator searches', async () => {
+    const view = await withRouter(<LogsPage />);
+    await flush();
+    await changeInput(view.container.querySelector('select')!, 'error');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.listLogs).toHaveBeenLastCalledWith(
+      expect.objectContaining({ level: 'error', page: 1, pageSize: 50 }),
+    );
+    await view.unmount();
+  });
+});

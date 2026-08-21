@@ -1,5 +1,5 @@
 import { UpdateRegistrationSettings } from '@keres/shared';
-import { eq, sql } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, users } from '../db/schema';
 
@@ -25,9 +25,12 @@ export class RegistrationSettingsService {
 
     // Corrida entre dois requests concorrentes na primeira leitura: o insert perdedor não
     // retorna linha (onConflictDoNothing), então busca a que o outro acabou de criar.
-    return created ?? (await db.query.registrationSettings.findFirst({
-      where: eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID),
-    }))!;
+    return (
+      created ??
+      (await db.query.registrationSettings.findFirst({
+        where: eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID),
+      }))!
+    );
   }
 
   async update(patch: UpdateRegistrationSettings) {
@@ -53,11 +56,11 @@ export class RegistrationSettingsService {
     if (settings.maxUsers === null) {
       return true;
     }
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)::int` })
+    const [{ total }] = await db
+      .select({ total: count() })
       .from(users)
       .where(eq(users.isDeleted, false));
-    return count < settings.maxUsers;
+    return total < settings.maxUsers;
   }
 }
 

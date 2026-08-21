@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // `@keres/shared` guarda a lista de ícones de avatar num .json (ver metadata/avatar.ts).
+    "resolveJsonModule": true,
     "target": "es2022",
     "module": "esnext",
     "lib": ["es2022", "dom"],

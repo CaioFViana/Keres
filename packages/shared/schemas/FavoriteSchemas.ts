@@ -37,7 +37,7 @@ export const CreateFavoriteDataSchema = FavoriteSchema.omit({
   deletedAt: true,
 });
 
-export const PartialFavoriteSchema = FavoriteSchema.partial();
+export const PartialFavoriteSchema = CreateFavoriteDataSchema.omit({ userId: true }).partial();
 
 export type FavoriteType = z.infer<typeof FavoriteSchema>;
 export type CreateFavoriteDataType = z.infer<typeof CreateFavoriteDataSchema>;

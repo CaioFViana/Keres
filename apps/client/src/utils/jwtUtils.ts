@@ -41,5 +41,5 @@ export const isJwtExpired = (token: string, gracePeriodSeconds: number = 60): bo
   }
 
   const now = Math.floor(Date.now() / 1000); // Current time in seconds since epoch
-  return decoded.exp < (now + gracePeriodSeconds);
+  return decoded.exp < now + gracePeriodSeconds;
 };

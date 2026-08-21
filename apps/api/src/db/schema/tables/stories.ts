@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { users } from './users';
 import { characters } from './characters';
 import { storyPermissions } from './storyPermissions';
@@ -23,10 +23,11 @@ import { seeAlsoRelations } from './seeAlsoRelations';
 import { comments } from './comments';
 import { storyTypeEnum } from '../enums';
 
-
-export const stories = pgTable('stories', {
+export const stories = table('stories', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
   title: text('title').notNull(),
   type: storyTypeEnum('type').notNull(),
   description: text('description'),
@@ -34,16 +35,35 @@ export const stories = pgTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: boolean('is_favorite').notNull().default(false),
-  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
+  favoriteBehavior: text('favorite_behavior', {
+    enum: ['global', 'individual', 'individual_public'],
+  })
+    .notNull()
+    .default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  statSystem: boolean('stat_system').notNull().default(false),
+  /** 'letter' | 'number' - como os valores de status são exibidos. */
+  statNotation: text('stat_notation').notNull().default('letter'),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),
+  /**
+   * Contador do próximo `operation_log.operation_version` a usar nesta história - não
+   * confundir com `version` acima, que é a concorrência otimista da própria Story.
+   *
+   * Incrementado por um único `UPDATE ... SET last_operation_version = last_operation_version
+   * + 1 RETURNING ...` (ver `SyncService.appendOperationLog`): o lock de linha do Postgres
+   * nessa instrução já serializa duas requisições concorrentes para a mesma história, sem
+   * precisar de lock explícito nem de recalcular via `max(operation_version)` (que corria
+   * risco de duas transações lerem o mesmo máximo antes de qualquer uma commitar).
+   */
+  lastOperationVersion: integer('last_operation_version').notNull().default(0),
 });
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({

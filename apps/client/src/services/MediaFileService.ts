@@ -48,7 +48,10 @@ export interface ImportedMedia {
 }
 
 export class UnsupportedMediaError extends Error {
-  constructor(public readonly mimeType: string | undefined, public readonly fileName: string) {
+  constructor(
+    public readonly mimeType: string | undefined,
+    public readonly fileName: string,
+  ) {
     super(`Unsupported media type "${mimeType ?? 'unknown'}" for file "${fileName}".`);
     this.name = 'UnsupportedMediaError';
   }
@@ -80,11 +83,25 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
   }
 
   const byExtension: Record<string, string> = {
-    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
-    webp: 'image/webp', bmp: 'image/bmp', heic: 'image/heic', heif: 'image/heif',
-    mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', m4v: 'video/x-m4v',
-    mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav',
-    ogg: 'audio/ogg', flac: 'audio/flac', '3gp': 'video/3gpp',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    bmp: 'image/bmp',
+    heic: 'image/heic',
+    heif: 'image/heif',
+    mp4: 'video/mp4',
+    mov: 'video/quicktime',
+    webm: 'video/webm',
+    m4v: 'video/x-m4v',
+    mp3: 'audio/mpeg',
+    m4a: 'audio/mp4',
+    aac: 'audio/aac',
+    wav: 'audio/wav',
+    ogg: 'audio/ogg',
+    flac: 'audio/flac',
+    '3gp': 'video/3gpp',
   };
 
   return byExtension[extension];
@@ -98,7 +115,11 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
  * render. Falha aqui não impede a mídia de existir - vídeo sem miniatura ainda toca, só
  * mostra o ícone genérico na lista.
  */
-async function generateVideoThumbnail(storyId: string, hash: string, videoUri: string): Promise<string | undefined> {
+async function generateVideoThumbnail(
+  storyId: string,
+  hash: string,
+  videoUri: string,
+): Promise<string | undefined> {
   try {
     const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 1000, quality: 0.5 });
     const directory = ensureDirectory(storyMediaDirectory(storyId));
@@ -137,7 +158,11 @@ export const mediaFileService = {
    * Usada tanto ao importar quanto depois de um download vindo do servidor - nos dois
    * casos o arquivo de vídeo já está local, só falta o quadro extraído.
    */
-  async generateVideoThumbnail(storyId: string, hash: string, videoUri: string): Promise<string | undefined> {
+  async generateVideoThumbnail(
+    storyId: string,
+    hash: string,
+    videoUri: string,
+  ): Promise<string | undefined> {
     return generateVideoThumbnail(storyId, hash, videoUri);
   },
 
@@ -146,8 +171,10 @@ export const mediaFileService = {
       return false;
     }
     if (isWeb) {
-      return localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)
-        && webMediaStore.existsSync(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length));
+      return (
+        localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX) &&
+        webMediaStore.existsSync(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length))
+      );
     }
     try {
       return new File(localPath).exists;
@@ -184,7 +211,10 @@ export const mediaFileService = {
    * detecção de mudança; o servidor recalcula o hash dos bytes que recebe, então isto não
    * é uma garantia de segurança que dependa do cliente.
    */
-  async importAsset(storyId: string, asset: DocumentPicker.DocumentPickerAsset): Promise<ImportedMedia> {
+  async importAsset(
+    storyId: string,
+    asset: DocumentPicker.DocumentPickerAsset,
+  ): Promise<ImportedMedia> {
     const mimeType = resolveMimeType(asset);
     const mediaType = mediaTypeForMimeType(mimeType);
 
@@ -209,9 +239,8 @@ export const mediaFileService = {
       }
 
       const localPath = webMediaStore.DESKTOP_MEDIA_URI_PREFIX + relativePath;
-      const thumbnailPath = mediaType === 'video'
-        ? await generateVideoThumbnail(storyId, hash, localPath)
-        : undefined;
+      const thumbnailPath =
+        mediaType === 'video' ? await generateVideoThumbnail(storyId, hash, localPath) : undefined;
 
       return {
         mediaType,
@@ -239,9 +268,10 @@ export const mediaFileService = {
       source.copy(destination);
     }
 
-    const thumbnailPath = mediaType === 'video'
-      ? await generateVideoThumbnail(storyId, hash, destination.uri)
-      : undefined;
+    const thumbnailPath =
+      mediaType === 'video'
+        ? await generateVideoThumbnail(storyId, hash, destination.uri)
+        : undefined;
 
     return {
       mediaType,
@@ -255,7 +285,12 @@ export const mediaFileService = {
   },
 
   /** Grava bytes vindos do servidor no endereço local correspondente ao hash. */
-  async writeDownloaded(storyId: string, hash: string, mimeType: string, bytes: Uint8Array): Promise<string> {
+  async writeDownloaded(
+    storyId: string,
+    hash: string,
+    mimeType: string,
+    bytes: Uint8Array,
+  ): Promise<string> {
     if (isWeb) {
       const relativePath = webMediaRelativePath(storyId, hash, mimeType);
       await webMediaStore.writeBytes(relativePath, bytes);
@@ -280,7 +315,9 @@ export const mediaFileService = {
       if (!localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
         throw new Error(`Not a web media path: "${localPath}".`);
       }
-      return webMediaStore.readBytes(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length));
+      return webMediaStore.readBytes(
+        localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length),
+      );
     }
     return new File(localPath).bytes();
   },
@@ -297,7 +334,8 @@ export const mediaFileService = {
     }
     if (isWeb) {
       if (localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
-        webMediaStore.deleteFile(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length))
+        webMediaStore
+          .deleteFile(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length))
           .catch((error) => console.warn('Could not delete local media file:', localPath, error));
       }
       return;
@@ -317,8 +355,11 @@ export const mediaFileService = {
   /** Remove todos os arquivos de mídia de uma história (usado ao excluir a história). */
   deleteStoryMedia(storyId: string): void {
     if (isWeb) {
-      webMediaStore.deleteDirectory(`media/${storyId}`)
-        .catch((error) => console.warn('Could not delete media directory for story:', storyId, error));
+      webMediaStore
+        .deleteDirectory(`media/${storyId}`)
+        .catch((error) =>
+          console.warn('Could not delete media directory for story:', storyId, error),
+        );
       return;
     }
     try {

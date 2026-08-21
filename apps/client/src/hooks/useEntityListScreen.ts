@@ -13,7 +13,10 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  */
 type AnyEntityStore = EntityStoreCore<unknown> & Record<string, any>;
 
-export interface UseEntityListScreenOptions<TStore extends AnyEntityStore, TKey extends keyof TStore & string> {
+export interface UseEntityListScreenOptions<
+  TStore extends AnyEntityStore,
+  TKey extends keyof TStore & string,
+> {
   /** The entity's Zustand store, as built by `createEntityStore`. */
   useStore: () => TStore;
   collectionKey: TKey;
@@ -35,7 +38,10 @@ export interface UseEntityListScreenOptions<TStore extends AnyEntityStore, TKey 
  * never lags, while the store's term (and therefore the query) only follows once typing
  * pauses.
  */
-export function useEntityListScreen<TStore extends AnyEntityStore, TKey extends keyof TStore & string>({
+export function useEntityListScreen<
+  TStore extends AnyEntityStore,
+  TKey extends keyof TStore & string,
+>({
   useStore,
   collectionKey,
   changeEvent,
@@ -96,10 +102,21 @@ export function useEntityListScreen<TStore extends AnyEntityStore, TKey extends 
     }
   }, [drizzleDb, storyId, setDbAndStoryId, initializeService]);
 
-  // Refetch whenever the committed filter state changes.
+  // Refetch whenever the committed filter state or the open story changes. `fetchItems`
+  // is a stable store method, so without `storyId` here a story switch would keep the
+  // previous story's rows on screen until the user touched a filter.
   useEffect(() => {
     fetchItems();
-  }, [storeSearchTerm, activeFilterTags, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchItems]);
+  }, [
+    storyId,
+    storeSearchTerm,
+    activeFilterTags,
+    activeSort,
+    sortDirection,
+    favoriteFilterState,
+    advancedSearchCriteria,
+    fetchItems,
+  ]);
 
   useEffect(() => {
     const handleChange = (changedStoryId: string) => {

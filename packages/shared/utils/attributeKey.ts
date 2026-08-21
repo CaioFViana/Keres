@@ -1,4 +1,7 @@
-const COMBINING_MARKS = new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g');
+const COMBINING_MARKS = new RegExp(
+  '[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']',
+  'g',
+);
 
 /**
  * "Power Type" -> "power_type". Vive em `packages/shared` (não só no client) para que a API

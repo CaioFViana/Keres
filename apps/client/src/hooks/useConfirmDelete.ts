@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppAlert } from '../utils/AppAlert';
 
-
 export interface ConfirmDeleteOptions {
   /** Translation key for the confirmation dialog title, e.g. `'delete_tag_title'`. */
   titleKey: string;
@@ -29,7 +28,14 @@ export function useConfirmDelete() {
   const { t } = useTranslation();
 
   return useCallback(
-    ({ titleKey, messageKey, onConfirm, successKey, failureKey, onLoadingChange }: ConfirmDeleteOptions) => {
+    ({
+      titleKey,
+      messageKey,
+      onConfirm,
+      successKey,
+      failureKey,
+      onLoadingChange,
+    }: ConfirmDeleteOptions) => {
       AppAlert.alert(
         t(titleKey),
         t(messageKey),

@@ -1,25 +1,28 @@
-import { CreateStoryUpdate, CreateSuggestionDataSchema, CreateSuggestionDataType, DeleteStoryUpdate, PartialSuggestionSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateStoryUpdate,
+  CreateSuggestionDataSchema,
+  CreateSuggestionDataType,
+  DeleteStoryUpdate,
+  PartialSuggestionSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { suggestions } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class SuggestionSyncHandler extends BaseSyncEntityHandler<typeof CreateSuggestionDataSchema, typeof PartialSuggestionSchema> {
+export class SuggestionSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateSuggestionDataSchema,
+  typeof PartialSuggestionSchema
+> {
   entityName = 'Suggestion';
 
   constructor() {
-    super(
-      'suggestions',
-      'id',
-      'version',
-      CreateSuggestionDataSchema,
-      PartialSuggestionSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      }
-    );
+    super('suggestions', 'id', 'version', CreateSuggestionDataSchema, PartialSuggestionSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
@@ -31,12 +34,14 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<typeof CreateSu
         eq(suggestions.storyId, storyId),
         eq(suggestions.type, validatedData.type),
         eq(suggestions.value, validatedData.value),
-        eq(suggestions.isDeleted, false)
+        eq(suggestions.isDeleted, false),
       ),
     });
 
     if (existingSuggestion) {
-      throw new Error(`Conflict: Suggestion with type "${validatedData.type}" and value "${validatedData.value}" already exists in story ${storyId}.`);
+      throw new Error(
+        `Conflict: Suggestion with type "${validatedData.type}" and value "${validatedData.value}" already exists in story ${storyId}.`,
+      );
     }
 
     await db.insert(suggestions).values({
@@ -52,7 +57,12 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<typeof CreateSu
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // If type or value are being updated, check for uniqueness within the story
@@ -69,19 +79,26 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<typeof CreateSu
           eq(suggestions.type, newType),
           eq(suggestions.value, newValue),
           eq(suggestions.isDeleted, false),
-          ne(suggestions.id, update.id!) // Exclude the current suggestion from the check
+          ne(suggestions.id, update.id!), // Exclude the current suggestion from the check
         ),
       });
 
       if (existingSuggestion) {
-        throw new Error(`Conflict: Suggestion with type "${newType}" and value "${newValue}" already exists in story ${storyId}.`);
+        throw new Error(
+          `Conflict: Suggestion with type "${newType}" and value "${newValue}" already exists in story ${storyId}.`,
+        );
       }
     }
 
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

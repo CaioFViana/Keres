@@ -5,8 +5,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/AudioPreviewPlayer';
@@ -14,12 +17,19 @@ import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZo
 import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
 import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
-import { decodeOwnerValue, encodeOwnerValue, useGalleryOwnerOptions } from '../../hooks/useGalleryOwnerOptions';
+import {
+  decodeOwnerValue,
+  encodeOwnerValue,
+  useGalleryOwnerOptions,
+} from '../../hooks/useGalleryOwnerOptions';
 import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { mediaFileService } from '../../services/MediaFileService';
-import { createGalleryRelationService, GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
+import {
+  createGalleryRelationService,
+  GalleryOwnerRef,
+} from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -69,7 +79,11 @@ interface GalleryDetailContentProps {
  * mostrado uma mídia por cima. Um `Modal` não participa do foco do React Navigation, então
  * não aciona esse reset.
  */
-const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, onClose, showCloseButton = false }) => {
+const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
+  galleryId,
+  onClose,
+  showCloseButton = false,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
@@ -119,7 +133,11 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
       setMedia(found);
       setTitle(found.title || '');
       setExtraNotes(found.extraNotes || '');
-      setSelectedOwners(links.map((link) => encodeOwnerValue(link.ownerType as GalleryOwnerRef['ownerType'], link.ownerId)));
+      setSelectedOwners(
+        links.map((link) =>
+          encodeOwnerValue(link.ownerType as GalleryOwnerRef['ownerType'], link.ownerId),
+        ),
+      );
       setError(null);
     } catch (loadError) {
       console.error('Failed to load media:', loadError);
@@ -159,7 +177,19 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
     } finally {
       setSaving(false);
     }
-  }, [media, storyId, userId, galleryService, relationService, title, extraNotes, selectedOwners, showNotification, t, onClose]);
+  }, [
+    media,
+    storyId,
+    userId,
+    galleryService,
+    relationService,
+    title,
+    extraNotes,
+    selectedOwners,
+    showNotification,
+    t,
+    onClose,
+  ]);
 
   const handleToggleFavorite = useCallback(async () => {
     if (!media || !userId) {
@@ -179,34 +209,30 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
       return;
     }
 
-    AppAlert.alert(
-      t('delete_media_title'),
-      t('delete_media_message'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await galleryService.deleteGallery(userId, media.id);
-              // O arquivo local só é removido depois que o registro foi marcado como
-              // excluído: se a ordem fosse a inversa, uma falha na exclusão deixaria uma
-              // mídia ativa apontando para um arquivo que não existe mais. Hash é único por
-              // história (dedupe em galleryMediaImport), então este é o único registro que
-              // aponta para este arquivo e sua miniatura - remover ambos é seguro.
-              mediaFileService.deleteLocal(media.localPath);
-              mediaFileService.deleteLocal(media.thumbnailPath);
-              showNotification(t('media_deleted_successfully'), 'success');
-              onClose();
-            } catch (deleteError) {
-              console.error('Failed to delete media:', deleteError);
-              showNotification(t('media_delete_failed'), 'error');
-            }
-          },
+    AppAlert.alert(t('delete_media_title'), t('delete_media_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await galleryService.deleteGallery(userId, media.id);
+            // O arquivo local só é removido depois que o registro foi marcado como
+            // excluído: se a ordem fosse a inversa, uma falha na exclusão deixaria uma
+            // mídia ativa apontando para um arquivo que não existe mais. Hash é único por
+            // história (dedupe em galleryMediaImport), então este é o único registro que
+            // aponta para este arquivo e sua miniatura - remover ambos é seguro.
+            mediaFileService.deleteLocal(media.localPath);
+            mediaFileService.deleteLocal(media.thumbnailPath);
+            showNotification(t('media_deleted_successfully'), 'success');
+            onClose();
+          } catch (deleteError) {
+            console.error('Failed to delete media:', deleteError);
+            showNotification(t('media_delete_failed'), 'error');
+          }
         },
-      ]
-    );
+      },
+    ]);
   }, [media, userId, galleryService, showNotification, t, onClose]);
 
   const styles = StyleSheet.create({
@@ -342,8 +368,16 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
           <View style={!isCompact && styles.widePreviewColumn}>
             <View style={[styles.preview, !isCompact && styles.widePreview]}>
               {hasLocalImage ? (
-                <TouchableOpacity activeOpacity={0.9} onPress={() => setZoomVisible(true)} style={styles.image}>
-                  <Image source={{ uri: resolvedUri as string }} style={styles.image} contentFit="contain" />
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => setZoomVisible(true)}
+                  style={styles.image}
+                >
+                  <Image
+                    source={{ uri: resolvedUri as string }}
+                    style={styles.image}
+                    contentFit="contain"
+                  />
                 </TouchableOpacity>
               ) : hasLocalVideo ? (
                 <VideoPreviewPlayer key={media.hash} uri={resolvedUri as string} />
@@ -370,7 +404,9 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
 
           <View style={!isCompact && styles.wideDetailsColumn}>
             <View style={styles.headerRow}>
-              <Text style={styles.fileName} numberOfLines={2}>{media.fileName}</Text>
+              <Text style={styles.fileName} numberOfLines={2}>
+                {media.fileName}
+              </Text>
               <View style={styles.headerActions}>
                 {canEdit && (
                   <TouchableOpacity onPress={handleToggleFavorite}>
@@ -395,71 +431,71 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
               </View>
             </View>
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>{t('media_type')}</Text>
-          <Text style={styles.metaValue}>{t(`media_type_${mediaType}`)}</Text>
-        </View>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>{t('media_format')}</Text>
-          <Text style={styles.metaValue}>{media.mimeType}</Text>
-        </View>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>{t('media_size')}</Text>
-          <Text style={styles.metaValue}>{formatSize(media.sizeBytes)}</Text>
-        </View>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>{t('media_sync_status')}</Text>
-          <Text style={styles.metaValue}>
-            {media.downloadState === 'pending'
-              ? t('media_downloading')
-              : media.uploadState === 'uploaded'
-                ? t('media_synced')
-                : media.uploadState === 'failed'
-                  ? t('media_transfer_failed')
-                  : t('media_pending_upload')}
-          </Text>
-        </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>{t('media_type')}</Text>
+              <Text style={styles.metaValue}>{t(`media_type_${mediaType}`)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>{t('media_format')}</Text>
+              <Text style={styles.metaValue}>{media.mimeType}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>{t('media_size')}</Text>
+              <Text style={styles.metaValue}>{formatSize(media.sizeBytes)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>{t('media_sync_status')}</Text>
+              <Text style={styles.metaValue}>
+                {media.downloadState === 'pending'
+                  ? t('media_downloading')
+                  : media.uploadState === 'uploaded'
+                    ? t('media_synced')
+                    : media.uploadState === 'failed'
+                      ? t('media_transfer_failed')
+                      : t('media_pending_upload')}
+              </Text>
+            </View>
 
-        <Text style={styles.sectionTitle}>{t('title')}</Text>
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder={t('media_title_placeholder')}
-          editable={canEdit}
-        />
+            <Text style={styles.sectionTitle}>{t('title')}</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder={t('media_title_placeholder')}
+              editable={canEdit}
+            />
 
-        <Text style={styles.sectionTitle}>{t('extra_notes')}</Text>
-        <TextInput
-          style={[styles.input, styles.notesInput]}
-          value={extraNotes}
-          onChangeText={setExtraNotes}
-          placeholder={t('media_notes_placeholder')}
-          multiline
-          editable={canEdit}
-        />
+            <Text style={styles.sectionTitle}>{t('extra_notes')}</Text>
+            <TextInput
+              style={[styles.input, styles.notesInput]}
+              value={extraNotes}
+              onChangeText={setExtraNotes}
+              placeholder={t('media_notes_placeholder')}
+              multiline
+              editable={canEdit}
+            />
 
-        <Text style={styles.sectionTitle}>{t('media_linked_entities')}</Text>
-        <GroupedMultiSelectPill
-          groups={ownerGroups}
-          selectedValues={selectedOwners}
-          onSelectionChange={canEdit ? setSelectedOwners : () => {}}
-          placeholder={t('media_select_entities')}
-          noOptionsText={t('media_no_entities_available')}
-        />
+            <Text style={styles.sectionTitle}>{t('media_linked_entities')}</Text>
+            <MultiSelectPill
+              groups={ownerGroups}
+              selectedValues={selectedOwners}
+              onSelectionChange={canEdit ? setSelectedOwners : () => {}}
+              placeholder={t('media_select_entities')}
+              noOptionsText={t('media_no_entities_available')}
+            />
 
-        <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
+            <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
 
-        {canEdit && (
-          <View style={styles.actions}>
-            <Button onPress={handleSave} disabled={saving}>
-              {saving ? t('saving') : t('save_changes')}
-            </Button>
-            <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
-              {t('delete')}
-            </Button>
-          </View>
-        )}
+            {canEdit && (
+              <View style={styles.actions}>
+                <Button onPress={handleSave} disabled={saving}>
+                  {saving ? t('saving') : t('save_changes')}
+                </Button>
+                <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
+                  {t('delete')}
+                </Button>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>

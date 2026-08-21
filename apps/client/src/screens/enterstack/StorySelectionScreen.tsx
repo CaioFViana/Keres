@@ -1,3 +1,4 @@
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
@@ -6,7 +7,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -16,8 +16,13 @@ import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonCardStyles, getCommonContainerStyles, useThemeColors } from '../../theme/commonStyles';
+import {
+  getCommonCardStyles,
+  getCommonContainerStyles,
+  useThemeColors,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -27,7 +32,10 @@ type RootStackParamList = {
   Settings: undefined;
 };
 
-type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
+type StorySelectionScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'StorySelection'
+>;
 
 // ThemedStoryItem component
 interface ThemedStoryItemProps {
@@ -58,7 +66,11 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
       style={[
         commonCardStyles.cardContainer,
         styles.storyItemBase,
-        { backgroundColor: storyThemeColors.card, borderColor: storyThemeColors.border, borderWidth: 3 },
+        {
+          backgroundColor: storyThemeColors.card,
+          borderColor: storyThemeColors.border,
+          borderWidth: 3,
+        },
       ]}
       onPress={() => onSelectStory(story)}
     >
@@ -72,8 +84,16 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
           />
           <Text style={[styles.storyTitle, { color: storyThemeColors.text }]}>{story.title}</Text>
         </View>
-        {story.genre && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('genre')}: {story.genre}</Text>}
-        {story.serverId && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('server')}: {serverName || story.serverId}</Text>}
+        {story.genre && (
+          <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>
+            {t('genre')}: {story.genre}
+          </Text>
+        )}
+        {story.serverId && (
+          <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>
+            {t('server')}: {serverName || story.serverId}
+          </Text>
+        )}
         {story.description && (
           <Text style={[styles.storyDescription, { color: storyThemeColors.textSecondary }]}>
             {story.description.length > 50
@@ -83,7 +103,10 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
         )}
       </View>
       <View style={styles.storyItemActions}>
-        <TouchableOpacity onPress={() => onToggleFavorite(story.id, story.isFavorite)} style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={() => onToggleFavorite(story.id, story.isFavorite)}
+          style={styles.actionButton}
+        >
           <Ionicons
             name={story.isFavorite ? 'star' : 'star-outline'}
             size={24}
@@ -98,9 +121,8 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
   );
 };
 
-
 const StorySelectionScreen = () => {
-  useBackButtonHandler()
+  useBackButtonHandler();
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
@@ -109,6 +131,7 @@ const StorySelectionScreen = () => {
   const { setSelectedStory } = useStoryStore();
   const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
   const { t } = useTranslation();
+  useDocumentTitle(t('story_selection_title'));
   const { showNotification } = useNotificationStore();
   const [serverNamesById, setServerNamesById] = useState<Record<string, string>>({});
 
@@ -131,9 +154,6 @@ const StorySelectionScreen = () => {
     const servers = await serverService.getAllServers();
     setServerNamesById(Object.fromEntries(servers.map((server) => [server.id, server.name])));
   }, [serverService]);
-
-
-
 
   useEffect(() => {
     if (!isFocused) {
@@ -285,7 +305,7 @@ const StorySelectionScreen = () => {
       justifyContent: 'center',
       alignItems: 'center',
       elevation: 8,
-      shadowColor: "#000000",
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 4,
@@ -312,7 +332,9 @@ const StorySelectionScreen = () => {
           />
         )}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={{ color: colors.textSecondary }}>{t('no_stories_found_create_one')}</Text>}
+        ListEmptyComponent={
+          <Text style={{ color: colors.textSecondary }}>{t('no_stories_found_create_one')}</Text>
+        }
         style={{ flex: 1 }}
       />
       <TouchableOpacity
@@ -325,6 +347,5 @@ const StorySelectionScreen = () => {
     </View>
   );
 };
-
 
 export default StorySelectionScreen;

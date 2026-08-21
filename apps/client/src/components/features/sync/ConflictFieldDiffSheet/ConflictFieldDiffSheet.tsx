@@ -1,0 +1,209 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useDrizzle } from '../../../../db';
+import { ConflictSummary } from '../../../../services/ConflictSummaryService';
+import { PendingConflict } from '../../../../services/SyncConflictService';
+import { useSyncConflictStore } from '../../../../state/syncConflictStore';
+import { useTheme } from '../../../../theme';
+import Button from '@/src/components/common/controls/Button/Button';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+
+/** De qual lado vem o valor escolhido para um campo em disputa. */
+type FieldChoice = 'local' | 'server';
+
+interface ConflictFieldDiffSheetProps {
+  conflict: PendingConflict;
+  summary: ConflictSummary;
+  visible: boolean;
+  onClose: () => void;
+}
+
+/**
+ * Drill-in de diff campo a campo - a lógica de `SyncConflictModal.tsx` original, só que
+ * alcançável apenas para conflitos `kind === 'content'` com múltiplos campos genuinamente
+ * disputados (`summary.diffFields`, já com nomes resolvidos em vez de IDs crus quando um
+ * campo aponta pra outra entidade). Nunca abre para nenhum dos 8 tipos de relação - esses se
+ * resolvem em um toque direto na lista.
+ */
+const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
+  conflict,
+  summary,
+  visible,
+  onClose,
+}) => {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const drizzleDb = useDrizzle();
+
+  const isResolving = useSyncConflictStore((state) => state.isResolving);
+  const keepLocal = useSyncConflictStore((state) => state.keepLocal);
+  const keepServer = useSyncConflictStore((state) => state.keepServer);
+
+  const [fieldChoices, setFieldChoices] = useState<Record<string, FieldChoice>>({});
+
+  useEffect(() => {
+    const defaults: Record<string, FieldChoice> = {};
+    for (const field of summary.diffFields) {
+      defaults[field.field] = 'local';
+    }
+    setFieldChoices(defaults);
+  }, [conflict.id, summary.diffFields]);
+
+  const hasServerChoice = useMemo(
+    () => Object.values(fieldChoices).some((choice) => choice === 'server'),
+    [fieldChoices],
+  );
+
+  const handleKeepMine = useCallback(async () => {
+    const chosenValues = hasServerChoice
+      ? Object.fromEntries(
+          Object.entries(conflict.localValues).map(([field, localValue]) => [
+            field,
+            fieldChoices[field] === 'server' ? conflict.serverValues?.[field] : localValue,
+          ]),
+        )
+      : undefined;
+    await keepLocal(drizzleDb, conflict.id, chosenValues);
+    onClose();
+  }, [conflict, fieldChoices, hasServerChoice, keepLocal, drizzleDb, onClose]);
+
+  const handleKeepServer = useCallback(async () => {
+    await keepServer(drizzleDb, conflict.id);
+    onClose();
+  }, [conflict.id, keepServer, drizzleDb, onClose]);
+
+  const keepMineLabel = hasServerChoice ? t('conflict_apply_merge') : t('conflict_keep_mine');
+
+  const styles = StyleSheet.create({
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 24,
+      maxHeight: '85%',
+    },
+    handle: {
+      alignSelf: 'center',
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginBottom: 14,
+    },
+    header: { flexDirection: 'row', alignItems: 'center' },
+    headerText: { flex: 1, marginRight: 12 },
+    title: { fontSize: 18, fontWeight: 'bold', color: colors.text },
+    subtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    closeButton: { padding: 4 },
+    fieldBlock: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 14,
+    },
+    fieldName: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    option: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      borderRadius: 6,
+      marginBottom: 4,
+    },
+    optionSelected: { backgroundColor: colors.primaryContainer },
+    optionLabel: { fontSize: 12, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 2 },
+    optionValue: { fontSize: 14, color: colors.text },
+    optionTextWrapper: { flex: 1, marginLeft: 8 },
+    footer: { marginTop: 18 },
+    secondaryButton: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginTop: 8,
+    },
+    secondaryButtonText: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
+  });
+
+  return (
+    <ResponsiveModal
+      visible={visible}
+      onClose={onClose}
+      placement="adaptive"
+      contentStyle={styles.sheet}
+      maxHeight="85%"
+    >
+      <View style={styles.handle} />
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{t('conflict_choose_per_field')}</Text>
+          <Text style={styles.subtitle}>{`${summary.entityLabel} — ${summary.title}`}</Text>
+        </View>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView>
+        {summary.diffFields.map((field) => {
+          const choice = fieldChoices[field.field] || 'local';
+          return (
+            <View key={field.field} style={styles.fieldBlock}>
+              <Text style={styles.fieldName}>{field.label}</Text>
+
+              <TouchableOpacity
+                style={[styles.option, choice === 'local' && styles.optionSelected]}
+                onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'local' }))}
+              >
+                <Ionicons
+                  name={choice === 'local' ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                  color={choice === 'local' ? colors.primary : colors.textSecondary}
+                />
+                <View style={styles.optionTextWrapper}>
+                  <Text style={styles.optionLabel}>{t('conflict_side_mine')}</Text>
+                  <Text style={styles.optionValue}>{field.localDisplay}</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.option, choice === 'server' && styles.optionSelected]}
+                onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'server' }))}
+              >
+                <Ionicons
+                  name={choice === 'server' ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                  color={choice === 'server' ? colors.primary : colors.textSecondary}
+                />
+                <View style={styles.optionTextWrapper}>
+                  <Text style={styles.optionLabel}>{t('conflict_side_server')}</Text>
+                  <Text style={styles.optionValue}>{field.serverDisplay}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+
+        <View style={styles.footer}>
+          <Button onPress={handleKeepMine} disabled={isResolving}>
+            {keepMineLabel}
+          </Button>
+          <Button onPress={handleKeepServer} disabled={isResolving} style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>{t('conflict_keep_server')}</Text>
+          </Button>
+        </View>
+      </ScrollView>
+    </ResponsiveModal>
+  );
+};
+
+export default ConflictFieldDiffSheet;

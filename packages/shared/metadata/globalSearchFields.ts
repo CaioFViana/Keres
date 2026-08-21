@@ -19,7 +19,8 @@ export type GlobalSearchEntityType =
   | 'Choice'
   | 'Chapter'
   | 'Note'
-  | 'WorldRule';
+  | 'WorldRule'
+  | 'Mode';
 
 export interface GlobalSearchFieldConfig {
   /** Column used as the result's display title. */
@@ -31,7 +32,21 @@ export interface GlobalSearchFieldConfig {
 export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearchFieldConfig> = {
   Character: {
     titleField: 'name',
-    searchFields: ['name', 'title', 'gender', 'race', 'subrace', 'description', 'personality', 'motivation', 'qualities', 'weaknesses', 'biography', 'plannedTimeline', 'extraNotes'],
+    searchFields: [
+      'name',
+      'title',
+      'gender',
+      'race',
+      'subrace',
+      'description',
+      'personality',
+      'motivation',
+      'qualities',
+      'weaknesses',
+      'biography',
+      'plannedTimeline',
+      'extraNotes',
+    ],
   },
   Location: {
     titleField: 'name',
@@ -68,5 +83,11 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
   WorldRule: {
     titleField: 'title',
     searchFields: ['title', 'description', 'extraNotes'],
+  },
+  // Modo não tem tela própria: o resultado carrega o id do personagem dono, e abrir leva ao
+  // detalhe dele, onde os modos são listados (ver ENTITY_ROUTES no client).
+  Mode: {
+    titleField: 'name',
+    searchFields: ['name', 'modeChanges'],
   },
 };

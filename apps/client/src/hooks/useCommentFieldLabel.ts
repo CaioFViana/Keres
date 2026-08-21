@@ -11,7 +11,11 @@ import { storySchemaFields } from '../db/schema';
  * customizados (`fieldId`), busca `StorySchemaField.name` (definido pelo usuário, sem
  * chave de tradução). Cai no `fieldKey`/`fieldId` cru só se nada for encontrado.
  */
-export function useCommentFieldLabel(entityType: string, fieldKey: string | null, fieldId: string | null): string {
+export function useCommentFieldLabel(
+  entityType: string,
+  fieldKey: string | null,
+  fieldId: string | null,
+): string {
   const { t } = useTranslation();
   const db = useDrizzle();
   const [customFieldName, setCustomFieldName] = useState<string | null>(null);
@@ -22,15 +26,20 @@ export function useCommentFieldLabel(entityType: string, fieldKey: string | null
       setCustomFieldName(null);
       return;
     }
-    db.query.storySchemaFields.findFirst({
-      where: eq(storySchemaFields.id, fieldId),
-      columns: { name: true },
-    }).then((field) => {
-      if (!cancelled) setCustomFieldName(field?.name ?? null);
-    }).catch(() => {
-      if (!cancelled) setCustomFieldName(null);
-    });
-    return () => { cancelled = true; };
+    db.query.storySchemaFields
+      .findFirst({
+        where: eq(storySchemaFields.id, fieldId),
+        columns: { name: true },
+      })
+      .then((field) => {
+        if (!cancelled) setCustomFieldName(field?.name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setCustomFieldName(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [db, fieldId]);
 
   if (fieldId) {

@@ -4,7 +4,7 @@ export const ItemSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   characterOwnerId: z.string().nullable(),
-  name: z.string().min(1, "Item name cannot be empty"),
+  name: z.string().min(1, 'Item name cannot be empty'),
   category: z.string().nullable(),
   description: z.string().nullable(),
   initialState: z.string().nullable(),
@@ -26,7 +26,7 @@ export const CreateItemDataSchema = ItemSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  name: z.string().min(1, "Item name cannot be empty"),
+  name: z.string().min(1, 'Item name cannot be empty'),
   characterOwnerId: z.string().nullable().default(null), // Added
   category: z.string().nullable().default(null), // Added
   description: z.string().nullable().default(null),
@@ -35,7 +35,7 @@ export const CreateItemDataSchema = ItemSchema.omit({
   extraNotes: z.string().nullable().default(null),
 });
 
-export const PartialItemSchema = ItemSchema.partial();
+export const PartialItemSchema = CreateItemDataSchema.partial();
 
 export type CreateItemDataType = z.infer<typeof CreateItemDataSchema>;
 export type ItemType = z.infer<typeof ItemSchema>;

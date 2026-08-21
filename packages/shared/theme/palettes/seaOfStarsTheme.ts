@@ -1,0 +1,53 @@
+import { ThemeColors } from '../ThemeColors';
+
+const lightColors: ThemeColors = {
+  primary: '#B58500',
+  primaryVariant: '#8D6800',
+  primaryContainer: '#FFE08A',
+  onPrimaryContainer: '#241A00',
+  secondary: '#3E6476',
+  secondaryVariant: '#274C5D',
+  background: '#F5FAFF',
+  surface: '#FBFCFF',
+  error: '#BA1A1A',
+  onPrimary: '#241A00',
+  onSecondary: '#FFFFFF',
+  onBackground: '#171C22',
+  onSurface: '#171C22',
+  onError: '#FFFFFF',
+  text: '#171C22',
+  textSecondary: '#52606E',
+  card: '#E7F1FA',
+  border: '#BFCBDA',
+  notification: '#805B00',
+  accent: '#176B91',
+  star: '#8A6500',
+  shadow: '#000000',
+};
+
+const darkColors: ThemeColors = {
+  primary: '#FFE16A',
+  primaryVariant: '#F1C93F',
+  primaryContainer: '#6C5200',
+  onPrimaryContainer: '#FFE08A',
+  secondary: '#A6CCDF',
+  secondaryVariant: '#8AB1C4',
+  background: '#0C1822',
+  surface: '#13202B',
+  error: '#FFB4AB',
+  onPrimary: '#3D2F00',
+  onSecondary: '#1F3642',
+  onBackground: '#DEE5EC',
+  onSurface: '#DEE5EC',
+  onError: '#690005',
+  text: '#DEE5EC',
+  textSecondary: '#BFCBDA',
+  card: '#1D2B37',
+  border: '#3A4B59',
+  notification: '#FFD166',
+  accent: '#80D8FF',
+  star: '#FFD166',
+  shadow: '#000000',
+};
+
+export const seaOfStarsTheme = { lightColors, darkColors };

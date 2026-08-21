@@ -13,8 +13,9 @@ if (!fs.existsSync(clientMigrationsDir)) {
 }
 
 try {
-  const drizzleMigrationFiles = fs.readdirSync(drizzleMigrationsDir)
-    .filter(file => file.endsWith('.sql'))
+  const drizzleMigrationFiles = fs
+    .readdirSync(drizzleMigrationsDir)
+    .filter((file) => file.endsWith('.sql'))
     .sort();
 
   let imports = '';
@@ -33,7 +34,10 @@ export default async function (db: SQLiteDatabase) {
 \`);
 }
 `;
-    fs.writeFileSync(path.join(clientMigrationsDir, `${fileNameWithoutExt}.ts`), tsMigrationContent);
+    fs.writeFileSync(
+      path.join(clientMigrationsDir, `${fileNameWithoutExt}.ts`),
+      tsMigrationContent,
+    );
 
     const migrationName = `migration_${index + 1}`;
     imports += `import ${migrationName} from './${fileNameWithoutExt}';
@@ -46,9 +50,8 @@ export default async function (db: SQLiteDatabase) {
 // Do not modify this file directly.
 
 ${imports}
-
 const migrations = [
-${migrationArray.trim()}
+  ${migrationArray.trim()}
 ];
 
 export default migrations;

@@ -14,7 +14,9 @@
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "version": 1,
     "isDeleted": false,
-    "deletedAt": null
+    "deletedAt": null,
+    "statSystem": false,
+    "statNotation": "letter"
   },
   "chapters": [
     {
@@ -1059,6 +1061,77 @@
       "relationType": "connected_to"
     }
   ],
+  "comments": [
+    {
+      "id": "01KZZ000000000000000000051",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "entityId": "01KYXGBR5M62694V70YZH2QPFC",
+      "fieldId": null,
+      "fieldKey": "description",
+      "contentSnapshot": "Kaguya-hime pertence tanto ao bosque de bambu quanto à lua.",
+      "excerptText": "Kaguya-hime pertence a dois mundos.",
+      "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
+      "commentText": "Exemplo editorial: antecipe cedo o distanciamento de Kaguya-hime da vida na corte.",
+      "criticality": 2,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "seeAlsoRelations": [
+    {
+      "id": "01KZZ000000000000000000052",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityAType": "Character",
+      "entityAId": "01KYXGBR5M62694V70YZH2QPFC",
+      "entityBType": "Location",
+      "entityBId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "favorites": [
+    {
+      "id": "01KZZ000000000000000000054",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Story",
+      "userId": "EXAMPLEUSERPLACEHOLDER0000",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceCheckGroups": [],
+  "choiceChecks": [],
+  "effects": [
+    {
+      "id": "01KZZ000000000000000000053",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "entityId": "01KYXGBR5M8E9XRNT31VZ9581J",
+      "effectType": "triggerSet",
+      "itemId": null,
+      "triggerName": "kaguya_e_encontrada",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 2
+  "formatVersion": 5,
+  "stats": [],
+  "statStrengths": [],
+  "statRelations": [],
+  "modes": []
 }

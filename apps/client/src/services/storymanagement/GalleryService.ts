@@ -1,12 +1,27 @@
 import { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { galleries, GalleryInsert, galleryRelations, GallerySelect, MediaTransferState } from '../../db/schema';
+import {
+  galleries,
+  GalleryInsert,
+  galleryRelations,
+  GallerySelect,
+  MediaTransferState,
+} from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
+import {
+  decorateFavorite,
+  normalizeFavoriteCreate,
+  normalizeFavoriteUpdate,
+  persistInitialFavorite,
+} from './favoriteBehaviorUtils';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 
 export type { FavoriteFilterState };
@@ -59,16 +74,36 @@ export interface GalleryService {
   getById(galleryId: string): Promise<GallerySelect | undefined>;
   /** A mídia desta história com estes bytes, se já existir. Base do dedupe na importação. */
   getByHash(storyId: string, hash: string): Promise<GallerySelect | undefined>;
-  getGalleriesForOwner(storyId: string, ownerId: string, ownerType: GalleryOwnerEntity): Promise<GallerySelect[]>;
+  getGalleriesForOwner(
+    storyId: string,
+    ownerId: string,
+    ownerType: GalleryOwnerEntity,
+  ): Promise<GallerySelect[]>;
   createGallery(currentUserId: string, media: NewGalleryMedia): Promise<GallerySelect>;
-  updateGallery(currentUserId: string, galleryId: string, data: Partial<Pick<GalleryInsert, 'title' | 'extraNotes' | 'isFavorite' | 'fileName'>>): Promise<void>;
-  updateGalleryFavoriteStatus(currentUserId: string, galleryId: string, isFavorite: boolean): Promise<void>;
+  updateGallery(
+    currentUserId: string,
+    galleryId: string,
+    data: Partial<Pick<GalleryInsert, 'title' | 'extraNotes' | 'isFavorite' | 'fileName'>>,
+  ): Promise<void>;
+  updateGalleryFavoriteStatus(
+    currentUserId: string,
+    galleryId: string,
+    isFavorite: boolean,
+  ): Promise<void>;
   deleteGallery(currentUserId: string, galleryId: string): Promise<void>;
   /**
    * Atualiza apenas o estado de transferência/arquivo local. Deliberadamente não gera
    * operação nem incrementa `version`: nada disto existe fora deste aparelho.
    */
-  setLocalFileState(galleryId: string, state: { localPath?: string | null; uploadState?: MediaTransferState; downloadState?: MediaTransferState; thumbnailPath?: string | null }): Promise<void>;
+  setLocalFileState(
+    galleryId: string,
+    state: {
+      localPath?: string | null;
+      uploadState?: MediaTransferState;
+      downloadState?: MediaTransferState;
+      thumbnailPath?: string | null;
+    },
+  ): Promise<void>;
   /** Mídias cujos bytes ainda não subiram. */
   getPendingUploads(storyId: string): Promise<GallerySelect[]>;
   /** Mídias que existem como metadado mas cujo arquivo ainda não está no aparelho. */
@@ -91,7 +126,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         // Busca no título e no nome do arquivo: o título costuma estar vazio logo depois
         // de importar, e nesse momento o nome do arquivo é a única coisa pesquisável.
         conditions.push(
-          sql`(${galleries.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE OR ${galleries.fileName} LIKE ${`%${searchTerm}%`} COLLATE NOCASE)` as SQL<boolean>
+          sql`(${galleries.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE OR ${galleries.fileName} LIKE ${`%${searchTerm}%`} COLLATE NOCASE)` as SQL<boolean>,
         );
       }
 
@@ -105,7 +140,11 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         conditions.push(eq(galleries.isFavorite, false) as SQL<boolean>);
       }
 
-      let query = db.select().from(galleries).where(and(...conditions)).$dynamic();
+      let query = db
+        .select()
+        .from(galleries)
+        .where(and(...conditions))
+        .$dynamic();
 
       const orderBy = sortDirection === 'desc' ? desc : asc;
       switch (sortBy) {
@@ -146,20 +185,23 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         where: and(
           eq(galleries.storyId, storyId),
           eq(galleries.hash, hash),
-          eq(galleries.isDeleted, false)
+          eq(galleries.isDeleted, false),
         ),
       });
     },
 
     async getGalleriesForOwner(storyId, ownerId, ownerType): Promise<GallerySelect[]> {
-      const links = await db.select({ galleryId: galleryRelations.galleryId })
+      const links = await db
+        .select({ galleryId: galleryRelations.galleryId })
         .from(galleryRelations)
-        .where(and(
-          eq(galleryRelations.storyId, storyId),
-          eq(galleryRelations.ownerId, ownerId),
-          eq(galleryRelations.ownerType, ownerType),
-          eq(galleryRelations.isDeleted, false)
-        ))
+        .where(
+          and(
+            eq(galleryRelations.storyId, storyId),
+            eq(galleryRelations.ownerId, ownerId),
+            eq(galleryRelations.ownerType, ownerType),
+            eq(galleryRelations.isDeleted, false),
+          ),
+        )
         .execute();
 
       const galleryIds = links.map((link) => link.galleryId);
@@ -167,7 +209,8 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         return [];
       }
 
-      return db.select()
+      return db
+        .select()
         .from(galleries)
         .where(and(inArray(galleries.id, galleryIds), eq(galleries.isDeleted, false)))
         .orderBy(desc(galleries.createdAt))
@@ -197,10 +240,30 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       newGallery = favorite.data;
 
       const result = await db.insert(galleries).values(newGallery).returning().get();
-      await persistInitialFavorite(db, newGallery.storyId, newGallery.id, 'Gallery', currentUserId, favorite.individualFavorite);
+      await persistInitialFavorite(
+        db,
+        newGallery.storyId,
+        newGallery.id,
+        'Gallery',
+        currentUserId,
+        favorite.individualFavorite,
+      );
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, media.storyId, currentUserId);
-      await recordLocalOperation(db, media.storyId, userIdToLog, 'create', 'Gallery', result.id, syncablePayload(result));
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        media.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        media.storyId,
+        userIdToLog,
+        'create',
+        'Gallery',
+        result.id,
+        syncablePayload(result),
+      );
       entityEventEmitter.emit('gallery_changed', media.storyId, result.id);
 
       return result;
@@ -212,7 +275,14 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         throw new Error(`Gallery with ID ${galleryId} not found for update.`);
       }
       await assertStoryIsWritable(db, original.storyId);
-      data = await normalizeFavoriteUpdate(db, original.storyId, galleryId, 'Gallery', currentUserId, data);
+      data = await normalizeFavoriteUpdate(
+        db,
+        original.storyId,
+        galleryId,
+        'Gallery',
+        currentUserId,
+        data,
+      );
 
       const changes = getChangedFields(original, { ...original, ...data });
       delete changes.version;
@@ -222,7 +292,8 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         return;
       }
 
-      const [updated] = await db.update(galleries)
+      const [updated] = await db
+        .update(galleries)
         .set({ ...data, updatedAt: new Date(), version: sql`${galleries.version} + 1` })
         .where(eq(galleries.id, galleryId))
         .returning({ id: galleries.id, storyId: galleries.storyId, version: galleries.version });
@@ -231,7 +302,12 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         throw new Error(`Failed to update gallery ${galleryId} or gallery not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updated.storyId,
+        currentUserId,
+      );
       // Log the diff already computed above, not the raw `data` input - the input has every
       // field the caller sends, changed or not.
       await recordLocalOperation(db, updated.storyId, userIdToLog, 'update', 'Gallery', galleryId, {
@@ -253,10 +329,21 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       }
       await assertStoryIsWritable(db, toDelete.storyId);
 
-      const [updated] = await db.update(galleries)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${galleries.version} + 1` })
+      const [updated] = await db
+        .update(galleries)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${galleries.version} + 1`,
+        })
         .where(eq(galleries.id, galleryId))
-        .returning({ id: galleries.id, storyId: galleries.storyId, isDeleted: galleries.isDeleted, version: galleries.version });
+        .returning({
+          id: galleries.id,
+          storyId: galleries.storyId,
+          isDeleted: galleries.isDeleted,
+          version: galleries.version,
+        });
 
       if (!updated) {
         throw new Error(`Failed to delete gallery ${galleryId} or gallery not found.`);
@@ -266,26 +353,53 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       // excluída não é exibível, e deixá-lo ativo faria o servidor recusar futuras
       // operações sobre ele por a mídia não existir mais.
       const orphanLinks = await db.query.galleryRelations.findMany({
-        where: and(eq(galleryRelations.galleryId, galleryId), eq(galleryRelations.isDeleted, false)),
+        where: and(
+          eq(galleryRelations.galleryId, galleryId),
+          eq(galleryRelations.isDeleted, false),
+        ),
       });
 
       for (const link of orphanLinks) {
-        const [updatedLink] = await db.update(galleryRelations)
-          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${galleryRelations.version} + 1` })
+        const [updatedLink] = await db
+          .update(galleryRelations)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${galleryRelations.version} + 1`,
+          })
           .where(eq(galleryRelations.id, link.id))
           .returning();
 
         if (updatedLink) {
-          const linkUserId = await getUserIdForOperation(db, serverService, updatedLink.storyId, currentUserId);
-          await recordLocalOperation(db, updatedLink.storyId, linkUserId, 'delete', 'GalleryRelation', updatedLink.id, {
-            id: updatedLink.id,
-            isDeleted: true,
-            version: updatedLink.version,
-          });
+          const linkUserId = await getUserIdForOperation(
+            db,
+            serverService,
+            updatedLink.storyId,
+            currentUserId,
+          );
+          await recordLocalOperation(
+            db,
+            updatedLink.storyId,
+            linkUserId,
+            'delete',
+            'GalleryRelation',
+            updatedLink.id,
+            {
+              id: updatedLink.id,
+              isDeleted: true,
+              version: updatedLink.version,
+            },
+          );
         }
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updated.storyId,
+        currentUserId,
+      );
       await recordLocalOperation(db, updated.storyId, userIdToLog, 'delete', 'Gallery', galleryId, {
         id: updated.id,
         isDeleted: updated.isDeleted,
@@ -296,9 +410,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
     },
 
     async setLocalFileState(galleryId, state): Promise<void> {
-      await db.update(galleries)
-        .set(state)
-        .where(eq(galleries.id, galleryId));
+      await db.update(galleries).set(state).where(eq(galleries.id, galleryId));
     },
 
     async getPendingUploads(storyId): Promise<GallerySelect[]> {
@@ -306,7 +418,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         where: and(
           eq(galleries.storyId, storyId),
           eq(galleries.isDeleted, false),
-          inArray(galleries.uploadState, ['pending', 'failed'])
+          inArray(galleries.uploadState, ['pending', 'failed']),
         ),
       });
     },
@@ -316,7 +428,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         where: and(
           eq(galleries.storyId, storyId),
           eq(galleries.isDeleted, false),
-          inArray(galleries.downloadState, ['pending', 'failed'])
+          inArray(galleries.downloadState, ['pending', 'failed']),
         ),
       });
     },

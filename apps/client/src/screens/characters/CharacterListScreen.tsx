@@ -6,14 +6,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CharacterListItem from '@/src/components/features/list-items/CharacterListItem';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import {
+  CharacterStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { CharacterWithTags } from '../../services/storymanagement/CharacterService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore';
@@ -101,33 +107,44 @@ const CharactersScreen = () => {
       setDocumentTitle(t('characters_title'));
       navigation.getParent()?.setOptions({
         title: t('characters_title'),
-        headerRight: canEdit ? () => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="add" size={30} color={colors.text} />
-          </TouchableOpacity>
-        ) : undefined,
+        headerRight: canEdit
+          ? () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
+                style={{ marginRight: 15 }}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )
+          : undefined,
       });
-    }, [navigation, colors.text, t, canEdit])
+    }, [navigation, colors.text, t, canEdit]),
   );
 
-  const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {
-    await toggleFavorite(characterId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (characterId: string, isFavorite: boolean) => {
+      await toggleFavorite(characterId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const handleViewDetails = useCallback((characterId: string) => {
-    navigation.navigate('CharacterDetail', { characterId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (characterId: string) => {
+      navigation.navigate('CharacterDetail', { characterId });
+    },
+    [navigation],
+  );
 
-  const memoizedRenderItem = useCallback(({ item }: { item: CharacterWithTags }) => (
-    <CharacterListItem
-      character={item}
-      onToggleFavorite={handleToggleFavorite}
-      onViewDetails={handleViewDetails}
-    />
-  ), [handleToggleFavorite, handleViewDetails]);
+  const memoizedRenderItem = useCallback(
+    ({ item }: { item: CharacterWithTags }) => (
+      <CharacterListItem
+        character={item}
+        onToggleFavorite={handleToggleFavorite}
+        onViewDetails={handleViewDetails}
+      />
+    ),
+    [handleToggleFavorite, handleViewDetails],
+  );
 
   const memoizedTagFilterOptions = useMemo(() => {
     return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));

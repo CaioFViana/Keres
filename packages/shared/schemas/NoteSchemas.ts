@@ -23,11 +23,11 @@ export const CreateNoteDataSchema = NoteSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  title: z.string().min(1, "Note title cannot be empty"),
+  title: z.string().min(1, 'Note title cannot be empty'),
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialNoteSchema = NoteSchema.partial();
+export const PartialNoteSchema = CreateNoteDataSchema.partial();
 
 export type CreateNoteDataType = z.infer<typeof CreateNoteDataSchema>;
 export type NoteType = z.infer<typeof NoteSchema>;

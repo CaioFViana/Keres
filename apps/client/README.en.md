@@ -132,5 +132,5 @@ The documents below are currently maintained in Portuguese:
 
 - [Screen flow](../../docs/screen_flow.md)
 - [Project structure](../../docs/file_structure.md)
-- [Conflict resolution strategy](../../docs/conflict_resolution_client_strategy.md)
+- [Sync and conflict resolution](../../docs/conflict_resolution_client_strategy.md)
 - [Choice mechanics](../../docs/choice_mechanics.md)

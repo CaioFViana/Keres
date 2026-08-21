@@ -1,8 +1,10 @@
 import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
 import { eq, sql } from 'drizzle-orm';
+import { BCRYPT_COST } from '../config/bcrypt';
 import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'
 import { users } from '../db/schema/tables/users'; // Import the users schema
+import { recoveryCodeService } from './RecoveryCodeService';
 
 export class TagAlreadyTakenError extends Error {
   constructor() {
@@ -89,7 +91,11 @@ export class UserService {
   }
 
   /** Auto-serviço: exige a senha atual, diferente do reset do painel admin que a ignora. */
-  async changeOwnPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changeOwnPassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { password: true },
@@ -103,11 +109,29 @@ export class UserService {
       throw new InvalidCurrentPasswordError();
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST);
     await db
       .update(users)
       .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, userId));
+  }
+
+  /** Auto-serviço: exige a senha atual, mesma justificativa de changeOwnPassword. */
+  async regenerateRecoveryCodes(userId: string, currentPassword: string): Promise<string[]> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { password: true },
+    });
+    if (!user) {
+      throw new Error('User not found.');
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new InvalidCurrentPasswordError();
+    }
+
+    return recoveryCodeService.generateCodes(userId);
   }
 }
 

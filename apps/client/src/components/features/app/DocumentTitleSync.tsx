@@ -5,10 +5,10 @@ import { setDocumentTitle } from '../../../utils/documentTitle';
  * Sets the initial `document.title` before any screen has focused yet (e.g. during the
  * cold-install wizard, which sets no title of its own).
  *
- * Every screen that has a title to show calls `setDocumentTitle` itself, directly, from the
- * same focus effect that already sets its in-app header title (see
- * `apps/client/src/utils/documentTitle.ts`) - this component does NOT try to derive titles from
- * React Navigation's `getCurrentOptions()`/`'options'` event.
+ * Every screen that has a title to show updates it from its navigation focus effect, either
+ * directly or through `useDocumentTitle` (see `apps/client/src/utils/documentTitle.ts`). This
+ * component does NOT try to derive titles from React Navigation's
+ * `getCurrentOptions()`/`'options'` event.
  *
  * That was tried first and reverted: `getCurrentOptions()` resolves the *deepest focused leaf's
  * own* options, but every list/detail/form screen in this app sets its title one level up (on

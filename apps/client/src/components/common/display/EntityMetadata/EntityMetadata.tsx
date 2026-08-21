@@ -39,7 +39,8 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, upd
     },
   });
 
-  const formatDateTime = (date: Date) => date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const formatDateTime = (date: Date) =>
+    date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
   return (
     <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>

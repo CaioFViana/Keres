@@ -6,11 +6,17 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CharacterRelationListItem from '@/src/components/features/list-items/CharacterRelationListItem';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { CharacterRelationsStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Assuming CharacterRelationsStackParamList exists
+import {
+  CharacterRelationsStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack'; // Assuming CharacterRelationsStackParamList exists
 import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterRelationStore } from '../../state/characterRelationStore';
 import { useTheme } from '../../theme';
@@ -72,12 +78,15 @@ const CharacterRelationsScreen = () => {
           </TouchableOpacity>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerButton])
+    }, [navigation, colors.text, t, styles.headerButton]),
   );
 
-  const memoizedListItem = useCallback(({ item }: { item: CharacterRelationWithNames }) => (
-    <CharacterRelationListItem relation={item} />
-  ), []);
+  const memoizedListItem = useCallback(
+    ({ item }: { item: CharacterRelationWithNames }) => (
+      <CharacterRelationListItem relation={item} />
+    ),
+    [],
+  );
 
   const memoizedSortOptions = useMemo(() => {
     return [

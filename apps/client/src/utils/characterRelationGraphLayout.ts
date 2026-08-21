@@ -31,8 +31,8 @@ export interface GraphCharacter {
 
 export interface GraphRelation {
   id: string;
-  charId1: string;
-  charId2: string;
+  character1Id: string;
+  character2Id: string;
   relationType: string;
 }
 
@@ -100,7 +100,7 @@ interface WorkEdge {
 /** Monta o layout completo. Devolve um grafo vazio quando não há personagens. */
 export function buildCharacterRelationGraphLayout(
   characters: GraphCharacter[],
-  relations: GraphRelation[]
+  relations: GraphRelation[],
 ): CharacterRelationGraphLayout {
   const nodeById = new Map<string, WorkNode>();
   for (const character of characters) {
@@ -109,8 +109,8 @@ export function buildCharacterRelationGraphLayout(
 
   const workEdges: WorkEdge[] = [];
   for (const relation of relations) {
-    const a = nodeById.get(relation.charId1);
-    const b = nodeById.get(relation.charId2);
+    const a = nodeById.get(relation.character1Id);
+    const b = nodeById.get(relation.character2Id);
     // Personagem excluído mas a relação ainda não foi limpa - mesmo tratamento que uma
     // escolha pendurada no mapa de história: ignorada em vez de quebrar o desenho.
     if (!a || !b) continue;
@@ -122,29 +122,36 @@ export function buildCharacterRelationGraphLayout(
 
   const allNodes = [...nodeById.values()];
   if (allNodes.length === 0) {
-    return { nodes: [], edges: [], width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2, clusterCount: 0, isolatedCount: 0 };
+    return {
+      nodes: [],
+      edges: [],
+      width: GRAPH_PADDING * 2,
+      height: GRAPH_PADDING * 2,
+      clusterCount: 0,
+      isolatedCount: 0,
+    };
   }
 
   const components = findComponents(allNodes);
-  const clusterComponents = components.filter(component => component.length > 1);
-  const isolatedComponents = components.filter(component => component.length === 1).flat();
+  const clusterComponents = components.filter((component) => component.length > 1);
+  const isolatedComponents = components.filter((component) => component.length === 1).flat();
 
   const clusterBoxes = clusterComponents
     .map(layoutComponentCircular)
     // Maiores primeiro deixa o empacotamento em prateleiras mais compacto (first-fit decreasing).
-    .sort((a, b) => (b.width * b.height) - (a.width * a.height));
+    .sort((a, b) => b.width * b.height - a.width * a.height);
 
   const packed = packClusters(clusterBoxes);
   const isolatedNodes = layoutIsolatedGrid(
     isolatedComponents,
     packed.width,
-    packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0
+    packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0,
   );
 
   const nodes = [...packed.nodes, ...isolatedNodes];
   const { width, height } = normalizeToPadding(nodes);
 
-  const nodesById = new Map(nodes.map(node => [node.id, node]));
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const edges: RelationGraphEdge[] = [];
   for (const workEdge of workEdges) {
     const source = nodesById.get(workEdge.a.character.id);
@@ -199,8 +206,9 @@ function findComponents(nodes: WorkNode[]): WorkNode[][] {
  * sem isso, uma ordem arbitrária cruzaria arestas para todo lado.
  */
 function orderByBreadthFromHub(members: WorkNode[]): WorkNode[] {
-  const hub = [...members].sort((a, b) =>
-    b.neighbors.length - a.neighbors.length || a.character.id.localeCompare(b.character.id)
+  const hub = [...members].sort(
+    (a, b) =>
+      b.neighbors.length - a.neighbors.length || a.character.id.localeCompare(b.character.id),
   )[0];
 
   const order: WorkNode[] = [];
@@ -211,8 +219,8 @@ function orderByBreadthFromHub(members: WorkNode[]): WorkNode[] {
     const node = queue.shift()!;
     order.push(node);
     const next = node.neighbors
-      .map(edge => (edge.a === node ? edge.b : edge.a))
-      .filter(neighbor => !visited.has(neighbor))
+      .map((edge) => (edge.a === node ? edge.b : edge.a))
+      .filter((neighbor) => !visited.has(neighbor))
       .sort((a, b) => a.character.name.localeCompare(b.character.name));
     for (const neighbor of next) {
       visited.add(neighbor);
@@ -244,8 +252,8 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
     return buildNode(work, centerX - NODE_WIDTH / 2, centerY - NODE_HEIGHT / 2);
   });
 
-  const minX = minOf(nodes.map(node => node.x));
-  const minY = minOf(nodes.map(node => node.y));
+  const minX = minOf(nodes.map((node) => node.x));
+  const minY = minOf(nodes.map((node) => node.y));
   for (const node of nodes) {
     node.x -= minX;
     node.y -= minY;
@@ -253,8 +261,8 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
 
   return {
     nodes,
-    width: maxOf(nodes.map(node => node.x + node.width)),
-    height: maxOf(nodes.map(node => node.y + node.height)),
+    width: maxOf(nodes.map((node) => node.x + node.width)),
+    height: maxOf(nodes.map((node) => node.y + node.height)),
   };
 }
 
@@ -264,13 +272,20 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
  * uma história com dezenas de famílias/facções sem relação entre si não virar uma faixa
  * horizontal quilométrica.
  */
-function packClusters(clusters: ClusterBox[]): { nodes: RelationGraphNode[]; width: number; height: number } {
+function packClusters(clusters: ClusterBox[]): {
+  nodes: RelationGraphNode[];
+  width: number;
+  height: number;
+} {
   if (clusters.length === 0) {
     return { nodes: [], width: 0, height: 0 };
   }
 
   const totalArea = clusters.reduce((sum, cluster) => sum + cluster.width * cluster.height, 0);
-  const rowTargetWidth = Math.max(maxOf(clusters.map(cluster => cluster.width)), Math.sqrt(totalArea) * 1.4);
+  const rowTargetWidth = Math.max(
+    maxOf(clusters.map((cluster) => cluster.width)),
+    Math.sqrt(totalArea) * 1.4,
+  );
 
   const nodes: RelationGraphNode[] = [];
   let rowX = 0;
@@ -303,7 +318,11 @@ function packClusters(clusters: ClusterBox[]): { nodes: RelationGraphNode[]; wid
  * O número de colunas acompanha a largura do resto do mapa para a grade não ficar mais larga
  * que os clusters - sem nenhum cluster (história só com personagens soltos), cai em quatro.
  */
-function layoutIsolatedGrid(isolated: WorkNode[], canvasWidth: number, startY: number): RelationGraphNode[] {
+function layoutIsolatedGrid(
+  isolated: WorkNode[],
+  canvasWidth: number,
+  startY: number,
+): RelationGraphNode[] {
   if (isolated.length === 0) return [];
 
   const columnStep = NODE_WIDTH + NODE_GAP;
@@ -339,16 +358,16 @@ function normalizeToPadding(nodes: RelationGraphNode[]): { width: number; height
     return { width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2 };
   }
 
-  const shiftX = GRAPH_PADDING - minOf(nodes.map(node => node.x));
-  const shiftY = GRAPH_PADDING - minOf(nodes.map(node => node.y));
+  const shiftX = GRAPH_PADDING - minOf(nodes.map((node) => node.x));
+  const shiftY = GRAPH_PADDING - minOf(nodes.map((node) => node.y));
   for (const node of nodes) {
     node.x += shiftX;
     node.y += shiftY;
   }
 
   return {
-    width: round(maxOf(nodes.map(node => node.x + node.width)) + GRAPH_PADDING),
-    height: round(maxOf(nodes.map(node => node.y + node.height)) + GRAPH_PADDING),
+    width: round(maxOf(nodes.map((node) => node.x + node.width)) + GRAPH_PADDING),
+    height: round(maxOf(nodes.map((node) => node.y + node.height)) + GRAPH_PADDING),
   };
 }
 
@@ -371,7 +390,11 @@ function pointOnNodeBoundary(node: RelationGraphNode, towards: GraphPoint): Grap
   return { x: centerX + dx * scale, y: centerY + dy * scale };
 }
 
-function buildEdge(work: WorkEdge, source: RelationGraphNode, target: RelationGraphNode): RelationGraphEdge {
+function buildEdge(
+  work: WorkEdge,
+  source: RelationGraphNode,
+  target: RelationGraphNode,
+): RelationGraphEdge {
   const sourceCenter = { x: source.x + source.width / 2, y: source.y + source.height / 2 };
   const targetCenter = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
   const start = pointOnNodeBoundary(source, targetCenter);

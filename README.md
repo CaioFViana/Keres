@@ -3,6 +3,7 @@
   <h1>Keres</h1>
   <p><strong>Organize universos, conecte narrativas e escreva em qualquer lugar.</strong></p>
   <p>Uma plataforma offline-first para planejamento de histórias, disponível em mobile, web e desktop, com sincronização opcional entre dispositivos.</p>
+  <p><a href="https://caiofviana.github.io/Keres/">Landing page</a></p>
   <p><strong>Português</strong> · <a href="README.en.md">English</a></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
@@ -21,6 +22,7 @@ O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras d
 | `apps/desktop` | Electron | Distribuição desktop do mesmo cliente web |
 | `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Autenticação, sincronização, colaboração e mídia |
 | `apps/admin` | React, Vite | Painel administrativo servido pela própria API em `/admin` |
+| `apps/site` | React, Vite | Landing pública publicada no GitHub Pages |
 | `packages/shared` | TypeScript, Zod | Entidades, contratos e metadados compartilhados |
 
 ```mermaid
@@ -38,6 +40,10 @@ flowchart LR
     A <--> M
     A --> D
 ```
+
+## Ajuda no aplicativo
+
+O drawer **Ajuda** está disponível tanto no menu principal quanto no menu de uma história. Ele reúne páginas em português e inglês sobre cada recurso do Keres, com busca local, caminhos pela interface e explicações dos campos visíveis. Os ícones `?` nos cabeçalhos levam diretamente à página de ajuda da tela atual.
 
 ## Início rápido
 
@@ -64,7 +70,6 @@ bun install --frozen-lockfile
    JWT_SECRET_REFRESH=troque-por-outro-segredo-com-pelo-menos-32-caracteres
    ROOT_ADMIN_USERNAME=root
    ROOT_ADMIN_PASSWORD=troque-por-uma-senha-com-8-ou-mais-caracteres
-   DEFAULT_PASSWORD_RESET_VALUE=troque-esta-senha-temporaria
    ```
 
    `ROOT_ADMIN_*` é opcional. Quando definido, o usuário é criado ou reconciliado como administrador em toda inicialização; a senha configurada também é reaplicada.
@@ -106,6 +111,8 @@ Serviços disponíveis:
 - API e Swagger: `http://localhost:3000/swagger`
 - Health check: `http://localhost:3000/kerescheck`
 - Painel administrativo compilado: `http://localhost:3000/admin`
+- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/` — precisa de `bun run --cwd apps/client export:web`
+- Vitrine de histórias publicadas: `http://localhost:3000/showcase`
 - Painel administrativo com hot reload: execute `bun run dev` em `apps/admin` e abra `http://localhost:5173/admin/`
 
 ### Stack Docker local
@@ -147,6 +154,47 @@ cd apps/client && bun run locales:audit
 
 Consulte o [guia específico do cliente](apps/client/README.md) para builds nativas, banco local e solução de problemas do Expo.
 
+## Keres Server (sem Docker)
+
+Para um PC em casa sincronizar com o telemóvel **sem** PostgreSQL nem Compose, a API também corre em SQLite. O pacote **Keres Server** é essa API mais um assistente em linha de comando (português/inglês). Não substitui a imagem Docker: Postgres em produção continua no GHCR.
+
+### Download (utilizadores)
+
+Cada tag `v*.*.*` anexa os zips à [GitHub Release](https://github.com/caiofviana/keres/releases) correspondente, junto com o cliente desktop, o Android e a imagem Docker. Escolha o ficheiro do seu sistema:
+
+| Sistema | Ficheiro |
+| --- | --- |
+| Windows x64 | `Keres-Server-windows-x64-<versão>.zip` |
+| Linux x64 | `Keres-Server-linux-x64-<versão>.zip` |
+| macOS Apple Silicon | `Keres-Server-macos-arm64-<versão>.zip` |
+
+Descompacte, execute `keres-server` / `keres-server.exe`. Não é preciso Bun, Node nem Docker. O zip contém o executável, o addon nativo do libSQL, as migrações, o painel `/admin` e um `README.md` (instruções e cópia de segurança). O compile da Bun não embute o `.node` do libSQL, por isso não é um único ficheiro.
+
+Na primeira execução o assistente pergunta banco (SQLite por omissão), mídia local ou S3, porta e se escuta só neste computador ou na rede local. Os dados ficam **fora** da pasta do zip (atualizar o executável não apaga o banco):
+
+| Sistema | Pasta |
+| --- | --- |
+| Windows | `%APPDATA%\KeresServer` |
+| macOS | `~/Library/Application Support/KeresServer` |
+| Linux | `~/.local/share/keres-server` |
+
+Enquanto corre, o CLI imprime os IPv4 atuais da LAN (`http://192.168.x.x:<porta>`) e volta a listá-los se o router mudar o endereço. Não há DNS local.
+
+### Cópia de segurança (deve ser feita)
+
+O zip traz um `README.md` (português e inglês) ao lado do executável. **Faça uma cópia no mínimo uma vez por mês:** pare o servidor (`Ctrl+C`), na pasta do programa corra `keres-server --backup`, volte a iniciar. Cada cópia vai para uma pasta com data e hora (`KeresServer-backups\…`). Guarde essa pasta noutro disco.
+
+Se o pior acontecer: pare o servidor, esvazie a pasta de dados e copie para lá o conteúdo da pasta datada. O README do zip detalha os ficheiros. Quem usa PostgreSQL ou S3 fora desta máquina trata esse backup como operador.
+
+### Desenvolvimento
+
+```bash
+bun run start:launcher
+bun run package:server
+```
+
+`package:server` gera a mesma pasta e o mesmo zip que a release. `start:api` e o Compose **não** passam pelo assistente: leem `.env` como hoje.
+
 ## Deploy da API
 
 Releases versionadas publicam a API e o painel admin no GitHub Container Registry:
@@ -175,7 +223,6 @@ JWT_SECRET=gere-um-segredo-aleatorio-com-pelo-menos-32-caracteres
 JWT_SECRET_REFRESH=gere-outro-segredo-independente-com-pelo-menos-32-caracteres
 ROOT_ADMIN_USERNAME=root
 ROOT_ADMIN_PASSWORD=gere-uma-senha-administrativa-forte
-DEFAULT_PASSWORD_RESET_VALUE=gere-uma-senha-temporaria-forte
 MEDIA_MAX_BYTES=52428800
 ```
 
@@ -225,7 +272,7 @@ docker compose up -d api
 docker compose logs -f api
 ```
 
-Para rollback, altere `KERES_IMAGE_TAG` para uma versão anterior compatível e repita os comandos. Antes de qualquer atualização, faça backup tanto do PostgreSQL quanto do volume de mídia; histórias sincronizadas e uploads são conjuntos de dados distintos. Um dump lógico do banco pode ser criado com:
+Para rollback, altere `KERES_IMAGE_TAG` para uma versão anterior compatível e repita os comandos. Backup deste deploy Compose é responsabilidade de quem opera o host (a API aceita qualquer Postgres que lhe apontem; não corre `pg_dump` sozinha). Antes de qualquer atualização, copie o PostgreSQL **e** o volume de mídia; histórias sincronizadas e uploads são conjuntos distintos. Um dump lógico:
 
 ```bash
 docker compose exec -T db pg_dump -U keres -d keres -Fc > keres.dump
@@ -245,11 +292,22 @@ git push origin v1.2.3
 Uma release publica:
 
 - imagem Docker `ghcr.io/caiofviana/keres:1.2.3` e `:latest`;
+- `Keres-Server-windows-x64-<versão>.zip`, `Keres-Server-linux-x64-<versão>.zip` e `Keres-Server-macos-arm64-<versão>.zip` (API caseira, sem Docker);
 - instalador e executável portátil para Windows;
 - DMG para macOS;
 - AppImage e Flatpak para Linux;
-- APK e AAB assinados para Android;
-- GitHub Release com os artefatos gerados.
+- APK e AAB assinados para Android.
+
+## Landing (GitHub Pages)
+
+A página pública do projeto vive em `apps/site` e é publicada em [caiofviana.github.io/Keres](https://caiofviana.github.io/Keres/). Não é a vitrine de histórias de um servidor (isso é o Showcase, servido pela API): é a landing do produto, em português e inglês.
+
+```bash
+bun run dev:site      # http://localhost:5175
+bun run build:site
+```
+
+O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` (a branch padrão). O environment `github-pages` recusa outras branches. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
 
 ## Documentação técnica
 
@@ -257,13 +315,13 @@ Uma release publica:
 - [Plano e arquitetura do projeto](docs/project_plan.md)
 - [Fluxo de telas](docs/screen_flow.md)
 - [Mecânicas de escolhas](docs/choice_mechanics.md)
-- [Estruturas narrativas dinâmicas](docs/dynamic_story_structure.md)
-- [Resolução de conflitos no cliente](docs/conflict_resolution_client_strategy.md)
+- [Sistema de status e gráfico radar](docs/stat_system.md)
+- [Sincronização e resolução de conflitos](docs/conflict_resolution_client_strategy.md)
 
 ## Segurança operacional
 
 - Nunca reutilize os segredos de desenvolvimento em produção.
 - Mantenha a API atrás de HTTPS; tokens e credenciais não devem trafegar em HTTP público.
 - Restrinja acesso a `/admin` no proxy quando o painel não precisar ser público.
-- Faça backup de `db_data` e `media_storage`; remover volumes destrói dados persistidos.
+- Faça backup de `db_data` e `media_storage`; remover volumes destrói dados persistidos. No Keres Server, siga o `README.md` do zip (cópia mensal da pasta de dados, servidor parado).
 - Fixe uma tag de imagem em produção e valide migrations e logs antes de descartar backups.

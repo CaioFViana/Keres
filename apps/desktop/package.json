@@ -1,14 +1,16 @@
 {
   "name": "@keres/desktop",
   "desktopName": "com.keres.desktop.desktop",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
     "build:client": "cd ../client && bun run export:web",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p tsconfig.test.json",
-    "lint": "eslint src test --ext .ts",
+    "lint": "eslint src test vitest.config.ts --ext .ts",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:sqlite-web": "node test/run-sqlite-web-smoke.cjs",
     "build:main": "tsc -p tsconfig.json",
     "build": "bun run build:client && bun run build:main",
     "start": "bun run build && electron .",
@@ -25,6 +27,7 @@
     "electron-builder": "^26.15.6",
     "eslint": "^9.25.0",
     "typescript": "^5.5.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.10"
   }
 }

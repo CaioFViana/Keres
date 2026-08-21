@@ -1,34 +1,47 @@
-import { CreateItemDataSchema, CreateItemDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialItemSchema, UpdateStoryUpdate } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import {
+  CreateItemDataSchema,
+  CreateItemDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialItemSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, items } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
-export class ItemSyncHandler extends BaseSyncEntityHandler<typeof CreateItemDataSchema, typeof PartialItemSchema> {
+export class ItemSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateItemDataSchema,
+  typeof PartialItemSchema
+> {
   entityName = 'Item';
 
   constructor() {
-    super(
-      'items',
-      'id',
-      'version',
-      CreateItemDataSchema,
-      PartialItemSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      }
-    );
+    super('items', 'id', 'version', CreateItemDataSchema, PartialItemSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
-  private async validateCharacterOwner(storyId: string, characterOwnerId: string | null): Promise<void> {
+  private async validateCharacterOwner(
+    storyId: string,
+    characterOwnerId: string | null,
+  ): Promise<void> {
     if (characterOwnerId) {
       const characterExists = await db.query.characters.findFirst({
-        where: and(eq(characters.id, characterOwnerId), eq(characters.storyId, storyId), eq(characters.isDeleted, false)),
+        where: and(
+          eq(characters.id, characterOwnerId),
+          eq(characters.storyId, storyId),
+          eq(characters.isDeleted, false),
+        ),
       });
       if (!characterExists) {
-        throw new Error(`Validation Error: Character with ID ${characterOwnerId} not found, is deleted, or does not belong to story ${storyId}.`);
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
+          `Validation Error: Character with ID ${characterOwnerId} not found, is deleted, or does not belong to story ${storyId}.`,
+        );
       }
     }
   }
@@ -44,12 +57,14 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<typeof CreateItemData
       where: and(
         eq(items.storyId, storyId),
         eq(items.name, validatedData.name),
-        eq(items.isDeleted, false)
+        eq(items.isDeleted, false),
       ),
     });
 
     if (existingItem) {
-      throw new Error(`Conflict: Item with name "${validatedData.name}" already exists in story ${storyId}.`);
+      throw new Error(
+        `Conflict: Item with name "${validatedData.name}" already exists in story ${storyId}.`,
+      );
     }
 
     await db.insert(items).values({
@@ -70,7 +85,12 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<typeof CreateItemData
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // Validate characterOwnerId if it's being updated
@@ -85,19 +105,26 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<typeof CreateItemData
           eq(items.storyId, storyId),
           eq(items.name, validatedChanges.name),
           eq(items.isDeleted, false),
-          eq(items.id, update.id!) // Exclude the current item from the check
+          ne(items.id, update.id!), // Exclude the current item from the check
         ),
       });
 
       if (existingItem) {
-        throw new Error(`Conflict: Item with name "${validatedChanges.name}" already exists in story ${storyId}.`);
+        throw new Error(
+          `Conflict: Item with name "${validatedChanges.name}" already exists in story ${storyId}.`,
+        );
       }
     }
 
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

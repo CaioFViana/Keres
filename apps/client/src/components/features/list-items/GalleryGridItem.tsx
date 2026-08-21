@@ -41,7 +41,9 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
   const { t } = useTranslation();
 
   const mediaType = media.mediaType as MediaType;
-  const resolvedUri = useResolvedMediaUri(mediaType === 'video' ? media.thumbnailPath : media.localPath);
+  const resolvedUri = useResolvedMediaUri(
+    mediaType === 'video' ? media.thumbnailPath : media.localPath,
+  );
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
   const isDownloading = media.downloadState === 'pending';
@@ -140,7 +142,11 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
 
         <View style={styles.badgeRow}>
           <View style={styles.badge}>
-            <Ionicons name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'} size={14} color={colors.text} />
+            <Ionicons
+              name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+              size={14}
+              color={colors.text}
+            />
           </View>
           {onToggleFavorite && (
             <TouchableOpacity
@@ -166,7 +172,9 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
           {media.sizeBytes > 0 ? ` · ${formatSize(media.sizeBytes)}` : ''}
         </Text>
         {isDownloading && <Text style={styles.statusText}>{t('media_downloading')}</Text>}
-        {!isDownloading && pendingUpload && <Text style={styles.statusText}>{t('media_pending_upload')}</Text>}
+        {!isDownloading && pendingUpload && (
+          <Text style={styles.statusText}>{t('media_pending_upload')}</Text>
+        )}
         {transferFailed && <Text style={styles.statusText}>{t('media_transfer_failed')}</Text>}
       </View>
     </TouchableOpacity>

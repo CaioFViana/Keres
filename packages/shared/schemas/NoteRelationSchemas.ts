@@ -6,7 +6,14 @@ export const NoteRelationSchema = z.object({
   storyId: z.string(),
   noteId: z.string(),
   relationId: z.string(),
-  relationType: z.enum(['Character', 'WorldRule', 'Location', 'Scene', 'Chapter', 'Choice'] as const) satisfies z.ZodType<NoteRelationEntities>,
+  relationType: z.enum([
+    'Character',
+    'WorldRule',
+    'Location',
+    'Scene',
+    'Chapter',
+    'Choice',
+  ] as const) satisfies z.ZodType<NoteRelationEntities>,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -24,7 +31,7 @@ export const CreateNoteRelationDataSchema = NoteRelationSchema.omit({
   deletedAt: true,
 });
 
-export const PartialNoteRelationSchema = NoteRelationSchema.partial()
+export const PartialNoteRelationSchema = CreateNoteRelationDataSchema.partial();
 
 export type NoteRelationType = z.infer<typeof NoteRelationSchema>;
 export type CreateNoteRelationDataType = z.infer<typeof CreateNoteRelationDataSchema>;

@@ -9,7 +9,10 @@ import { createServerService } from '../ServerService';
 const MAX_ANCESTOR_WALK = 500;
 
 export interface LocationRelationService {
-  getParentRelation(storyId: string, locationId: string): Promise<LocationRelationSelect | undefined>;
+  getParentRelation(
+    storyId: string,
+    locationId: string,
+  ): Promise<LocationRelationSelect | undefined>;
   getChildRelations(storyId: string, locationId: string): Promise<LocationRelationSelect[]>;
   getConnectionRelations(storyId: string, locationId: string): Promise<LocationRelationSelect[]>;
   /** Ancestrais de `locationId` (não inclui ele mesmo). Não-autoritativo: só reflete o que o
@@ -21,26 +24,41 @@ export interface LocationRelationService {
   /** null para remover o pai atual. Faz a "troca" como duas operações: apaga a aresta antiga
    *  (se houver) e cria a nova. Checagem de ciclo aqui é só para feedback rápido de UI - a
    *  validação real (autoritativa) acontece no servidor, ver LocationRelationSyncHandler. */
-  setParent(currentUserId: string, storyId: string, childId: string, newParentId: string | null): Promise<void>;
-  addConnection(currentUserId: string, storyId: string, locationAId: string, locationBId: string): Promise<LocationRelationSelect>;
+  setParent(
+    currentUserId: string,
+    storyId: string,
+    childId: string,
+    newParentId: string | null,
+  ): Promise<void>;
+  addConnection(
+    currentUserId: string,
+    storyId: string,
+    locationAId: string,
+    locationBId: string,
+  ): Promise<LocationRelationSelect>;
   removeRelation(currentUserId: string, relationId: string): Promise<boolean>;
   getAllRelationsForStory(storyId: string): Promise<LocationRelationSelect[]>;
 }
 
-const walkAncestorIds = async (db: AppDrizzleClient, storyId: string, locationId: string): Promise<Set<string>> => {
+const walkAncestorIds = async (
+  db: AppDrizzleClient,
+  storyId: string,
+  locationId: string,
+): Promise<Set<string>> => {
   const ancestors = new Set<string>();
   let currentId: string | undefined = locationId;
   let steps = 0;
 
   while (currentId && ++steps <= MAX_ANCESTOR_WALK) {
-    const parentEdge: { locationAId: string } | undefined = await db.query.locationRelations.findFirst({
-      where: and(
-        eq(locationRelations.storyId, storyId),
-        eq(locationRelations.locationBId, currentId),
-        eq(locationRelations.relationType, 'contains'),
-        eq(locationRelations.isDeleted, false)
-      ),
-    });
+    const parentEdge: { locationAId: string } | undefined =
+      await db.query.locationRelations.findFirst({
+        where: and(
+          eq(locationRelations.storyId, storyId),
+          eq(locationRelations.locationBId, currentId),
+          eq(locationRelations.relationType, 'contains'),
+          eq(locationRelations.isDeleted, false),
+        ),
+      });
     if (!parentEdge || ancestors.has(parentEdge.locationAId)) break;
     ancestors.add(parentEdge.locationAId);
     currentId = parentEdge.locationAId;
@@ -54,15 +72,21 @@ const getExistingConnection = async (
   storyId: string,
   locationAId: string,
   locationBId: string,
-  excludeRelationId?: string
+  excludeRelationId?: string,
 ): Promise<LocationRelationSelect | undefined> => {
   const conditions = [
     eq(locationRelations.storyId, storyId),
     eq(locationRelations.relationType, 'connected_to' as const),
     eq(locationRelations.isDeleted, false),
     or(
-      and(eq(locationRelations.locationAId, locationAId), eq(locationRelations.locationBId, locationBId)),
-      and(eq(locationRelations.locationAId, locationBId), eq(locationRelations.locationBId, locationAId))
+      and(
+        eq(locationRelations.locationAId, locationAId),
+        eq(locationRelations.locationBId, locationBId),
+      ),
+      and(
+        eq(locationRelations.locationAId, locationBId),
+        eq(locationRelations.locationBId, locationAId),
+      ),
     ),
   ];
   if (excludeRelationId) {
@@ -74,9 +98,18 @@ const getExistingConnection = async (
 export const createLocationRelationService = (db: AppDrizzleClient): LocationRelationService => {
   const serverService = createServerService(db);
 
-  const softDeleteRelation = async (currentUserId: string, relation: LocationRelationSelect): Promise<void> => {
-    const [updated] = await db.update(locationRelations)
-      .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${locationRelations.version} + 1` })
+  const softDeleteRelation = async (
+    currentUserId: string,
+    relation: LocationRelationSelect,
+  ): Promise<void> => {
+    const [updated] = await db
+      .update(locationRelations)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        version: sql`${locationRelations.version} + 1`,
+      })
       .where(eq(locationRelations.id, relation.id))
       .returning({ id: locationRelations.id, version: locationRelations.version });
 
@@ -84,12 +117,25 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
       throw new Error(`Failed to delete location relation ${relation.id}.`);
     }
 
-    const userIdToLog = await getUserIdForOperation(db, serverService, relation.storyId, currentUserId);
-    await recordLocalOperation(db, relation.storyId, userIdToLog, 'delete', 'LocationRelation', relation.id, {
-      id: relation.id,
-      isDeleted: true,
-      version: updated.version,
-    });
+    const userIdToLog = await getUserIdForOperation(
+      db,
+      serverService,
+      relation.storyId,
+      currentUserId,
+    );
+    await recordLocalOperation(
+      db,
+      relation.storyId,
+      userIdToLog,
+      'delete',
+      'LocationRelation',
+      relation.id,
+      {
+        id: relation.id,
+        isDeleted: true,
+        version: updated.version,
+      },
+    );
   };
 
   return {
@@ -99,33 +145,41 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
           eq(locationRelations.storyId, storyId),
           eq(locationRelations.locationBId, locationId),
           eq(locationRelations.relationType, 'contains'),
-          eq(locationRelations.isDeleted, false)
+          eq(locationRelations.isDeleted, false),
         ),
       });
     },
 
     async getChildRelations(storyId, locationId) {
-      return db.select().from(locationRelations)
-        .where(and(
-          eq(locationRelations.storyId, storyId),
-          eq(locationRelations.locationAId, locationId),
-          eq(locationRelations.relationType, 'contains'),
-          eq(locationRelations.isDeleted, false)
-        ))
+      return db
+        .select()
+        .from(locationRelations)
+        .where(
+          and(
+            eq(locationRelations.storyId, storyId),
+            eq(locationRelations.locationAId, locationId),
+            eq(locationRelations.relationType, 'contains'),
+            eq(locationRelations.isDeleted, false),
+          ),
+        )
         .all();
     },
 
     async getConnectionRelations(storyId, locationId) {
-      return db.select().from(locationRelations)
-        .where(and(
-          eq(locationRelations.storyId, storyId),
-          eq(locationRelations.relationType, 'connected_to'),
-          eq(locationRelations.isDeleted, false),
-          or(
-            eq(locationRelations.locationAId, locationId),
-            eq(locationRelations.locationBId, locationId)
-          )
-        ))
+      return db
+        .select()
+        .from(locationRelations)
+        .where(
+          and(
+            eq(locationRelations.storyId, storyId),
+            eq(locationRelations.relationType, 'connected_to'),
+            eq(locationRelations.isDeleted, false),
+            or(
+              eq(locationRelations.locationAId, locationId),
+              eq(locationRelations.locationBId, locationId),
+            ),
+          ),
+        )
         .all();
     },
 
@@ -139,13 +193,17 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
 
       while (queue.length > 0) {
         const current = queue.shift()!;
-        const children = await db.select({ locationBId: locationRelations.locationBId }).from(locationRelations)
-          .where(and(
-            eq(locationRelations.storyId, storyId),
-            eq(locationRelations.locationAId, current),
-            eq(locationRelations.relationType, 'contains'),
-            eq(locationRelations.isDeleted, false)
-          ))
+        const children = await db
+          .select({ locationBId: locationRelations.locationBId })
+          .from(locationRelations)
+          .where(
+            and(
+              eq(locationRelations.storyId, storyId),
+              eq(locationRelations.locationAId, current),
+              eq(locationRelations.relationType, 'contains'),
+              eq(locationRelations.isDeleted, false),
+            ),
+          )
           .all();
 
         for (const child of children) {
@@ -169,7 +227,7 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
           eq(locationRelations.storyId, storyId),
           eq(locationRelations.locationBId, childId),
           eq(locationRelations.relationType, 'contains'),
-          eq(locationRelations.isDeleted, false)
+          eq(locationRelations.isDeleted, false),
         ),
       });
 
@@ -184,7 +242,9 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
       // Checagem de ciclo não-autoritativa (só para feedback rápido de UI, ver docstring da interface).
       const ancestorsOfNewParent = await walkAncestorIds(db, storyId, newParentId);
       if (ancestorsOfNewParent.has(childId)) {
-        throw new Error('Validation Error: setting this parent would create a cycle in the Location hierarchy.');
+        throw new Error(
+          'Validation Error: setting this parent would create a cycle in the Location hierarchy.',
+        );
       }
 
       if (existingParentEdge) {
@@ -209,7 +269,15 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'LocationRelation', inserted.id, { ...inserted });
+      await recordLocalOperation(
+        db,
+        storyId,
+        userIdToLog,
+        'create',
+        'LocationRelation',
+        inserted.id,
+        { ...inserted },
+      );
       entityEventEmitter.emit('location_relation_changed', storyId, childId);
     },
 
@@ -241,14 +309,24 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'LocationRelation', inserted.id, { ...inserted });
+      await recordLocalOperation(
+        db,
+        storyId,
+        userIdToLog,
+        'create',
+        'LocationRelation',
+        inserted.id,
+        { ...inserted },
+      );
       entityEventEmitter.emit('location_relation_changed', storyId, locationAId);
 
       return inserted;
     },
 
     async removeRelation(currentUserId, relationId) {
-      const relation = await db.query.locationRelations.findFirst({ where: eq(locationRelations.id, relationId) });
+      const relation = await db.query.locationRelations.findFirst({
+        where: eq(locationRelations.id, relationId),
+      });
       if (!relation || relation.isDeleted) {
         return false;
       }
@@ -259,7 +337,9 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
     },
 
     async getAllRelationsForStory(storyId) {
-      return db.select().from(locationRelations)
+      return db
+        .select()
+        .from(locationRelations)
         .where(and(eq(locationRelations.storyId, storyId), eq(locationRelations.isDeleted, false)))
         .all();
     },

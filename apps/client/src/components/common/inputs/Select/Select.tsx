@@ -19,6 +19,7 @@ interface SelectPropsSingle {
   multiple?: false; // Explicitly false for single select
   disabled?: boolean; // Added disabled prop
   allowDeselect?: boolean;
+  maxHeight?: number;
 }
 
 // Props for multi select
@@ -30,11 +31,21 @@ interface SelectPropsMulti {
   multiple: true; // Explicitly true for multi select
   disabled?: boolean; // Added disabled prop
   allowDeselect?: boolean;
+  maxHeight?: number;
 }
 
 type SelectProps = SelectPropsSingle | SelectPropsMulti;
 
-const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false, disabled = false, allowDeselect = false }) => {
+const Select: React.FC<SelectProps> = ({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  multiple = false,
+  disabled = false,
+  allowDeselect = false,
+  maxHeight,
+}) => {
   const { colors } = useTheme();
 
   const [open, setOpen] = useState(false);
@@ -46,12 +57,23 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     setInternalValue(value);
   }, [value]);
 
-  const dropdownItems: ItemType<string>[] = options.map(option => ({
+  const dropdownItems: ItemType<string>[] = options.map((option) => ({
     label: option.label,
     value: option.value,
-    icon: option.color ? () => (
-      <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: colors.border, backgroundColor: option.color ?? undefined }} />
-    ) : undefined,
+    icon: option.color
+      ? () => (
+          <View
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: option.color ?? undefined,
+            }}
+          />
+        )
+      : undefined,
   }));
 
   const dropdownStyles = StyleSheet.create({
@@ -162,6 +184,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           zIndex={open ? 3000 : 1000} // Dynamic zIndex
           zIndexInverse={1000}
           multiple={true} // Explicitly true
+          maxHeight={maxHeight}
           mode="BADGE"
           renderBadgeItem={renderBadgeItem}
           disabled={disabled} // Pass disabled prop
@@ -187,7 +210,11 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
             let finalValue: string | null = newValue as string | null;
 
             // If allowDeselect is true and the newly selected item is the same as the currently selected one, deselect it
-            if (allowDeselect && currentSelectedValue !== null && newValue === currentSelectedValue) {
+            if (
+              allowDeselect &&
+              currentSelectedValue !== null &&
+              newValue === currentSelectedValue
+            ) {
               finalValue = null;
             }
 
@@ -212,6 +239,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           zIndex={open ? 3000 : 1000} // Dynamic zIndex
           zIndexInverse={1000}
           multiple={false} // Explicitly false
+          maxHeight={maxHeight}
           disabled={disabled} // Pass disabled prop
           disabledStyle={dropdownStyles.disabledStyle} // Apply disabled style
         />

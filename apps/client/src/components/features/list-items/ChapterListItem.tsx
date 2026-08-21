@@ -5,7 +5,8 @@ import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import { createChapterStyles } from '@/src/components/features/list-items/styles/chapterListItemStyles';
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface ChapterListItemProps {
   chapter: ChapterSelect;
@@ -13,19 +14,23 @@ interface ChapterListItemProps {
   onViewDetails: (chapterId: string) => void;
 }
 
-const ChapterListItem: React.FC<ChapterListItemProps> = ({ chapter, onToggleFavorite, onViewDetails }) => {
+const ChapterListItem: React.FC<ChapterListItemProps> = ({
+  chapter,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const summaryText = truncate(chapter.summary, 150);
 
-  const styles = createChapterStyles(colors); // Use externalized styles
+  const styles = createReferenceListItemStyles(colors);
 
   const renderHeaderContent = (chap: ChapterSelect) => (
-    <View style={styles.headerLeft}>
-      <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {`${chap.index}. ${chap.name}`}
-      </Text>
-    </View>
+    <ListItemTitle
+      text={`${chap.index}. ${chap.name}`}
+      headerLeftStyle={styles.headerLeft}
+      nameStyle={styles.name}
+    />
   );
 
   const renderExpandedContent = (chap: ChapterSelect) => (

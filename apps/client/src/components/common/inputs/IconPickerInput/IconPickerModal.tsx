@@ -1,22 +1,26 @@
+import { AVATAR_ICON_OPTIONS as SHARED_AVATAR_ICON_OPTIONS } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 
 /**
- * Conjunto pequeno e escolhido a dedo, não uma busca entre milhares de ícones - o pedido foi
- * um sistema "simples e leve", e o app já usa só Ionicons em todo o resto (ver Avatar.tsx).
+ * A lista mora em `@keres/shared` porque o site público desenha o mesmo avatar - ver
+ * `metadata/avatar.ts`. Reexportada aqui para os imports existentes continuarem válidos, e
+ * tipada como glifo do Ionicons, que é o que este app precisa.
  */
-export const AVATAR_ICON_OPTIONS: (keyof typeof Ionicons.glyphMap)[] = [
-  'person', 'happy', 'skull', 'paw', 'leaf', 'flame',
-  'star', 'shield', 'book', 'telescope', 'planet', 'moon',
-  'sunny', 'rose', 'diamond', 'flash', 'rocket', 'sparkles',
-  'heart', 'game-controller', 'color-wand', 'compass', 'key', 'trophy',
-  'flower', 'eye', 'glasses', 'water',
-];
+export const AVATAR_ICON_OPTIONS =
+  SHARED_AVATAR_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[];
 
 interface IconPickerModalProps {
   currentIcon: string | null;
@@ -32,17 +36,23 @@ const CELL_MARGIN = 4;
  * columns for comfortable touch targets; wider windows use five or six columns so the picker
  * does not remain a narrow phone-sized strip in the middle of a desktop modal.
  */
-const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelectIcon, onClose, title }) => {
+const IconPickerModal: React.FC<IconPickerModalProps> = ({
+  currentIcon,
+  onSelectIcon,
+  onClose,
+  title,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { breakpoint } = useResponsiveLayout();
   const numColumns = breakpoint === 'wide' ? 6 : breakpoint === 'medium' ? 5 : 4;
-  const iconGridSize = breakpoint === 'wide'
-    ? Math.min(Math.max(screenWidth * 0.42, 360), 520)
-    : breakpoint === 'medium'
-      ? Math.min(Math.max(screenWidth * 0.5, 320), 420)
-      : Math.min(screenWidth * 0.7, 320);
+  const iconGridSize =
+    breakpoint === 'wide'
+      ? Math.min(Math.max(screenWidth * 0.42, 360), 520)
+      : breakpoint === 'medium'
+        ? Math.min(Math.max(screenWidth * 0.5, 320), 420)
+        : Math.min(screenWidth * 0.7, 320);
   const iconCellSize = iconGridSize / numColumns - CELL_MARGIN * 2;
   const iconSize = breakpoint === 'wide' ? 32 : breakpoint === 'medium' ? 29 : 26;
 
@@ -106,7 +116,9 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelect
         )}
       />
       <View style={styles.buttonWrapper}>
-        <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>{t('cancel')}</Button>
+        <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
+          {t('cancel')}
+        </Button>
       </View>
     </View>
   );

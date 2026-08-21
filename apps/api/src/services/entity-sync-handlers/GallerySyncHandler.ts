@@ -1,9 +1,18 @@
-import { CreateGalleryDataSchema, CreateGalleryDataType, CreateStoryUpdate, DeleteStoryUpdate, isSupportedMediaMimeType, mediaTypeForMimeType, PartialGallerySchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateGalleryDataSchema,
+  CreateGalleryDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  isSupportedMediaMimeType,
+  mediaTypeForMimeType,
+  PartialGallerySchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { galleries } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**
  * Sincroniza os *metadados* de uma mídia. Os bytes não passam por aqui: eles sobem e
@@ -12,7 +21,10 @@ import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
  * Não há validação de dono porque a mídia não tem dono - o vínculo com personagens,
  * locais, notas, cenas e itens vive em `GalleryRelationSyncHandler`.
  */
-export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalleryDataSchema, typeof PartialGallerySchema> {
+export class GallerySyncHandler extends BaseSyncEntityHandler<
+  typeof CreateGalleryDataSchema,
+  typeof PartialGallerySchema
+> {
   entityName = 'Gallery';
 
   constructor() {
@@ -26,7 +38,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
@@ -40,7 +52,31 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
     }
     const expected = mediaTypeForMimeType(mimeType);
     if (expected !== mediaType) {
-      throw new Error(`Validation Error: mediaType "${mediaType}" does not match MIME type "${mimeType}" (expected "${expected}").`);
+      throw new Error(
+        `Validation Error: mediaType "${mediaType}" does not match MIME type "${mimeType}" (expected "${expected}").`,
+      );
+    }
+  }
+
+  /**
+   * Hash conhecido no storage global só pode ser ligado a esta história se ela já o
+   * referencia (inclusive via tombstone). Um hash ainda inexistente é mídia nova cujo
+   * upload virá depois. Sem isto, quem conhece o MD5 de um blob alheio cria uma Gallery
+   * aqui e baixa o arquivo pela rota de mídia.
+   */
+  private async assertHashBindableToStory(storyId: string, hash: string): Promise<void> {
+    const blobExists = await mediaStorageService.has(hash);
+    if (!blobExists) return;
+
+    const referencedHere = await db.query.galleries.findFirst({
+      where: and(eq(galleries.storyId, storyId), eq(galleries.hash, hash)),
+      columns: { id: true },
+    });
+    if (!referencedHere) {
+      throw new SyncConflictError(
+        'unauthorized',
+        'Cannot bind a media hash that is not already part of this story.',
+      );
     }
   }
 
@@ -54,6 +90,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
     }
 
     this.assertSupportedMedia(validatedData.mimeType, validatedData.mediaType);
+    await this.assertHashBindableToStory(storyId, validatedData.hash);
 
     await db.insert(galleries).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
@@ -67,29 +104,39 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.mimeType !== undefined || validatedChanges.mediaType !== undefined) {
       this.assertSupportedMedia(
         validatedChanges.mimeType ?? currentEntity.mimeType,
-        validatedChanges.mediaType ?? currentEntity.mediaType
+        validatedChanges.mediaType ?? currentEntity.mediaType,
       );
     }
 
-    await db.update(galleries)
-      .set({
-        ...validatedChanges,
-        updatedAt: new Date(),
-        version: currentEntity.version + 1,
-      })
-      .where(and(
-        eq(galleries.id, update.id!),
-        eq(galleries.version, currentEntity.version)
-      ));
+    if (validatedChanges.hash && validatedChanges.hash !== currentEntity.hash) {
+      await this.assertHashBindableToStory(storyId, validatedChanges.hash);
+    }
+
+    // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
+    // that reimplementation had no `checkVersionConflict`, no `deleted_on_server` check, and
+    // used server time instead of the client's `operationTime` - a concurrent edit landed here
+    // with no error and no conflict reported, just silently dropped (same bug already found
+    // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
+    await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
     // A linha vira tombstone acima, mas o hash pode ser usado por outra Gallery (mesma
     // história ou outra, já que o armazenamento é dedupado globalmente) - só o blob deixa

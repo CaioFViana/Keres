@@ -5,7 +5,8 @@ import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import { createSceneStyles } from '@/src/components/features/list-items/styles/sceneListItemStyles';
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface SceneListItemProps {
   scene: SceneSelect;
@@ -14,19 +15,24 @@ interface SceneListItemProps {
   onViewDetails: (sceneId: string) => void;
 }
 
-const SceneListItem: React.FC<SceneListItemProps> = ({ scene, storyType, onToggleFavorite, onViewDetails }) => {
+const SceneListItem: React.FC<SceneListItemProps> = ({
+  scene,
+  storyType,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const summaryText = truncate(scene.summary, 150);
 
-  const styles = createSceneStyles(colors); // Use externalized styles
+  const styles = createReferenceListItemStyles(colors);
 
   const renderHeaderContent = (scn: SceneSelect) => (
-    <View style={styles.headerLeft}>
-      <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {storyType === 'linear' ? `${scn.index}. ${scn.name}` : scn.name}
-      </Text>
-    </View>
+    <ListItemTitle
+      text={storyType === 'linear' ? `${scn.index}. ${scn.name}` : scn.name}
+      headerLeftStyle={styles.headerLeft}
+      nameStyle={styles.name}
+    />
   );
 
   const renderExpandedContent = (scn: SceneSelect) => (

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Tier } from '@keres/shared';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
 
 export function UserFormPage() {
+  const { t } = useTranslation('admin');
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
@@ -14,30 +16,48 @@ export function UserFormPage() {
   const [password, setPassword] = useState('');
   const [tag, setTag] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [initialIsAdmin, setInitialIsAdmin] = useState(false);
   const [tierId, setTierId] = useState<string>('');
   const [bio, setBio] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null);
+  const [tierError, setTierError] = useState<string | null>(null);
+  const [regeneratingCodes, setRegeneratingCodes] = useState(false);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  /** Mostrados só uma vez - depois disto só o hash de cada um existe no servidor. */
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   useEffect(() => {
-    TierApiService.list().then(setTiers).catch(() => {});
+    TierApiService.list()
+      .then(setTiers)
+      .catch((err) =>
+        setTierError(err instanceof Error ? err.message : t('userForm.loadTiersFailed')),
+      );
   }, []);
 
   useEffect(() => {
     if (isNew || !id) return;
+    let ignore = false;
     AdminUserApiService.get(id)
       .then((u) => {
+        if (ignore) return;
         setUsername(u.username);
         setTag(u.tag);
         setIsAdmin(u.isAdmin);
+        setInitialIsAdmin(u.isAdmin);
         setTierId(u.tierId ?? '');
         setBio(u.bio ?? '');
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!ignore) setError(err.message);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [id, isNew]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -45,14 +65,28 @@ export function UserFormPage() {
     setSaving(true);
     setError(null);
     try {
+      const grantingAdmin = isAdmin && (isNew || !initialIsAdmin);
+      if (
+        grantingAdmin &&
+        !confirm(
+          isNew
+            ? t('userForm.confirmAdmin')
+            : `Grant admin access to "${username}"? They will be able to manage the panel.`,
+        )
+      ) {
+        return;
+      }
+
       if (isNew) {
-        await AdminUserApiService.create({
+        const created = await AdminUserApiService.create({
           username,
           password,
           tag: tag || undefined,
           isAdmin,
           tierId: tierId || null,
         });
+        setRecoveryCodes(created.recoveryCodes);
+        return;
       } else if (id) {
         await AdminUserApiService.update(id, {
           isAdmin,
@@ -63,86 +97,146 @@ export function UserFormPage() {
       }
       navigate('/users');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed.');
+      setError(err instanceof Error ? err.message : t('common.saveFailed'));
     } finally {
       setSaving(false);
     }
   };
 
-  const onResetPassword = async () => {
+  const onRegenerateRecoveryCodes = async () => {
     if (!id) return;
-    if (!confirm(`Reset ${username}'s password to the server's configured default value?`)) {
+    if (!confirm(t('userForm.confirmRegenerate', { username }))) {
       return;
     }
-    setResettingPassword(true);
-    setResetPasswordMessage(null);
+    setRegeneratingCodes(true);
     setError(null);
     try {
-      const { newPassword } = await AdminUserApiService.resetPassword(id);
-      setResetPasswordMessage(`Password reset. The user can now log in with: ${newPassword}`);
+      const { recoveryCodes: codes } = await AdminUserApiService.regenerateRecoveryCodes(id);
+      setRecoveryCodes(codes);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Password reset failed.');
+      setError(err instanceof Error ? err.message : t('userForm.regenerateFailed'));
     } finally {
-      setResettingPassword(false);
+      setRegeneratingCodes(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  const copyCodes = async () => {
+    if (!recoveryCodes) return;
+    try {
+      await navigator.clipboard.writeText(recoveryCodes.join('\n'));
+      setCopyMessage(t('userForm.copied'));
+    } catch {
+      setCopyMessage(t('userForm.copyFailed'));
+    }
+  };
+
+  if (loading) return <p className="loading-text">{t('common.loading')}</p>;
+
+  if (recoveryCodes) {
+    return (
+      <div>
+        <div className="page-header">
+          <h1>{t('userForm.recoveryTitle', { username })}</h1>
+        </div>
+        <div className="form-card">
+          <p className="hint">{t('userForm.recoveryHint')}</p>
+          <ul>
+            {recoveryCodes.map((code) => (
+              <li key={code} className="mono-code">
+                {code}
+              </li>
+            ))}
+          </ul>
+          {copyMessage && <p className="success-text">{copyMessage}</p>}
+          <div className="form-actions">
+            <button type="button" onClick={() => void copyCodes()}>
+              {t('userForm.copyCodes')}
+            </button>
+            <button type="button" className="button-secondary" onClick={() => navigate('/users')}>
+              {t('common.done')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1>{isNew ? 'New user' : `Edit ${username}`}</h1>
-      <form className="form-card" onSubmit={onSubmit}>
+      <div className="page-header">
+        <h1>{isNew ? t('userForm.newTitle') : t('userForm.editTitle', { username })}</h1>
+      </div>
+      <form className="form-card" onSubmit={(e) => void onSubmit(e)}>
         {isNew && (
           <>
             <label>
-              Username
+              {t('userForm.username')}
               <input value={username} onChange={(e) => setUsername(e.target.value)} required />
             </label>
             <label>
-              Password
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              {t('userForm.password')}
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
             </label>
           </>
         )}
         <label>
-          Tag
-          <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={isNew ? username || '(defaults to username)' : ''} />
+          {t('userForm.tag')}
+          <input
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            placeholder={isNew ? username || t('userForm.tagPlaceholder') : ''}
+          />
         </label>
         {!isNew && (
           <label>
-            Bio
+            {t('userForm.bio')}
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={200} />
           </label>
         )}
         <label>
-          Tier
+          {t('userForm.tier')}
           <select value={tierId} onChange={(e) => setTierId(e.target.value)}>
-            <option value="">(none / default)</option>
+            <option value="">{t('userForm.tierNone')}</option>
             {tiers.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
           </select>
         </label>
+        {tierError && <p className="error-text">{tierError}</p>}
         <label className="checkbox-label">
           <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
-          Admin access
+          {t('userForm.adminAccess')}
         </label>
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-          <button type="button" onClick={() => navigate('/users')}>Cancel</button>
+          <button type="submit" disabled={saving}>
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+          <button type="button" className="button-secondary" onClick={() => navigate('/users')}>
+            {t('common.cancel')}
+          </button>
         </div>
       </form>
 
       {!isNew && (
         <div className="form-card">
-          <h3>Password</h3>
-          <p className="hint">Resets the password to this server's configured default value. The user is not notified - share the new password with them yourself.</p>
-          <button type="button" onClick={onResetPassword} disabled={resettingPassword}>
-            {resettingPassword ? 'Resetting...' : 'Reset password'}
+          <h3>{t('userForm.lockedOutTitle')}</h3>
+          <p className="hint">{t('userForm.lockedOutHint')}</p>
+          <button
+            type="button"
+            onClick={() => void onRegenerateRecoveryCodes()}
+            disabled={regeneratingCodes}
+          >
+            {regeneratingCodes ? t('userForm.regenerating') : t('userForm.regenerate')}
           </button>
-          {resetPasswordMessage && <p className="success-text">{resetPasswordMessage}</p>}
         </div>
       )}
     </div>

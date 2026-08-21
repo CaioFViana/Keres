@@ -20,7 +20,11 @@ interface ThemeProviderProps {
   drizzleClient: AppDrizzleClient | null; // New prop for drizzleClient
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultThemeName = 'default', drizzleClient }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({
+  children,
+  defaultThemeName = 'default',
+  drizzleClient,
+}) => {
   const { darkMode, toggleDarkMode } = useThemeStore(); // Use darkMode from themeStore
   const [currentThemeName, setCurrentThemeName] = useState(defaultThemeName);
 
@@ -46,19 +50,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultT
     return darkMode ? selectedTheme.darkColors : selectedTheme.lightColors;
   }, [darkMode, currentThemeName]);
 
-  const value = useMemo(() => ({
-    colors,
-    isDarkMode: darkMode,
-    toggleTheme,
-    currentThemeName,
-    setTheme
-  }), [colors, darkMode, toggleTheme, currentThemeName, setTheme]);
-
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({
+      colors,
+      isDarkMode: darkMode,
+      toggleTheme,
+      currentThemeName,
+      setTheme,
+    }),
+    [colors, darkMode, toggleTheme, currentThemeName, setTheme],
   );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
 export const useTheme = () => {

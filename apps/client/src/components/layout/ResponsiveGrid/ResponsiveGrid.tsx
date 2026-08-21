@@ -21,11 +21,8 @@ const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   style,
 }) => {
   const { breakpoint } = useResponsiveLayout();
-  const columns = breakpoint === 'wide'
-    ? wideColumns
-    : breakpoint === 'medium'
-      ? mediumColumns
-      : compactColumns;
+  const columns =
+    breakpoint === 'wide' ? wideColumns : breakpoint === 'medium' ? mediumColumns : compactColumns;
 
   const itemWidth = `${100 / columns}%` as `${number}%`;
 
@@ -48,4 +45,3 @@ const styles = StyleSheet.create({
 });
 
 export default ResponsiveGrid;
-

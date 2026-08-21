@@ -1,7 +1,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import {
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -12,26 +20,55 @@ const SLIDER_HEIGHT = 20;
 // HUES: 0 (Red), 45 (Orange), 90 (Yellow-Green), 135 (Green), 180 (Cyan), 225 (Blue), 270 (Purple), 315 (Magenta).
 const STANDARD_COLORS = [
   // Row 1 (V=100, S=50 - pastel tones)
-  { h: 0, s: 50, v: 100 }, { h: 45, s: 50, v: 100 }, { h: 90, s: 50, v: 100 }, { h: 135, s: 50, v: 100 },
-  { h: 180, s: 50, v: 100 }, { h: 225, s: 50, v: 100 }, { h: 270, s: 50, v: 100 }, { h: 315, s: 50, v: 100 },
+  { h: 0, s: 50, v: 100 },
+  { h: 45, s: 50, v: 100 },
+  { h: 90, s: 50, v: 100 },
+  { h: 135, s: 50, v: 100 },
+  { h: 180, s: 50, v: 100 },
+  { h: 225, s: 50, v: 100 },
+  { h: 270, s: 50, v: 100 },
+  { h: 315, s: 50, v: 100 },
   // Row 2 (V=100, S=100 - standard vibrant)
-  { h: 0, s: 100, v: 100 }, { h: 45, s: 100, v: 100 }, { h: 90, s: 100, v: 100 }, { h: 135, s: 100, v: 100 },
-  { h: 180, s: 100, v: 100 }, { h: 225, s: 100, v: 100 }, { h: 270, s: 100, v: 100 }, { h: 315, s: 100, v: 100 },
+  { h: 0, s: 100, v: 100 },
+  { h: 45, s: 100, v: 100 },
+  { h: 90, s: 100, v: 100 },
+  { h: 135, s: 100, v: 100 },
+  { h: 180, s: 100, v: 100 },
+  { h: 225, s: 100, v: 100 },
+  { h: 270, s: 100, v: 100 },
+  { h: 315, s: 100, v: 100 },
   // Row 3 (V=80, S=100 - slightly darker vibrant)
-  { h: 0, s: 100, v: 80 }, { h: 45, s: 100, v: 80 }, { h: 90, s: 100, v: 80 }, { h: 135, s: 100, v: 80 },
-  { h: 180, s: 100, v: 80 }, { h: 225, s: 100, v: 80 }, { h: 270, s: 100, v: 80 }, { h: 315, s: 100, v: 80 },
+  { h: 0, s: 100, v: 80 },
+  { h: 45, s: 100, v: 80 },
+  { h: 90, s: 100, v: 80 },
+  { h: 135, s: 100, v: 80 },
+  { h: 180, s: 100, v: 80 },
+  { h: 225, s: 100, v: 80 },
+  { h: 270, s: 100, v: 80 },
+  { h: 315, s: 100, v: 80 },
   // Row 4 (V=60, S=80 - muted darker tones)
-  { h: 0, s: 80, v: 60 }, { h: 45, s: 80, v: 60 }, { h: 90, s: 80, v: 60 }, { h: 135, s: 80, v: 60 },
-  { h: 180, s: 80, v: 60 }, { h: 225, s: 80, v: 60 }, { h: 270, s: 80, v: 60 }, { h: 315, s: 80, v: 60 },
-].map(color => rgbToHex(hsvToRgb(color.h, color.s, color.v).r, hsvToRgb(color.h, color.s, color.v).g, hsvToRgb(color.h, color.s, color.v).b));
+  { h: 0, s: 80, v: 60 },
+  { h: 45, s: 80, v: 60 },
+  { h: 90, s: 80, v: 60 },
+  { h: 135, s: 80, v: 60 },
+  { h: 180, s: 80, v: 60 },
+  { h: 225, s: 80, v: 60 },
+  { h: 270, s: 80, v: 60 },
+  { h: 315, s: 80, v: 60 },
+].map((color) =>
+  rgbToHex(
+    hsvToRgb(color.h, color.s, color.v).r,
+    hsvToRgb(color.h, color.s, color.v).g,
+    hsvToRgb(color.h, color.s, color.v).b,
+  ),
+);
 
 // The original palette is four rows of eight hues. Transposing it produces
 // eight rows of four variations for the side-by-side layout without changing
 // the relationship between each hue and its variants.
 const TRANSPOSED_STANDARD_COLORS = Array.from({ length: 8 }, (_, rowIndex) =>
-  Array.from({ length: 4 }, (_, columnIndex) => STANDARD_COLORS[columnIndex * 8 + rowIndex])
+  Array.from({ length: 4 }, (_, columnIndex) => STANDARD_COLORS[columnIndex * 8 + rowIndex]),
 ).flat();
-
 
 interface ColorPickerModalProps {
   currentColor: string;
@@ -53,14 +90,15 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { breakpoint } = useResponsiveLayout();
-  const widthBasedPickerSize = breakpoint === 'wide'
-    ? Math.min(Math.max(screenWidth * 0.32, 360), 440)
-    : breakpoint === 'medium'
-      ? Math.min(Math.max(screenWidth * 0.45, 320), 380)
-      : Math.min(screenWidth * 0.7, 320);
+  const widthBasedPickerSize =
+    breakpoint === 'wide'
+      ? Math.min(Math.max(screenWidth * 0.32, 360), 440)
+      : breakpoint === 'medium'
+        ? Math.min(Math.max(screenWidth * 0.45, 320), 380)
+        : Math.min(screenWidth * 0.7, 320);
   const colorPickerSize = Math.min(
     widthBasedPickerSize,
-    Math.max(220, screenHeight - (breakpoint === 'compact' ? 390 : 420))
+    Math.max(220, screenHeight - (breakpoint === 'compact' ? 390 : 420)),
   );
   const sideBySideLayout = breakpoint !== 'compact';
   const standardColorColumns = sideBySideLayout ? 4 : 8;
@@ -68,8 +106,9 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const standardColorsWidth = sideBySideLayout
     ? Math.max(200, Math.min(220, colorPickerSize * 0.55))
     : colorPickerSize;
-  const colorPickerContentWidth = colorPickerSize + (sideBySideLayout ? standardColorsWidth + 16 : 0);
-  const colorCircleSize = (standardColorsWidth / standardColorColumns) - 5;
+  const colorPickerContentWidth =
+    colorPickerSize + (sideBySideLayout ? standardColorsWidth + 16 : 0);
+  const colorCircleSize = standardColorsWidth / standardColorColumns - 5;
 
   const saturationValueRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
@@ -122,7 +161,11 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       onPanResponderGrant: (evt, gestureState) => {
         saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
           setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
-          handleColorSelect(gestureState, { x: pageX, y: pageY, width: _width, height: _height }, false);
+          handleColorSelect(
+            gestureState,
+            { x: pageX, y: pageY, width: _width, height: _height },
+            false,
+          );
         });
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -130,7 +173,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           handleColorSelect(gestureState, pickerLayout, false);
         }
       },
-    })
+    }),
   ).current;
 
   const huePanResponder = useRef(
@@ -140,7 +183,11 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       onPanResponderGrant: (evt, gestureState) => {
         hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
           setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
-          handleColorSelect(gestureState, { x: pageX, y: pageY, width: _width, height: _height }, true);
+          handleColorSelect(
+            gestureState,
+            { x: pageX, y: pageY, width: _width, height: _height },
+            true,
+          );
         });
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -148,7 +195,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           handleColorSelect(gestureState, hueLayout, true);
         }
       },
-    })
+    }),
   ).current;
 
   const getBackgroundColorForSatValPicker = useCallback(() => {
@@ -158,7 +205,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
 
   const satValPickerHandlePosition = useCallback(() => {
     const x = (saturation / 100) * colorPickerSize;
-    const y = (1 - (value / 100)) * colorPickerSize; // Invert for UI
+    const y = (1 - value / 100) * colorPickerSize; // Invert for UI
     return { left: x - 10, top: y - 10 }; // Adjust for handle size
   }, [colorPickerSize, saturation, value]);
 
@@ -270,11 +317,11 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     },
     cancelButton: {
       backgroundColor: colors.textSecondary,
-      width: '40%'
+      width: '40%',
     },
     selectButton: {
       backgroundColor: colors.primary,
-      width: '40%'
+      width: '40%',
     },
     buttonText: {
       color: colors.onPrimary,
@@ -319,7 +366,10 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           {/* Saturation and Value Picker */}
           <View
             ref={saturationValueRef}
-            style={[styles.saturationValuePicker, { backgroundColor: getBackgroundColorForSatValPicker() }]}
+            style={[
+              styles.saturationValuePicker,
+              { backgroundColor: getBackgroundColorForSatValPicker() },
+            ]}
             {...saturationValuePanResponder.panHandlers}
           >
             <LinearGradient
@@ -334,24 +384,30 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
               end={{ x: 0, y: 0 }}
               style={StyleSheet.absoluteFillObject}
             />
-            <View style={[styles.pickerHandle, satValPickerHandlePosition(), { backgroundColor: currentPickedColorHex() }]} />
+            <View
+              style={[
+                styles.pickerHandle,
+                satValPickerHandlePosition(),
+                { backgroundColor: currentPickedColorHex() },
+              ]}
+            />
           </View>
 
           {/* Hue Slider */}
-          <View
-            ref={hueRef}
-            style={styles.hueSlider}
-            {...huePanResponder.panHandlers}
-          >
+          <View ref={hueRef} style={styles.hueSlider} {...huePanResponder.panHandlers}>
             <LinearGradient
-              colors={[
-                '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000',
-              ]}
+              colors={['#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFillObject}
             />
-            <View style={[styles.sliderHandle, hueSliderHandlePosition(), { backgroundColor: `hsl(${hue}, 100%, 50%)` }]} />
+            <View
+              style={[
+                styles.sliderHandle,
+                hueSliderHandlePosition(),
+                { backgroundColor: `hsl(${hue}, 100%, 50%)` },
+              ]}
+            />
           </View>
         </View>
 
@@ -374,10 +430,17 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
         <View style={styles.buttonWrapper}>
-          <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>{t('cancel')}</Button>
+          <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
+            {t('cancel')}
+          </Button>
         </View>
         <View style={styles.buttonWrapper}>
-          <Button onPress={() => onSelectColor(currentPickedColorHex())} style={{ backgroundColor: colors.primary }}>{t('select')}</Button>
+          <Button
+            onPress={() => onSelectColor(currentPickedColorHex())}
+            style={{ backgroundColor: colors.primary }}
+          >
+            {t('select')}
+          </Button>
         </View>
       </View>
     </ScrollView>

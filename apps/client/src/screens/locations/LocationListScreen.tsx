@@ -6,14 +6,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { LocationStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import {
+  LocationStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { LocationWithTags } from '../../services/storymanagement/LocationService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
@@ -122,24 +128,33 @@ const LocationsScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton, canEdit])
+    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton, canEdit]),
   );
 
-  const handleToggleFavorite = useCallback(async (locationId: string, isFavorite: boolean) => {
-    await toggleFavorite(locationId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (locationId: string, isFavorite: boolean) => {
+      await toggleFavorite(locationId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const handleViewDetails = useCallback((locationId: string) => {
-    navigation.navigate('LocationDetail', { locationId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (locationId: string) => {
+      navigation.navigate('LocationDetail', { locationId });
+    },
+    [navigation],
+  );
 
-  const memoizedRenderItem = useCallback(({ item }: { item: LocationWithTags }) => (
-    <LocationListItem
-      location={item}
-      onToggleFavorite={handleToggleFavorite}
-      onViewDetails={handleViewDetails}
-    />
-  ), [handleToggleFavorite, handleViewDetails]);
+  const memoizedRenderItem = useCallback(
+    ({ item }: { item: LocationWithTags }) => (
+      <LocationListItem
+        location={item}
+        onToggleFavorite={handleToggleFavorite}
+        onViewDetails={handleViewDetails}
+      />
+    ),
+    [handleToggleFavorite, handleViewDetails],
+  );
 
   const memoizedTagFilterOptions = useMemo(() => {
     return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));

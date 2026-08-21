@@ -2,9 +2,11 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 
 export default [
-  { ignores: ['node_modules/', 'dist-electron/', 'release/'] },
+  { ignores: ['node_modules/', 'dist-electron/', 'release/', 'coverage/'] },
   {
-    files: ['src/**/*.ts'],
+    // `test/` e a config do Vitest também são TypeScript: sem eles aqui, o parser padrão do
+    // ESLint (espree) tenta ler anotações de tipo e falha com "Unexpected token :".
+    files: ['src/**/*.ts', 'test/**/*.ts', 'vitest.config.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: { ecmaVersion: 'latest', sourceType: 'commonjs' },

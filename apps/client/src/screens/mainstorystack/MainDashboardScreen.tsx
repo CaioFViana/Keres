@@ -8,6 +8,8 @@ import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'rea
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 //import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList'; // Import OperationLogList
+import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
+import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
@@ -15,6 +17,7 @@ import { createStoryAnalysisService } from '../../services/storymanagement/Story
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
+import { useSyncConflictStore } from '../../state/syncConflictStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -24,10 +27,12 @@ const MainDashboardScreen = () => {
   const { selectedStory } = useStoryStore();
   const { isWide } = useResponsiveLayout();
   const db = useDrizzle(); // Get the Drizzle client
-  const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
+  const navigation =
+    useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
   const { t } = useTranslation();
-
+  const conflictCount = useSyncConflictStore((state) => state.conflicts.length);
+  const [conflictSheetOpen, setConflictSheetOpen] = useState(false);
 
   const [characterCount, setCharacterCount] = useState<number | undefined>(undefined);
   const [locationCount, setLocationCount] = useState<number | undefined>(undefined);
@@ -48,7 +53,7 @@ const MainDashboardScreen = () => {
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(selectedStory?.title || t('dashboard_title'));
-    }, [selectedStory?.title, t])
+    }, [selectedStory?.title, t]),
   );
 
   useEffect(() => {
@@ -65,16 +70,18 @@ const MainDashboardScreen = () => {
             CommonActions.reset({
               index: 0,
               routes: [{ name: 'StorySelection' }],
-            })
+            }),
           );
         } else {
-          console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
+          console.error(
+            'Could not find root stack navigation to dispatch reset action. This is unexpected.',
+          );
           // Fallback to current navigation context if parent not found
           navigation.dispatch(
             CommonActions.reset({
               index: 0,
               routes: [{ name: 'StorySelection' }],
-            })
+            }),
           );
         }
         return true; // Event handled
@@ -135,7 +142,6 @@ const MainDashboardScreen = () => {
         setTagCount(tags);
         setCustomAttributeCount(customAttributes);
         setForkCount(forks);
-
       } catch (error) {
         console.error('Error fetching entity counts:', error);
       }
@@ -161,7 +167,7 @@ const MainDashboardScreen = () => {
       return;
     }
     try {
-      const report = await createStoryAnalysisService(db).analyzeStory(selectedStory.id);
+      const report = await createStoryAnalysisService(db).analyzeStoryCheap(selectedStory.id);
       setAnalysisIssueCount(report.findings.length);
     } catch (error) {
       console.error('Error running story analysis:', error);
@@ -173,7 +179,7 @@ const MainDashboardScreen = () => {
     useCallback(() => {
       fetchCounts();
       runAnalysis();
-    }, [fetchCounts, runAnalysis])
+    }, [fetchCounts, runAnalysis]),
   );
 
   useEffect(() => {
@@ -268,9 +274,12 @@ const MainDashboardScreen = () => {
         </Text>
       )}
 
+      {selectedStory?.id && (
+        <SyncConflictBanner count={conflictCount} onPress={() => setConflictSheetOpen(true)} />
+      )}
+
       <SummaryCard
         title={t('story_overview')}
-
         characterCount={characterCount}
         locationCount={locationCount}
         chapterCount={chapterCount}
@@ -286,12 +295,13 @@ const MainDashboardScreen = () => {
         branchingStoryForkCount={forkCount}
         analysisSummary={
           selectedStory?.id && analysisIssueCount !== undefined
-            ? { issueCount: analysisIssueCount, onPress: () => navigation.navigate('StoryAnalysis', { storyId: selectedStory.id }) }
+            ? {
+                issueCount: analysisIssueCount,
+                onPress: () => navigation.navigate('StoryAnalysis', { storyId: selectedStory.id }),
+              }
             : undefined
         }
       />
-
-      
 
       {selectedStory?.id && (
         <>
@@ -299,6 +309,11 @@ const MainDashboardScreen = () => {
           <OperationLogList storyId={selectedStory.id} limit={20} />
         </>
       )}
+
+      <SyncConflictReviewSheet
+        visible={conflictSheetOpen}
+        onClose={() => setConflictSheetOpen(false)}
+      />
     </ScrollView>
   );
 };

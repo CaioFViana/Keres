@@ -23,7 +23,7 @@ export async function buildCustomAttributeSearchCondition(
   db: AppDrizzleClient,
   entityIdColumn: any,
   key: string,
-  rawValue: any
+  rawValue: any,
 ): Promise<SQL<boolean> | null> {
   const fieldId = extractCustomFieldId(key);
   if (!fieldId) {
@@ -48,19 +48,32 @@ export async function buildCustomAttributeSearchCondition(
       break;
     }
     case AttributeType.BOOLEAN:
-      valuePredicate = eq(attributeValues.value, rawValue === true || rawValue === 'true' ? 'true' : 'false') as SQL<boolean>;
+      valuePredicate = eq(
+        attributeValues.value,
+        rawValue === true || rawValue === 'true' ? 'true' : 'false',
+      ) as SQL<boolean>;
+      break;
+    case AttributeType.ENTITY:
+      valuePredicate = eq(attributeValues.value, String(rawValue)) as SQL<boolean>;
       break;
     default:
       // text, long_text, date, suggestion - substring match, same treatment native string/date
       // fields already get.
-      valuePredicate = sql`${attributeValues.value} LIKE ${`%${rawValue}%`} COLLATE NOCASE` as SQL<boolean>;
+      valuePredicate =
+        sql`${attributeValues.value} LIKE ${`%${rawValue}%`} COLLATE NOCASE` as SQL<boolean>;
       break;
   }
 
   const matchingEntityIds = db
     .select({ entityId: attributeValues.entityId })
     .from(attributeValues)
-    .where(and(eq(attributeValues.fieldId, fieldId), eq(attributeValues.isDeleted, false), valuePredicate));
+    .where(
+      and(
+        eq(attributeValues.fieldId, fieldId),
+        eq(attributeValues.isDeleted, false),
+        valuePredicate,
+      ),
+    );
 
   return inArray(entityIdColumn, matchingEntityIds) as SQL<boolean>;
 }

@@ -1,48 +1,61 @@
-import { CreateSceneDataSchema, CreateSceneDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialSceneSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateSceneDataSchema,
+  CreateSceneDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialSceneSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq, not, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { chapters, locations, scenes, stories } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
-export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDataSchema, typeof PartialSceneSchema> {
+export class SceneSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateSceneDataSchema,
+  typeof PartialSceneSchema
+> {
   entityName = 'Scene';
 
   constructor() {
-    super(
-      'scenes',
-      'id',
-      'version',
-      CreateSceneDataSchema,
-      PartialSceneSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      }
-    );
+    super('scenes', 'id', 'version', CreateSceneDataSchema, PartialSceneSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
-  private async validateRelatedEntities(storyId: string, chapterId: string, locationId: string): Promise<void> {
+  private async validateRelatedEntities(
+    storyId: string,
+    chapterId: string,
+    locationId: string,
+  ): Promise<void> {
     const chapter = await db.query.chapters.findFirst({
       where: and(
         eq(chapters.id, chapterId),
         eq(chapters.storyId, storyId),
-        eq(chapters.isDeleted, false)
+        eq(chapters.isDeleted, false),
       ),
     });
     if (!chapter) {
-      throw new Error(`Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
 
     const location = await db.query.locations.findFirst({
       where: and(
         eq(locations.id, locationId),
         eq(locations.storyId, storyId),
-        eq(locations.isDeleted, false)
+        eq(locations.isDeleted, false),
       ),
     });
     if (!location) {
-      throw new Error(`Validation Error: Location with ID ${locationId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Location with ID ${locationId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
   }
 
@@ -56,27 +69,30 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
     return story?.type === 'linear';
   }
 
-  private async _handleIsStartFinishFlags(storyId: string, sceneId: string, isStart: boolean | undefined, isFinish: boolean | undefined): Promise<void> {
+  private async _handleIsStartFinishFlags(
+    storyId: string,
+    sceneId: string,
+    isStart: boolean | undefined,
+    isFinish: boolean | undefined,
+  ): Promise<void> {
     if (isStart === true) {
       // Unset isStart for all other scenes in the same story
-      await db.update(scenes)
+      await db
+        .update(scenes)
         .set({ isStart: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-        .where(and(
-          eq(scenes.storyId, storyId),
-          eq(scenes.isStart, true),
-          not(eq(scenes.id, sceneId))
-        ));
+        .where(
+          and(eq(scenes.storyId, storyId), eq(scenes.isStart, true), not(eq(scenes.id, sceneId))),
+        );
     }
 
     if (isFinish === true) {
       // Unset isFinish for all other scenes in the same story
-      await db.update(scenes)
+      await db
+        .update(scenes)
         .set({ isFinish: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-        .where(and(
-          eq(scenes.storyId, storyId),
-          eq(scenes.isFinish, true),
-          not(eq(scenes.id, sceneId))
-        ));
+        .where(
+          and(eq(scenes.storyId, storyId), eq(scenes.isFinish, true), not(eq(scenes.id, sceneId))),
+        );
     }
   }
 
@@ -92,7 +108,12 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
 
     const isLinear = await this._isStoryLinear(storyId);
     if (isLinear && (validatedData.isStart || validatedData.isFinish)) {
-      await this._handleIsStartFinishFlags(storyId, update.id!, validatedData.isStart, validatedData.isFinish);
+      await this._handleIsStartFinishFlags(
+        storyId,
+        update.id!,
+        validatedData.isStart,
+        validatedData.isFinish,
+      );
     }
 
     await db.insert(scenes).values({
@@ -107,7 +128,12 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // If chapterId or locationId are being updated, validate them
@@ -118,23 +144,35 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
     }
 
     const isLinear = await this._isStoryLinear(storyId);
-    if (isLinear && (validatedChanges.isStart !== undefined || validatedChanges.isFinish !== undefined)) {
-      await this._handleIsStartFinishFlags(storyId, update.id!, validatedChanges.isStart, validatedChanges.isFinish);
+    if (
+      isLinear &&
+      (validatedChanges.isStart !== undefined || validatedChanges.isFinish !== undefined)
+    ) {
+      await this._handleIsStartFinishFlags(
+        storyId,
+        update.id!,
+        validatedChanges.isStart,
+        validatedChanges.isFinish,
+      );
     }
 
-    await db.update(scenes)
-      .set({
-        ...validatedChanges,
-        updatedAt: new Date(),
-        version: currentEntity.version + 1,
-      })
-      .where(and(
-        eq(scenes.id, update.id!),
-        eq(scenes.version, currentEntity.version)
-      ));
+    // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
+    // that reimplementation had no `checkVersionConflict`, no `deleted_on_server` check, and
+    // used server time instead of the client's `operationTime` - a concurrent edit landed here
+    // with no error and no conflict reported, just silently dropped (same bug already found
+    // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
+    // As a bonus, throwing on conflict now also rolls back the isStart/isFinish flag-flip above
+    // via the same transaction, instead of leaving other scenes' flags cleared while this
+    // scene's own edit silently failed to apply.
+    await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     // The client is now responsible for creating operations to re-index other scenes.
     // The API's role is simply to mark this specific scene as deleted.
     await super.delete(userId, storyId, update, currentEntity);

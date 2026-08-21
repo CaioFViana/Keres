@@ -1,18 +1,32 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Location } from '@keres/shared/entities/Location';
-import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  RouteProp,
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
+import { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
@@ -20,18 +34,43 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import {
+  createLocationRelationService,
+  LocationRelationService,
+} from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
-
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { createULID } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;
-type LocationFormScreenNavigationProp = NativeStackNavigationProp<LocationStackParamList, 'LocationForm'>;
+type LocationFormScreenNavigationProp = NativeStackNavigationProp<
+  LocationStackParamList,
+  'LocationForm'
+>;
+
+const makePendingLocationRelation = (
+  storyId: string,
+  relationType: 'contains' | 'connected_to',
+  locationAId: string,
+  locationBId: string,
+): LocationRelationSelect => ({
+  id: `pending-${createULID()}`,
+  storyId,
+  locationAId,
+  locationBId,
+  relationType,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+});
 
 const LocationFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -50,10 +89,15 @@ const LocationFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
+  const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
 
   useEffect(() => {
     if (drizzleDb && !locationServiceRef.current) {
       locationServiceRef.current = createLocationService(drizzleDb);
+    }
+    if (drizzleDb && !locationRelationServiceRef.current) {
+      locationRelationServiceRef.current = createLocationRelationService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -75,6 +119,7 @@ const LocationFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Location', entityId: currentLocationId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Location');
@@ -82,17 +127,169 @@ const LocationFormScreen = () => {
   const customDefaultsAppliedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const [allLocations, setAllLocations] = useState<LocationSelect[]>([]);
+  const [allLocationRelations, setAllLocationRelations] = useState<LocationRelationSelect[]>([]);
+  // Enquanto o location ainda não existe, cada operação vira uma relação sintética aqui em vez de
+  // gravar no banco - '' no lugar do lado ainda-não-criado. Replay em
+  // `persistPendingLocationRelations` depois do save principal.
+  const [pendingLocationRelations, setPendingLocationRelations] = useState<
+    LocationRelationSelect[]
+  >([]);
 
   const isEditing = !!currentLocationId;
+
+  const fetchAllLocationsInStory = useCallback(async () => {
+    if (!locationServiceRef.current || !selectedStory?.id) {
+      setAllLocations([]);
+      return;
+    }
+    try {
+      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
+      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all locations:', err);
+    }
+  }, [selectedStory?.id]);
+
+  const fetchAllLocationRelationsInStory = useCallback(async () => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id) {
+      setAllLocationRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(
+        selectedStory.id,
+      );
+      setAllLocationRelations(fetchedRelations);
+    } catch (err) {
+      console.error('Failed to fetch all location relations:', err);
+    }
+  }, [selectedStory?.id]);
+
+  useEffect(() => {
+    fetchAllLocationsInStory();
+    fetchAllLocationRelationsInStory();
+  }, [fetchAllLocationsInStory, fetchAllLocationRelationsInStory]);
+
+  const handleSetParent = useCallback(
+    async (newParentId: string | null) => {
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => {
+          const withoutParent = prev.filter(
+            (r) => !(r.relationType === 'contains' && r.locationBId === ''),
+          );
+          return newParentId === null
+            ? withoutParent
+            : [
+                ...withoutParent,
+                makePendingLocationRelation(selectedStory?.id ?? '', 'contains', newParentId, ''),
+              ];
+        });
+        return;
+      }
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+      try {
+        await locationRelationServiceRef.current.setParent(
+          userId,
+          selectedStory.id,
+          currentLocationId,
+          newParentId,
+        );
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, currentLocationId, t, fetchAllLocationRelationsInStory],
+  );
+
+  const handleAddChild = useCallback(
+    async (childId: string) => {
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => [
+          ...prev,
+          makePendingLocationRelation(selectedStory?.id ?? '', 'contains', '', childId),
+        ]);
+        return;
+      }
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+      try {
+        await locationRelationServiceRef.current.setParent(
+          userId,
+          selectedStory.id,
+          childId,
+          currentLocationId,
+        );
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, currentLocationId, t, fetchAllLocationRelationsInStory],
+  );
+
+  const handleAddConnection = useCallback(
+    async (otherLocationId: string) => {
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => [
+          ...prev,
+          makePendingLocationRelation(selectedStory?.id ?? '', 'connected_to', '', otherLocationId),
+        ]);
+        return;
+      }
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+      try {
+        await locationRelationServiceRef.current.addConnection(
+          userId,
+          selectedStory.id,
+          currentLocationId,
+          otherLocationId,
+        );
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, currentLocationId, t, fetchAllLocationRelationsInStory],
+  );
+
+  const handleRemoveLocationRelation = useCallback(
+    async (relationId: string) => {
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => prev.filter((r) => r.id !== relationId));
+        return;
+      }
+      if (!locationRelationServiceRef.current || !userId) return;
+      try {
+        await locationRelationServiceRef.current.removeRelation(userId, relationId);
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_remove_relation'),
+        );
+      }
+    },
+    [userId, t, fetchAllLocationRelationsInStory, currentLocationId],
+  );
 
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(isEditing ? t('edit_location_title') : t('create_location_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_location_title') : t('create_location_title'),
-        headerRight: () => <View/>
+        headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -116,7 +313,9 @@ const LocationFormScreen = () => {
             setIsFavorite(fetchedLocation.isFavorite);
             setExtraNotes(fetchedLocation.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentLocationId!);
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
+              currentLocationId!,
+            );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Location not found:', currentLocationId);
@@ -160,7 +359,10 @@ const LocationFormScreen = () => {
     setLoading(true);
 
     try {
-      const locationData: Omit<Location, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
+      const locationData: Omit<
+        Location,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      > = {
         name: name.trim(),
         description,
         climate,
@@ -173,19 +375,34 @@ const LocationFormScreen = () => {
       let savedLocation: Location;
 
       if (isEditing) {
-        savedLocation = await locationServiceRef.current!.updateLocation(userId, currentLocationId!, locationData);
+        savedLocation = await locationServiceRef.current!.updateLocation(
+          userId,
+          currentLocationId!,
+          locationData,
+        );
         AppAlert.alert(t('success'), t('location_updated_successfully'));
       } else {
-        savedLocation = await locationServiceRef.current!.createLocation(userId, { ...locationData, storyId: selectedStory.id });
+        savedLocation = await locationServiceRef.current!.createLocation(userId, {
+          ...locationData,
+          storyId: selectedStory.id,
+        });
         AppAlert.alert(t('success'), t('location_created_successfully'));
         setCurrentLocationId(savedLocation.id);
       }
 
       if (savedLocation.id) {
         await persistTagRelations(savedLocation.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Location', savedLocation.id, customValues);
+        await persistNoteRelations(savedLocation.id);
+        await seeAlsoManagerRef.current?.persistPending(savedLocation.id);
+        await persistPendingLocationRelations(savedLocation.id);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(
+          userId,
+          selectedStory.id,
+          'Location',
+          savedLocation.id,
+          customValues,
+        );
       }
-
 
       entityEventEmitter.emit('location_changed', selectedStory.id, savedLocation.id);
 
@@ -194,7 +411,6 @@ const LocationFormScreen = () => {
       } else {
         navigation.goBack();
       }
-
     } catch (err) {
       console.error('Failed to save location:', err);
       AppAlert.alert(t('error'), t('failed_to_save_location'));
@@ -227,9 +443,51 @@ const LocationFormScreen = () => {
     });
   };
 
-  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
-    setSelectedTagIds(newSelection);
-  }, [setSelectedTagIds]);
+  /**
+   * Grava de verdade as relações acumuladas enquanto o location ainda não existia - '' no lugar do
+   * lado ainda-não-criado (ver `makePendingLocationRelation`); troca pelo id de verdade aqui.
+   */
+  const persistPendingLocationRelations = async (targetLocationId: string) => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+    for (const pending of pendingLocationRelations) {
+      if (pending.relationType === 'contains') {
+        if (pending.locationAId === '') {
+          await locationRelationServiceRef.current.setParent(
+            userId,
+            selectedStory.id,
+            pending.locationBId,
+            targetLocationId,
+          );
+        } else {
+          await locationRelationServiceRef.current.setParent(
+            userId,
+            selectedStory.id,
+            targetLocationId,
+            pending.locationAId,
+          );
+        }
+      } else {
+        const otherId = pending.locationAId === '' ? pending.locationBId : pending.locationAId;
+        await locationRelationServiceRef.current.addConnection(
+          userId,
+          selectedStory.id,
+          targetLocationId,
+          otherId,
+        );
+      }
+    }
+    if (pendingLocationRelations.length > 0) {
+      setPendingLocationRelations([]);
+      fetchAllLocationRelationsInStory();
+    }
+  };
+
+  const handleTagSelectionChange = useCallback(
+    (newSelection: string[]) => {
+      setSelectedTagIds(newSelection);
+    },
+    [setSelectedTagIds],
+  );
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -256,12 +514,12 @@ const LocationFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
       backgroundColor: 'red',
-      marginBottom: 15
+      marginBottom: 15,
     },
     centered: {
       flex: 1,
@@ -270,7 +528,12 @@ const LocationFormScreen = () => {
     },
     tagSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: 0,
+    },
+    noteSection: {
+      // Renamed from tagSection for clarity.
+      marginTop: 20,
+      marginBottom: -10,
     },
     sectionTitle: {
       fontSize: 18,
@@ -289,120 +552,152 @@ const LocationFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_location_title') : t('create_location_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('location_form_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_location_title') : t('create_location_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('location_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-          <TextInput
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
+      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
+      <TextInput
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
+      <TextInput
+        placeholder={t('description_placeholder')}
+        value={description || ''}
+        onChangeText={setDescription}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('field_climate')}</Text>
+      <TextInput
+        placeholder={t('climate_placeholder')}
+        value={climate || ''}
+        onChangeText={setClimate}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('field_culture')}</Text>
+      <TextInput
+        placeholder={t('culture_placeholder')}
+        value={culture || ''}
+        onChangeText={setCulture}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('field_politics')}</Text>
+      <TextInput
+        placeholder={t('politics_placeholder')}
+        value={politics || ''}
+        onChangeText={setPolitics}
+        style={commonInputStyles.input}
+      />
+
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <CustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+      />
+
+      <View style={styles.tagSection}>
+        <MultiSelectPill
+          options={availableTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color || colors.primaryContainer,
+          }))}
+          selectedValues={selectedTagIds}
+          onSelectionChange={handleTagSelectionChange}
+          placeholder={t('select_tags_for_location')}
+          label={t('location_tags')}
+        />
+      </View>
+
+      {selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <NoteManager
+            noteRelations={locationNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentEntityId={currentLocationId ?? ''}
+            currentEntityType="Location"
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('description_placeholder')}
-            value={description || ""}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
+      {selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <LocationRelationManager
+            currentLocationId={currentLocationId ?? ''}
+            allLocations={allLocations}
+            allLocationRelations={
+              currentLocationId ? allLocationRelations : pendingLocationRelations
+            }
+            onSetParent={handleSetParent}
+            onAddChild={handleAddChild}
+            onAddConnection={handleAddConnection}
+            onRemoveRelation={handleRemoveLocationRelation}
+            editable={true}
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('field_climate')}</Text>
-          <TextInput
-            placeholder={t('climate_placeholder')}
-            value={climate || ""}
-            onChangeText={setClimate}
-            style={commonInputStyles.input}
+      {selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <SeeAlsoManager
+            ref={seeAlsoManagerRef}
+            storyId={selectedStory.id}
+            entityType="Location"
+            entityId={currentLocationId ?? ''}
+            editable={true}
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('field_culture')}</Text>
-          <TextInput
-            placeholder={t('culture_placeholder')}
-            value={culture || ""}
-            onChangeText={setCulture}
-            style={commonInputStyles.input}
-          />
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {t('save_location')}
+      </Button>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('field_politics')}</Text>
-          <TextInput
-            placeholder={t('politics_placeholder')}
-            value={politics || ""}
-            onChangeText={setPolitics}
-            style={commonInputStyles.input}
-          />
-
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
-
-          <CustomAttributeFields
-            storyId={selectedStory?.id || ''}
-            fields={customFields}
-            values={customValues}
-            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-          />
-
-          <View style={styles.tagSection}>
-            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-            <MultiSelectPill
-              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
-              selectedValues={selectedTagIds}
-              onSelectionChange={handleTagSelectionChange}
-              placeholder={t('select_tags_for_location')}
-              label={t('location_tags')}
-            />
-          </View>
-
-          {currentLocationId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-              <NoteManager
-                noteRelations={locationNoteRelations}
-                availableNotes={allNotes}
-                onSave={saveNoteRelation}
-                onDelete={deleteNoteRelation}
-                editable={true}
-                currentStoryId={selectedStory.id}
-                currentEntityId={currentLocationId}
-                currentEntityType="Location"
-              />
-            </View>
-          )}
-
-          {currentLocationId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <SeeAlsoManager storyId={selectedStory.id} entityType="Location" entityId={currentLocationId} editable={true} />
-            </View>
-          )}
-
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {t('save_location')}
-          </Button>
-
-          {isEditing && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_location_title')}
-            </Button>
-          )}
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_location_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

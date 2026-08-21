@@ -12,14 +12,21 @@ beforeAll(() => {
   vi.stubGlobal('Bun', {
     write: (filePath: string, bytes: ArrayBuffer) => writeFile(filePath, new Uint8Array(bytes)),
     file: (filePath: string) => ({
-      exists: async () => access(filePath).then(() => true).catch(() => false),
+      exists: async () =>
+        access(filePath)
+          .then(() => true)
+          .catch(() => false),
       text: async () => readFile(filePath, 'utf8'),
     }),
   });
 });
 
 afterEach(async () => {
-  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+  await Promise.all(
+    temporaryDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { recursive: true, force: true })),
+  );
 });
 
 describe('LocalFilesystemBlobStorage', () => {

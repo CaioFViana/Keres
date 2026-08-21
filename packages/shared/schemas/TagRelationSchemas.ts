@@ -3,9 +3,9 @@ import { z } from 'zod';
 export const TagRelationSchema = z.object({
   id: z.string(),
   storyId: z.string(),
-  tagId: z.string().min(1, "Tag ID cannot be empty"),
-  relationId: z.string().min(1, "Relation ID cannot be empty"),
-  relationType: z.string().min(1, "Relation type cannot be empty"), // e.g., 'Character', 'Location', 'Scene'
+  tagId: z.string().min(1, 'Tag ID cannot be empty'),
+  relationId: z.string().min(1, 'Relation ID cannot be empty'),
+  relationType: z.string().min(1, 'Relation type cannot be empty'), // e.g., 'Character', 'Location', 'Scene'
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -22,12 +22,12 @@ export const CreateTagRelationDataSchema = TagRelationSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  tagId: z.string().min(1, "Tag ID cannot be empty"),
-  relationId: z.string().min(1, "Relation ID cannot be empty"),
-  relationType: z.string().min(1, "Relation type cannot be empty"),
+  tagId: z.string().min(1, 'Tag ID cannot be empty'),
+  relationId: z.string().min(1, 'Relation ID cannot be empty'),
+  relationType: z.string().min(1, 'Relation type cannot be empty'),
 });
 
-export const PartialTagRelationSchema = TagRelationSchema.partial();
+export const PartialTagRelationSchema = CreateTagRelationDataSchema.partial();
 
 export type CreateTagRelationDataType = z.infer<typeof CreateTagRelationDataSchema>;
 export type TagRelationType = z.infer<typeof TagRelationSchema>;

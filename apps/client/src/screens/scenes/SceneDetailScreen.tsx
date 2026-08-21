@@ -1,48 +1,63 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Chapter } from '@keres/shared/entities/Chapter';
-import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
-import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
-import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
-import { Location } from '@keres/shared/entities/Location'; // Import Location
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
-import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import TagList from '@/src/components/common/display/TagList/TagList';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager'; // Import ItemSceneManager
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager'; // Import NoteRelationManager
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import { Ionicons } from '@expo/vector-icons';
+import { Chapter } from '@keres/shared/entities/Chapter';
+import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
+import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
+import { Effect } from '@keres/shared/entities/Effect';
+import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
+import { Location } from '@keres/shared/entities/Location'; // Import Location
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { ChapterService, createChapterService } from '../../services/storymanagement/ChapterService'; // Import ChapterService
-import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import {
+  ChapterService,
+  createChapterService,
+} from '../../services/storymanagement/ChapterService'; // Import ChapterService
+import {
+  CharacterSceneServiceInterface,
+  createCharacterSceneService,
+} from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { ChoiceService, createChoiceService } from '../../services/storymanagement/ChoiceService'; // Import ChoiceService
-import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import { createEffectService, EffectService } from '../../services/storymanagement/EffectService';
+import {
+  createItemJourneyService,
+  ItemJourneyService,
+} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import { createLocationService, LocationService } from '../../services/storymanagement/LocationService';
+import {
+  createLocationService,
+  LocationService,
+} from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
@@ -74,8 +89,14 @@ const SceneDetailScreen = () => {
   const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
   const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
   const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null); // Ref for ItemJourneyService
+  const effectServiceRef = useRef<EffectService | null>(null); // Ref for EffectService
 
-  const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore(); // For character data
+  const {
+    characters,
+    fetchCharacters,
+    setDbAndStoryId: setCharacterDbAndStoryId,
+    initializeService: initializeCharacterService,
+  } = useCharacterStore(); // For character data
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -101,6 +122,9 @@ const SceneDetailScreen = () => {
       if (!itemJourneyServiceRef.current) {
         itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
       }
+      if (!effectServiceRef.current) {
+        effectServiceRef.current = createEffectService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -111,18 +135,32 @@ const SceneDetailScreen = () => {
       initializeCharacterService();
       fetchCharacters();
     }
-  }, [drizzleDb, selectedStory?.id, setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters]);
+  }, [
+    drizzleDb,
+    selectedStory?.id,
+    setCharacterDbAndStoryId,
+    initializeCharacterService,
+    fetchCharacters,
+  ]);
 
   const [scene, setScene] = useState<SceneSelect | null>(null);
   const { canEdit } = useStoryRole(scene?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(scene?.storyId, 'Scene', sceneId);
   const [chapter, setChapter] = useState<Chapter | null>(null); // State for chapter details
   const [location, setLocation] = useState<Location | null>(null); // State for location details
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
   const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined); // State for next scene
-  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices
+  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices leaving this scene
+  const [incomingChoicesForScene, setIncomingChoicesForScene] = useState<Choice[]>([]); // State for choices arriving at this scene
+  const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({}); // For choice target/source scene labels
   const {
     selectedTags: sceneTags,
     allNotes,
@@ -133,6 +171,8 @@ const SceneDetailScreen = () => {
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
   const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in the story
   const [itemJourneys, setItemJourneys] = useState<ItemJourney[]>([]); // State for item journeys related to the scene
+  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]); // State for effects caused by this scene
+  const isBranching = selectedStory?.type === 'branching';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -165,6 +205,15 @@ const SceneDetailScreen = () => {
       flexDirection: 'row',
       alignItems: 'center',
     },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    checkRow: { color: colors.text, marginTop: 4 },
   });
 
   const fetchScene = useCallback(async () => {
@@ -222,13 +271,23 @@ const SceneDetailScreen = () => {
   }, [scene?.locationId]);
 
   const fetchPreviousNextScenes = useCallback(async () => {
-    if (!sceneServiceRef.current || !selectedStory?.id || !sceneId || !chapter?.id || selectedStory.type !== 'linear') {
+    if (
+      !sceneServiceRef.current ||
+      !selectedStory?.id ||
+      !sceneId ||
+      !chapter?.id ||
+      selectedStory.type !== 'linear'
+    ) {
       setPreviousScene(undefined);
       setNextScene(undefined);
       return;
     }
     try {
-      const { previousScene, nextScene } = await sceneServiceRef.current.getPreviousNextScenes(selectedStory.id, sceneId, chapter.id);
+      const { previousScene, nextScene } = await sceneServiceRef.current.getPreviousNextScenes(
+        selectedStory.id,
+        sceneId,
+        chapter.id,
+      );
       setPreviousScene(previousScene);
       setNextScene(nextScene);
     } catch (err) {
@@ -239,7 +298,12 @@ const SceneDetailScreen = () => {
   }, [selectedStory?.id, sceneId, chapter?.id, selectedStory?.type]);
 
   const fetchChoicesForScene = useCallback(async () => {
-    if (!choiceServiceRef.current || !selectedStory?.id || !sceneId || selectedStory.type !== 'branching') {
+    if (
+      !choiceServiceRef.current ||
+      !selectedStory?.id ||
+      !sceneId ||
+      selectedStory.type !== 'branching'
+    ) {
       setChoicesForScene([]);
       return;
     }
@@ -247,7 +311,14 @@ const SceneDetailScreen = () => {
       // `sceneId` é o critério que o serviço entende e filtra pelas escolhas que *saem* desta
       // cena, que é o que os botões de navegação abaixo oferecem. `fromSceneId` não existia:
       // caía na varredura de critérios genéricos e derrubava a consulta.
-      const choices = await choiceServiceRef.current.getChoicesByStoryId(selectedStory.id, undefined, undefined, undefined, undefined, { sceneId });
+      const choices = await choiceServiceRef.current.getChoicesByStoryId(
+        selectedStory.id,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { sceneId },
+      );
       setChoicesForScene(choices);
     } catch (err) {
       console.error('Failed to fetch choices for scene:', err);
@@ -255,13 +326,55 @@ const SceneDetailScreen = () => {
     }
   }, [selectedStory?.id, sceneId, selectedStory?.type]);
 
+  const fetchIncomingChoicesForScene = useCallback(async () => {
+    if (
+      !choiceServiceRef.current ||
+      !selectedStory?.id ||
+      !sceneId ||
+      selectedStory.type !== 'branching'
+    ) {
+      setIncomingChoicesForScene([]);
+      return;
+    }
+    try {
+      const choices = await choiceServiceRef.current.getChoicesByStoryId(
+        selectedStory.id,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { nextSceneId: sceneId },
+      );
+      setIncomingChoicesForScene(choices);
+    } catch (err) {
+      console.error('Failed to fetch incoming choices for scene:', err);
+      setIncomingChoicesForScene([]);
+    }
+  }, [selectedStory?.id, sceneId, selectedStory?.type]);
+
+  const fetchSceneNames = useCallback(async () => {
+    if (!sceneServiceRef.current || !selectedStory?.id || selectedStory.type !== 'branching') {
+      setSceneNamesById({});
+      return;
+    }
+    try {
+      const allScenes = await sceneServiceRef.current.getAllByStoryId(selectedStory.id);
+      setSceneNamesById(Object.fromEntries(allScenes.map((s) => [s.id, s.name])));
+    } catch (err) {
+      console.error('Failed to fetch scene name lookups:', err);
+    }
+  }, [selectedStory?.id, selectedStory?.type]);
+
   const fetchCharacterSceneRelations = useCallback(async () => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !sceneId) {
       setCharacterSceneRelations([]);
       return;
     }
     try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForScene(selectedStory.id, sceneId);
+      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForScene(
+        selectedStory.id,
+        sceneId,
+      );
       setCharacterSceneRelations(fetchedRelations);
     } catch (err) {
       console.error('Failed to fetch character-scene relations:', err);
@@ -287,50 +400,103 @@ const SceneDetailScreen = () => {
       return;
     }
     try {
-      const fetchedJourneys = await itemJourneyServiceRef.current.getItemJourneysBySceneId(selectedStory.id, sceneId);
+      const fetchedJourneys = await itemJourneyServiceRef.current.getItemJourneysBySceneId(
+        selectedStory.id,
+        sceneId,
+      );
       setItemJourneys(fetchedJourneys);
     } catch (err) {
       console.error('Failed to fetch item journeys for scene:', err);
     }
   }, [selectedStory?.id, sceneId]);
 
-  const handleItemChange = useCallback((changedStoryId: string, changedItemId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllItems();
+  const fetchSceneEffects = useCallback(async () => {
+    if (!effectServiceRef.current || !selectedStory?.id || !sceneId) {
+      setSceneEffects([]);
+      return;
     }
-  }, [selectedStory?.id, fetchAllItems]);
-
-  const handleItemJourneyChange = useCallback((changedStoryId: string, changedItemJourneyId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchItemJourneysForScene();
+    try {
+      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(
+        selectedStory.id,
+        'Scene',
+        sceneId,
+      );
+      setSceneEffects(fetchedEffects);
+    } catch (err) {
+      console.error('Failed to fetch scene effects:', err);
     }
-  }, [selectedStory?.id, fetchItemJourneysForScene]);
+  }, [selectedStory?.id, sceneId]);
 
-  const handleSceneChange = useCallback(async (changedStoryId: string, changedSceneId: string) => {
-    if (changedSceneId === sceneId) {
-      if (sceneServiceRef.current) {
-        const updatedScene = await sceneServiceRef.current.getById(sceneId);
-        if (!updatedScene || updatedScene.isDeleted) {
-          navigation.goBack();
-        } else {
-          setScene(updatedScene);
-          setHeaderTitle(updatedScene.name || t('scene_details_title'));
+  const handleEffectChange = useCallback(
+    (changedStoryId: string, changedEntityId: string) => {
+      if (selectedStory?.id === changedStoryId && changedEntityId === sceneId) {
+        fetchSceneEffects();
+      }
+    },
+    [selectedStory?.id, sceneId, fetchSceneEffects],
+  );
+
+  const handleItemChange = useCallback(
+    (changedStoryId: string, changedItemId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllItems();
+      }
+    },
+    [selectedStory?.id, fetchAllItems],
+  );
+
+  const handleItemJourneyChange = useCallback(
+    (changedStoryId: string, changedItemJourneyId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchItemJourneysForScene();
+      }
+    },
+    [selectedStory?.id, fetchItemJourneysForScene],
+  );
+
+  const handleSceneChange = useCallback(
+    async (changedStoryId: string, changedSceneId: string) => {
+      if (changedSceneId === sceneId) {
+        if (sceneServiceRef.current) {
+          const updatedScene = await sceneServiceRef.current.getById(sceneId);
+          if (!updatedScene || updatedScene.isDeleted) {
+            navigation.goBack();
+          } else {
+            setScene(updatedScene);
+            setHeaderTitle(updatedScene.name || t('scene_details_title'));
+          }
+        }
+        fetchChapter();
+        if (selectedStory?.type === 'linear') {
+          fetchPreviousNextScenes();
+        } else if (selectedStory?.type === 'branching') {
+          fetchChoicesForScene();
+          fetchIncomingChoicesForScene();
         }
       }
-      fetchChapter();
-      if (selectedStory?.type === 'linear') {
-        fetchPreviousNextScenes();
-      } else if (selectedStory?.type === 'branching') {
-        fetchChoicesForScene();
-      }
-    }
-  }, [sceneId, navigation, setScene, setHeaderTitle, t, fetchChapter, selectedStory?.type, fetchPreviousNextScenes, fetchChoicesForScene]);
+    },
+    [
+      sceneId,
+      navigation,
+      setScene,
+      setHeaderTitle,
+      t,
+      fetchChapter,
+      selectedStory?.type,
+      fetchPreviousNextScenes,
+      fetchChoicesForScene,
+      fetchIncomingChoicesForScene,
+    ],
+  );
 
-  const handleCharacterSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
-    if (changedSceneId === sceneId) {
-      fetchCharacterSceneRelations();
-    }
-  }, [sceneId, fetchCharacterSceneRelations]);
+  const handleCharacterSceneChange = useCallback(
+    (changedStoryId: string, changedSceneId: string) => {
+      if (changedSceneId === sceneId) {
+        fetchCharacterSceneRelations();
+      }
+    },
+    [sceneId, fetchCharacterSceneRelations],
+  );
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
@@ -340,15 +506,25 @@ const SceneDetailScreen = () => {
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
       entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
       entityEventEmitter.on('item_journey_changed', handleItemJourneyChange); // Listen for item journey changes
+      entityEventEmitter.on('effect_changed', handleEffectChange); // Listen for effect changes
 
       return () => {
         entityEventEmitter.off('scene_changed', handleSceneChange);
         entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange); // Cleanup listener
         entityEventEmitter.off('item_changed', handleItemChange); // Cleanup listener
         entityEventEmitter.off('item_journey_changed', handleItemJourneyChange); // Cleanup listener
+        entityEventEmitter.off('effect_changed', handleEffectChange); // Cleanup listener
       };
     }
-  }, [sceneId, fetchScene, handleSceneChange, handleCharacterSceneChange, handleItemChange, handleItemJourneyChange]);
+  }, [
+    sceneId,
+    fetchScene,
+    handleSceneChange,
+    handleCharacterSceneChange,
+    handleItemChange,
+    handleItemJourneyChange,
+    handleEffectChange,
+  ]);
 
   useEffect(() => {
     if (scene) {
@@ -357,35 +533,59 @@ const SceneDetailScreen = () => {
       fetchCharacterSceneRelations();
       fetchAllItems(); // Fetch all items when scene changes
       fetchItemJourneysForScene(); // Fetch item journeys for scene when scene changes
+      if (isBranching) {
+        fetchSceneEffects();
+      }
     }
-  }, [scene, fetchChapter, fetchLocation, fetchCharacterSceneRelations, fetchAllItems, fetchItemJourneysForScene]);
+  }, [
+    scene,
+    fetchChapter,
+    fetchLocation,
+    fetchCharacterSceneRelations,
+    fetchAllItems,
+    fetchItemJourneysForScene,
+    isBranching,
+    fetchSceneEffects,
+  ]);
 
   useEffect(() => {
     if (selectedStory?.type === 'linear' && scene && chapter) {
       fetchPreviousNextScenes();
     } else if (selectedStory?.type === 'branching' && scene) {
       fetchChoicesForScene();
+      fetchIncomingChoicesForScene();
+      fetchSceneNames();
     }
-  }, [selectedStory, selectedStory?.type, scene, chapter, fetchPreviousNextScenes, fetchChoicesForScene]);
+  }, [
+    selectedStory,
+    selectedStory?.type,
+    scene,
+    chapter,
+    fetchPreviousNextScenes,
+    fetchChoicesForScene,
+    fetchIncomingChoicesForScene,
+    fetchSceneNames,
+  ]);
+
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const handleLocationPress = useCallback(() => {
     if (!location) return;
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Location', location.id);
-    }
-  }, [navigation, location]);
+    navigateToDetail('Location', location.id);
+  }, [navigateToDetail, location]);
 
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('SceneForm', { sceneId: sceneId })}
-        style={{ marginRight: 15 }}
-      >
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, sceneId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('SceneForm', { sceneId: sceneId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, sceneId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -394,7 +594,7 @@ const SceneDetailScreen = () => {
         headerRight: renderHeaderRight,
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -406,18 +606,44 @@ const SceneDetailScreen = () => {
   }
 
   if (!scene) {
-    return <ScreenError padded message={t('scene_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('scene_data_missing')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
+  const describeEffect = (effect: Effect): string => {
+    const itemName =
+      (effect.itemId && allItems.find((item) => item.id === effect.itemId)?.name) || t('common_na');
+    switch (effect.effectType) {
+      case 'itemGrant':
+        return t('effect_description_item_grant', { item: itemName });
+      case 'itemTake':
+        return t('effect_description_item_take', { item: itemName });
+      case 'triggerSet':
+        return t('effect_description_trigger_set', {
+          trigger: effect.triggerName || t('common_na'),
+        });
+      case 'triggerUnset':
+        return t('effect_description_trigger_unset', {
+          trigger: effect.triggerName || t('common_na'),
+        });
+      default:
+        return '';
+    }
+  };
+
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       {chapter && (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
           {chapter.name}
         </Text>
       )}
-      <TagChipList tags={sceneTags} />
+      <TagList tags={sceneTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
         storyId={scene.storyId}
         label={t('summary')}
@@ -426,16 +652,30 @@ const SceneDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'summary' }, { ...input, contentSnapshot: scene.summary || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'summary' },
+            { ...input, contentSnapshot: scene.summary || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
-      <DetailField label={t('gap')} value={formatSceneGap(scene, t, selectedStory?.normalizeSceneTiming)} />
-      <DetailField label={t('in_universe_duration')} value={formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming)} />
+      <DetailField
+        label={t('gap')}
+        value={formatSceneGap(scene, t, selectedStory?.normalizeSceneTiming)}
+      />
+      <DetailField
+        label={t('in_universe_duration')}
+        value={formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming)}
+      />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
 
-      <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField
+        label={t('is_favorite')}
+        value={scene.isFavorite ? t('common_yes') : t('common_no')}
+      />
       <CommentableDetailField
         storyId={scene.storyId}
         label={t('extra_notes')}
@@ -444,7 +684,12 @@ const SceneDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: scene.extraNotes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'extraNotes' },
+            { ...input, contentSnapshot: scene.extraNotes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -452,10 +697,17 @@ const SceneDetailScreen = () => {
       {location && (
         <>
           <Text style={styles.sectionTitle}>{t('location')}</Text>
-          <TouchableOpacity onPress={handleLocationPress} style={styles.locationLink} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={handleLocationPress}
+            style={styles.locationLink}
+            activeOpacity={0.7}
+          >
             <View style={{ flex: 1 }}>
               <DetailField label={t('name')} value={location.name} />
-              <DetailField label={t('description')} value={location.description || t('common_na')} />
+              <DetailField
+                label={t('description')}
+                value={location.description || t('common_na')}
+              />
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -470,9 +722,9 @@ const SceneDetailScreen = () => {
         editable={canEdit}
       />
 
-      <CharacterRelationManager
+      <SceneCharacterManager
         characterRelations={characterSceneRelations}
-        availableCharacters={characters.filter(char => !char.isDeleted)}
+        availableCharacters={characters.filter((char) => !char.isDeleted)}
         onSave={() => Promise.resolve()}
         onDelete={() => Promise.resolve()}
         editable={false}
@@ -482,8 +734,8 @@ const SceneDetailScreen = () => {
 
       <ItemSceneManager
         itemJourneys={itemJourneys}
-        allItems={allItems.filter(item => !item.isDeleted)}
-        allCharacters={characters.filter(char => !char.isDeleted)}
+        allItems={allItems.filter((item) => !item.isDeleted)}
+        allCharacters={characters.filter((char) => !char.isDeleted)}
         currentSceneId={sceneId}
       />
 
@@ -503,12 +755,40 @@ const SceneDetailScreen = () => {
         previousScene={previousScene}
         nextScene={nextScene}
         choicesForScene={choicesForScene}
+        incomingChoicesForScene={incomingChoicesForScene}
+        sceneNamesById={sceneNamesById}
       />
 
-      <SeeAlsoManager storyId={scene.storyId} entityType="Scene" entityId={sceneId} editable={false} />
+      {isBranching && (
+        <>
+          <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+          {sceneEffects.length === 0 && (
+            <DetailField label={t('effects_title')} value={t('no_effects')} />
+          )}
+          {sceneEffects.length > 0 && (
+            <View style={styles.card}>
+              {sceneEffects.map((effect) => (
+                <Text key={effect.id} style={styles.checkRow}>{`• ${describeEffect(effect)}`}</Text>
+              ))}
+            </View>
+          )}
+        </>
+      )}
 
-      <EntityMetadata version={scene.version} createdAt={scene.createdAt} updatedAt={scene.updatedAt} />
+      <SeeAlsoManager
+        storyId={scene.storyId}
+        entityType="Scene"
+        entityId={sceneId}
+        editable={false}
+      />
+
       <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />
+
+      <EntityMetadata
+        version={scene.version}
+        createdAt={scene.createdAt}
+        updatedAt={scene.updatedAt}
+      />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
@@ -516,6 +796,5 @@ const SceneDetailScreen = () => {
     </ScrollView>
   );
 };
-
 
 export default SceneDetailScreen;

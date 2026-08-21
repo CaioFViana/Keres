@@ -56,6 +56,10 @@ const sharedSrcPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared
 // Everywhere a translation key can plausibly originate: the app itself, and the shared
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
 const SCAN_ROOTS = [clientSrcPath, sharedSrcPath];
+const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
+const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'storyDevices', 'content');
+// Prosa autorada por idioma: não usa chaves de tradução e não deve entrar na auditoria.
+const DOC_CONTENT_PATHS = [HELP_CONTENT_PATH, STORY_DEVICES_CONTENT_PATH];
 
 // --- JSON helpers -----------------------------------------------------------------
 
@@ -133,8 +137,14 @@ function walkSourceFiles(rootDir: string): string[] {
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
     for (const entry of fs.readdirSync(dir)) {
-      if (entry === 'node_modules' || entry === 'dist' || entry === '.expo') continue;
       const entryPath = path.join(dir, entry);
+      if (
+        entry === 'node_modules' ||
+        entry === 'dist' ||
+        entry === '.expo' ||
+        DOC_CONTENT_PATHS.includes(entryPath)
+      )
+        continue;
       const stat = fs.statSync(entryPath);
       if (stat.isDirectory()) {
         walk(entryPath);
@@ -162,14 +172,25 @@ function patternFromTemplate(node: ts.TemplateExpression): RegExp {
 
 function isTranslationCallee(expression: ts.LeftHandSideExpression): boolean {
   if (ts.isIdentifier(expression) && expression.text === 't') return true;
-  if (ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.name) && expression.name.text === 't') return true;
+  if (
+    ts.isPropertyAccessExpression(expression) &&
+    ts.isIdentifier(expression.name) &&
+    expression.name.text === 't'
+  )
+    return true;
   return false;
 }
 
 function scanFile(filePath: string): ScanResult {
   const content = fs.readFileSync(filePath, 'utf8');
   const scriptKind = filePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, scriptKind);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind,
+  );
 
   const exactUsages: KeyUsage[] = [];
   const dynamicPatterns: DynamicKeyPattern[] = [];
@@ -183,7 +204,11 @@ function scanFile(filePath: string): ScanResult {
       allLiterals.add(node.text);
     }
 
-    if (ts.isCallExpression(node) && isTranslationCallee(node.expression) && node.arguments.length > 0) {
+    if (
+      ts.isCallExpression(node) &&
+      isTranslationCallee(node.expression) &&
+      node.arguments.length > 0
+    ) {
       const arg = node.arguments[0];
       if (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg)) {
         exactUsages.push({ key: arg.text, file: filePath, line: lineOf(arg.getStart(sourceFile)) });
@@ -201,8 +226,18 @@ function scanFile(filePath: string): ScanResult {
     // somewhere else entirely, so it never appears as a `t(...)` call site itself.
     if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'label') {
       const init = node.initializer;
-      if (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) {
-        exactUsages.push({ key: init.text, file: filePath, line: lineOf(init.getStart(sourceFile)) });
+      // Um literal vazio é a ausência de rótulo (o grupo único de um MultiSelectPill não tem
+      // cabeçalho), nunca uma chave: `t('')` não existe, e tratá-lo como chave só produz um
+      // "Missing key ''" que não dá para corrigir no locale.
+      if (
+        (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) &&
+        init.text.trim() !== ''
+      ) {
+        exactUsages.push({
+          key: init.text,
+          file: filePath,
+          line: lineOf(init.getStart(sourceFile)),
+        });
       }
     }
 
@@ -210,11 +245,20 @@ function scanFile(filePath: string): ScanResult {
     // the prop internally (see file header, indirection case 2), so the literal here never
     // appears inside a `t(...)` call site itself. Without this, a typo'd/never-added key only
     // gets caught by luck, if some other real key happens not to already cover it as "unused".
-    if (ts.isJsxAttribute(node) && ts.isIdentifier(node.name) && node.name.text === 'noItemsMessage' && node.initializer) {
+    if (
+      ts.isJsxAttribute(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === 'noItemsMessage' &&
+      node.initializer
+    ) {
       const init = node.initializer;
       const literal = ts.isJsxExpression(init) ? init.expression : init;
       if (literal && (ts.isStringLiteral(literal) || ts.isNoSubstitutionTemplateLiteral(literal))) {
-        exactUsages.push({ key: literal.text, file: filePath, line: lineOf(literal.getStart(sourceFile)) });
+        exactUsages.push({
+          key: literal.text,
+          file: filePath,
+          line: lineOf(literal.getStart(sourceFile)),
+        });
       }
     }
 
@@ -226,7 +270,10 @@ function scanFile(filePath: string): ScanResult {
 }
 
 function toRelative(filePath: string): string {
-  return path.relative(path.join(__dirname, '..', '..', '..'), filePath).split(path.sep).join('/');
+  return path
+    .relative(path.join(__dirname, '..', '..', '..'), filePath)
+    .split(path.sep)
+    .join('/');
 }
 
 // --- Main ---------------------------------------------------------------------------
@@ -280,7 +327,9 @@ async function auditLocales() {
       result.allLiterals.forEach((literal) => allLiterals.add(literal));
     }
   }
-  console.log(`✅ Scanned. ${exactUsages.length} literal t() usages, ${dynamicPatterns.length} dynamic key patterns.`);
+  console.log(
+    `✅ Scanned. ${exactUsages.length} literal t() usages, ${dynamicPatterns.length} dynamic key patterns.`,
+  );
 
   // First occurrence per key, for readable diagnostics below.
   const firstUsageByKey = new Map<string, KeyUsage>();
@@ -296,7 +345,7 @@ async function auditLocales() {
     for (const localeFile of localeFiles) {
       if (!allLocaleKeysFlattened[localeFile].has(key)) {
         console.error(
-          `❌ Missing key '${key}' in '${localeFile}' (used at ${toRelative(usage.file)}:${usage.line})`
+          `❌ Missing key '${key}' in '${localeFile}' (used at ${toRelative(usage.file)}:${usage.line})`,
         );
         hasErrors = true;
       }
@@ -305,10 +354,12 @@ async function auditLocales() {
 
   for (const dynamic of dynamicPatterns) {
     for (const localeFile of localeFiles) {
-      const hasMatch = [...allLocaleKeysFlattened[localeFile]].some((key) => dynamic.pattern.test(key));
+      const hasMatch = [...allLocaleKeysFlattened[localeFile]].some((key) =>
+        dynamic.pattern.test(key),
+      );
       if (!hasMatch) {
         console.error(
-          `❌ Dynamic key ${dynamic.raw} (${toRelative(dynamic.file)}:${dynamic.line}) matches no key in '${localeFile}'`
+          `❌ Dynamic key ${dynamic.raw} (${toRelative(dynamic.file)}:${dynamic.line}) matches no key in '${localeFile}'`,
         );
         hasErrors = true;
       }
@@ -325,7 +376,9 @@ async function auditLocales() {
   for (const uniqueKey of allUniqueLocaleKeys) {
     for (const localeFile of localeFiles) {
       if (!allLocaleKeysFlattened[localeFile].has(uniqueKey)) {
-        console.error(`❌ Missing key '${uniqueKey}' in locale file '${localeFile}' (present in other locale files)`);
+        console.error(
+          `❌ Missing key '${uniqueKey}' in locale file '${localeFile}' (present in other locale files)`,
+        );
         crossLocaleErrors = true;
       }
     }
@@ -366,7 +419,9 @@ async function auditLocales() {
       for (const unusedKey of [...unusedKeys].sort()) {
         console.warn(`⚠️ Unused translation key: '${unusedKey}'`);
       }
-      console.warn(`\n${unusedKeys.size} unused key(s) found. Re-run with --force to remove them from every locale file.`);
+      console.warn(
+        `\n${unusedKeys.size} unused key(s) found. Re-run with --force to remove them from every locale file.`,
+      );
       hasErrors = true;
     }
   } else {

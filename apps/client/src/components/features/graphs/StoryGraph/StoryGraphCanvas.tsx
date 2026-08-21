@@ -1,6 +1,7 @@
 import React, { forwardRef, useMemo } from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path, Polygon, Rect as SvgRect, Text as SvgText } from 'react-native-svg';
+import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
 import { GraphNode, StoryGraphLayout } from '../../../../utils/storyGraphLayout';
@@ -31,84 +32,70 @@ interface StoryGraphCanvasProps {
 const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProps>(
   ({ layout, showEdgeLabels, selectedNodeId, onSelectNode }, ref) => {
     const { colors } = useTheme();
-    const { containerRef, handleLayout, panHandlers, animatedTransform } = usePanZoomCanvas(ref, layout);
+    const panZoom = usePanZoomCanvas(ref, layout);
 
-    const styles = useMemo(() => StyleSheet.create({
-      container: {
-        flex: 1,
-        overflow: 'hidden',
-        backgroundColor: colors.background,
-      },
-      content: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        // Escala e deslocamento medidos do canto: com a origem no centro (o padrão), manter um
-        // ponto fixo sob os dedos exigiria compensar o tamanho do conteúdo a cada quadro.
-        transformOrigin: 'top left',
-      },
-      node: {
-        position: 'absolute',
-        borderRadius: 10,
-        overflow: 'hidden',
-        outlineWidth: 0,
-      },
-      nodeInner: {
-        flex: 1,
-        marginTop: 5,
-        borderRadius: 9,
-        borderWidth: 1.2,
-        paddingHorizontal: 6,
-        paddingTop: 6,
-        paddingBottom: 3,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.surface,
-      },
-      nodeLabel: {
-        fontSize: 12.5,
-        fontWeight: '600',
-        color: colors.text,
-        textAlign: 'center',
-      },
-      nodeChapter: {
-        fontSize: 9.5,
-        marginTop: 3,
-        textAlign: 'center',
-      },
-    }), [colors]);
+    const styles = useMemo(
+      () =>
+        StyleSheet.create({
+          node: {
+            position: 'absolute',
+            borderRadius: 10,
+            overflow: 'hidden',
+            outlineWidth: 0,
+          },
+          nodeInner: {
+            flex: 1,
+            marginTop: 5,
+            borderRadius: 9,
+            borderWidth: 1.2,
+            paddingHorizontal: 6,
+            paddingTop: 6,
+            paddingBottom: 3,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.surface,
+          },
+          nodeLabel: {
+            fontSize: 12.5,
+            fontWeight: '600',
+            color: colors.text,
+            textAlign: 'center',
+          },
+          nodeChapter: {
+            fontSize: 9.5,
+            marginTop: 3,
+            textAlign: 'center',
+          },
+        }),
+      [colors],
+    );
 
     return (
-      <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              width: layout.width,
-              height: layout.height,
-              transform: animatedTransform,
-            },
-          ]}
-        >
-          <Svg width={layout.width} height={layout.height}>
-            {layout.edges.map(edge => {
-              const isReturn = edge.kind === 'backward' || edge.kind === 'self';
-              return (
-                <React.Fragment key={edge.id}>
-                  <Path
-                    d={edge.path}
-                    fill="none"
-                    stroke={edge.color}
-                    strokeWidth={1.8}
-                    strokeOpacity={isReturn ? 0.9 : 0.7}
-                    strokeDasharray={isReturn ? '7,5' : undefined}
-                  />
-                  <Polygon points={edge.arrowPoints} fill={edge.color} fillOpacity={isReturn ? 0.9 : 0.7} />
-                </React.Fragment>
-              );
-            })}
+      <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
+        <Svg width={layout.width} height={layout.height}>
+          {layout.edges.map((edge) => {
+            const isReturn = edge.kind === 'backward' || edge.kind === 'self';
+            return (
+              <React.Fragment key={edge.id}>
+                <Path
+                  d={edge.path}
+                  fill="none"
+                  stroke={edge.color}
+                  strokeWidth={1.8}
+                  strokeOpacity={isReturn ? 0.9 : 0.7}
+                  strokeDasharray={isReturn ? '7,5' : undefined}
+                />
+                <Polygon
+                  points={edge.arrowPoints}
+                  fill={edge.color}
+                  fillOpacity={isReturn ? 0.9 : 0.7}
+                />
+              </React.Fragment>
+            );
+          })}
 
-            {showEdgeLabels && layout.edges.map(edge => {
+          {showEdgeLabels &&
+            layout.edges.map((edge) => {
               const label = edge.label.trim();
               if (!label) return null;
               const clipped = label.length > 26 ? `${label.slice(0, 25)}…` : label;
@@ -136,51 +123,63 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
                 </React.Fragment>
               );
             })}
-          </Svg>
+        </Svg>
 
-          {layout.nodes.map(node => {
-            const isSelected = node.id === selectedNodeId;
-            const borderColor = isSelected
-              ? colors.primary
-              : node.isStart
-                ? colors.accent
-                : node.isFinish
-                  ? colors.error
-                  : colors.border;
+        {layout.nodes.map((node) => {
+          const isSelected = node.id === selectedNodeId;
+          const borderColor = isSelected
+            ? colors.primary
+            : node.isStart
+              ? colors.accent
+              : node.isFinish
+                ? colors.error
+                : colors.border;
 
-            return (
-              <TouchableOpacity
-                key={node.id}
-                activeOpacity={0.75}
-                onPress={() => onSelectNode(node)}
+          return (
+            <TouchableOpacity
+              key={node.id}
+              activeOpacity={0.75}
+              onPress={() => onSelectNode(node)}
+              style={[
+                styles.node,
+                {
+                  left: node.x,
+                  top: node.y,
+                  width: node.width,
+                  height: node.height,
+                  backgroundColor: node.chapterColor,
+                },
+              ]}
+            >
+              <View
                 style={[
-                  styles.node,
+                  styles.nodeInner,
                   {
-                    left: node.x,
-                    top: node.y,
-                    width: node.width,
-                    height: node.height,
-                    backgroundColor: node.chapterColor,
+                    borderColor,
+                    borderWidth: isSelected || node.isStart || node.isFinish ? 2.5 : 1.2,
                   },
                 ]}
               >
-                <View style={[styles.nodeInner, { borderColor, borderWidth: isSelected || node.isStart || node.isFinish ? 2.5 : 1.2 }]}>
-                  {node.labelLines.map((line, index) => (
-                    <Text key={index} style={styles.nodeLabel} numberOfLines={1}>{line}</Text>
-                  ))}
-                  {!!node.chapterName && (
-                    <Text style={[styles.nodeChapter, { color: node.chapterColor }]} numberOfLines={1}>
-                      {node.chapterName}
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </Animated.View>
-      </View>
+                {node.labelLines.map((line, index) => (
+                  <Text key={index} style={styles.nodeLabel} numberOfLines={1}>
+                    {line}
+                  </Text>
+                ))}
+                {!!node.chapterName && (
+                  <Text
+                    style={[styles.nodeChapter, { color: node.chapterColor }]}
+                    numberOfLines={1}
+                  >
+                    {node.chapterName}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </GraphCanvasFrame>
     );
-  }
+  },
 );
 
 StoryGraphCanvas.displayName = 'StoryGraphCanvas';

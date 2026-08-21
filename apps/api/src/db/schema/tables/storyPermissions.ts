@@ -1,17 +1,21 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 import { users } from './users';
 import { storyPermissionTypeEnum } from '../enums';
 
-export const storyPermissions = pgTable('story_permissions', {
+export const storyPermissions = table('story_permissions', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  userId: text('user_id').notNull().references(() => users.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
   permissionType: storyPermissionTypeEnum('permission_type').notNull(),
   version: integer('version').notNull().default(1),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),
 });

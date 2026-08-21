@@ -19,4 +19,4 @@ export const COMMENT_ENTITY_TYPES = [
   'WorldRule',
 ] as const;
 
-export type CommentEntityType = typeof COMMENT_ENTITY_TYPES[number];
+export type CommentEntityType = (typeof COMMENT_ENTITY_TYPES)[number];

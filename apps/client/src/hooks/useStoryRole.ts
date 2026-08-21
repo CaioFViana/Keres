@@ -14,8 +14,17 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  * whose role hasn't resolved yet (`myRole` still null) is treated as NOT editable rather than
  * defaulting to owner. The old fail-open default let a reader edit for as long as their local
  * copy hadn't completed a sync cycle, since "unknown" was silently treated as "owner".
+ *
+ * `canManageStoryPolicy` is stricter: only the owner may change story identity/policy (`type`,
+ * `favoriteBehavior`, `allowReaderComments`) or delete/unlink the story. Writers keep content
+ * editing; those fields are locked both here and in `StoryService`.
  */
-export function useStoryRole(storyId: string | undefined | null): { role: EffectiveStoryRole | null; canEdit: boolean; loading: boolean } {
+export function useStoryRole(storyId: string | undefined | null): {
+  role: EffectiveStoryRole | null;
+  canEdit: boolean;
+  canManageStoryPolicy: boolean;
+  loading: boolean;
+} {
   const drizzleDb = useDrizzle();
   const [role, setRole] = useState<EffectiveStoryRole | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,5 +57,10 @@ export function useStoryRole(storyId: string | undefined | null): { role: Effect
     };
   }, [fetchRole]);
 
-  return { role, canEdit: role === 'owner' || role === 'writer', loading };
+  return {
+    role,
+    canEdit: role === 'owner' || role === 'writer',
+    canManageStoryPolicy: role === 'owner',
+    loading,
+  };
 }

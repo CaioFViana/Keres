@@ -56,18 +56,25 @@ export class FriendshipApiService {
     return response.data;
   }
 
-  async getUserDetails(server: ServerSelect, userId: string): Promise<{
-    id: string;
-    username: string;
-    tag: string;
-    avatarColor: string | null;
-    avatarIcon: string | null;
-    bio: string | null;
-  } | undefined> {
+  async getUserDetails(
+    server: ServerSelect,
+    userId: string,
+  ): Promise<
+    | {
+        id: string;
+        username: string;
+        tag: string;
+        avatarColor: string | null;
+        avatarIcon: string | null;
+        bio: string | null;
+      }
+    | undefined
+  > {
     try {
       const response = await this.clientFor(server).get(`/user/details/${userId}`);
       return response.data;
-    } catch (error: any) { // Use 'any' to access response property
+    } catch (error: any) {
+      // Use 'any' to access response property
       // Handle 404 specifically, return undefined if user not found
       if (error.response && error.response.status === 404) {
         return undefined;

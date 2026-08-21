@@ -77,8 +77,8 @@ import WorldRuleDetailScreen, {
 } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
-import { useStoryStore } from '../state/storyStore';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
@@ -833,6 +833,26 @@ const MainSystemNavigator = () => {
           }}
         />
         <Drawer.Screen
+          name="StatsDrawer"
+          component={StatsStackNavigator}
+          options={{
+            title: t('stats_title'),
+            drawerLabel: t('stats_title'),
+            // Mesmo idioma de ChoicesStack em história linear: a tela continua registrada, só
+            // o item do menu some quando o sistema está desligado.
+            drawerItemStyle: {
+              height: selectedStory?.statSystem ? undefined : 0,
+              overflow: 'hidden',
+            },
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('StatsDrawer', { screen: 'StatList' });
+            },
+          })}
+        />
+        <Drawer.Screen
           name="CommentsStack"
           component={CommentsStackNavigator}
           options={{
@@ -869,26 +889,6 @@ const MainSystemNavigator = () => {
           name="StorySettings"
           component={StorySettingsScreen}
           options={{ title: t('story_settings_title') }}
-        />
-        <Drawer.Screen
-          name="StatsDrawer"
-          component={StatsStackNavigator}
-          options={{
-            title: t('stats_title'),
-            drawerLabel: t('stats_title'),
-            // Mesmo idioma de ChoicesStack em história linear: a tela continua registrada, só
-            // o item do menu some quando o sistema está desligado.
-            drawerItemStyle: {
-              height: selectedStory?.statSystem ? undefined : 0,
-              overflow: 'hidden',
-            },
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StatsDrawer', { screen: 'StatList' });
-            },
-          })}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"

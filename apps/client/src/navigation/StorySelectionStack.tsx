@@ -25,16 +25,16 @@ import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
-import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
+import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
-import { useTheme } from '../theme';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import { useTheme } from '../theme';
 import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
 import StoryDevicesStackNavigator, { StoryDevicesStackParamList } from './StoryDevicesStack';
 
@@ -379,14 +379,6 @@ const StorySelectionNavigator = () => {
         }}
       />
       <Drawer.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          title: t('settings_title'),
-          drawerLabel: t('settings_title'),
-        }}
-      />
-      <Drawer.Screen
         name="StoryDevicesDrawer"
         component={StoryDevicesStackNavigator}
         options={{
@@ -416,6 +408,14 @@ const StorySelectionNavigator = () => {
             navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
           },
         })}
+      />
+      <Drawer.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: t('settings_title'),
+          drawerLabel: t('settings_title'),
+        }}
       />
     </Drawer.Navigator>
   );

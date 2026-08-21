@@ -19,6 +19,7 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import apiClient from '../../services/apiClient';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
+import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
 import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -71,6 +72,10 @@ const ServerRegistrationScreen = () => {
    *  depois disto só o hash de cada um existe no servidor, não há como recuperá-los de novo. */
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
 
+  // Só o HTML servido pela API (meta keres-hosted). Electron tem `keresAuth` e não entra.
+  const hostedSameOrigin = usesHttpOnlyCookieSession();
+  const lockedServerAddress = hostedSameOrigin ? hostedApiOrigin() : null;
+
   useEffect(() => {
     const loadServer = async () => {
       if (serverId) {
@@ -78,7 +83,7 @@ const ServerRegistrationScreen = () => {
           setLoading(true);
           const fetchedServer = await serverService.getServerById(serverId);
           if (fetchedServer) {
-            setServerAddress(fetchedServer.url);
+            setServerAddress(lockedServerAddress ?? fetchedServer.url);
             setUsername(fetchedServer.userName);
             setServerName(fetchedServer.name || '');
             // Password is not loaded for editing for security reasons
@@ -92,14 +97,18 @@ const ServerRegistrationScreen = () => {
           setLoading(false);
         }
       } else {
+        if (lockedServerAddress) {
+          setServerAddress(lockedServerAddress);
+        }
         setLoading(false);
       }
     };
     loadServer();
-  }, [serverId, serverService, t]);
+  }, [serverId, serverService, t, lockedServerAddress]);
 
   const handleSave = useCallback(async () => {
-    if (!serverAddress.trim() || !username.trim()) {
+    const addressToSave = (lockedServerAddress ?? serverAddress).trim();
+    if (!addressToSave || !username.trim()) {
       AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit')); // New translation key
       return;
     }
@@ -154,7 +163,7 @@ const ServerRegistrationScreen = () => {
 
     try {
       // 1. Server Check (/kerescheck) - always check if server is reachable
-      const keresCheckUrl = `${serverAddress}/kerescheck`;
+      const keresCheckUrl = `${addressToSave}/kerescheck`;
       const checkResponse = await apiClient.get(keresCheckUrl, {
         timeout: 5000,
         validateStatus: () => true,
@@ -175,7 +184,7 @@ const ServerRegistrationScreen = () => {
       // value can never send an edit-existing-connection save through /auth/register.
       const isNewServer = !serverId;
       const isPasswordProvided = password.trim().length > 0;
-      const isUrlChanged = existingServer && existingServer.url !== serverAddress;
+      const isUrlChanged = existingServer && existingServer.url !== addressToSave;
       const isRegistering = isNewServer && mode === 'register';
 
       if (isNewServer || isPasswordProvided || isUrlChanged) {
@@ -185,7 +194,7 @@ const ServerRegistrationScreen = () => {
           return;
         }
 
-        const authUrl = `${serverAddress}${isRegistering ? '/auth/register' : '/auth/login'}`;
+        const authUrl = `${addressToSave}${isRegistering ? '/auth/register' : '/auth/login'}`;
         const authResponse = await apiClient.post(
           authUrl,
           { username, password },
@@ -245,8 +254,8 @@ const ServerRegistrationScreen = () => {
         idUser: serverUserId, // Use the server-provided userId
         userName: username,
         tag: serverUserTag,
-        name: serverName || serverAddress,
-        url: serverAddress,
+        name: serverName || addressToSave,
+        url: addressToSave,
       };
 
       let savedServer;
@@ -286,6 +295,7 @@ const ServerRegistrationScreen = () => {
     }
   }, [
     serverAddress,
+    lockedServerAddress,
     username,
     password,
     confirmPassword,
@@ -302,7 +312,8 @@ const ServerRegistrationScreen = () => {
    *  RecoveryCodeService (apps/api). Só existe pra conexão nova (`!serverId`): editar uma já
    *  registrada usa o campo "Nova Senha" normal, que não precisa provar identidade de novo. */
   const handleRecover = useCallback(async () => {
-    if (!serverAddress.trim() || !username.trim() || !recoveryCode.trim()) {
+    const addressToSave = (lockedServerAddress ?? serverAddress).trim();
+    if (!addressToSave || !username.trim() || !recoveryCode.trim()) {
       AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit'));
       return;
     }
@@ -318,7 +329,7 @@ const ServerRegistrationScreen = () => {
     setLoading(true);
     setError(null);
     try {
-      const outcome = await redeemRecoveryCode(serverAddress, username, recoveryCode, password);
+      const outcome = await redeemRecoveryCode(addressToSave, username, recoveryCode, password);
 
       if (!outcome.success) {
         if (outcome.reason === 'invalid_code') {
@@ -334,8 +345,8 @@ const ServerRegistrationScreen = () => {
         idUser: outcome.result.userId,
         userName: username,
         tag: outcome.result.tag,
-        name: serverName || serverAddress,
-        url: serverAddress,
+        name: serverName || addressToSave,
+        url: addressToSave,
         lastSyncDate: new Date(),
       });
       await authTokenManager.updateTokens(
@@ -356,6 +367,7 @@ const ServerRegistrationScreen = () => {
     }
   }, [
     serverAddress,
+    lockedServerAddress,
     username,
     recoveryCode,
     password,
@@ -513,6 +525,12 @@ const ServerRegistrationScreen = () => {
         </Text>
       )}
 
+      {hostedSameOrigin && (
+        <Text style={[styles.hostedNotice, { color: colors.textSecondary }]}>
+          {t('hosted_web_same_origin_notice')}
+        </Text>
+      )}
+
       <Text style={[styles.label, { color: colors.text }]}>{t('server_address')}</Text>
       <TextInput
         placeholder={t('server_address_placeholder')}
@@ -521,6 +539,7 @@ const ServerRegistrationScreen = () => {
         style={commonInputStyles.input}
         keyboardType="url"
         autoCapitalize="none"
+        editable={!hostedSameOrigin}
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('server_name_optional')}</Text>
@@ -667,6 +686,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  hostedNotice: {
+    fontSize: 14,
+    marginBottom: 12,
+    lineHeight: 20,
   },
   label: {
     fontSize: 16,

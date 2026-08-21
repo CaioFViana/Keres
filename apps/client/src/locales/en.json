@@ -565,6 +565,7 @@
   "help_no_results": "No help pages found.",
   "help_no_results_faq_link": "See frequently asked questions.",
   "help_no_results_hint": "See how to use this help.",
+  "hosted_web_same_origin_notice": "The browser client can only use this server — the one that served this page. Connecting to another domain is blocked by technical limits (SQLite in the browser needs the same origin). Phone and desktop apps can register any URL.",
   "help_page_not_found": "This help page was not found.",
   "help_search_clear": "Clear search",
   "help_search_placeholder": "Search help",

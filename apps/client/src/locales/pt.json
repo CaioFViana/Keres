@@ -565,6 +565,7 @@
   "help_no_results": "Nenhuma página de ajuda encontrada.",
   "help_no_results_faq_link": "Veja as perguntas frequentes.",
   "help_no_results_hint": "Veja como usar esta ajuda.",
+  "hosted_web_same_origin_notice": "O cliente no navegador só pode usar este servidor — o que serviu esta página. Ligar a outro domínio é bloqueado por limites técnicos (o SQLite no browser precisa da mesma origem). No telemóvel e no desktop você registra qualquer URL.",
   "help_page_not_found": "Esta página de ajuda não foi encontrada.",
   "help_search_clear": "Limpar busca",
   "help_search_placeholder": "Pesquisar na ajuda",

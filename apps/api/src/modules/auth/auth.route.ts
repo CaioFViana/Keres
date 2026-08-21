@@ -1,10 +1,9 @@
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
-import * as bcrypt from 'bcrypt';
 import { and, eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
-import { BCRYPT_COST } from '../../config/bcrypt';
+import { comparePassword, hashPassword } from '../../config/bcrypt';
 import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
@@ -99,7 +98,7 @@ export const authRoutes = new Elysia()
         return { message: 'Invalid credentials' };
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await comparePassword(password, user.password);
 
       if (!isPasswordValid) {
         set.status = 401;
@@ -171,7 +170,7 @@ export const authRoutes = new Elysia()
         return { message: 'User already exists' };
       }
 
-      const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
+      const hashedPassword = await hashPassword(password);
       const newUserId = ulid();
       const { defaultTierId } = await registrationSettingsService.getOrCreate();
 

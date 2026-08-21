@@ -6,10 +6,9 @@ import {
   type ShowcaseVisibility,
   type StoryPublicationSnapshot,
 } from '@keres/shared';
-import * as bcrypt from 'bcrypt';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { BCRYPT_COST } from '../config/bcrypt';
+import { hashPassword } from '../config/bcrypt';
 import { db } from '../db';
 import { stories, storyPermissions, storyPublications, storyShowcaseEntries } from '../db/schema';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
@@ -150,8 +149,7 @@ export class StoryPublicationService {
     // `catch` - sem isso, cada publicação recusada deixaria um .zip órfão ocupando disco.
     await publicationStorageService.store(storyId, publicationId, zip.bytes);
 
-    const passwordHash =
-      visibility === 'password' ? await bcrypt.hash(password!, BCRYPT_COST) : null;
+    const passwordHash = visibility === 'password' ? await hashPassword(password!) : null;
 
     const prunedIds = await this.runPublishTransaction(
       async (tx) => {
@@ -297,7 +295,7 @@ export class StoryPublicationService {
       .update(storyShowcaseEntries)
       .set({
         visibility,
-        passwordHash: visibility === 'password' ? await bcrypt.hash(password!, BCRYPT_COST) : null,
+        passwordHash: visibility === 'password' ? await hashPassword(password!) : null,
         updatedAt: new Date(),
       })
       .where(eq(storyShowcaseEntries.storyId, storyId))

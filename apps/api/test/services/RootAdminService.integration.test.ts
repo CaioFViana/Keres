@@ -1,5 +1,5 @@
-import * as bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
+import { comparePassword } from '../../src/config/bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
 import { users } from '../../src/db/schema';
@@ -40,7 +40,7 @@ describe('RootAdminService integration', () => {
       where: (fields, { eq }) => eq(fields.username, 'root'),
     });
     expect(created).toMatchObject({ username: 'root', tag: 'root', isAdmin: true });
-    expect(await bcrypt.compare('secure-root-password', created!.password)).toBe(true);
+    expect(await comparePassword('secure-root-password', created!.password)).toBe(true);
 
     await db
       .update(users)
@@ -51,7 +51,7 @@ describe('RootAdminService integration', () => {
       where: (fields, { eq }) => eq(fields.id, created!.id),
     });
     expect(reconciled?.isAdmin).toBe(true);
-    expect(await bcrypt.compare('secure-root-password', reconciled!.password)).toBe(true);
+    expect(await comparePassword('secure-root-password', reconciled!.password)).toBe(true);
     expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Root admin 'root' created."));
     expect(logger.info).toHaveBeenCalledWith(
       expect.stringContaining("Root admin 'root' reconciled"),

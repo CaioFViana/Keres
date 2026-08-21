@@ -5,7 +5,7 @@ import type {
   ShowcaseVersion,
   StoryPublicationSnapshot,
 } from '@keres/shared';
-import * as bcrypt from 'bcrypt';
+import { comparePassword } from '../config/bcrypt';
 import { count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { storyPublications, storyShowcaseEntries, users } from '../db/schema';
@@ -151,7 +151,7 @@ export class ShowcaseService {
       entry?.visibility === 'password' && entry.passwordHash
         ? entry.passwordHash
         : DUMMY_BCRYPT_HASH;
-    const matches = await bcrypt.compare(password, hash);
+    const matches = await comparePassword(password, hash);
     return matches && entry?.visibility === 'password';
   }
 

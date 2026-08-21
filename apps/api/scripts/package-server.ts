@@ -69,6 +69,20 @@ function libsqlNativePackage(): string {
   throw new Error(`No libSQL native package mapping for ${platform}/${arch}`);
 }
 
+/**
+ * Copia um dos três bundles web (painel, vitrine, cliente) e exige `index.html` no destino:
+ * um `dist` ausente ou pela metade só aparecia depois, no servidor a responder 404 - a cópia
+ * do cliente chegou a ser condicional e o release saiu sem ela sem uma linha de aviso.
+ */
+function copyWebBundle(source: string, bundleFolder: string, buildScript: string): void {
+  if (!existsSync(path.join(source, 'index.html'))) {
+    throw new Error(
+      `Bundle web ausente em ${source} - \`bun run ${buildScript}\` não produziu index.html.`,
+    );
+  }
+  cpSync(source, path.join(bundleDir, bundleFolder), { recursive: true });
+}
+
 async function ensureRcedit(): Promise<string> {
   mkdirSync(toolsDir, { recursive: true });
   const dest = path.join(toolsDir, 'rcedit-x64.exe');
@@ -108,6 +122,12 @@ mkdirSync(bundleDir, { recursive: true });
 
 run('bun', ['run', 'build'], path.join(repoRoot, 'apps', 'admin'));
 run('bun', ['run', 'build:showcase'], path.join(repoRoot, 'apps', 'admin'));
+// O export web do cliente é build daqui, não pré-requisito: no checkout limpo do runner
+// `apps/client/dist` não existe, e a cópia condicional que havia aqui simplesmente pulava a
+// pasta - o zip do release saía sem `client-dist` e a raiz do servidor respondia 404. Mesmo
+// artefato que o Electron empacota (`apps/desktop`, `build:client`) e que o Dockerfile
+// constrói no estágio `client-web-build`.
+run('bun', ['run', 'export:web'], path.join(repoRoot, 'apps', 'client'));
 
 const exePath = path.join(bundleDir, exeName);
 run('bun', [
@@ -127,24 +147,17 @@ cpSync(path.join(apiRoot, 'drizzle'), path.join(bundleDir, 'drizzle'), { recursi
 cpSync(path.join(apiRoot, 'drizzle-sqlite'), path.join(bundleDir, 'drizzle-sqlite'), {
   recursive: true,
 });
-cpSync(path.join(repoRoot, 'apps', 'admin', 'dist'), path.join(bundleDir, 'admin-dist'), {
-  recursive: true,
-});
-cpSync(
+copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'admin-dist', 'build');
+copyWebBundle(
   path.join(repoRoot, 'apps', 'admin', 'dist-showcase'),
-  path.join(bundleDir, 'dist-showcase'),
-  {
-    recursive: true,
-  },
+  'dist-showcase',
+  'build:showcase',
 );
+copyWebBundle(path.join(repoRoot, 'apps', 'client', 'dist'), 'client-dist', 'export:web');
 cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),
 );
-const clientDist = path.join(repoRoot, 'apps', 'client', 'dist');
-if (existsSync(path.join(clientDist, 'index.html'))) {
-  cpSync(clientDist, path.join(bundleDir, 'client-dist'), { recursive: true });
-}
 cpSync(path.join(apiRoot, 'packaging', 'README.md'), path.join(bundleDir, 'README.md'));
 
 const nativeName = libsqlNativePackage();

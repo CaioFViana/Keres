@@ -10,7 +10,7 @@ export default defineConfig({
     // Um único banco descartável é compartilhado por toda a suíte e cada arquivo trunca as
     // tabelas entre os testes - rodar arquivos em paralelo faria um limpar o estado do outro.
     fileParallelism: false,
-    // bcrypt no registro e o primeiro `createApp()` deixam o primeiro teste de cada arquivo
+    // bcryptjs no registro e o primeiro `createApp()` deixam o primeiro teste de cada arquivo
     // bem mais lento que os seguintes.
     testTimeout: 30_000,
     hookTimeout: 30_000,

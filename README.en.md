@@ -3,6 +3,7 @@
   <h1>Keres</h1>
   <p><strong>Organize universes, connect narratives, and write anywhere.</strong></p>
   <p>An offline-first story planning platform for mobile, web, and desktop, with optional synchronization across devices.</p>
+  <p><a href="https://caiofviana.github.io/Keres/">Landing page</a></p>
   <p><a href="README.md">Português</a> · <strong>English</strong></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
@@ -21,6 +22,7 @@ Keres brings characters, locations, chapters, scenes, choices, items, world rule
 | `apps/desktop` | Electron | Desktop distribution of the same web client |
 | `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Authentication, synchronization, collaboration, and media |
 | `apps/admin` | React, Vite | Administration panel served by the API at `/admin` |
+| `apps/site` | React, Vite | Public landing page published on GitHub Pages |
 | `packages/shared` | TypeScript, Zod | Shared entities, contracts, and metadata |
 
 ```mermaid
@@ -293,6 +295,17 @@ A release publishes:
 - a macOS DMG;
 - Linux AppImage and Flatpak packages;
 - signed Android APK and AAB packages.
+
+## Landing (GitHub Pages)
+
+The public project page lives in `apps/site` and is published at [caiofviana.github.io/Keres](https://caiofviana.github.io/Keres/). It is not a server's story showcase (that is the Showcase, served by the API): it is the product landing page, in Portuguese and English.
+
+```bash
+bun run dev:site      # http://localhost:5175
+bun run build:site
+```
+
+The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` or `ouroboros`. The first time, under Settings → Pages, set the source to **GitHub Actions**.
 
 ## Technical documentation
 

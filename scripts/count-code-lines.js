@@ -8,6 +8,7 @@ const applications = [
   ['Client-Help', 'apps/client/src/help'],
   ['Client-StoryDevices', 'apps/client/src/storyDevices'],
   ['Desktop', 'apps/desktop'],
+  ['Site', 'apps/site'],
 ];
 
 // Diretórios de dependências, saída de build, metadados ou código gerado.

@@ -3,6 +3,7 @@
   <h1>Keres</h1>
   <p><strong>Organize universos, conecte narrativas e escreva em qualquer lugar.</strong></p>
   <p>Uma plataforma offline-first para planejamento de histórias, disponível em mobile, web e desktop, com sincronização opcional entre dispositivos.</p>
+  <p><a href="https://caiofviana.github.io/Keres/">Landing page</a></p>
   <p><strong>Português</strong> · <a href="README.en.md">English</a></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
@@ -21,6 +22,7 @@ O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras d
 | `apps/desktop` | Electron | Distribuição desktop do mesmo cliente web |
 | `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Autenticação, sincronização, colaboração e mídia |
 | `apps/admin` | React, Vite | Painel administrativo servido pela própria API em `/admin` |
+| `apps/site` | React, Vite | Landing pública publicada no GitHub Pages |
 | `packages/shared` | TypeScript, Zod | Entidades, contratos e metadados compartilhados |
 
 ```mermaid
@@ -293,6 +295,17 @@ Uma release publica:
 - DMG para macOS;
 - AppImage e Flatpak para Linux;
 - APK e AAB assinados para Android.
+
+## Landing (GitHub Pages)
+
+A página pública do projeto vive em `apps/site` e é publicada em [caiofviana.github.io/Keres](https://caiofviana.github.io/Keres/). Não é a vitrine de histórias de um servidor (isso é o Showcase, servido pela API): é a landing do produto, em português e inglês.
+
+```bash
+bun run dev:site      # http://localhost:5175
+bun run build:site
+```
+
+O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` ou `ouroboros`. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
 
 ## Documentação técnica
 

@@ -10,7 +10,8 @@ Keres/
 │   ├── api/       # Backend - Elysia (Bun) + Drizzle (Postgres)
 │   ├── admin/     # Painel administrativo interno - React + Vite
 │   ├── client/    # App principal - React Native + Expo (mobile e web)
-│   └── desktop/   # Empacotador Electron do client, para Windows/Mac/Linux
+│   ├── desktop/   # Empacotador Electron do client, para Windows/Mac/Linux
+│   └── site/      # Landing pública (GitHub Pages) - React + Vite
 ├── packages/
 │   └── shared/    # Entidades, schemas Zod e metadados compartilhados entre api/admin/client
 └── docs/          # Esta pasta
@@ -78,4 +79,14 @@ Wrapper **Electron** em torno do export web de `apps/client`. `main.ts`:
 
 ## `apps/admin`
 
-SPA em **React + Vite + react-router-dom**, servido pela própria API sob `/admin/*`. É um painel **interno**, não voltado ao usuário final (o escritor): gerencia usuários, tiers/planos de assinatura, configurações de abertura de cadastro e recuperação de conta.
+SPA em **React + Vite + react-router-dom**, servido pela própria API sob `/admin/*`. É um painel **interno**, não voltado ao usuário final (o escritor): gerencia usuários, tiers/planos de assinatura, configurações de abertura de cadastro e recuperação de conta. O mesmo projeto também gera o **Showcase** (`vite.showcase.config.ts`, saída em `dist-showcase/`), a vitrine de histórias publicadas servida pela API — coisa distinta da landing do GitHub Pages.
+
+---
+
+## `apps/site`
+
+Landing pública do Keres, um SPA **React + Vite** estático, em português e inglês, com o mesmo visual (claro/escuro) do Showcase. Não fala com a API: descreve o produto e aponta para o repositório, as GitHub Releases e a imagem Docker.
+
+O workflow `.github/workflows/pages.yml` constrói `apps/site/dist` e publica no GitHub Pages. A URL do site de projeto é `https://<dono>.github.io/<repositório>/` — o `base` do Vite vem de `VITE_BASE` no CI, porque o nome do repositório preserva maiúsculas (`Keres`). Localmente: `bun run dev:site` (porta 5175) e `bun run build:site`.
+
+Na primeira publicação, em Settings → Pages do repositório, a origem precisa ser **GitHub Actions**.

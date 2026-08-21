@@ -1,0 +1,345 @@
+{
+  "language": {
+    "label": "Idioma"
+  },
+  "theme": {
+    "system": "Tema: Sistema",
+    "light": "Tema: Claro",
+    "dark": "Tema: Escuro"
+  },
+  "meta": {
+    "title": "Keres — Organize universos, conecte narrativas",
+    "description": "Plataforma offline-first para planejar histórias em celular, web e desktop, com sincronização opcional entre dispositivos."
+  },
+  "nav": {
+    "product": "Produto",
+    "universe": "Universo",
+    "platforms": "Plataformas",
+    "download": "Baixar",
+    "github": "GitHub",
+    "menu": "Menu"
+  },
+  "hero": {
+    "eyebrow": "Planejamento de histórias",
+    "title": "Organize universos, conecte narrativas e escreva em qualquer lugar.",
+    "lead": "O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras de mundo, notas e mídias num único espaço. O aplicativo continua funcionando sem internet. Um servidor só entra se você quiser sincronizar, colaborar ou publicar.",
+    "ctaDownload": "Baixar",
+    "ctaGithub": "Ver no GitHub",
+    "ctaFeatures": "Ver o que inclui"
+  },
+  "pillars": {
+    "offline": {
+      "title": "Offline-first de verdade",
+      "body": "Cada história vive num SQLite local. Você planeja no trem, no avião ou no sofá. Quando houver rede e um servidor, a sincronização envia as alterações e trata conflitos de versão."
+    },
+    "universe": {
+      "title": "O universo, não o manuscrito",
+      "body": "O Keres não é um editor de texto. Você escreve o capítulo onde preferir e registra aqui quem estava na cena, o que mudou de dono e qual regra do mundo isso respeita."
+    },
+    "anywhere": {
+      "title": "Celular, web e desktop",
+      "body": "O mesmo cliente em Android, iOS, navegador e Windows, macOS e Linux. Em casa, um Keres Server no PC sincroniza o telemóvel sem Docker nem PostgreSQL."
+    }
+  },
+  "product": {
+    "title": "Um lugar para a história inteira",
+    "lead": "Abra uma história e o menu lateral mostra cada tipo de elemento. Listas com busca, filtros e favoritos; fichas com relações; grafos quando o espaço ou as escolhas pedem um mapa."
+  },
+  "features": {
+    "universe": {
+      "title": "O universo narrativo",
+      "lead": "Tudo o que uma história precisa guardar, ligado entre si.",
+      "items": {
+        "characters": {
+          "title": "Personagens",
+          "body": "Quem participa, o que os descreve e como se mantêm coerentes ao longo da obra."
+        },
+        "relations": {
+          "title": "Relações",
+          "body": "Vínculos entre pessoas — família, rivalidade, magistério — e um grafo do elenco."
+        },
+        "modes": {
+          "title": "Modos",
+          "body": "As formas que um personagem assume: transformações, disfarces, estados duradouros."
+        },
+        "stats": {
+          "title": "Status",
+          "body": "Eixos que você define e um gráfico radar para comparar o elenco, com notação em letras ou números."
+        },
+        "chapters": {
+          "title": "Capítulos",
+          "body": "Agrupam cenas na ordem de leitura ou na ordem cronológica que você escolher."
+        },
+        "scenes": {
+          "title": "Cenas",
+          "body": "Cada acontecimento: onde ocorre, quem está presente e o que se passa."
+        },
+        "timing": {
+          "title": "Tempo das cenas",
+          "body": "Quanto cada acontecimento dura e o intervalo até o próximo."
+        },
+        "locations": {
+          "title": "Locais",
+          "body": "Os espaços da história, com relações de contenção e de caminho."
+        },
+        "locationMap": {
+          "title": "Mapa de locais",
+          "body": "Um grafo de lugares dentro de lugares e das ligações entre eles."
+        },
+        "items": {
+          "title": "Itens",
+          "body": "Objetos importantes, o estado inicial e quem os possui."
+        },
+        "itemJourneys": {
+          "title": "Trajetórias de item",
+          "body": "Cena a cena, quando um objeto muda de estado ou de dono."
+        },
+        "worldRules": {
+          "title": "Regras do mundo",
+          "body": "Limites e fatos que o universo precisa respeitar para continuar coerente."
+        },
+        "notes": {
+          "title": "Notas",
+          "body": "Escrita livre, solta ou ancorada a qualquer elemento da história."
+        },
+        "tags": {
+          "title": "Etiquetas",
+          "body": "Marcadores com cor, aplicáveis a qualquer tipo de elemento."
+        },
+        "gallery": {
+          "title": "Galeria",
+          "body": "Imagens, áudios e vídeos, reutilizáveis em várias fichas."
+        },
+        "favorites": {
+          "title": "Favoritos",
+          "body": "Destaque o que importa agora e filtre listas por isso."
+        }
+      }
+    },
+    "branching": {
+      "title": "Histórias ramificadas",
+      "lead": "Para CYOA, jogos e qualquer narrativa com mais de um caminho.",
+      "items": {
+        "type": {
+          "title": "Linear ou ramificada",
+          "body": "Uma história linear segue o índice das cenas. Uma ramificada liga cenas por escolhas."
+        },
+        "choices": {
+          "title": "Escolhas",
+          "body": "O texto da decisão, a cena de origem e a de destino."
+        },
+        "storyMap": {
+          "title": "Mapa da história",
+          "body": "Um diagrama navegável de cenas e transições, para ver o grafo de uma vez."
+        },
+        "conditions": {
+          "title": "Condições",
+          "body": "Uma escolha só aparece se o leitor visitou uma cena, tem um item ou ligou um marcador."
+        },
+        "effects": {
+          "title": "Efeitos",
+          "body": "Dar ou tirar um item, ligar ou desligar um marcador, ao passar por uma cena ou decisão."
+        },
+        "storyState": {
+          "title": "Estado do leitor",
+          "body": "O que o leitor carrega — visitas, inventário, marcadores — analisado junto com o mapa."
+        }
+      }
+    },
+    "craft": {
+      "title": "Ferramentas de ofício",
+      "lead": "Encontre, estenda e revise o planejamento sem sair do aplicativo.",
+      "items": {
+        "customAttributes": {
+          "title": "Atributos customizados",
+          "body": "Campos seus em personagens, locais, itens, cenas, capítulos, notas e regras: texto, número, data, booleano ou sugestão."
+        },
+        "suggestions": {
+          "title": "Sugestões",
+          "body": "Listas da história para raças, gêneros, tipos de relação e o que mais se repetir."
+        },
+        "search": {
+          "title": "Busca",
+          "body": "Busca global em qualquer campo, inclusive atributos customizados, e busca avançada em cada lista."
+        },
+        "analysis": {
+          "title": "Análise da história",
+          "body": "Cenas órfãs, escolhas quebradas e outras falhas estruturais que o autor raramente nota sozinho."
+        },
+        "dashboard": {
+          "title": "Painel da história",
+          "body": "Um retrato do que já está planejado e atalhos para o que falta revisar."
+        },
+        "comments": {
+          "title": "Comentários",
+          "body": "Conversas ancoradas a um campo ou a um elemento, reunidas também numa lista só."
+        },
+        "seeAlso": {
+          "title": "Veja também",
+          "body": "Uma ligação livre e recíproca entre dois elementos, sem substituir etiquetas nem notas."
+        },
+        "storyDevices": {
+          "title": "Recursos literários",
+          "body": "Uma lista de consulta sobre técnicas narrativas — presságio, gancho, relógio correndo — separada da sua história."
+        },
+        "help": {
+          "title": "Ajuda integrada",
+          "body": "Catálogo em português e inglês, com busca local e ícone de ajuda em cada tela."
+        },
+        "exampleStories": {
+          "title": "Histórias de exemplo",
+          "body": "Instale uma cópia pronta para explorar o Keres sem mexer na sua obra."
+        }
+      }
+    },
+    "together": {
+      "title": "Sincronizar, colaborar, publicar",
+      "lead": "O servidor é opcional. Quando existe, vira a ponte entre aparelhos e entre pessoas.",
+      "items": {
+        "offlineSync": {
+          "title": "Sincronização",
+          "body": "Trabalhe offline. Ao conectar, o motor replica criações, edições e exclusões com controle de versão."
+        },
+        "servers": {
+          "title": "Servidores",
+          "body": "Cadastre a URL de um Keres Server ou de uma API em Docker e vincule histórias a ele."
+        },
+        "friends": {
+          "title": "Amizades",
+          "body": "Pedidos de amizade no mesmo servidor, o primeiro passo para convidar alguém."
+        },
+        "collaborators": {
+          "title": "Colaboradores",
+          "body": "Convide amigos para ler ou editar uma história sincronizada, com permissões na própria história."
+        },
+        "conflicts": {
+          "title": "Conflitos",
+          "body": "Se duas edições partem da mesma versão, o Keres mostra o conflito em vez de silenciar uma delas."
+        },
+        "activityLog": {
+          "title": "Log de operações",
+          "body": "Histórico auditável do que foi criado, alterado ou apagado na sincronização."
+        },
+        "publish": {
+          "title": "Publicar",
+          "body": "Alguns servidores têm uma vitrine: uma cópia congelada da base Keres, para qualquer pessoa baixar e importar."
+        },
+        "importExport": {
+          "title": "Importar e exportar",
+          "body": "Um pacote da história no aparelho, para backup, troca entre pessoas ou publicação."
+        }
+      }
+    }
+  },
+  "platforms": {
+    "title": "Onde o Keres corre",
+    "lead": "Um cliente, várias formas de chegar até ele. Um servidor, quando você quiser uma.",
+    "items": {
+      "android": {
+        "title": "Android",
+        "body": "APK e AAB nas releases. O mesmo aplicativo que no iOS, com SQLite local."
+      },
+      "ios": {
+        "title": "iOS",
+        "body": "Cliente Expo nativo. Planeje no telemóvel e sincronize com o PC de casa."
+      },
+      "web": {
+        "title": "Web",
+        "body": "O cliente também corre no navegador. É essa build que o desktop empacota."
+      },
+      "windows": {
+        "title": "Windows",
+        "body": "Instalador e executável portátil, gerados a cada versão."
+      },
+      "macos": {
+        "title": "macOS",
+        "body": "DMG para Apple Silicon e Intel, unsigned até haver certificado."
+      },
+      "linux": {
+        "title": "Linux",
+        "body": "AppImage e Flatpak nas mesmas releases do resto."
+      },
+      "keresServer": {
+        "title": "Keres Server",
+        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra."
+      },
+      "docker": {
+        "title": "Docker",
+        "body": "Imagem no GHCR com PostgreSQL, painel /admin e armazenamento de mídia. Para quem opera um servidor de verdade."
+      }
+    }
+  },
+  "download": {
+    "title": "Baixe e comece",
+    "lead": "As builds oficiais saem nas GitHub Releases, junto com o Keres Server e a imagem Docker.",
+    "items": {
+      "releases": {
+        "title": "Cliente",
+        "body": "Desktop para Windows, macOS e Linux, e o Android. Abra a release mais recente e escolha o arquivo do seu sistema.",
+        "cta": "Abrir releases"
+      },
+      "server": {
+        "title": "Keres Server",
+        "body": "Zips para Windows x64, Linux x64 e macOS Apple Silicon. Na primeira execução o assistente pergunta banco, mídia e porta.",
+        "cta": "Baixar o servidor"
+      },
+      "docker": {
+        "title": "Imagem Docker",
+        "body": "ghcr.io/caiofviana/keres — use uma tag imutável em produção. O repositório traz um Compose de deploy.",
+        "cta": "Ver no GitHub"
+      },
+      "source": {
+        "title": "Código-fonte",
+        "body": "Monorepo aberto: cliente, API, painel, desktop e esta landing. Bun, TypeScript, testes no CI.",
+        "cta": "Abrir o repositório"
+      }
+    }
+  },
+  "stack": {
+    "title": "Como é feito",
+    "lead": "As mesmas peças descritas na documentação do repositório.",
+    "client": "React Native + Expo, SQLite local, store Zustand e um motor de sincronização próprio.",
+    "desktop": "Electron em volta da build web do cliente, com SQLite em OPFS.",
+    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa.",
+    "admin": "Painel React servido pela API em /admin, para contas, planos e cadastro.",
+    "shared": "Entidades, contratos Zod e paletas compartilhados entre os apps."
+  },
+  "faq": {
+    "title": "Perguntas frequentes",
+    "items": {
+      "editor": {
+        "q": "O Keres substitui o meu editor de texto?",
+        "a": "Não. Ele organiza o universo da narrativa. O manuscrito, o roteiro ou a campanha continuam onde você já escreve."
+      },
+      "offline": {
+        "q": "Preciso de internet?",
+        "a": "Não para planejar. O cliente guarda tudo no aparelho. Internet só entra para sincronizar, colaborar ou publicar num servidor."
+      },
+      "server": {
+        "q": "Preciso de um servidor?",
+        "a": "Não. Uma história pode viver só no aparelho. Um servidor entra quando você quer o mesmo universo no telemóvel e no PC, ou quando quer colaborar."
+      },
+      "languages": {
+        "q": "Em que idiomas o aplicativo está?",
+        "a": "Português e inglês, no cliente, na ajuda, no Keres Server e nesta página."
+      },
+      "collaborate": {
+        "q": "Dá para escrever a quatro mãos?",
+        "a": "Com um servidor: convide amigos, defina se leem ou editam, e use comentários nas fichas. Sem servidor, dá para trocar um pacote de importação/exportação."
+      },
+      "cost": {
+        "q": "Quanto custa?",
+        "a": "O Keres é software aberto. Você baixa o cliente e, se quiser, corre o próprio servidor. Um operador de servidor público pode aplicar limites de conta — isso é decisão de quem o mantém, não do aplicativo."
+      },
+      "showcase": {
+        "q": "Esta página publica histórias?",
+        "a": "Não. Esta é a landing do projeto. A vitrine de histórias publicadas é um site separado, servido por um Keres Server que alguém escolheu manter."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Um companheiro de escrita para planejar histórias.",
+    "source": "Código aberto no GitHub",
+    "docs": "Documentação no repositório"
+  }
+}

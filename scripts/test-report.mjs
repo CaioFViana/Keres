@@ -19,6 +19,7 @@ const projects = [
   ],
   ['admin', 'apps/admin', [['test:coverage', 'coverage']]],
   ['desktop', 'apps/desktop', [['test:coverage', 'coverage']]],
+  ['site', 'apps/site', [['test:coverage', 'coverage']]],
 ];
 
 // The API ratchet applies to the union of unit and integration coverage, not either report in
@@ -30,6 +31,7 @@ const ratchets = {
   api: { lines: 78, functions: 76, branches: 65 },
   admin: { lines: 70, functions: 53, branches: 47 },
   desktop: { lines: 95, functions: 94, branches: 81 },
+  site: { lines: 90, functions: 90, branches: 80 },
 };
 
 function run(command, args) {

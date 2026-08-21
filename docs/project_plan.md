@@ -21,6 +21,7 @@ Keres/
 │ │ │ ├── services/   # lógica de negócio + entity-sync-handlers/
 │ │ │ └── db/         # schema Drizzle (Postgres) e migrations
 │ ├── admin/    # painel administrativo interno (React + Vite), servido pela API em /admin
+│ ├── site/     # landing pública (GitHub Pages)
 │ ├── client/   # frontend (React Native + Expo, mobile e web)
 │ │ └── src/
 │ │   ├── db/        # schema Drizzle (SQLite local) e migrations

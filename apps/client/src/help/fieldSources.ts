@@ -28,6 +28,7 @@ export const fieldSources: Record<string, string[]> = {
     'plannedTimeline',
     'isFavorite',
     'extraNotes',
+    'relationType',
   ],
   chapters: ['name', 'summary', 'order', 'isFavorite', 'extraNotes'],
   scenes: [
@@ -67,7 +68,7 @@ export const fieldSources: Record<string, string[]> = {
     'linkedEntities',
     'isFavorite',
   ],
-  choices: ['text', 'sourceScene', 'destinationScene', 'notes'],
+  choices: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],
   'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
 };
 

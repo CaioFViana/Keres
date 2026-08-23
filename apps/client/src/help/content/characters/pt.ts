@@ -114,6 +114,13 @@ const page: HelpPage = {
           whatToWrite: 'Detalhes que não cabem nos outros campos.',
           note: 'Ficam na ficha.',
         },
+        {
+          key: 'relationType',
+          label: 'Tipo de relação',
+          whatToWrite:
+            'Este é um campo apenas de busca. Escolha um tipo de relação para encontrar personagens conectados por esse tipo de relação.',
+          note: 'Ele busca nas relações do personagem e não adiciona um campo à ficha.',
+        },
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

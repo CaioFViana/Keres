@@ -114,6 +114,13 @@ const page: HelpPage = {
           whatToWrite: 'Details that do not fit other fields.',
           note: 'They remain in the profile.',
         },
+        {
+          key: 'relationType',
+          label: 'Relation type',
+          whatToWrite:
+            'This is a search-only field. Choose a relation type to find characters connected by that type of relationship.',
+          note: 'It searches the character’s relationships and does not add a field to the character profile.',
+        },
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

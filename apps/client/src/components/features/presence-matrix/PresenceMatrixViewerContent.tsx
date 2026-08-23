@@ -26,6 +26,7 @@ import { buildPresenceMatrixLayout, PresenceMatrixRow } from '../../../utils/pre
 import { buildChapterColors } from '../../../utils/storyGraphLayout';
 import { deliverSvgMap } from '../../../utils/storyTransfer';
 import { renderPresenceMatrixSvg } from '../../../utils/presenceMatrixSvg';
+import { getDistinctSeriesColor } from '../../../utils/colorUtils';
 import PresenceMatrixCanvas, { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 
 const SERIES_COLORS = [
@@ -33,6 +34,8 @@ const SERIES_COLORS = [
   '#655CDB', '#A55A18', '#007C83', '#A94141', '#4D749E', '#8D6B13',
 ];
 const MAX_VISIBLE_SERIES = 12;
+const seriesColor = (index: number, total: number) =>
+  getDistinctSeriesColor(index, total, SERIES_COLORS);
 type Request = { kind: 'character'; characterId: string } | { kind: 'item'; itemId: string };
 
 const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => void }> = ({
@@ -63,11 +66,11 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const characterColorOf = useCallback(
-    (id: string) => SERIES_COLORS[Math.max(0, ids.indexOf(id))],
+    (id: string) => seriesColor(Math.max(0, ids.indexOf(id)), ids.length),
     [ids],
   );
   const itemColorOf = useCallback(
-    (id: string) => SERIES_COLORS[Math.max(0, itemIds.indexOf(id))],
+    (id: string) => seriesColor(Math.max(0, itemIds.indexOf(id)), itemIds.length),
     [itemIds],
   );
   useEffect(() => {
@@ -122,6 +125,17 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
     () => selectedItems.find((entry) => entry.id === selectedItemDetailsId) ?? null,
     [selectedItemDetailsId, selectedItems],
   );
+  const availableIds = request.kind === 'character' ? characters.map((entry) => entry.id) : items.map((entry) => entry.id);
+  const activeIds = request.kind === 'character' ? ids : itemIds;
+  const isCompleteView = availableIds.length > MAX_VISIBLE_SERIES && activeIds.length === availableIds.length;
+  const selectAll = () => {
+    if (request.kind === 'character') setIds(availableIds);
+    else setItemIds(availableIds);
+  };
+  const selectCompactView = () => {
+    if (request.kind === 'character') setIds(availableIds.slice(0, MAX_VISIBLE_SERIES));
+    else setItemIds(availableIds.slice(0, MAX_VISIBLE_SERIES));
+  };
   const layout = useMemo(() => {
     const byChapter = new Map(chapters.map((x) => [x.id, x]));
     const colorsByChapter = buildChapterColors(chapters);
@@ -221,6 +235,10 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           paddingVertical: 5,
         },
         controls: { position: 'absolute', right: 14, bottom: 18, gap: 8 },
+        bulkActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 12, paddingBottom: 8 },
+        bulkAction: { paddingVertical: 5 },
+        bulkActionText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+        bulkHint: { color: colors.textSecondary, fontSize: 12, paddingHorizontal: 12, paddingBottom: 8 },
         control: {
           width: 42,
           height: 42,
@@ -274,6 +292,7 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           onSelectionChange={(next) => setIds(next.slice(0, MAX_VISIBLE_SERIES))}
           placeholder={t('characters_title')}
           searchPlaceholder={t('search')}
+          selectionSummary={isCompleteView ? t('presence_matrix_selected_all', { count: ids.length }) : undefined}
           triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
         />
       )}
@@ -288,9 +307,23 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           onSelectionChange={(next) => setItemIds(next.slice(0, MAX_VISIBLE_SERIES))}
           placeholder={t('items_title')}
           searchPlaceholder={t('search')}
+          selectionSummary={isCompleteView ? t('presence_matrix_selected_all', { count: itemIds.length }) : undefined}
           triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
         />
       )}
+      <View style={styles.bulkActions}>
+        <TouchableOpacity
+          style={styles.bulkAction}
+          onPress={isCompleteView ? selectCompactView : selectAll}
+        >
+          <Text style={styles.bulkActionText}>
+            {isCompleteView
+              ? t('presence_matrix_show_compact', { count: MAX_VISIBLE_SERIES })
+              : t('presence_matrix_add_all')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {isCompleteView && <Text style={styles.bulkHint}>{t('presence_matrix_complete_view_hint')}</Text>}
       <PresenceMatrixCanvas
         ref={canvas}
         layout={layout}

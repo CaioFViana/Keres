@@ -92,6 +92,10 @@ jest.mock(
   '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay',
   () => () => null,
 );
+jest.mock(
+  '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay',
+  () => () => null,
+);
 jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/navigation/StatsStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/help/contextualHelp', () => ({

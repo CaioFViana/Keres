@@ -6,6 +6,7 @@
  */
 export {
   getColorLuminance,
+  getDistinctSeriesColor,
   getContrastTextColor,
   isColorLight,
   isValidHexColor,

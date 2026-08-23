@@ -1404,5 +1404,9 @@
   "presence_matrix_open_item": "View item journey",
   "presence_matrix_branching_unavailable": "This map is available for linear stories.",
   "presence_matrix_export_success": "Map saved as {{fileName}}.",
-  "presence_matrix_export_no_share_target": "Map saved to {{path}}."
+  "presence_matrix_export_no_share_target": "Map saved to {{path}}.",
+  "presence_matrix_add_all": "Add all",
+  "presence_matrix_show_compact": "Show first {{count}}",
+  "presence_matrix_selected_all": "All {{count}} selected",
+  "presence_matrix_complete_view_hint": "Complete view: this dense matrix is best explored by panning and zooming, or saved as SVG."
 }

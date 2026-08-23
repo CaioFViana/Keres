@@ -1404,5 +1404,9 @@
   "presence_matrix_open_item": "Ver jornada do item",
   "presence_matrix_branching_unavailable": "Este mapa está disponível para histórias lineares.",
   "presence_matrix_export_success": "Mapa salvo como {{fileName}}.",
-  "presence_matrix_export_no_share_target": "Mapa salvo em {{path}}."
+  "presence_matrix_export_no_share_target": "Mapa salvo em {{path}}.",
+  "presence_matrix_add_all": "Adicionar todos",
+  "presence_matrix_show_compact": "Mostrar os primeiros {{count}}",
+  "presence_matrix_selected_all": "Todos os {{count}} selecionados",
+  "presence_matrix_complete_view_hint": "Visão completa: esta matriz densa é melhor explorada com zoom e arraste, ou salva como SVG."
 }

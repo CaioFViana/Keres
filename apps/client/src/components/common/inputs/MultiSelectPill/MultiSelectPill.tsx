@@ -52,6 +52,8 @@ interface MultiSelectPillProps {
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
   pillStyle?: StyleProp<ViewStyle>;
+  /** Texto compacto para seleções extensas, sem perder a seleção real no modal. */
+  selectionSummary?: string;
 }
 
 const FLAT_GROUP_KEY = '__flat__';
@@ -76,6 +78,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   style,
   triggerStyle,
   pillStyle,
+  selectionSummary,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -213,6 +216,11 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       color: colors.textSecondary,
       fontSize: 16,
     },
+    selectionSummary: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
     modalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
@@ -327,7 +335,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         onPress={openModal}
         style={[styles.pillContainer, triggerStyle]}
       >
-        {selectedOptionDetails.length > 0 ? (
+        {selectionSummary ? (
+          <Text style={styles.selectionSummary}>{selectionSummary}</Text>
+        ) : selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option) => {
             const pillBackgroundColor = option.color || colors.primaryContainer;
             const pillTextColor = getContrastTextColor(pillBackgroundColor);

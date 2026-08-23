@@ -894,6 +894,7 @@
   "story_timeline_scale_compact": "Compact",
   "story_timeline_scale_proportional": "Proportional",
   "story_timeline_subtitle": "{{count}} scenes · narrative time, with compacted spacing",
+  "story_timeline_story_duration": "Story duration",
   "story_timeline_title": "Story timeline",
   "press_back_again_to_exit": "Press back again to exit",
   "previous_scene": "Previous Scene",

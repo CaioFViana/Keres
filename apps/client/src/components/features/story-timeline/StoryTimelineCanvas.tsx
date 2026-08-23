@@ -1,6 +1,6 @@
 import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Line, Rect } from 'react-native-svg';
+import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import { PanZoomCanvasHandle, usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useTheme } from '@/src/theme';
@@ -16,11 +16,13 @@ import {
 interface Props {
   layout: StoryTimelineLayout;
   onPressScene: (id: string) => void;
+  storyDurationLabel: string;
+  storyDurationTitle: string;
 }
 export type StoryTimelineCanvasHandle = PanZoomCanvasHandle;
 
 const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
-  ({ layout, onPressScene }, ref) => {
+  ({ layout, onPressScene, storyDurationLabel, storyDurationTitle }, ref) => {
     const { colors } = useTheme();
     const panZoom = usePanZoomCanvas(ref, layout, {
       minScale: 0.08,
@@ -57,13 +59,69 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
         <Svg width={layout.width} height={layout.height}>
-          <Line
-            x1={TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}
-            y1={startY - 10}
-            x2={layout.width - TIMELINE_PADDING}
-            y2={startY - 10}
-            stroke={colors.border}
-          />
+          {layout.scaleMode === 'proportional' ? (
+            <>
+              <Line
+                x1={TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}
+                y1={startY - 10}
+                x2={layout.width - TIMELINE_PADDING}
+                y2={startY - 10}
+                stroke={colors.border}
+              />
+              {layout.rulerTicks.map((tick) => (
+                <React.Fragment key={`${tick.x}-${tick.label}`}>
+                  <Line
+                    x1={tick.x}
+                    y1={startY - 15}
+                    x2={tick.x}
+                    y2={startY - 5}
+                    stroke={colors.textSecondary}
+                  />
+                  <SvgText
+                    x={tick.x}
+                    y={startY - 20}
+                    fontSize={10}
+                    textAnchor="middle"
+                    fill={colors.textSecondary}
+                  >
+                    {tick.label}
+                  </SvgText>
+                </React.Fragment>
+              ))}
+            </>
+          ) : (
+            <>
+              <SvgText
+                x={TIMELINE_PADDING + TIMELINE_LABEL_PADDING}
+                y={startY - 20}
+                fontSize={10}
+                fill={colors.textSecondary}
+              >
+                {storyDurationTitle}: {storyDurationLabel}
+              </SvgText>
+              {layout.chapters.map((chapter) => (
+                <React.Fragment key={chapter.id}>
+                  <Line
+                    x1={chapter.start}
+                    y1={startY - 10}
+                    x2={chapter.end}
+                    y2={startY - 10}
+                    stroke={chapter.color}
+                    strokeWidth={3}
+                  />
+                  <SvgText
+                    x={(chapter.start + chapter.end) / 2}
+                    y={startY - 20}
+                    fontSize={10}
+                    textAnchor="middle"
+                    fill={chapter.color}
+                  >
+                    {chapter.durationLabel}
+                  </SvgText>
+                </React.Fragment>
+              ))}
+            </>
+          )}
           {layout.rows.map((row, index) => {
             const y = startY + index * TIMELINE_ROW_HEIGHT;
             const centerY = y + TIMELINE_ROW_HEIGHT / 2;

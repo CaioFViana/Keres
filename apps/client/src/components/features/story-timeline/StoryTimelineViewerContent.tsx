@@ -11,7 +11,11 @@ import { createSceneService } from '@/src/services/storymanagement/SceneService'
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
-import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
+import {
+  formatChapterUniverseDuration,
+  formatSceneGap,
+  formatSceneUniverseDuration,
+} from '@/src/utils/sceneTiming';
 import { buildChapterColors } from '@/src/utils/storyGraphLayout';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
 import { buildStoryTimelineLayout, StoryTimelineScaleMode } from '@/src/utils/storyTimelineLayout';
@@ -87,9 +91,34 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
         };
       });
   }, [chapterIds, chapters, colors.border, scenes, t]);
+  const chapterDurationLabels = useMemo(
+    () =>
+      new Map(
+        chapters.map((chapter) => [
+          chapter.id,
+          formatChapterUniverseDuration(
+            orderedScenes.filter((scene) => scene.chapterId === chapter.id),
+            t,
+          ),
+        ]),
+      ),
+    [chapters, orderedScenes, t],
+  );
+  const storyDurationLabel = useMemo(
+    () => formatChapterUniverseDuration(orderedScenes, t),
+    [orderedScenes, t],
+  );
+  const timelineScenes = useMemo(
+    () =>
+      orderedScenes.map((scene) => ({
+        ...scene,
+        chapterDurationLabel: chapterDurationLabels.get(scene.chapterId),
+      })),
+    [chapterDurationLabels, orderedScenes],
+  );
   const layout = useMemo(
-    () => buildStoryTimelineLayout(orderedScenes, scaleMode),
-    [orderedScenes, scaleMode],
+    () => buildStoryTimelineLayout(timelineScenes, scaleMode),
+    [scaleMode, timelineScenes],
   );
   useEffect(() => {
     canvas.current?.fitToScreen();
@@ -113,6 +142,7 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
               ? t('story_timeline_compressed')
               : t('story_timeline_proportional_legend'),
         },
+        storyDuration: { title: t('story_timeline_story_duration'), value: storyDurationLabel },
         colors: {
           background: colors.background,
           surface: colors.surface,
@@ -134,7 +164,7 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
     } finally {
       setSaving(false);
     }
-  }, [colors, layout, notify, scaleMode, story, t]);
+  }, [colors, layout, notify, scaleMode, story, storyDurationLabel, t]);
 
   const styles = useMemo(
     () =>
@@ -283,7 +313,13 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
         <Text style={styles.warning}>{t('story_timeline_proportional_warning')}</Text>
       )}
       {layout.rows.length ? (
-        <StoryTimelineCanvas ref={canvas} layout={layout} onPressScene={setSelectedSceneId} />
+        <StoryTimelineCanvas
+          ref={canvas}
+          layout={layout}
+          onPressScene={setSelectedSceneId}
+          storyDurationTitle={t('story_timeline_story_duration')}
+          storyDurationLabel={storyDurationLabel}
+        />
       ) : (
         <Text style={styles.message}>{t('story_timeline_no_scenes')}</Text>
       )}

@@ -48,6 +48,18 @@ describe('story timeline layout', () => {
 
     expect(hoursWidth / minutesWidth).toBeCloseTo(30, 5);
     expect(layout.hasProportionalScaleWarning).toBe(false);
+    expect(layout.rulerTicks.length).toBeGreaterThan(0);
+  });
+
+  it('groups compact scenes into chapter duration spans', () => {
+    const layout = buildStoryTimelineLayout([
+      scene('first', { chapterDurationLabel: '2 hours', duration: 1, durationType: 'hours' }),
+      scene('second', { chapterDurationLabel: '2 hours', duration: 1, durationType: 'hours' }),
+    ]);
+
+    expect(layout.chapters).toEqual([
+      expect.objectContaining({ id: 'chapter', durationLabel: '2 hours' }),
+    ]);
   });
 
   it('does not connect a scene that starts a separate chapter selection', () => {

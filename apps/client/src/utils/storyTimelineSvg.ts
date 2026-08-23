@@ -11,6 +11,7 @@ interface StoryTimelineSvgOptions {
   title: string;
   subtitle: string;
   labels: { gap: string; duration: string; compressed: string };
+  storyDuration: { title: string; value: string };
   colors: {
     background: string;
     surface: string;
@@ -29,11 +30,31 @@ export function renderStoryTimelineSvg(
     `<rect width="${layout.width}" height="${layout.height}" fill="${options.colors.background}"/>`,
     `<text x="${TIMELINE_PADDING}" y="28" font-size="18" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
     `<text x="${TIMELINE_PADDING}" y="47" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
-    `<line x1="${TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}" y1="${startY - 10}" x2="${layout.width - TIMELINE_PADDING}" y2="${startY - 10}" stroke="${options.colors.border}"/>`,
     `<line x1="${TIMELINE_PADDING}" y1="64" x2="${TIMELINE_PADDING + 20}" y2="64" stroke="${options.colors.textSecondary}" stroke-dasharray="4 3"/><text x="${TIMELINE_PADDING + 27}" y="68" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.labels.gap)}</text>`,
     `<rect x="${TIMELINE_PADDING + 88}" y="59" width="18" height="10" rx="3" fill="${options.colors.textSecondary}"/><text x="${TIMELINE_PADDING + 113}" y="68" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.labels.duration)}</text>`,
     `<text x="${TIMELINE_PADDING + 208}" y="68" font-size="10" fill="${options.colors.textSecondary}">⋯ ${escapeXml(options.labels.compressed)}</text>`,
   ];
+  if (layout.scaleMode === 'proportional') {
+    body.push(
+      `<line x1="${TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}" y1="${startY - 10}" x2="${layout.width - TIMELINE_PADDING}" y2="${startY - 10}" stroke="${options.colors.border}"/>`,
+    );
+    layout.rulerTicks.forEach((tick) =>
+      body.push(
+        `<line x1="${tick.x}" y1="${startY - 15}" x2="${tick.x}" y2="${startY - 5}" stroke="${options.colors.textSecondary}"/>`,
+        `<text x="${tick.x}" y="${startY - 20}" font-size="10" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(tick.label)}</text>`,
+      ),
+    );
+  } else {
+    body.push(
+      `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_PADDING}" y="${startY - 20}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.storyDuration.title)}: ${escapeXml(options.storyDuration.value)}</text>`,
+    );
+    layout.chapters.forEach((chapter) =>
+      body.push(
+        `<line x1="${chapter.start}" y1="${startY - 10}" x2="${chapter.end}" y2="${startY - 10}" stroke="${chapter.color}" stroke-width="3"/>`,
+        `<text x="${(chapter.start + chapter.end) / 2}" y="${startY - 20}" font-size="10" text-anchor="middle" fill="${chapter.color}">${escapeXml(chapter.durationLabel ?? '')}</text>`,
+      ),
+    );
+  }
   layout.rows.forEach((row, index) => {
     const y = startY + index * TIMELINE_ROW_HEIGHT;
     const centerY = y + TIMELINE_ROW_HEIGHT / 2;

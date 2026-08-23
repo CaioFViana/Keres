@@ -9,6 +9,7 @@ export interface StoryTimelineScene {
   chapterId: string;
   chapterName: string;
   chapterColor: string;
+  chapterDurationLabel?: string;
   index: number;
   summary?: string | null;
   gap?: number | null;
@@ -66,6 +67,7 @@ export interface StoryTimelineSegment {
 
 export interface StoryTimelineRow {
   id: string;
+  chapterId: string;
   sequence: number;
   name: string;
   chapterName: string;
@@ -79,8 +81,24 @@ export interface StoryTimelineRow {
   duration?: StoryTimelineSegment;
 }
 
+export interface StoryTimelineChapterSpan {
+  id: string;
+  name: string;
+  color: string;
+  durationLabel?: string;
+  start: number;
+  end: number;
+}
+
+export interface StoryTimelineRulerTick {
+  x: number;
+  label: string;
+}
+
 export interface StoryTimelineLayout {
   rows: StoryTimelineRow[];
+  chapters: StoryTimelineChapterSpan[];
+  rulerTicks: StoryTimelineRulerTick[];
   width: number;
   height: number;
   scaleMode: StoryTimelineScaleMode;
@@ -115,6 +133,60 @@ const PROPORTIONAL_MAX_WIDTH = 100_000;
 
 function timingSeconds(value: number, unit: string): number {
   return Math.abs(value) * (VISUAL_SECONDS_PER_UNIT[unit] ?? 1);
+}
+
+function formatRulerSeconds(seconds: number): string {
+  const absolute = Math.abs(seconds);
+  const sign = seconds < 0 ? '−' : '';
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.eons)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.eons)} e`;
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.millennia)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.millennia)} ky`;
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.years)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.years)}y`;
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.months)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.months)}mo`;
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.days)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.days)}d`;
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.hours)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.hours)}h`;
+  if (absolute >= VISUAL_SECONDS_PER_UNIT.minutes)
+    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.minutes)}m`;
+  return `${sign}${Math.round(absolute)}s`;
+}
+
+function buildRulerTicks(
+  minSeconds: number,
+  maxSeconds: number,
+  originX: number,
+  pixelsPerSecond: number,
+): StoryTimelineRulerTick[] {
+  const minimumStepPixels = 115;
+  const baseSteps = [
+    60,
+    5 * 60,
+    15 * 60,
+    30 * 60,
+    60 * 60,
+    3 * 60 * 60,
+    6 * 60 * 60,
+    12 * 60 * 60,
+    24 * 60 * 60,
+    3 * 24 * 60 * 60,
+    7 * 24 * 60 * 60,
+    30 * 24 * 60 * 60,
+    90 * 24 * 60 * 60,
+    365.25 * 24 * 60 * 60,
+  ];
+  let step =
+    baseSteps.find((entry) => entry * pixelsPerSecond >= minimumStepPixels) ?? baseSteps.at(-1)!;
+  while (step * pixelsPerSecond < minimumStepPixels) step *= 10;
+  const first = Math.ceil(minSeconds / step) * step;
+  const ticks: StoryTimelineRulerTick[] = [];
+  for (let value = first; value <= maxSeconds + step * 0.001; value += step) {
+    ticks.push({ x: originX + value * pixelsPerSecond, label: formatRulerSeconds(value) });
+  }
+  return ticks;
 }
 
 /**
@@ -154,6 +226,9 @@ export function buildStoryTimelineLayout(
       (timing) => timingSeconds(timing.value, timing.unit) * proportionalPixelsPerSecond < 4,
     );
   let cursor = TIMELINE_PADDING + TIMELINE_LABEL_WIDTH;
+  let timeCursor = 0;
+  let minSeconds = 0;
+  let maxSeconds = 0;
   let minX = cursor;
   let maxX = cursor;
   const rows = scenes.map((scene, rowIndex) => {
@@ -163,19 +238,27 @@ export function buildStoryTimelineLayout(
         : segment(scene.gap, scene.gapType, scene.gapLabel);
     const duration = segment(scene.duration, scene.durationType, scene.durationLabel);
     const gapStart = cursor;
-    if (gap) cursor += Math.sign(gap.value) * segmentLength(gap.value, gap.unit, MIN_GAP_WIDTH);
+    if (gap) {
+      cursor += Math.sign(gap.value) * segmentLength(gap.value, gap.unit, MIN_GAP_WIDTH);
+      timeCursor += gap.value * (VISUAL_SECONDS_PER_UNIT[gap.unit] ?? 1);
+    }
     const gapEnd = cursor;
     const barStart = cursor;
-    if (duration)
+    const timeStart = timeCursor;
+    if (duration) {
       cursor +=
         Math.sign(duration.value) *
         segmentLength(duration.value, duration.unit, MIN_DURATION_WIDTH);
-    else cursor += MIN_DURATION_WIDTH;
+      timeCursor += duration.value * (VISUAL_SECONDS_PER_UNIT[duration.unit] ?? 1);
+    } else if (scaleMode === 'compact') cursor += MIN_DURATION_WIDTH;
     const barEnd = cursor;
+    minSeconds = Math.min(minSeconds, timeStart, timeCursor);
+    maxSeconds = Math.max(maxSeconds, timeStart, timeCursor);
     minX = Math.min(minX, gapStart, gapEnd, barStart, barEnd);
     maxX = Math.max(maxX, gapStart, gapEnd, barStart, barEnd);
     return {
       id: scene.id,
+      chapterId: scene.chapterId,
       sequence: rowIndex + 1,
       name: scene.name,
       chapterName: scene.chapterName,
@@ -201,8 +284,49 @@ export function buildStoryTimelineLayout(
     });
     maxX += shift;
   }
+  const chapters = new Map<string, StoryTimelineChapterSpan>();
+  rows.forEach((row) => {
+    const start = Math.min(
+      row.gapStart ?? row.barStart,
+      row.gapEnd ?? row.barStart,
+      row.barStart,
+      row.barEnd,
+    );
+    const end = Math.max(
+      row.gapStart ?? row.barStart,
+      row.gapEnd ?? row.barStart,
+      row.barStart,
+      row.barEnd,
+    );
+    const existing = chapters.get(row.chapterId);
+    if (existing) {
+      existing.start = Math.min(existing.start, start);
+      existing.end = Math.max(existing.end, end);
+    } else {
+      chapters.set(row.chapterId, {
+        id: row.chapterId,
+        name: row.chapterName,
+        color: row.chapterColor,
+        durationLabel: scenes.find((scene) => scene.chapterId === row.chapterId)
+          ?.chapterDurationLabel,
+        start,
+        end,
+      });
+    }
+  });
+  const rulerTicks =
+    scaleMode === 'proportional'
+      ? buildRulerTicks(
+          minSeconds,
+          maxSeconds,
+          TIMELINE_PADDING + TIMELINE_LABEL_WIDTH + shift,
+          proportionalPixelsPerSecond,
+        )
+      : [];
   return {
     rows,
+    chapters: [...chapters.values()],
+    rulerTicks,
     width: Math.max(620, Math.ceil(maxX + TIMELINE_PADDING)),
     height: TIMELINE_PADDING * 2 + TIMELINE_HEADER_HEIGHT + rows.length * TIMELINE_ROW_HEIGHT,
     scaleMode,

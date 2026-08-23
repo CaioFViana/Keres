@@ -39,6 +39,8 @@ interface PanZoomCanvasOptions {
   fitVerticalAlignment?: 'center' | 'top';
   /** Mantém a posição atual quando os dados da visualização mudam. */
   refitOnLayoutChange?: boolean;
+  /** Algumas visualizações, como uma timeline, devem preservar a escala vertical e rolar na horizontal. */
+  fitMode?: 'contain' | 'height';
 }
 
 interface Transform {
@@ -56,6 +58,7 @@ export function usePanZoomCanvas(
   const maxScale = options.maxScale ?? DEFAULT_MAX_SCALE;
   const fitVerticalAlignment = options.fitVerticalAlignment ?? 'center';
   const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
+  const fitMode = options.fitMode ?? 'contain';
 
   const viewport = useRef({ width: 0, height: 0 });
   /** Canto do canvas na janela, para converter o foco da pinça em coordenadas locais. */
@@ -123,13 +126,9 @@ export function usePanZoomCanvas(
     if (viewportWidth === 0 || viewportHeight === 0 || layout.width === 0 || layout.height === 0)
       return;
 
-    const scale = Math.max(
-      minScale,
-      Math.min(
-        maxScale,
-        Math.min(viewportWidth / layout.width, viewportHeight / layout.height) * FIT_MARGIN,
-      ),
-    );
+    const containedScale = Math.min(viewportWidth / layout.width, viewportHeight / layout.height);
+    const targetScale = fitMode === 'height' ? viewportHeight / layout.height : containedScale;
+    const scale = Math.max(minScale, Math.min(maxScale, targetScale * FIT_MARGIN));
     transform.current = {
       scale,
       x: (viewportWidth - layout.width * scale) / 2,
@@ -137,7 +136,16 @@ export function usePanZoomCanvas(
     };
     clamp();
     publish();
-  }, [clamp, fitVerticalAlignment, layout.height, layout.width, maxScale, minScale, publish]);
+  }, [
+    clamp,
+    fitMode,
+    fitVerticalAlignment,
+    layout.height,
+    layout.width,
+    maxScale,
+    minScale,
+    publish,
+  ]);
 
   useImperativeHandle(
     ref,

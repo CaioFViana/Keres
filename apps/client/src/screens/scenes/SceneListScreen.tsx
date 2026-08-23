@@ -16,6 +16,7 @@ import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useOpenStoryTimelineViewer } from '../../hooks/useOpenStoryTimelineViewer';
 import { MainSystemDrawerParamList, SceneStackParamList } from '../../navigation/MainSystemStack';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -33,6 +34,7 @@ const SceneListScreen = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const navigation = useNavigation<ScenesScreenNavigationProp>();
+  const openStoryTimeline = useOpenStoryTimelineViewer();
 
   const {
     items: scenes,
@@ -132,6 +134,11 @@ const SceneListScreen = () => {
         title: t('scenes_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
+            {selectedStory?.type === 'linear' && (
+              <TouchableOpacity onPress={openStoryTimeline} style={styles.headerButton}>
+                <Ionicons name="bar-chart-outline" size={23} color={colors.text} />
+              </TouchableOpacity>
+            )}
             {selectedStory?.type === 'linear' && canEdit && (
               <TouchableOpacity onPress={handleReorderPress} style={styles.headerButton}>
                 <Ionicons name="swap-vertical" size={24} color={colors.text} />
@@ -153,6 +160,7 @@ const SceneListScreen = () => {
       colors.text,
       t,
       handleReorderPress,
+      openStoryTimeline,
       selectedStory?.type,
       styles.headerButton,
       styles.headerRightContainer,

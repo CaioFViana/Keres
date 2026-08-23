@@ -81,6 +81,11 @@ export function buildLocationGraphMapFileName(storyTitle: string, now: Date = ne
   return `${slugify(storyTitle)}-locations-${now.toISOString().slice(0, 10)}.svg`;
 }
 
+/** Nome do SVG da linha do tempo narrativa. */
+export function buildStoryTimelineFileName(storyTitle: string, now: Date = new Date()): string {
+  return `${slugify(storyTitle)}-linha-do-tempo-${now.toISOString().slice(0, 10)}.svg`;
+}
+
 /** Resultado da tentativa de entregar o arquivo ao usuário. */
 export interface ExportDeliveryResult {
   /** `false` quando a plataforma não oferece nenhuma forma de compartilhar arquivo. */

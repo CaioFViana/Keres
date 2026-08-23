@@ -16,6 +16,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
+import StoryTimelineViewerOverlay from '@/src/components/features/story-timeline/StoryTimelineViewerOverlay';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -956,6 +957,7 @@ const MainSystemNavigator = () => {
       </Drawer.Navigator>
       <GalleryMediaViewerOverlay />
       <PresenceMatrixViewerOverlay />
+      <StoryTimelineViewerOverlay />
     </>
   );
 };

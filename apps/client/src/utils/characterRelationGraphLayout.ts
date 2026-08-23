@@ -1,4 +1,5 @@
 import { GraphPoint, wrapLabel } from './storyGraphLayout';
+import { GraphLayoutDirection } from './graphLayoutDirection';
 
 /**
  * Posicionamento do grafo de relações entre personagens: personagens viram nós, relações
@@ -101,6 +102,7 @@ interface WorkEdge {
 export function buildCharacterRelationGraphLayout(
   characters: GraphCharacter[],
   relations: GraphRelation[],
+  direction: GraphLayoutDirection = 'top-to-bottom',
 ): CharacterRelationGraphLayout {
   const nodeById = new Map<string, WorkNode>();
   for (const character of characters) {
@@ -141,12 +143,19 @@ export function buildCharacterRelationGraphLayout(
     // Maiores primeiro deixa o empacotamento em prateleiras mais compacto (first-fit decreasing).
     .sort((a, b) => b.width * b.height - a.width * a.height);
 
-  const packed = packClusters(clusterBoxes);
-  const isolatedNodes = layoutIsolatedGrid(
-    isolatedComponents,
-    packed.width,
-    packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0,
-  );
+  const packed = packClusters(clusterBoxes, direction);
+  const isolatedNodes =
+    direction === 'left-to-right'
+      ? layoutIsolatedColumn(
+          isolatedComponents,
+          packed.nodes.length > 0 ? packed.width + CLUSTER_GAP : 0,
+          packed.height,
+        )
+      : layoutIsolatedGrid(
+          isolatedComponents,
+          packed.width,
+          packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0,
+        );
 
   const nodes = [...packed.nodes, ...isolatedNodes];
   const { width, height } = normalizeToPadding(nodes);
@@ -272,7 +281,10 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
  * uma história com dezenas de famílias/facções sem relação entre si não virar uma faixa
  * horizontal quilométrica.
  */
-function packClusters(clusters: ClusterBox[]): {
+function packClusters(
+  clusters: ClusterBox[],
+  direction: GraphLayoutDirection = 'top-to-bottom',
+): {
   nodes: RelationGraphNode[];
   width: number;
   height: number;
@@ -282,10 +294,13 @@ function packClusters(clusters: ClusterBox[]): {
   }
 
   const totalArea = clusters.reduce((sum, cluster) => sum + cluster.width * cluster.height, 0);
-  const rowTargetWidth = Math.max(
-    maxOf(clusters.map((cluster) => cluster.width)),
-    Math.sqrt(totalArea) * 1.4,
-  );
+  const rowTargetWidth =
+    direction === 'left-to-right'
+      ? Infinity
+      : Math.max(
+          maxOf(clusters.map((cluster) => cluster.width)),
+          Math.sqrt(totalArea) * 1.4,
+        );
 
   const nodes: RelationGraphNode[] = [];
   let rowX = 0;
@@ -310,6 +325,25 @@ function packClusters(clusters: ClusterBox[]): {
   }
 
   return { nodes, width: packedWidth, height: rowY + rowHeight };
+}
+
+/** Em telas largas, personagens sem relação ficam à direita dos grupos conectados. */
+function layoutIsolatedColumn(
+  isolated: WorkNode[],
+  startX: number,
+  canvasHeight: number,
+): RelationGraphNode[] {
+  if (isolated.length === 0) return [];
+
+  const rowStep = NODE_HEIGHT + NODE_GAP;
+  const rows = Math.max(1, Math.floor((canvasHeight || rowStep * 4) / rowStep));
+  const sorted = [...isolated].sort((a, b) => a.character.name.localeCompare(b.character.name));
+
+  return sorted.map((work, index) => {
+    const column = Math.floor(index / rows);
+    const row = index % rows;
+    return buildNode(work, startX + column * (NODE_WIDTH + NODE_GAP), row * rowStep);
+  });
 }
 
 /**

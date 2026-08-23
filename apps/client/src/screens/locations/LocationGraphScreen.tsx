@@ -14,6 +14,7 @@ import LocationGraphCanvas, {
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -54,6 +55,7 @@ const LocationGraphScreen = () => {
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
+  const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<LocationGraphCanvasHandle>(null);
 
@@ -120,8 +122,13 @@ const LocationGraphScreen = () => {
   );
 
   const layout = useMemo(
-    () => buildLocationGraphLayout(locations, graphRelations),
-    [locations, graphRelations],
+    () =>
+      buildLocationGraphLayout(
+        locations,
+        graphRelations,
+        isCompact ? 'top-to-bottom' : 'left-to-right',
+      ),
+    [locations, graphRelations, isCompact],
   );
 
   const selectedNode = useMemo(

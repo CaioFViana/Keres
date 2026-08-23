@@ -1,4 +1,5 @@
 import { AVATAR_FALLBACK_PALETTE } from '@keres/shared';
+import { GraphLayoutDirection } from './graphLayoutDirection';
 /**
  * Posicionamento do grafo de uma história: cenas viram nós, escolhas viram arestas.
  *
@@ -238,6 +239,7 @@ export function buildStoryGraphLayout(
   scenes: GraphScene[],
   choices: GraphChoice[],
   chapters: GraphChapter[],
+  direction: GraphLayoutDirection = 'top-to-bottom',
 ): StoryGraphLayout {
   const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const chapterColorById = buildChapterColors(chapters);
@@ -327,8 +329,10 @@ export function buildStoryGraphLayout(
     isDetached: detachedIds.has(node.scene.id),
   }));
 
+  if (direction === 'left-to-right') orientNodesLeftToRight(nodes);
+
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
-  const placedEdges = placeEdges(workEdges, nodesById);
+  const placedEdges = placeEdges(workEdges, nodesById, direction);
 
   // As curvas de retorno e os laços saem para fora dos nós, então a caixa do desenho só pode
   // ser fechada depois de conhecê-las - senão o mapa exportado corta as voltas da história.
@@ -347,6 +351,18 @@ export function buildStoryGraphLayout(
     ),
     detachedSceneCount: detached.length,
   };
+}
+
+/** Gira o fluxo, preservando espaços adequados para cartões que não são quadrados. */
+function orientNodesLeftToRight(nodes: GraphNode[]): void {
+  const horizontalLayerStep = NODE_WIDTH + LAYER_GAP;
+  const verticalColumnStep = NODE_HEIGHT + COLUMN_GAP;
+  for (const node of nodes) {
+    const previousX = node.x;
+    const previousY = node.y;
+    node.x = (previousY / LAYER_STEP) * horizontalLayerStep;
+    node.y = (previousX / COLUMN_STEP) * verticalColumnStep;
+  }
 }
 
 function compareByStoryOrder(a: WorkNode, b: WorkNode): number {
@@ -652,7 +668,11 @@ function layOutDetachedNodes(detached: WorkNode[], flowWidth: number, flowHeight
 }
 
 /** Curvas de cada aresta, ainda em coordenadas locais. */
-function placeEdges(edges: WorkEdge[], nodesById: Map<string, GraphNode>): PlacedEdge[] {
+function placeEdges(
+  edges: WorkEdge[],
+  nodesById: Map<string, GraphNode>,
+  direction: GraphLayoutDirection,
+): PlacedEdge[] {
   // Arestas paralelas (duas escolhas diferentes entre as mesmas cenas) receberiam a mesma
   // curva e ficariam indistinguíveis; a posição no grupo desloca cada uma para o lado.
   const groups = new Map<string, WorkEdge[]>();
@@ -678,7 +698,7 @@ function placeEdges(edges: WorkEdge[], nodesById: Map<string, GraphNode>): Place
         source,
         target,
         kind,
-        curve: buildCurve(source, target, kind, spread, loopSide),
+        curve: buildCurve(source, target, kind, spread, loopSide, direction),
       });
     });
   }
@@ -744,7 +764,11 @@ function buildCurve(
   kind: GraphEdgeKind,
   spread: number,
   loopSide: 1 | -1,
+  direction: GraphLayoutDirection,
 ): Cubic {
+  if (direction === 'left-to-right') {
+    return buildLeftToRightCurve(source, target, kind, spread, loopSide);
+  }
   const sourceBottom = { x: source.x + source.width / 2, y: source.y + source.height };
   const targetTop = { x: target.x + target.width / 2, y: target.y };
 
@@ -801,6 +825,68 @@ function buildCurve(
     control1: { x: sourceTop.x + side * detour, y: sourceTop.y - LAYER_GAP * 0.55 },
     control2: { x: targetBottom.x + side * detour, y: targetBottom.y + LAYER_GAP * 0.55 },
     end: targetBottom,
+  };
+}
+
+function buildLeftToRightCurve(
+  source: GraphNode,
+  target: GraphNode,
+  kind: GraphEdgeKind,
+  spread: number,
+  loopSide: 1 | -1,
+): Cubic {
+  const sourceRight = { x: source.x + source.width, y: source.y + source.height / 2 };
+  const targetLeft = { x: target.x, y: target.y + target.height / 2 };
+
+  if (kind === 'forward') {
+    const run = Math.max(targetLeft.x - sourceRight.x, LAYER_GAP);
+    return {
+      start: { x: sourceRight.x, y: sourceRight.y + spread },
+      control1: { x: sourceRight.x + run * 0.45, y: sourceRight.y + spread },
+      control2: { x: targetLeft.x - run * 0.45, y: targetLeft.y + spread },
+      end: { x: targetLeft.x, y: targetLeft.y + spread },
+    };
+  }
+
+  if (kind === 'self') {
+    const flank = loopSide === 1 ? source.y + source.height : source.y;
+    const bulge = (SELF_LOOP_BULGE + Math.abs(spread)) * loopSide;
+    return {
+      start: { x: source.x + source.width * 0.32, y: flank },
+      control1: { x: source.x - 18, y: flank + bulge },
+      control2: { x: source.x + source.width + 18, y: flank + bulge },
+      end: { x: source.x + source.width * 0.68, y: flank },
+    };
+  }
+
+  if (kind === 'lateral') {
+    const goingDown = target.y >= source.y;
+    const start = {
+      x: source.x + source.width * 0.7,
+      y: goingDown ? source.y + source.height : source.y,
+    };
+    const end = {
+      x: target.x + target.width * 0.7,
+      y: goingDown ? target.y : target.y + target.height,
+    };
+    const detour = source.width * 0.7 + 26 + Math.abs(spread);
+    return {
+      start,
+      control1: { x: start.x + detour, y: start.y + (goingDown ? 40 : -40) },
+      control2: { x: end.x + detour, y: end.y + (goingDown ? -40 : 40) },
+      end,
+    };
+  }
+
+  const side = source.y >= target.y ? 1 : -1;
+  const detour = source.height * 1.2 + Math.abs(spread);
+  const sourceLeft = { x: source.x, y: source.y + source.height / 2 };
+  const targetRight = { x: target.x + target.width, y: target.y + target.height / 2 };
+  return {
+    start: sourceLeft,
+    control1: { x: sourceLeft.x - LAYER_GAP * 0.55, y: sourceLeft.y + side * detour },
+    control2: { x: targetRight.x + LAYER_GAP * 0.55, y: targetRight.y + side * detour },
+    end: targetRight,
   };
 }
 

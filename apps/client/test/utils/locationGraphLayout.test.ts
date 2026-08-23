@@ -62,6 +62,17 @@ describe('buildLocationGraphLayout', () => {
     expect(nodes.get('cidade').y).toBeGreaterThan(nodes.get('reino').y);
   });
 
+  it('places a contains child to the right of its parent in a wide layout', () => {
+    const layout = buildLocationGraphLayout(
+      [location('reino'), location('cidade')],
+      [rel('r1', 'reino', 'cidade')],
+      'left-to-right',
+    );
+    const nodes = byId(layout);
+
+    expect(nodes.get('cidade').x).toBeGreaterThan(nodes.get('reino').x);
+  });
+
   it('counts one tree per root, not per node', () => {
     const layout = buildLocationGraphLayout(
       [location('reino'), location('cidade'), location('vila')],

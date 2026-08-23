@@ -1,4 +1,5 @@
 import { GraphPoint, wrapLabel } from './storyGraphLayout';
+import { GraphLayoutDirection } from './graphLayoutDirection';
 
 /**
  * Posicionamento do grafo de estrutura de Locations: cada Location vira um nó, e as duas
@@ -93,6 +94,7 @@ interface TreeBox {
 export function buildLocationGraphLayout(
   locations: GraphLocation[],
   relations: GraphLocationRelation[],
+  direction: GraphLayoutDirection = 'top-to-bottom',
 ): LocationGraphLayout {
   if (locations.length === 0) {
     return {
@@ -166,6 +168,7 @@ export function buildLocationGraphLayout(
   );
 
   const nodes = [...packed.nodes, ...isolatedGraphNodes];
+  if (direction === 'left-to-right') orientNodesLeftToRight(nodes);
   const { width, height } = normalizeToPadding(nodes);
 
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
@@ -191,6 +194,20 @@ export function buildLocationGraphLayout(
     treeCount: treeRoots.length,
     isolatedCount: isolatedRoots.length,
   };
+}
+
+/** Converte a árvore vertical em uma árvore lida da esquerda para a direita. */
+function orientNodesLeftToRight(nodes: LocationGraphNode[]): void {
+  const horizontalLayerStep = NODE_WIDTH + LAYER_GAP;
+  const verticalColumnStep = NODE_HEIGHT + NODE_GAP;
+  const sourceLayerStep = NODE_HEIGHT + LAYER_GAP;
+  const sourceColumnStep = NODE_WIDTH + NODE_GAP;
+  for (const node of nodes) {
+    const previousX = node.x;
+    const previousY = node.y;
+    node.x = (previousY / sourceLayerStep) * horizontalLayerStep;
+    node.y = (previousX / sourceColumnStep) * verticalColumnStep;
+  }
 }
 
 /**

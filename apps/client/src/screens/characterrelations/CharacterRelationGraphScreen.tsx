@@ -14,6 +14,7 @@ import CharacterRelationGraphCanvas, {
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import {
   createCharacterRelationService,
@@ -59,6 +60,7 @@ const CharacterRelationGraphScreen = () => {
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
+  const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<CharacterRelationGraphCanvasHandle>(null);
 
@@ -118,8 +120,13 @@ const CharacterRelationGraphScreen = () => {
   );
 
   const layout = useMemo(
-    () => buildCharacterRelationGraphLayout(characters, relations),
-    [characters, relations],
+    () =>
+      buildCharacterRelationGraphLayout(
+        characters,
+        relations,
+        isCompact ? 'top-to-bottom' : 'left-to-right',
+      ),
+    [characters, relations, isCompact],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;

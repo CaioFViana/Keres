@@ -24,6 +24,7 @@ import StoryGraphCanvas, {
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
@@ -78,6 +79,7 @@ const ChoiceViewScreen = () => {
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
+  const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<StoryGraphCanvasHandle>(null);
 
@@ -158,8 +160,14 @@ const ChoiceViewScreen = () => {
   );
 
   const layout = useMemo(
-    () => buildStoryGraphLayout(scenes, choices, chapters),
-    [scenes, choices, chapters],
+    () =>
+      buildStoryGraphLayout(
+        scenes,
+        choices,
+        chapters,
+        isCompact ? 'top-to-bottom' : 'left-to-right',
+      ),
+    [scenes, choices, chapters, isCompact],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;

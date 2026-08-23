@@ -161,6 +161,21 @@ describe.each(RENDERERS)('$name SVG export', ({ render, renderWith, renderNamed,
 });
 
 describe('story map specifics', () => {
+  it('exports the same left-to-right geometry used by wide screens', () => {
+    const scenes = [scene('start', 'Início', 'c1', 0), scene('end', 'Fim', 'c1', 1)];
+    const layout = buildStoryGraphLayout(
+      scenes as never,
+      [{ id: 'choice', sceneId: 'start', nextSceneId: 'end', text: 'seguir' }],
+      [{ id: 'c1', name: 'Capítulo 1', index: 1 }],
+      'left-to-right',
+    );
+
+    expect(layout.nodes.find((node) => node.id === 'end')!.x).toBeGreaterThan(
+      layout.nodes.find((node) => node.id === 'start')!.x,
+    );
+    expect(renderStoryMapSvg(layout, storyOptions())).toContain(`d="${layout.edges[0].path}"`);
+  });
+
   it('reserves room for the header above the graph', () => {
     const layout = storyLayout();
     const svg = renderStoryMapSvg(layout, storyOptions());

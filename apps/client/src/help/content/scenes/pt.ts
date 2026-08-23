@@ -17,11 +17,12 @@ const page: HelpPage = {
       text: '“Partida da estação” fica no capítulo A viagem, acontece na Estação Central e reúne Lia e Omar. Marque-a como Cena inicial se for o começo de uma história ramificada.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Cenas', '+'] },
+    { type: 'path', segments: ['Menu da história', 'Capítulos', 'Abrir capítulo', 'Adicionar cena'] },
     {
       type: 'steps',
       items: [
-        'Crie a cena e informe Nome.',
+        'Abra o capítulo que deve conter a cena e toque em Adicionar cena.',
+        'Informe Nome.',
         'Escolha o Capítulo e o Local; o local precisa estar preenchido.',
         'Use Resumo para registrar o acontecimento.',
         'Depois de salvar, adicione personagens participantes, etiquetas, notas, mídia e relações.',

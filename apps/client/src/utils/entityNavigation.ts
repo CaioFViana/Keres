@@ -26,7 +26,7 @@ interface EntityRoute {
 
 const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Character: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
-  Scene: { stack: 'ScenesStack', screen: 'SceneDetail', paramKey: 'sceneId' },
+  Scene: { stack: 'ChaptersStack', screen: 'SceneDetail', paramKey: 'sceneId' },
   Location: { stack: 'LocationsStack', screen: 'LocationDetail', paramKey: 'locationId' },
   Item: { stack: 'ItemsStack', screen: 'ItemDetail', paramKey: 'itemId' },
   ItemJourney: {

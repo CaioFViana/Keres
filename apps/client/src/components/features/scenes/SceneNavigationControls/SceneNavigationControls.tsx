@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { Choice } from '@keres/shared/entities/Choice';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SceneSelect } from '../../../../db/schema';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { ScenesScreenNavigationProp } from '../../../../screens/scenes/SceneListScreen';
+import { ChapterStackParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
 
 interface SceneNavigationControlsProps {
@@ -31,7 +32,8 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<ScenesScreenNavigationProp>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ChapterStackParamList, 'SceneDetail'>>();
   const navigateToDetail = useNavigateToEntityDetail();
 
   const styles = StyleSheet.create({

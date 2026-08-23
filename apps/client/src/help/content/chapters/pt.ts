@@ -23,7 +23,7 @@ const page: HelpPage = {
       items: [
         'Crie um capítulo e informe Nome.',
         'Use Resumo para registrar seu papel na narrativa.',
-        'Salve e crie ou associe cenas a ele.',
+        'Salve, abra o capítulo na lista e crie ou associe cenas dentro dele.',
         'Use a reorganização de capítulos quando quiser mudar a ordem de leitura.',
       ],
     },

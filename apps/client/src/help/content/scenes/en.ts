@@ -17,11 +17,12 @@ const page: HelpPage = {
       text: '“Leaving the station” belongs to the chapter The Journey, takes place at Central Station, and brings Lia and Omar together. Mark it as Start scene if it begins a branching story.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Scenes', '+'] },
+    { type: 'path', segments: ['Story menu', 'Chapters', 'Open chapter', 'Add scene'] },
     {
       type: 'steps',
       items: [
-        'Create the scene and enter Name.',
+        'Open the chapter that should contain the scene and select Add scene.',
+        'Enter Name.',
         'Choose the Chapter and Location; a location must be filled in.',
         'Use Summary to record the event.',
         'After saving, add participating characters, tags, notes, media, and relationships.',

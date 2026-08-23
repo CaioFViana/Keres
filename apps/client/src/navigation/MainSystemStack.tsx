@@ -67,7 +67,6 @@ import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetail
 import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
 import SceneDetailScreen from '../screens/scenes/SceneDetailScreen';
 import SceneFormScreen from '../screens/scenes/SceneFormScreen';
-import SceneListScreen from '../screens/scenes/SceneListScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
@@ -97,7 +96,6 @@ export type MainSystemDrawerParamList = {
   CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
   LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   ChaptersStack: NavigatorScreenParams<ChapterStackParamList> | undefined;
-  ScenesStack: NavigatorScreenParams<SceneStackParamList> | undefined;
   ChoicesStack: NavigatorScreenParams<ChoiceStackParamList> | undefined;
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
   ItemJourneysStack: NavigatorScreenParams<ItemJourneyStackParamList> | undefined;
@@ -124,7 +122,6 @@ const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 const mainSystemStackRootScreens = new Set([
   'Characters',
   'Chapters',
-  'Scenes',
   'Choices',
   'Items',
   'ItemJourneys',
@@ -173,6 +170,8 @@ export type ChapterStackParamList = {
   Chapters: undefined;
   ChapterDetail: ChapterDetailScreenParamList['ChapterDetail'];
   ChapterForm: { chapterId?: string };
+  SceneDetail: { sceneId: string };
+  SceneForm: { sceneId?: string; chapterId?: string };
 };
 
 const ChapterStackNavigator = () => {
@@ -182,32 +181,9 @@ const ChapterStackNavigator = () => {
       <ChapterStack.Screen name="Chapters" component={ChapterListScreen} />
       <ChapterStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
       <ChapterStack.Screen name="ChapterForm" component={ChapterFormScreen} />
+      <ChapterStack.Screen name="SceneDetail" component={SceneDetailScreen} />
+      <ChapterStack.Screen name="SceneForm" component={SceneFormScreen} />
     </ChapterStack.Navigator>
-  );
-};
-//#endregion
-//#region Scene
-
-const SceneStack = createNativeStackNavigator<SceneStackParamList>();
-
-export type SceneDetailScreenParamList = {
-  SceneDetail: { sceneId: string };
-};
-
-export type SceneStackParamList = {
-  Scenes: undefined;
-  SceneDetail: SceneDetailScreenParamList['SceneDetail'];
-  SceneForm: { sceneId?: string };
-};
-
-const SceneStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <SceneStack.Navigator screenOptions={{ headerShown: false }}>
-      <SceneStack.Screen name="Scenes" component={SceneListScreen} />
-      <SceneStack.Screen name="SceneDetail" component={SceneDetailScreen} />
-      <SceneStack.Screen name="SceneForm" component={SceneFormScreen} />
-    </SceneStack.Navigator>
   );
 };
 //#endregion
@@ -665,20 +641,6 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('ChaptersStack', { screen: 'Chapters' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="ScenesStack"
-          component={SceneStackNavigator}
-          options={{
-            title: t('scenes_title'),
-            drawerLabel: t('scenes_title'),
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('ScenesStack', { screen: 'Scenes' });
             },
           })}
         />

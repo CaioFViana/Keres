@@ -22,6 +22,7 @@ import { Effect } from '@keres/shared/entities/Effect';
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import { Location } from '@keres/shared/entities/Location'; // Import Location
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -61,19 +62,16 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
-import { ScenesScreenNavigationProp } from './SceneListScreen';
+import { ChapterStackParamList } from '../../navigation/MainSystemStack';
 
 // Define the parameter list for this screen
-export type SceneDetailScreenParamList = {
-  SceneDetail: { sceneId: string };
-};
-
-type SceneDetailScreenRouteProp = RouteProp<SceneDetailScreenParamList, 'SceneDetail'>;
+type SceneDetailScreenRouteProp = RouteProp<ChapterStackParamList, 'SceneDetail'>;
 
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const navigation = useNavigation<ScenesScreenNavigationProp>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ChapterStackParamList, 'SceneDetail'>>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId } = route.params;

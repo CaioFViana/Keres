@@ -13,6 +13,9 @@ interface SceneListItemProps {
   storyType: 'linear' | 'branching' | undefined;
   onToggleFavorite: (sceneId: string, isFavorite: boolean) => void;
   onViewDetails: (sceneId: string) => void;
+  density?: 'default' | 'nested';
+  isExpanded?: boolean;
+  onExpandedChange?: (isExpanded: boolean) => void;
 }
 
 const SceneListItem: React.FC<SceneListItemProps> = ({
@@ -20,6 +23,9 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
   storyType,
   onToggleFavorite,
   onViewDetails,
+  density,
+  isExpanded,
+  onExpandedChange,
 }) => {
   const { colors } = useTheme();
 
@@ -51,6 +57,9 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
       onViewDetails={onViewDetails}
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
+      density={density}
+      isExpanded={isExpanded}
+      onExpandedChange={onExpandedChange}
     />
   );
 };

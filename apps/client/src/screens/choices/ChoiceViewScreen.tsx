@@ -263,7 +263,7 @@ const ChoiceViewScreen = () => {
   const handleOpenScene = useCallback(
     (sceneId: string) => {
       setSelectedNodeId(null);
-      navigation.navigate('ScenesStack', { screen: 'SceneDetail', params: { sceneId } });
+      navigation.navigate('ChaptersStack', { screen: 'SceneDetail', params: { sceneId } });
     },
     [navigation],
   );

@@ -10,7 +10,7 @@ import {
 } from '@keres/shared/metadata/globalSearchFields';
 import { and, eq, inArray, ne, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { attributeValues, storySchemaFields } from '../../db/schema';
+import { attributeValues, chapters, scenes, storySchemaFields } from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
 import { truncate } from '../../utils/stringUtils';
 import { createFavoriteService } from './FavoriteService';
@@ -20,6 +20,8 @@ export interface GlobalSearchResult {
   id: string;
   title: string;
   snippet: string;
+  /** Caminho contextual para resultados que vivem dentro de outra entidade, como Scene. */
+  context?: string;
   /** `null` marks entity types that do not support favorites. */
   isFavorite: boolean | null;
 }
@@ -314,6 +316,31 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
       })();
 
       await Promise.all([...nativeQueries, attributeQuery, entityAttributeQuery]);
+
+      // Scene não é mais um destino de drawer próprio: preservar o capítulo aqui evita que um
+      // resultado de busca pareça uma cena solta e dá ao autor sua posição narrativa.
+      const sceneResults = Array.from(results.values()).filter(
+        (result) => result.entityType === 'Scene',
+      );
+      if (sceneResults.length > 0) {
+        const sceneContexts = await db
+          .select({ sceneId: scenes.id, chapterName: chapters.name, chapterIndex: chapters.index })
+          .from(scenes)
+          .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+          .where(
+            inArray(
+              scenes.id,
+              sceneResults.map((result) => result.id),
+            ),
+          )
+          .all();
+        const contextBySceneId = new Map(
+          sceneContexts.map((row) => [row.sceneId, `${row.chapterIndex}. ${row.chapterName}`]),
+        );
+        sceneResults.forEach((result) => {
+          result.context = contextBySceneId.get(result.id);
+        });
+      }
 
       const favoriteService = createFavoriteService(db);
       await Promise.all(

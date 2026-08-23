@@ -12,14 +12,22 @@ interface ChapterListItemProps {
   chapter: ChapterSelect;
   onToggleFavorite: (chapterId: string, isFavorite: boolean) => void;
   onViewDetails: (chapterId: string) => void;
+  renderScenes?: (options: {
+    expandedSceneIds: ReadonlySet<string>;
+    onSceneExpandedChange: (sceneId: string, isExpanded: boolean) => void;
+  }) => React.ReactNode;
+  initialExpanded?: boolean;
 }
 
 const ChapterListItem: React.FC<ChapterListItemProps> = ({
   chapter,
   onToggleFavorite,
   onViewDetails,
+  renderScenes,
+  initialExpanded,
 }) => {
   const { colors } = useTheme();
+  const [expandedSceneIds, setExpandedSceneIds] = React.useState<ReadonlySet<string>>(new Set());
 
   const summaryText = truncate(chapter.summary, 150);
 
@@ -37,6 +45,17 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
     <View>
       {summaryText && <Text style={styles.summaryText}>{summaryText}</Text>}
       {chap.extraNotes && <Text style={styles.notesText}>{truncate(chap.extraNotes, 150)}</Text>}
+      {renderScenes?.({
+        expandedSceneIds,
+        onSceneExpandedChange: (sceneId, isExpanded) => {
+          setExpandedSceneIds((previous) => {
+            const next = new Set(previous);
+            if (isExpanded) next.add(sceneId);
+            else next.delete(sceneId);
+            return next;
+          });
+        },
+      })}
     </View>
   );
 
@@ -47,6 +66,7 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
       onViewDetails={onViewDetails}
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
+      initialExpanded={initialExpanded}
     />
   );
 };

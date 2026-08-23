@@ -14,7 +14,13 @@ const ViewDetailsButton: React.FC<ViewDetailsButtonProps> = ({ onPress, size = 2
   const iconColor = color || colors.primary;
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.button}>
+    <TouchableOpacity
+      onPress={(event) => {
+        event.stopPropagation();
+        onPress();
+      }}
+      style={styles.button}
+    >
       <MaterialCommunityIcons name="eye" size={size} color={iconColor} />
     </TouchableOpacity>
   );

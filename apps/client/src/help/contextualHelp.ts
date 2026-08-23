@@ -32,8 +32,6 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   Chapters: 'chapters',
   ChapterDetail: 'chapters',
   ChapterForm: 'chapters',
-  ScenesStack: 'scenes',
-  Scenes: 'scenes',
   SceneDetail: 'scenes',
   SceneForm: 'scenes',
   ChoicesStack: 'choices',

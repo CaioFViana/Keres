@@ -101,7 +101,7 @@ jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: 
 jest.mock('../../src/navigation/StatsStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/help/contextualHelp', () => ({
   __esModule: true,
-  screenHelpPage: { ScenesStack: 'scenes' },
+  screenHelpPage: { ChaptersStack: 'chapters' },
 }));
 
 jest.mock('../../src/screens/chapters/ChapterDetailScreen', () => ({
@@ -248,10 +248,6 @@ jest.mock('../../src/screens/scenes/SceneFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/scenes/SceneListScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock('../../src/screens/storyschema/StorySchemaFieldFormScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -307,13 +303,13 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(24);
+  expect(mockDrawerScreens).toHaveLength(23);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
   await renderDrawer();
   const navigator = mockDrawerNavigatorProps.at(-1);
-  const options = navigator?.screenOptions({ navigation: {}, route: { name: 'ScenesStack' } });
+  const options = navigator?.screenOptions({ navigation: {}, route: { name: 'ChaptersStack' } });
 
   expect(navigator).toMatchObject({ defaultStatus: 'closed', backBehavior: 'history' });
   expect(options).toMatchObject({ drawerType: 'front', swipeEnabled: true });
@@ -325,7 +321,6 @@ it('configures a compact, front drawer and preserves the current story as its da
 it.each([
   ['CharactersStack', 'Characters'],
   ['ChaptersStack', 'Chapters'],
-  ['ScenesStack', 'Scenes'],
   ['ChoicesStack', 'Choices'],
   ['LocationsStack', 'Locations'],
   ['ItemsStack', 'Items'],

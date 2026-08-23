@@ -34,7 +34,7 @@ import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { SceneStackParamList } from '../../navigation/MainSystemStack';
+import { ChapterStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import {
   CharacterSceneServiceInterface,
@@ -55,8 +55,8 @@ import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
-type SceneFormScreenRouteProp = RouteProp<SceneStackParamList, 'SceneForm'>;
-type SceneFormScreenNavigationProp = NativeStackNavigationProp<SceneStackParamList, 'SceneForm'>;
+type SceneFormScreenRouteProp = RouteProp<ChapterStackParamList, 'SceneForm'>;
+type SceneFormScreenNavigationProp = NativeStackNavigationProp<ChapterStackParamList, 'SceneForm'>;
 
 const isTimingInput = (value: string) => /^-?\d*$/.test(value);
 const MAX_SCENE_TIMING = 2147483647;
@@ -71,7 +71,7 @@ const SceneFormScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<SceneFormScreenNavigationProp>();
   const route = useRoute<SceneFormScreenRouteProp>();
-  const { sceneId: initialSceneId } = route.params || {};
+  const { sceneId: initialSceneId, chapterId: initialChapterId } = route.params || {};
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
@@ -379,6 +379,8 @@ const SceneFormScreen = () => {
           } else {
             console.warn('Scene not found:', currentSceneId);
           }
+        } else if (initialChapterId) {
+          setChapterId(initialChapterId);
         }
       } catch (err) {
         console.error('Failed to load scene:', err);
@@ -388,7 +390,15 @@ const SceneFormScreen = () => {
       }
     };
     loadSceneAndData();
-  }, [currentSceneId, drizzleDb, isEditing, selectedStory?.id, t, fetchCharacterSceneRelations]);
+  }, [
+    currentSceneId,
+    drizzleDb,
+    fetchCharacterSceneRelations,
+    initialChapterId,
+    isEditing,
+    selectedStory?.id,
+    t,
+  ]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -525,7 +535,7 @@ const SceneFormScreen = () => {
         const nextIndex =
           allScenesInChapter.length > 0
             ? Math.max(...allScenesInChapter.map((scn) => scn.index || 0)) + 1
-            : 1;
+            : 0;
         const savedScene = await sceneServiceRef.current!.createScene(userId, {
           ...sceneData,
           storyId: selectedStory.id,

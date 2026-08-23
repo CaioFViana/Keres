@@ -1,6 +1,5 @@
 import {
   StoryTimelineLayout,
-  TIMELINE_HEADER_HEIGHT,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
@@ -25,7 +24,7 @@ export function renderStoryTimelineSvg(
   layout: StoryTimelineLayout,
   options: StoryTimelineSvgOptions,
 ) {
-  const startY = TIMELINE_PADDING + TIMELINE_HEADER_HEIGHT;
+  const startY = TIMELINE_PADDING + layout.headerHeight;
   const body = [
     `<rect width="${layout.width}" height="${layout.height}" fill="${options.colors.background}"/>`,
     `<text x="${TIMELINE_PADDING}" y="28" font-size="18" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
@@ -46,12 +45,12 @@ export function renderStoryTimelineSvg(
     );
   } else {
     body.push(
-      `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_PADDING}" y="${startY - 20}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.storyDuration.title)}: ${escapeXml(options.storyDuration.value)}</text>`,
+      `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_PADDING}" y="${startY - 20 - layout.chapterLaneCount * 18}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.storyDuration.title)}: ${escapeXml(options.storyDuration.value)}</text>`,
     );
     layout.chapters.forEach((chapter) =>
       body.push(
-        `<line x1="${chapter.start}" y1="${startY - 10}" x2="${chapter.end}" y2="${startY - 10}" stroke="${chapter.color}" stroke-width="3"/>`,
-        `<text x="${(chapter.start + chapter.end) / 2}" y="${startY - 20}" font-size="10" text-anchor="middle" fill="${chapter.color}">${escapeXml(chapter.durationLabel ?? '')}</text>`,
+        `<line x1="${chapter.start}" y1="${startY - 10 - chapter.lane * 18}" x2="${chapter.end}" y2="${startY - 10 - chapter.lane * 18}" stroke="${chapter.color}" stroke-width="3"/>`,
+        `<text x="${(chapter.start + chapter.end) / 2}" y="${startY - 20 - chapter.lane * 18}" font-size="10" text-anchor="middle" fill="${chapter.color}">${escapeXml(chapter.durationLabel ?? '')}</text>`,
       ),
     );
   }

@@ -62,6 +62,28 @@ describe('story timeline layout', () => {
     ]);
   });
 
+  it('uses separate header lanes for chapters that overlap in time', () => {
+    const layout = buildStoryTimelineLayout([
+      scene('first', {
+        chapterId: 'one',
+        chapterName: 'One',
+        duration: 5,
+        durationType: 'hours',
+      }),
+      scene('second', {
+        chapterId: 'two',
+        chapterName: 'Two',
+        gap: -2,
+        gapType: 'hours',
+        duration: 2,
+        durationType: 'hours',
+      }),
+    ]);
+
+    expect(layout.chapterLaneCount).toBe(2);
+    expect(layout.chapters.map((chapter) => chapter.lane)).toEqual([0, 1]);
+  });
+
   it('does not connect a scene that starts a separate chapter selection', () => {
     const layout = buildStoryTimelineLayout([
       scene('chapter-one', { duration: 1, durationType: 'hours' }),

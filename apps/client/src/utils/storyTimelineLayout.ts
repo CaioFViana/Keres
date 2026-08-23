@@ -88,6 +88,7 @@ export interface StoryTimelineChapterSpan {
   durationLabel?: string;
   start: number;
   end: number;
+  lane: number;
 }
 
 export interface StoryTimelineRulerTick {
@@ -99,6 +100,8 @@ export interface StoryTimelineLayout {
   rows: StoryTimelineRow[];
   chapters: StoryTimelineChapterSpan[];
   rulerTicks: StoryTimelineRulerTick[];
+  headerHeight: number;
+  chapterLaneCount: number;
   width: number;
   height: number;
   scaleMode: StoryTimelineScaleMode;
@@ -311,9 +314,27 @@ export function buildStoryTimelineLayout(
           ?.chapterDurationLabel,
         start,
         end,
+        lane: 0,
       });
     }
   });
+  const chapterSpans = [...chapters.values()];
+  const laneEnds: number[] = [];
+  for (const chapter of chapterSpans) {
+    let lane = laneEnds.findIndex((end) => end <= chapter.start);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(chapter.end);
+    } else {
+      laneEnds[lane] = chapter.end;
+    }
+    chapter.lane = lane;
+  }
+  const chapterLaneCount = Math.max(1, laneEnds.length);
+  const headerHeight =
+    scaleMode === 'compact'
+      ? TIMELINE_HEADER_HEIGHT + (chapterLaneCount - 1) * 18
+      : TIMELINE_HEADER_HEIGHT;
   const rulerTicks =
     scaleMode === 'proportional'
       ? buildRulerTicks(
@@ -325,11 +346,13 @@ export function buildStoryTimelineLayout(
       : [];
   return {
     rows,
-    chapters: [...chapters.values()],
+    chapters: chapterSpans,
     rulerTicks,
     width: Math.max(620, Math.ceil(maxX + TIMELINE_PADDING)),
-    height: TIMELINE_PADDING * 2 + TIMELINE_HEADER_HEIGHT + rows.length * TIMELINE_ROW_HEIGHT,
+    height: TIMELINE_PADDING * 2 + headerHeight + rows.length * TIMELINE_ROW_HEIGHT,
     scaleMode,
     hasProportionalScaleWarning,
+    headerHeight,
+    chapterLaneCount,
   };
 }

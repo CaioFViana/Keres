@@ -6,7 +6,6 @@ import { PanZoomCanvasHandle, usePanZoomCanvas } from '@/src/hooks/usePanZoomCan
 import { useTheme } from '@/src/theme';
 import {
   StoryTimelineLayout,
-  TIMELINE_HEADER_HEIGHT,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
@@ -55,7 +54,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
         }),
       [],
     );
-    const startY = TIMELINE_PADDING + TIMELINE_HEADER_HEIGHT;
+    const startY = TIMELINE_PADDING + layout.headerHeight;
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
         <Svg width={layout.width} height={layout.height}>
@@ -93,7 +92,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             <>
               <SvgText
                 x={TIMELINE_PADDING + TIMELINE_LABEL_PADDING}
-                y={startY - 20}
+                y={startY - 20 - layout.chapterLaneCount * 18}
                 fontSize={10}
                 fill={colors.textSecondary}
               >
@@ -103,15 +102,15 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                 <React.Fragment key={chapter.id}>
                   <Line
                     x1={chapter.start}
-                    y1={startY - 10}
+                    y1={startY - 10 - chapter.lane * 18}
                     x2={chapter.end}
-                    y2={startY - 10}
+                    y2={startY - 10 - chapter.lane * 18}
                     stroke={chapter.color}
                     strokeWidth={3}
                   />
                   <SvgText
                     x={(chapter.start + chapter.end) / 2}
-                    y={startY - 20}
+                    y={startY - 20 - chapter.lane * 18}
                     fontSize={10}
                     textAnchor="middle"
                     fill={chapter.color}

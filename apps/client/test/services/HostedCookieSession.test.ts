@@ -11,6 +11,8 @@ jest.mock('../../src/state/userSettingsStore', () => ({
 jest.mock('../../src/services/apiClient', () => ({
   __esModule: true,
   default: { setBaseUrl: jest.fn(), setActiveServer: jest.fn() },
+  apiUrl: (serverUrl: string, endpoint: string) =>
+    `${serverUrl.replace(/\/+$/, '')}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
 }));
 jest.mock('../../src/services/ServerService', () => ({
   createServerService: jest.fn(() => ({
@@ -43,7 +45,7 @@ it('does nothing outside the hosted cookie session', async () => {
   expect(mockCreateServer).not.toHaveBeenCalled();
 });
 
-it('creates a local server record from GET /auth/me', async () => {
+it('creates a local server record from GET /api/auth/me', async () => {
   const created = {
     id: 'server-1',
     url: 'http://localhost:3000',
@@ -61,6 +63,10 @@ it('creates a local server record from GET /auth/me', async () => {
   });
 
   await expect(restoreHostedCookieSession(db)).resolves.toEqual(created);
+  expect(axios.get).toHaveBeenCalledWith(
+    'http://localhost:3000/api/auth/me',
+    expect.objectContaining({ timeout: 5000 }),
+  );
   expect(mockCreateServer).toHaveBeenCalledWith(
     expect.objectContaining({
       idUser: 'user-1',

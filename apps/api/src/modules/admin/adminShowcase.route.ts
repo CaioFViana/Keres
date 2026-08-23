@@ -6,9 +6,8 @@ import { requireAdmin } from '../../utils/adminAuth';
 /**
  * A chave do site público, na mão de quem hospeda o servidor.
  *
- * Desligada, `/` volta a ser o atalho para o Swagger, `/api/public/*` responde 404 e publicar é
- * recusado - inclusive para histórias que já tinham versões, que simplesmente deixam de ser
- * alcançáveis sem serem apagadas.
+ * A vitrine pode ser desligada sem apagar o que já foi publicado. O cliente hospedado em `/`
+ * tem controle próprio e, desligado, dá lugar à landing mínima do servidor.
  */
 export const adminShowcaseRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -32,12 +31,17 @@ export const adminShowcaseRoutes = new Elysia()
     '/',
     async ({ body, user }) => {
       await requireAdmin(user);
-      return showcaseSettingsService.update({ isShowcaseEnabled: body.isShowcaseEnabled });
+      return showcaseSettingsService.update(body);
     },
     {
-      body: t.Object({ isShowcaseEnabled: t.Boolean() }),
+      body: t.Partial(
+        t.Object({
+          isShowcaseEnabled: t.Boolean(),
+          isHostedClientEnabled: t.Boolean(),
+        }),
+      ),
       detail: {
-        summary: 'Enable or disable the public showcase',
+        summary: 'Configure the hosted client and public showcase',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

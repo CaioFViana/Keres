@@ -168,9 +168,10 @@
     "loadTiersFailed": "Não foi possível carregar os planos."
   },
   "showcaseSettings": {
-    "title": "Vitrine pública",
-    "description": "Quando ativada, este servidor passa a servir uma página pública no seu endereço raiz, listando as histórias que os usuários escolheram publicar. Qualquer pessoa pode ver e baixar essas histórias, sem conta. Histórias protegidas por senha continuam fora da listagem nos dois casos.",
+    "title": "Páginas hospedadas",
+    "description": "A vitrine lista histórias publicadas. O cliente hospedado é o aplicativo web servido na raiz; ao desligá-lo, a raiz mostra uma página simples com links para administração e vitrine.",
     "enabled": "Vitrine ativada",
+    "hostedClientEnabled": "Cliente hospedado ativado na raiz",
     "loadFailed": "Não foi possível carregar."
   },
   "appearance": {

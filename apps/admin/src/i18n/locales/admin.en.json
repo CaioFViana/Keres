@@ -168,9 +168,10 @@
     "loadTiersFailed": "Failed to load tiers."
   },
   "showcaseSettings": {
-    "title": "Public Showcase",
-    "description": "When enabled, this server serves a public page at its root address, listing the stories its users chose to publish. Anyone can browse and download those stories - no account needed. Password-protected stories stay unlisted either way.",
+    "title": "Hosted Pages",
+    "description": "The showcase lists published stories. The hosted client is the web app served at the root; when disabled, the root shows a simple page linking to administration and the showcase.",
     "enabled": "Showcase enabled",
+    "hostedClientEnabled": "Enable the hosted client at the root",
     "loadFailed": "Failed to load."
   },
   "appearance": {

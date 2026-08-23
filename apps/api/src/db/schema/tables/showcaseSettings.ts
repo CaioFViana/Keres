@@ -13,5 +13,7 @@ export const SHOWCASE_SETTINGS_SINGLETON_ID = 'singleton';
 export const showcaseSettings = table('showcase_settings', {
   id: text('id').primaryKey(),
   isShowcaseEnabled: boolean('is_showcase_enabled').notNull().default(false),
+  /** O cliente Expo hospedado em `/`; desligado, a raiz vira a landing mínima do servidor. */
+  isHostedClientEnabled: boolean('is_hosted_client_enabled').notNull().default(true),
   updatedAt: timestampNow('updated_at'),
 });

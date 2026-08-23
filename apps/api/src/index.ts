@@ -71,10 +71,37 @@ const ADMIN_UI_SECURITY_HEADERS: Record<string, string> = {
   'X-Frame-Options': 'DENY',
 };
 
+const SERVER_LANDING_SECURITY_HEADERS: Record<string, string> = {
+  'Content-Security-Policy':
+    "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY',
+};
+
 function applyAdminUiSecurityHeaders(set: { headers: Record<string, string | number> }): void {
   for (const [name, value] of Object.entries(ADMIN_UI_SECURITY_HEADERS)) {
     set.headers[name] = value;
   }
+}
+
+function applyServerLandingSecurityHeaders(set: {
+  headers: Record<string, string | number>;
+}): void {
+  for (const [name, value] of Object.entries(SERVER_LANDING_SECURITY_HEADERS)) {
+    set.headers[name] = value;
+  }
+}
+
+/** Página deliberadamente estática: o servidor continua útil sem expor o cliente hospedado. */
+function serverLandingHtml(): string {
+  return `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keres Server</title><style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#121212;color:#fff;font-family:system-ui,sans-serif}
+main{width:min(34rem,calc(100% - 3rem));padding:2.5rem;border:1px solid #333;border-radius:1rem;background:#1e1e1e;text-align:center}
+h1{margin:0 0 .75rem;color:#bb86fc}p{margin:0 0 2rem;color:#d0c8d8;line-height:1.55}.actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}a{padding:.7rem 1rem;border-radius:.55rem;background:#bb86fc;color:#1b1024;text-decoration:none;font-weight:700}a.secondary{background:transparent;color:#eaddff;border:1px solid #bb86fc}
+</style></head><body><main><h1>Keres Server</h1><p>Este endereço hospeda um servidor Keres.</p><div class="actions"><a href="/admin">Administração</a><a class="secondary" href="/showcase">Vitrine</a></div></main></body></html>`;
 }
 
 function applyClientAppIsolationHeaders(set: { headers: Record<string, string | number> }): void {
@@ -268,14 +295,25 @@ export async function createApp() {
         '/',
         async ({ set }) => {
           // A raiz é o cliente web (mesmo export que o Electron), para o Expo Router viver
-          // em `/` como no desktop. Sem o export, a vitrine (se ligada) ou o Swagger.
-          if (clientUiAvailable) {
+          // em `/` como no desktop. O administrador pode trocar isso por uma landing mínima.
+          // A raiz sempre serviu o cliente sem depender do banco. Preservar esse caminho quando
+          // o banco ainda está iniciando ou caiu evita trocar uma página útil por um 503; o
+          // default da configuração também é "ligado".
+          const hostedClientEnabled = await showcaseSettingsService
+            .isHostedClientEnabled()
+            .catch(() => true);
+          if (clientUiAvailable && hostedClientEnabled) {
             const file = readHostedClientFile(clientDistPath, '/');
             if (file) {
               applyClientAppIsolationHeaders(set);
               set.headers['content-type'] = file.contentType;
               return file.body;
             }
+          }
+          if (!hostedClientEnabled) {
+            applyServerLandingSecurityHeaders(set);
+            set.headers['content-type'] = 'text/html; charset=utf-8';
+            return serverLandingHtml();
           }
           if (showcaseUiAvailable && (await showcaseSettingsService.isEnabled())) {
             set.status = 302;

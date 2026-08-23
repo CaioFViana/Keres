@@ -36,7 +36,11 @@ export class ShowcaseSettingsService {
     return (await this.getOrCreate()).isShowcaseEnabled;
   }
 
-  async update(patch: { isShowcaseEnabled: boolean }) {
+  async isHostedClientEnabled(): Promise<boolean> {
+    return (await this.getOrCreate()).isHostedClientEnabled;
+  }
+
+  async update(patch: { isShowcaseEnabled?: boolean; isHostedClientEnabled?: boolean }) {
     await this.getOrCreate();
     const [updated] = await db
       .update(showcaseSettings)

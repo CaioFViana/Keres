@@ -1,7 +1,12 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/apiClient', () => ({ createKeresAxiosInstance: jest.fn() }));
+jest.mock('../../src/services/apiClient', () => ({
+  createKeresAxiosInstance: jest.fn(),
+  apiBaseUrl: (serverUrl: string) => `${serverUrl.replace(/\/+$/, '')}/api`,
+  apiUrl: (serverUrl: string, endpoint: string) =>
+    `${serverUrl.replace(/\/+$/, '')}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
+}));
 jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
 jest.mock('../../src/services/FriendshipService', () => ({ createFriendshipService: jest.fn() }));
 jest.mock('../../src/services/SyncEngineService', () => ({

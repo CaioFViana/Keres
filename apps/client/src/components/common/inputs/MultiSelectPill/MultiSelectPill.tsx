@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Animated,
-  Easing,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -86,7 +84,6 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const dropdownAnim = useRef(new Animated.Value(0)).current;
 
   const effectiveGroups = useMemo<MultiSelectGroup[]>(
     () => groups ?? [{ key: FLAT_GROUP_KEY, label: '', options: options ?? [] }],
@@ -127,28 +124,15 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     setSearch('');
     setActiveGroupKey(effectiveGroups.length === 1 ? (effectiveGroups[0]?.key ?? null) : null);
     setModalVisible(true);
-    Animated.timing(dropdownAnim, {
-      toValue: 1,
-      duration: 200,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start();
-  }, [dropdownAnim, effectiveGroups]);
+  }, [effectiveGroups]);
 
   const closeModal = useCallback(() => {
-    Animated.timing(dropdownAnim, {
-      toValue: 0,
-      duration: 200,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start(() => {
-      setModalVisible(false);
-      // Reseta para a lista de tipos na próxima abertura, em vez de reabrir dentro do
-      // último grupo visitado.
-      setActiveGroupKey(null);
-      setSearch('');
-    });
-  }, [dropdownAnim]);
+    setModalVisible(false);
+    // Reseta para a lista de tipos na próxima abertura, em vez de reabrir dentro do
+    // último grupo visitado.
+    setActiveGroupKey(null);
+    setSearch('');
+  }, []);
 
   const toggleOption = useCallback(
     (value: string) => {
@@ -367,18 +351,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         contentStyle={styles.modalContent}
         maxHeight={Math.min(screenHeight * 0.75, 720)}
       >
-        <Animated.View
-          style={{
-            transform: [
-              {
-                translateY: dropdownAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [screenHeight, 0],
-                }),
-              },
-            ],
-          }}
-        >
+        <View>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderTitleRow}>
               {activeGroup && effectiveGroups.length > 1 && (
@@ -472,7 +445,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
               <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
             )}
           </ScrollView>
-        </Animated.View>
+        </View>
       </ResponsiveModal>
     </View>
   );

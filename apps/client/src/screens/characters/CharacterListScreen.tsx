@@ -49,6 +49,7 @@ const CharactersScreen = () => {
   const {
     items: characters,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -213,7 +214,7 @@ const CharactersScreen = () => {
     ];
   }, [t]);
 
-  if (loading && characters.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_characters')} />;
   }
 

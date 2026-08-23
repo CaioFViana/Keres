@@ -42,6 +42,7 @@ const LocationsScreen = () => {
   const {
     items: locations,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -168,7 +169,7 @@ const LocationsScreen = () => {
     ];
   }, [t]);
 
-  if (loading && locations.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_locations')} />;
   }
 

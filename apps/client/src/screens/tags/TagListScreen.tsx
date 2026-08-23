@@ -33,6 +33,7 @@ const TagsScreen = () => {
   const {
     items: tags,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -110,7 +111,7 @@ const TagsScreen = () => {
     },
   });
 
-  if (loading && tags.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_tags')} />;
   }
 

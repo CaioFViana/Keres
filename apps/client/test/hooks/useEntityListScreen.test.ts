@@ -63,6 +63,24 @@ afterEach(() => {
 });
 
 describe('bootstrapping', () => {
+  it('only reports the blocking loading state until the first response for a story', async () => {
+    let resolveFetch: (() => void) | undefined;
+    store = buildStore({
+      fetchTags: jest.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFetch = resolve;
+          }),
+      ),
+    });
+
+    const { result } = await render();
+    expect(result.current.isInitialLoading).toBe(true);
+
+    await act(async () => resolveFetch?.());
+    await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
+  });
+
   it('hands the store the database and the open story', async () => {
     await render();
 

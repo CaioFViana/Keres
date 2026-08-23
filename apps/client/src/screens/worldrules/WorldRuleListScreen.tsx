@@ -45,6 +45,7 @@ const WorldRulesScreen = () => {
   const {
     items: worldRules,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -158,7 +159,7 @@ const WorldRulesScreen = () => {
     },
   });
 
-  if (loading && worldRules.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_world_rules')} />;
   }
 

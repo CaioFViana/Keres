@@ -42,6 +42,7 @@ const NotesScreen = () => {
   const {
     items: notes,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -155,7 +156,7 @@ const NotesScreen = () => {
     },
   });
 
-  if (loading && notes.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_notes')} />;
   }
 

@@ -54,6 +54,7 @@ const ItemListScreen = () => {
   const {
     items,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -266,7 +267,7 @@ const ItemListScreen = () => {
     }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit]),
   );
 
-  if (loading && items.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_items')} />;
   }
 

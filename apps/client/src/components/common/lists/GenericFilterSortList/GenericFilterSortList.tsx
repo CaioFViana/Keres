@@ -55,6 +55,8 @@ interface GenericFilterSortListProps<T> {
   currentAdvancedSearchCriteria?: { [key: string]: any };
   disableTagFilter?: boolean;
   isLoading?: boolean;
+  /** Contextual count supplied by composite lists, e.g. items nested under each result. */
+  resultsMeta?: string;
   /**
    * Colunas da lista. A galeria mostra miniaturas em grade; as demais telas são listas de
    * uma coluna e não passam nada.
@@ -90,6 +92,7 @@ const GenericFilterSortList = <T,>({
   disableFavoriteFilter = false,
   disableTagFilter = false,
   isLoading = false,
+  resultsMeta,
   numColumns = 1,
   columnWrapperStyle,
 }: GenericFilterSortListProps<T>) => {
@@ -318,6 +321,7 @@ const GenericFilterSortList = <T,>({
         )}
         <Text style={styles(colors).resultsCountText}>
           {t('total_results_found', { count: data.length })}
+          {resultsMeta ? ` (${resultsMeta})` : ''}
         </Text>
       </View>
       <FlatList

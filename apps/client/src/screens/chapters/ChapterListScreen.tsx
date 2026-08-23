@@ -41,6 +41,13 @@ const matchesSceneQuery = (scene: SceneSelect, query: string) =>
     value?.toLocaleLowerCase().includes(query),
   );
 
+const scenesShownForChapter = (chapterId: string, allScenes: SceneSelect[], query: string) => {
+  const chapterScenes = allScenes.filter((scene) => scene.chapterId === chapterId);
+  if (!query) return chapterScenes;
+  const matchingScenes = chapterScenes.filter((scene) => matchesSceneQuery(scene, query));
+  return matchingScenes.length > 0 ? matchingScenes : chapterScenes;
+};
+
 const ChapterListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
@@ -236,11 +243,12 @@ const ChapterListScreen = () => {
   const memoizedChapterListItem = useCallback(
     ({ item }: { item: ChapterSelect }) => {
       const query = searchQuery.trim().toLocaleLowerCase();
-      const chapterScenes = scenesWithFavoriteState.filter((scene) => scene.chapterId === item.id);
-      const matchingScenes = query
-        ? chapterScenes.filter((scene) => matchesSceneQuery(scene, query))
-        : [];
-      const hasSceneMatch = matchingScenes.length > 0;
+      const chapterScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
+      const hasSceneMatch = query
+        ? scenesWithFavoriteState.some(
+            (scene) => scene.chapterId === item.id && matchesSceneQuery(scene, query),
+          )
+        : false;
 
       return (
         <ChapterListItem
@@ -251,7 +259,7 @@ const ChapterListScreen = () => {
           renderScenes={({ expandedSceneIds, onSceneExpandedChange }) => (
             <ChapterScenesList
               storyType={selectedStory?.type}
-              scenes={hasSceneMatch ? matchingScenes : chapterScenes}
+              scenes={chapterScenes}
               choices={choices}
               canEdit={canEdit}
               onOpenScene={handleOpenScene}
@@ -287,6 +295,15 @@ const ChapterListScreen = () => {
       { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
+
+  const visibleSceneCount = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    return visibleChapters.reduce(
+      (total, chapter) =>
+        total + scenesShownForChapter(chapter.id, scenesWithFavoriteState, query).length,
+      0,
+    );
+  }, [scenesWithFavoriteState, searchQuery, visibleChapters]);
 
   const handleReorderPress = useCallback(() => {
     setIsReorderModalVisible(true);
@@ -392,6 +409,7 @@ const ChapterListScreen = () => {
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
         isLoading={loading}
+        resultsMeta={t('chapter_outline_scene_count', { count: visibleSceneCount })}
       />
       <ChapterReorderModal
         isVisible={isReorderModalVisible}

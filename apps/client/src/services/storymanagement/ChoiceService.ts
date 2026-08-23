@@ -92,7 +92,11 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
             const fieldMeta = choiceMetadata.find((meta) => meta.name === key);
 
             if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
+              if (key === 'choiceSearch') {
+                conditions.push(
+                  sql`(${choices.text} LIKE ${`%${value}%`} COLLATE NOCASE OR ${choices.notes} LIKE ${`%${value}%`} COLLATE NOCASE)` as SQL<boolean>,
+                );
+              } else if (fieldMeta.type === 'string') {
                 conditions.push(
                   sql`${choices[key as keyof ChoiceSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
                 );

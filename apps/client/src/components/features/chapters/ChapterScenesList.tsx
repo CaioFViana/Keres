@@ -58,7 +58,12 @@ const ChapterScenesList: React.FC<Props> = ({
     <View>
       <View style={styles.titleRow}>
         <Text style={styles.title}>
-          {t('chapter_outline_scene_count', { count: sorted.length })}
+          {t(
+            sorted.length === 1
+              ? 'chapter_outline_scene_count_one'
+              : 'chapter_outline_scene_count_other',
+            { count: sorted.length },
+          )}
         </Text>
         {canEdit && (
           <View style={{ flexDirection: 'row', gap: 10 }}>

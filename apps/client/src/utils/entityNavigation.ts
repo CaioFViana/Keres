@@ -26,7 +26,7 @@ interface EntityRoute {
 
 const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Character: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
-  Scene: { stack: 'ChaptersStack', screen: 'SceneDetail', paramKey: 'sceneId' },
+  Scene: { stack: 'NarrativeElementsStack', screen: 'SceneDetail', paramKey: 'sceneId' },
   Location: { stack: 'LocationsStack', screen: 'LocationDetail', paramKey: 'locationId' },
   Item: { stack: 'ItemsStack', screen: 'ItemDetail', paramKey: 'itemId' },
   ItemJourney: {
@@ -35,8 +35,8 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
     paramKey: 'itemJourneyId',
   },
   Tag: { stack: 'TagsStack', screen: 'TagDetail', paramKey: 'tagId' },
-  Choice: { stack: 'ChoicesStack', screen: 'ChoiceDetail', paramKey: 'choiceId' },
-  Chapter: { stack: 'ChaptersStack', screen: 'ChapterDetail', paramKey: 'chapterId' },
+  Choice: { stack: 'NarrativeElementsStack', screen: 'ChoiceDetail', paramKey: 'choiceId' },
+  Chapter: { stack: 'NarrativeElementsStack', screen: 'ChapterDetail', paramKey: 'chapterId' },
   Note: { stack: 'NotesStack', screen: 'NoteDetail', paramKey: 'noteId' },
   WorldRule: { stack: 'WorldRulesStack', screen: 'WorldRuleDetail', paramKey: 'worldRuleId' },
   // Modo não tem tela própria: a busca global devolve o id do personagem dono no lugar do id

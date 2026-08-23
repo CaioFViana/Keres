@@ -154,6 +154,13 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
-  Choice: [{ name: 'text', label: 'text', type: 'string', isSearchable: true }],
+  Choice: [
+    {
+      name: 'choiceSearch',
+      label: 'choice_text_or_notes',
+      type: 'string',
+      isSearchable: true,
+    },
+  ],
   // Add other relevant entities as needed
 };

@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -20,14 +22,22 @@ import { buildChapterColors } from '@/src/utils/storyGraphLayout';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
 import { buildStoryTimelineLayout, StoryTimelineScaleMode } from '@/src/utils/storyTimelineLayout';
 import { renderStoryTimelineSvg } from '@/src/utils/storyTimelineSvg';
-import StoryTimelineCanvas, { StoryTimelineCanvasHandle } from './StoryTimelineCanvas';
+import StoryTimelineCanvas, {
+  StoryTimelineCanvasHandle,
+} from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { setDocumentTitle } from '../../../utils/documentTitle';
 
-const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+const StoryTimelineScreen = () => {
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
   const notify = useNotificationStore((state) => state.showNotification);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'StoryTimeline'>>();
   const canvas = useRef<StoryTimelineCanvasHandle>(null);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
@@ -36,6 +46,13 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
   const [scaleMode, setScaleMode] = useState<StoryTimelineScaleMode>('compact');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setDocumentTitle(t('story_timeline_title'));
+      navigation.getParent()?.setOptions({ title: t('story_timeline_title'), headerRight: undefined });
+    }, [navigation, t]),
+  );
 
   useEffect(() => {
     if (!story) return;
@@ -159,7 +176,7 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
         result.delivered ? 'success' : 'warning',
       );
     } catch (error) {
-      console.log('StoryTimelineViewerContent: failed to export timeline.', error);
+      console.log('StoryTimelineScreen: failed to export timeline.', error);
       notify(t('story_timeline_export_failed'), 'error');
     } finally {
       setSaving(false);
@@ -170,14 +187,6 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
     () =>
       StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.background },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 12,
-          borderBottomWidth: 1,
-          borderColor: colors.border,
-        },
-        title: { flex: 1, color: colors.text, fontSize: 17, fontWeight: '700' },
         controls: { position: 'absolute', right: 14, bottom: 18, gap: 8 },
         control: {
           width: 42,
@@ -228,12 +237,6 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
   if (story?.type !== 'linear')
     return (
       <View style={styles.root}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('story_timeline_title')}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={26} color={colors.text} />
-          </TouchableOpacity>
-        </View>
         <Text style={styles.message}>{t('story_timeline_branching_unavailable')}</Text>
       </View>
     );
@@ -245,12 +248,6 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
     );
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('story_timeline_title')}</Text>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={26} color={colors.text} />
-        </TouchableOpacity>
-      </View>
       <MultiSelectPill
         options={chapters.map((chapter) => ({
           label: chapter.name,
@@ -360,4 +357,4 @@ const StoryTimelineViewerContent: React.FC<{ onClose: () => void }> = ({ onClose
     </View>
   );
 };
-export default StoryTimelineViewerContent;
+export default StoryTimelineScreen;

@@ -26,52 +26,58 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import { SceneSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
+import { useDrizzle } from '../../../db';
+import { SceneSelect } from '../../../db/schema';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../../hooks/useEntityComments';
+import { useEntityRelations } from '../../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
+import { useOpenGalleryMediaViewer } from '../../../hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '../../../hooks/useStoryRole';
 import {
   ChapterService,
   createChapterService,
-} from '../../services/storymanagement/ChapterService'; // Import ChapterService
+} from '../../../services/storymanagement/ChapterService'; // Import ChapterService
 import {
   CharacterSceneServiceInterface,
   createCharacterSceneService,
-} from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import { ChoiceService, createChoiceService } from '../../services/storymanagement/ChoiceService'; // Import ChoiceService
-import { createEffectService, EffectService } from '../../services/storymanagement/EffectService';
+} from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import {
+  ChoiceService,
+  createChoiceService,
+} from '../../../services/storymanagement/ChoiceService'; // Import ChoiceService
+import {
+  createEffectService,
+  EffectService,
+} from '../../../services/storymanagement/EffectService';
 import {
   createItemJourneyService,
   ItemJourneyService,
-} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+} from '../../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import { createItemService, ItemService } from '../../../services/storymanagement/ItemService'; // Import ItemService
 import {
   createLocationService,
   LocationService,
-} from '../../services/storymanagement/LocationService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
-import { ChapterStackParamList } from '../../navigation/MainSystemStack';
+} from '../../../services/storymanagement/LocationService';
+import { createSceneService } from '../../../services/storymanagement/SceneService';
+import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
+import { useStoryStore } from '../../../state/storyStore';
+import { useTheme } from '../../../theme';
+import { getCommonContainerStyles } from '../../../theme/commonStyles';
+import { setDocumentTitle } from '../../../utils/documentTitle';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
+import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 // Define the parameter list for this screen
-type SceneDetailScreenRouteProp = RouteProp<ChapterStackParamList, 'SceneDetail'>;
+type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
 
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation =
-    useNavigation<NativeStackNavigationProp<ChapterStackParamList, 'SceneDetail'>>();
+    useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneDetail'>>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId } = route.params;
@@ -755,6 +761,8 @@ const SceneDetailScreen = () => {
         choicesForScene={choicesForScene}
         incomingChoicesForScene={incomingChoicesForScene}
         sceneNamesById={sceneNamesById}
+        canEdit={canEdit}
+        onAddChoice={() => navigation.navigate('ChoiceForm', { sceneId })}
       />
 
       {isBranching && (

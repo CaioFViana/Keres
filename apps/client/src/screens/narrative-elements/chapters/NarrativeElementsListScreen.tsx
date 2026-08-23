@@ -14,34 +14,39 @@ import {
 import ChapterListItem from '@/src/components/features/list-items/ChapterListItem';
 import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
-import { useDrizzle } from '../../db';
-import { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useOpenStoryTimelineViewer } from '../../hooks/useOpenStoryTimelineViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { ChapterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { useChapterStore } from '../../state/chapterStore';
-import { useSceneStore } from '../../state/sceneStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { useDrizzle } from '../../../db';
+import { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../../hooks/useStoryRole';
+import {
+  NarrativeElementsStackParamList,
+  MainSystemDrawerParamList,
+} from '../../../navigation/MainSystemStack';
+import { useChapterStore } from '../../../state/chapterStore';
+import { useSceneStore } from '../../../state/sceneStore';
+import { useStoryStore } from '../../../state/storyStore';
+import { useTheme } from '../../../theme';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { setDocumentTitle } from '../../../utils/documentTitle';
+import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
+import { createSceneService } from '../../../services/storymanagement/SceneService';
+import { createChapterService } from '../../../services/storymanagement/ChapterService';
+import { createTagService } from '../../../services/storymanagement/TagService';
+import { createTagRelationService } from '../../../services/storymanagement/TagRelationService';
 
-export type ChaptersScreenNavigationProp = CompositeNavigationProp<
-  DrawerNavigationProp<MainSystemDrawerParamList, 'ChaptersStack'>,
-  NativeStackNavigationProp<ChapterStackParamList, 'ChapterDetail'>
+export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
+  DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
+  NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChapterDetail'>
 >;
 
 const matchesSceneQuery = (scene: SceneSelect, query: string) =>
   [scene.name, scene.summary, scene.extraNotes].some((value) =>
     value?.toLocaleLowerCase().includes(query),
   );
+
+const matchesChoiceQuery = (choice: ChoiceSelect, query: string) =>
+  [choice.text, choice.notes].some((value) => value?.toLocaleLowerCase().includes(query));
 
 const scenesShownForChapter = (chapterId: string, allScenes: SceneSelect[], query: string) => {
   const chapterScenes = allScenes.filter((scene) => scene.chapterId === chapterId);
@@ -50,17 +55,28 @@ const scenesShownForChapter = (chapterId: string, allScenes: SceneSelect[], quer
   return matchingScenes.length > 0 ? matchingScenes : chapterScenes;
 };
 
-const ChapterListScreen = () => {
+type AdvancedNarrativeMatches = {
+  chapterIds: ReadonlySet<string>;
+  sceneIds: ReadonlySet<string>;
+  choiceSourceSceneIds: ReadonlySet<string>;
+};
+
+const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: string) =>
+  Object.fromEntries(
+    Object.entries(criteria)
+      .filter(([key, value]) => key.startsWith(`${prefix}:`) && value !== undefined && value !== '')
+      .map(([key, value]) => [key.slice(prefix.length + 1), value]),
+  );
+
+const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
-  const navigation = useNavigation<ChaptersScreenNavigationProp>();
-  const openStoryTimeline = useOpenStoryTimelineViewer();
+  const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
 
   const {
-    items: chapters,
     loading,
     error,
     storyId,
@@ -102,6 +118,7 @@ const ChapterListScreen = () => {
   const [tagsByChapterId, setTagsByChapterId] = useState<Map<string, TagSelect[]>>(new Map());
   const [tagsBySceneId, setTagsBySceneId] = useState<Map<string, TagSelect[]>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
+  const [advancedMatches, setAdvancedMatches] = useState<AdvancedNarrativeMatches | null>(null);
 
   const loadOutline = useCallback(async () => {
     if (!storyId) return;
@@ -118,6 +135,70 @@ const ChapterListScreen = () => {
   useEffect(() => {
     loadOutline();
   }, [loadOutline]);
+
+  useEffect(() => {
+    if (!storyId) {
+      setAdvancedMatches(null);
+      return;
+    }
+    const chapterCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'chapter');
+    const sceneCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'scene');
+    const choiceCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'choice');
+    const hasCriteria = [chapterCriteria, sceneCriteria, choiceCriteria].some(
+      (criteria) => Object.keys(criteria).length > 0,
+    );
+    if (!hasCriteria) {
+      setAdvancedMatches(null);
+      return;
+    }
+
+    let cancelled = false;
+    const loadAdvancedMatches = async () => {
+      const [matchedChapters, matchedScenes, matchedChoices] = await Promise.all([
+        Object.keys(chapterCriteria).length
+          ? createChapterService(db).getChaptersByStoryId(
+              storyId,
+              undefined,
+              undefined,
+              undefined,
+              'all',
+              chapterCriteria,
+            )
+          : Promise.resolve(outlineChapters),
+        Object.keys(sceneCriteria).length
+          ? createSceneService(db).getScenesByStoryId(
+              storyId,
+              undefined,
+              undefined,
+              undefined,
+              'all',
+              sceneCriteria,
+            )
+          : Promise.resolve(scenes),
+        Object.keys(choiceCriteria).length
+          ? createChoiceService(db).getChoicesByStoryId(
+              storyId,
+              undefined,
+              undefined,
+              undefined,
+              'all',
+              choiceCriteria,
+            )
+          : Promise.resolve(choices),
+      ]);
+      if (!cancelled) {
+        setAdvancedMatches({
+          chapterIds: new Set(matchedChapters.map((chapter) => chapter.id)),
+          sceneIds: new Set(matchedScenes.map((scene) => scene.id)),
+          choiceSourceSceneIds: new Set(matchedChoices.map((choice) => choice.sceneId)),
+        });
+      }
+    };
+    loadAdvancedMatches();
+    return () => {
+      cancelled = true;
+    };
+  }, [advancedSearchCriteria, choices, db, outlineChapters, scenes, storyId]);
 
   const loadTags = useCallback(async () => {
     if (!storyId) {
@@ -241,19 +322,26 @@ const ChapterListScreen = () => {
 
   const visibleChapters = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
-    const favoriteOverrides = new Map(
-      (chapters as ChapterSelect[]).map((chapter) => [chapter.id, chapter.isFavorite]),
-    );
-    const base: ChapterSelect[] = Object.keys(advancedSearchCriteria).length
-      ? (chapters as ChapterSelect[])
-      : outlineChapters;
-    const filtered = base.filter((chapter) => {
-      const isFavorite = favoriteOverrides.get(chapter.id) ?? chapter.isFavorite;
-      if (favoriteFilterState === 'favorite' && !isFavorite) return false;
-      if (favoriteFilterState === 'not-favorite' && isFavorite) return false;
+    const filtered = outlineChapters.filter((chapter) => {
+      const chapterScenes = scenesWithFavoriteState.filter(
+        (scene) => scene.chapterId === chapter.id,
+      );
+      const hasFavorite = chapter.isFavorite || chapterScenes.some((scene) => scene.isFavorite);
+      if (favoriteFilterState === 'favorite' && !hasFavorite) return false;
+      if (favoriteFilterState === 'not-favorite' && hasFavorite) return false;
+      if (advancedMatches) {
+        if (!advancedMatches.chapterIds.has(chapter.id)) return false;
+        if (!chapterScenes.some((scene) => advancedMatches.sceneIds.has(scene.id))) return false;
+        if (!chapterScenes.some((scene) => advancedMatches.choiceSourceSceneIds.has(scene.id))) {
+          return false;
+        }
+      }
       if (
         activeTagIds.length > 0 &&
-        !(tagsByChapterId.get(chapter.id) ?? []).some((tag) => activeTagIds.includes(tag.id))
+        !(tagsByChapterId.get(chapter.id) ?? []).some((tag) => activeTagIds.includes(tag.id)) &&
+        !chapterScenes.some((scene) =>
+          (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
+        )
       ) {
         return false;
       }
@@ -263,7 +351,12 @@ const ChapterListScreen = () => {
       );
       return (
         chapterMatches ||
-        scenes.some((scene) => scene.chapterId === chapter.id && matchesSceneQuery(scene, query))
+        chapterScenes.some((scene) => matchesSceneQuery(scene, query)) ||
+        choices.some(
+          (choice) =>
+            matchesChoiceQuery(choice, query) &&
+            chapterScenes.some((scene) => scene.id === choice.sceneId),
+        )
       );
     });
     const direction = sortDirection === 'desc' ? -1 : 1;
@@ -281,19 +374,21 @@ const ChapterListScreen = () => {
       })
       .map((chapter) => ({
         ...chapter,
-        isFavorite: favoriteOverrides.get(chapter.id) ?? chapter.isFavorite,
+        isFavorite: chapter.isFavorite,
       }));
   }, [
     activeSort,
     activeTagIds,
-    advancedSearchCriteria,
-    chapters,
+    advancedMatches,
+    choices,
     favoriteFilterState,
     outlineChapters,
     scenes,
+    scenesWithFavoriteState,
     searchQuery,
     sortDirection,
     tagsByChapterId,
+    tagsBySceneId,
   ]);
 
   const memoizedChapterListItem = useCallback(
@@ -302,12 +397,41 @@ const ChapterListScreen = () => {
       const allChapterScenes = scenesWithFavoriteState.filter(
         (scene) => scene.chapterId === item.id,
       );
-      const chapterScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
+      const queryScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
+      const choiceMatchedSceneIds = new Set(
+        choices
+          .filter((choice) => matchesChoiceQuery(choice, query))
+          .map((choice) => choice.sceneId),
+      );
+      const chapterHasMatchingTag = (tagsByChapterId.get(item.id) ?? []).some((tag) =>
+        activeTagIds.includes(tag.id),
+      );
+      const filteredByTag =
+        activeTagIds.length > 0 && !chapterHasMatchingTag
+          ? queryScenes.filter((scene) =>
+              (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
+            )
+          : queryScenes;
+      const filteredByFavorite =
+        favoriteFilterState === 'favorite' && !item.isFavorite
+          ? filteredByTag.filter((scene) => scene.isFavorite)
+          : filteredByTag;
+      const chapterScenes = advancedMatches
+        ? filteredByFavorite.filter(
+            (scene) =>
+              advancedMatches.sceneIds.has(scene.id) &&
+              advancedMatches.choiceSourceSceneIds.has(scene.id),
+          )
+        : query &&
+            choiceMatchedSceneIds.size > 0 &&
+            !queryScenes.some((scene) => matchesSceneQuery(scene, query))
+          ? filteredByFavorite.filter((scene) => choiceMatchedSceneIds.has(scene.id))
+          : filteredByFavorite;
       const hasSceneMatch = query
         ? scenesWithFavoriteState.some(
             (scene) => scene.chapterId === item.id && matchesSceneQuery(scene, query),
-          )
-        : false;
+          ) || choiceMatchedSceneIds.size > 0
+        : chapterScenes.length !== allChapterScenes.length;
 
       return (
         <ChapterListItem
@@ -337,7 +461,10 @@ const ChapterListScreen = () => {
     },
     [
       canEdit,
+      advancedMatches,
+      activeTagIds,
       choices,
+      favoriteFilterState,
       handleAddScene,
       handleOpenScene,
       handleToggleFavorite,
@@ -359,6 +486,17 @@ const ChapterListScreen = () => {
       { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
+
+  const advancedSearchScopes = useMemo(
+    () => [
+      { entityName: 'Chapter' as const, prefix: 'chapter', label: t('chapters_title') },
+      { entityName: 'Scene' as const, prefix: 'scene', label: t('scenes_title') },
+      ...(selectedStory?.type === 'branching'
+        ? [{ entityName: 'Choice' as const, prefix: 'choice', label: t('choices_title') }]
+        : []),
+    ],
+    [selectedStory?.type, t],
+  );
 
   const visibleSceneCount = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
@@ -397,13 +535,25 @@ const ChapterListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('chapters_title'));
+      setDocumentTitle(t('narrative_elements_title'));
       navigation.getParent()?.setOptions({
-        title: t('chapters_title'),
+        title: t('narrative_elements_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
+            {selectedStory?.type === 'branching' && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ChoiceView')}
+                style={styles.headerButton}
+                accessibilityLabel={t('story_map_title')}
+              >
+                <Ionicons name="git-network-outline" size={26} color={colors.text} />
+              </TouchableOpacity>
+            )}
             {selectedStory?.type === 'linear' && (
-              <TouchableOpacity onPress={openStoryTimeline} style={styles.headerButton}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('StoryTimeline')}
+                style={styles.headerButton}
+              >
                 <Ionicons name="bar-chart-outline" size={23} color={colors.text} />
               </TouchableOpacity>
             )}
@@ -431,7 +581,6 @@ const ChapterListScreen = () => {
       styles.headerButton,
       styles.headerRightContainer,
       canEdit,
-      openStoryTimeline,
       selectedStory?.type,
     ]),
   );
@@ -471,13 +620,19 @@ const ChapterListScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
+        advancedSearchScopes={advancedSearchScopes}
         isLoading={loading}
-        resultsMeta={t('chapter_outline_scene_count', { count: visibleSceneCount })}
+        resultsMeta={t(
+          visibleSceneCount === 1
+            ? 'chapter_outline_scene_count_one'
+            : 'chapter_outline_scene_count_other',
+          { count: visibleSceneCount },
+        )}
       />
       <ChapterReorderModal
         isVisible={isReorderModalVisible}
         onClose={() => setIsReorderModalVisible(false)}
-        chapters={chapters}
+        chapters={outlineChapters}
         onReorderConfirm={handleReorderConfirm}
       />
       <SceneReorderModal
@@ -492,4 +647,4 @@ const ChapterListScreen = () => {
   );
 };
 
-export default ChapterListScreen;
+export default NarrativeElementsListScreen;

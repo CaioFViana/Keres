@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
+import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import Select from '@/src/components/common/inputs/Select/Select';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -53,6 +54,7 @@ interface GenericFilterSortListProps<T> {
   storyId?: string;
   onAdvancedSearch?: (criteria: { [key: string]: any }) => void;
   currentAdvancedSearchCriteria?: { [key: string]: any };
+  advancedSearchScopes?: AdvancedSearchScope[];
   disableTagFilter?: boolean;
   isLoading?: boolean;
   /** Contextual count supplied by composite lists, e.g. items nested under each result. */
@@ -89,6 +91,7 @@ const GenericFilterSortList = <T,>({
   storyId,
   onAdvancedSearch,
   currentAdvancedSearchCriteria,
+  advancedSearchScopes,
   disableFavoriteFilter = false,
   disableTagFilter = false,
   isLoading = false,
@@ -112,13 +115,15 @@ const GenericFilterSortList = <T,>({
   // instead of needing a separate story-scoped fetch just to decide visibility.
   const hasAdvancedSearchFields = useMemo(() => {
     if (!entityName) return false;
-    const metadata = entityFieldMetadata[entityName];
-    const hasNativeSearchableFields = !!metadata && metadata.some((field) => field.isSearchable);
-    const supportsCustomAttributes = (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(
-      entityName,
+    const entities = advancedSearchScopes?.map((scope) => scope.entityName) ?? [entityName];
+    const hasNativeSearchableFields = entities.some((name) =>
+      entityFieldMetadata[name]?.some((field) => field.isSearchable),
+    );
+    const supportsCustomAttributes = entities.some((name) =>
+      (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(name),
     );
     return hasNativeSearchableFields || supportsCustomAttributes;
-  }, [entityName]);
+  }, [advancedSearchScopes, entityName]);
 
   React.useEffect(() => {
     setSelectedFilter(selectedFilterValues || []);
@@ -346,6 +351,7 @@ const GenericFilterSortList = <T,>({
             onClose={handleCloseAdvancedSearchModal}
             onSearch={handleAdvancedSearchSubmit}
             initialCriteria={currentAdvancedSearchCriteria}
+            scopes={advancedSearchScopes}
           />
         )}
     </View>

@@ -24,27 +24,27 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import { ChapterSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { ChapterStackParamList } from '../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDrizzle } from '../../../db';
+import { ChapterSelect } from '../../../db/schema';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
+import { useEntityRelations } from '../../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
+import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
+import { createChapterService } from '../../../services/storymanagement/ChapterService';
+import { useStoryStore } from '../../../state/storyStore';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import { useTheme } from '../../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
+import { AppAlert } from '../../../utils/AppAlert';
+import { setDocumentTitle } from '../../../utils/documentTitle';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
 
-type ChapterFormScreenRouteProp = RouteProp<ChapterStackParamList, 'ChapterForm'>;
+type ChapterFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChapterForm'>;
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<
-  ChapterStackParamList,
+  NarrativeElementsStackParamList,
   'ChapterForm'
 >;
 

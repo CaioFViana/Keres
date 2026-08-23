@@ -16,7 +16,6 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
-import StoryTimelineViewerOverlay from '@/src/components/features/story-timeline/StoryTimelineViewerOverlay';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -27,19 +26,18 @@ import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import ChapterDetailScreen, {
   ChapterDetailScreenParamList,
-} from '../screens/chapters/ChapterDetailScreen';
-import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
-import ChapterListScreen from '../screens/chapters/ChapterListScreen';
+} from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
+import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import CharacterDetailScreen, {
   CharacterDetailScreenParamList,
 } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
-import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
-import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
-import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
-import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
+import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
+import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
+import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
@@ -63,8 +61,9 @@ import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
 import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
 import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
-import SceneDetailScreen from '../screens/scenes/SceneDetailScreen';
-import SceneFormScreen from '../screens/scenes/SceneFormScreen';
+import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
+import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
@@ -93,8 +92,7 @@ export type MainSystemDrawerParamList = {
   // Drawer restaurar o estado aninhado como estava.
   CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
   LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
-  ChaptersStack: NavigatorScreenParams<ChapterStackParamList> | undefined;
-  ChoicesStack: NavigatorScreenParams<ChoiceStackParamList> | undefined;
+  NarrativeElementsStack: NavigatorScreenParams<NarrativeElementsStackParamList> | undefined;
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
   TagsStack: NavigatorScreenParams<TagsStackParamList> | undefined;
   WorldRulesStack: NavigatorScreenParams<WorldRulesStackParamList> | undefined;
@@ -117,8 +115,7 @@ const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 
 const mainSystemStackRootScreens = new Set([
   'Characters',
-  'Chapters',
-  'Choices',
+  'NarrativeElements',
   'Items',
   'ItemJourneys',
   'Locations',
@@ -162,55 +159,39 @@ const CharacterStackNavigator = () => {
   );
 };
 //#endregion
-//#region Chapter
+//#region Narrative elements
 
-const ChapterStack = createNativeStackNavigator<ChapterStackParamList>();
+const NarrativeElementsStack = createNativeStackNavigator<NarrativeElementsStackParamList>();
 
-export type ChapterStackParamList = {
-  Chapters: undefined;
+export type NarrativeElementsStackParamList = {
+  NarrativeElements: undefined;
   ChapterDetail: ChapterDetailScreenParamList['ChapterDetail'];
   ChapterForm: { chapterId?: string };
   SceneDetail: { sceneId: string };
   SceneForm: { sceneId?: string; chapterId?: string };
-};
-
-const ChapterStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <ChapterStack.Navigator screenOptions={{ headerShown: false }}>
-      <ChapterStack.Screen name="Chapters" component={ChapterListScreen} />
-      <ChapterStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
-      <ChapterStack.Screen name="ChapterForm" component={ChapterFormScreen} />
-      <ChapterStack.Screen name="SceneDetail" component={SceneDetailScreen} />
-      <ChapterStack.Screen name="SceneForm" component={SceneFormScreen} />
-    </ChapterStack.Navigator>
-  );
-};
-//#endregion
-//#region Choice
-
-const ChoiceStack = createNativeStackNavigator<ChoiceStackParamList>();
-
-export type ChoiceDetailScreenParamList = {
   ChoiceDetail: { choiceId: string };
-};
-
-export type ChoiceStackParamList = {
-  Choices: undefined;
-  ChoiceDetail: ChoiceDetailScreenParamList['ChoiceDetail'];
-  ChoiceForm: { choiceId?: string };
+  ChoiceForm: { choiceId?: string; sceneId?: string };
   ChoiceView: undefined;
+  StoryTimeline: undefined;
 };
 
-const ChoiceStackNavigator = () => {
+const NarrativeElementsStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <ChoiceStack.Navigator screenOptions={{ headerShown: false }}>
-      <ChoiceStack.Screen name="Choices" component={ChoiceListScreen} />
-      <ChoiceStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
-      <ChoiceStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
-      <ChoiceStack.Screen name="ChoiceView" component={ChoiceViewScreen} />
-    </ChoiceStack.Navigator>
+    <NarrativeElementsStack.Navigator screenOptions={{ headerShown: false }}>
+      <NarrativeElementsStack.Screen
+        name="NarrativeElements"
+        component={NarrativeElementsListScreen}
+      />
+      <NarrativeElementsStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
+      <NarrativeElementsStack.Screen name="ChapterForm" component={ChapterFormScreen} />
+      <NarrativeElementsStack.Screen name="SceneDetail" component={SceneDetailScreen} />
+      <NarrativeElementsStack.Screen name="SceneForm" component={SceneFormScreen} />
+      <NarrativeElementsStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
+      <NarrativeElementsStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
+      <NarrativeElementsStack.Screen name="ChoiceView" component={ChoiceViewScreen} />
+      <NarrativeElementsStack.Screen name="StoryTimeline" component={StoryTimelineScreen} />
+    </NarrativeElementsStack.Navigator>
   );
 };
 //#endregion
@@ -586,34 +567,16 @@ const MainSystemNavigator = () => {
           })}
         />
         <Drawer.Screen
-          name="ChaptersStack"
-          component={ChapterStackNavigator}
+          name="NarrativeElementsStack"
+          component={NarrativeElementsStackNavigator}
           options={{
-            title: t('chapters_title'),
-            drawerLabel: t('chapters_title'),
+            title: t('narrative_elements_title'),
+            drawerLabel: t('narrative_elements_title'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
-              navigation.navigate('ChaptersStack', { screen: 'Chapters' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="ChoicesStack"
-          component={ChoiceStackNavigator}
-          options={{
-            title: t('choices_title'),
-            drawerLabel: t('choices_title'),
-            drawerItemStyle: {
-              height: selectedStory?.type === 'linear' ? 0 : undefined, // Hide if linear
-              overflow: 'hidden', // Ensure content is hidden
-            },
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('ChoicesStack', { screen: 'Choices' });
+              navigation.navigate('NarrativeElementsStack', { screen: 'NarrativeElements' });
             },
           })}
         />
@@ -729,8 +692,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('stats_title'),
             drawerLabel: t('stats_title'),
-            // Mesmo idioma de ChoicesStack em história linear: a tela continua registrada, só
-            // o item do menu some quando o sistema está desligado.
+            // O stack continua registrado; só o item do menu some quando o sistema está desligado.
             drawerItemStyle: {
               height: selectedStory?.statSystem ? undefined : 0,
               overflow: 'hidden',
@@ -846,7 +808,6 @@ const MainSystemNavigator = () => {
       </Drawer.Navigator>
       <GalleryMediaViewerOverlay />
       <PresenceMatrixViewerOverlay />
-      <StoryTimelineViewerOverlay />
     </>
   );
 };

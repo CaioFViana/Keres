@@ -96,23 +96,22 @@ jest.mock(
   '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay',
   () => () => null,
 );
-jest.mock('@/src/components/features/story-timeline/StoryTimelineViewerOverlay', () => () => null);
 jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/navigation/StatsStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/help/contextualHelp', () => ({
   __esModule: true,
-  screenHelpPage: { ChaptersStack: 'chapters' },
+  screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));
 
-jest.mock('../../src/screens/chapters/ChapterDetailScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/chapters/ChapterDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/chapters/ChapterFormScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/chapters/ChapterFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/chapters/ChapterListScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/chapters/NarrativeElementsListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -132,19 +131,15 @@ jest.mock('../../src/screens/characters/CharacterListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/choices/ChoiceDetailScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/choices/ChoiceDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/choices/ChoiceFormScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/choices/ChoiceFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/choices/ChoiceListScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
-jest.mock('../../src/screens/choices/ChoiceViewScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/choices/ChoiceViewScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -232,11 +227,15 @@ jest.mock('../../src/screens/operationlog/OperationLogListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/scenes/SceneDetailScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/scenes/SceneFormScreen', () => ({
+jest.mock('../../src/screens/narrative-elements/scenes/SceneFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/narrative-elements/timeline/StoryTimelineScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -295,25 +294,27 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(21);
+  expect(mockDrawerScreens).toHaveLength(20);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
   await renderDrawer();
   const navigator = mockDrawerNavigatorProps.at(-1);
-  const options = navigator?.screenOptions({ navigation: {}, route: { name: 'ChaptersStack' } });
+  const options = navigator?.screenOptions({
+    navigation: {},
+    route: { name: 'NarrativeElementsStack' },
+  });
 
   expect(navigator).toMatchObject({ defaultStatus: 'closed', backBehavior: 'history' });
   expect(options).toMatchObject({ drawerType: 'front', swipeEnabled: true });
   expect(options.drawerStyle).toMatchObject({ minWidth: 280, width: 360 });
   expect(drawerScreen('MainDashboard')?.options).toMatchObject({ title: 'A jornada' });
-  expect(drawerScreen('ChoicesStack')?.options.drawerItemStyle).toMatchObject({ height: 0 });
+  expect(drawerScreen('ChoicesStack')).toBeUndefined();
 });
 
 it.each([
   ['CharactersStack', 'Characters'],
-  ['ChaptersStack', 'Chapters'],
-  ['ChoicesStack', 'Choices'],
+  ['NarrativeElementsStack', 'NarrativeElements'],
   ['LocationsStack', 'Locations'],
   ['ItemsStack', 'Items'],
   ['TagsStack', 'Tags'],

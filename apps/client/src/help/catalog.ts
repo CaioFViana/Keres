@@ -40,6 +40,7 @@ export const helpSections: HelpSection[] = [
       'character-relationships',
       'character-modes',
       'stats',
+      'narrative-elements',
       'chapters',
       'scenes',
       'scene-timing',

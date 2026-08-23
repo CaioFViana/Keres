@@ -3,6 +3,7 @@ import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import { Effect } from '@keres/shared/entities/Effect';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,33 +22,33 @@ import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/Grap
 import StoryGraphCanvas, {
   StoryGraphCanvasHandle,
 } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import { useDrizzle } from '../../db';
-import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
-import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '../../services/storymanagement/EffectService';
-import { createItemService } from '../../services/storymanagement/ItemService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
+import { useDrizzle } from '../../../db';
+import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../db/schema';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
+import { createChapterService } from '../../../services/storymanagement/ChapterService';
+import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
+import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '../../../services/storymanagement/EffectService';
+import { createItemService } from '../../../services/storymanagement/ItemService';
+import { createSceneService } from '../../../services/storymanagement/SceneService';
+import { useNotificationStore } from '../../../state/notificationStore';
+import { useStoryStore } from '../../../state/storyStore';
+import { useTheme } from '../../../theme';
+import { setDocumentTitle } from '../../../utils/documentTitle';
+import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import {
   formatSceneGap,
   formatSceneUniverseDuration,
   hasSceneGap,
   hasSceneUniverseDuration,
-} from '../../utils/sceneTiming';
-import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
-import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
-import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
+} from '../../../utils/sceneTiming';
+import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../../utils/storyGraphLayout';
+import { renderStoryMapSvg } from '../../../utils/storyGraphSvg';
+import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 /**
  * Mapa da história: as cenas e as escolhas que ligam uma à outra.
@@ -75,7 +76,8 @@ const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<ChoicesScreenNavigationProp>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceView'>>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
@@ -263,7 +265,7 @@ const ChoiceViewScreen = () => {
   const handleOpenScene = useCallback(
     (sceneId: string) => {
       setSelectedNodeId(null);
-      navigation.navigate('ChaptersStack', { screen: 'SceneDetail', params: { sceneId } });
+      navigation.navigate('SceneDetail', { sceneId });
     },
     [navigation],
   );

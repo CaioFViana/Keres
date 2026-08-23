@@ -22,35 +22,38 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { ChoiceStackParamList } from '../../navigation/MainSystemStack';
-import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
-import { createEffectService } from '../../services/storymanagement/EffectService';
-import { useItemStore } from '../../state/itemStore';
-import { useSceneStore } from '../../state/sceneStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDrizzle } from '../../../db';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
+import { useEntityRelations } from '../../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
+import { createEffectService } from '../../../services/storymanagement/EffectService';
+import { useItemStore } from '../../../state/itemStore';
+import { useSceneStore } from '../../../state/sceneStore';
+import { useStoryStore } from '../../../state/storyStore';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import { useTheme } from '../../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
+import { AppAlert } from '../../../utils/AppAlert';
+import { setDocumentTitle } from '../../../utils/documentTitle';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
 
-type ChoiceFormScreenRouteProp = RouteProp<ChoiceStackParamList, 'ChoiceForm'>;
-type ChoiceFormScreenNavigationProp = NativeStackNavigationProp<ChoiceStackParamList, 'ChoiceForm'>;
+type ChoiceFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChoiceForm'>;
+type ChoiceFormScreenNavigationProp = NativeStackNavigationProp<
+  NarrativeElementsStackParamList,
+  'ChoiceForm'
+>;
 
 const ChoiceFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChoiceFormScreenNavigationProp>();
   const route = useRoute<ChoiceFormScreenRouteProp>();
-  const { choiceId: initialChoiceId } = route.params || {};
+  const { choiceId: initialChoiceId, sceneId: initialSceneId } = route.params || {};
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
@@ -122,7 +125,7 @@ const ChoiceFormScreen = () => {
   ]);
 
   const [currentChoiceId, setCurrentChoiceId] = useState<string | undefined>(initialChoiceId);
-  const [sceneId, setSceneId] = useState<string | null>(null);
+  const [sceneId, setSceneId] = useState<string | null>(initialSceneId ?? null);
   const [nextSceneId, setNextSceneId] = useState<string | null>(null);
   const [text, setText] = useState(''); // Changed from description
   const [notes, setNotes] = useState<string | null>(null);

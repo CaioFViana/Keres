@@ -67,6 +67,8 @@ import locationMap_en from '../content/location-map/en';
 import locationMap_pt from '../content/location-map/pt';
 import locations_en from '../content/locations/en';
 import locations_pt from '../content/locations/pt';
+import narrativeElements_en from '../content/narrative-elements/en';
+import narrativeElements_pt from '../content/narrative-elements/pt';
 import notes_en from '../content/notes/en';
 import notes_pt from '../content/notes/pt';
 import publishStory_en from '../content/publish-story/en';
@@ -150,6 +152,7 @@ export type GeneratedHelpPageId =
   | 'lists-and-search'
   | 'location-map'
   | 'locations'
+  | 'narrative-elements'
   | 'notes'
   | 'publish-story'
   | 'scene-timing'
@@ -307,6 +310,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   locations: {
     en: locations_en,
     pt: locations_pt,
+  },
+  'narrative-elements': {
+    en: narrativeElements_en,
+    pt: narrativeElements_pt,
   },
   notes: {
     en: notes_en,

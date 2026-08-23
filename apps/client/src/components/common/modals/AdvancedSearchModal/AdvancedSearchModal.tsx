@@ -24,6 +24,13 @@ interface AdvancedSearchModalProps {
   onSearch: (criteria: { [key: string]: any }) => void;
   storyId: string;
   initialCriteria?: { [key: string]: any };
+  scopes?: AdvancedSearchScope[];
+}
+
+export interface AdvancedSearchScope {
+  entityName: string;
+  prefix: string;
+  label: string;
 }
 
 const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
@@ -33,28 +40,15 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   onSearch,
   storyId,
   initialCriteria = {},
+  scopes,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [searchCriteria, setSearchCriteria] = useState<{ [key: string]: any }>(initialCriteria);
 
-  // Get metadata for the specified entity
-  const nativeFieldsMetadata = useMemo(() => {
-    return entityFieldMetadata[entityName]?.filter((field) => field.isSearchable) || [];
-  }, [entityName]);
-
-  // Campos customizados de Story Schema para este tipo de entidade - vazio (sem custo extra
-  // além da própria query, que só encontra 0 linhas) para tipos de entidade fora do escopo
-  // suportado, sem precisar de um type guard aqui.
-  const customFields = useStorySchemaFields(storyId, entityName as StorySchemaEntityType);
-  const customFieldsMetadata = useMemo(
-    () => buildCustomAttributeFieldMetadata(customFields),
-    [customFields],
-  );
-
-  const fieldsMetadata = useMemo(
-    () => [...nativeFieldsMetadata, ...customFieldsMetadata],
-    [nativeFieldsMetadata, customFieldsMetadata],
+  const effectiveScopes = useMemo<AdvancedSearchScope[]>(
+    () => scopes ?? [{ entityName: entityName as StorySchemaEntityType, prefix: '', label: '' }],
+    [entityName, scopes],
   );
 
   useEffect(() => {
@@ -218,7 +212,15 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
-        {fieldsMetadata.map(renderFieldInput)}
+        {effectiveScopes.map((scope) => (
+          <AdvancedSearchScopeFields
+            key={`${scope.entityName}:${scope.prefix}`}
+            scope={scope}
+            storyId={storyId}
+            showLabel={effectiveScopes.length > 1}
+            renderFieldInput={renderFieldInput}
+          />
+        ))}
       </ScrollView>
       <View style={styles.modalFooter}>
         <View style={styles.buttonWrapper}>
@@ -233,6 +235,42 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         </View>
       </View>
     </ResponsiveModal>
+  );
+};
+
+interface AdvancedSearchScopeFieldsProps {
+  scope: AdvancedSearchScope;
+  storyId: string;
+  showLabel: boolean;
+  renderFieldInput: (field: EntityFieldMetadata, styleOverrides?: any) => React.ReactNode;
+}
+
+const AdvancedSearchScopeFields: React.FC<AdvancedSearchScopeFieldsProps> = ({
+  scope,
+  storyId,
+  showLabel,
+  renderFieldInput,
+}) => {
+  const { colors } = useTheme();
+  const customFields = useStorySchemaFields(storyId, scope.entityName as StorySchemaEntityType);
+  const fields = useMemo(
+    () => [
+      ...(entityFieldMetadata[scope.entityName]?.filter((field) => field.isSearchable) ?? []),
+      ...buildCustomAttributeFieldMetadata(customFields),
+    ],
+    [customFields, scope.entityName],
+  );
+
+  return (
+    <View>
+      {showLabel && <Text style={[styles.scopeTitle, { color: colors.text }]}>{scope.label}</Text>}
+      {fields.map((field) =>
+        renderFieldInput({
+          ...field,
+          name: scope.prefix ? `${scope.prefix}:${field.name}` : field.name,
+        }),
+      )}
+    </View>
   );
 };
 
@@ -261,6 +299,12 @@ const styles = StyleSheet.create({
   },
   inputContainerSuggestion: {
     marginBottom: 20,
+  },
+  scopeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 8,
+    marginBottom: 8,
   },
   booleanRow: {
     flexDirection: 'row',

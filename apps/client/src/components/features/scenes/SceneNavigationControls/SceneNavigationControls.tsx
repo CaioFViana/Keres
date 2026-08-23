@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SceneSelect } from '../../../../db/schema';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { ChapterStackParamList } from '../../../../navigation/MainSystemStack';
+import { NarrativeElementsStackParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
 
 interface SceneNavigationControlsProps {
@@ -20,6 +20,8 @@ interface SceneNavigationControlsProps {
   incomingChoicesForScene?: Choice[];
   /** Nome de cada Scene por id, pra rotular o alvo/origem de cada Choice - ver `SceneDetailScreen.fetchSceneNames`. */
   sceneNamesById?: Record<string, string>;
+  canEdit?: boolean;
+  onAddChoice?: () => void;
 }
 
 const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
@@ -29,11 +31,13 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
   choicesForScene,
   incomingChoicesForScene = [],
   sceneNamesById = {},
+  canEdit = false,
+  onAddChoice,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation =
-    useNavigation<NativeStackNavigationProp<ChapterStackParamList, 'SceneDetail'>>();
+    useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneDetail'>>();
   const navigateToDetail = useNavigateToEntityDetail();
 
   const styles = StyleSheet.create({
@@ -49,6 +53,13 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
       color: colors.text,
       marginBottom: 10,
     },
+    choiceSectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    addChoice: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6 },
+    addChoiceText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
     buttonContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -221,9 +232,23 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
   ) {
     return (
       <View style={styles.container}>
+        {choicesForScene.length === 0 && canEdit && onAddChoice && (
+          <TouchableOpacity style={styles.addChoice} onPress={onAddChoice}>
+            <Ionicons name="add" size={16} color={colors.primary} />
+            <Text style={styles.addChoiceText}>{t('add_choice')}</Text>
+          </TouchableOpacity>
+        )}
         {choicesForScene.length > 0 && (
           <>
-            <Text style={styles.navigationTitle}>{t('story_map_outgoing_choices')}</Text>
+            <View style={styles.choiceSectionHeader}>
+              <Text style={styles.navigationTitle}>{t('story_map_outgoing_choices')}</Text>
+              {canEdit && onAddChoice && (
+                <TouchableOpacity style={styles.addChoice} onPress={onAddChoice}>
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={styles.addChoiceText}>{t('add_choice')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {choicesForScene.map((choice) => renderChoiceCard(choice, 'outgoing'))}
           </>
         )}
@@ -235,6 +260,17 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
             {incomingChoicesForScene.map((choice) => renderChoiceCard(choice, 'incoming'))}
           </>
         )}
+      </View>
+    );
+  }
+
+  if (storyType === 'branching' && canEdit && onAddChoice) {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.addChoice} onPress={onAddChoice}>
+          <Ionicons name="add" size={16} color={colors.primary} />
+          <Text style={styles.addChoiceText}>{t('add_choice')}</Text>
+        </TouchableOpacity>
       </View>
     );
   }

@@ -40,7 +40,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ChaptersScreenNavigationProp } from './ChapterListScreen';
+import { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
 
 // Define the parameter list for this screen
 export type ChapterDetailScreenParamList = {
@@ -52,7 +52,7 @@ type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'Cha
 const ChapterDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const navigation = useNavigation<ChaptersScreenNavigationProp>();
+  const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const route = useRoute<ChapterDetailScreenRouteProp>();
   const { chapterId } = route.params;
   const { t } = useTranslation();

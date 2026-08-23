@@ -28,35 +28,38 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { ChapterStackParamList } from '../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { useDrizzle } from '../../../db';
+import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
+import { useEntityRelations } from '../../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
+import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
 import {
   CharacterSceneServiceInterface,
   createCharacterSceneService,
-} from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import { createEffectService } from '../../services/storymanagement/EffectService';
-import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { useChapterStore } from '../../state/chapterStore'; // Import useChapterStore
-import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
-import { useItemStore } from '../../state/itemStore';
-import { useLocationStore } from '../../state/locationStore'; // Import useLocationStore
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+} from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import { createEffectService } from '../../../services/storymanagement/EffectService';
+import { createLocationService } from '../../../services/storymanagement/LocationService'; // Import LocationService
+import { createSceneService } from '../../../services/storymanagement/SceneService';
+import { useChapterStore } from '../../../state/chapterStore'; // Import useChapterStore
+import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
+import { useItemStore } from '../../../state/itemStore';
+import { useLocationStore } from '../../../state/locationStore'; // Import useLocationStore
+import { useStoryStore } from '../../../state/storyStore';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import { useTheme } from '../../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
+import { AppAlert } from '../../../utils/AppAlert';
+import { setDocumentTitle } from '../../../utils/documentTitle';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
 
-type SceneFormScreenRouteProp = RouteProp<ChapterStackParamList, 'SceneForm'>;
-type SceneFormScreenNavigationProp = NativeStackNavigationProp<ChapterStackParamList, 'SceneForm'>;
+type SceneFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneForm'>;
+type SceneFormScreenNavigationProp = NativeStackNavigationProp<
+  NarrativeElementsStackParamList,
+  'SceneForm'
+>;
 
 const isTimingInput = (value: string) => /^-?\d*$/.test(value);
 const MAX_SCENE_TIMING = 2147483647;

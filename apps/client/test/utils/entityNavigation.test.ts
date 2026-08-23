@@ -47,7 +47,16 @@ describe('navigateToEntityDetail', () => {
 
     expect(navigate).toHaveBeenCalledTimes(1);
     const [stack, params] = navigate.mock.calls[0];
-    expect(stack).toBe(`${entityType === 'WorldRule' ? 'WorldRules' : `${entityType}s`}Stack`);
+    const mergedStacks: Partial<Record<NavigableEntityType, string>> = {
+      Scene: 'NarrativeElementsStack',
+      Choice: 'NarrativeElementsStack',
+      Chapter: 'NarrativeElementsStack',
+      ItemJourney: 'ItemsStack',
+    };
+    expect(stack).toBe(
+      mergedStacks[entityType] ??
+        `${entityType === 'WorldRule' ? 'WorldRules' : `${entityType}s`}Stack`,
+    );
     expect(params.screen).toBe(`${entityType}Detail`);
     expect(Object.values(params.params)).toEqual(['id-1']);
   });

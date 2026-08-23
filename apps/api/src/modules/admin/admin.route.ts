@@ -7,8 +7,8 @@ import { adminTierRoutes } from './adminTier.route';
 import { adminUserRoutes } from './adminUser.route';
 
 /**
- * Composição de todas as rotas administrativas, montadas em `/admin/api/*` (não `/admin/*`
- * puro - esse prefixo é reservado para servir o app estático do painel, ver index.ts).
+ * Composição de todas as rotas administrativas, montadas em `/api/admin/*`; `/admin/*`
+ * é reservado para servir o app estático do painel, ver index.ts.
  *
  * Cada módulo (adminUser.route.ts etc.) chama `requireAdmin(user)` diretamente em vez de
  * compor um plugin Elysia via `.use()` - testado que propagar um `.derive()` de guard

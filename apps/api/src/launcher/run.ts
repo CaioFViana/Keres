@@ -135,7 +135,7 @@ export async function runLauncher(
           const localUrl = `http://127.0.0.1:${port}`;
           io.print(t('listening', { url: localUrl }));
           io.print(t('admin', { url: `${localUrl}/admin` }));
-          io.print(t('swagger', { url: `${localUrl}/swagger` }));
+          io.print(t('swagger', { url: `${localUrl}/api/swagger` }));
           io.print(t('data_dir', { path: publicConfig.dataDir }));
           io.print(t('backup_hint'));
           for (const line of describeLanAddresses(publicConfig.port, publicConfig.host, t)) {

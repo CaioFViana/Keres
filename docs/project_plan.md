@@ -82,6 +82,12 @@ Relação entre dois locais, com `relationType`: `contains` (direcional - `locat
 #### Tag X <entidade> (`TagRelation`) / Note X <entidade> (`NoteRelation`)
 Mesmo padrão polimórfico de `GalleryRelation`: uma tabela de junção genérica ligando uma `Tag`/`Note` a qualquer entidade da história, em vez de uma coluna de FK fixa por tipo.
 
+#### Status, modos e valores (`Stat`, `StatStrength`, `StatRelation`, `Mode`)
+Quando `Story.statSystem` está ligado, `Stat` define um eixo mensurável (por exemplo, Força); apenas os eixos primários entram no radar. `StatStrength` define a escala padrão da história ou uma escala exclusiva de um stat. `StatRelation` guarda o valor de um personagem em um stat e, opcionalmente, em um `Mode`; sem valor próprio no modo, vale o valor normal do personagem. `Mode` existe independentemente do sistema de status e descreve uma forma/estado alternativo do personagem.
+
+#### Comentários e "Veja também" (`Comment`, `SeeAlsoRelation`)
+`Comment` é uma conversa anexada a um campo de uma entidade navegável, não apenas uma observação solta da entidade. Ele aponta para um campo nativo (`fieldKey`) ou personalizado (`fieldId`), preserva o conteúdo/excerto vistos no momento e registra autor e criticidade. `SeeAlsoRelation` é um vínculo recíproco livre entre duas entidades compatíveis.
+
 ### Choices
 Representa as transições entre cenas em histórias ramificadas (CYOA) - `sceneId` (origem) → `nextSceneId` (destino) + `text`. Ver `docs/choice_mechanics.md` e `docs/dynamic_story_structure.md` para o detalhamento completo (histórias lineares nunca têm `Choice`s explícitas; a navegação segue o `index` das cenas).
 
@@ -107,20 +113,11 @@ Além dos campos nativos de cada entidade, o usuário pode definir **campos cust
 ### Operation Log
 Toda operação sincronizável (create/update/delete em qualquer entidade coberta por `OperationLogEntityType`) gera uma entrada no log de operações, tanto no cliente quanto no servidor - é a trilha de auditoria e a fonte de verdade para o mecanismo de pull/push de sincronização (ver seção de sincronização abaixo).
 
-### Listas Customizáveis (Suggestions)
-Para campos que requerem listas de valores pré-definidos (como gêneros literários, raças, gêneros de personagens, tipos de relação, etc.), o sistema oferecerá um mecanismo de listas customizáveis. O objetivo é fornecer sugestões padrão, mas permitir total flexibilidade para o usuário adaptar ou criar suas próprias entradas.
+### Publicações (`StoryPublication`)
+Uma publicação é um pacote imutável de uma versão da história para o Showcase. Ela referencia a história e o dono, mas fica deliberadamente fora da sincronização incremental e do log de operações; seus metadados descrevem o pacote e o snapshot público daquela versão.
 
-**Características:**
-- **Sugestões Padrão:** O sistema virá com listas de sugestões comuns (ex: gêneros literários populares, raças de fantasia comuns, gêneros de personagens básicos).
-- **Customização pelo Usuário:** O usuário poderá adicionar, editar ou remover qualquer entrada dessas listas. As alterações são persistentes e específicas do usuário.
-- **Escopo:**
-    - **Por História:** Para elementos mais específicos de um universo narrativo (ex: raças e sub-raças personalizadas, gêneros de personagens únicos para aquela história), as listas podem ser customizadas por história.
-
-**Exemplos de Uso:**
-- **Gêneros Literários:** O usuário pode adicionar "Fantasia Urbana" ou remover "Romance Histórico" das sugestões.
-- **Gêneros de Personagens:** Além de "Masculino" e "Feminino", o usuário pode adicionar "Não-binário" ou "Agênero", ou até mesmo termos específicos do seu mundo como "Elfo-do-Bosque".
-- **Raças/Sub-raças:** O sistema pode sugerir "Elfo", "Anão", "Humano", mas o usuário pode adicionar "Draconiano" ou "Meio-Orc", e sub-raças como "Elfo da Floresta" ou "Anão da Montanha".
-- **Tipos de Relação:** Além de "Irmão", "Mãe", "Amigo", o usuário pode adicionar "Mentor", "Rival", "Mestre/Aprendiz".
+### Suggestions
+`Suggestion` é uma entidade sincronizável por história (`storyId`, `type`, `value`) que sustenta o sistema reutilizável de sugestões. O `type` identifica a fonte/catálogo usada por campos nativos e customizados; assim, valores inseridos numa fonte podem ser reaproveitados onde aquela fonte é oferecida. Além de texto simples, o sistema suporta listas nomeadas e campos customizados de sugestão ou lista de sugestões.
 
 ## Ajuda integrada
 
@@ -129,22 +126,18 @@ O cliente inclui um catálogo de ajuda em português e inglês, com busca local,
 ## Recursos transversais da história
 
 - **Favoritos:** uma história ou elemento pode ser destacado para filtros e listas. Em histórias compartilhadas, o comportamento do favorito é definido nas configurações da história.
-- **Comentários:** colaboradores e leitores autorizados podem comentar um campo ou elemento; a lista de comentários reúne essas conversas em um só lugar.
+- **Comentários:** colaboradores e leitores autorizados podem comentar um campo nativo ou personalizado de uma entidade navegável; cada comentário preserva o contexto do campo e a lista de comentários reúne essas conversas.
 - **Veja também:** cria uma ligação livre e recíproca entre elementos relacionados, sem substituir etiquetas ou notas.
 - **Histórias ramificadas:** escolhas podem ter condições (visitas, itens ou marcadores) e efeitos (dar/tirar item ou ligar/desligar marcador). Esses recursos formam o estado do leitor e são analisados junto ao mapa da história.
 - **Colaboração:** uma história ligada a servidor pode ter colaboradores; permissões e comentários de leitores são configurados na própria história.
 
-**Nota sobre Suggestions:**
-> O código está implementado para que o sistema tenha uma lista padrão de sugestões, porém está inutilizado no momento visto que a forma atual permite uma completa customização desta lista ao usuário, sendo populada apenas pelo que o usuário insere. No entanto, pode-se ver como uma melhoria futura adicionar entradas nesta tabela para "persistir mesmo que todas as entidades com o valor X sejam excluidas." Talvez um novo futuro drawer.
-
 ### Gráfico de Relações entre Entidades
 
-> Diagrama atualizado para refletir todas as entidades hoje implementadas (a versão original só cobria o subconjunto inicial: characters, gallery, chapters, scenes, locations, world_rules, notes, tags, choices). Entidades administrativas (`Tier`, `RegistrationSettings`, `AdminUserInfo`) e exclusivas do cliente (`ClientSettings`, `Server`, `SyncConflict`) ficam fora do diagrama por não pertencerem ao grafo de uma história - são configuração/infraestrutura, não conteúdo narrativo.
+> Diagrama da estrutura de conteúdo da história. Entidades administrativas e de infraestrutura ficam no diagrama separado abaixo. `Suggestion` é o catálogo reutilizável de sugestões da história. A publicação aparece pontilhada porque é um pacote derivado, fora da sincronização incremental.
 
 ```mermaid
 graph LR
     users --> story
-    users --> suggestions/unused
 
     story --> characters
     story --> gallery
@@ -154,15 +147,32 @@ graph LR
     story --> notes
     story --> tags
     story --> items
+    story --> modes
+    story --> stats
+    story --> stat_strengths
+    story --> stat_relations
     story --> story_schema_fields
+    story --> attribute_values
+    story --> comments
+    story --> see_also_relations
+    story --> favorites
+    story --> effects
+    story --> suggestions
     story --> operation_log
-    story -- when story specific --> suggestions/unused
+    story -. immutable publication .-> story_publications
 
     chapters --> scenes
     locations -- occurs on --> scenes
 
     scenes -- source --> choices
     choices -- target next_scene_id --> scenes
+    choices --> choice_check_groups
+    choice_check_groups --> choice_checks
+    scenes --> effects
+    choices --> effects
+    choice_checks -- scene/item condition --> scenes
+    choice_checks -- item condition --> items
+    effects -- grants/takes --> items
 
     tags -- via tag_relations (polymorphic) --> chapters/scenes/characters/locations/items/notes/world_rules
     notes -- via note_relations (polymorphic) --> chapters/scenes/characters/locations/items/world_rules
@@ -181,8 +191,53 @@ graph LR
     item_journeys -- occurs on --> scenes
     item_journeys -- may reassign owner --> characters
 
+    characters --> modes
+    characters --> stat_relations
+    modes -- optional override --> stat_relations
+    stats --> stat_strengths
+    stats --> stat_relations
+
+    comments -- fieldId --> story_schema_fields
+    comments -- fieldKey or entityType/entityId --> chapters/scenes/characters/locations/items/item_journeys/notes/tags/world_rules/choices
+    see_also_relations -- reciprocal --> characters/locations/chapters/scenes/items/item_journeys/world_rules/choices
+    favorites -- user marks --> story/characters/chapters/locations/scenes/notes/world_rules/items/gallery/tags
+
     story_schema_fields -- defines custom fields for --> attribute_values
     attribute_values -- value for entityType+entityId --> characters/locations/items/scenes/chapters/notes/world_rules
+```
+
+### Diagrama de Entidades Administrativas e do Servidor
+
+> Este diagrama separa administração, configuração do servidor, auditoria e publicação do grafo narrativo. Onde uma relação alcança conteúdo da história, ela aponta para o nó **Diagrama de história** sem repetir suas entidades internas.
+
+```mermaid
+graph LR
+    users[Usuário]
+    tiers[Tier]
+    registration_settings[Configuração de cadastro]
+    recovery_codes[Códigos de recuperação]
+    api_logs[Logs da API]
+    showcase_settings[Configuração do Showcase]
+    media_storage_settings[Configuração de mídia]
+    showcase_entry[Publicação da história no Showcase]
+    publication[Versão publicada]
+    story_diagram[Diagrama de história]
+
+    users -- pertence a / recebe limites --> tiers
+    registration_settings -- tier padrão --> tiers
+    users -- possui --> recovery_codes
+
+    api_logs -- pode referenciar --> users
+    api_logs -- pode referenciar --> story_diagram
+
+    showcase_settings -- habilita --> showcase_entry
+    media_storage_settings -- define destino de blobs para --> story_diagram
+
+    story_diagram -- pode ter --> showcase_entry
+    showcase_entry -- proprietário --> users
+    showcase_entry -- reúne versões --> publication
+    publication -- proprietário no momento da publicação --> users
+    publication -- snapshot de --> story_diagram
 ```
 
 ## 🔗 Fluxo de Arquitetura

@@ -16,7 +16,7 @@ import {
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
-import apiClient, { isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
+import apiClient, { apiUrl, isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
 import {
   createServerService,
   OwnedServerStory,
@@ -59,7 +59,7 @@ const ServerManagementScreen = () => {
 
   const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
     try {
-      const checkUrl = `${server.url}/kerescheck`;
+      const checkUrl = apiUrl(server.url, '/kerescheck');
       const response = await apiClient.get(checkUrl, {
         timeout: 5000, // 5 seconds timeout
         validateStatus: () => true, // Always resolve, don't reject on HTTP status codes

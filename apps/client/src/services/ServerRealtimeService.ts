@@ -1,7 +1,7 @@
 import { AppDrizzleClient } from '../db';
 import { ServerSelect } from '../db/schema';
 import { useStoryListStore } from '../state/storyListStore';
-import { createKeresAxiosInstance } from './apiClient';
+import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createPublicationService } from './PublicationService';
@@ -70,7 +70,7 @@ export class ServerRealtimeService {
       const { data } = await client.post<{ ticket: string }>('/auth/ws-ticket');
       if (this.stopped) return;
       const wsUrl =
-        this.server.url.replace(/^http/i, 'ws').replace(/\/$/, '') +
+        apiBaseUrl(this.server.url).replace(/^http/i, 'ws').replace(/\/$/, '') +
         `/ws/events?ticket=${encodeURIComponent(data.ticket)}`;
       const socket = new WebSocket(wsUrl);
       this.socket = socket;
@@ -181,7 +181,7 @@ export class ServerRealtimeService {
     this.retryTimer = setTimeout(async () => {
       this.retryTimer = null;
       try {
-        await fetch(`${this.server.url.replace(/\/$/, '')}/kerescheck`);
+        await fetch(apiUrl(this.server.url, '/kerescheck'));
       } catch {
         /* retry below */
       }

@@ -116,7 +116,7 @@ describe('refreshAccessToken', () => {
     const result = await authTokenManager.refreshAccessToken(SERVER.id, 'refresh-1');
 
     expect(result).toEqual({ accessToken: 'novo-access', refreshToken: 'novo-refresh' });
-    expect(seen).toEqual(['POST http://servidor/auth/refresh']);
+    expect(seen).toEqual(['POST http://servidor/api/auth/refresh']);
   });
 
   it('stores the refreshed pair', async () => {

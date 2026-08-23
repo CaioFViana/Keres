@@ -19,7 +19,7 @@ const page: HelpPage = {
       items: [
         'From the main menu, open Servers and tap add.',
         'Choose Sign in for an existing account or Create account for a new one.',
-        'Enter the server Address, without paths such as /admin or /swagger, your username, and password.',
+        'Enter the server Address, without paths such as /api, /admin or /swagger, your username, and password.',
         'When creating an account, confirm the password and, if you want, give the server a Name to recognize it in the list.',
         'Confirm. When creating a new account, the screen then shows a list of recovery codes.',
       ],

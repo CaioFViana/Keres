@@ -5,7 +5,7 @@ import { JWTPayload } from '../index';
 import { AppError } from './errors';
 
 /**
- * Guarda centralizada para as rotas /admin/api/*, no lugar de cada módulo repetir a
+ * Guarda centralizada para as rotas /api/admin/*, no lugar de cada módulo repetir a
  * checagem (como `requirePermission` em media.route.ts fazia por módulo).
  *
  * `isAdmin` é checado no banco a cada request, nunca confiado a partir do JWT: o token

@@ -75,7 +75,7 @@ beforeEach(() => {
   mocks.fetchStories.mockResolvedValue({ stories: [card], etag: 'W/"showcase-1-x"' });
   mocks.fetchStory.mockResolvedValue(detail);
   mocks.fetchConfig.mockResolvedValue({ showcaseEnabled: true, serverVersion: '1.0.0' });
-  mocks.fetchDownloadUrl.mockResolvedValue('/public/stories/story-1/x/download');
+  mocks.fetchDownloadUrl.mockResolvedValue('/api/public/stories/story-1/x/download');
 });
 
 describe('showcase home', () => {

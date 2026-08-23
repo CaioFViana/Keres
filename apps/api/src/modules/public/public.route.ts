@@ -84,7 +84,7 @@ export const publicRoutes = new Elysia()
   .guard({}, (app) =>
     app
       .onBeforeHandle(async ({ path }) => {
-        if (path === '/public/config') {
+        if (path === '/api/public/config') {
           return;
         }
         if (!(await showcaseSettingsService.isEnabled())) {
@@ -307,7 +307,7 @@ export const publicRoutes = new Elysia()
                 })
               : undefined;
 
-          const base = `/public/stories/${params.storyId}/publications/${params.publicationId}/download`;
+          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/download`;
           return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
         },
         {

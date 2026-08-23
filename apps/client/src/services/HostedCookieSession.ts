@@ -2,7 +2,7 @@ import axios from 'axios';
 import { AppDrizzleClient } from '../db';
 import { ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import apiClient from './apiClient';
+import apiClient, { apiUrl } from './apiClient';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from './browserCookieSession';
 import { createServerService } from './ServerService';
 
@@ -27,7 +27,7 @@ export async function restoreHostedCookieSession(
   const origin = hostedApiOrigin();
   let me: HostedMeResponse;
   try {
-    const response = await axios.get<HostedMeResponse>(`${origin}/auth/me`, {
+    const response = await axios.get<HostedMeResponse>(apiUrl(origin, '/auth/me'), {
       timeout: 5000,
       validateStatus: () => true,
     });

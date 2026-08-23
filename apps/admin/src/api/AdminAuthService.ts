@@ -31,7 +31,7 @@ export async function login(username: string, password: string): Promise<LoginRe
   setToken(data.accessToken);
 
   try {
-    await apiClient.get('/admin/api/users', { params: { pageSize: 1 } });
+    await apiClient.get('/admin/users', { params: { pageSize: 1 } });
   } catch (err) {
     clearLocalSession();
     await clearServerSession();
@@ -53,5 +53,5 @@ export async function logout(): Promise<void> {
 
 /** Cheap probe used on bootstrap to confirm a persisted token still has admin access. */
 export async function probeAdminAccess(): Promise<void> {
-  await apiClient.get('/admin/api/users', { params: { pageSize: 1 } });
+  await apiClient.get('/admin/users', { params: { pageSize: 1 } });
 }

@@ -67,7 +67,7 @@ const media = (id: string, overrides: Record<string, unknown> = {}) => ({
 /** Cliente axios falso: só precisa de `post`, `get` e a baseURL. */
 function fakeClient(overrides: Record<string, any> = {}) {
   return {
-    defaults: { baseURL: 'http://servidor' },
+    defaults: { baseURL: 'http://servidor/api' },
     post: jest.fn(async () => ({ data: { present: [], missing: [] } })),
     get: jest.fn(async () => ({ data: new ArrayBuffer(3) })),
     ...overrides,
@@ -282,7 +282,7 @@ describe('downloading', () => {
     const summary = await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
 
     expect(mockDownloadFileAsync).toHaveBeenCalledWith(
-      `http://servidor/media/${STORY_ID}/blobs/hash-a`,
+      `http://servidor/api/media/${STORY_ID}/blobs/hash-a`,
       expect.any(String),
       expect.objectContaining({ idempotent: true }),
     );

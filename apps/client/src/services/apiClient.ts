@@ -13,6 +13,17 @@ import { canRefreshSessionWithCookie } from './browserCookieSession';
 
 export const NO_RESPONSE_ERROR = 'NO_RESPONSE';
 export const TIMEOUT_ERROR = 'TIMEOUT';
+export const API_PREFIX = '/api';
+
+/** The persisted server address is always its origin; HTTP calls belong below `/api`. */
+export function apiBaseUrl(serverUrl: string): string {
+  const origin = serverUrl.replace(/\/+$/, '');
+  return origin.endsWith(API_PREFIX) ? origin : `${origin}${API_PREFIX}`;
+}
+
+export function apiUrl(serverUrl: string, endpoint: string): string {
+  return `${apiBaseUrl(serverUrl)}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+}
 
 /**
  * True when a request failed because the server could not be reached at all
@@ -383,7 +394,7 @@ applyInterceptors(apiClient); // Apply interceptors (and setActiveServer) to the
 
 // Method to dynamically set the base URL for the global instance
 apiClient.setBaseUrl = (url: string) => {
-  apiClient.defaults.baseURL = url;
+  apiClient.defaults.baseURL = apiBaseUrl(url);
   if (Platform.OS === 'web') {
     console.log(`API Client Base URL set to: ${url}`);
   }
@@ -395,10 +406,13 @@ apiClient.setTokenProvider = (provider: TokenProvider | null) => {
 
 // Function to create a new Axios instance with interceptors
 export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxiosInstance {
-  const instance = createAxios(config) as KeresAxiosInstance;
+  const instance = createAxios({
+    ...config,
+    baseURL: config?.baseURL ? apiBaseUrl(config.baseURL) : config?.baseURL,
+  }) as KeresAxiosInstance;
   applyInterceptors(instance); // Also sets instance.setActiveServer, scoped to this instance
   instance.setBaseUrl = (url: string) => {
-    instance.defaults.baseURL = url;
+    instance.defaults.baseURL = apiBaseUrl(url);
   };
   instance.setTokenProvider = (provider: TokenProvider | null) => {
     tokenProvider = provider;

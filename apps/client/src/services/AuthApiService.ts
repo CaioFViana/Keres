@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient, { apiUrl } from './apiClient';
 
 export interface RecoveryCodeLoginResult {
   accessToken: string;
@@ -26,7 +26,7 @@ export async function redeemRecoveryCode(
   newPassword: string,
 ): Promise<RedeemRecoveryCodeOutcome> {
   const response = await apiClient.post(
-    `${serverAddress}/auth/forgot-password`,
+    apiUrl(serverAddress, '/auth/forgot-password'),
     { username, recoveryCode: recoveryCode.trim(), newPassword },
     { timeout: 5000, validateStatus: () => true },
   );

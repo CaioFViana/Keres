@@ -16,7 +16,7 @@ describe('new response schemas do not break DB-independent error branches', () =
   async function expectCleanUnauthorized(method: string, path: string, extra: RequestInit = {}) {
     const app = await createApp();
     const res = await app.handle(
-      new Request(`http://localhost${path}`, { method, headers: badAuth, ...extra }),
+      new Request(`http://localhost/api${path}`, { method, headers: badAuth, ...extra }),
     );
     const body = await res.json();
     expect(res.status).toBe(401);
@@ -75,7 +75,7 @@ describe('new response schemas do not break DB-independent error branches', () =
     form.append('file', new File([new Uint8Array([1, 2, 3])], 'x.png', { type: 'image/png' }));
     const app = await createApp();
     const res = await app.handle(
-      new Request('http://localhost/media/s/blobs/00000000000000000000000000000000', {
+      new Request('http://localhost/api/media/s/blobs/00000000000000000000000000000000', {
         method: 'POST',
         headers: badAuth,
         body: form,
@@ -88,11 +88,11 @@ describe('new response schemas do not break DB-independent error branches', () =
   it('admin create/update user still reject a clean, valid-shaped body (no auth) with 401, not a schema error', async () => {
     // Guards against the tightened body schema (item 2) rejecting realistic input at the
     // Elysia layer before requireAdmin even runs.
-    await expectCleanUnauthorized('POST', '/admin/api/users', {
+    await expectCleanUnauthorized('POST', '/admin/users', {
       headers: { ...badAuth, 'content-type': 'application/json' },
       body: JSON.stringify({ username: 'ana', password: 'a-real-password-123', isAdmin: false }),
     });
-    await expectCleanUnauthorized('PUT', '/admin/api/users/some-id', {
+    await expectCleanUnauthorized('PUT', '/admin/users/some-id', {
       headers: { ...badAuth, 'content-type': 'application/json' },
       body: JSON.stringify({ bio: 'a normal bio' }),
     });

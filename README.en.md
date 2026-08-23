@@ -108,8 +108,8 @@ For a physical device, the computer and device must be on the same network, and 
 
 Available services:
 
-- API and Swagger: `http://localhost:3000/swagger`
-- Health check: `http://localhost:3000/kerescheck`
+- API and Swagger: `http://localhost:3000/api/swagger`
+- Health check: `http://localhost:3000/api/kerescheck`
 - Built administration panel: `http://localhost:3000/admin`
 - Hosted web client (same origin, COOP/COEP): `http://localhost:3000/` — requires `bun run --cwd apps/client export:web`
 - Published-story showcase: `http://localhost:3000/showcase`
@@ -250,16 +250,16 @@ docker compose logs -f api
 Validate the deployment locally on the server:
 
 ```bash
-curl --fail http://127.0.0.1:3000/kerescheck
+curl --fail http://127.0.0.1:3000/api/kerescheck
 ```
 
 On its first startup, the API waits for PostgreSQL to become healthy, applies migrations, and only then begins serving traffic.
 
 ### 3. Publish with HTTPS
 
-Place Caddy, Nginx, Traefik, or your platform proxy in front of `127.0.0.1:3000` and terminate TLS there. Forward the complete host, preserve paths, and enable WebSocket upgrades for `/ws`. Do not publish PostgreSQL port 5432.
+Place Caddy, Nginx, Traefik, or your platform proxy in front of `127.0.0.1:3000` and terminate TLS there. Forward the complete host, preserve paths, and enable WebSocket upgrades for `/api/ws`. Do not publish PostgreSQL port 5432.
 
-Configure the public HTTPS URL in the client without suffixes such as `/swagger` or `/admin` — for example, `https://keres.example.com`.
+Configure the public HTTPS URL in the client without suffixes such as `/api`, `/swagger` or `/admin` — for example, `https://keres.example.com`.
 
 ### Updates, rollback, and backups
 

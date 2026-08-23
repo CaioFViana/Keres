@@ -64,7 +64,7 @@ function notifySessionCleared(): void {
  * não se aplica aqui. Este painel é uma ferramenta interna simples: um token, localStorage.
  */
 export const apiClient = axios.create({
-  baseURL: '/',
+  baseURL: '/api',
   // Prevent absolute request URLs from bypassing baseURL and leaking the Bearer token.
   allowAbsoluteUrls: false,
 });

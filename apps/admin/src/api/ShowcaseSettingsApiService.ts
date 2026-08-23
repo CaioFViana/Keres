@@ -8,11 +8,11 @@ export interface ShowcaseSettings {
 
 export const ShowcaseSettingsApiService = {
   async get(): Promise<ShowcaseSettings> {
-    const { data } = await apiClient.get('/admin/api/showcase-settings');
+    const { data } = await apiClient.get('/admin/showcase-settings');
     return data;
   },
   async update(patch: { isShowcaseEnabled: boolean }): Promise<ShowcaseSettings> {
-    const { data } = await apiClient.put('/admin/api/showcase-settings', patch);
+    const { data } = await apiClient.put('/admin/showcase-settings', patch);
     return data;
   },
 };

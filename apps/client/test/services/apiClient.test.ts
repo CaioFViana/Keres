@@ -9,6 +9,8 @@ jest.mock('../../src/state/connectivityStore', () => ({
 
 import { AxiosError, type AxiosRequestConfig } from 'axios';
 import {
+  apiBaseUrl,
+  apiUrl,
   clearAllServerAuthState,
   clearServerTokenCache,
   createKeresAxiosInstance,
@@ -120,6 +122,15 @@ describe('isOfflineError', () => {
     ['a number', 42],
   ])('does not treat %s as offline', (_label, value) => {
     expect(isOfflineError(value)).toBe(false);
+  });
+});
+
+describe('API URL contract', () => {
+  it('keeps the persisted address at the origin and mounts calls below /api', () => {
+    expect(apiBaseUrl('https://keres.example.com/')).toBe('https://keres.example.com/api');
+    expect(apiUrl('https://keres.example.com', '/auth/login')).toBe(
+      'https://keres.example.com/api/auth/login',
+    );
   });
 });
 

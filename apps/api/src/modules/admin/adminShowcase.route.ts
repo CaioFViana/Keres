@@ -6,7 +6,7 @@ import { requireAdmin } from '../../utils/adminAuth';
 /**
  * A chave do site público, na mão de quem hospeda o servidor.
  *
- * Desligada, `/` volta a ser o atalho para o Swagger, `/public/*` responde 404 e publicar é
+ * Desligada, `/` volta a ser o atalho para o Swagger, `/api/public/*` responde 404 e publicar é
  * recusado - inclusive para histórias que já tinham versões, que simplesmente deixam de ser
  * alcançáveis sem serem apagadas.
  */

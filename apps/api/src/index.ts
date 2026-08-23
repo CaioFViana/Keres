@@ -2,7 +2,6 @@ import { cookie } from '@elysiajs/cookie';
 import { cors } from '@elysiajs/cors';
 import { jwt } from '@elysiajs/jwt';
 import { staticPlugin } from '@elysiajs/static';
-import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
@@ -21,17 +20,7 @@ import {
   SHOWCASE_PATH_PREFIX,
 } from './services/hostedClient';
 import { env } from './config/env';
-import { adminRoutes } from './modules/admin/admin.route';
-import { authRoutes } from './modules/auth/auth.route';
-import { friendRoutes } from './modules/friend/friend.route';
-import { mediaRoutes } from './modules/media/media.route';
-import { publicRoutes } from './modules/public/public.route';
-import { storyRoutes } from './modules/story/story.route';
-import { publicationRoutes } from './modules/story/publication.route';
-import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
-import { syncRoute } from './modules/sync/sync.route';
-import { userRoutes } from './modules/user/user.route'; // Import userRoutes
-import { wsRoutes } from './modules/webSocket/webSocket.route';
+import { createApiRoutes, isApiOrLegacyApiPath } from './api';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
@@ -43,7 +32,7 @@ import { logger } from './utils/logger';
  * que muda aqui é só servir o resultado estático.
  *
  * O prefixo do app é `/admin` (arquivos estáticos + fallback de SPA abaixo); a API JSON
- * usada por ele mora em `/admin/api/*`, para as duas coisas não brigarem pelo mesmo espaço
+ * usada por ele mora em `/api/admin/*`, para as duas coisas não brigarem pelo mesmo espaço
  * de URL. Se o build ainda não existir (dev sem `bun run build`, ou API rodando sozinha),
  * isso não derruba o servidor - só o painel fica indisponível, a API continua normal.
  *
@@ -73,7 +62,7 @@ const clientUiAvailable = existsSync(clientDistIndexPath);
 /** Fallback before an admin build exists — same PNG desktop uses, not copied into admin. */
 const desktopIconFilePath = desktopIconPath();
 
-/** Headers for the co-hosted admin SPA (static assets + HTML fallback). Not applied to `/admin/api/*`. */
+/** Headers for the co-hosted admin SPA (static assets + HTML fallback). Not applied to `/api/admin/*`. */
 const ADMIN_UI_SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy':
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
@@ -114,37 +103,6 @@ function serveClientRootAsset(
   applyClientAppIsolationHeaders(set);
   set.headers['content-type'] = file.contentType;
   return file.body;
-}
-
-/**
- * Prefixos que pertencem à API. O catch-all do Showcase (que devolve o index.html para
- * qualquer rota de cliente sobreviver a um F5) precisa deixar estes em paz - senão um 404 de
- * API viraria silenciosamente uma página HTML, e quem chamou receberia texto onde esperava JSON.
- */
-const API_PATH_PREFIXES = [
-  '/admin',
-  '/auth',
-  '/sync',
-  '/stories',
-  '/media',
-  '/story-permissions',
-  '/friend',
-  '/user',
-  '/ws',
-  '/public',
-  '/swagger',
-  '/kerescheck',
-  '/favicon.ico',
-  '/_showcase',
-  SHOWCASE_PATH_PREFIX,
-  '/_expo',
-  '/assets',
-];
-
-function isApiPath(pathname: string): boolean {
-  return API_PATH_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
 }
 
 if (!showcaseUiAvailable) {
@@ -200,71 +158,6 @@ export interface JWTPayload {
 export async function createApp() {
   return (
     new Elysia()
-      .use(
-        swagger({
-          path: '/swagger',
-          // Default provider (Scalar's API Reference) kept explicit since scalarConfig below is
-          // specific to it - if this ever changes to 'swagger-ui', the theme needs redoing with
-          // that provider's own CSS classes instead.
-          provider: 'scalar',
-          scalarConfig: {
-            // 'none' instead of a built-in preset (e.g. 'purple'): a preset ships its own full
-            // stylesheet that the overrides below would otherwise be fighting piece by piece.
-            theme: 'none',
-            // Same palette as apps/client/src/theme/palettes/default.ts, mapped onto Scalar's
-            // own CSS custom properties (see https://github.com/scalar/scalar - documentation/
-            // themes.md) so /swagger doesn't look like a default Scalar install next to the rest
-            // of the app. `primaryContainer` (a primary-tinted surface in the client's Material-
-            // style palette) is a clean semantic match for Scalar's "accent background" slot;
-            // there's no third background/text tier in the client palette, so those reuse the
-            // second tier rather than inventing a color that doesn't exist anywhere else.
-            customCss: `
-            .light-mode {
-              --scalar-color-accent: #6200EE;
-              --scalar-background-1: #FFFFFF;
-              --scalar-background-2: #F5F5F5;
-              --scalar-background-3: #F5F5F5;
-              --scalar-background-accent: #EADDFF;
-              --scalar-color-1: #000000;
-              --scalar-color-2: #666666;
-              --scalar-color-3: #666666;
-              --scalar-border-color: #E0E0E0;
-            }
-            .dark-mode {
-              --scalar-color-accent: #BB86FC;
-              --scalar-background-1: #121212;
-              --scalar-background-2: #1E1E1E;
-              --scalar-background-3: #1E1E1E;
-              --scalar-background-accent: #4F378B;
-              --scalar-color-1: #FFFFFF;
-              --scalar-color-2: #AAAAAA;
-              --scalar-color-3: #AAAAAA;
-              --scalar-border-color: #333333;
-            }
-          `,
-          },
-          documentation: {
-            info: {
-              title: 'Keres API Documentation',
-              version: '1.0.0',
-            },
-            components: {
-              securitySchemes: {
-                bearerAuth: {
-                  type: 'http',
-                  scheme: 'bearer',
-                  bearerFormat: 'JWT',
-                },
-              },
-            },
-            security: [
-              {
-                bearerAuth: [],
-              },
-            ],
-          },
-        }),
-      )
       .use(cookie())
       .use(
         jwt({
@@ -309,7 +202,7 @@ export async function createApp() {
         }
 
         // An invalid/expired token is treated exactly like no token at all - this `.derive()`
-        // runs on every request, including public ones (GET /kerescheck, GET /swagger, POST
+        // runs on every request, including public ones (GET /api/kerescheck, GET /api/swagger, POST
         // /auth/login...). Throwing 401 here used to reject those too, just because a client
         // happened to carry a stale token; each route that actually requires auth already does
         // its own `if (!user) { 401 }` check right after this runs, so nothing is lost by
@@ -390,14 +283,14 @@ export async function createApp() {
             return;
           }
           set.status = 302;
-          set.headers.location = '/swagger';
+          set.headers.location = '/api/swagger';
           return;
         },
         {
           detail: {
             summary: 'Hosted Keres client (or showcase / Swagger)',
             description:
-              'Serves the web export of apps/client at the origin root, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Same origin as the API. Falls back to /showcase or /swagger when the export is missing.',
+              'Serves the web export of apps/client at the origin root, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Falls back to /showcase or /api/swagger when the export is missing.',
             tags: ['Client'],
           },
         },
@@ -433,33 +326,29 @@ export async function createApp() {
           },
         },
       )
-      .get(
-        '/kerescheck',
-        ({ set }) => {
-          set.status = 200;
-          return { version: env.SERVER_VERSION };
-        },
-        {
-          detail: {
-            summary: 'Check API Status',
-            description: 'Returns the current version of the Keres API, useful for health checks.',
-            tags: ['Health Check'],
-          },
-        },
-      )
-      .group('/admin/api', (app) => app.use(adminRoutes))
+      .use(createApiRoutes())
       .onAfterHandle(({ request, set }) => {
         const pathname = new URL(request.url).pathname;
         if (isClientAppPath(pathname)) {
           applyClientAppIsolationHeaders(set);
           return;
         }
-        if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/api')) {
+        if (pathname.startsWith('/admin')) {
           applyAdminUiSecurityHeaders(set);
         }
         if (isShowcasePath(pathname) || pathname.startsWith('/_showcase')) {
           applyAdminUiSecurityHeaders(set);
         }
+      })
+      // Sem compatibilidade: antes de o fallback do painel poder devolver seu HTML, os antigos
+      // endpoints administrativos recebem o mesmo 404 JSON de qualquer rota API removida.
+      .all('/admin/api', ({ set }) => {
+        set.status = 404;
+        return { message: 'Not found' };
+      })
+      .all('/admin/api/*', ({ set }) => {
+        set.status = 404;
+        return { message: 'Not found' };
       })
       .use(
         adminUiAvailable
@@ -468,7 +357,14 @@ export async function createApp() {
       )
       .get(
         '/admin/*',
-        ({ set }) => {
+        ({ set, path: requestPath }) => {
+          // `staticPlugin` e o fallback de SPA são ambos compilados pelo Elysia; para caminhos
+          // que parecem uma rota do painel, o fallback tem precedência sobre `.all()` acima.
+          // Não permita que o contrato removido `/admin/api/*` vire um 200 com index.html.
+          if (requestPath === '/admin/api' || requestPath.startsWith('/admin/api/')) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
           if (!adminUiAvailable) {
             set.status = 404;
             return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
@@ -489,15 +385,6 @@ export async function createApp() {
           },
         },
       )
-      .group('/auth', (app) => app.use(authRoutes))
-      .group('/sync', (app) => app.use(syncRoute))
-      .group('/stories', (app) => app.use(storyRoutes).use(publicationRoutes))
-      .group('/media', (app) => app.use(mediaRoutes))
-      .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
-      .group('/friend', (app) => app.use(friendRoutes))
-      .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
-      .group('/ws', (app) => app.use(wsRoutes))
-      .group('/public', (app) => app.use(publicRoutes))
       .get(
         '/app',
         ({ set }) => {
@@ -589,7 +476,7 @@ export async function createApp() {
       .get(
         '/*',
         ({ set, path: requestPath }) => {
-          if (isApiPath(requestPath)) {
+          if (isApiOrLegacyApiPath(requestPath)) {
             set.status = 404;
             return { message: 'Not found' };
           }

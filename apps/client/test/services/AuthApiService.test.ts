@@ -4,6 +4,7 @@
 jest.mock('../../src/services/apiClient', () => ({
   __esModule: true,
   default: { post: jest.fn() },
+  apiUrl: (server: string, endpoint: string) => `${server}/api${endpoint}`,
 }));
 
 import apiClient from '../../src/services/apiClient';
@@ -46,7 +47,7 @@ describe('redeemRecoveryCode', () => {
       },
     });
     expect(mockPost).toHaveBeenCalledWith(
-      'https://keres.example.com/auth/forgot-password',
+      'https://keres.example.com/api/auth/forgot-password',
       { username: 'ana', recoveryCode: 'AAAAA-11111', newPassword: 'new-password-123' },
       expect.objectContaining({ validateStatus: expect.any(Function) }),
     );

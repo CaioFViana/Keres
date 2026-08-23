@@ -45,7 +45,7 @@ export interface ShowcaseConfig {
 }
 
 export async function fetchConfig(): Promise<ShowcaseConfig> {
-  const response = await fetch('/public/config');
+  const response = await fetch('/api/public/config');
   if (!response.ok) {
     throw new Error(await readError(response));
   }
@@ -63,7 +63,7 @@ export interface StoryListResult {
  * baixaria o catálogo inteiro de novo só para descobrir que nada mudou.
  */
 export async function fetchStories(previousEtag: string | null): Promise<StoryListResult> {
-  const response = await fetch('/public/stories', {
+  const response = await fetch('/api/public/stories', {
     headers: previousEtag ? { 'If-None-Match': previousEtag } : {},
   });
   if (response.status === 304) {
@@ -76,7 +76,7 @@ export async function fetchStories(previousEtag: string | null): Promise<StoryLi
 }
 
 export async function fetchStory(storyId: string): Promise<ShowcaseStoryResponse> {
-  const response = await fetch(`/public/stories/${encodeURIComponent(storyId)}`, {
+  const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}`, {
     headers: unlockHeaders(storyId),
   });
   if (!response.ok) {
@@ -86,7 +86,7 @@ export async function fetchStory(storyId: string): Promise<ShowcaseStoryResponse
 }
 
 export async function unlockStory(storyId: string, password: string): Promise<ShowcaseStoryDetail> {
-  const response = await fetch(`/public/stories/${encodeURIComponent(storyId)}/unlock`, {
+  const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}/unlock`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password }),
@@ -115,7 +115,7 @@ export async function unlockStory(storyId: string, password: string): Promise<Sh
  */
 export async function fetchDownloadUrl(storyId: string, publicationId: string): Promise<string> {
   const response = await fetch(
-    `/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
+    `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
       publicationId,
     )}/download-url`,
     { method: 'POST', headers: unlockHeaders(storyId) },

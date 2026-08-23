@@ -60,7 +60,7 @@ export async function bootAndListen(options?: {
         port: port ?? Number(env.PORT),
       };
       logger.info(`Elysia is running at http://${address.hostname}:${address.port}`);
-      logger.info(`Swagger UI at http://${address.hostname}:${address.port}/swagger`);
+      logger.info(`Swagger UI at http://${address.hostname}:${address.port}/api/swagger`);
       options?.onListening?.(address);
     },
   );

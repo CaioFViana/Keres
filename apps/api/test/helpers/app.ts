@@ -1,6 +1,9 @@
 import { ulid } from 'ulid';
 import { createApp } from '../../src/index';
 
+/** Every programmatic endpoint is mounted below this prefix; test call sites stay route-relative. */
+const API_PREFIX = '/api';
+
 /**
  * A aplicação real, montada uma vez por arquivo de teste e exercitada em memória por
  * `app.handle(new Request(...))` - mesmo caminho que `test/health/kerescheck.test.ts` já usa.
@@ -48,7 +51,15 @@ export async function request<T = any>(
     headers['authorization'] = `Bearer ${options.token}`;
   }
 
-  const url = new URL(path, 'http://localhost');
+  // Admin tests historically describe routes as `/admin/api/*`; retain that compact notation
+  // at call sites while exercising its canonical public address, `/api/admin/*`.
+  const relativePath = path === '/admin/api' || path.startsWith('/admin/api/')
+    ? `/admin${path.slice('/admin/api'.length)}`
+    : path;
+  const canonicalPath = relativePath === API_PREFIX || relativePath.startsWith(`${API_PREFIX}/`)
+    ? relativePath
+    : `${API_PREFIX}${relativePath.startsWith('/') ? relativePath : `/${relativePath}`}`;
+  const url = new URL(canonicalPath, 'http://localhost');
   for (const [key, value] of Object.entries(options.query ?? {})) {
     if (value !== undefined) {
       url.searchParams.set(key, String(value));

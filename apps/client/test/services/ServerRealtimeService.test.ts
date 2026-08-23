@@ -83,7 +83,7 @@ it('subscribes after connecting and requests a sync for a changed story notifica
   await flush();
 
   const socket = MockWebSocket.instances[0];
-  expect(socket.url).toBe('wss://server.test/ws/events?ticket=ticket%20with%20space');
+  expect(socket.url).toBe('wss://server.test/api/ws/events?ticket=ticket%20with%20space');
   socket.onopen?.();
   expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', storyId: 'story' }));
   expect(mockFriendshipService.syncFriendshipsWithServer).toHaveBeenCalledWith('me', server);

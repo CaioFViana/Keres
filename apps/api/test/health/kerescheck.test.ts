@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/index';
 
-describe('GET /kerescheck', () => {
+describe('GET /api/kerescheck', () => {
   it('responds in memory without opening a server', async () => {
     const app = await createApp();
 
-    const response = await app.handle(new Request('http://localhost/kerescheck'));
+    const response = await app.handle(new Request('http://localhost/api/kerescheck'));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ version: expect.any(String) });
@@ -30,7 +30,7 @@ describe('GET /kerescheck', () => {
     const app = await createApp();
 
     const response = await app.handle(
-      new Request('http://localhost/stories/', {
+      new Request('http://localhost/api/stories/', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ title: 'Unauthenticated story', type: 'linear' }),
@@ -41,5 +41,23 @@ describe('GET /kerescheck', () => {
     await expect(response.json()).resolves.toEqual({
       message: 'Unauthorized: User not authenticated.',
     });
+  });
+
+  it('does not leave the legacy health endpoint at the root', async () => {
+    const app = await createApp();
+    const response = await app.handle(new Request('http://localhost/kerescheck'));
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({ message: 'Not found' });
+  });
+
+  it('serves Swagger under /api and never lets removed API paths fall into a web UI', async () => {
+    const app = await createApp();
+
+    const swagger = await app.handle(new Request('http://localhost/api/swagger'));
+    expect(swagger.status).toBe(200);
+
+    const legacyAdmin = await app.handle(new Request('http://localhost/admin/api/users'));
+    expect(legacyAdmin.status).toBe(404);
+    await expect(legacyAdmin.json()).resolves.toEqual({ message: 'Not found' });
   });
 });

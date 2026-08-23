@@ -8,7 +8,7 @@ import {
 /**
  * A chave do site público deste servidor.
  *
- * Desligado (o padrão), `/` volta a redirecionar para a documentação, as rotas `/public/*`
+ * Desligado (o padrão), `/` volta a redirecionar para a documentação, as rotas `/api/public/*`
  * respondem 404 e publicar é recusado. Nada é apagado: religar traz de volta exatamente o que
  * já estava publicado.
  */

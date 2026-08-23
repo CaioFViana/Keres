@@ -69,7 +69,7 @@ export const authRoutes = new Elysia()
       detail: {
         summary: 'Issue a short-lived WebSocket ticket',
         description:
-          'Exchanges the current session for a single-use ticket (30s) that GET /ws/events accepts as its auth credential - WebSocket connections cannot carry an Authorization header.',
+          'Exchanges the current session for a single-use ticket (30s) that GET /api/ws/events accepts as its auth credential - WebSocket connections cannot carry an Authorization header.',
         tags: ['Auth'],
         security: [{ bearerAuth: [] }],
       },

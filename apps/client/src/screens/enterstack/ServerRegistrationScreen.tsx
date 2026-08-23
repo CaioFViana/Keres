@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import apiClient from '../../services/apiClient';
+import apiClient, { apiUrl } from '../../services/apiClient';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
@@ -186,7 +186,7 @@ const ServerRegistrationScreen = () => {
 
     try {
       // 1. Server Check (/kerescheck) - always check if server is reachable
-      const keresCheckUrl = `${addressToSave}/kerescheck`;
+      const keresCheckUrl = apiUrl(addressToSave, '/kerescheck');
       const checkResponse = await apiClient.get(keresCheckUrl, {
         timeout: 5000,
         validateStatus: () => true,
@@ -217,7 +217,7 @@ const ServerRegistrationScreen = () => {
           return;
         }
 
-        const authUrl = `${addressToSave}${isRegistering ? '/auth/register' : '/auth/login'}`;
+        const authUrl = apiUrl(addressToSave, isRegistering ? '/auth/register' : '/auth/login');
         const authResponse = await apiClient.post(
           authUrl,
           { username, password },

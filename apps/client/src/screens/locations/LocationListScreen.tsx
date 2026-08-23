@@ -115,7 +115,7 @@ const LocationsScreen = () => {
               style={styles.headerButton}
               accessibilityLabel={t('location_graph_title')}
             >
-              <Ionicons name="git-network-outline" size={28} color={colors.text} />
+              <Ionicons name="git-network-outline" size={26} color={colors.text} />
             </TouchableOpacity>
             {canEdit && (
               <TouchableOpacity

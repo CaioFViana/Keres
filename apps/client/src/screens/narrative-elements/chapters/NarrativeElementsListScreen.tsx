@@ -526,11 +526,11 @@ const NarrativeElementsListScreen = () => {
     },
     headerRightContainer: {
       flexDirection: 'row',
+      alignItems: 'center',
       marginRight: 15,
+      gap: 15,
     },
-    headerButton: {
-      marginLeft: 15,
-    },
+    headerButton: {},
   });
 
   useFocusEffect(
@@ -554,12 +554,12 @@ const NarrativeElementsListScreen = () => {
                 onPress={() => navigation.navigate('StoryTimeline')}
                 style={styles.headerButton}
               >
-                <Ionicons name="bar-chart-outline" size={23} color={colors.text} />
+                <Ionicons name="bar-chart-outline" size={26} color={colors.text} />
               </TouchableOpacity>
             )}
             {canEdit && (
               <TouchableOpacity onPress={handleReorderPress} style={styles.headerButton}>
-                <Ionicons name="swap-vertical" size={24} color={colors.text} />
+                <Ionicons name="swap-vertical" size={26} color={colors.text} />
               </TouchableOpacity>
             )}
             {canEdit && (

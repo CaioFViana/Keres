@@ -27,7 +27,7 @@ import {
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
@@ -64,6 +64,7 @@ const SuggestionsScreen = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const navigation = useNavigation<any>();
   const { isCompact } = useResponsiveLayout();
@@ -349,7 +350,6 @@ const SuggestionsScreen = () => {
   };
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background, padding: 16 },
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
     description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
     // Compacto: tira de chips com rolagem horizontal (cabe bem em telas estreitas). Largo:
@@ -595,7 +595,7 @@ const SuggestionsScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={commonContainerStyles.container}>
       <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
       <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
       {isCompact ? (

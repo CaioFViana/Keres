@@ -1,11 +1,13 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ItemSelect } from '../../../db/schemas/items';
+import { TagSelect } from '../../../db/schema';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface ItemListItemProps {
@@ -13,6 +15,7 @@ interface ItemListItemProps {
   onViewDetails: (itemId: string) => void;
   onToggleFavorite: (itemId: string, isFavorite: boolean) => void;
   renderJourneys?: () => React.ReactNode;
+  tags?: TagSelect[];
 }
 
 const ItemListItem: React.FC<ItemListItemProps> = ({
@@ -20,6 +23,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
   onViewDetails,
   onToggleFavorite,
   renderJourneys,
+  tags = [],
 }) => {
   const { colors } = useTheme();
 
@@ -54,6 +58,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
       {currentItem.characterOwnerId && (
         <Text style={styles.detailText}>Owner: {truncate(currentItem.characterOwnerId, 50)}</Text>
       )}
+      {tags.length > 0 && <TagList tags={tags} />}
       {renderJourneys?.()}
     </View>
   );

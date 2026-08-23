@@ -11,8 +11,11 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CharacterListItem from '@/src/components/features/list-items/CharacterListItem';
+import CharacterRelationRows from '@/src/components/features/relations/CharacterRelationRows';
+import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
+import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -20,8 +23,12 @@ import {
   CharacterStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
-import { CharacterWithTags } from '../../services/storymanagement/CharacterService';
+import {
+  CharacterWithTags,
+  createCharacterService,
+} from '../../services/storymanagement/CharacterService';
 import { createTagService } from '../../services/storymanagement/TagService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
@@ -65,6 +72,8 @@ const CharactersScreen = () => {
   });
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
+  const [relations, setRelations] = useState<CharacterRelation[]>([]);
+  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
   const { canEdit } = useStoryRole(storyId);
 
@@ -94,6 +103,24 @@ const CharactersScreen = () => {
     fetchTags();
   }, [fetchTags]);
 
+  const fetchRelations = useCallback(async () => {
+    if (!storyId) {
+      setRelations([]);
+      setAllCharacters([]);
+      return;
+    }
+    const [loadedRelations, loadedCharacters] = await Promise.all([
+      createCharacterRelationService(drizzleDb).getCharacterRelationsByStoryId(storyId),
+      createCharacterService(drizzleDb).getAllByStoryId(storyId),
+    ]);
+    setRelations(loadedRelations);
+    setAllCharacters(loadedCharacters);
+  }, [drizzleDb, storyId]);
+
+  useEffect(() => {
+    fetchRelations();
+  }, [fetchRelations]);
+
   useEffect(() => {
     const handleTagChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) fetchTags();
@@ -102,6 +129,14 @@ const CharactersScreen = () => {
     return () => entityEventEmitter.off('tag_changed', handleTagChange);
   }, [fetchTags, storyId]);
 
+  useEffect(() => {
+    const refresh = (changedStoryId: string) => {
+      if (changedStoryId === storyId) fetchRelations();
+    };
+    entityEventEmitter.on('character_relation_changed', refresh);
+    return () => entityEventEmitter.off('character_relation_changed', refresh);
+  }, [fetchRelations, storyId]);
+
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('characters_title'));
@@ -109,14 +144,25 @@ const CharactersScreen = () => {
         title: t('characters_title'),
         headerRight: canEdit
           ? () => (
+              <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+                <TouchableOpacity onPress={() => navigation.navigate('CharacterRelationView')}>
+                  <Ionicons name="git-network-outline" size={26} color={colors.text} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
+                >
+                  <Ionicons name="add" size={30} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+            )
+          : () => (
               <TouchableOpacity
-                onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
+                onPress={() => navigation.navigate('CharacterRelationView')}
                 style={{ marginRight: 15 }}
               >
-                <Ionicons name="add" size={30} color={colors.text} />
+                <Ionicons name="git-network-outline" size={26} color={colors.text} />
               </TouchableOpacity>
-            )
-          : undefined,
+            ),
       });
     }, [navigation, colors.text, t, canEdit]),
   );
@@ -141,9 +187,18 @@ const CharactersScreen = () => {
         character={item}
         onToggleFavorite={handleToggleFavorite}
         onViewDetails={handleViewDetails}
+        renderRelations={({ expanded, onExpandedChange }) => (
+          <CharacterRelationRows
+            characterId={item.id}
+            relations={relations}
+            characters={allCharacters}
+            expanded={expanded}
+            onExpandedChange={onExpandedChange}
+          />
+        )}
       />
     ),
-    [handleToggleFavorite, handleViewDetails],
+    [allCharacters, handleToggleFavorite, handleViewDetails, relations],
   );
 
   const memoizedTagFilterOptions = useMemo(() => {

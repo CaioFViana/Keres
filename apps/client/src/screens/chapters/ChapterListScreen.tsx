@@ -15,7 +15,7 @@ import ChapterListItem from '@/src/components/features/list-items/ChapterListIte
 import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
 import { useDrizzle } from '../../db';
-import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
+import { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenStoryTimelineViewer } from '../../hooks/useOpenStoryTimelineViewer';
@@ -30,6 +30,8 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { createTagService } from '../../services/storymanagement/TagService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 
 export type ChaptersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ChaptersStack'>,
@@ -96,6 +98,9 @@ const ChapterListScreen = () => {
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
   const [reorderChapterId, setReorderChapterId] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<TagSelect[]>([]);
+  const [tagsByChapterId, setTagsByChapterId] = useState<Map<string, TagSelect[]>>(new Map());
+  const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
   const loadOutline = useCallback(async () => {
     if (!storyId) return;
@@ -112,6 +117,43 @@ const ChapterListScreen = () => {
   useEffect(() => {
     loadOutline();
   }, [loadOutline]);
+
+  const loadTags = useCallback(async () => {
+    if (!storyId) {
+      setAllTags([]);
+      setTagsByChapterId(new Map());
+      return;
+    }
+    const relationService = createTagRelationService(db);
+    const [loadedTags, chapterTags] = await Promise.all([
+      createTagService(db).getTagsByStoryId(storyId),
+      Promise.all(
+        outlineChapters.map((chapter) =>
+          relationService.getTagsForEntity(storyId, chapter.id, 'Chapter'),
+        ),
+      ),
+    ]);
+    setAllTags(loadedTags);
+    setTagsByChapterId(
+      new Map(outlineChapters.map((chapter, index) => [chapter.id, chapterTags[index]])),
+    );
+  }, [db, outlineChapters, storyId]);
+
+  useEffect(() => {
+    loadTags();
+  }, [loadTags]);
+
+  useEffect(() => {
+    const refreshTags = (changedStoryId: string) => {
+      if (changedStoryId === storyId) loadTags();
+    };
+    entityEventEmitter.on('tag_changed', refreshTags);
+    entityEventEmitter.on('tag_relation_changed', refreshTags);
+    return () => {
+      entityEventEmitter.off('tag_changed', refreshTags);
+      entityEventEmitter.off('tag_relation_changed', refreshTags);
+    };
+  }, [loadTags, storyId]);
   useEffect(() => {
     if (storyId) {
       setSceneDbAndStoryId(db, storyId);
@@ -203,6 +245,12 @@ const ChapterListScreen = () => {
       const isFavorite = favoriteOverrides.get(chapter.id) ?? chapter.isFavorite;
       if (favoriteFilterState === 'favorite' && !isFavorite) return false;
       if (favoriteFilterState === 'not-favorite' && isFavorite) return false;
+      if (
+        activeTagIds.length > 0 &&
+        !(tagsByChapterId.get(chapter.id) ?? []).some((tag) => activeTagIds.includes(tag.id))
+      ) {
+        return false;
+      }
       if (!query) return true;
       const chapterMatches = [chapter.name, chapter.summary, chapter.extraNotes].some((value) =>
         value?.toLocaleLowerCase().includes(query),
@@ -231,6 +279,7 @@ const ChapterListScreen = () => {
       }));
   }, [
     activeSort,
+    activeTagIds,
     advancedSearchCriteria,
     chapters,
     favoriteFilterState,
@@ -238,6 +287,7 @@ const ChapterListScreen = () => {
     scenes,
     searchQuery,
     sortDirection,
+    tagsByChapterId,
   ]);
 
   const memoizedChapterListItem = useCallback(
@@ -259,6 +309,7 @@ const ChapterListScreen = () => {
           onViewDetails={handleViewDetails}
           onToggleFavorite={handleToggleFavorite}
           initialExpanded={hasSceneMatch}
+          tags={tagsByChapterId.get(item.id)}
           renderScenes={({ expandedSceneIds, onSceneExpandedChange }) => (
             <ChapterScenesList
               storyType={selectedStory?.type}
@@ -288,6 +339,7 @@ const ChapterListScreen = () => {
       scenesWithFavoriteState,
       selectedStory?.type,
       searchQuery,
+      tagsByChapterId,
     ],
   );
 
@@ -397,9 +449,9 @@ const ChapterListScreen = () => {
         onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('chapter_outline_search_placeholder')}
         currentSearchTerm={searchQuery}
-        filterOptions={[]} // Chapters don't have tags themselves
-        onFilterChange={() => {}}
-        selectedFilterValues={[]}
+        filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
+        onFilterChange={setActiveTagIds}
+        selectedFilterValues={activeTagIds}
         sortOptions={memoizedSortOptions}
         onSortChange={handleSortChange}
         onSortDirectionChange={handleSortDirectionChange}
@@ -407,7 +459,6 @@ const ChapterListScreen = () => {
         currentSortValue={activeSort}
         onFavoriteFilterChange={handleFavoriteFilterChange}
         currentFavoriteFilterState={favoriteFilterState}
-        disableTagFilter={true}
         entityName="Chapter"
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}

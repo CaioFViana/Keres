@@ -31,7 +31,6 @@ import ChapterDetailScreen, {
 import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
 import ChapterListScreen from '../screens/chapters/ChapterListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
-import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
 import CharacterDetailScreen, {
   CharacterDetailScreenParamList,
 } from '../screens/characters/CharacterDetailScreen';
@@ -101,7 +100,6 @@ export type MainSystemDrawerParamList = {
   WorldRulesStack: NavigatorScreenParams<WorldRulesStackParamList> | undefined;
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
-  CharacterRelationsStack: NavigatorScreenParams<CharacterRelationsStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
   StoryAnalysis: { storyId: string };
@@ -124,7 +122,6 @@ const mainSystemStackRootScreens = new Set([
   'Items',
   'ItemJourneys',
   'Locations',
-  'CharacterRelations',
   'GalleryList',
   'Tags',
   'Notes',
@@ -147,6 +144,7 @@ export type CharacterStackParamList = {
   Characters: undefined;
   CharacterDetail: CharacterDetailScreenParamList['CharacterDetail'];
   CharacterForm: { characterId?: string };
+  CharacterRelationView: undefined;
 };
 
 const CharacterStackNavigator = () => {
@@ -156,6 +154,10 @@ const CharacterStackNavigator = () => {
       <CharacterStack.Screen name="Characters" component={CharactersScreen} />
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
       <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
+      <CharacterStack.Screen
+        name="CharacterRelationView"
+        component={CharacterRelationGraphScreen}
+      />
     </CharacterStack.Navigator>
   );
 };
@@ -261,31 +263,6 @@ const LocationStackNavigator = () => {
       <LocationStack.Screen name="LocationForm" component={LocationFormScreen} />
       <LocationStack.Screen name="LocationView" component={LocationGraphScreen} />
     </LocationStack.Navigator>
-  );
-};
-//#endregion
-//#region Character Relations
-
-const CharacterRelationsStack = createNativeStackNavigator<CharacterRelationsStackParamList>();
-
-export type CharacterRelationsStackParamList = {
-  CharacterRelations: undefined;
-  CharacterRelationView: undefined;
-};
-
-const CharacterRelationsStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <CharacterRelationsStack.Navigator screenOptions={{ headerShown: false }}>
-      <CharacterRelationsStack.Screen
-        name="CharacterRelations"
-        component={CharacterRelationsScreen}
-      />
-      <CharacterRelationsStack.Screen
-        name="CharacterRelationView"
-        component={CharacterRelationGraphScreen}
-      />
-    </CharacterRelationsStack.Navigator>
   );
 };
 //#endregion
@@ -721,20 +698,6 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('GalleryStack', { screen: 'GalleryList' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="CharacterRelationsStack"
-          component={CharacterRelationsStackNavigator}
-          options={{
-            title: t('character_relations_title'),
-            drawerLabel: t('character_relations_title'),
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('CharacterRelationsStack', { screen: 'CharacterRelations' });
             },
           })}
         />

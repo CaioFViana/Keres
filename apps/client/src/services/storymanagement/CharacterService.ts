@@ -5,6 +5,7 @@ import {
   CharacterInsert,
   characters,
   CharacterSelect,
+  characterRelations,
   tagRelations,
   tags,
   TagSelect,
@@ -105,6 +106,20 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
           if (advancedSearchCriteria.hasOwnProperty(key)) {
             const value = advancedSearchCriteria[key];
             if (value === undefined || value === null || value === '') continue; // Skip empty values
+
+            if (key === 'relationType') {
+              whereConditions.push(
+                sql`EXISTS (
+                  SELECT 1 FROM ${characterRelations}
+                  WHERE ${characterRelations.storyId} = ${storyId}
+                    AND ${characterRelations.isDeleted} = false
+                    AND ${characterRelations.relationType} LIKE ${`%${value}%`} COLLATE NOCASE
+                    AND (${characterRelations.character1Id} = ${characters.id}
+                      OR ${characterRelations.character2Id} = ${characters.id})
+                )` as SQL<boolean>,
+              );
+              continue;
+            }
 
             const fieldMetadata = characterMetadata.find((meta) => meta.name === key);
 

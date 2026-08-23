@@ -1,5 +1,4 @@
 import { useChapterStore } from './chapterStore';
-import { useCharacterRelationStore } from './characterRelationStore';
 import { useCharacterStore } from './characterStore';
 import { useChoiceStore } from './choiceStore';
 import { useConnectivityStore } from './connectivityStore';
@@ -28,7 +27,6 @@ export function resetAllClientStores(): void {
   useGalleryMediaViewerStore.getState().close();
 
   useChapterStore.getState().resetStore();
-  useCharacterRelationStore.getState().resetStore();
   useCharacterStore.getState().resetStore();
   useChoiceStore.getState().resetStore();
   useGalleryStore.getState().resetStore();

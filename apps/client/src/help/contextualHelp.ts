@@ -66,8 +66,6 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   GalleryStack: 'gallery',
   GalleryList: 'gallery',
   GalleryDetail: 'gallery',
-  CharacterRelationsStack: 'character-relationships',
-  CharacterRelations: 'character-relationships',
   CharacterRelationView: 'character-relationships',
   StorySchemaStack: 'custom-attributes',
   StorySchemaList: 'custom-attributes',

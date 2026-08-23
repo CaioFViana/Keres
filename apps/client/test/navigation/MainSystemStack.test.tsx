@@ -120,10 +120,6 @@ jest.mock('../../src/screens/characterrelations/CharacterRelationGraphScreen', (
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/characterrelations/CharacterRelationListScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock('../../src/screens/characters/CharacterDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -299,7 +295,7 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(22);
+  expect(mockDrawerScreens).toHaveLength(21);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -324,7 +320,6 @@ it.each([
   ['WorldRulesStack', 'WorldRules'],
   ['NotesStack', 'Notes'],
   ['GalleryStack', 'GalleryList'],
-  ['CharacterRelationsStack', 'CharacterRelations'],
   ['StorySchemaStack', 'StorySchemaList'],
   ['CommentsStack', 'CommentsList'],
   ['OperationLogStack', 'OperationLog'],

@@ -38,7 +38,6 @@ Drawer unificado dá acesso a todos os módulos do sistema, com uma tela por ent
 10. **Regras do Mundo** (`WorldRulesStack`)
 11. **Notas** (`NotesStack`)
 12. **Galeria** (`GalleryStack`)
-13. **Relações de Personagens** (`CharacterRelationsStack`) - inclui um grafo de relações (`CharacterRelationGraphScreen`).
 14. **Atributos Customizados** (`StorySchemaStack`) - onde o usuário define campos customizados por tipo de entidade (ver `project_plan.md`, seção "Story Schema Fields").
 15. **Sugestões** (`Suggestions`) - armazenamento por história de valores livres; não é um catálogo padrão de preenchimento (ver `project_plan.md`).
 16. **Status** (`StatsDrawer`) - só visível quando `Story.statSystem` está ligado; reúne lista, escadas, comparação e ranking de status.

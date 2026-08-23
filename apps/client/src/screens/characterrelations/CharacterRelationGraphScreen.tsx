@@ -31,7 +31,7 @@ import {
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { CharacterRelationsScreenNavigationProp } from './CharacterRelationListScreen';
+import { CharactersScreenNavigationProp } from '../characters/CharacterListScreen';
 
 /**
  * Mapa de relações: os personagens de uma história e quem conhece quem.
@@ -56,7 +56,7 @@ const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<CharacterRelationsScreenNavigationProp>();
+  const navigation = useNavigation<CharactersScreenNavigationProp>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();

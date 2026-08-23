@@ -53,6 +53,15 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'plannedTimeline', label: 'field_plannedTimeline', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+    // Virtual field: CharacterService resolves it through either endpoint of a relation.
+    {
+      name: 'relationType',
+      label: 'field_relationType',
+      type: 'string',
+      isSearchable: true,
+      isSuggestion: true,
+      suggestionsSource: 'characterRelation_type',
+    },
     // System fields are generally not searchable directly by users
     // Like id, storyId, createdAt, updatedAt, version, isDeleted, deletedAt
   ],

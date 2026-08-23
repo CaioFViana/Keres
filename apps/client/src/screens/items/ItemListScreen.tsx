@@ -13,7 +13,13 @@ import {
 import ItemListItem from '@/src/components/features/list-items/ItemListItem';
 import ItemJourneyRows from '@/src/components/features/item-journeys/ItemJourneyRows';
 import { useDrizzle } from '../../db';
-import { ChapterSelect, ChoiceSelect, ItemJourneySelect, SceneSelect } from '../../db/schema';
+import {
+  ChapterSelect,
+  ChoiceSelect,
+  ItemJourneySelect,
+  SceneSelect,
+  TagSelect,
+} from '../../db/schema';
 import { ItemSelect } from '../../db/schemas/items';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
@@ -27,6 +33,8 @@ import { createChapterService } from '../../services/storymanagement/ChapterServ
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
+import { createTagService } from '../../services/storymanagement/TagService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
 
@@ -71,6 +79,9 @@ const ItemListScreen = () => {
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
+  const [allTags, setAllTags] = useState<TagSelect[]>([]);
+  const [tagsByItemId, setTagsByItemId] = useState<Map<string, TagSelect[]>>(new Map());
+  const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
   const loadJourneys = useCallback(async () => {
     if (!drizzleDb || !storyId) return;
@@ -104,6 +115,56 @@ const ItemListScreen = () => {
       entityEventEmitter.off('choice_changed', refresh);
     };
   }, [loadJourneys, storyId]);
+
+  const loadTags = useCallback(async () => {
+    if (!drizzleDb || !storyId) {
+      setAllTags([]);
+      setTagsByItemId(new Map());
+      return;
+    }
+    const tagService = createTagService(drizzleDb);
+    const relationService = createTagRelationService(drizzleDb);
+    const [loadedTags, itemTags] = await Promise.all([
+      tagService.getTagsByStoryId(storyId),
+      Promise.all(
+        (items as ItemSelect[]).map((item) =>
+          relationService.getTagsForEntity(storyId, item.id, 'Item'),
+        ),
+      ),
+    ]);
+    setAllTags(loadedTags);
+    setTagsByItemId(
+      new Map((items as ItemSelect[]).map((item, index) => [item.id, itemTags[index]])),
+    );
+  }, [drizzleDb, items, storyId]);
+
+  useEffect(() => {
+    loadTags();
+  }, [loadTags]);
+
+  useEffect(() => {
+    const refreshTags = (changedStoryId: string) => {
+      if (changedStoryId === storyId) loadTags();
+    };
+    entityEventEmitter.on('tag_changed', refreshTags);
+    entityEventEmitter.on('tag_relation_changed', refreshTags);
+    return () => {
+      entityEventEmitter.off('tag_changed', refreshTags);
+      entityEventEmitter.off('tag_relation_changed', refreshTags);
+    };
+  }, [loadTags, storyId]);
+
+  const itemsWithTags = useMemo(
+    () =>
+      (items as ItemSelect[])
+        .map((item) => ({ ...item, tags: tagsByItemId.get(item.id) ?? [] }))
+        .filter(
+          (item) =>
+            activeTagIds.length === 0 ||
+            item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id)),
+        ),
+    [activeTagIds, items, tagsByItemId],
+  );
 
   const handleViewDetails = useCallback(
     (itemId: string) => {
@@ -140,6 +201,7 @@ const ItemListScreen = () => {
           item={item}
           onViewDetails={handleViewDetails}
           onToggleFavorite={handleToggleFavorite}
+          tags={tagsByItemId.get(item.id)}
           renderJourneys={() => (
             <ItemJourneyRows
               journeys={orderedJourneys}
@@ -163,6 +225,7 @@ const ItemListScreen = () => {
       journeys,
       scenes,
       selectedStory?.type,
+      tagsByItemId,
     ],
   );
 
@@ -180,7 +243,6 @@ const ItemListScreen = () => {
     container: { flex: 1, backgroundColor: colors.background },
     headerRightContainer: { flexDirection: 'row', marginRight: 15 },
     headerButton: { marginLeft: 15 },
-    filterContainer: { flexDirection: 'row', padding: 0, paddingBottom: 10, zIndex: 1000 },
   });
 
   useFocusEffect(
@@ -204,13 +266,6 @@ const ItemListScreen = () => {
     }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit]),
   );
 
-  // Temporarily simplified filter component for Items
-  const filterComponent = (
-    <View style={styles.filterContainer}>
-      {/* Add item-specific filters here later if needed, e.g., by category */}
-    </View>
-  );
-
   if (loading && items.length === 0) {
     return <ScreenLoading message={t('loading_items')} />;
   }
@@ -222,17 +277,16 @@ const ItemListScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
-        data={items}
+        data={itemsWithTags}
         renderItem={memoizedItemListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_items')}
         currentSearchTerm={searchQuery}
-        filterComponent={filterComponent}
-        filterOptions={[]} // No specific filter options for now
-        onFilterChange={() => {}}
-        selectedFilterValues={[]}
+        filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
+        onFilterChange={setActiveTagIds}
+        selectedFilterValues={activeTagIds}
         sortOptions={memoizedSortOptions}
         onSortChange={handleSortChange}
         onSortDirectionChange={handleSortDirectionChange}
@@ -240,7 +294,6 @@ const ItemListScreen = () => {
         currentSortValue={activeSort}
         onFavoriteFilterChange={handleFavoriteFilterChange}
         currentFavoriteFilterState={favoriteFilterState}
-        disableTagFilter={true}
         entityName="Item"
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}

@@ -1408,5 +1408,9 @@
   "presence_matrix_add_all": "Add all",
   "presence_matrix_show_compact": "Show first {{count}}",
   "presence_matrix_selected_all": "All {{count}} selected",
-  "presence_matrix_complete_view_hint": "Complete view: this dense matrix is best explored by panning and zooming, or saved as SVG."
+  "presence_matrix_complete_view_hint": "Complete view: this dense matrix is best explored by panning and zooming, or saved as SVG.",
+  "presence_matrix_order_appearance": "Appearance in the story",
+  "presence_matrix_order_appearance_description": "First scene where each character appears or item changes; ties use name, then creation date.",
+  "presence_matrix_order_alphabetical": "Alphabetical",
+  "presence_matrix_order_alphabetical_description": "Orders by name; equal names use creation date."
 }

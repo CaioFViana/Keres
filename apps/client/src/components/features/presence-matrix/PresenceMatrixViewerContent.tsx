@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import {
   CharacterSelect,
   ChapterSelect,
@@ -53,6 +54,7 @@ const MAX_VISIBLE_SERIES = 12;
 const seriesColor = (index: number, total: number) =>
   getDistinctSeriesColor(index, total, SERIES_COLORS);
 type Request = { kind: 'character'; characterId: string } | { kind: 'item'; itemId: string };
+type BulkOrder = 'appearance' | 'alphabetical';
 
 const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => void }> = ({
   request,
@@ -77,6 +79,7 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [selectedItemDetailsId, setSelectedItemDetailsId] = useState<string | null>(null);
+  const [bulkOrderVisible, setBulkOrderVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const characterColorOf = useCallback(
@@ -147,29 +150,76 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
   const activeIds = request.kind === 'character' ? ids : itemIds;
   const isCompleteView =
     availableIds.length > MAX_VISIBLE_SERIES && activeIds.length === availableIds.length;
-  const selectAll = () => {
-    if (request.kind === 'character') setIds(availableIds);
-    else setItemIds(availableIds);
-  };
-  const selectCompactView = () => {
-    if (request.kind === 'character') setIds(availableIds.slice(0, MAX_VISIBLE_SERIES));
-    else setItemIds(availableIds.slice(0, MAX_VISIBLE_SERIES));
-  };
-  const layout = useMemo(() => {
+  const orderedScenes = useMemo(() => {
     const byChapter = new Map(chapters.map((x) => [x.id, x]));
     const colorsByChapter = buildChapterColors(chapters);
-    const ordered = [...scenes]
+    return [...scenes]
       .sort(
         (a, b) =>
           (byChapter.get(a.chapterId)?.index ?? 0) - (byChapter.get(b.chapterId)?.index ?? 0) ||
           a.index - b.index,
       )
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        chapterName: byChapter.get(s.chapterId)?.name ?? '',
-        chapterColor: colorsByChapter.get(s.chapterId) ?? colors.border,
+      .map((scene) => ({
+        id: scene.id,
+        name: scene.name,
+        chapterName: byChapter.get(scene.chapterId)?.name ?? '',
+        chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
       }));
+  }, [chapters, colors.border, scenes]);
+  const applyBulkOrder = async (order: BulkOrder) => {
+    const sceneOrder = new Map(orderedScenes.map((scene, index) => [scene.id, index]));
+    const compareByNameThenCreation = <T extends CharacterSelect | ItemSelect>(a: T, b: T) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) ||
+      a.createdAt.getTime() - b.createdAt.getTime() ||
+      a.id.localeCompare(b.id);
+
+    if (request.kind === 'character') {
+      const firstAppearance = (id: string) =>
+        Math.min(
+          ...presence
+            .filter((relation) => relation.characterId === id)
+            .map((relation) => sceneOrder.get(relation.sceneId) ?? Number.POSITIVE_INFINITY),
+          Number.POSITIVE_INFINITY,
+        );
+      const ordered = [...characters].sort((a, b) =>
+        order === 'appearance'
+          ? firstAppearance(a.id) - firstAppearance(b.id) || compareByNameThenCreation(a, b)
+          : compareByNameThenCreation(a, b),
+      );
+      setIds(ordered.map((entry) => entry.id));
+    } else if (story) {
+      const allJourneys = (
+        await Promise.all(
+          items.map((entry) =>
+            createItemJourneyService(db).getItemJourneysByItemId(story.id, entry.id),
+          ),
+        )
+      )
+        .flat()
+        .filter((entry) => !entry.isDeleted);
+      const firstAppearance = (id: string) =>
+        Math.min(
+          ...allJourneys
+            .filter((journey) => journey.itemId === id)
+            .map((journey) => sceneOrder.get(journey.sceneId) ?? Number.POSITIVE_INFINITY),
+          Number.POSITIVE_INFINITY,
+        );
+      const ordered = [...items].sort((a, b) =>
+        order === 'appearance'
+          ? firstAppearance(a.id) - firstAppearance(b.id) || compareByNameThenCreation(a, b)
+          : compareByNameThenCreation(a, b),
+      );
+      setJourneys(allJourneys);
+      setItemIds(ordered.map((entry) => entry.id));
+    }
+    setBulkOrderVisible(false);
+  };
+  const selectCompactView = () => {
+    if (request.kind === 'character') setIds(ids.slice(0, MAX_VISIBLE_SERIES));
+    else setItemIds(itemIds.slice(0, MAX_VISIBLE_SERIES));
+  };
+  const layout = useMemo(() => {
+    const ordered = orderedScenes;
     let rows: PresenceMatrixRow[] = [];
     if (request.kind === 'item')
       rows = selectedItems.map((entry) => ({
@@ -191,16 +241,14 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
       }));
     return buildPresenceMatrixLayout(ordered, rows);
   }, [
-    chapters,
     characterColorOf,
     characters,
-    colors.border,
     ids,
     itemColorOf,
     journeys,
     presence,
     request.kind,
-    scenes,
+    orderedScenes,
     selectedItems,
   ]);
   const toggle = (id: string) =>
@@ -280,6 +328,16 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           paddingHorizontal: 12,
           paddingBottom: 8,
         },
+        orderModal: { padding: 18, gap: 10 },
+        orderModalTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },
+        orderOption: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 10,
+          padding: 14,
+        },
+        orderOptionTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+        orderOptionDescription: { color: colors.textSecondary, fontSize: 13, marginTop: 4 },
         control: {
           width: 42,
           height: 42,
@@ -361,7 +419,7 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
       <View style={styles.bulkActions}>
         <TouchableOpacity
           style={styles.bulkAction}
-          onPress={isCompleteView ? selectCompactView : selectAll}
+          onPress={isCompleteView ? selectCompactView : () => setBulkOrderVisible(true)}
         >
           <Text style={styles.bulkActionText}>
             {isCompleteView
@@ -373,6 +431,30 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
       {isCompleteView && (
         <Text style={styles.bulkHint}>{t('presence_matrix_complete_view_hint')}</Text>
       )}
+      <ResponsiveModal
+        visible={bulkOrderVisible}
+        onClose={() => setBulkOrderVisible(false)}
+        keyboardAvoiding={false}
+      >
+        <View style={styles.orderModal}>
+          <Text style={styles.orderModalTitle}>{t('presence_matrix_add_all')}</Text>
+          <TouchableOpacity style={styles.orderOption} onPress={() => applyBulkOrder('appearance')}>
+            <Text style={styles.orderOptionTitle}>{t('presence_matrix_order_appearance')}</Text>
+            <Text style={styles.orderOptionDescription}>
+              {t('presence_matrix_order_appearance_description')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.orderOption}
+            onPress={() => applyBulkOrder('alphabetical')}
+          >
+            <Text style={styles.orderOptionTitle}>{t('presence_matrix_order_alphabetical')}</Text>
+            <Text style={styles.orderOptionDescription}>
+              {t('presence_matrix_order_alphabetical_description')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ResponsiveModal>
       <PresenceMatrixCanvas
         ref={canvas}
         layout={layout}

@@ -1408,5 +1408,9 @@
   "presence_matrix_add_all": "Adicionar todos",
   "presence_matrix_show_compact": "Mostrar os primeiros {{count}}",
   "presence_matrix_selected_all": "Todos os {{count}} selecionados",
-  "presence_matrix_complete_view_hint": "Visão completa: esta matriz densa é melhor explorada com zoom e arraste, ou salva como SVG."
+  "presence_matrix_complete_view_hint": "Visão completa: esta matriz densa é melhor explorada com zoom e arraste, ou salva como SVG.",
+  "presence_matrix_order_appearance": "Aparição na história",
+  "presence_matrix_order_appearance_description": "Primeira cena em que cada personagem aparece ou item muda; empates usam nome e depois a data de criação.",
+  "presence_matrix_order_alphabetical": "Alfabética",
+  "presence_matrix_order_alphabetical_description": "Ordena por nome; nomes iguais usam a data de criação."
 }

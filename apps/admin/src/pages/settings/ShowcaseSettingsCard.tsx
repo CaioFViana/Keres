@@ -26,7 +26,9 @@ export function ShowcaseSettingsCard() {
       );
   }, []);
 
-  const toggle = async (patch: Partial<Pick<ShowcaseSettings, 'isShowcaseEnabled' | 'isHostedClientEnabled'>>) => {
+  const toggle = async (
+    patch: Partial<Pick<ShowcaseSettings, 'isShowcaseEnabled' | 'isHostedClientEnabled'>>,
+  ) => {
     setSaving(true);
     setError(null);
     setMessage(null);

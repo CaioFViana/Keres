@@ -11,7 +11,13 @@ import {
 } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import { CharacterSelect, ChapterSelect, ItemJourneySelect, ItemSelect, SceneSelect } from '../../../db/schema';
+import {
+  CharacterSelect,
+  ChapterSelect,
+  ItemJourneySelect,
+  ItemSelect,
+  SceneSelect,
+} from '../../../db/schema';
 import { useDrizzle } from '../../../db';
 import { createCharacterSceneService } from '../../../services/storymanagement/CharacterSceneService';
 import { createCharacterService } from '../../../services/storymanagement/CharacterService';
@@ -30,8 +36,18 @@ import { getDistinctSeriesColor } from '../../../utils/colorUtils';
 import PresenceMatrixCanvas, { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 
 const SERIES_COLORS = [
-  '#0B6E99', '#D64545', '#6D4BC3', '#C87800', '#16803C', '#B23A7A',
-  '#655CDB', '#A55A18', '#007C83', '#A94141', '#4D749E', '#8D6B13',
+  '#0B6E99',
+  '#D64545',
+  '#6D4BC3',
+  '#C87800',
+  '#16803C',
+  '#B23A7A',
+  '#655CDB',
+  '#A55A18',
+  '#007C83',
+  '#A94141',
+  '#4D749E',
+  '#8D6B13',
 ];
 const MAX_VISIBLE_SERIES = 12;
 const seriesColor = (index: number, total: number) =>
@@ -53,9 +69,7 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
   const [presence, setPresence] = useState<{ characterId: string; sceneId: string }[]>([]);
   const [items, setItems] = useState<ItemSelect[]>([]);
-  const [itemIds, setItemIds] = useState<string[]>(
-    request.kind === 'item' ? [request.itemId] : [],
-  );
+  const [itemIds, setItemIds] = useState<string[]>(request.kind === 'item' ? [request.itemId] : []);
   const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
   const [ids, setIds] = useState<string[]>(
     request.kind === 'character' ? [request.characterId] : [],
@@ -118,16 +132,21 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
     };
   }, [db, itemIds, request.kind, story]);
   const selectedItems = useMemo(
-    () => itemIds.map((id) => items.find((entry) => entry.id === id)).filter(Boolean) as ItemSelect[],
+    () =>
+      itemIds.map((id) => items.find((entry) => entry.id === id)).filter(Boolean) as ItemSelect[],
     [itemIds, items],
   );
   const selectedItemDetails = useMemo(
     () => selectedItems.find((entry) => entry.id === selectedItemDetailsId) ?? null,
     [selectedItemDetailsId, selectedItems],
   );
-  const availableIds = request.kind === 'character' ? characters.map((entry) => entry.id) : items.map((entry) => entry.id);
+  const availableIds =
+    request.kind === 'character'
+      ? characters.map((entry) => entry.id)
+      : items.map((entry) => entry.id);
   const activeIds = request.kind === 'character' ? ids : itemIds;
-  const isCompleteView = availableIds.length > MAX_VISIBLE_SERIES && activeIds.length === availableIds.length;
+  const isCompleteView =
+    availableIds.length > MAX_VISIBLE_SERIES && activeIds.length === availableIds.length;
   const selectAll = () => {
     if (request.kind === 'character') setIds(availableIds);
     else setItemIds(availableIds);
@@ -168,12 +187,22 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
         id,
         label: characters.find((x) => x.id === id)?.name ?? id,
         color: characterColorOf(id),
-        cells: new Map(
-          presence.filter((x) => x.characterId === id).map((x) => [x.sceneId, '✓']),
-        ),
+        cells: new Map(presence.filter((x) => x.characterId === id).map((x) => [x.sceneId, '✓'])),
       }));
     return buildPresenceMatrixLayout(ordered, rows);
-  }, [chapters, characterColorOf, characters, colors.border, ids, itemColorOf, journeys, presence, request.kind, scenes, selectedItems]);
+  }, [
+    chapters,
+    characterColorOf,
+    characters,
+    colors.border,
+    ids,
+    itemColorOf,
+    journeys,
+    presence,
+    request.kind,
+    scenes,
+    selectedItems,
+  ]);
   const toggle = (id: string) =>
     setIds((current) =>
       current.includes(id)
@@ -190,7 +219,8 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
     try {
       const svg = renderPresenceMatrixSvg(layout, {
         title: story.title,
-        subtitle: request.kind === 'item' ? t('presence_matrix_item_title') : t('presence_matrix_title'),
+        subtitle:
+          request.kind === 'item' ? t('presence_matrix_item_title') : t('presence_matrix_title'),
         background: colors.background,
         surface: colors.surface,
         text: colors.text,
@@ -235,10 +265,21 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           paddingVertical: 5,
         },
         controls: { position: 'absolute', right: 14, bottom: 18, gap: 8 },
-        bulkActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 12, paddingBottom: 8 },
+        bulkActions: {
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          gap: 12,
+          paddingHorizontal: 12,
+          paddingBottom: 8,
+        },
         bulkAction: { paddingVertical: 5 },
         bulkActionText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-        bulkHint: { color: colors.textSecondary, fontSize: 12, paddingHorizontal: 12, paddingBottom: 8 },
+        bulkHint: {
+          color: colors.textSecondary,
+          fontSize: 12,
+          paddingHorizontal: 12,
+          paddingBottom: 8,
+        },
         control: {
           width: 42,
           height: 42,
@@ -292,7 +333,9 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           onSelectionChange={(next) => setIds(next.slice(0, MAX_VISIBLE_SERIES))}
           placeholder={t('characters_title')}
           searchPlaceholder={t('search')}
-          selectionSummary={isCompleteView ? t('presence_matrix_selected_all', { count: ids.length }) : undefined}
+          selectionSummary={
+            isCompleteView ? t('presence_matrix_selected_all', { count: ids.length }) : undefined
+          }
           triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
         />
       )}
@@ -307,7 +350,11 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           onSelectionChange={(next) => setItemIds(next.slice(0, MAX_VISIBLE_SERIES))}
           placeholder={t('items_title')}
           searchPlaceholder={t('search')}
-          selectionSummary={isCompleteView ? t('presence_matrix_selected_all', { count: itemIds.length }) : undefined}
+          selectionSummary={
+            isCompleteView
+              ? t('presence_matrix_selected_all', { count: itemIds.length })
+              : undefined
+          }
           triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
         />
       )}
@@ -323,7 +370,9 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           </Text>
         </TouchableOpacity>
       </View>
-      {isCompleteView && <Text style={styles.bulkHint}>{t('presence_matrix_complete_view_hint')}</Text>}
+      {isCompleteView && (
+        <Text style={styles.bulkHint}>{t('presence_matrix_complete_view_hint')}</Text>
+      )}
       <PresenceMatrixCanvas
         ref={canvas}
         layout={layout}
@@ -445,19 +494,21 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
               : []),
             {
               title: t('scenes_title'),
-              items: journeys.filter((journey) => journey.itemId === selectedItemDetailsId).map((journey) => {
-                const scene = scenes.find((entry) => entry.id === journey.sceneId);
-                return {
-                  id: journey.sceneId,
-                  icon: 'document-text-outline' as const,
-                  label: scene?.name ?? t('common_na'),
-                  detail: journey.newState,
-                  onPress: () => {
-                    setSelectedItemDetailsId(null);
-                    setSelectedSceneId(journey.sceneId);
-                  },
-                };
-              }),
+              items: journeys
+                .filter((journey) => journey.itemId === selectedItemDetailsId)
+                .map((journey) => {
+                  const scene = scenes.find((entry) => entry.id === journey.sceneId);
+                  return {
+                    id: journey.sceneId,
+                    icon: 'document-text-outline' as const,
+                    label: scene?.name ?? t('common_na'),
+                    detail: journey.newState,
+                    onPress: () => {
+                      setSelectedItemDetailsId(null);
+                      setSelectedSceneId(journey.sceneId);
+                    },
+                  };
+                }),
             },
           ]}
           actionLabel={t('close')}

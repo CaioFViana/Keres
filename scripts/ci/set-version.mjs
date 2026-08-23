@@ -6,7 +6,12 @@
 // Usage: node scripts/ci/set-version.mjs 1.2.3
 // (no leading "v" - strip that before calling, see .github/workflows/release.yml)
 
-import { assertSemver, readReleaseName, setAppRelease, setPackageVersions } from '../version/release.mjs';
+import {
+  assertSemver,
+  readReleaseName,
+  setAppRelease,
+  setPackageVersions,
+} from '../version/release.mjs';
 
 const version = process.argv[2];
 if (!version) {

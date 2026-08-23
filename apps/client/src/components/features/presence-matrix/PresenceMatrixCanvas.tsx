@@ -23,12 +23,12 @@ export type PresenceMatrixCanvasHandle = PanZoomCanvasHandle;
 const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
   ({ layout, onPressScene, onPressRow }, ref) => {
     const { colors } = useTheme();
-  const panZoom = usePanZoomCanvas(ref, layout, {
-    minScale: 0.08,
-    maxScale: 3,
-    fitVerticalAlignment: 'top',
-    refitOnLayoutChange: false,
-  });
+    const panZoom = usePanZoomCanvas(ref, layout, {
+      minScale: 0.08,
+      maxScale: 3,
+      fitVerticalAlignment: 'top',
+      refitOnLayoutChange: false,
+    });
     const styles = useMemo(
       () =>
         StyleSheet.create({
@@ -82,9 +82,30 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
           <TouchableOpacity
             key={`scene-${scene.id}`}
             onPress={() => onPressScene(scene.id)}
-            style={{ position: 'absolute', left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * MATRIX_SCENE_WIDTH + 4, top: MATRIX_PADDING, width: MATRIX_SCENE_WIDTH - 8, height: MATRIX_HEADER_HEIGHT - 8, justifyContent: 'center' }}
+            style={{
+              position: 'absolute',
+              left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * MATRIX_SCENE_WIDTH + 4,
+              top: MATRIX_PADDING,
+              width: MATRIX_SCENE_WIDTH - 8,
+              height: MATRIX_HEADER_HEIGHT - 8,
+              justifyContent: 'center',
+            }}
           >
-            <Text numberOfLines={2} style={[styles.label, { position: 'relative', left: 4, width: MATRIX_SCENE_WIDTH - 12, color: colors.text, fontSize: 10 }]}>{scene.name}</Text>
+            <Text
+              numberOfLines={2}
+              style={[
+                styles.label,
+                {
+                  position: 'relative',
+                  left: 4,
+                  width: MATRIX_SCENE_WIDTH - 12,
+                  color: colors.text,
+                  fontSize: 10,
+                },
+              ]}
+            >
+              {scene.name}
+            </Text>
           </TouchableOpacity>
         ))}
         {layout.rows.map((row, rowIndex) => (

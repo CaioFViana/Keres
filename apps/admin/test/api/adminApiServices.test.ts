@@ -73,10 +73,7 @@ describe('AdminUserApiService', () => {
     await AdminUserApiService.regenerateRecoveryCodes('user-1');
 
     expect(mocks.post).toHaveBeenNthCalledWith(1, '/admin/users/user-1/restore');
-    expect(mocks.post).toHaveBeenNthCalledWith(
-      2,
-      '/admin/users/user-1/regenerate-recovery-codes',
-    );
+    expect(mocks.post).toHaveBeenNthCalledWith(2, '/admin/users/user-1/regenerate-recovery-codes');
   });
 
   it('returns the fresh recovery codes after regenerating', async () => {
@@ -121,12 +118,7 @@ describe('TierApiService', () => {
       'put',
       ['/admin/tiers/tier-1', { name: 'Pro+' }],
     ],
-    [
-      'softDelete',
-      () => TierApiService.softDelete('tier-1'),
-      'delete',
-      ['/admin/tiers/tier-1'],
-    ],
+    ['softDelete', () => TierApiService.softDelete('tier-1'), 'delete', ['/admin/tiers/tier-1']],
   ])('routes %s to the right verb and URL', async (_label, call, method, expectedArgs) => {
     await call();
 

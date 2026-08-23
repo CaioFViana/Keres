@@ -133,10 +133,7 @@ export function usePanZoomCanvas(
     transform.current = {
       scale,
       x: (viewportWidth - layout.width * scale) / 2,
-      y:
-        fitVerticalAlignment === 'top'
-          ? 0
-          : (viewportHeight - layout.height * scale) / 2,
+      y: fitVerticalAlignment === 'top' ? 0 : (viewportHeight - layout.height * scale) / 2,
     };
     clamp();
     publish();

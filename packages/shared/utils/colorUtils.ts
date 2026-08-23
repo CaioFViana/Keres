@@ -62,9 +62,23 @@ export function getDistinctSeriesColor(
   const segment = hue / 60;
   const match = chroma * (1 - Math.abs((segment % 2) - 1));
   const [red, green, blue] =
-    segment < 1 ? [chroma, match, 0] : segment < 2 ? [match, chroma, 0] : segment < 3 ? [0, chroma, match] : segment < 4 ? [0, match, chroma] : segment < 5 ? [match, 0, chroma] : [chroma, 0, match];
+    segment < 1
+      ? [chroma, match, 0]
+      : segment < 2
+        ? [match, chroma, 0]
+        : segment < 3
+          ? [0, chroma, match]
+          : segment < 4
+            ? [0, match, chroma]
+            : segment < 5
+              ? [match, 0, chroma]
+              : [chroma, 0, match];
   const offset = lightness - chroma / 2;
   return `#${[red, green, blue]
-    .map((channel) => Math.round((channel + offset) * 255).toString(16).padStart(2, '0'))
+    .map((channel) =>
+      Math.round((channel + offset) * 255)
+        .toString(16)
+        .padStart(2, '0'),
+    )
     .join('')}`;
 }

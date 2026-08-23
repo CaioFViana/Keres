@@ -4,7 +4,7 @@ import path from 'node:path';
 
 export const repoRoot = path.join(fileURLToPath(import.meta.url), '..', '..', '..');
 
-const VERSIONED_JSON_FILES = [
+export const VERSIONED_JSON_FILES = [
   'package.json',
   'apps/api/package.json',
   'apps/client/package.json',
@@ -13,8 +13,8 @@ const VERSIONED_JSON_FILES = [
   'apps/site/package.json',
   'packages/shared/package.json',
 ];
-const APP_JSON_FILE = 'apps/client/app.json';
-const APP_RELEASE_FILE = 'packages/shared/metadata/AppRelease.ts';
+export const APP_JSON_FILE = 'apps/client/app.json';
+export const APP_RELEASE_FILE = 'packages/shared/metadata/AppRelease.ts';
 
 export function assertSemver(version) {
   if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {

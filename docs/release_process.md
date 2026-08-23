@@ -5,11 +5,12 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 
 ## 1. Pre-flight
 
-- [ ] `bun run typecheck`, `bun run lint`, and `bun run test:coverage` all pass
-      (the same three commands the release workflow's `verify` job runs
-      before any platform build starts — catching a failure locally is
-      faster than catching it after a tag is already pushed).
-- [ ] `bun run format` to run biome.
+- [ ] `bun run release:check` passa. Ele executa `typecheck`, aplica a formatação,
+      roda `test:report`, confere que todas as versões controladas por
+      `scripts/version/set-release.mjs` coincidem com a versão do `package.json` raiz e exige
+      worktree limpo ao final.
+- [ ] O job de release ainda reexecuta typecheck, lint e cobertura; para diagnosticar uma etapa
+      isoladamente, use os scripts correspondentes.
 
 ## 2. Version and release name
 

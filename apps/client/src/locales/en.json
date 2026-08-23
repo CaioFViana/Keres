@@ -1397,5 +1397,12 @@
   "yes": "Yes",
   "you_suffix": "(You)",
   "your_friendships": "Your Friendships",
-  "your_stories": "Your Stories"
+  "your_stories": "Your Stories",
+  "presence_matrix_title": "Story presence",
+  "presence_matrix_item_title": "Item journey",
+  "presence_matrix_open_character": "View story presence",
+  "presence_matrix_open_item": "View item journey",
+  "presence_matrix_branching_unavailable": "This map is available for linear stories.",
+  "presence_matrix_export_success": "Map saved as {{fileName}}.",
+  "presence_matrix_export_no_share_target": "Map saved to {{path}}."
 }

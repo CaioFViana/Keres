@@ -34,6 +34,7 @@ import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import {
   CharacterRelationServiceInterface,
@@ -82,6 +83,7 @@ const CharacterDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
+  const { openCharacter: openPresenceMatrix } = useOpenPresenceMatrixViewer();
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
   const { t } = useTranslation();
@@ -529,16 +531,27 @@ const CharacterDetailScreen = () => {
   };
 
   const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, characterId, colors.text, canEdit],
+    () => (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {selectedStory?.type === 'linear' && (
+          <TouchableOpacity
+            onPress={() => openPresenceMatrix(characterId)}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="map-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
+        {canEdit && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CharacterForm', { characterId })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="pencil-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
+      </View>
+    ),
+    [navigation, characterId, colors.text, canEdit, openPresenceMatrix, selectedStory?.type],
   );
 
   useFocusEffect(

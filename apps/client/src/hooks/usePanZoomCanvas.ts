@@ -35,6 +35,10 @@ export interface PanZoomLayout {
 interface PanZoomCanvasOptions {
   minScale?: number;
   maxScale?: number;
+  /** Matrizes começam no topo; grafos permanecem centralizados. */
+  fitVerticalAlignment?: 'center' | 'top';
+  /** Mantém a posição atual quando os dados da visualização mudam. */
+  refitOnLayoutChange?: boolean;
 }
 
 interface Transform {
@@ -50,6 +54,8 @@ export function usePanZoomCanvas(
 ) {
   const minScale = options.minScale ?? DEFAULT_MIN_SCALE;
   const maxScale = options.maxScale ?? DEFAULT_MAX_SCALE;
+  const fitVerticalAlignment = options.fitVerticalAlignment ?? 'center';
+  const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
 
   const viewport = useRef({ width: 0, height: 0 });
   /** Canto do canvas na janela, para converter o foco da pinça em coordenadas locais. */
@@ -90,9 +96,11 @@ export function usePanZoomCanvas(
 
     transform.current.y =
       scaledHeight <= viewportHeight
-        ? (viewportHeight - scaledHeight) / 2
+        ? fitVerticalAlignment === 'top'
+          ? 0
+          : (viewportHeight - scaledHeight) / 2
         : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
-  }, [layout.height, layout.width]);
+  }, [fitVerticalAlignment, layout.height, layout.width]);
 
   /** Aplica um zoom mantendo fixo o ponto do mapa que está sob `focus`. */
   const zoomAround = useCallback(
@@ -125,11 +133,14 @@ export function usePanZoomCanvas(
     transform.current = {
       scale,
       x: (viewportWidth - layout.width * scale) / 2,
-      y: (viewportHeight - layout.height * scale) / 2,
+      y:
+        fitVerticalAlignment === 'top'
+          ? 0
+          : (viewportHeight - layout.height * scale) / 2,
     };
     clamp();
     publish();
-  }, [clamp, layout.height, layout.width, maxScale, minScale, publish]);
+  }, [clamp, fitVerticalAlignment, layout.height, layout.width, maxScale, minScale, publish]);
 
   useImperativeHandle(
     ref,
@@ -151,12 +162,12 @@ export function usePanZoomCanvas(
       viewport.current = { width, height };
       // Primeiro enquadramento só é possível quando se conhece o tamanho da janela, o que
       // acontece depois do primeiro render.
-      if (fittedLayout.current !== layout) {
+      if (!fittedLayout.current || (refitOnLayoutChange && fittedLayout.current !== layout)) {
         fittedLayout.current = layout;
         fitToScreen();
       }
     });
-  }, [fitToScreen, layout]);
+  }, [fitToScreen, layout, refitOnLayoutChange]);
 
   const panResponder = useMemo(
     () =>

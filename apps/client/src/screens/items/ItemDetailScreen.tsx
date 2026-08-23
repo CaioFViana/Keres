@@ -24,6 +24,7 @@ import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createItemService } from '../../services/storymanagement/ItemService';
@@ -45,6 +46,7 @@ const ItemDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
+  const { openItem: openJourneyMap } = useOpenPresenceMatrixViewer();
   const route = useRoute<ItemDetailScreenRouteProp>();
   const { itemId } = route.params;
   const { t } = useTranslation();
@@ -167,16 +169,24 @@ const ItemDetailScreen = () => {
   }, [item, fetchAllCharacters]);
 
   const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ItemForm', { itemId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, itemId, colors.text, canEdit],
+    () => (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {selectedStory?.type === 'linear' && (
+          <TouchableOpacity onPress={() => openJourneyMap(itemId)} style={{ marginRight: 15 }}>
+            <Ionicons name="map-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
+        {canEdit && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ItemForm', { itemId })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="pencil-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
+      </View>
+    ),
+    [navigation, itemId, colors.text, canEdit, openJourneyMap, selectedStory?.type],
   );
 
   useFocusEffect(
@@ -292,11 +302,13 @@ const ItemDetailScreen = () => {
       />
 
       {selectedStory && (
-        <ItemJourneyTimeline
-          item={item}
-          storyId={selectedStory.id}
-          storyType={selectedStory.type}
-        />
+        <>
+          <ItemJourneyTimeline
+            item={item}
+            storyId={selectedStory.id}
+            storyType={selectedStory.type}
+          />
+        </>
       )}
 
       <NoteManager

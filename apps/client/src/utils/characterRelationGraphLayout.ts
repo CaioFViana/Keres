@@ -297,10 +297,7 @@ function packClusters(
   const rowTargetWidth =
     direction === 'left-to-right'
       ? Infinity
-      : Math.max(
-          maxOf(clusters.map((cluster) => cluster.width)),
-          Math.sqrt(totalArea) * 1.4,
-        );
+      : Math.max(maxOf(clusters.map((cluster) => cluster.width)), Math.sqrt(totalArea) * 1.4);
 
   const nodes: RelationGraphNode[] = [];
   let rowX = 0;

@@ -100,6 +100,7 @@ const ChapterListScreen = () => {
   const [reorderChapterId, setReorderChapterId] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [tagsByChapterId, setTagsByChapterId] = useState<Map<string, TagSelect[]>>(new Map());
+  const [tagsBySceneId, setTagsBySceneId] = useState<Map<string, TagSelect[]>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
   const loadOutline = useCallback(async () => {
@@ -122,22 +123,27 @@ const ChapterListScreen = () => {
     if (!storyId) {
       setAllTags([]);
       setTagsByChapterId(new Map());
+      setTagsBySceneId(new Map());
       return;
     }
     const relationService = createTagRelationService(db);
-    const [loadedTags, chapterTags] = await Promise.all([
+    const [loadedTags, chapterTags, sceneTags] = await Promise.all([
       createTagService(db).getTagsByStoryId(storyId),
       Promise.all(
         outlineChapters.map((chapter) =>
           relationService.getTagsForEntity(storyId, chapter.id, 'Chapter'),
         ),
       ),
+      Promise.all(
+        scenes.map((scene) => relationService.getTagsForEntity(storyId, scene.id, 'Scene')),
+      ),
     ]);
     setAllTags(loadedTags);
     setTagsByChapterId(
       new Map(outlineChapters.map((chapter, index) => [chapter.id, chapterTags[index]])),
     );
-  }, [db, outlineChapters, storyId]);
+    setTagsBySceneId(new Map(scenes.map((scene, index) => [scene.id, sceneTags[index]])));
+  }, [db, outlineChapters, scenes, storyId]);
 
   useEffect(() => {
     loadTags();
@@ -323,6 +329,7 @@ const ChapterListScreen = () => {
               onReorderScenes={() => setReorderChapterId(item.id)}
               expandedSceneIds={expandedSceneIds}
               onSceneExpandedChange={onSceneExpandedChange}
+              tagsBySceneId={tagsBySceneId}
             />
           )}
         />
@@ -340,6 +347,7 @@ const ChapterListScreen = () => {
       selectedStory?.type,
       searchQuery,
       tagsByChapterId,
+      tagsBySceneId,
     ],
   );
 

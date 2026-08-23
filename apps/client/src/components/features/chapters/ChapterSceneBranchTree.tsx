@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { ChoiceSelect, SceneSelect } from '@/src/db/schema';
+import { ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
 import SceneListItem from '@/src/components/features/list-items/SceneListItem';
 
@@ -16,6 +16,7 @@ interface Props {
   onToggleFavorite: (sceneId: string, isFavorite: boolean) => void;
   expandedSceneIds: ReadonlySet<string>;
   onSceneExpandedChange: (sceneId: string, isExpanded: boolean) => void;
+  tagsBySceneId?: ReadonlyMap<string, TagSelect[]>;
 }
 
 /**
@@ -30,6 +31,7 @@ const ChapterSceneBranchTree: React.FC<Props> = ({
   onToggleFavorite,
   expandedSceneIds,
   onSceneExpandedChange,
+  tagsBySceneId,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -82,6 +84,7 @@ const ChapterSceneBranchTree: React.FC<Props> = ({
                     onToggleFavorite={onToggleFavorite}
                     isExpanded={expandedSceneIds.has(scene.id)}
                     onExpandedChange={(isExpanded) => onSceneExpandedChange(scene.id, isExpanded)}
+                    tags={tagsBySceneId?.get(scene.id)}
                   />
                 </View>
               ))}

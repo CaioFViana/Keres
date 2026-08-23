@@ -1,11 +1,12 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { SceneSelect } from '../../../db/schema';
+import { SceneSelect, TagSelect } from '../../../db/schema';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface SceneListItemProps {
@@ -16,6 +17,7 @@ interface SceneListItemProps {
   density?: 'default' | 'nested';
   isExpanded?: boolean;
   onExpandedChange?: (isExpanded: boolean) => void;
+  tags?: TagSelect[];
 }
 
 const SceneListItem: React.FC<SceneListItemProps> = ({
@@ -26,6 +28,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
   density,
   isExpanded,
   onExpandedChange,
+  tags = [],
 }) => {
   const { colors } = useTheme();
 
@@ -47,6 +50,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
     <View>
       {summaryText && <Text style={styles.summaryText}>{summaryText}</Text>}
       {scn.extraNotes && <Text style={styles.notesText}>{truncate(scn.extraNotes, 150)}</Text>}
+      {tags.length > 0 && <TagList tags={tags} />}
     </View>
   );
 

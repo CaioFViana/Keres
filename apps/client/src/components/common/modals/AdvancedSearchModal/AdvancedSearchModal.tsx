@@ -79,6 +79,9 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
       // Campos customizados de Story Schema já vêm com o texto de exibição pronto (`rawLabel`,
       // definido pelo usuário) - não é uma chave de tradução, então não passa por `t()`.
       const fieldLabel = field.rawLabel ?? t(field.label);
+      const fieldLabelText = (
+        <Text style={[styles.filledFieldLabel, { color: colors.textSecondary }]}>{fieldLabel}</Text>
+      );
 
       if (field.isSuggestion) {
         return (
@@ -86,6 +89,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             key={field.name}
             style={[styles.inputContainer, styles.inputContainerSuggestion, styleOverrides]}
           >
+            {fieldLabelText}
             <SuggestionTextInput
               placeholder={fieldLabel}
               value={value || ''}
@@ -102,6 +106,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         case 'id': // Treat ID fields as string for search input
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              {fieldLabelText}
               <TextInput // Custom TextInput
                 value={value || ''}
                 onChangeText={(text) => handleInputChange(field.name, text)}
@@ -132,6 +137,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           // For numbers, could offer range or exact match. For simplicity, single text input for now.
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              {fieldLabelText}
               <TextInput // Custom TextInput
                 value={value !== undefined && value !== null ? String(value) : ''}
                 onChangeText={(text) =>
@@ -153,6 +159,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               key={field.name}
               style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
             >
+              {fieldLabelText}
               <DatePickerInput
                 value={value ? String(value) : null}
                 onChange={(newValue) => handleInputChange(field.name, newValue ?? undefined)}
@@ -166,6 +173,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               key={field.name}
               style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
             >
+              {fieldLabelText}
               <ColorPickerInput
                 currentColor={value || ''}
                 onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
@@ -177,6 +185,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           if (!field.entityTargetType) return null;
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              {fieldLabelText}
               <EntityPickerInput
                 storyId={storyId}
                 entityType={field.entityTargetType as StorySchemaEntityType}
@@ -211,7 +220,11 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
-      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {effectiveScopes.map((scope) => (
           <AdvancedSearchScopeFields
             key={`${scope.entityName}:${scope.prefix}`}
@@ -279,6 +292,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     padding: 20,
+    // ResponsiveModal normally clips to preserve rounded media/modal surfaces.
+    // Advanced-search controls draw their focus treatment at the edge, so this
+    // particular form must let that treatment extend into its own padding.
+    overflow: 'visible',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -294,11 +311,25 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     marginBottom: 20,
   },
+  // Keeps an input's themed focus border inside the scrollable clipping area.
+  scrollContent: {
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+  },
   inputContainer: {
     marginBottom: 0,
+    // The native/web focus treatment can extend a pixel beyond the control.
+    // Keep that room at the immediate parent, not only at ScrollView level.
+    paddingHorizontal: 2,
+    paddingVertical: 2,
   },
   inputContainerSuggestion: {
     marginBottom: 20,
+  },
+  filledFieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   scopeTitle: {
     fontSize: 16,

@@ -42,13 +42,15 @@ Drawer unificado dá acesso a todos os módulos do sistema, com uma tela por ent
 13. **Galeria** (`GalleryStack`)
 14. **Relações de Personagens** (`CharacterRelationsStack`) - inclui um grafo de relações (`CharacterRelationGraphScreen`).
 15. **Atributos Customizados** (`StorySchemaStack`) - onde o usuário define campos customizados por tipo de entidade (ver `project_plan.md`, seção "Story Schema Fields").
-16. **Sugestões** (`Suggestions`) - valores usados para sugerir preenchimento em campos do universo da história.
-17. **Comentários** (`CommentsStack`) - lista centralizada dos comentários feitos nos campos e elementos da história.
-18. **Logs de Operação** (`OperationLogStack`) - histórico auditável de criações/edições/exclusões sincronizadas.
-19. **Análise da História** (`StoryAnalysis`) - relatório de problemas estruturais que o autor dificilmente notaria sozinho (cenas órfãs, escolhas quebradas, etc.) - recarrega ao focar.
-20. **Configurações da História** (`StorySettings`)
-21. **Seleção de Histórias** (`StorySelection`) - item "voltar": reseta a pilha raiz de volta à lista de histórias, sem ficar empilhado no histórico de navegação.
-22. **Ajuda** (`HelpDrawer`) - abre o catálogo de ajuda sem sair da história.
+16. **Sugestões** (`Suggestions`) - armazenamento por história de valores livres; não é um catálogo padrão de preenchimento (ver `project_plan.md`).
+17. **Status** (`StatsDrawer`) - só visível quando `Story.statSystem` está ligado; reúne lista, escadas, comparação e ranking de status.
+18. **Comentários** (`CommentsStack`) - lista centralizada dos comentários feitos em campos de entidades da história.
+19. **Logs de Operação** (`OperationLogStack`) - histórico auditável de criações/edições/exclusões sincronizadas.
+20. **Análise da História** (`StoryAnalysis`) - relatório de problemas estruturais que o autor dificilmente notaria sozinho (cenas órfãs, escolhas quebradas etc.); recarrega ao focar.
+21. **Configurações da História** (`StorySettings`)
+22. **Dispositivos de Trama** (`StoryDevicesDrawer`) - visível quando a opção correspondente das configurações do app está ligada.
+23. **Ajuda** (`HelpDrawer`) - abre o catálogo de ajuda sem sair da história.
+24. **Seleção de Histórias** (`StorySelection`) - item "voltar": reseta a pilha raiz de volta à lista de histórias, sem ficar empilhado no histórico de navegação.
 
 ### Padrão de telas por entidade (Personagens, Locais, Capítulos, Escolhas, Itens, Trajetórias de Item, Cenas, Etiquetas, Regras do Mundo, Notas)
 
@@ -66,6 +68,8 @@ Exceções ao padrão:
 - **Atributos Customizados** (Story Schema) tem Listagem e Formulário de campo, mas não "Detalhe" - o campo em si não tem uma visualização separada da edição.
 - **Log de Operações** é somente leitura: tem Listagem e Detalhe, sem Formulário.
 - **Comentários** são transversais: podem ser abertos junto de um campo no detalhe e também aparecem na lista centralizada; não possuem formulário de entidade próprio.
+- **Status** é uma feature da história, não uma entidade comum: tem telas próprias de lista, formulário, escada, comparação e ranking; o detalhe/formulário do personagem concentra modos e valores.
+- **Matriz de presença/jornada** é uma sobreposição global aberta pelos detalhes de Personagem ou Item. Ela compara presença de personagens ou jornadas de itens nas cenas de histórias lineares; não entra na pilha de navegação.
 
 ## Ajuda
 

@@ -1,6 +1,6 @@
 # Keres - Story Organizer Project Plan
 
-Um projeto offline-first para organização de histórias (solo ou colaborativa), com sincronização inteligente entre dispositivos locais e servidor remoto. O objetivo é fornecer uma ferramenta robusta e intuitiva para escritores, permitindo que organizem todos os aspectos de suas narrativas, desde personagens e locais até a estrutura de cenas e regras do mundo. O sistema será projetado para ser acessível e fácil de usar, com foco na organização eficiente do conteúdo da história.
+Um organizador offline-first de histórias (solo ou colaborativas), com sincronização inteligente entre dispositivos locais e servidor remoto. O Keres oferece aos escritores uma forma de organizar personagens, locais, cenas, regras do mundo e a estrutura narrativa, com foco em acesso rápido e organização eficiente.
 
 Backend com **Elysia (Bun)** + **Zod** para rotas/validação, **Drizzle ORM** para persistência (**PostgreSQL** no servidor), **ULID** como identificadores. Frontend em **React Native + Expo** (mobile nativo e web via React Native Web) com suporte a SQLite local (Drizzle + expo-sqlite) em um modelo offline-first com engine de sincronização própria. A build web do frontend é o que o app desktop (**Electron**) empacota para Windows/Mac/Linux. Um painel administrativo separado (React + Vite) é servido pela própria API.
 

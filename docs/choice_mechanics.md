@@ -12,7 +12,7 @@ A entidade `Choice` é fundamental para definir as transições entre cenas em u
 *   **`text`**: O texto que descreve a escolha (ex: "Vire à esquerda na floresta").
 *   **`createdAt`, `updatedAt`**: Timestamps de criação e última atualização.
 
-É importante notar que, na implementação atual, as escolhas sempre conectam **cenas** entre si. A possibilidade de conectar momentos (partes menores dentro de uma cena) é uma questão em aberto (referência: TODO 8 no `tmp/planningTODO.txt`).
+Na implementação atual, escolhas sempre conectam **cenas** entre si. Não há uma entidade de "momento" menor dentro de uma cena que possa ser origem ou destino de escolha.
 
 ## 2. Tipos de História e Gerenciamento de Escolhas
 

@@ -47,7 +47,6 @@ import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
 import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen';
-import ItemJourneyListScreen from '../screens/itemJourneys/ItemJourneyListScreen';
 import ItemDetailScreen from '../screens/items/ItemDetailScreen';
 import ItemFormScreen from '../screens/items/ItemFormScreen';
 import ItemListScreen from '../screens/items/ItemListScreen';
@@ -98,7 +97,6 @@ export type MainSystemDrawerParamList = {
   ChaptersStack: NavigatorScreenParams<ChapterStackParamList> | undefined;
   ChoicesStack: NavigatorScreenParams<ChoiceStackParamList> | undefined;
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
-  ItemJourneysStack: NavigatorScreenParams<ItemJourneyStackParamList> | undefined;
   TagsStack: NavigatorScreenParams<TagsStackParamList> | undefined;
   WorldRulesStack: NavigatorScreenParams<WorldRulesStackParamList> | undefined;
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
@@ -226,6 +224,8 @@ export type ItemStackParamList = {
   Items: undefined;
   ItemDetail: ItemDetailScreenParamList['ItemDetail'];
   ItemForm: { itemId?: string };
+  ItemJourneyDetail: { itemJourneyId: string };
+  ItemJourneyForm: { itemJourneyId?: string; itemId?: string };
 };
 
 const ItemStackNavigator = () => {
@@ -235,31 +235,9 @@ const ItemStackNavigator = () => {
       <ItemStack.Screen name="Items" component={ItemListScreen} />
       <ItemStack.Screen name="ItemDetail" component={ItemDetailScreen} />
       <ItemStack.Screen name="ItemForm" component={ItemFormScreen} />
+      <ItemStack.Screen name="ItemJourneyDetail" component={ItemJourneyDetailScreen} />
+      <ItemStack.Screen name="ItemJourneyForm" component={ItemJourneyFormScreen} />
     </ItemStack.Navigator>
-  );
-};
-//#endregion
-//#region ItemJourney
-const ItemJourneyStack = createNativeStackNavigator<ItemJourneyStackParamList>();
-
-export type ItemJourneyDetailScreenParamList = {
-  ItemJourneyDetail: { itemJourneyId: string };
-};
-
-export type ItemJourneyStackParamList = {
-  ItemJourneys: undefined;
-  ItemJourneyDetail: ItemJourneyDetailScreenParamList['ItemJourneyDetail'];
-  ItemJourneyForm: { itemJourneyId?: string; itemId?: string };
-};
-
-const ItemJourneyStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <ItemJourneyStack.Navigator screenOptions={{ headerShown: false }}>
-      <ItemJourneyStack.Screen name="ItemJourneys" component={ItemJourneyListScreen} />
-      <ItemJourneyStack.Screen name="ItemJourneyDetail" component={ItemJourneyDetailScreen} />
-      <ItemJourneyStack.Screen name="ItemJourneyForm" component={ItemJourneyFormScreen} />
-    </ItemJourneyStack.Navigator>
   );
 };
 //#endregion
@@ -687,20 +665,6 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('ItemsStack', { screen: 'Items' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="ItemJourneysStack"
-          component={ItemJourneyStackNavigator}
-          options={{
-            title: t('item_journeys_title'),
-            drawerLabel: t('item_journeys_title'),
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('ItemJourneysStack', { screen: 'ItemJourneys' });
             },
           })}
         />

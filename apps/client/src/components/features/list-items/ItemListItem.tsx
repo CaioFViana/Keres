@@ -11,9 +11,16 @@ import { createReferenceListItemStyles } from '@/src/components/features/list-it
 interface ItemListItemProps {
   item: ItemSelect;
   onViewDetails: (itemId: string) => void;
+  onToggleFavorite: (itemId: string, isFavorite: boolean) => void;
+  renderJourneys?: () => React.ReactNode;
 }
 
-const ItemListItem: React.FC<ItemListItemProps> = ({ item, onViewDetails }) => {
+const ItemListItem: React.FC<ItemListItemProps> = ({
+  item,
+  onViewDetails,
+  onToggleFavorite,
+  renderJourneys,
+}) => {
   const { colors } = useTheme();
 
   const referenceStyles = createReferenceListItemStyles(colors);
@@ -47,6 +54,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onViewDetails }) => {
       {currentItem.characterOwnerId && (
         <Text style={styles.detailText}>Owner: {truncate(currentItem.characterOwnerId, 50)}</Text>
       )}
+      {renderJourneys?.()}
     </View>
   );
 
@@ -54,6 +62,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onViewDetails }) => {
     <GenericExpandedListItemWithActions
       item={item}
       onViewDetails={onViewDetails}
+      onToggleFavorite={onToggleFavorite}
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

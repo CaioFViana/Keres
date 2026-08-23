@@ -10,6 +10,7 @@ import ChapterSceneBranchTree from './ChapterSceneBranchTree';
 interface Props {
   storyType: 'linear' | 'branching' | undefined;
   scenes: SceneSelect[];
+  allChapterScenes?: SceneSelect[];
   choices: ChoiceSelect[];
   canEdit: boolean;
   onOpenScene: (sceneId: string) => void;
@@ -23,6 +24,7 @@ interface Props {
 const ChapterScenesList: React.FC<Props> = ({
   storyType,
   scenes,
+  allChapterScenes = scenes,
   choices,
   canEdit,
   onOpenScene,
@@ -75,6 +77,7 @@ const ChapterScenesList: React.FC<Props> = ({
       ) : storyType === 'branching' ? (
         <ChapterSceneBranchTree
           scenes={sorted}
+          allChapterScenes={allChapterScenes}
           choices={choices}
           onOpenScene={onOpenScene}
           onToggleFavorite={onToggleFavorite}

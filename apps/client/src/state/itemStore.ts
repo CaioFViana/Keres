@@ -15,6 +15,9 @@ export const useItemStore = createEntityStore<'items', ItemSelect, ItemService>(
       p.favoriteFilterState,
       p.advancedSearchCriteria,
     ),
+  updateFavorite: (service, userId, id, isFavorite) =>
+    service.updateItem(userId, id, { isFavorite }),
+  changeEvent: 'item_changed',
   defaultSort: 'createdAt',
   persistKey: 'item-storage',
   errorMessages: { fetch: 'Failed to fetch items.' },

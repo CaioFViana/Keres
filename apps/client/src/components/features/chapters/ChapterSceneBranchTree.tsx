@@ -7,7 +7,10 @@ import { useTheme } from '@/src/theme';
 import SceneListItem from '@/src/components/features/list-items/SceneListItem';
 
 interface Props {
+  /** Cenas visíveis, que podem estar filtradas pela busca. */
   scenes: SceneSelect[];
+  /** Estrutura integral do capítulo, usada para preservar números de camada ao filtrar. */
+  allChapterScenes: SceneSelect[];
   choices: ChoiceSelect[];
   onOpenScene: (sceneId: string) => void;
   onToggleFavorite: (sceneId: string, isFavorite: boolean) => void;
@@ -21,6 +24,7 @@ interface Props {
  */
 const ChapterSceneBranchTree: React.FC<Props> = ({
   scenes,
+  allChapterScenes,
   choices,
   onOpenScene,
   onToggleFavorite,
@@ -29,44 +33,59 @@ const ChapterSceneBranchTree: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const layers = useMemo(() => buildLayers(scenes, choices), [scenes, choices]);
+  const layers = useMemo(() => {
+    const visibleIds = new Set(scenes.map((scene) => scene.id));
+    return buildLayers(allChapterScenes, choices)
+      .map((layer, sourceIndex) => ({
+        sourceIndex,
+        scenes: layer.filter((scene) => visibleIds.has(scene.id)),
+      }))
+      .filter((layer) => layer.scenes.length > 0);
+  }, [allChapterScenes, choices, scenes]);
   const styles = useMemo(
     () =>
       StyleSheet.create({
         scroll: { marginTop: 4 },
-        content: { flexDirection: 'row', gap: 16, paddingBottom: 4 },
-        layer: { width: 226, gap: 6 },
+        content: { gap: 12, paddingBottom: 4 },
+        layer: { gap: 6 },
         layerHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
         layerText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+        sceneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+        // A single scene should use the entire layer width; siblings still wrap into columns
+        // on wider screens instead of leaving a narrow card at the left edge.
+        sceneCard: { flexGrow: 1, flexBasis: 250, minWidth: 220 },
       }),
     [colors],
   );
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator style={styles.scroll}>
+    <ScrollView style={styles.scroll} nestedScrollEnabled>
       <View style={styles.content}>
-        {layers.map((layer, index) => (
-          <View key={index} style={styles.layer}>
+        {layers.map((layer) => (
+          <View key={layer.sourceIndex} style={styles.layer}>
             <View style={styles.layerHeader}>
-              {index > 0 && (
+              {layer.sourceIndex > 0 && (
                 <Ionicons name="arrow-forward" size={14} color={colors.textSecondary} />
               )}
               <Text style={styles.layerText}>
-                {t('chapter_outline_layer', { count: index + 1 })}
+                {t('chapter_outline_layer', { count: layer.sourceIndex + 1 })}
               </Text>
             </View>
-            {layer.map((scene) => (
-              <SceneListItem
-                key={scene.id}
-                scene={scene}
-                storyType="branching"
-                density="nested"
-                onViewDetails={onOpenScene}
-                onToggleFavorite={onToggleFavorite}
-                isExpanded={expandedSceneIds.has(scene.id)}
-                onExpandedChange={(isExpanded) => onSceneExpandedChange(scene.id, isExpanded)}
-              />
-            ))}
+            <View style={styles.sceneRow}>
+              {layer.scenes.map((scene) => (
+                <View key={scene.id} style={styles.sceneCard}>
+                  <SceneListItem
+                    scene={scene}
+                    storyType="branching"
+                    density="nested"
+                    onViewDetails={onOpenScene}
+                    onToggleFavorite={onToggleFavorite}
+                    isExpanded={expandedSceneIds.has(scene.id)}
+                    onExpandedChange={(isExpanded) => onSceneExpandedChange(scene.id, isExpanded)}
+                  />
+                </View>
+              ))}
+            </View>
           </View>
         ))}
       </View>

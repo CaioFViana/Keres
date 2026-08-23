@@ -30,7 +30,8 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { ItemJourneysScreenNavigationProp } from './ItemJourneyListScreen';
+import { ItemStackParamList } from '../../navigation/MainSystemStack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type ItemJourneyDetailScreenParamList = {
   ItemJourneyDetail: { itemJourneyId: string };
@@ -44,7 +45,8 @@ type ItemJourneyDetailScreenRouteProp = RouteProp<
 const ItemJourneyDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const navigation = useNavigation<ItemJourneysScreenNavigationProp>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ItemStackParamList, 'ItemJourneyDetail'>>();
   const route = useRoute<ItemJourneyDetailScreenRouteProp>();
   const { itemJourneyId } = route.params;
   const { t } = useTranslation();

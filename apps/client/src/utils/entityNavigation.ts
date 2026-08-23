@@ -30,7 +30,7 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Location: { stack: 'LocationsStack', screen: 'LocationDetail', paramKey: 'locationId' },
   Item: { stack: 'ItemsStack', screen: 'ItemDetail', paramKey: 'itemId' },
   ItemJourney: {
-    stack: 'ItemJourneysStack',
+    stack: 'ItemsStack',
     screen: 'ItemJourneyDetail',
     paramKey: 'itemJourneyId',
   },

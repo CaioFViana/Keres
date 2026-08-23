@@ -243,6 +243,9 @@ const ChapterListScreen = () => {
   const memoizedChapterListItem = useCallback(
     ({ item }: { item: ChapterSelect }) => {
       const query = searchQuery.trim().toLocaleLowerCase();
+      const allChapterScenes = scenesWithFavoriteState.filter(
+        (scene) => scene.chapterId === item.id,
+      );
       const chapterScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
       const hasSceneMatch = query
         ? scenesWithFavoriteState.some(
@@ -260,6 +263,7 @@ const ChapterListScreen = () => {
             <ChapterScenesList
               storyType={selectedStory?.type}
               scenes={chapterScenes}
+              allChapterScenes={allChapterScenes}
               choices={choices}
               canEdit={canEdit}
               onOpenScene={handleOpenScene}

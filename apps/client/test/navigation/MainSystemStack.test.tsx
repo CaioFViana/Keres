@@ -176,10 +176,6 @@ jest.mock('../../src/screens/itemJourneys/ItemJourneyFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/itemJourneys/ItemJourneyListScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock('../../src/screens/items/ItemDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -303,7 +299,7 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(23);
+  expect(mockDrawerScreens).toHaveLength(22);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -324,7 +320,6 @@ it.each([
   ['ChoicesStack', 'Choices'],
   ['LocationsStack', 'Locations'],
   ['ItemsStack', 'Items'],
-  ['ItemJourneysStack', 'ItemJourneys'],
   ['TagsStack', 'Tags'],
   ['WorldRulesStack', 'WorldRules'],
   ['NotesStack', 'Notes'],

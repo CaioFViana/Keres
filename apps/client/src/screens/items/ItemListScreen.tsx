@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -11,14 +11,24 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ItemListItem from '@/src/components/features/list-items/ItemListItem';
+import ItemJourneyRows from '@/src/components/features/item-journeys/ItemJourneyRows';
+import { useDrizzle } from '../../db';
+import { ChapterSelect, ChoiceSelect, ItemJourneySelect, SceneSelect } from '../../db/schema';
 import { ItemSelect } from '../../db/schemas/items';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { createChoiceService } from '../../services/storymanagement/ChoiceService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createSceneService } from '../../services/storymanagement/SceneService';
+import { entityEventEmitter } from '../../utils/EventEmitter';
+import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -29,6 +39,8 @@ const ItemListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const drizzleDb = useDrizzle();
+  const selectedStory = useStoryStore((state) => state.selectedStory);
   const navigation = useNavigation<ItemsScreenNavigationProp>();
 
   const {
@@ -39,12 +51,15 @@ const ItemListScreen = () => {
     searchQuery,
     activeSort,
     sortDirection,
+    favoriteFilterState,
     advancedSearchCriteria,
     handleSearch,
     handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
+    handleFavoriteFilterChange,
     setAdvancedSearchCriteria,
+    toggleFavorite,
   } = useEntityListScreen({
     useStore: useItemStore,
     collectionKey: 'items',
@@ -52,6 +67,43 @@ const ItemListScreen = () => {
   });
 
   const { canEdit } = useStoryRole(storyId);
+  const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
+  const [scenes, setScenes] = useState<SceneSelect[]>([]);
+  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
+  const [choices, setChoices] = useState<ChoiceSelect[]>([]);
+
+  const loadJourneys = useCallback(async () => {
+    if (!drizzleDb || !storyId) return;
+    const [loadedJourneys, loadedScenes, loadedChapters, loadedChoices] = await Promise.all([
+      createItemJourneyService(drizzleDb).getAllByStoryId(storyId),
+      createSceneService(drizzleDb).getAllByStoryId(storyId),
+      createChapterService(drizzleDb).getAllByStoryId(storyId),
+      createChoiceService(drizzleDb).getAllByStoryId(storyId),
+    ]);
+    setJourneys(loadedJourneys);
+    setScenes(loadedScenes);
+    setChapters(loadedChapters);
+    setChoices(loadedChoices.filter((choice) => !choice.isDeleted));
+  }, [drizzleDb, storyId]);
+
+  useEffect(() => {
+    loadJourneys();
+  }, [loadJourneys]);
+  useEffect(() => {
+    const refresh = (changedStoryId: string) => {
+      if (changedStoryId === storyId) loadJourneys();
+    };
+    entityEventEmitter.on('item_journey_changed', refresh);
+    entityEventEmitter.on('scene_changed', refresh);
+    entityEventEmitter.on('chapter_changed', refresh);
+    entityEventEmitter.on('choice_changed', refresh);
+    return () => {
+      entityEventEmitter.off('item_journey_changed', refresh);
+      entityEventEmitter.off('scene_changed', refresh);
+      entityEventEmitter.off('chapter_changed', refresh);
+      entityEventEmitter.off('choice_changed', refresh);
+    };
+  }, [loadJourneys, storyId]);
 
   const handleViewDetails = useCallback(
     (itemId: string) => {
@@ -59,12 +111,59 @@ const ItemListScreen = () => {
     },
     [navigation],
   );
+  const handleToggleFavorite = useCallback(
+    async (itemId: string, isFavorite: boolean) => {
+      await toggleFavorite(itemId, isFavorite);
+    },
+    [toggleFavorite],
+  );
+  const handleOpenJourney = useCallback(
+    (itemJourneyId: string) => navigation.navigate('ItemJourneyDetail', { itemJourneyId }),
+    [navigation],
+  );
+  const handleAddJourney = useCallback(
+    (itemId: string) => navigation.navigate('ItemJourneyForm', { itemId }),
+    [navigation],
+  );
 
   const memoizedItemListItem = useCallback(
-    ({ item }: { item: ItemSelect }) => (
-      <ItemListItem item={item} onViewDetails={handleViewDetails} />
-    ),
-    [handleViewDetails],
+    ({ item }: { item: ItemSelect }) => {
+      const orderedJourneys = orderItemJourneysByNarrative(
+        journeys.filter((journey) => journey.itemId === item.id),
+        selectedStory?.type ?? 'linear',
+        scenes,
+        choices,
+        chapters,
+      );
+      return (
+        <ItemListItem
+          item={item}
+          onViewDetails={handleViewDetails}
+          onToggleFavorite={handleToggleFavorite}
+          renderJourneys={() => (
+            <ItemJourneyRows
+              journeys={orderedJourneys}
+              scenes={scenes}
+              canEdit={canEdit}
+              onOpenJourney={handleOpenJourney}
+              onAddJourney={() => handleAddJourney(item.id)}
+            />
+          )}
+        />
+      );
+    },
+    [
+      canEdit,
+      chapters,
+      choices,
+      handleAddJourney,
+      handleOpenJourney,
+      handleViewDetails,
+      handleToggleFavorite,
+      journeys,
+      scenes,
+      selectedStory?.type,
+    ],
   );
 
   const memoizedSortOptions = useMemo(
@@ -139,13 +238,14 @@ const ItemListScreen = () => {
         onSortDirectionChange={handleSortDirectionChange}
         currentSortDirection={sortDirection}
         currentSortValue={activeSort}
+        onFavoriteFilterChange={handleFavoriteFilterChange}
+        currentFavoriteFilterState={favoriteFilterState}
         disableTagFilter={true}
         entityName="Item"
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
         isLoading={loading}
-        disableFavoriteFilter={false} // Items have isFavorite field
       />
     </View>
   );

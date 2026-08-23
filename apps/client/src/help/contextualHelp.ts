@@ -48,7 +48,6 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   Items: 'items',
   ItemDetail: 'items',
   ItemForm: 'items',
-  ItemJourneysStack: 'item-journeys',
   ItemJourneys: 'item-journeys',
   ItemJourneyDetail: 'item-journeys',
   ItemJourneyForm: 'item-journeys',

@@ -25,7 +25,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { ItemJourneyStackParamList } from '../../navigation/MainSystemStack';
+import { ItemStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
 import { useItemStore } from '../../state/itemStore'; // Assuming ItemStore for items
@@ -38,9 +38,9 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
 
-type ItemJourneyFormScreenRouteProp = RouteProp<ItemJourneyStackParamList, 'ItemJourneyForm'>;
+type ItemJourneyFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemJourneyForm'>;
 type ItemJourneyFormScreenNavigationProp = NativeStackNavigationProp<
-  ItemJourneyStackParamList,
+  ItemStackParamList,
   'ItemJourneyForm'
 >;
 

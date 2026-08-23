@@ -34,7 +34,6 @@ Drawer unificado dá acesso a todos os módulos do sistema, com uma tela por ent
 5. **Escolhas** (`ChoicesStack`) - **oculto no drawer se a história for `linear`**. Inclui um mapa/grafo da história (`ChoiceViewScreen`).
 6. **Locais** (`LocationsStack`) - inclui uma visualização em grafo das relações entre locais (`LocationGraphScreen`).
 7. **Itens** (`ItemsStack`)
-8. **Trajetórias de Item** (`ItemJourneysStack`) - histórico de mudanças de estado/posse de um item ao longo das cenas.
 9. **Etiquetas** (`TagsStack`)
 10. **Regras do Mundo** (`WorldRulesStack`)
 11. **Notas** (`NotesStack`)

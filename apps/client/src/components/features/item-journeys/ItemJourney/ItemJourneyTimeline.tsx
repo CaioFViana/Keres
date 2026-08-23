@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +12,8 @@ import {
   ItemSelect,
   SceneSelect,
 } from '../../../../db/schema';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createCharacterService } from '../../../../services/storymanagement/CharacterService';
 import { createChapterService } from '../../../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../../../services/storymanagement/ChoiceService';
@@ -43,7 +43,7 @@ interface ItemJourneyTimelineProps {
 const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId, storyType }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
   const drizzleDb = useDrizzle();
 
@@ -117,14 +117,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
   );
 
   const handleAddJourney = useCallback(() => {
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      drawerNavigation.navigate('ItemJourneysStack', {
-        screen: 'ItemJourneyForm',
-        params: { itemId: item.id },
-      });
-    }
+    navigation.navigate('ItemJourneyForm', { itemId: item.id });
   }, [navigation, item.id]);
 
   const originOwner = item.characterOwnerId ? characterById.get(item.characterOwnerId) : undefined;

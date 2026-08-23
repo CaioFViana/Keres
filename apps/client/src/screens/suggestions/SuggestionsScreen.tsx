@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import {
   isSuggestionAttributeType,
@@ -26,6 +27,7 @@ import {
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
@@ -62,6 +64,7 @@ const SuggestionsScreen = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();
+  const commonInputStyles = getCommonInputStyles(colors);
   const navigation = useNavigation<any>();
   const { isCompact } = useResponsiveLayout();
   const db = useDrizzle();
@@ -159,12 +162,92 @@ const SuggestionsScreen = () => {
     setStoryValues(usageCounts.filter(([value]) => !storedValues.has(value)));
   }, [selectedType, storyId, suggestionService]);
 
+  const selectedGroup = groups.find((group) => group.type === selectedType);
+  const copyDestinations = groups.filter((group) => group.type !== selectedType);
+
+  const removeNamedList = useCallback(() => {
+    if (!selectedType || !isNamedListType(selectedType)) return;
+    AppAlert.alert(t('delete'), t('delete_named_suggestion_list_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: async () => {
+          if (!userId || !storyId) return;
+          await suggestionService.deleteNamedList(userId, storyId, selectedType);
+          await loadGroups();
+        },
+      },
+    ]);
+  }, [loadGroups, selectedType, storyId, suggestionService, t, userId]);
+
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('standard_suggestions_title') });
+      navigation.setOptions({
+        title: t('standard_suggestions_title'),
+        headerRight: () =>
+          canEdit ? (
+            <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setCreatingList(true);
+                  setRenamingList(false);
+                  setCopying(false);
+                }}
+                accessibilityLabel={t('suggestion_new_list')}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+              {selectedType && stored.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setCopying(true);
+                    setCopyTargets([]);
+                  }}
+                  accessibilityLabel={t('suggestion_copy_to')}
+                >
+                  <Ionicons name="copy-outline" size={24} color={colors.text} />
+                </TouchableOpacity>
+              )}
+              {selectedType && isNamedListType(selectedType) && (
+                <>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setRenamingList(true);
+                      setRenameListName(selectedGroup?.name ?? '');
+                      setCreatingList(false);
+                      setCopying(false);
+                    }}
+                    accessibilityLabel={t('suggestion_rename_list')}
+                  >
+                    <Ionicons name="pencil-outline" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={removeNamedList}
+                    accessibilityLabel={t('suggestion_delete_list')}
+                  >
+                    <Ionicons name="trash-outline" size={24} color={colors.error} />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          ) : undefined,
+      });
       loadGroups();
       loadValues();
-    }, [loadGroups, loadValues, navigation, t]),
+    }, [
+      canEdit,
+      colors.error,
+      colors.text,
+      loadGroups,
+      loadValues,
+      navigation,
+      removeNamedList,
+      selectedGroup?.name,
+      selectedType,
+      stored.length,
+      t,
+    ]),
   );
   useEffect(() => {
     loadValues();
@@ -259,30 +342,12 @@ const SuggestionsScreen = () => {
     }
   };
 
-  const removeNamedList = () => {
-    if (!selectedType || !isNamedListType(selectedType)) return;
-    AppAlert.alert(t('delete'), t('delete_named_suggestion_list_message'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          if (!userId || !storyId) return;
-          await suggestionService.deleteNamedList(userId, storyId, selectedType);
-          await loadGroups();
-        },
-      },
-    ]);
-  };
-
   const toggleCopyTarget = (type: string) => {
     setCopyTargets((current) =>
       current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
     );
   };
 
-  const selectedGroup = groups.find((group) => group.type === selectedType);
-  const copyDestinations = groups.filter((group) => group.type !== selectedType);
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background, padding: 16 },
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
@@ -343,10 +408,12 @@ const SuggestionsScreen = () => {
     },
     icon: { padding: 7 },
     empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
     copyList: { marginBottom: 12 },
     copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     copyLabel: { flex: 1, color: colors.text },
+    modalContent: { padding: 16, gap: 12 },
+    modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   });
 
   const groupsList = isCompact ? (
@@ -395,113 +462,6 @@ const SuggestionsScreen = () => {
         <Text style={styles.key}>
           {t('suggestion_key')}: {selectedGroup.key}
         </Text>
-      )}
-      {canEdit && (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.icon}
-            onPress={() => {
-              setCreatingList((open) => !open);
-              setRenamingList(false);
-            }}
-            accessibilityLabel={t('suggestion_new_list')}
-          >
-            <Ionicons
-              name="add-circle-outline"
-              size={26}
-              color={creatingList ? colors.primary : colors.text}
-            />
-          </TouchableOpacity>
-          {selectedType && stored.length > 0 && (
-            <TouchableOpacity
-              style={styles.icon}
-              onPress={() => {
-                setCopying((open) => !open);
-                setCopyTargets([]);
-              }}
-              accessibilityLabel={t('suggestion_copy_to')}
-            >
-              <Ionicons
-                name="copy-outline"
-                size={24}
-                color={copying ? colors.primary : colors.text}
-              />
-            </TouchableOpacity>
-          )}
-          {selectedType && isNamedListType(selectedType) && (
-            <>
-              <TouchableOpacity
-                style={styles.icon}
-                onPress={() => {
-                  setRenamingList((open) => !open);
-                  setCreatingList(false);
-                  setRenameListName(selectedGroup?.name ?? '');
-                }}
-                accessibilityLabel={t('suggestion_rename_list')}
-              >
-                <Ionicons
-                  name="pencil-outline"
-                  size={24}
-                  color={renamingList ? colors.primary : colors.text}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.icon}
-                onPress={removeNamedList}
-                accessibilityLabel={t('suggestion_delete_list')}
-              >
-                <Ionicons name="trash-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      )}
-      {canEdit && creatingList && (
-        <View style={styles.inputRow}>
-          <TextInput
-            value={newListName}
-            onChangeText={setNewListName}
-            placeholder={t('suggestion_list_name_placeholder')}
-            style={styles.input}
-          />
-          <Button onPress={createList}>{t('add')}</Button>
-        </View>
-      )}
-      {canEdit && renamingList && (
-        <View style={styles.inputRow}>
-          <TextInput
-            value={renameListName}
-            onChangeText={setRenameListName}
-            placeholder={t('suggestion_list_name_placeholder')}
-            style={styles.input}
-          />
-          <Button onPress={renameList}>{t('save')}</Button>
-        </View>
-      )}
-      {canEdit && copying && (
-        <View style={styles.copyList}>
-          {copyDestinations.map((group) => (
-            <TouchableOpacity
-              key={group.type}
-              style={styles.copyRow}
-              onPress={() => toggleCopyTarget(group.type)}
-            >
-              <Ionicons
-                name={copyTargets.includes(group.type) ? 'checkbox' : 'square-outline'}
-                size={22}
-                color={colors.primary}
-              />
-              <Text style={styles.copyLabel}>{group.label}</Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={styles.icon}
-            onPress={copyToSelected}
-            accessibilityLabel={t('suggestion_copy_confirm')}
-          >
-            <Ionicons name="checkmark-circle-outline" size={26} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
       )}
       {canEdit && selectedType && (
         <View style={styles.inputRow}>
@@ -570,6 +530,67 @@ const SuggestionsScreen = () => {
           <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
         )}
       </ScrollView>
+      <ResponsiveModal
+        visible={creatingList}
+        onClose={() => setCreatingList(false)}
+        contentStyle={styles.modalContent}
+      >
+        <Text style={styles.modalTitle}>{t('suggestion_new_list')}</Text>
+        <TextInput
+          value={newListName}
+          onChangeText={setNewListName}
+          placeholder={t('suggestion_list_name_placeholder')}
+          style={commonInputStyles.input}
+        />
+        <View style={styles.modalActions}>
+          <Button onPress={() => setCreatingList(false)}>{t('cancel')}</Button>
+          <Button onPress={createList}>{t('add')}</Button>
+        </View>
+      </ResponsiveModal>
+      <ResponsiveModal
+        visible={renamingList}
+        onClose={() => setRenamingList(false)}
+        contentStyle={styles.modalContent}
+      >
+        <Text style={styles.modalTitle}>{t('suggestion_rename_list')}</Text>
+        <TextInput
+          value={renameListName}
+          onChangeText={setRenameListName}
+          placeholder={t('suggestion_list_name_placeholder')}
+          style={commonInputStyles.input}
+        />
+        <View style={styles.modalActions}>
+          <Button onPress={() => setRenamingList(false)}>{t('cancel')}</Button>
+          <Button onPress={renameList}>{t('save')}</Button>
+        </View>
+      </ResponsiveModal>
+      <ResponsiveModal
+        visible={copying}
+        onClose={() => setCopying(false)}
+        contentStyle={styles.modalContent}
+      >
+        <Text style={styles.modalTitle}>{t('suggestion_copy_to')}</Text>
+        <ScrollView style={styles.copyList}>
+          {copyDestinations.map((group) => (
+            <TouchableOpacity
+              key={group.type}
+              style={styles.copyRow}
+              onPress={() => toggleCopyTarget(group.type)}
+            >
+              <Ionicons
+                name={copyTargets.includes(group.type) ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={colors.primary}
+              />
+              <Text style={styles.copyLabel}>{group.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        <View style={styles.modalActions}>
+          <Button onPress={() => setCopying(false)}>{t('cancel')}</Button>
+          <Button onPress={copyToSelected}>{t('suggestion_copy_confirm')}</Button>
+        </View>
+      </ResponsiveModal>
     </>
   );
 

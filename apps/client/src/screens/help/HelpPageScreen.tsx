@@ -17,12 +17,28 @@ type HelpPageScreenProps = {
 };
 
 export function HelpPageScreen({ library = helpLibrary }: HelpPageScreenProps) {
-  useBackButtonHandler({ showWebBackButton: true });
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HelpNavigation>();
-  const route = useRoute<{ key: string; name: string; params: { pageId: string } }>();
+  const route = useRoute<{
+    key: string;
+    name: string;
+    params: { pageId: string; returnDrawerRoute?: string };
+  }>();
   const { colors } = useTheme();
   const { page, usedFallback } = library.resolvePage(route.params.pageId, i18n.language);
+  const returnToOrigin = useCallback(() => {
+    // Drawer history is not guaranteed after a nested navigate. The contextual
+    // shortcut therefore records the exact drawer route to restore.
+    const drawerNavigation = navigation.getParent();
+    if (drawerNavigation && route.params.returnDrawerRoute) {
+      drawerNavigation.navigate(route.params.returnDrawerRoute as never);
+    }
+    else navigation.goBack();
+  }, [navigation, route.params.returnDrawerRoute]);
+  useBackButtonHandler({
+    showWebBackButton: true,
+    onBack: route.params.returnDrawerRoute ? returnToOrigin : undefined,
+  });
 
   useFocusEffect(
     useCallback(() => {

@@ -475,7 +475,9 @@ const SuggestionsScreen = () => {
         </View>
       )}
       <ScrollView>
-        {stored.length > 0 && <Text style={styles.sectionTitle}>{t('suggestion_saved_values')}</Text>}
+        {stored.length > 0 && (
+          <Text style={styles.sectionTitle}>{t('suggestion_saved_values')}</Text>
+        )}
         {stored.map((suggestion) => (
           <View key={suggestion.id} style={styles.row}>
             {editingId === suggestion.id ? (

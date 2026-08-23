@@ -3,7 +3,11 @@ import React from 'react';
 import { HelpIndexScreen } from '../screens/help/HelpIndexScreen';
 import { HelpPageScreen } from '../screens/help/HelpPageScreen';
 
-export type HelpStackParamList = { HelpIndex: undefined; HelpPage: { pageId: string } };
+export type HelpStackParamList = {
+  HelpIndex: undefined;
+  /** `returnDrawerRoute` returns to the drawer route whose help shortcut opened this page. */
+  HelpPage: { pageId: string; returnDrawerRoute?: string };
+};
 const Stack = createNativeStackNavigator<HelpStackParamList>();
 export default function HelpStackNavigator() {
   const [openSections, setOpenSections] = React.useState<Record<string, boolean>>({ start: true });

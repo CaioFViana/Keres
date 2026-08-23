@@ -427,8 +427,10 @@ const MainSystemNavigator = () => {
         screenOptions={({ navigation, route }) => {
           const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
           const helpPageId = screenHelpPage[activeRouteName];
-          const isHelpPage = activeRouteName === 'HelpPage';
           const nestedState = (route as typeof route & { state?: NavigationState }).state;
+          const focusedNestedRoute = nestedState?.routes[nestedState.index ?? 0];
+          const isHelpPage =
+            activeRouteName === 'HelpPage' || focusedNestedRoute?.name === 'HelpPage';
           const nestedStackKey = nestedState?.key;
           const isNestedDestination =
             activeRouteName !== route.name && !mainSystemStackRootScreens.has(activeRouteName);
@@ -490,7 +492,7 @@ const MainSystemNavigator = () => {
                           onPress={() =>
                             navigation.navigate('HelpDrawer', {
                               screen: 'HelpPage',
-                              params: { pageId: helpPageId },
+                              params: { pageId: helpPageId, returnDrawerRoute: route.name },
                             })
                           }
                           style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}

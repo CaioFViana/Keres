@@ -162,9 +162,7 @@ describe('SuggestionService', () => {
     ]);
 
     expect(await service.getSuggestions('custom:origin', STORY_ID)).toEqual([['Lua', 2]]);
-    expect(await service.getSuggestionUsageCounts('custom:origin', STORY_ID)).toEqual([
-      ['Lua', 2],
-    ]);
+    expect(await service.getSuggestionUsageCounts('custom:origin', STORY_ID)).toEqual([['Lua', 2]]);
   });
 });
 

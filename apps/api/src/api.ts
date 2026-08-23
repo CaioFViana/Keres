@@ -1,6 +1,6 @@
 import { swagger } from '@elysiajs/swagger';
+import { APP_RELEASE } from '@keres/shared';
 import { Elysia } from 'elysia';
-import { env } from './config/env';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
 import { friendRoutes } from './modules/friend/friend.route';
@@ -75,7 +75,7 @@ export function createApiRoutes() {
         provider: 'scalar',
         scalarConfig: { theme: 'none', customCss: scalarCss },
         documentation: {
-          info: { title: 'Keres API Documentation', version: '1.0.0' },
+          info: { title: 'Keres API Documentation', version: APP_RELEASE.version },
           components: {
             securitySchemes: {
               bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
@@ -89,7 +89,7 @@ export function createApiRoutes() {
       '/kerescheck',
       ({ set }) => {
         set.status = 200;
-        return { version: env.SERVER_VERSION };
+        return { version: APP_RELEASE.version };
       },
       {
         detail: {

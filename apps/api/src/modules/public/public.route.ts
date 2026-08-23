@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { env } from '../../config/env';
+import { APP_RELEASE } from '@keres/shared';
 import { jwtShowcase } from '../../config/jwt';
 import { publicationStorageService } from '../../services/PublicationStorageService';
 import { showcaseService } from '../../services/ShowcaseService';
@@ -68,7 +68,7 @@ export const publicRoutes = new Elysia()
     '/config',
     async () => ({
       showcaseEnabled: await showcaseSettingsService.isEnabled(),
-      serverVersion: env.SERVER_VERSION,
+      serverVersion: APP_RELEASE.version,
     }),
     {
       response: t.Object({ showcaseEnabled: t.Boolean(), serverVersion: t.String() }),

@@ -73,6 +73,8 @@ jobs:
           # `packages: write` via the `permissions:` block above.
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+
       - uses: docker/build-push-action@v6
         env:
           # build-push-action v6 auto-uploads a GitHub Actions artifact with the build's summary

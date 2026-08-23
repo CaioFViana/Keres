@@ -213,7 +213,6 @@ Install Docker Engine with the Compose plugin. Copy `apps/api/docker-compose.dep
 KERES_IMAGE_TAG=latest
 KERES_BIND_ADDRESS=127.0.0.1
 KERES_PORT=3000
-SERVER_VERSION=1.0.0
 
 POSTGRES_DB=keres
 POSTGRES_USER=keres

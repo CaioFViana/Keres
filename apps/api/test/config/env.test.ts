@@ -17,7 +17,6 @@ const BASE_ENV: Record<string, string> = {
   JWT_SECRET_REFRESH: 'test-refresh-secret-that-is-at-least-thirty-two-characters',
   PORT: '',
   HOST: '',
-  SERVER_VERSION: '',
   MEDIA_STORAGE_DRIVER: '',
   MEDIA_STORAGE_PATH: '',
   MEDIA_S3_ENDPOINT: '',
@@ -36,7 +35,6 @@ const BASE_ENV: Record<string, string> = {
 const DEFAULTED_KEYS = [
   'PORT',
   'HOST',
-  'SERVER_VERSION',
   'MEDIA_STORAGE_DRIVER',
   'MEDIA_STORAGE_PATH',
   'MEDIA_S3_REGION',
@@ -77,7 +75,6 @@ describe('env', () => {
     expect(env.HOST).toBeUndefined();
     expect(env).toMatchObject({
       PORT: '3000',
-      SERVER_VERSION: '1.0.0',
       MEDIA_STORAGE_DRIVER: 'local',
       MEDIA_STORAGE_PATH: './media-storage',
       MEDIA_S3_REGION: 'us-east-1',

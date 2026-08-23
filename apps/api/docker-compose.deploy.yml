@@ -26,7 +26,6 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
-      SERVER_VERSION: ${SERVER_VERSION:-unknown}
       DATABASE_URL: postgresql://${POSTGRES_USER:-keres}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}@db:5432/${POSTGRES_DB:-keres}
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET no arquivo .env}
       JWT_SECRET_REFRESH: ${JWT_SECRET_REFRESH:?Define JWT_SECRET_REFRESH no arquivo .env}

@@ -15,19 +15,16 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 
 - [ ] Decide the new semver version and a codename in the spirit of
       [`docs/fluff_release_names.md`](fluff_release_names.md).
-- [ ] Update `name` and `version` in
-      [`apps/client/src/config/appRelease.ts`](../apps/client/src/config/appRelease.ts)
-      — the in-app, human-facing release identity. Nothing else sets this file.
+- [ ] Run `bun run version:set 1.2.3 Galatea` (replace both values). It updates every
+      workspace `package.json`, Expo's `app.json`, and
+      [`packages/shared/metadata/AppRelease.ts`](../packages/shared/metadata/AppRelease.ts),
+      the one human-facing identity consumed by both client and server.
 - [ ] Add the release's entry to
       [`docs/fluff_release_names.md`](fluff_release_names.md).
 
-> **`package.json` versions are automated — no manual edit needed.**
-> `scripts/ci/set-version.mjs` stamps the version parsed from the git tag
-> into all 6 `package.json` files (root, `apps/api`, `apps/client`,
-> `apps/desktop`, `apps/admin`, `packages/shared`) plus `apps/client/app.json`'s
-> `expo.version`, as part of the release workflow. Internal workspace
-> packages reference each other via `workspace:*`, so the committed
-> version numbers never need to match for `bun install` to resolve.
+> The release workflow repeats the version stamp from the tag as a safeguard. The local
+> command includes `apps/site` as well, so every workspace manifest and the packaged
+> application version stay aligned before the tag is created.
 
 ## 3. Tag and push
 

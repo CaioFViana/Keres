@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { APP_RELEASE } from '@keres/shared';
 import * as path from 'node:path';
 import { parseLauncherArgs } from './args';
 import {
@@ -16,10 +17,6 @@ import { detectSystemLanguage } from './language';
 import { createDataBackup, describeBackupResult } from './backup';
 import { configPathFor, defaultDataDir } from './paths';
 import { assertDriverNotChanged, runSetupWizard } from './wizard';
-import apiPackage from '../../package.json';
-
-const PACKAGE_VERSION = apiPackage.version;
-
 function resolveConfigPath(configPath: string | undefined): string {
   return path.resolve(configPath ?? configPathFor(defaultDataDir()));
 }
@@ -33,7 +30,7 @@ export async function runLauncher(
   } = {},
 ): Promise<void> {
   const io = options.io ?? createStdio();
-  const version = options.version ?? PACKAGE_VERSION;
+  const version = options.version ?? APP_RELEASE.version;
 
   let args;
   try {
@@ -123,7 +120,6 @@ export async function runLauncher(
 
   const t = createTranslator(publicConfig.language);
   applyLauncherEnv(publicConfig, secrets);
-  process.env.SERVER_VERSION = version;
   io.print(t('starting'));
 
   const boot =
@@ -161,5 +157,5 @@ export async function runLauncher(
 }
 
 export function launcherVersion(): string {
-  return PACKAGE_VERSION;
+  return APP_RELEASE.version;
 }

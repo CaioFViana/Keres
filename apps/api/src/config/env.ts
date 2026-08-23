@@ -37,7 +37,6 @@ const envSchema = z.object({
    * O launcher caseiro preenche `127.0.0.1` ou `0.0.0.0`.
    */
   HOST: optionalEnvironmentString,
-  SERVER_VERSION: z.string().optional().default('1.0.0'),
   NODE_ENV: z.string().optional().default('development'),
   /** Backend físico da galeria. Não altere em um banco que já possua mídia sem migrá-la. */
   MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).optional().default('local'),

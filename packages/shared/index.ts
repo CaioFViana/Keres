@@ -78,6 +78,7 @@ export * from './metadata/recoverableEntityTypes';
 export * from './metadata/entityDisplayName';
 export * from './metadata/FriendStatus';
 export * from './metadata/AttributeType';
+export * from './metadata/AppRelease';
 export * from './metadata/StorySchemaEntityType';
 export * from './metadata/LocationRelationType';
 export * from './metadata/SeeAlsoEntityType';

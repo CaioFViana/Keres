@@ -10,7 +10,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { APP_RELEASE } from '../../config/appRelease';
+import { APP_RELEASE } from '@keres/shared';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
 import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';

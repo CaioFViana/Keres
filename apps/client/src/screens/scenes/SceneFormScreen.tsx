@@ -58,6 +58,14 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 type SceneFormScreenRouteProp = RouteProp<SceneStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<SceneStackParamList, 'SceneForm'>;
 
+const isTimingInput = (value: string) => /^-?\d*$/.test(value);
+const MAX_SCENE_TIMING = 2147483647;
+const parseTimingInput = (value: string): number | null => {
+  if (!value || value === '-') return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && Math.abs(parsed) <= MAX_SCENE_TIMING ? parsed : null;
+};
+
 const SceneFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
@@ -183,9 +191,9 @@ const SceneFormScreen = () => {
   const [summary, setSummary] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [gap, setGap] = useState<number | null>(null);
+  const [gapInput, setGapInput] = useState('');
   const [gapType, setGapType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
-  const [duration, setDuration] = useState<number | null>(null);
+  const [durationInput, setDurationInput] = useState('');
   const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [isStart, setIsStart] = useState(false);
   const [isFinish, setIsFinish] = useState(false);
@@ -357,9 +365,9 @@ const SceneFormScreen = () => {
             setSummary(fetchedScene.summary);
             setIsFavorite(fetchedScene.isFavorite);
             setExtraNotes(fetchedScene.extraNotes);
-            setGap(fetchedScene.gap);
+            setGapInput(fetchedScene.gap === null ? '' : String(fetchedScene.gap));
             setGapType(fetchedScene.gapType);
-            setDuration(fetchedScene.duration);
+            setDurationInput(fetchedScene.duration === null ? '' : String(fetchedScene.duration));
             setDurationType(fetchedScene.durationType);
             setIsStart(fetchedScene.isStart);
             setIsFinish(fetchedScene.isFinish);
@@ -414,6 +422,13 @@ const SceneFormScreen = () => {
     }
     if (!selectedStory?.id) {
       AppAlert.alert(t('error'), t('no_story_selected'));
+      return;
+    }
+
+    const gap = parseTimingInput(gapInput);
+    const duration = parseTimingInput(durationInput);
+    if ((gapInput !== '' && gap === null) || (durationInput !== '' && duration === null)) {
+      AppAlert.alert(t('error'), t('scene_timing_invalid'));
       return;
     }
 
@@ -762,6 +777,13 @@ const SceneFormScreen = () => {
       gap: 10,
       marginBottom: 10,
     },
+    timingHint: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      marginTop: -4,
+      marginBottom: 10,
+    },
     card: {
       borderWidth: 1,
       borderColor: colors.border,
@@ -857,9 +879,9 @@ const SceneFormScreen = () => {
       <View style={styles.row}>
         <TextInput
           placeholder={t('gap_placeholder')}
-          value={gap !== null ? String(gap) : ''}
-          onChangeText={(text) => setGap(text ? Number(text) : null)}
-          keyboardType="numeric"
+          value={gapInput}
+          onChangeText={(text) => isTimingInput(text) && setGapInput(text)}
+          keyboardType="numbers-and-punctuation"
           style={[commonInputStyles.input, styles.numberWidthInput]}
         />
         <View style={{ flex: 1 }}>
@@ -872,14 +894,17 @@ const SceneFormScreen = () => {
           />
         </View>
       </View>
+      {parseTimingInput(gapInput) !== null && parseTimingInput(gapInput)! < 0 && (
+        <Text style={styles.timingHint}>{t('negative_gap_timing_hint')}</Text>
+      )}
 
       <Text style={[styles.label, { color: colors.text }]}>{t('duration')}</Text>
       <View style={styles.row}>
         <TextInput
           placeholder={t('duration_placeholder')}
-          value={duration !== null ? String(duration) : ''}
-          onChangeText={(text) => setDuration(text ? Number(text) : null)}
-          keyboardType="numeric"
+          value={durationInput}
+          onChangeText={(text) => isTimingInput(text) && setDurationInput(text)}
+          keyboardType="numbers-and-punctuation"
           style={[commonInputStyles.input, styles.numberWidthInput]}
         />
         <View style={{ flex: 1 }}>
@@ -892,6 +917,9 @@ const SceneFormScreen = () => {
           />
         </View>
       </View>
+      {parseTimingInput(durationInput) !== null && parseTimingInput(durationInput)! < 0 && (
+        <Text style={styles.timingHint}>{t('negative_duration_timing_hint')}</Text>
+      )}
 
       <View style={styles.switchContainer}>
         <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>

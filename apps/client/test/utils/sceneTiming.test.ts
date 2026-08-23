@@ -33,4 +33,18 @@ describe('scene timing', () => {
 
     expect(formatChapterUniverseDuration(scenes, t)).toBe('scene_time_hours:6');
   });
+
+  it('keeps negative timing values in individual and chapter calculations', () => {
+    expect(formatSceneGap({ gap: -2, gapType: 'hours' }, t)).toBe('scene_time_hours:-2');
+    expect(hasSceneUniverseDuration({ duration: -1, durationType: 'hours' })).toBe(true);
+    expect(
+      formatChapterUniverseDuration(
+        [
+          { duration: 4, durationType: 'hours' },
+          { gap: -2, gapType: 'hours', duration: -1, durationType: 'hours' },
+        ],
+        t,
+      ),
+    ).toBe('scene_time_hours:1');
+  });
 });

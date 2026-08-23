@@ -50,7 +50,9 @@ const StoryTimelineScreen = () => {
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('story_timeline_title'));
-      navigation.getParent()?.setOptions({ title: t('story_timeline_title'), headerRight: undefined });
+      navigation
+        .getParent()
+        ?.setOptions({ title: t('story_timeline_title'), headerRight: undefined });
     }, [navigation, t]),
   );
 

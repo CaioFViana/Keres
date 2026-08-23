@@ -31,6 +31,15 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
+type StorySuggestion = [value: string, usageCount: number];
+
+const SUGGESTION_SOURCE_EVENTS = [
+  'character_changed',
+  'character_relation_changed',
+  'item_changed',
+  'item_journey_changed',
+  'attribute_value_changed',
+] as const;
 
 const ENTITY_LABELS: Record<string, string> = {
   Character: 'characters_title',
@@ -64,6 +73,8 @@ const SuggestionsScreen = () => {
   const [groups, setGroups] = useState<SuggestionGroup[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [stored, setStored] = useState<SuggestionSelect[]>([]);
+  const [storyValues, setStoryValues] = useState<StorySuggestion[]>([]);
+  const [usageByValue, setUsageByValue] = useState<Map<string, number>>(new Map());
   const [newValue, setNewValue] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -76,15 +87,33 @@ const SuggestionsScreen = () => {
 
   const loadGroups = useCallback(async () => {
     if (!storyId) return setGroups([]);
-    const native = Object.entries(entityFieldMetadata).flatMap(([entity, fields]) =>
+    const nativeByType = new Map<
+      string,
+      { type: string; key: string; entityLabels: string[]; fieldLabels: string[] }
+    >();
+    Object.entries(entityFieldMetadata).forEach(([entity, fields]) => {
       fields
         .filter((field) => field.isSuggestion && field.suggestionsSource)
-        .map((field) => ({
-          type: field.suggestionsSource!,
-          key: field.suggestionsSource!,
-          label: `${t(ENTITY_LABELS[entity] ?? entity)} · ${t(field.label)}`,
-        })),
-    );
+        .forEach((field) => {
+          const type = field.suggestionsSource!;
+          const current = nativeByType.get(type) ?? {
+            type,
+            key: type,
+            entityLabels: [],
+            fieldLabels: [],
+          };
+          const entityLabel = t(ENTITY_LABELS[entity] ?? entity);
+          const fieldLabel = t(field.label);
+          if (!current.entityLabels.includes(entityLabel)) current.entityLabels.push(entityLabel);
+          if (!current.fieldLabels.includes(fieldLabel)) current.fieldLabels.push(fieldLabel);
+          nativeByType.set(type, current);
+        });
+    });
+    const native = Array.from(nativeByType.values()).map((group) => ({
+      type: group.type,
+      key: group.key,
+      label: `${group.entityLabels.join(' + ')} · ${group.fieldLabels.join(' / ')}`,
+    }));
     const schemaService = createStorySchemaFieldService(db);
     const batches = await Promise.all(
       STORY_SCHEMA_ENTITY_TYPES.map((entityType) =>
@@ -113,31 +142,48 @@ const SuggestionsScreen = () => {
     );
   }, [db, storyId, suggestionService, t]);
 
-  const loadStored = useCallback(async () => {
-    if (!storyId || !selectedType) return setStored([]);
-    setStored(await suggestionService.getStoredSuggestions(selectedType, storyId));
+  const loadValues = useCallback(async () => {
+    if (!storyId || !selectedType) {
+      setStored([]);
+      setStoryValues([]);
+      setUsageByValue(new Map());
+      return;
+    }
+    const [storedSuggestions, usageCounts] = await Promise.all([
+      suggestionService.getStoredSuggestions(selectedType, storyId),
+      suggestionService.getSuggestionUsageCounts(selectedType, storyId),
+    ]);
+    const storedValues = new Set(storedSuggestions.map((suggestion) => suggestion.value));
+    setStored(storedSuggestions);
+    setUsageByValue(new Map(usageCounts));
+    setStoryValues(usageCounts.filter(([value]) => !storedValues.has(value)));
   }, [selectedType, storyId, suggestionService]);
 
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions({ title: t('standard_suggestions_title') });
       loadGroups();
-    }, [loadGroups, navigation, t]),
+      loadValues();
+    }, [loadGroups, loadValues, navigation, t]),
   );
   useEffect(() => {
-    loadStored();
-  }, [loadStored]);
+    loadValues();
+  }, [loadValues]);
   useEffect(() => {
     setRenamingList(false);
     setRenameListName('');
   }, [selectedType]);
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadStored();
+      if (changedStoryId === storyId) loadValues();
     };
     entityEventEmitter.on('suggestion_changed', refresh);
-    return () => entityEventEmitter.off('suggestion_changed', refresh);
-  }, [loadStored, storyId]);
+    SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.on(event, refresh));
+    return () => {
+      entityEventEmitter.off('suggestion_changed', refresh);
+      SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.off(event, refresh));
+    };
+  }, [loadValues, storyId]);
 
   const add = async () => {
     if (!userId || !storyId || !selectedType || !newValue.trim()) return;
@@ -285,6 +331,16 @@ const SuggestionsScreen = () => {
       borderBottomColor: colors.border,
     },
     value: { flex: 1, color: colors.text, fontSize: 16 },
+    storyValue: { flex: 1, color: colors.textSecondary, fontSize: 16 },
+    usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
+    sectionTitle: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 2,
+      textTransform: 'uppercase',
+    },
     icon: { padding: 7 },
     empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
@@ -459,12 +515,16 @@ const SuggestionsScreen = () => {
         </View>
       )}
       <ScrollView>
+        {stored.length > 0 && <Text style={styles.sectionTitle}>{t('suggestion_saved_values')}</Text>}
         {stored.map((suggestion) => (
           <View key={suggestion.id} style={styles.row}>
             {editingId === suggestion.id ? (
               <TextInput value={editingValue} onChangeText={setEditingValue} style={styles.input} />
             ) : (
               <Text style={styles.value}>{suggestion.value}</Text>
+            )}
+            {(usageByValue.get(suggestion.value) ?? 0) > 0 && (
+              <Text style={styles.usage}>{usageByValue.get(suggestion.value)}</Text>
             )}
             {canEdit &&
               (editingId === suggestion.id ? (
@@ -489,7 +549,24 @@ const SuggestionsScreen = () => {
               ))}
           </View>
         ))}
-        {selectedType && stored.length === 0 && (
+        {storyValues.length > 0 && (
+          <Text style={styles.sectionTitle}>{t('suggestion_values_in_story')}</Text>
+        )}
+        {storyValues.map(([value, usageCount]) => (
+          <View key={value} style={styles.row}>
+            <Text style={styles.storyValue}>{value}</Text>
+            <Text style={styles.usage}>{usageCount}</Text>
+            <View style={styles.icon}>
+              <Ionicons
+                name="link-outline"
+                size={20}
+                color={colors.textSecondary}
+                accessibilityLabel={t('suggestion_value_from_story')}
+              />
+            </View>
+          </View>
+        ))}
+        {selectedType && stored.length === 0 && storyValues.length === 0 && (
           <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
         )}
       </ScrollView>

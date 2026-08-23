@@ -81,6 +81,8 @@ export type SuggestionType = string;
 
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
+  /** Distinct values currently present in story entities, excluding saved catalog values. */
+  getSuggestionUsageCounts(type: SuggestionType, storyId: string): Promise<[string, number][]>;
   getStoredSuggestions(type: SuggestionType, storyId: string): Promise<SuggestionSelect[]>;
   createSuggestion(
     currentUserId: string,
@@ -113,6 +115,29 @@ export interface SuggestionServiceInterface {
 
 export const createSuggestionService = (db: AppDrizzleClient): SuggestionServiceInterface => {
   const serverService = createServerService(db);
+
+  const getSuggestionUsageCounts = async (
+    type: SuggestionType,
+    storyId: string,
+  ): Promise<[string, number][]> => {
+    if (!storyId || isNamedListType(type)) return [];
+    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
+      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
+      return createAttributeValueService(db).getValueUsageCounts(fieldId);
+    }
+
+    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    if (!config) return [];
+    const dynamic = await db
+      .select({ value: config.column, count: sql<number>`count(*)` })
+      .from(config.schema)
+      .where(and(eq(config.schema.storyId, storyId), eq(config.schema.isDeleted, false)))
+      .groupBy(config.column)
+      .all();
+    return dynamic
+      .filter(({ value }) => typeof value === 'string' && Boolean(value))
+      .map(({ value, count }) => [value as string, count]);
+  };
 
   const ensureUnique = async (storyId: string, type: string, value: string, excludeId?: string) => {
     const conditions = [
@@ -156,32 +181,13 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         .all();
       stored.forEach(({ value }) => counts.set(value, counts.get(value) ?? 0));
 
-      if (isNamedList) {
-        // Só o catálogo gravado — listas nomeadas não têm coluna nativa nem AttributeValue.
-      } else if (isCustomAttribute) {
-        const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-        (await createAttributeValueService(db).getValueUsageCounts(fieldId)).forEach(
-          ([value, count]) => {
-            counts.set(value, (counts.get(value) ?? 0) + count);
-          },
-        );
-      } else {
-        const nativeConfig = config!;
-        const dynamic = await db
-          .select({ value: nativeConfig.column, count: sql<number>`count(*)` })
-          .from(nativeConfig.schema)
-          .where(
-            and(eq(nativeConfig.schema.storyId, storyId), eq(nativeConfig.schema.isDeleted, false)),
-          )
-          .groupBy(nativeConfig.column)
-          .all();
-        dynamic.forEach(({ value, count }) => {
-          if (value && typeof value === 'string')
-            counts.set(value, (counts.get(value) ?? 0) + count);
-        });
-      }
+      (await getSuggestionUsageCounts(type, storyId)).forEach(([value, count]) => {
+        counts.set(value, (counts.get(value) ?? 0) + count);
+      });
       return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
     },
+
+    getSuggestionUsageCounts,
 
     async getStoredSuggestions(type, storyId) {
       return db

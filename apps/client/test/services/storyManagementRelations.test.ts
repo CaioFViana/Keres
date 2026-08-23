@@ -126,6 +126,9 @@ describe('SuggestionService', () => {
       ['Feminino', 1],
       ['Neutro', 0],
     ]);
+    expect(await service.getSuggestionUsageCounts('character_gender', STORY_ID)).toEqual([
+      ['Feminino', 1],
+    ]);
     await expect(
       service.createSuggestion(USER_ID, 'character_gender', 'Neutro', STORY_ID),
     ).rejects.toThrow('already exists');
@@ -159,6 +162,9 @@ describe('SuggestionService', () => {
     ]);
 
     expect(await service.getSuggestions('custom:origin', STORY_ID)).toEqual([['Lua', 2]]);
+    expect(await service.getSuggestionUsageCounts('custom:origin', STORY_ID)).toEqual([
+      ['Lua', 2],
+    ]);
   });
 });
 

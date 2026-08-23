@@ -30,6 +30,10 @@ jest.mock('../../src/state/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
+jest.mock('../../src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({ colors: { background: '#101010' } }),
+}));
 jest.mock('@/src/components/features/app/SyncInitializer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,

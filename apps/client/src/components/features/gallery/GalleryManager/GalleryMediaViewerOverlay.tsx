@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal } from 'react-native';
+import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
 import GalleryDetailContent from '../../../../screens/gallery/GalleryDetailContent';
 import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
 
@@ -16,7 +16,7 @@ const GalleryMediaViewerOverlay: React.FC = () => {
   const close = useGalleryMediaViewerStore((state) => state.close);
 
   return (
-    <Modal visible={galleryId !== null} animationType="slide" onRequestClose={close}>
+    <ThemedFullscreenModal visible={galleryId !== null} onRequestClose={close}>
       {galleryId && (
         <GalleryDetailContent
           key={galleryId}
@@ -25,7 +25,7 @@ const GalleryMediaViewerOverlay: React.FC = () => {
           showCloseButton
         />
       )}
-    </Modal>
+    </ThemedFullscreenModal>
   );
 };
 

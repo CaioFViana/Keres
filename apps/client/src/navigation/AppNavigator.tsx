@@ -7,6 +7,7 @@ import { useDrizzle } from '../db';
 import { getClientSettings } from '../services/ClientSettingsService';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import { useTheme } from '../theme';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import StorySelectionStack from './StorySelectionStack';
@@ -28,6 +29,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
 
   const drizzleDb = useDrizzle();
+  const { colors } = useTheme();
 
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
@@ -73,7 +75,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   return (
     <SyncInitializer>
       <RootStack.Navigator
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
         initialRouteName={initialRouteName}
       >
         <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />

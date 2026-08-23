@@ -4,6 +4,7 @@ import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
@@ -37,6 +38,12 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const { colors } = useTheme(); // Get theme colors
   // Determine status bar style based on background color lightness
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
+
+  // O fundo da janela nativa aparece por instantes em transições de stack e Modal. Mantê-lo
+  // sincronizado com a paleta evita revelar o branco padrão fora da árvore React.
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+  }, [colors.background]);
 
   return (
     <View

@@ -2,7 +2,7 @@ import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -233,6 +233,24 @@ const StorySelectionScreen = () => {
     navigation.navigate('StoryForm', {});
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('story_selection_title'),
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+            <TouchableOpacity
+              onPress={handleCreateNewStory}
+              accessibilityLabel={t('create_new_story')}
+            >
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        ),
+      });
+    }, [colors.text, navigation, t]),
+  );
+
   const handleEditStory = (storyId: string) => {
     navigation.navigate('StoryForm', { storyId });
   };
@@ -294,22 +312,6 @@ const StorySelectionScreen = () => {
     favoriteButton: {
       padding: 5,
     },
-    floatingButton: {
-      position: 'absolute',
-      bottom: 20,
-      right: 20,
-      backgroundColor: colors.primary,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 8,
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4,
-    },
   });
 
   return (
@@ -337,13 +339,6 @@ const StorySelectionScreen = () => {
         }
         style={{ flex: 1 }}
       />
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={handleCreateNewStory}
-        onLongPress={() => showNotification(t('create_new_story'), 'info')}
-      >
-        <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
-      </TouchableOpacity>
     </View>
   );
 };

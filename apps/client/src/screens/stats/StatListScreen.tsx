@@ -39,12 +39,6 @@ const StatListScreen = () => {
   const data = useStoryStats(storyId);
   const [reordering, setReordering] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('stats_title') });
-    }, [navigation, t]),
-  );
-
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = useMemo(
     () =>
@@ -71,18 +65,6 @@ const StatListScreen = () => {
         name: { fontSize: 16, fontWeight: 'bold', color: colors.text },
         meta: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
         empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 30 },
-        fab: {
-          position: 'absolute',
-          bottom: 20,
-          right: 20,
-          backgroundColor: colors.primary,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 6,
-        },
       }),
     [colors],
   );
@@ -136,6 +118,23 @@ const StatListScreen = () => {
     }
     navigation.navigate('StatForm', {});
   }, [data.stats, navigation, t]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('stats_title'),
+        headerRight: canEdit
+          ? () => (
+              <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+              <TouchableOpacity onPress={handleCreate} accessibilityLabel={t('add')}>
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+              </View>
+            )
+          : undefined,
+      });
+    }, [canEdit, colors.text, data.stats.length, handleCreate, navigation, t]),
+  );
 
   if (!storyId) {
     return (
@@ -235,12 +234,6 @@ const StatListScreen = () => {
           </View>
         )}
       />
-
-      {canEdit ? (
-        <TouchableOpacity style={styles.fab} onPress={handleCreate} accessibilityLabel={t('add')}>
-          <Ionicons name="add" size={30} color={colors.onPrimary} />
-        </TouchableOpacity>
-      ) : null}
 
       <ReorderModal
         isVisible={reordering}

@@ -1,7 +1,7 @@
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -94,6 +94,21 @@ const FriendshipListScreen = () => {
   const handleAddFriendship = () => {
     navigation.navigate('FriendshipForm');
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('manage_friendships'),
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+            <TouchableOpacity onPress={handleAddFriendship} accessibilityLabel={t('add_new_friendship')}>
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        ),
+      });
+    }, [colors.text, navigation, t]),
+  );
 
   const runFriendshipAction = useFriendshipActionHandler(
     useCallback((serverId: string) => serversMap.get(serverId), [serversMap]),
@@ -280,12 +295,6 @@ const FriendshipListScreen = () => {
           </Text>
         }
       />
-      <TouchableOpacity
-        style={[styles.floatingButton, { backgroundColor: colors.primary }]}
-        onPress={() => handleAddFriendship()}
-      >
-        <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -326,22 +335,6 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: 8,
     marginLeft: 5,
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#6200EE',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
 });
 

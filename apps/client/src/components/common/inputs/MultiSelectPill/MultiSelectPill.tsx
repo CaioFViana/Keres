@@ -46,6 +46,8 @@ interface MultiSelectPillProps {
   searchPlaceholder?: string;
   /** Limita a seleção a um valor e fecha o modal após a escolha. */
   singleSelect?: boolean;
+  /** Número máximo de opções simultâneas. Opções ainda não escolhidas ficam indisponíveis. */
+  maxSelections?: number;
   /** Ajustes de layout para contextos compactos, como barras de filtro. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
@@ -73,6 +75,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   noOptionsText,
   searchPlaceholder,
   singleSelect = false,
+  maxSelections,
   style,
   triggerStyle,
   pillStyle,
@@ -136,6 +139,14 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
 
   const toggleOption = useCallback(
     (value: string) => {
+      if (
+        !singleSelect &&
+        maxSelections !== undefined &&
+        !selectedValues.includes(value) &&
+        selectedValues.length >= maxSelections
+      ) {
+        return;
+      }
       const newSelection = singleSelect
         ? selectedValues.includes(value)
           ? []
@@ -148,7 +159,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         closeModal();
       }
     },
-    [selectedValues, onSelectionChange, singleSelect, closeModal],
+    [selectedValues, onSelectionChange, singleSelect, maxSelections, closeModal],
   );
 
   const openGroup = useCallback((groupKey: string) => {
@@ -287,6 +298,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       justifyContent: 'space-between',
       alignItems: 'center',
     },
+    optionDisabled: {
+      opacity: 0.45,
+    },
     optionLeading: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -423,24 +437,32 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                 );
               })
             ) : visibleOptions.length > 0 ? (
-              visibleOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  testID={`multiselect-option-${option.value}`}
-                  style={styles.optionContainer}
-                  onPress={() => toggleOption(option.value)}
-                >
-                  <View style={styles.optionLeading}>
-                    {option.color && (
-                      <View style={[styles.optionColor, { backgroundColor: option.color }]} />
+              visibleOptions.map((option) => {
+                const atSelectionLimit =
+                  !singleSelect &&
+                  maxSelections !== undefined &&
+                  selectedValues.length >= maxSelections &&
+                  !selectedValues.includes(option.value);
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    testID={`multiselect-option-${option.value}`}
+                    style={[styles.optionContainer, atSelectionLimit && styles.optionDisabled]}
+                    onPress={() => toggleOption(option.value)}
+                    disabled={atSelectionLimit}
+                  >
+                    <View style={styles.optionLeading}>
+                      {option.color && (
+                        <View style={[styles.optionColor, { backgroundColor: option.color }]} />
+                      )}
+                      <Text style={styles.optionText}>{option.label}</Text>
+                    </View>
+                    {selectedValues.includes(option.value) && (
+                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                     )}
-                    <Text style={styles.optionText}>{option.label}</Text>
-                  </View>
-                  {selectedValues.includes(option.value) && (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
             )}

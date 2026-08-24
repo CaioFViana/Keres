@@ -114,4 +114,21 @@ describe('MultiSelectPill flat mode (options)', () => {
 
     expect(onSelectionChange).toHaveBeenCalledWith(['adventure', 'mystery']);
   });
+
+  it('keeps unselected options unavailable after reaching a selection limit', async () => {
+    const onSelectionChange = jest.fn();
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={['adventure']}
+        onSelectionChange={onSelectionChange}
+        maxSelections={1}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await fireEvent.press(screen.getByTestId('multiselect-option-mystery'));
+
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
 });

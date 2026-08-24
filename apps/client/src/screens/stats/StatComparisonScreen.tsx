@@ -1,12 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
-import EntityPickerInput from '../../components/common/inputs/EntityPickerInput/EntityPickerInput';
+import MultiSelectPill from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Select from '../../components/common/inputs/Select/Select';
 import { StatRadarChart } from '../../components/features/stats/StatRadarChart/StatRadarChart';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -61,12 +60,11 @@ const StatComparisonScreen = () => {
   const data = useStoryStats(storyId);
   const showNotification = useNotificationStore((state) => state.showNotification);
 
-  const [slots, setSlots] = useState<SeriesSlot[]>(() => [
+  const [slots, setSlots] = useState<SeriesSlot[]>(() =>
     route.params?.characterId
-      ? { ...newSlot(route.params.characterId), modeId: route.params.modeId ?? null }
-      : newSlot(),
-    newSlot(),
-  ]);
+      ? [{ ...newSlot(route.params.characterId), modeId: route.params.modeId ?? null }]
+      : [],
+  );
   const [exporting, setExporting] = useState(false);
 
   // Aberta a partir do detalhe de um personagem, a volta é para ele - e não para a lista de
@@ -139,8 +137,8 @@ const StatComparisonScreen = () => {
     () =>
       StyleSheet.create({
         content: { padding: 16, paddingBottom: 32 },
-        // Cada série num cartão: o seletor de personagem e o de modo têm alturas próprias, e
-        // lado a lado numa linha só eles nunca alinham em tela estreita.
+        // Cada série selecionada só precisa configurar seu modo. A seleção em si fica em um
+        // único campo acima, para não parecer que existem cartões vazios para preencher.
         slotCard: {
           borderColor: colors.border,
           borderWidth: 1,
@@ -151,13 +149,13 @@ const StatComparisonScreen = () => {
         },
         slotHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
         slotTitle: {
-          color: colors.textSecondary,
+          color: colors.text,
           flex: 1,
-          fontSize: 12,
-          textTransform: 'uppercase',
+          fontSize: 16,
+          fontWeight: '600',
         },
         swatch: { width: 12, height: 12, borderRadius: 3 },
-        iconButton: { padding: 6 },
+        modeLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: -4 },
         sectionTitle: {
           color: colors.text,
           fontSize: 16,
@@ -177,7 +175,7 @@ const StatComparisonScreen = () => {
         valueStatName: { color: colors.text, flex: 1.6, fontSize: 14 },
         valueCell: { flex: 1, fontSize: 14, fontWeight: '600', textAlign: 'right' },
         valueHeaderCell: { flex: 1, fontSize: 12, textAlign: 'right' },
-        hint: { color: colors.textSecondary, marginTop: 8 },
+        limitHint: { color: colors.textSecondary, marginTop: -10, marginBottom: 16 },
       }),
     [colors],
   );
@@ -222,66 +220,77 @@ const StatComparisonScreen = () => {
       .map((mode) => ({ label: mode.name, value: mode.id })),
   ];
 
+  const characterOptions = useMemo(
+    () =>
+      data.characters.map((character) => {
+        const seriesIndex = slots.findIndex((slot) => slot.characterId === character.id);
+        return {
+          label: character.name,
+          value: character.id,
+          color: seriesIndex >= 0 ? seriesColors[seriesIndex % seriesColors.length] : undefined,
+        };
+      }),
+    [data.characters, seriesColors, slots],
+  );
+
+  const handleCharacterSelection = useCallback((characterIds: string[]) => {
+    setSlots((current) => {
+      const slotsByCharacterId = new Map(
+        current.filter((slot) => slot.characterId).map((slot) => [slot.characterId!, slot]),
+      );
+      return characterIds.slice(0, MAX_SERIES).map((characterId) => {
+        const existing = slotsByCharacterId.get(characterId);
+        return existing ?? newSlot(characterId);
+      });
+    });
+  }, []);
+
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.content}>
-      {slots.map((slot, index) => (
-        <View key={slot.key} style={styles.slotCard}>
-          <View style={styles.slotHeader}>
-            <View
-              style={[
-                styles.swatch,
-                { backgroundColor: seriesColors[index % seriesColors.length] },
-              ]}
-            />
-            <Text style={styles.slotTitle}>{`${index + 1}`}</Text>
-            {slots.length > 1 ? (
-              <TouchableOpacity
-                style={styles.iconButton}
-                accessibilityLabel={t('delete')}
-                onPress={() =>
-                  setSlots((current) => current.filter((item) => item.key !== slot.key))
-                }
-              >
-                <Ionicons name="close" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ) : null}
-          </View>
-          <EntityPickerInput
-            storyId={storyId ?? ''}
-            entityType="Character"
-            value={slot.characterId}
-            onChange={(value) =>
-              setSlots((current) =>
-                current.map((item) =>
-                  item.key === slot.key ? { ...item, characterId: value, modeId: null } : item,
-                ),
-              )
-            }
-            placeholder={t('characters_title')}
-          />
-          <Select
-            options={modeOptionsFor(slot.characterId)}
-            value={slot.modeId ?? ''}
-            onValueChange={(value) =>
-              setSlots((current) =>
-                current.map((item) =>
-                  item.key === slot.key ? { ...item, modeId: value ? value : null } : item,
-                ),
-              )
-            }
-            placeholder={t('mode_normal')}
-            disabled={!slot.characterId}
-          />
-        </View>
-      ))}
+      <MultiSelectPill
+        label={t('stat_compare_characters')}
+        options={characterOptions}
+        selectedValues={slots.flatMap((slot) => (slot.characterId ? [slot.characterId] : []))}
+        onSelectionChange={handleCharacterSelection}
+        maxSelections={MAX_SERIES}
+        placeholder={t('stat_compare_select_characters', { count: MAX_SERIES })}
+        searchPlaceholder={t('search_characters')}
+        style={{ marginBottom: 16 }}
+      />
+      {slots.length >= MAX_SERIES ? (
+        <Text style={styles.limitHint}>{t('stat_compare_limit', { count: MAX_SERIES })}</Text>
+      ) : null}
 
-      {slots.length < MAX_SERIES ? (
-        <Button onPress={() => setSlots((current) => [...current, newSlot()])}>
-          {t('stat_compare_add')}
-        </Button>
-      ) : (
-        <Text style={styles.hint}>{t('stat_compare_limit', { count: MAX_SERIES })}</Text>
-      )}
+      {slots.map((slot, index) => {
+        const modeOptions = modeOptionsFor(slot.characterId);
+        return (
+          <View key={slot.key} style={styles.slotCard}>
+            <View style={styles.slotHeader}>
+              <View
+                style={[
+                  styles.swatch,
+                  { backgroundColor: seriesColors[index % seriesColors.length] },
+                ]}
+              />
+              <Text style={styles.slotTitle}>{nameOf(slot.characterId!)}</Text>
+            </View>
+            <Text style={styles.modeLabel}>{t('mode')}</Text>
+            <Select
+              options={modeOptions}
+              value={slot.modeId ?? ''}
+              onValueChange={(value) =>
+                setSlots((current) =>
+                  current.map((item) =>
+                    item.key === slot.key ? { ...item, modeId: value ? value : null } : item,
+                  ),
+                )
+              }
+              placeholder={t('mode_normal')}
+              disabled={modeOptions.length === 1}
+            />
+          </View>
+        );
+      })}
 
       <View style={{ marginTop: 16 }}>
         <StatRadarChart

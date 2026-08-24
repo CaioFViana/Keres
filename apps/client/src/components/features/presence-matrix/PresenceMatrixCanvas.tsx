@@ -16,11 +16,12 @@ interface Props {
   layout: PresenceMatrixLayout;
   onPressScene: (sceneId: string) => void;
   onPressRow: (rowId: string) => void;
+  showRowCoverage: boolean;
 }
 export type PresenceMatrixCanvasHandle = PanZoomCanvasHandle;
 
 const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
-  ({ layout, onPressScene, onPressRow }, ref) => {
+  ({ layout, onPressScene, onPressRow, showRowCoverage }, ref) => {
     const { colors } = useTheme();
     const panZoom = usePanZoomCanvas(ref, layout, {
       minScale: 0.08,
@@ -39,6 +40,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
             fontWeight: '700',
             textAlignVertical: 'center',
           },
+          rowPresence: { fontSize: 10, marginTop: 2 },
           cell: {
             position: 'absolute',
             borderRadius: 7,
@@ -153,20 +155,27 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                 justifyContent: 'center',
               }}
             >
-              <Text
-                numberOfLines={2}
-                style={[
-                  styles.label,
-                  {
-                    position: 'relative',
-                    left: 0,
-                    width: MATRIX_LABEL_WIDTH - 8,
-                    color: row.color,
-                  },
-                ]}
-              >
-                {row.label}
-              </Text>
+              <View>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.label,
+                    {
+                      position: 'relative',
+                      left: 0,
+                      width: MATRIX_LABEL_WIDTH - 8,
+                      color: row.color,
+                    },
+                  ]}
+                >
+                  {row.label}
+                </Text>
+                {showRowCoverage && (
+                  <Text style={[styles.rowPresence, { color: colors.textSecondary }]}>
+                    {`${row.cells.size}/${layout.scenes.length} (${Math.round((row.cells.size / layout.scenes.length || 0) * 100)}%)`}
+                  </Text>
+                )}
+              </View>
             </TouchableOpacity>
             {layout.scenes.map((scene, sceneIndex) => {
               const value = row.cells.get(scene.id);

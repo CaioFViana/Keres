@@ -145,6 +145,16 @@ const PresenceMatrixViewerContent: React.FC<{
     () => selectedItems.find((entry) => entry.id === selectedItemDetailsId) ?? null,
     [selectedItemDetailsId, selectedItems],
   );
+  const selectedCharacterPresence = useMemo(() => {
+    const sceneIds = new Set(
+      presence
+        .filter((relation) => relation.characterId === selectedCharacterId)
+        .map((relation) => relation.sceneId),
+    );
+    const present = scenes.filter((scene) => sceneIds.has(scene.id)).length;
+    const total = scenes.length;
+    return { present, total, percentage: Math.round((present / total || 0) * 100) };
+  }, [presence, scenes, selectedCharacterId]);
   const availableIds =
     request.kind === 'character'
       ? characters.map((entry) => entry.id)
@@ -265,6 +275,7 @@ const PresenceMatrixViewerContent: React.FC<{
         surface: colors.surface,
         text: colors.text,
         border: colors.border,
+        showRowCoverage: request.kind === 'character',
       });
       const r = await deliverSvgMap(svg, `${story.title}-presenca.svg`);
       notify(
@@ -480,6 +491,7 @@ const PresenceMatrixViewerContent: React.FC<{
         <PresenceMatrixCanvas
           ref={canvas}
           layout={layout}
+          showRowCoverage={request.kind === 'character'}
           onPressScene={setSelectedSceneId}
           onPressRow={(id) => {
             if (request.kind === 'character') setSelectedCharacterId(id);
@@ -570,6 +582,10 @@ const PresenceMatrixViewerContent: React.FC<{
               description:
                 characters.find((character) => character.id === selectedCharacterId)?.description ||
                 t('common_na'),
+            },
+            {
+              title: t('presence_matrix_presence'),
+              description: t('presence_matrix_presence_value', selectedCharacterPresence),
             },
             {
               title: t('scenes_title'),

@@ -15,6 +15,7 @@ export function renderPresenceMatrixSvg(
     surface: string;
     text: string;
     border: string;
+    showRowCoverage: boolean;
   },
 ): string {
   const body: string[] = [
@@ -55,9 +56,14 @@ export function renderPresenceMatrixSvg(
   });
   layout.rows.forEach((row, rowIndex) => {
     const y = MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT;
+    const percentage = Math.round((row.cells.size / layout.scenes.length || 0) * 100);
     body.push(
-      `<text x="${MATRIX_PADDING}" y="${y + 33}" font-size="12" font-weight="bold" fill="${row.color}">${escapeXml(truncate(row.label, 20))}</text>`,
+      `<text x="${MATRIX_PADDING}" y="${y + (options.showRowCoverage ? 26 : 33)}" font-size="12" font-weight="bold" fill="${row.color}">${escapeXml(truncate(row.label, 20))}</text>`,
     );
+    if (options.showRowCoverage)
+      body.push(
+        `<text x="${MATRIX_PADDING}" y="${y + 42}" font-size="10" fill="${options.text}" fill-opacity="0.72">${row.cells.size}/${layout.scenes.length} (${percentage}%)</text>`,
+      );
     layout.scenes.forEach((scene, sceneIndex) => {
       const value = row.cells.get(scene.id);
       if (!value) return;

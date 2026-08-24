@@ -19,9 +19,7 @@
     "test": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB",
     "test:coverage": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB --coverage",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "locales:audit": "tsx scripts/verify-translations.ts",
-    "locales:audit:force": "tsx scripts/verify-translations.ts --force"
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts"
   },
   "dependencies": {
     "@keres/shared": "workspace:*",

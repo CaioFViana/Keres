@@ -5,7 +5,8 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 
 ## 1. Pre-flight
 
-- [ ] `bun run release:check` passa. Ele executa `typecheck`, aplica a formatação,
+- [ ] `bun run release:check` passa. Ele audita primeiro as traduções do client, admin,
+      showcase e site para falhar cedo; depois executa `typecheck`, aplica a formatação,
       roda `test:report`, confere que todas as versões controladas por
       `scripts/version/set-release.mjs` coincidem com a versão do `package.json` raiz e exige
       worktree limpo ao final.

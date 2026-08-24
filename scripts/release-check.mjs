@@ -66,15 +66,17 @@ function verifyCleanWorktree() {
 }
 
 try {
-  console.log('\n[1/5] Typecheck');
+  console.log('\n[1/6] Traduções');
+  run('bun', ['run', 'locales:audit']);
+  console.log('\n[2/6] Typecheck');
   run('bun', ['run', 'typecheck']);
-  console.log('\n[2/5] Formatação');
+  console.log('\n[3/6] Formatação');
   run('bun', ['run', 'format']);
-  console.log('\n[3/5] Versões de release');
+  console.log('\n[4/6] Versões de release');
   verifyReleaseVersions();
-  console.log('\n[4/5] Worktree');
+  console.log('\n[5/6] Worktree');
   verifyCleanWorktree();
-  console.log('\n[5/5] Relatório de testes e cobertura');
+  console.log('\n[6/6] Relatório de testes e cobertura');
   run('bun', ['run', 'test:report']);
   console.log('\nRelease check concluído sem pendências.');
 } catch (error) {

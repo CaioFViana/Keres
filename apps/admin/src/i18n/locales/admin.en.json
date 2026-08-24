@@ -1,11 +1,9 @@
 {
-  "language": {
-    "label": "Language"
-  },
-  "theme": {
-    "system": "Theme: System",
-    "light": "Theme: Light",
-    "dark": "Theme: Dark"
+  "appearance": {
+    "title": "Appearance",
+    "hint": "Saved in this browser only.",
+    "palette": "Palette",
+    "followingSystem": "Following your device setting."
   },
   "common": {
     "loading": "Loading...",
@@ -29,6 +27,34 @@
     "actionFailed": "Action failed.",
     "blankUnlimited": "(blank = unlimited)"
   },
+  "language": {
+    "label": "Language"
+  },
+  "login": {
+    "title": "Keres Admin",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "failed": "Login failed."
+  },
+  "logs": {
+    "title": "Logs",
+    "level": "Level",
+    "allLevels": "All levels",
+    "storyId": "Story ID",
+    "userId": "User ID",
+    "searchPlaceholder": "Message, story, user…",
+    "from": "From",
+    "to": "To",
+    "columnWhen": "When",
+    "columnLevel": "Level",
+    "columnMessage": "Message",
+    "columnStory": "Story",
+    "columnUser": "User",
+    "empty": "No entries. Search above.",
+    "detail": "Log detail"
+  },
   "nav": {
     "title": "Keres Admin",
     "menu": "Menu",
@@ -41,57 +67,6 @@
     "signedIn": "Signed in",
     "signOut": "Sign out",
     "ariaLabel": "Admin"
-  },
-  "login": {
-    "title": "Keres Admin",
-    "username": "Username",
-    "password": "Password",
-    "signIn": "Sign in",
-    "signingIn": "Signing in...",
-    "failed": "Login failed."
-  },
-  "users": {
-    "title": "Users",
-    "newUser": "New user",
-    "searchPlaceholder": "Username or tag...",
-    "searchAriaLabel": "Search username or tag",
-    "showDeleted": "Show deleted",
-    "columnUsername": "Username",
-    "columnTag": "Tag",
-    "columnAdmin": "Admin",
-    "columnTier": "Tier",
-    "columnCreated": "Created",
-    "columnStatus": "Status",
-    "statusActive": "Active",
-    "statusDeleted": "Deleted",
-    "empty": "No users found.",
-    "confirmDelete": "Soft-delete user \"{{username}}\"?",
-    "confirmDeleteAdmin": "Soft-delete admin \"{{username}}\"? They will lose access until restored."
-  },
-  "userForm": {
-    "newTitle": "New user",
-    "editTitle": "Edit {{username}}",
-    "username": "Username",
-    "password": "Password",
-    "tag": "Tag",
-    "tagPlaceholder": "(defaults to username)",
-    "bio": "Bio",
-    "tier": "Tier",
-    "tierNone": "(none / default)",
-    "adminAccess": "Admin access",
-    "confirmAdmin": "Create this user with admin access? They will be able to manage the panel.",
-    "recoveryTitle": "Recovery codes for {{username}}",
-    "recoveryHint": "Each code can be used once to reset the password without knowing the current one. Shown only this once - hand them to the user now, they cannot be retrieved again later.",
-    "copyCodes": "Copy codes",
-    "copied": "Copied to clipboard.",
-    "copyFailed": "Could not copy automatically — select the codes manually.",
-    "lockedOutTitle": "Locked out of their account?",
-    "lockedOutHint": "Issues a fresh batch of recovery codes and invalidates any old ones. Hand a code to the user - they use it to set their own new password, which you never see.",
-    "regenerate": "Regenerate recovery codes",
-    "regenerating": "Regenerating...",
-    "confirmRegenerate": "Regenerate {{username}}'s recovery codes? All of their previous codes will stop working.",
-    "regenerateFailed": "Failed to regenerate recovery codes.",
-    "loadTiersFailed": "Failed to load tiers."
   },
   "recovery": {
     "title": "Recovery",
@@ -119,22 +94,29 @@
     "operationVersion": "Operation version",
     "entityVersion": "Entity version"
   },
-  "logs": {
-    "title": "Logs",
-    "level": "Level",
-    "allLevels": "All levels",
-    "storyId": "Story ID",
-    "userId": "User ID",
-    "searchPlaceholder": "Message, story, user…",
-    "from": "From",
-    "to": "To",
-    "columnWhen": "When",
-    "columnLevel": "Level",
-    "columnMessage": "Message",
-    "columnStory": "Story",
-    "columnUser": "User",
-    "empty": "No entries. Search above.",
-    "detail": "Log detail"
+  "settings": {
+    "title": "Settings",
+    "registration": "Registration",
+    "autoManage": "Auto-manage open/closed based on max users",
+    "registrationOpen": "Registration open",
+    "maxUsers": "Max users",
+    "maxUsersHint": "(blank = no cap)",
+    "defaultTier": "Default tier for new signups",
+    "defaultTierNone": "(none / unlimited)",
+    "saved": "Saved.",
+    "loadTiersFailed": "Failed to load tiers."
+  },
+  "showcaseSettings": {
+    "title": "Hosted Pages",
+    "description": "The showcase lists published stories. The hosted client is the web app served at the root; when disabled, the root shows a simple page linking to administration and the showcase.",
+    "enabled": "Showcase enabled",
+    "hostedClientEnabled": "Enable the hosted client at the root",
+    "loadFailed": "Failed to load."
+  },
+  "theme": {
+    "system": "Theme: System",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark"
   },
   "tiers": {
     "title": "Tiers",
@@ -155,29 +137,47 @@
     "empty": "No tiers yet.",
     "confirmDelete": "Delete tier \"{{name}}\"?"
   },
-  "settings": {
-    "title": "Settings",
-    "registration": "Registration",
-    "autoManage": "Auto-manage open/closed based on max users",
-    "registrationOpen": "Registration open",
-    "maxUsers": "Max users",
-    "maxUsersHint": "(blank = no cap)",
-    "defaultTier": "Default tier for new signups",
-    "defaultTierNone": "(none / unlimited)",
-    "saved": "Saved.",
+  "userForm": {
+    "newTitle": "New user",
+    "editTitle": "Edit {{username}}",
+    "username": "Username",
+    "password": "Password",
+    "tag": "Tag",
+    "tagPlaceholder": "(defaults to username)",
+    "bio": "Bio",
+    "tier": "Tier",
+    "tierNone": "(none / default)",
+    "adminAccess": "Admin access",
+    "confirmAdmin": "Create this user with admin access? They will be able to manage the panel.",
+    "recoveryTitle": "Recovery codes for {{username}}",
+    "recoveryHint": "Each code can be used once to reset the password without knowing the current one. Shown only this once - hand them to the user now, they cannot be retrieved again later.",
+    "copyCodes": "Copy codes",
+    "copied": "Copied to clipboard.",
+    "copyFailed": "Could not copy automatically — select the codes manually.",
+    "lockedOutTitle": "Locked out of their account?",
+    "lockedOutHint": "Issues a fresh batch of recovery codes and invalidates any old ones. Hand a code to the user - they use it to set their own new password, which you never see.",
+    "regenerate": "Regenerate recovery codes",
+    "regenerating": "Regenerating...",
+    "confirmRegenerate": "Regenerate {{username}}'s recovery codes? All of their previous codes will stop working.",
+    "regenerateFailed": "Failed to regenerate recovery codes.",
     "loadTiersFailed": "Failed to load tiers."
   },
-  "showcaseSettings": {
-    "title": "Hosted Pages",
-    "description": "The showcase lists published stories. The hosted client is the web app served at the root; when disabled, the root shows a simple page linking to administration and the showcase.",
-    "enabled": "Showcase enabled",
-    "hostedClientEnabled": "Enable the hosted client at the root",
-    "loadFailed": "Failed to load."
-  },
-  "appearance": {
-    "title": "Appearance",
-    "hint": "Saved in this browser only.",
-    "palette": "Palette",
-    "followingSystem": "Following your device setting."
+  "users": {
+    "title": "Users",
+    "newUser": "New user",
+    "searchPlaceholder": "Username or tag...",
+    "searchAriaLabel": "Search username or tag",
+    "showDeleted": "Show deleted",
+    "columnUsername": "Username",
+    "columnTag": "Tag",
+    "columnAdmin": "Admin",
+    "columnTier": "Tier",
+    "columnCreated": "Created",
+    "columnStatus": "Status",
+    "statusActive": "Active",
+    "statusDeleted": "Deleted",
+    "empty": "No users found.",
+    "confirmDelete": "Soft-delete user \"{{username}}\"?",
+    "confirmDeleteAdmin": "Soft-delete admin \"{{username}}\"? They will lose access until restored."
   }
 }

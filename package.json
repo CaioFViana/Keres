@@ -11,6 +11,8 @@
     "test:coverage": "bun run --cwd packages/shared test:coverage && bun run --cwd apps/client test:coverage && bun run --cwd apps/api test:coverage && bun run --cwd apps/admin test:coverage && bun run --cwd apps/desktop test:coverage && bun run --cwd apps/site test:coverage",
     "test:report": "node scripts/test-report.mjs",
     "coverage:update": "node scripts/update-coverage-thresholds.mjs",
+    "locales:audit": "bun scripts/verify-translations.ts",
+    "locales:audit:force": "bun scripts/verify-translations.ts --force",
     "release:check": "node scripts/release-check.mjs",
     "version:set": "node scripts/version/set-release.mjs",
     "test:integration": "bun run --cwd apps/api test:integration",

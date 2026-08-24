@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as ts from 'typescript';
 
 /**
- * Audits `src/locales/*.json` against the codebase: every locale file has the same keys
+ * Audits the monorepo locale catalogs against their codebases: every locale file has the same keys
  * (Step "cross-locale consistency"), every key the code actually asks `t()` for exists in
  * every locale (Step "missing keys"), and every key that exists in the locales is
  * reachable from somewhere in the code (Step "unused keys").
@@ -48,18 +48,65 @@ interface ScanResult {
   exactUsages: KeyUsage[];
   dynamicPatterns: DynamicKeyPattern[];
   allLiterals: Set<string>;
+  allTemplatePatterns: RegExp[];
 }
 
-const clientSrcPath = path.join(__dirname, '..', 'src');
+interface LocaleAuditTarget {
+  name: string;
+  localesPath: string;
+  localeFilePattern: RegExp;
+  scanRoots: string[];
+  excludedPaths: string[];
+}
+
+const repoRoot = path.join(__dirname, '..');
+const clientSrcPath = path.join(repoRoot, 'apps', 'client', 'src');
 const localesPath = path.join(clientSrcPath, 'locales');
-const sharedSrcPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared');
+const sharedSrcPath = path.join(repoRoot, 'packages', 'shared');
+const adminSrcPath = path.join(repoRoot, 'apps', 'admin', 'src');
+const adminLocalesPath = path.join(adminSrcPath, 'i18n', 'locales');
+const showcaseSrcPath = path.join(adminSrcPath, 'showcase');
+const adminLanguageSelectPath = path.join(adminSrcPath, 'i18n', 'LanguageSelect.tsx');
+const siteSrcPath = path.join(repoRoot, 'apps', 'site', 'src');
+const siteLocalesPath = path.join(siteSrcPath, 'i18n', 'locales');
 // Everywhere a translation key can plausibly originate: the app itself, and the shared
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
-const SCAN_ROOTS = [clientSrcPath, sharedSrcPath];
 const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
 const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'storyDevices', 'content');
 // Prosa autorada por idioma: não usa chaves de tradução e não deve entrar na auditoria.
 const DOC_CONTENT_PATHS = [HELP_CONTENT_PATH, STORY_DEVICES_CONTENT_PATH];
+
+const AUDIT_TARGETS: LocaleAuditTarget[] = [
+  {
+    name: 'client',
+    localesPath,
+    localeFilePattern: /^(en|pt)\.json$/,
+    scanRoots: [clientSrcPath, sharedSrcPath],
+    excludedPaths: DOC_CONTENT_PATHS,
+  },
+  {
+    name: 'admin',
+    localesPath: adminLocalesPath,
+    localeFilePattern: /^admin\.(en|pt)\.json$/,
+    scanRoots: [adminSrcPath],
+    // Showcase é outro bundle e outro namespace, apesar de viver no mesmo app Vite.
+    excludedPaths: [showcaseSrcPath],
+  },
+  {
+    name: 'showcase',
+    localesPath: adminLocalesPath,
+    localeFilePattern: /^showcase\.(en|pt)\.json$/,
+    scanRoots: [showcaseSrcPath, adminLanguageSelectPath],
+    excludedPaths: [],
+  },
+  {
+    name: 'site',
+    localesPath: siteLocalesPath,
+    localeFilePattern: /^site\.(en|pt)\.json$/,
+    scanRoots: [siteSrcPath],
+    excludedPaths: [],
+  },
+];
 
 // --- JSON helpers -----------------------------------------------------------------
 
@@ -132,17 +179,22 @@ function writeJsonFile(filePath: string, data: Record<string, any>) {
 
 // --- Source scanning ---------------------------------------------------------------
 
-function walkSourceFiles(rootDir: string): string[] {
+function walkSourceFiles(rootDir: string, excludedPaths: string[]): string[] {
   const files: string[] = [];
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
+    const rootStat = fs.statSync(dir);
+    if (rootStat.isFile()) {
+      if (dir.endsWith('.ts') || dir.endsWith('.tsx')) files.push(dir);
+      return;
+    }
     for (const entry of fs.readdirSync(dir)) {
       const entryPath = path.join(dir, entry);
       if (
         entry === 'node_modules' ||
         entry === 'dist' ||
         entry === '.expo' ||
-        DOC_CONTENT_PATHS.includes(entryPath)
+        excludedPaths.includes(entryPath)
       )
         continue;
       const stat = fs.statSync(entryPath);
@@ -170,6 +222,13 @@ function patternFromTemplate(node: ts.TemplateExpression): RegExp {
   return new RegExp(source + '$');
 }
 
+function indirectPatternFromTemplate(node: ts.TemplateExpression): RegExp | null {
+  const staticText = node.head.text + node.templateSpans.map((span) => span.literal.text).join('');
+  // `${value}` e outros templates sem âncora textual útil casariam com todo o catálogo e
+  // esconderiam qualquer chave realmente órfã.
+  return staticText.length >= 3 ? patternFromTemplate(node) : null;
+}
+
 function isTranslationCallee(expression: ts.LeftHandSideExpression): boolean {
   if (ts.isIdentifier(expression) && expression.text === 't') return true;
   if (
@@ -195,6 +254,7 @@ function scanFile(filePath: string): ScanResult {
   const exactUsages: KeyUsage[] = [];
   const dynamicPatterns: DynamicKeyPattern[] = [];
   const allLiterals = new Set<string>();
+  const allTemplatePatterns: RegExp[] = [];
   const lineOf = (pos: number) => sourceFile.getLineAndCharacterOfPosition(pos).line + 1;
 
   function visit(node: ts.Node) {
@@ -202,6 +262,14 @@ function scanFile(filePath: string): ScanResult {
     // through a prop or hook argument instead of a literal `t('key')` at that spot.
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
       allLiterals.add(node.text);
+    }
+    // Assim como literais indiretos, templates podem chegar a `t()` depois de atravessar
+    // helpers (`buildFinding(..., `analysis_scene_${problem}`)`). Servem como evidência de uso,
+    // mas não como pedido autoritativo de chave: templates comuns da aplicação não devem gerar
+    // falso "missing translation".
+    if (ts.isTemplateExpression(node)) {
+      const pattern = indirectPatternFromTemplate(node);
+      if (pattern) allTemplatePatterns.push(pattern);
     }
 
     if (
@@ -241,14 +309,12 @@ function scanFile(filePath: string): ScanResult {
       }
     }
 
-    // `<GenericRelationDisplay noItemsMessage="notes_empty" />`: the component calls `t()` on
-    // the prop internally (see file header, indirection case 2), so the literal here never
-    // appears inside a `t(...)` call site itself. Without this, a typo'd/never-added key only
-    // gets caught by luck, if some other real key happens not to already cover it as "unused".
+    // Props que carregam chaves: `noItemsMessage` é traduzida dentro do componente genérico;
+    // `Trans i18nKey` é resolvida pelo react-i18next sem uma chamada `t()` explícita.
     if (
       ts.isJsxAttribute(node) &&
       ts.isIdentifier(node.name) &&
-      node.name.text === 'noItemsMessage' &&
+      (node.name.text === 'noItemsMessage' || node.name.text === 'i18nKey') &&
       node.initializer
     ) {
       const init = node.initializer;
@@ -266,29 +332,26 @@ function scanFile(filePath: string): ScanResult {
   }
 
   visit(sourceFile);
-  return { exactUsages, dynamicPatterns, allLiterals };
+  return { exactUsages, dynamicPatterns, allLiterals, allTemplatePatterns };
 }
 
 function toRelative(filePath: string): string {
-  return path
-    .relative(path.join(__dirname, '..', '..', '..'), filePath)
-    .split(path.sep)
-    .join('/');
+  return path.relative(repoRoot, filePath).split(path.sep).join('/');
 }
 
 // --- Main ---------------------------------------------------------------------------
 
-async function auditLocales() {
-  const args = process.argv.slice(2);
-  const forceRemoveUnused = args.includes('--force');
-
+function auditTarget(target: LocaleAuditTarget, forceRemoveUnused: boolean): boolean {
   let hasErrors = false;
+  console.log(`\n========== ${target.name.toUpperCase()} ==========`);
 
   // --- Step 1: Read, Sort, and Write all locale JSON files ---
-  const localeFiles = fs.readdirSync(localesPath).filter((file) => file.endsWith('.json'));
+  const localeFiles = fs
+    .readdirSync(target.localesPath)
+    .filter((file) => target.localeFilePattern.test(file));
   if (localeFiles.length === 0) {
-    console.warn('⚠️ No locale JSON files found.');
-    return;
+    console.error(`❌ No locale JSON files found for ${target.name}.`);
+    return true;
   }
 
   const allLocalesContent: { [key: string]: Record<string, any> } = {};
@@ -296,14 +359,14 @@ async function auditLocales() {
 
   console.log('🔄 Sorting locale files...');
   for (const file of localeFiles) {
-    const filePath = path.join(localesPath, file);
+    const filePath = path.join(target.localesPath, file);
     const data = readJsonFile(filePath);
     writeJsonFile(filePath, data);
     console.log(`✅ Sorted and wrote to ${file}`);
   }
 
   for (const file of localeFiles) {
-    const data = readJsonFile(path.join(localesPath, file));
+    const data = readJsonFile(path.join(target.localesPath, file));
     allLocalesContent[file] = data;
     allLocaleKeysFlattened[file] = flattenObject(data);
   }
@@ -318,13 +381,15 @@ async function auditLocales() {
   const exactUsages: KeyUsage[] = [];
   const dynamicPatterns: DynamicKeyPattern[] = [];
   const allLiterals = new Set<string>();
+  const allTemplatePatterns: RegExp[] = [];
 
-  for (const root of SCAN_ROOTS) {
-    for (const file of walkSourceFiles(root)) {
+  for (const root of target.scanRoots) {
+    for (const file of walkSourceFiles(root, target.excludedPaths)) {
       const result = scanFile(file);
       exactUsages.push(...result.exactUsages);
       dynamicPatterns.push(...result.dynamicPatterns);
       result.allLiterals.forEach((literal) => allLiterals.add(literal));
+      allTemplatePatterns.push(...result.allTemplatePatterns);
     }
   }
   console.log(
@@ -396,6 +461,7 @@ async function auditLocales() {
     if (firstUsageByKey.has(key)) continue;
     if (allLiterals.has(key)) continue;
     if (dynamicPatterns.some((dynamic) => dynamic.pattern.test(key))) continue;
+    if (allTemplatePatterns.some((pattern) => pattern.test(key))) continue;
     unusedKeys.add(key);
   }
 
@@ -411,7 +477,7 @@ async function auditLocales() {
           }
         }
         if (fileModified) {
-          writeJsonFile(path.join(localesPath, localeFile), allLocalesContent[localeFile]);
+          writeJsonFile(path.join(target.localesPath, localeFile), allLocalesContent[localeFile]);
           console.log(`✅ Updated '${localeFile}' with unused keys removed.`);
         }
       }
@@ -428,12 +494,29 @@ async function auditLocales() {
     console.log('✅ No unused translations found.');
   }
 
+  console.log(
+    hasErrors
+      ? `\n🚫 ${target.name}: translation key issues found.`
+      : `\n✅ ${target.name}: translations audited and consistent.`,
+  );
+  return hasErrors;
+}
+
+async function auditLocales() {
+  const args = process.argv.slice(2);
+  const forceRemoveUnused = args.includes('--force');
+  let hasErrors = false;
+
+  for (const target of AUDIT_TARGETS) {
+    const targetHasErrors = auditTarget(target, forceRemoveUnused);
+    hasErrors = targetHasErrors || hasErrors;
+  }
+
   if (hasErrors) {
     console.error('\n🚫 Some translation key issues were found.');
     process.exit(1);
-  } else {
-    console.log('\n✅ All translation keys are correctly audited and consistent.');
   }
+  console.log('\n✅ All translation catalogs are correctly audited and consistent.');
 }
 
 auditLocales().catch((error) => {

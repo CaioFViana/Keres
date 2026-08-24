@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'data-and-backup',
   title: 'Seus dados e backup',

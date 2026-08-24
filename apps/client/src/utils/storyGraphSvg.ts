@@ -1,9 +1,10 @@
-import {
+import type {
   GraphChapterLegendEntry,
   GraphEdge,
   GraphNode,
-  GRAPH_PADDING,
-  StoryGraphLayout,
+  StoryGraphLayout} from './storyGraphLayout';
+import {
+  GRAPH_PADDING
 } from './storyGraphLayout';
 
 /**

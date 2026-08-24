@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import { EntityStoreCore } from '../state/createEntityStore';
+import type { EntityStoreCore } from '../state/createEntityStore';
 import { useStoryStore } from '../state/storyStore';
-import { SortDirection } from '../types/entityFilters';
+import type { SortDirection } from '../types/entityFilters';
 import { debounce } from '../utils/debounce';
 import { entityEventEmitter } from '../utils/EventEmitter';
 

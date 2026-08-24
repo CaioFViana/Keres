@@ -26,7 +26,7 @@ try {
     const sqlContent = fs.readFileSync(path.join(drizzleMigrationsDir, file), 'utf8');
 
     // Create the .ts migration file in clientMigrationsDir
-    const tsMigrationContent = `import { SQLiteDatabase } from 'expo-sqlite';
+    const tsMigrationContent = `import type { SQLiteDatabase } from 'expo-sqlite';
 
 export default async function (db: SQLiteDatabase) {
   await db.execAsync(\`

@@ -1,7 +1,9 @@
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import { and, asc, desc, eq, or, sql, SQL } from 'drizzle-orm'; // Import SQL
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, or, sql } from 'drizzle-orm'; // Import SQL
 import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing
-import { AppDrizzleClient, characterRelations, characters } from '../../db';
+import type { AppDrizzleClient} from '../../db';
+import { characterRelations, characters } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils'; // Import for changed fields in update
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import for event emission
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Imports for logging operations

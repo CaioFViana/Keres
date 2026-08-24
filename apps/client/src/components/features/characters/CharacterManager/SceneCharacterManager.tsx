@@ -1,5 +1,5 @@
-import { Character } from '@keres/shared/entities/Character';
-import { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Character } from '@keres/shared/entities/Character';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';

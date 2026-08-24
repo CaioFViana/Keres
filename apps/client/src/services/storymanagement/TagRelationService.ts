@@ -1,6 +1,7 @@
-import { TagRelation, TagRelationEntities } from '@keres/shared';
+import type { TagRelation, TagRelationEntities } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { AppDrizzleClient, TagRelationInsert, tagRelations, tags, TagSelect } from '../../db';
+import type { AppDrizzleClient, TagRelationInsert, TagSelect } from '../../db';
+import { tagRelations, tags } from '../../db';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';

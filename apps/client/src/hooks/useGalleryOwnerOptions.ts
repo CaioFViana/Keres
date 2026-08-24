@@ -1,9 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
-import { GALLERY_OWNER_ENTITIES, GalleryOwnerEntity } from '@keres/shared';
+import type { Ionicons } from '@expo/vector-icons';
+import type { GalleryOwnerEntity } from '@keres/shared';
+import { GALLERY_OWNER_ENTITIES } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
 import * as schema from '../db/schema';
 

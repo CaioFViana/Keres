@@ -2,8 +2,11 @@ import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
 import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
-import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../hooks/usePanZoomCanvas';
+import type { PanZoomCanvasHandle} from '../../../hooks/usePanZoomCanvas';
+import { usePanZoomCanvas } from '../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../theme';
+import type {
+  PresenceMatrixLayout} from '../../../utils/presenceMatrixLayout';
 import {
   buildMatrixThreadSegments,
   MATRIX_CELL_INSET,
@@ -14,8 +17,7 @@ import {
   MATRIX_THREAD_GAP_DASH,
   MATRIX_THREAD_OPACITY,
   MATRIX_THREAD_WIDTH,
-  matrixRowCenterY,
-  PresenceMatrixLayout,
+  matrixRowCenterY
 } from '../../../utils/presenceMatrixLayout';
 
 interface Props {

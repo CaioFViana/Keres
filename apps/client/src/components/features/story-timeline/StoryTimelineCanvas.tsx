@@ -2,10 +2,12 @@ import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import { PanZoomCanvasHandle, usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
+import type { PanZoomCanvasHandle} from '@/src/hooks/usePanZoomCanvas';
+import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useTheme } from '@/src/theme';
+import type {
+  StoryTimelineLayout} from '@/src/utils/storyTimelineLayout';
 import {
-  StoryTimelineLayout,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,

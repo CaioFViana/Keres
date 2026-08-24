@@ -1,9 +1,9 @@
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/Story';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,6 +12,7 @@ import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
+import { useThemeColors } from '../../theme/useThemeColors';
 import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -19,7 +20,6 @@ import { useTheme } from '../../theme';
 import {
   getCommonCardStyles,
   getCommonContainerStyles,
-  useThemeColors,
 } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';

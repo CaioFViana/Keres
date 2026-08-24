@@ -1,12 +1,13 @@
-import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
-import { TagRelationEntities } from '@keres/shared/entities/Tag';
+import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
+import type { TagRelationEntities } from '@keres/shared/entities/Tag';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
-import { TagSelect } from '../db/schema';
+import type { TagSelect } from '../db/schema';
+import type {
+  SaveNoteRelation} from '../services/storymanagement/NoteRelationService';
 import {
-  createNoteRelationService,
-  SaveNoteRelation,
+  createNoteRelationService
 } from '../services/storymanagement/NoteRelationService';
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';

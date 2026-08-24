@@ -1,10 +1,13 @@
-import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships'; // Import friendships here
-import { servers, ServerSelect } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
-import { UserInsert, users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
-import { EnrichedFriendship, UserPublicInfo } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
+import type { FriendshipInsert, FriendshipSelect } from '@/src/db/schemas/friendships';
+import { friendships } from '@/src/db/schemas/friendships'; // Import friendships here
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import { servers } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
+import type { UserInsert} from '@/src/db/schemas/users';
+import { users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
+import type { EnrichedFriendship, UserPublicInfo } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { eq, inArray, sql } from 'drizzle-orm';
-import { AppDrizzleClient, AppDrizzleTransaction } from '../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../db';
 import { useNotificationStore } from '../state/notificationStore'; // Import notification store and types
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter

@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -10,12 +12,12 @@ import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSo
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '../../db';
-import { GallerySelect } from '../../db/schemas/galleries';
+import type { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -181,10 +183,7 @@ const GalleryListScreen = () => {
   const numColumns = breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2;
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     columnWrapper: {
       paddingHorizontal: 5,
     },

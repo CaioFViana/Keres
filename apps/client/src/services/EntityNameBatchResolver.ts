@@ -1,6 +1,7 @@
 import { inArray } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
-import { getEntityTable, SyncableEntityName } from './entityTableRegistry';
+import type { AppDrizzleClient } from '../db';
+import type { SyncableEntityName } from './entityTableRegistry';
+import { getEntityTable } from './entityTableRegistry';
 
 export interface EntityRef {
   entityType: string;

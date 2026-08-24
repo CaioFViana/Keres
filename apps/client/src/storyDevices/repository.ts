@@ -1,6 +1,6 @@
 import { storyDevicePageIds } from './catalog';
 import { storyDeviceRegistry } from './generated/registry';
-import { StoryDevicePage } from './types';
+import type { StoryDevicePage } from './types';
 
 export interface ResolvedStoryDevicePage {
   page: StoryDevicePage | undefined;

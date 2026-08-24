@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
-import { Choice } from '@keres/shared/entities/Choice';
+import type { Choice } from '@keres/shared/entities/Choice';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SceneSelect } from '../../../../db/schema';
+import type { SceneSelect } from '../../../../db/schema';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { NarrativeElementsStackParamList } from '../../../../navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
 
 interface SceneNavigationControlsProps {

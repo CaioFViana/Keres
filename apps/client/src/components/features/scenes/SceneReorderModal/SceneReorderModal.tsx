@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import { SceneSelect } from '../../../../db/schema';
+import type { SceneSelect } from '../../../../db/schema';
 import { useChapterStore } from '../../../../state/chapterStore';
 import { useTheme } from '../../../../theme';
 import { buildReorderItems } from '../../../../utils/reorderIndexes';

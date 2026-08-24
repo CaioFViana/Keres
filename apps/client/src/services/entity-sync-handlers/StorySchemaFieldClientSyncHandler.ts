@@ -1,14 +1,14 @@
-import {
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   StorySchemaField,
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID } from '../../utils/entityUtils';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'StorySchemaField';

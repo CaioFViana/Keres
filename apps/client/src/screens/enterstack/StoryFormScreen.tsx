@@ -2,9 +2,9 @@ import Button from '@/src/components/common/controls/Button/Button';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -285,7 +285,7 @@ const StoryFormScreen = () => {
       {storyId && (
         <Button
           onPress={handleDelete}
-          style={[styles.saveButton, styles.deleteButton]}
+          style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
           disabled={!canManageStoryPolicy}
         >
           {t('delete_story_title')}
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     marginTop: 10,
     marginBottom: 15,
-    backgroundColor: 'red', // Destructive color
+    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
   },
   centered: {
     flex: 1,

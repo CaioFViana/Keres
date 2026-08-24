@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'what-is-a-server',
   title: 'O que é um servidor Keres',

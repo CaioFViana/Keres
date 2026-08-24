@@ -2,7 +2,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,12 +14,13 @@ import {
   View,
 } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schema';
-import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
+import type { ServerSelect } from '../../db/schema';
+import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
 import apiClient, { apiUrl, isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
+import type {
+  OwnedServerStory} from '../../services/ServerService';
 import {
   createServerService,
-  OwnedServerStory,
   ServerHasOwnedStoriesError,
 } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';

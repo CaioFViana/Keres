@@ -1,8 +1,8 @@
-import { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { SceneSelect } from '../../../../db/schema';
+import type { SceneSelect } from '../../../../db/schema';
 import { useChapterNames } from '../../../../hooks/useChapterNames';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';

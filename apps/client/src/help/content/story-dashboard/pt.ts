@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'story-dashboard',
   title: 'O painel da história',

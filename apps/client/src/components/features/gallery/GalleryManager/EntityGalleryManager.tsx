@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { GalleryOwnerEntity, MediaType } from '@keres/shared';
+import type { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { GallerySelect } from '../../../../db/schema';
+import type { GallerySelect } from '../../../../db/schema';
 import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
 import { useResolvedMediaUri } from '../../../../hooks/useResolvedMediaUri';
 import { useNotificationStore } from '../../../../state/notificationStore';

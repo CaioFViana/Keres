@@ -1,7 +1,8 @@
-import { ItemJourney } from '@keres/shared/entities/Item';
+import type { ItemJourney } from '@keres/shared/entities/Item';
 import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntityType';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, itemJourneys } from '../../db';
+import type { AppDrizzleClient} from '../../db';
+import { itemJourneys } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

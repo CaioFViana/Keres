@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Animated, View } from 'react-native';
-import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
+import type { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
 
 type PanZoomCanvasResult = ReturnType<typeof usePanZoomCanvas>;

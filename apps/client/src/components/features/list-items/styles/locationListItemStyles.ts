@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { ThemeColors } from '../../../../theme/ThemeColors'; // Corrected import
+import type { ThemeColors } from '../../../../theme/ThemeColors'; // Corrected import
 
 export const createLocationStyles = (
   colors: ThemeColors, // Corrected type

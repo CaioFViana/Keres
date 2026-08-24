@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import type { Ionicons } from '@expo/vector-icons';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 
 /**
  * Ícone por tipo de entidade, usado em qualquer lugar que precise exibir "ícone + nome" para

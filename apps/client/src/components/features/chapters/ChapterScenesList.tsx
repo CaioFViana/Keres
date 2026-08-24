@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
+import type { ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
 import SceneListItem from '@/src/components/features/list-items/SceneListItem';
 import ChapterSceneBranchTree from './ChapterSceneBranchTree';

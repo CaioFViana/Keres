@@ -1,12 +1,13 @@
-import { StorySchemaEntityType } from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
-import { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { buildCustomAttributeFieldMetadata } from '../../../../utils/customAttributeFieldMetadata';
 import Button from '@/src/components/common/controls/Button/Button';

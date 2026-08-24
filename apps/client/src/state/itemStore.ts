@@ -1,5 +1,6 @@
-import { ItemSelect } from '../db/schemas/items';
-import { createItemService, ItemService } from '../services/storymanagement/ItemService';
+import type { ItemSelect } from '../db/schemas/items';
+import type { ItemService } from '../services/storymanagement/ItemService';
+import { createItemService } from '../services/storymanagement/ItemService';
 import { createEntityStore } from './createEntityStore';
 
 export const useItemStore = createEntityStore<'items', ItemSelect, ItemService>({

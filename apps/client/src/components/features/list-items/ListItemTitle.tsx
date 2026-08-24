@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+import { Text, View } from 'react-native';
 
 interface ListItemTitleProps {
   text: string;

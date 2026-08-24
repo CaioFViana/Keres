@@ -1,5 +1,5 @@
-import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
 import { useStoryListStore } from '../state/storyListStore';
 import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';

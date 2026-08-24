@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
-import { WorldRuleWithTags } from '../../../db/schemas/worldRules';
+import type { WorldRuleWithTags } from '../../../db/schemas/worldRules';
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';

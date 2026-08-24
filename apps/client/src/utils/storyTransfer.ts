@@ -1,6 +1,7 @@
+import type {
+  FullStoryExportType} from '@keres/shared';
 import {
   FullStoryExportSchema,
-  FullStoryExportType,
   migrateStoryExport,
   StoryExportVersionError,
 } from '@keres/shared';
@@ -9,7 +10,8 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { reviveDates } from './reviveDates';
-import { ExtractedZipMedia, extractStoryZip, stripUtf8Bom } from './storyMediaBundle';
+import type { ExtractedZipMedia} from './storyMediaBundle';
+import { extractStoryZip, stripUtf8Bom } from './storyMediaBundle';
 import { StoryImportError } from './StoryImportError';
 
 export { StoryImportError };

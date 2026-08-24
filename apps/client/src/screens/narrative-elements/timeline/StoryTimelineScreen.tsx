@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import { ChapterSelect, SceneSelect } from '@/src/db/schema';
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useDrizzle } from '@/src/db';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
@@ -20,12 +20,14 @@ import {
 } from '@/src/utils/sceneTiming';
 import { buildChapterColors } from '@/src/utils/storyGraphLayout';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
-import { buildStoryTimelineLayout, StoryTimelineScaleMode } from '@/src/utils/storyTimelineLayout';
+import type { StoryTimelineScaleMode } from '@/src/utils/storyTimelineLayout';
+import { buildStoryTimelineLayout } from '@/src/utils/storyTimelineLayout';
 import { renderStoryTimelineSvg } from '@/src/utils/storyTimelineSvg';
-import StoryTimelineCanvas, {
+import type {
   StoryTimelineCanvasHandle,
 } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
-import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 

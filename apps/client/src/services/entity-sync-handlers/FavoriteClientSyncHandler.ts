@@ -1,8 +1,8 @@
-import { Favorite, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type { Favorite, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import { favorites } from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class FavoriteClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'Favorite';

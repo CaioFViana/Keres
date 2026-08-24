@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { MediaType } from '@keres/shared';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,7 @@ import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/Audi
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
 import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
 import { useDrizzle } from '../../db';
-import { GallerySelect } from '../../db/schemas/galleries';
+import type { GallerySelect } from '../../db/schemas/galleries';
 import {
   decodeOwnerValue,
   encodeOwnerValue,
@@ -26,9 +27,10 @@ import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { mediaFileService } from '../../services/MediaFileService';
+import type {
+  GalleryOwnerRef} from '../../services/storymanagement/GalleryRelationService';
 import {
-  createGalleryRelationService,
-  GalleryOwnerRef,
+  createGalleryRelationService
 } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -236,10 +238,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   }, [media, userId, galleryService, showNotification, t, onClose]);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     content: {
       padding: 20,
       width: '100%',

@@ -1,6 +1,6 @@
 import { AttributeType, isSuggestionAttributeType } from '@keres/shared';
-import { FieldType, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { StorySchemaFieldSelect } from '../db/schema';
+import type { FieldType, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import type { StorySchemaFieldSelect } from '../db/schema';
 import { customAttributeSuggestionType } from '../services/storymanagement/SuggestionService';
 
 function mapAttributeTypeToFieldType(type: string): FieldType {

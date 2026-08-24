@@ -1,6 +1,6 @@
-import * as DocumentPicker from 'expo-document-picker';
+import type * as DocumentPicker from 'expo-document-picker';
 import { mediaFileService, UnsupportedMediaError } from './MediaFileService';
-import { GalleryService } from './storymanagement/GalleryService';
+import type { GalleryService } from './storymanagement/GalleryService';
 
 /**
  * Resultado de importar um lote de arquivos escolhidos pela pessoa.

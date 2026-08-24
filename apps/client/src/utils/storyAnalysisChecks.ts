@@ -1,5 +1,5 @@
 import { AttributeType, decodeAttributeValue, isValidAttributeDate } from '@keres/shared';
-import { NavigableEntityType } from './entityNavigation';
+import type { NavigableEntityType } from './entityNavigation';
 
 /**
  * Checagens estruturais de uma Story: não é busca, é achar o que um escritor dificilmente

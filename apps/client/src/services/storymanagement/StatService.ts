@@ -1,8 +1,10 @@
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { StatInsert, StatSelect, stats } from '../../db/schema';
-import { Create, prepareNewEntityData } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '../../db';
+import type { StatInsert, StatSelect} from '../../db/schema';
+import { stats } from '../../db/schema';
+import type { Create} from '../../utils/entityUtils';
+import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,

@@ -12,21 +12,23 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '@/src/db';
-import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import type {
+  LocationService} from '@/src/services/storymanagement/LocationService';
 import {
-  createLocationService,
-  LocationService,
+  createLocationService
 } from '@/src/services/storymanagement/LocationService'; // Import LocationService
-import { createSceneService, SceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
+import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
-import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
@@ -35,12 +37,13 @@ import {
   hasSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
 import { Ionicons } from '@expo/vector-icons';
-import { Location } from '@keres/shared/entities/Location'; // Import Location entity
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
+import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
 
 // Define the parameter list for this screen
 export type ChapterDetailScreenParamList = {
@@ -107,27 +110,12 @@ const ChapterDetailScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
     subTitle: {
       fontSize: 20,
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
     },
   });
 

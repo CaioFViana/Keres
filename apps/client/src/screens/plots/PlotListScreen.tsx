@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,11 +13,11 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
-import { PlotSelect } from '../../db/schema';
+import type { PlotSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { MainSystemDrawerParamList, PlotsStackParamList } from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList, PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
@@ -49,10 +51,7 @@ const PlotListScreen = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     headerRightContainer: {
       flexDirection: 'row',
       alignItems: 'center',

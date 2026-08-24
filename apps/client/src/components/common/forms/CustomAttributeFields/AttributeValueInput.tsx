@@ -1,8 +1,9 @@
+import type {
+  StorySchemaEntityType} from '@keres/shared';
 import {
   AttributeType,
   decodeAttributeValue,
-  encodeAttributeValue,
-  StorySchemaEntityType,
+  encodeAttributeValue
 } from '@keres/shared';
 import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';

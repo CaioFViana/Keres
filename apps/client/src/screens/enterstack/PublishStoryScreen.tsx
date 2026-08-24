@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { useDrizzle } from '../../db';
 import * as schema from '../../db/schema';
-import { ServerSelect, StorySelect } from '../../db/schema';
+import type { ServerSelect, StorySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { isOfflineError } from '../../services/apiClient';
 import {
@@ -34,6 +34,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 
 /**
  * Publicar uma história no Showcase do servidor.
@@ -331,7 +332,7 @@ const PublishStoryScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 6 },
     sectionDescription: {

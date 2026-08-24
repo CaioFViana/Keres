@@ -1,4 +1,4 @@
-import { ServerSelect } from '../db/schema';
+import type { ServerSelect } from '../db/schema';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 

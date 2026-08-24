@@ -11,10 +11,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import {
-  createSuggestionService,
+import type {
   SuggestionServiceInterface,
-  SuggestionType,
+  SuggestionType} from '../../../../services/storymanagement/SuggestionService';
+import {
+  createSuggestionService
 } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';

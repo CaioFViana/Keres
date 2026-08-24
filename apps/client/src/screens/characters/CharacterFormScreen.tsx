@@ -1,7 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import type {
+  CustomAttributeValues} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
-  CustomAttributeValues,
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -12,34 +13,37 @@ import NoteManager from '@/src/components/features/notes/NoteManager'; // Import
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
-import SeeAlsoManager, {
+import type {
   SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { Character } from '@keres/shared/entities/Character';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import type { Character } from '@keres/shared/entities/Character';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import type {
+  RouteProp} from '@react-navigation/native';
 import {
-  RouteProp,
   StackActions,
   useFocusEffect,
   useNavigation,
   useRoute,
 } from '@react-navigation/native'; // Import StackActions
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
+import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { CharacterStackParamList } from '../../navigation/MainSystemStack';
+import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import type {
+  CharacterRelationServiceInterface} from '../../services/storymanagement/CharacterRelationService';
 import {
-  CharacterRelationServiceInterface,
   createCharacterRelationService,
 } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
@@ -49,7 +53,7 @@ import { createStatRelationService } from '../../services/storymanagement/StatRe
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
@@ -460,42 +464,7 @@ const CharacterFormScreen = () => {
   };
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    saveButton: {
-      marginTop: 10,
-      marginBottom: 0,
-    },
-    deleteButton: {
-      backgroundColor: 'red',
-      marginBottom: 15,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: {
       // Renamed from tagSection for clarity.
       marginTop: 20,

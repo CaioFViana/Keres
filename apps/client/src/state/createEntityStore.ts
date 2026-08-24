@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { create, StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand';
+import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { AppDrizzleClient } from '../db';
-import { AdvancedSearchCriteria, FavoriteFilterState, SortDirection } from '../types/entityFilters';
+import type { AppDrizzleClient } from '../db';
+import type { AdvancedSearchCriteria, FavoriteFilterState, SortDirection } from '../types/entityFilters';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
-import { FavoriteEntityType } from '@keres/shared';
+import type { FavoriteEntityType } from '@keres/shared';
 import { createFavoriteService } from '../services/storymanagement/FavoriteService';
 
 /** The filter/sort state a fetch is run against. */

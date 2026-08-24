@@ -1,4 +1,4 @@
-import {
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   Mode,
@@ -8,9 +8,9 @@ import {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
  * As quatro entidades do sistema de status (e os modos) só carregam colunas próprias, sem

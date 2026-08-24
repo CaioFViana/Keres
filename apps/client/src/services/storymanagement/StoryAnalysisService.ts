@@ -1,12 +1,13 @@
 import { and, eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import {
-  buildCheapStoryAnalysisFindings,
-  buildStoryAnalysisReport,
+import type {
   RunStoryAnalysisOptions,
   StoryAnalysisFinding,
-  StoryAnalysisInput,
+  StoryAnalysisInput} from '../../utils/storyAnalysisChecks';
+import {
+  buildCheapStoryAnalysisFindings,
+  buildStoryAnalysisReport
 } from '../../utils/storyAnalysisChecks';
 
 export interface StoryAnalysisReport {

@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { MediaType } from '@keres/shared';
+import type { MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { GallerySelect } from '../../../db/schemas/galleries';
+import type { GallerySelect } from '../../../db/schemas/galleries';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { useTheme } from '../../../theme';
 

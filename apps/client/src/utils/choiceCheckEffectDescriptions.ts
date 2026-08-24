@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
-import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import { Effect } from '@keres/shared/entities/Effect';
+import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import type { Effect } from '@keres/shared/entities/Effect';
 
 /**
  * Frases legíveis pra um ChoiceCheck/Effect, compartilhadas entre `ChoiceDetailScreen` (lista

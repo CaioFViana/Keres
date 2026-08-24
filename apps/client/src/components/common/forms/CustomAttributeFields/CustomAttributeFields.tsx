@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { AttributeType, decodeAttributeValue, StorySchemaEntityType } from '@keres/shared';
-import { StorySchemaFieldSelect } from '../../../../db/schema';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue } from '@keres/shared';
+import type { StorySchemaFieldSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 

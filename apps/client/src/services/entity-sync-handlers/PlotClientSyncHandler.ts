@@ -1,8 +1,8 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, Plot, UpdateStoryUpdate } from '@keres/shared';
+import type { CreateStoryUpdate, DeleteStoryUpdate, Plot, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class PlotClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'Plot';

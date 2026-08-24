@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -10,7 +10,7 @@ import Select from '../../components/common/inputs/Select/Select';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { StatsStackParamList } from '../../navigation/StatsStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';

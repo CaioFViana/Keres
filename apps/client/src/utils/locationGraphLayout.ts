@@ -1,5 +1,6 @@
-import { GraphPoint, wrapLabel } from './storyGraphLayout';
-import { GraphLayoutDirection } from './graphLayoutDirection';
+import type { GraphPoint} from './storyGraphLayout';
+import { wrapLabel } from './storyGraphLayout';
+import type { GraphLayoutDirection } from './graphLayoutDirection';
 
 /**
  * Posicionamento do grafo de estrutura de Locations: cada Location vira um nó, e as duas

@@ -1,6 +1,6 @@
 import { helpRegistry } from './generated/registry';
 import { helpPageIds } from './catalog';
-import { HelpPage, HelpPageId } from './types';
+import type { HelpPage, HelpPageId } from './types';
 
 export interface ResolvedHelpPage {
   page: HelpPage | undefined;

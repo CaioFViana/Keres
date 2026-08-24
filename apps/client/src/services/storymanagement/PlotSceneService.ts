@@ -1,6 +1,8 @@
-import { PLOT_SCENE_NOTE_MAX_LENGTH, PlotScene } from '@keres/shared/entities/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, plotScenes, PlotSceneInsert } from '../../db';
+import type { AppDrizzleClient, PlotSceneInsert } from '../../db';
+import { plotScenes } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';

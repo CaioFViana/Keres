@@ -1,4 +1,4 @@
-import { HelpSection } from './types';
+import type { HelpSection } from './types';
 
 export const helpSections: HelpSection[] = [
   {

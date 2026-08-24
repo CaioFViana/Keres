@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -12,15 +14,15 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
+import type { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import {
+import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
-import { LocationWithTags } from '../../services/storymanagement/LocationService';
+import type { LocationWithTags } from '../../services/storymanagement/LocationService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
@@ -70,10 +72,7 @@ const LocationsScreen = () => {
   const { canEdit } = useStoryRole(storyId);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     headerRightContainer: { flexDirection: 'row', marginRight: 15 },
     headerButton: { marginLeft: 15 },
   });

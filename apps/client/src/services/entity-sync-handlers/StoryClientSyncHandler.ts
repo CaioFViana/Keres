@@ -1,9 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, Story, UpdateStoryUpdate } from '@keres/shared'; // Assuming Story entity is shared
+import type { CreateStoryUpdate, DeleteStoryUpdate, Story, UpdateStoryUpdate } from '@keres/shared'; // Assuming Story entity is shared
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { omitClientProtectedFields, toEntityColumns } from '../entityTableRegistry';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StoryClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Story';

@@ -1,7 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
-import { useThemeStore } from '../state/themeStore';
-import { themes } from './palettes';
-import { ThemeColors } from './ThemeColors';
+import type { ThemeColors } from './ThemeColors';
 
 // Compatibility re-export: color analysis stays in the pure utility module so it can be
 // shared by themed and non-themed components without an import cycle.
@@ -20,14 +18,6 @@ export const saturateColor = (hex: string, factor: number = 1.1): string => {
   b = Math.min(255, Math.floor(b * factor));
 
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-};
-
-export const useThemeColors = (themeName: string | null | undefined): ThemeColors => {
-  const { darkMode } = useThemeStore(); // Get darkMode state
-
-  const selectedTheme = themes[themeName || 'default'] || themes['default'];
-
-  return darkMode ? selectedTheme.darkColors : selectedTheme.lightColors;
 };
 
 export const getCommonCardStyles = (colors: ThemeColors) =>
@@ -202,3 +192,114 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
     },
     // Add other common input styles here if needed
   });
+
+/**
+ * O esqueleto de um formulário: rolagem, título, rótulo de campo, seção, linha de interruptor
+ * e os dois botões do rodapé.
+ *
+ * Objeto simples, e não `StyleSheet.create`, para ser espalhado dentro do `StyleSheet.create`
+ * da própria tela - o mesmo arranjo de `relationSectionStyleDefs`. A tela declara o que é dela
+ * depois do espalhamento e, se precisar, sobrescreve uma entrada sem ter que abrir mão do
+ * resto.
+ *
+ * Existe porque estas mesmas medidas estavam copiadas em dez a vinte telas cada uma, com
+ * variações acidentais de uma vírgula ou de um `color` - e `deleteButton` chegava a fixar
+ * `'red'` literal em cinco delas, ignorando a paleta.
+ */
+export const commonFormStyleDefs = (colors: ThemeColors, scrollBottomPadding?: number) => ({
+  scrollViewContent: {
+    padding: 20,
+    paddingBottom: scrollBottomPadding,
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginBottom: 5,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  switchContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  saveButton: {
+    marginTop: 10,
+    marginBottom: 0,
+  },
+  deleteButton: {
+    backgroundColor: colors.error,
+    marginBottom: 15,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+});
+
+/**
+ * O esqueleto de uma tela de detalhe: nome da entidade, títulos de seção, o botão de voltar do
+ * rodapé e o estado vazio. Mesmo arranjo de `commonFormStyleDefs`.
+ */
+export const commonDetailStyleDefs = (colors: ThemeColors) => ({
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    padding: 32,
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center' as const,
+    lineHeight: 21,
+  },
+});
+
+/**
+ * A moldura de uma tela que entrega o corpo a uma lista ou a um gráfico: ocupa a tela e usa o
+ * fundo do tema, sem o respiro de `getCommonContainerStyles` (que é para telas com conteúdo
+ * direto, não para listas que precisam sangrar até a borda).
+ *
+ * Era a duplicação mais comum da base - 22 telas declarando as mesmas duas linhas.
+ */
+export const commonScreenStyleDefs = (colors: ThemeColors) => ({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+});

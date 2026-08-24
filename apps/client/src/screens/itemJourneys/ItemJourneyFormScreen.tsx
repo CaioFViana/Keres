@@ -2,30 +2,32 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import Select from '@/src/components/common/inputs/Select/Select';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { ItemJourney } from '@keres/shared/entities/Item';
+import type { ItemJourney } from '@keres/shared/entities/Item';
+import type {
+  RouteProp} from '@react-navigation/native';
 import {
-  RouteProp,
   StackActions,
   useFocusEffect,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager, {
+import type {
   SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { ItemStackParamList } from '../../navigation/MainSystemStack';
+import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
 import { useItemStore } from '../../state/itemStore'; // Assuming ItemStore for items
@@ -34,7 +36,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -305,19 +307,8 @@ const ItemJourneyFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
-    label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     saveButton: { marginTop: 20, marginBottom: 0 },
-    deleteButton: { backgroundColor: 'red', marginBottom: 15 },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     noteSection: { marginTop: 20, marginBottom: 10 },
     tagSection: { marginTop: 20, marginBottom: 10 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },

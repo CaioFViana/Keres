@@ -3,7 +3,7 @@ import { OperationLogEntityType } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { OperationLogSelect } from '../../../db/schema';
+import type { OperationLogSelect } from '../../../db/schema';
 import { useEntityName } from '../../../hooks/useEntityName';
 import { useUserDisplayName } from '../../../hooks/useUserDisplayName'; // Import the new hook
 import { useTheme } from '../../../theme';

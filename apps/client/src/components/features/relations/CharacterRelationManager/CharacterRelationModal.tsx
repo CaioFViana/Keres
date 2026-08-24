@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Character } from '@keres/shared/entities/Character';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Character } from '@keres/shared/entities/Character';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

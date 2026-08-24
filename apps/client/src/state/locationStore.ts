@@ -1,7 +1,8 @@
-import {
-  createLocationService,
+import type {
   LocationService,
-  LocationWithTags,
+  LocationWithTags} from '../services/storymanagement/LocationService';
+import {
+  createLocationService
 } from '../services/storymanagement/LocationService';
 import { createEntityStore } from './createEntityStore';
 

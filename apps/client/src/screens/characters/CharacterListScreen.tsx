@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -12,20 +14,21 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CharacterListItem from '@/src/components/features/list-items/CharacterListItem';
 import CharacterRelationRows from '@/src/components/features/relations/CharacterRelationRows';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
-import { CharacterSelect } from '../../db/schemas/characters';
+import type { TagSelect } from '../../db/schema';
+import type { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import {
+import type {
   CharacterStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
+import type {
+  CharacterWithTags} from '../../services/storymanagement/CharacterService';
 import {
-  CharacterWithTags,
   createCharacterService,
 } from '../../services/storymanagement/CharacterService';
 import { createTagService } from '../../services/storymanagement/TagService';
@@ -84,10 +87,7 @@ const CharactersScreen = () => {
 
   // Styles are always defined at the top
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
   });
 
   // Tags power the filter dropdown, so they're fetched here rather than by the list hook.

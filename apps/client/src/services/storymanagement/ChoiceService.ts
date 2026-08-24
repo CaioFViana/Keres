@@ -1,9 +1,12 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { ChoiceInsert, choices, ChoiceSelect } from '../../db/schemas/choices';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
+import { choices } from '../../db/schemas/choices';
 import { scenes } from '../../db/schemas/scenes';
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { Create} from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,

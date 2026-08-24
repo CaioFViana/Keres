@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import { Effect } from '@keres/shared/entities/Effect';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../../theme/commonStyles';
+import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/Effect';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,11 +20,12 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import StoryGraphCanvas, {
+import type {
   StoryGraphCanvasHandle,
 } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
+import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../../db';
-import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../db/schema';
+import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -44,11 +46,12 @@ import {
   hasSceneGap,
   hasSceneUniverseDuration,
 } from '../../../utils/sceneTiming';
-import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../../utils/storyGraphLayout';
+import type { GraphEdge, GraphNode } from '../../../utils/storyGraphLayout';
+import { buildStoryGraphLayout } from '../../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 /**
  * Mapa da história: as cenas e as escolhas que ligam uma à outra.
@@ -330,10 +333,8 @@ const ChoiceViewScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
-          flex: 1,
-          backgroundColor: colors.background,
-        },
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
@@ -425,19 +426,6 @@ const ChoiceViewScreen = () => {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
           outlineWidth: 0,
-        },
-        emptyContainer: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 32,
-        },
-        emptyText: {
-          marginTop: 12,
-          fontSize: 15,
-          color: colors.textSecondary,
-          textAlign: 'center',
-          lineHeight: 21,
         },
       }),
     [colors],

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,30 +9,33 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import CharacterRelationGraphCanvas, {
+import type {
   CharacterRelationGraphCanvasHandle,
 } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import { useDrizzle } from '../../db';
-import { CharacterSelect } from '../../db/schema';
+import type { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
+import type {
+  CharacterRelationWithNames} from '../../services/storymanagement/CharacterRelationService';
 import {
-  createCharacterRelationService,
-  CharacterRelationWithNames,
+  createCharacterRelationService
 } from '../../services/storymanagement/CharacterRelationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import type {
+  RelationGraphNode} from '../../utils/characterRelationGraphLayout';
 import {
-  buildCharacterRelationGraphLayout,
-  RelationGraphNode,
+  buildCharacterRelationGraphLayout
 } from '../../utils/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { CharactersScreenNavigationProp } from '../characters/CharacterListScreen';
+import type { CharactersScreenNavigationProp } from '../characters/CharacterListScreen';
 
 /**
  * Mapa de relações: os personagens de uma história e quem conhece quem.
@@ -230,10 +234,8 @@ const CharacterRelationGraphScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
-          flex: 1,
-          backgroundColor: colors.background,
-        },
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
@@ -268,19 +270,6 @@ const CharacterRelationGraphScreen = () => {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
           outlineWidth: 0,
-        },
-        emptyContainer: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 32,
-        },
-        emptyText: {
-          marginTop: 12,
-          fontSize: 15,
-          color: colors.textSecondary,
-          textAlign: 'center',
-          lineHeight: 21,
         },
       }),
     [colors],

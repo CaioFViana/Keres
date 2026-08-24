@@ -2,7 +2,8 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
-import { navigateToEntityDetail, NavigableEntityType } from '../utils/entityNavigation';
+import type { NavigableEntityType } from '../utils/entityNavigation';
+import { navigateToEntityDetail } from '../utils/entityNavigation';
 
 /**
  * `navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>()` seguido de

@@ -2,9 +2,10 @@ import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
-import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
+import type { PanZoomCanvasHandle} from '../../../../hooks/usePanZoomCanvas';
+import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
-import { LocationGraphLayout, LocationGraphNode } from '../../../../utils/locationGraphLayout';
+import type { LocationGraphLayout, LocationGraphNode } from '../../../../utils/locationGraphLayout';
 
 /**
  * Desenho interativo do grafo de estrutura de Locations. Mesma arquitetura dos outros dois

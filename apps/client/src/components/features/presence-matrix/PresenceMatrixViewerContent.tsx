@@ -12,7 +12,7 @@ import {
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import {
+import type {
   CharacterSelect,
   ChapterSelect,
   ItemJourneySelect,
@@ -27,15 +27,17 @@ import { createItemJourneyService } from '../../../services/storymanagement/Item
 import { createItemService } from '../../../services/storymanagement/ItemService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useNotificationStore } from '../../../state/notificationStore';
-import { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
+import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { buildPresenceMatrixLayout, PresenceMatrixRow } from '../../../utils/presenceMatrixLayout';
+import type { PresenceMatrixRow } from '../../../utils/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '../../../utils/presenceMatrixLayout';
 import { buildChapterColors } from '../../../utils/storyGraphLayout';
 import { deliverSvgMap } from '../../../utils/storyTransfer';
 import { renderPresenceMatrixSvg } from '../../../utils/presenceMatrixSvg';
 import { getDistinctSeriesColor } from '../../../utils/colorUtils';
-import PresenceMatrixCanvas, { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
+import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
+import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 
 const SERIES_COLORS = [
   '#0B6E99',

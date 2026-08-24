@@ -1,6 +1,6 @@
-import { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/Story';
 import { create } from 'zustand';
-import { createStoryService } from '../services/storymanagement/StoryService';
+import type { createStoryService } from '../services/storymanagement/StoryService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
 

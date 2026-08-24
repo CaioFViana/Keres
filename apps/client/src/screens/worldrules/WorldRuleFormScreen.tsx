@@ -1,20 +1,23 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import type {
+  CustomAttributeValues} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
-  CustomAttributeValues,
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import SeeAlsoManager, {
+import type {
   SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { WorldRule } from '@keres/shared/entities/WorldRule';
+import type { WorldRule } from '@keres/shared/entities/WorldRule';
+import type {
+  RouteProp} from '@react-navigation/native';
 import {
-  RouteProp,
   StackActions,
   useFocusEffect,
   useNavigation,
@@ -29,13 +32,13 @@ import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
+import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -256,42 +259,15 @@ const WorldRuleFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     saveButton: {
       marginTop: 30,
       marginBottom: 0,
     },
     deleteButton: {
-      backgroundColor: 'red',
+      backgroundColor: colors.error,
       marginTop: 10,
       marginBottom: 15,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     tagSection: {
       marginTop: 20,

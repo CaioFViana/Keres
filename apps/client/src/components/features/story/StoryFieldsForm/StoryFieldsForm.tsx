@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { FavoriteBehavior } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { themeDisplayOptions } from '../../../../theme/palettes';

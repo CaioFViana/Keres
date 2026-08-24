@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { ThemeColors } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
 
 /**
  * `characterListItemStyles.ts` e `worldRuleListItemStyles.ts` eram idênticos linha a linha;

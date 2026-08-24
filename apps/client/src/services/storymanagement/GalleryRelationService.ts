@@ -1,7 +1,8 @@
-import { GalleryOwnerEntity } from '@keres/shared';
+import type { GalleryOwnerEntity } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { galleryRelations, GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
+import type { AppDrizzleClient } from '../../db';
+import type { GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
+import { galleryRelations } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

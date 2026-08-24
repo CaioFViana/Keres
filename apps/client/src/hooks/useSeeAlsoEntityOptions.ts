@@ -1,10 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { SEE_ALSO_ENTITY_TYPES, SeeAlsoEntityType } from '@keres/shared';
+import type { Ionicons } from '@expo/vector-icons';
+import type { SeeAlsoEntityType } from '@keres/shared';
+import { SEE_ALSO_ENTITY_TYPES } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
-import { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
+import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
 import { loadEntityOptions } from '../utils/entityOptions';
 import { ENTITY_TYPE_ICONS } from '../utils/entityTypeIcons';
 

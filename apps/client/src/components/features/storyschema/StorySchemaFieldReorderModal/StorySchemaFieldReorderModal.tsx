@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StorySchemaFieldSelect } from '../../../../db/schema';
+import type { StorySchemaFieldSelect } from '../../../../db/schema';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 
 interface StorySchemaFieldReorderModalProps {

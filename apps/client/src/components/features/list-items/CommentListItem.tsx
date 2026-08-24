@@ -1,16 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import { OperationLogEntityType } from '@keres/shared';
+import type { OperationLogEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { useDrizzle } from '../../../db';
-import { CommentSelect, servers, stories } from '../../../db/schema';
+import type { CommentSelect} from '../../../db/schema';
+import { servers, stories } from '../../../db/schema';
 import { useCommentFieldLabel } from '../../../hooks/useCommentFieldLabel';
 import { useEntityName } from '../../../hooks/useEntityName';
-import { ResolvedUserProfile, useUserProfileResolver } from '../../../hooks/useUserProfileResolver';
+import type { ResolvedUserProfile} from '../../../hooks/useUserProfileResolver';
+import { useUserProfileResolver } from '../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../theme';
-import { CommentCriticality, CRITICALITY_ICONS } from '../../../utils/commentCriticality';
+import type { CommentCriticality} from '../../../utils/commentCriticality';
+import { CRITICALITY_ICONS } from '../../../utils/commentCriticality';
 
 interface CommentListItemProps {
   comment: CommentSelect;

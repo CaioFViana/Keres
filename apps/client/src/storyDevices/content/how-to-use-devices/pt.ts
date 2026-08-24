@@ -1,4 +1,4 @@
-import { StoryDevicePage } from '../../types';
+import type { StoryDevicePage } from '../../types';
 const page: StoryDevicePage = {
   id: 'how-to-use-devices',
   title: 'Como usar esta lista',

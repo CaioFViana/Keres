@@ -1,7 +1,7 @@
-import { GalleryOwnerEntity } from '@keres/shared';
+import type { GalleryOwnerEntity } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import { GallerySelect } from '../db/schema';
+import type { GallerySelect } from '../db/schema';
 import { importPickedMediaAssets } from '../services/galleryMediaImport';
 import { mediaFileService } from '../services/MediaFileService';
 import { createGalleryRelationService } from '../services/storymanagement/GalleryRelationService';

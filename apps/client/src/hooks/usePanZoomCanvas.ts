@@ -1,5 +1,6 @@
 import { useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { Animated, PanResponder, View } from 'react-native';
+import type { View } from 'react-native';
+import { Animated, PanResponder } from 'react-native';
 
 /**
  * Pan e zoom compartilhados pelos canvas de grafo (mapa de história, mapa de relações).

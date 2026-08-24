@@ -2,10 +2,11 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
+import type {
+  StorySchemaEntityType} from '@keres/shared';
 import {
   isSuggestionAttributeType,
-  STORY_SCHEMA_ENTITY_TYPES,
-  StorySchemaEntityType,
+  STORY_SCHEMA_ENTITY_TYPES
 } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -13,7 +14,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { SuggestionSelect } from '../../db/schema';
+import type { SuggestionSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryRole } from '../../hooks/useStoryRole';

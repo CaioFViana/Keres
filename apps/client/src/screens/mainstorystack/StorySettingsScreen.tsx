@@ -2,24 +2,25 @@ import { Button, Select } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schema';
+import type { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
-import { StoryCollaborator, storyPermissionApi } from '../../services/StoryPermissionService';
+import type { StoryCollaborator} from '../../services/StoryPermissionService';
+import { storyPermissionApi } from '../../services/StoryPermissionService';
 import { SyncEngineService } from '../../services/SyncEngineService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -859,7 +860,7 @@ const StorySettingsScreen = () => {
               <Button
                 onPress={handleUnlinkFromServer}
                 disabled={serverActionLoading || collaborators === null || collaborators.length > 0}
-                style={[styles.saveButton, styles.deleteButton]}
+                style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
               >
                 {t('unlink_from_server_title')}
               </Button>
@@ -874,7 +875,7 @@ const StorySettingsScreen = () => {
 
       <Button
         onPress={handleDelete}
-        style={[styles.saveButton, styles.deleteButton]}
+        style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
         disabled={!canManageStoryPolicy}
       >
         {t('delete_story_title')}
@@ -913,7 +914,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     marginTop: 10,
     marginBottom: 15,
-    backgroundColor: 'red', // Destructive color
+    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
   },
   collaboratorsSection: {
     marginTop: 15,

@@ -3,7 +3,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -701,7 +701,7 @@ const ServerRegistrationScreen = () => {
       {serverId && (
         <Button
           onPress={handleDeleteServer}
-          style={[styles.registerButton, styles.deleteButton]}
+          style={[styles.registerButton, styles.deleteButton, { backgroundColor: colors.error }]}
           disabled={loading}
         >
           {t('delete_server')}
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     marginTop: 10,
     marginBottom: 15,
-    backgroundColor: 'red', // Destructive color
+    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
   },
 });
 

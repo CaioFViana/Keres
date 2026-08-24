@@ -2,16 +2,17 @@ import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
+import type { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
-import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
+import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
+import type { FriendshipWithServer } from '../../services/FriendshipService';
+import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';

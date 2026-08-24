@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 
 /** 1 = informacional, 2 = relevante, 3 = atenção, 4 = grave, 5 = imediato. Só o ícone muda
  *  entre níveis - sem cor/escala própria (ver plano de implementação). */

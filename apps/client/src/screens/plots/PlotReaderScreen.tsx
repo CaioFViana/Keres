@@ -13,8 +13,9 @@ import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { PlotsScreenNavigationProp } from './PlotListScreen';
+import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 const ALL_SCENES = '__all__';
 
@@ -62,7 +63,7 @@ const PlotReaderScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1, backgroundColor: colors.background },
+    ...commonScreenStyleDefs(colors),
         header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10, gap: 10 },
         scope: { color: colors.textSecondary, fontSize: 13 },
         content: { paddingHorizontal: 20, paddingBottom: scrollBottomPadding },

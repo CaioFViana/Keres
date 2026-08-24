@@ -1,10 +1,11 @@
+import type {
+  CommentEntityType,
+  StorySchemaEntityType} from '@keres/shared';
 import {
   AttributeType,
-  CommentEntityType,
   decodeAttributeValue,
   formatAttributeDateForDisplay,
-  joinSuggestionListForDisplay,
-  StorySchemaEntityType,
+  joinSuggestionListForDisplay
 } from '@keres/shared';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

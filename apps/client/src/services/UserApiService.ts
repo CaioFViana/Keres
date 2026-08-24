@@ -1,5 +1,5 @@
-import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
-import { ServerSelect } from '../db/schemas/servers';
+import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 

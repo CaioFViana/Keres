@@ -1,7 +1,7 @@
-import { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import type { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
 import { create } from 'zustand';
-import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 
 interface UserSettingsState {

@@ -1,4 +1,4 @@
-import { DocLibrary } from '../help/library';
+import type { DocLibrary } from '../help/library';
 import { storyDeviceSections } from './catalog';
 import { getStoryDevicePage, getStoryDevicePages, resolveStoryDevicePage } from './repository';
 

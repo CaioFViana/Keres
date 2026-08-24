@@ -2,8 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import { CharacterSelect } from '@/src/db/schemas/characters';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
 

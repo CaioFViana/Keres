@@ -1,6 +1,7 @@
 import { helpSections } from './catalog';
-import { getHelpPage, getHelpPages, resolveHelpPage, ResolvedHelpPage } from './repository';
-import { HelpPage, HelpSection } from './types';
+import type { ResolvedHelpPage } from './repository';
+import { getHelpPage, getHelpPages, resolveHelpPage } from './repository';
+import type { HelpPage, HelpSection } from './types';
 
 /**
  * Descreve uma biblioteca de documentação para as telas de índice e de página. Existem duas: a

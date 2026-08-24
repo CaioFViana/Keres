@@ -1,13 +1,13 @@
-import {
+import type {
   SeeAlsoRelation,
   CreateStoryUpdate,
   DeleteStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import { seeAlsoRelations } from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'SeeAlsoRelation';

@@ -1,7 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -9,15 +10,15 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { PlotsStackParamList } from '../../navigation/MainSystemStack';
+import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { createPlotService } from '../../services/storymanagement/PlotService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { PlotsScreenNavigationProp } from './PlotListScreen';
+import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 type PlotFormScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotForm'>;
 
@@ -49,27 +50,10 @@ const PlotFormScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        scrollViewContent: {
-          padding: 20,
-          paddingBottom: scrollBottomPadding,
-          flexGrow: 1,
-        },
-        title: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: colors.text,
-          marginBottom: 5,
-        },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
         description: {
           color: colors.textSecondary,
           marginBottom: 20,
-        },
-        label: {
-          fontSize: 16,
-          fontWeight: 'bold',
-          color: colors.text,
-          marginTop: 15,
-          marginBottom: 5,
         },
         saveButton: {
           marginTop: 20,
@@ -79,11 +63,6 @@ const PlotFormScreen = () => {
           backgroundColor: colors.error,
           marginTop: 10,
           marginBottom: 15,
-        },
-        centered: {
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
         },
       }),
     [colors, scrollBottomPadding],

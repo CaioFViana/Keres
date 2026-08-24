@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StorySchemaEntityType } from '@keres/shared';
-import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
+import type { StorySchemaEntityType } from '@keres/shared';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import type {
+  NavigationState,
+  NavigatorScreenParams} from '@react-navigation/native';
 import {
   CommonActions,
   DrawerActions,
   getFocusedRouteNameFromRoute,
-  NavigationState,
-  NavigatorScreenParams,
   StackActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -24,15 +26,17 @@ import ResizableDrawerContent, {
 import { screenHelpPage } from '../help/contextualHelp';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import ChapterDetailScreen, {
+import type {
   ChapterDetailScreenParamList,
 } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import ChapterDetailScreen from '../screens/narrative-elements/chapters/ChapterDetailScreen';
 import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
 import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
-import CharacterDetailScreen, {
+import type {
   CharacterDetailScreenParamList,
 } from '../screens/characters/CharacterDetailScreen';
+import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
@@ -47,16 +51,18 @@ import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen
 import ItemDetailScreen from '../screens/items/ItemDetailScreen';
 import ItemFormScreen from '../screens/items/ItemFormScreen';
 import ItemListScreen from '../screens/items/ItemListScreen';
-import LocationDetailsScreen, {
+import type {
   LocationDetailScreenParamList,
 } from '../screens/locations/LocationDetailsScreen';
+import LocationDetailsScreen from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
-import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
+import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
+import NoteDetailScreen from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
 import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
@@ -68,12 +74,14 @@ import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldF
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
 import SuggestionUsageScreen from '../screens/suggestions/SuggestionUsageScreen';
-import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
+import type { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
+import TagDetailScreen from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
-import WorldRuleDetailScreen, {
+import type {
   WorldRuleDetailScreenParamList,
 } from '../screens/worldrules/WorldRuleDetailScreen';
+import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import PlotListScreen from '../screens/plots/PlotListScreen';
@@ -86,9 +94,12 @@ import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
-import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
-import StatsStackNavigator, { StatsStackParamList } from './StatsStack';
-import StoryDevicesStackNavigator, { StoryDevicesStackParamList } from './StoryDevicesStack';
+import type { HelpStackParamList } from './HelpStack';
+import HelpStackNavigator from './HelpStack';
+import type { StatsStackParamList } from './StatsStack';
+import StatsStackNavigator from './StatsStack';
+import type { StoryDevicesStackParamList } from './StoryDevicesStack';
+import StoryDevicesStackNavigator from './StoryDevicesStack';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;

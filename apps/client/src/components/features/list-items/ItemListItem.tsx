@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { ItemSelect } from '../../../db/schemas/items';
-import { TagSelect } from '../../../db/schema';
+import type { ItemSelect } from '../../../db/schemas/items';
+import type { TagSelect } from '../../../db/schema';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
-import { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
+import type { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
 import { ENTITY_TYPE_ICONS } from '../../../utils/entityTypeIcons';
 
 interface GlobalSearchResultItemProps {

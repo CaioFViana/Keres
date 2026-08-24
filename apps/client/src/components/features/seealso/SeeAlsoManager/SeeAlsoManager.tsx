@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { SeeAlsoEntityType } from '@keres/shared';
+import type { SeeAlsoEntityType } from '@keres/shared';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

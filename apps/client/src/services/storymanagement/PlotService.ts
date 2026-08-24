@@ -1,6 +1,7 @@
-import { Plot } from '@keres/shared/entities/Plot';
+import type { Plot } from '@keres/shared/entities/Plot';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, PlotInsert, plots } from '../../db';
+import type { AppDrizzleClient, PlotInsert} from '../../db';
+import { plots } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';

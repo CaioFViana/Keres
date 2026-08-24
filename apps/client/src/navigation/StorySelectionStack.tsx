@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import type {
+  NavigationState,
+  NavigatorScreenParams} from '@react-navigation/native';
 import {
   DrawerActions,
   getFocusedRouteNameFromRoute,
-  NavigationState,
-  NavigatorScreenParams,
   StackActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -35,8 +37,10 @@ import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
-import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
-import StoryDevicesStackNavigator, { StoryDevicesStackParamList } from './StoryDevicesStack';
+import type { HelpStackParamList } from './HelpStack';
+import HelpStackNavigator from './HelpStack';
+import type { StoryDevicesStackParamList } from './StoryDevicesStack';
+import StoryDevicesStackNavigator from './StoryDevicesStack';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;

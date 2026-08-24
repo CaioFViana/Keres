@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleProp, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Animated, Easing, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/src/theme';
 import { getContrastTextColor } from '@/src/utils/colorUtils';
 

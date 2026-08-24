@@ -1,6 +1,7 @@
 import { AttributeType } from '@keres/shared';
-import { and, eq, inArray, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
+import type { SQL } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../db';
 import { attributeValues, storySchemaFields } from '../db/schema';
 import { extractCustomFieldId } from './customAttributeFieldMetadata';
 

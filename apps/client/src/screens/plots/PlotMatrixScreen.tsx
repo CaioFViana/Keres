@@ -1,8 +1,9 @@
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import PresenceMatrixCanvas, {
+import type {
   PresenceMatrixCanvasHandle,
 } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
+import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,11 +17,12 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getDistinctSeriesColor } from '../../utils/colorUtils';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { buildPresenceMatrixLayout, PresenceMatrixRow } from '../../utils/presenceMatrixLayout';
+import type { PresenceMatrixRow } from '../../utils/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '../../utils/presenceMatrixLayout';
 import { renderPresenceMatrixSvg } from '../../utils/presenceMatrixSvg';
 import { buildChapterColors } from '../../utils/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
-import { PlotsScreenNavigationProp } from './PlotListScreen';
+import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 /** As mesmas cores de série da matriz de presença: os dois gráficos são lidos lado a lado. */
 const SERIES_COLORS = [

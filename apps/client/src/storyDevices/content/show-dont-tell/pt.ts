@@ -1,4 +1,4 @@
-import { StoryDevicePage } from '../../types';
+import type { StoryDevicePage } from '../../types';
 const page: StoryDevicePage = {
   id: 'show-dont-tell',
   title: 'Mostre, não conte',

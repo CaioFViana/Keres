@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { CharacterWithTags } from '../../../services/storymanagement/CharacterService';
+import type { CharacterWithTags } from '../../../services/storymanagement/CharacterService';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 

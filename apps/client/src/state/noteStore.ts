@@ -1,7 +1,8 @@
-import {
-  createNoteService,
+import type {
   NoteService,
-  NoteWithTags,
+  NoteWithTags} from '../services/storymanagement/NoteService';
+import {
+  createNoteService
 } from '../services/storymanagement/NoteService';
 import { createEntityStore } from './createEntityStore';
 

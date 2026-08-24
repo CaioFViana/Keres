@@ -4,8 +4,8 @@ import PlotSceneModal from '@/src/components/features/plots/ScenePlotManager/Plo
 import RelationRow from '@/src/components/features/relations/RelationManager/RelationRow';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { Plot } from '@keres/shared/entities/Plot';
-import { PlotScene } from '@keres/shared/entities/PlotScene';
+import type { Plot } from '@keres/shared/entities/Plot';
+import type { PlotScene } from '@keres/shared/entities/PlotScene';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

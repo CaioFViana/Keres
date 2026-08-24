@@ -1,8 +1,9 @@
-import {
+import type {
   CharacterRelationGraphLayout,
-  GRAPH_PADDING,
   RelationGraphEdge,
-  RelationGraphNode,
+  RelationGraphNode} from './characterRelationGraphLayout';
+import {
+  GRAPH_PADDING
 } from './characterRelationGraphLayout';
 
 /**

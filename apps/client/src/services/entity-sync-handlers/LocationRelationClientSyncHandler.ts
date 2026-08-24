@@ -1,13 +1,13 @@
-import {
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   LocationRelation,
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
-import { AppDrizzleClient, LocationRelationSelect } from '../../db';
+import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /** Para 'connected_to' (par não-ordenado): encontra uma relação ativa entre as duas Locations,
  *  em qualquer ordem de armazenamento. Para 'contains' (pai único), use `getExistingParentEdge`. */

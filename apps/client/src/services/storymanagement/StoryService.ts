@@ -1,91 +1,94 @@
+import type {
+  EffectiveStoryRole,
+  FullStoryExportType} from '@keres/shared';
 import {
   CURRENT_STORY_FORMAT_VERSION,
-  EffectiveStoryRole,
-  FullStoryExportSchema,
-  FullStoryExportType,
+  FullStoryExportSchema
 } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import {
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
+import type {
   AttributeValueInsert,
-  attributeValues,
   ChapterInsert,
-  chapters,
   ChapterSelect,
   CharacterInsert,
   CharacterRelationInsert,
-  characterRelations,
-  characters,
   CharacterSceneInsert,
-  characterScenes,
   CharacterSelect,
   ChoiceCheckGroupInsert,
-  choiceCheckGroups,
   ChoiceCheckInsert,
-  choiceChecks,
   ChoiceInsert,
-  choices,
   ChoiceSelect,
   CommentInsert,
-  comments,
   EffectInsert,
-  effects,
-  galleries,
   GalleryInsert,
-  favorites,
-  galleryRelations,
   GalleryRelationInsert,
   ItemInsert,
   ItemJourneyInsert,
-  itemJourneys,
-  items,
   LocationInsert,
-  locations,
   LocationRelationInsert,
-  locationRelations,
   LocationSelect,
   NoteInsert,
   NoteRelationInsert,
-  noteRelations,
-  notes,
   NoteSelect,
-  operationLogs,
   PlotInsert,
-  plots,
   PlotSceneInsert,
-  plotScenes,
   SceneInsert,
-  scenes,
   SceneSelect,
   SeeAlsoRelationInsert,
+  StoryInsert,
+  StorySelect,
+  StorySchemaFieldInsert,
+  ModeInsert,
+  StatInsert,
+  StatRelationInsert,
+  StatStrengthInsert,
+  SuggestionInsert,
+  TagInsert,
+  TagRelationInsert,
+  WorldRuleInsert,
+  WorldRuleSelect} from '../../db/schema';
+import {
+  attributeValues,
+  chapters,
+  characterRelations,
+  characters,
+  characterScenes,
+  choiceCheckGroups,
+  choiceChecks,
+  choices,
+  comments,
+  effects,
+  galleries,
+  favorites,
+  galleryRelations,
+  itemJourneys,
+  items,
+  locations,
+  locationRelations,
+  noteRelations,
+  notes,
+  operationLogs,
+  plots,
+  plotScenes,
+  scenes,
   seeAlsoRelations,
   servers,
   stories,
-  StoryInsert,
-  StorySelect,
   storyPermissions,
-  StorySchemaFieldInsert,
-  ModeInsert,
   modes,
-  StatInsert,
-  StatRelationInsert,
   statRelations,
   stats,
-  StatStrengthInsert,
   statStrengths,
   storySchemaFields,
-  SuggestionInsert,
   suggestions,
   syncConflicts,
-  TagInsert,
-  TagRelationInsert,
   tagRelations,
   tags,
-  WorldRuleInsert,
-  worldRules,
-  WorldRuleSelect,
+  worldRules
 } from '../../db/schema';
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { Create} from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n from '../../utils/i18n';
 import {
@@ -103,12 +106,13 @@ import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import { createFavoriteService } from './FavoriteService';
 import { cloneStoryForLocalImport } from './cloneStoryForLocalImport';
+import type {
+  LinearCompatibilityResult} from './storyTypeConversion';
 import {
   checkLinearCompatibility as checkLinearCompatibilityGraph,
   classifyEdges,
   computeChapterChainOrder,
   groupScenesByChapter,
-  LinearCompatibilityResult,
   loadStoryGraph,
 } from './storyTypeConversion';
 

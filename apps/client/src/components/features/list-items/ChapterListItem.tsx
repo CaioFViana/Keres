@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { ChapterSelect, TagSelect } from '../../../db/schema';
+import type { ChapterSelect, TagSelect } from '../../../db/schema';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 

@@ -1,7 +1,8 @@
-import { FavoriteBehavior } from '@keres/shared';
+import type { FavoriteBehavior } from '@keres/shared';
 import { and, desc, eq, ne, or, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
-import { operationLogs, OperationLogSelect } from '../db/schema'; // Import OperationLogSelect
+import type { AppDrizzleClient } from '../db';
+import type { OperationLogSelect } from '../db/schema';
+import { operationLogs } from '../db/schema'; // Import OperationLogSelect
 import { createFavoriteService } from './storymanagement/FavoriteService';
 
 export type OperationType = 'create' | 'update' | 'delete' | 'reorder';

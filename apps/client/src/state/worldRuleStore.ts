@@ -1,7 +1,8 @@
-import { WorldRuleWithTags } from '../db/schemas/worldRules';
+import type { WorldRuleWithTags } from '../db/schemas/worldRules';
+import type {
+  WorldRuleService} from '../services/storymanagement/WorldRuleService';
 import {
-  createWorldRuleService,
-  WorldRuleService,
+  createWorldRuleService
 } from '../services/storymanagement/WorldRuleService';
 import { createEntityStore } from './createEntityStore';
 

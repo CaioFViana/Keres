@@ -1,10 +1,11 @@
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 import { HelpBlockRenderer } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
-import { DocLibrary, helpLibrary } from '../../help/library';
+import type { DocLibrary} from '../../help/library';
+import { helpLibrary } from '../../help/library';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';

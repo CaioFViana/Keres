@@ -1,6 +1,7 @@
 import { createULID } from '../../utils/entityUtils';
 import { and, eq, or, sql } from 'drizzle-orm';
-import { AppDrizzleClient, locationRelations, LocationRelationSelect } from '../../db';
+import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
+import { locationRelations } from '../../db';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';

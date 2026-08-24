@@ -1,13 +1,14 @@
+import type {
+  StorySchemaEntityType} from '@keres/shared';
 import {
   AttributeType,
   decodeAttributeValue,
   OperationLogEntityType,
-  StorySchemaEntityType,
   suggestionDisplayValue,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { TFunction } from 'i18next';
-import { AppDrizzleClient } from '../db';
+import type { TFunction } from 'i18next';
+import type { AppDrizzleClient } from '../db';
 import {
   attributeValues,
   chapters,

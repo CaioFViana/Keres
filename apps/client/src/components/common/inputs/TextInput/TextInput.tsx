@@ -1,6 +1,7 @@
 import { KeyboardAwareContext } from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import React, { useContext, useState } from 'react';
-import { Platform, TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
+import type { TextInputProps } from 'react-native';
+import { Platform, TextInput as RNTextInput, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 

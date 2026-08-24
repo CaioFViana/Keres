@@ -8,22 +8,23 @@ import GenericRelationDisplay from '@/src/components/features/relations/Relation
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { PlotSceneSelect, SceneSelect } from '../../db/schema';
+import type { PlotSceneSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { PlotsStackParamList } from '../../navigation/MainSystemStack';
+import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { PlotsScreenNavigationProp } from './PlotListScreen';
+import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;
 
@@ -66,13 +67,8 @@ const PlotDetailScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
+    ...commonDetailStyleDefs(colors),
         ...relationSectionStyleDefs(colors),
-        mainTitle: {
-          fontSize: 28,
-          fontWeight: 'bold',
-          color: colors.text,
-          marginBottom: 5,
-        },
         coverage: {
           fontSize: 14,
           color: colors.textSecondary,
@@ -82,9 +78,6 @@ const PlotDetailScreen = () => {
           fontSize: 14,
           color: colors.textSecondary,
           marginTop: 2,
-        },
-        buttonContainer: {
-          marginTop: 20,
         },
       }),
     [colors],

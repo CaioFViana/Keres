@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,18 +14,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import {
+import type {
   MainSystemDrawerParamList,
   SuggestionsStackParamList,
 } from '../../navigation/MainSystemStack';
+import type {
+  SuggestionUsage} from '../../services/storymanagement/SuggestionService';
 import {
   createSuggestionService,
-  isNamedListType,
-  SuggestionUsage,
+  isNamedListType
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';

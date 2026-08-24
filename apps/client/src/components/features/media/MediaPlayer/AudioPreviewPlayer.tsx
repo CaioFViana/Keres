@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { useCallback, useMemo, useState } from 'react';
+import type {
+  GestureResponderEvent} from 'react-native';
 import {
-  GestureResponderEvent,
   Pressable,
   StyleSheet,
   Text,

@@ -1,4 +1,5 @@
 import Select from '@/src/components/common/inputs/Select/Select';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';
+import type { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createExampleStoryService } from '../../services/storymanagement/ExampleStoryService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -135,10 +136,8 @@ const ExampleStoriesScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
     content: {
       padding: 20,
       paddingBottom: 60,
@@ -199,19 +198,6 @@ const ExampleStoriesScreen = () => {
     },
     installButtonDisabled: {
       opacity: 0.5,
-    },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 21,
     },
   });
 

@@ -1,4 +1,4 @@
-import { FavoriteEntityType } from '@keres/shared';
+import type { FavoriteEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -8,8 +8,9 @@ import { servers, stories } from '../../../../db/schema';
 import { createFavoriteService } from '../../../../services/storymanagement/FavoriteService';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
+import type {
+  ResolvedUserProfile} from '../../../../hooks/useUserProfileResolver';
 import {
-  ResolvedUserProfile,
   useUserProfileResolver,
 } from '../../../../hooks/useUserProfileResolver';
 import Avatar from '../../../common/display/Avatar/Avatar';

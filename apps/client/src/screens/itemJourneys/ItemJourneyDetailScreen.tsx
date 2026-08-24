@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -14,7 +15,7 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '../../db';
-import { ItemJourneySelect } from '../../db/schema';
+import type { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -27,11 +28,11 @@ import { useItemStore } from '../../state/itemStore';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { ItemStackParamList } from '../../navigation/MainSystemStack';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { ItemStackParamList } from '../../navigation/MainSystemStack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type ItemJourneyDetailScreenParamList = {
   ItemJourneyDetail: { itemJourneyId: string };
@@ -134,16 +135,8 @@ const ItemJourneyDetailScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
+    ...commonDetailStyleDefs(colors),
     subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
-    buttonContainer: { marginTop: 20 },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
-    },
     relationLink: { flexDirection: 'row', alignItems: 'center' },
   });
 

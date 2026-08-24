@@ -1,5 +1,6 @@
+import type {
+  StoryTimelineLayout} from './storyTimelineLayout';
 import {
-  StoryTimelineLayout,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,

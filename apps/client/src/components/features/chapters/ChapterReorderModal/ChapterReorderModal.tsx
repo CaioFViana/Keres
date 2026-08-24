@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChapterSelect } from '../../../../db/schema';
+import type { ChapterSelect } from '../../../../db/schema';
 import { buildReorderItems } from '@/src/utils/reorderIndexes';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 

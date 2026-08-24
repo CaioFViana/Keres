@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { LocationSelect } from '../../../../db/schema';
+import type { LocationSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';

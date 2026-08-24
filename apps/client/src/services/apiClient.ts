@@ -1,13 +1,14 @@
-import {
-  AxiosError,
+import type {
   AxiosInstance,
   AxiosRequestConfig,
+  InternalAxiosRequestConfig} from 'axios';
+import {
+  AxiosError,
   create as createAxios,
-  InternalAxiosRequestConfig,
   isAxiosError,
 } from 'axios';
 import { Platform } from 'react-native';
-import { ServerSelect } from '../db/schema'; // Import ServerSelect
+import type { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
 import { canRefreshSessionWithCookie } from './browserCookieSession';
 

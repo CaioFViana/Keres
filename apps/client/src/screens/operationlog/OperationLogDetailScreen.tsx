@@ -1,17 +1,19 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { OperationLogSelect } from '../../db/schema'; // Ensure this path is correct
+import type { OperationLogSelect } from '../../db/schema'; // Ensure this path is correct
 import { useEntityName } from '../../hooks/useEntityName';
 import { useUserDisplayName } from '../../hooks/useUserDisplayName';
-import { OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Corrected import path
+import type { OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Corrected import path
 import { EntityService } from '../../services/EntityService';
 import { createOperationLogService } from '../../services/OperationLogService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -158,10 +160,7 @@ const OperationLogDetailScreen: React.FC = () => {
   );
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     scrollViewContent: {
       padding: 15,
       paddingBottom: 30,

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
+import type { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';

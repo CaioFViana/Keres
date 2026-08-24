@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'account-limits',
   title: 'Account limits',

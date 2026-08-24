@@ -1,4 +1,5 @@
-import { buildStoryGraphLayout, GraphChapter, GraphChoice, GraphScene } from './storyGraphLayout';
+import type { GraphChapter, GraphChoice, GraphScene } from './storyGraphLayout';
+import { buildStoryGraphLayout } from './storyGraphLayout';
 
 /**
  * Ordena Item Journeys pela posição narrativa da cena de cada uma, não por `createdAt` (que é

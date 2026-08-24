@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import apiClient, { apiUrl } from './apiClient';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from './browserCookieSession';

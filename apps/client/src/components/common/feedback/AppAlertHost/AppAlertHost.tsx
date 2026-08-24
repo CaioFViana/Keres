@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppAlertButton, useAppAlertStore } from '../../../../state/appAlertStore';
+import type { AppAlertButton} from '../../../../state/appAlertStore';
+import { useAppAlertStore } from '../../../../state/appAlertStore';
 import { useTheme } from '../../../../theme';
 
 /**

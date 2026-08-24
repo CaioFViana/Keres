@@ -17,7 +17,7 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { renderPlotCoverageSvg } from '../../utils/plotCoverageSvg';
 import { deliverSvgMap } from '../../utils/storyTransfer';
-import { PlotsScreenNavigationProp } from './PlotListScreen';
+import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 /**
  * Quanto da história cada trama percorre. **Cobertura**, e não participação: uma cena pode

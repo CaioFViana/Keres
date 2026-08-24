@@ -1,15 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   ScrollView,
-  StyleProp,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ViewStyle,
   useWindowDimensions,
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';

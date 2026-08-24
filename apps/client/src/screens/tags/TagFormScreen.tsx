@@ -3,8 +3,9 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { Tag } from '@keres/shared/entities/Tag';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { Tag } from '@keres/shared/entities/Tag';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -12,12 +13,12 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
+import type { TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
@@ -151,42 +152,15 @@ const TagFormScreen = () => {
   };
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     saveButton: {
       marginTop: 40,
       marginBottom: 0,
     },
     deleteButton: {
-      backgroundColor: 'red',
+      backgroundColor: colors.error,
       marginTop: 10,
       marginBottom: 15,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
   });
 

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,23 +12,25 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  StoryAnalysisReport} from '../../services/storymanagement/StoryAnalysisService';
 import {
-  createStoryAnalysisService,
-  StoryAnalysisReport,
+  createStoryAnalysisService
 } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import {
-  StoryAnalysisCancelledError,
+import type {
   StoryAnalysisCategory,
-  StoryAnalysisFinding,
+  StoryAnalysisFinding} from '../../utils/storyAnalysisChecks';
+import {
+  StoryAnalysisCancelledError
 } from '../../utils/storyAnalysisChecks';
 
 /**
@@ -196,6 +198,7 @@ const StoryAnalysisScreen = () => {
   );
 
   const styles = StyleSheet.create({
+    ...commonDetailStyleDefs(colors),
     scrollContent: {
       // O container comum já aplica 20px em todos os lados. Repetir o padding no conteúdo
       // rolável deixava o cartão da checagem 40px afastado das bordas, diferente das demais
@@ -269,19 +272,6 @@ const StoryAnalysisScreen = () => {
       fontSize: 13,
       color: colors.textSecondary,
       marginTop: 2,
-    },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 21,
     },
   });
 

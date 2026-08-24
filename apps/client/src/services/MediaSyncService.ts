@@ -1,11 +1,13 @@
-import { MediaBlobStatusResponseType } from '@keres/shared';
+import type { MediaBlobStatusResponseType } from '@keres/shared';
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
-import { AppDrizzleClient } from '../db';
-import { GallerySelect, ServerSelect } from '../db/schema';
-import { getServerAccessToken, isOfflineError, KeresAxiosInstance } from './apiClient';
+import type { AppDrizzleClient } from '../db';
+import type { GallerySelect, ServerSelect } from '../db/schema';
+import type { KeresAxiosInstance } from './apiClient';
+import { getServerAccessToken, isOfflineError } from './apiClient';
 import { mediaFileService } from './MediaFileService';
-import { createGalleryService, GalleryService } from './storymanagement/GalleryService';
+import type { GalleryService } from './storymanagement/GalleryService';
+import { createGalleryService } from './storymanagement/GalleryService';
 
 /**
  * O canal binário da galeria.

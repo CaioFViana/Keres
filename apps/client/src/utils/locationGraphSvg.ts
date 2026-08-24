@@ -1,8 +1,9 @@
-import {
-  GRAPH_PADDING,
+import type {
   LocationGraphEdge,
   LocationGraphLayout,
-  LocationGraphNode,
+  LocationGraphNode} from './locationGraphLayout';
+import {
+  GRAPH_PADDING
 } from './locationGraphLayout';
 
 /**

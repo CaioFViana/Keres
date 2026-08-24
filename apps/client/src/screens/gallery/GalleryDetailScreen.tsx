@@ -1,8 +1,9 @@
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { GalleryStackParamList } from '../../navigation/MainSystemStack';
+import type { GalleryStackParamList } from '../../navigation/MainSystemStack';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import GalleryDetailContent from './GalleryDetailContent';
 

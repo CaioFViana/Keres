@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { commonScreenStyleDefs } from '../../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -15,11 +17,11 @@ import ChapterListItem from '@/src/components/features/list-items/ChapterListIte
 import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
 import { useDrizzle } from '../../../db';
-import { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
+import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../../hooks/useStoryRole';
-import {
+import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
 } from '../../../navigation/MainSystemStack';
@@ -520,10 +522,7 @@ const NarrativeElementsListScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     headerRightContainer: {
       flexDirection: 'row',
       alignItems: 'center',

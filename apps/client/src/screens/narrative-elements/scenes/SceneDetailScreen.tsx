@@ -15,19 +15,20 @@ import NoteRelationManager from '@/src/components/features/notes/NoteManager/Not
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import { Chapter } from '@keres/shared/entities/Chapter';
-import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
-import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
-import { Effect } from '@keres/shared/entities/Effect';
-import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
-import { Location } from '@keres/shared/entities/Location'; // Import Location
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { Chapter } from '@keres/shared/entities/Chapter';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
+import type { Choice } from '@keres/shared/entities/Choice'; // Import Choice
+import type { Effect } from '@keres/shared/entities/Effect';
+import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
+import type { Location } from '@keres/shared/entities/Location'; // Import Location
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
-import { SceneSelect } from '../../../db/schema';
+import type { SceneSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
@@ -35,40 +36,47 @@ import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPa
 import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
 import { useOpenGalleryMediaViewer } from '../../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../../hooks/useStoryRole';
+import type {
+  ChapterService} from '../../../services/storymanagement/ChapterService';
 import {
-  ChapterService,
   createChapterService,
 } from '../../../services/storymanagement/ChapterService'; // Import ChapterService
+import type {
+  CharacterSceneServiceInterface} from '../../../services/storymanagement/CharacterSceneService';
 import {
-  CharacterSceneServiceInterface,
   createCharacterSceneService,
 } from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import type {
+  ChoiceService} from '../../../services/storymanagement/ChoiceService';
 import {
-  ChoiceService,
   createChoiceService,
 } from '../../../services/storymanagement/ChoiceService'; // Import ChoiceService
+import type {
+  EffectService} from '../../../services/storymanagement/EffectService';
 import {
-  createEffectService,
-  EffectService,
+  createEffectService
 } from '../../../services/storymanagement/EffectService';
+import type {
+  ItemJourneyService} from '../../../services/storymanagement/ItemJourneyService';
 import {
-  createItemJourneyService,
-  ItemJourneyService,
+  createItemJourneyService
 } from '../../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../../services/storymanagement/ItemService'; // Import ItemService
+import type { ItemService } from '../../../services/storymanagement/ItemService';
+import { createItemService } from '../../../services/storymanagement/ItemService'; // Import ItemService
+import type {
+  LocationService} from '../../../services/storymanagement/LocationService';
 import {
-  createLocationService,
-  LocationService,
+  createLocationService
 } from '../../../services/storymanagement/LocationService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { getCommonContainerStyles } from '../../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
-import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 // Define the parameter list for this screen
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
@@ -183,27 +191,12 @@ const SceneDetailScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
     subTitle: {
       fontSize: 20,
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
     },
     locationLink: {
       flexDirection: 'row',

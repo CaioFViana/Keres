@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ServerSelect } from '../db/schema';
+import type { ServerSelect } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
 import { AppAlert } from '../utils/AppAlert';
 

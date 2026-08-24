@@ -1,25 +1,28 @@
 import { and, eq, inArray, ne, sql } from 'drizzle-orm';
+import type {
+  StorySchemaEntityType} from '@keres/shared';
 import {
   AttributeType,
   encodeAttributeValue,
   explodeAttributeUsageValue,
-  isSuggestionAttributeType,
-  StorySchemaEntityType,
+  isSuggestionAttributeType
 } from '@keres/shared';
+import type {
+  GlobalSearchEntityType} from '@keres/shared/metadata/globalSearchFields';
 import {
-  GlobalSearchEntityType,
   globalSearchFieldConfig,
 } from '@keres/shared/metadata/globalSearchFields';
-import {
+import type {
   AppDrizzleClient,
+  SuggestionInsert,
+  SuggestionSelect} from '../../db';
+import {
   characterRelations,
   characters,
   itemJourneys,
   items,
   attributeValues,
   storySchemaFields,
-  SuggestionInsert,
-  SuggestionSelect,
   suggestions,
 } from '../../db';
 import { createULID } from '../../utils/entityUtils';

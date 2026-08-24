@@ -1,11 +1,12 @@
-import { CommentEntityType } from '@keres/shared';
+import type { CommentEntityType } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import { CommentSelect } from '../db/schema';
-import {
-  createCommentService,
+import type { CommentSelect } from '../db/schema';
+import type {
   CommentTarget,
-  CreateCommentInput,
+  CreateCommentInput} from '../services/storymanagement/CommentService';
+import {
+  createCommentService
 } from '../services/storymanagement/CommentService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';

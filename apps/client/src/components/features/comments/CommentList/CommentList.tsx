@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-nativ
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CommentListItem from '@/src/components/features/list-items/CommentListItem';
 import { useDrizzle } from '../../../../db';
-import { CommentSelect } from '../../../../db/schema';
+import type { CommentSelect } from '../../../../db/schema';
 import { createCommentService } from '../../../../services/storymanagement/CommentService';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';

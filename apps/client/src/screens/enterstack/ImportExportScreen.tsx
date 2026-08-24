@@ -8,7 +8,7 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { StorySelect } from '../../db/schema';
+import type { StorySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -20,6 +20,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { createULID } from '../../utils/entityUtils';
 import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import {
   buildExportFileName,
   buildExportZipFileName,
@@ -218,10 +219,7 @@ const ImportExportScreen = () => {
   }, [drizzleDb, userId, showNotification, t, loadStories, fetchStoryList]);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     content: {
       padding: 20,
       paddingBottom: 60,

@@ -1,18 +1,8 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
+import React, { useCallback, useMemo, useState } from 'react';
+import type { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
 import { themes } from './palettes';
-import { ThemeColors } from './ThemeColors';
-
-interface ThemeContextType {
-  colors: ThemeColors;
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-  currentThemeName: string;
-  setTheme: (themeName: string) => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import { ThemeContext } from './ThemeContext';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -62,12 +52,4 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-};
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
 };

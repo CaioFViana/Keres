@@ -1,4 +1,4 @@
-import { HelpPageId } from './types';
+import type { HelpPageId } from './types';
 
 /**
  * Every reachable app route with a reader-facing header points to its closest

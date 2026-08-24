@@ -1,14 +1,15 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { ItemJourney, Item } from '@keres/shared/entities/Item';
-import { SceneSelect } from '../../../../db/schema'; // SceneSelect type
-import { CharacterSelect } from '../../../../db/schemas/characters'; // CharacterSelect type
+import type { ItemJourney, Item } from '@keres/shared/entities/Item';
+import type { SceneSelect } from '../../../../db/schema'; // SceneSelect type
+import type { CharacterSelect } from '../../../../db/schemas/characters'; // CharacterSelect type
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
-import GenericRelationDisplay, {
+import type {
   BaseRelation,
-} from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
+} from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
+import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 
 // Define the relation type for GenericRelationDisplay

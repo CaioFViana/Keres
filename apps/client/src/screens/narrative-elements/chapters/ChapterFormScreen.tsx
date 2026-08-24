@@ -1,43 +1,46 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import type {
+  CustomAttributeValues} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
-  CustomAttributeValues,
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager, {
+import type {
   SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { Chapter } from '@keres/shared/entities/Chapter';
+import type { Chapter } from '@keres/shared/entities/Chapter';
+import type {
+  RouteProp} from '@react-navigation/native';
 import {
-  RouteProp,
   StackActions,
   useFocusEffect,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../../db';
-import { ChapterSelect } from '../../../db/schema';
+import type { ChapterSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
-import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
@@ -273,42 +276,7 @@ const ChapterFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    saveButton: {
-      marginTop: 10,
-      marginBottom: 0,
-    },
-    deleteButton: {
-      backgroundColor: 'red',
-      marginBottom: 15,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: {
       // Renamed from tagSection for clarity.
       marginTop: 20,

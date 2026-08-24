@@ -5,15 +5,17 @@ import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFi
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import type {
+  StorySchemaEntityType} from '@keres/shared';
 import {
   AttributeKeyRegex,
   AttributeType,
   deriveAttributeKey,
-  STORY_SCHEMA_ENTITY_TYPES,
-  StorySchemaEntityType,
+  STORY_SCHEMA_ENTITY_TYPES
 } from '@keres/shared';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -21,12 +23,12 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
+import type { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
@@ -187,16 +189,8 @@ const StorySchemaFieldFormScreen = () => {
   }));
 
   const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
-    label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     hint: { fontSize: 13, color: colors.textSecondary, marginTop: -2, marginBottom: 5 },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
     saveButton: { marginTop: 30 },
   });
 

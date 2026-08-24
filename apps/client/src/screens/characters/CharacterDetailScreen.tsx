@@ -18,17 +18,18 @@ import ScenePresenceList, {
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
-import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import { Location } from '@keres/shared/entities/Location'; // Import Location entity
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
+import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
+import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { SceneSelect } from '../../db/schema'; // For available scenes
-import { CharacterSelect } from '../../db/schemas/characters';
+import type { SceneSelect } from '../../db/schema'; // For available scenes
+import type { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
@@ -36,28 +37,33 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import type {
+  CharacterRelationServiceInterface} from '../../services/storymanagement/CharacterRelationService';
 import {
-  CharacterRelationServiceInterface,
   createCharacterRelationService,
 } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import type {
+  CharacterSceneServiceInterface} from '../../services/storymanagement/CharacterSceneService';
 import {
-  CharacterSceneServiceInterface,
   createCharacterSceneService,
 } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
+import type {
+  ItemJourneyService} from '../../services/storymanagement/ItemJourneyService';
 import {
-  createItemJourneyService,
-  ItemJourneyService,
+  createItemJourneyService
 } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import type { ItemService } from '../../services/storymanagement/ItemService';
+import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import type {
+  LocationService} from '../../services/storymanagement/LocationService';
 import {
-  createLocationService,
-  LocationService,
+  createLocationService
 } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -164,27 +170,12 @@ const CharacterDetailScreen = () => {
   // Move styles declaration to the top
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
     subTitle: {
       fontSize: 20,
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
     },
   });
 

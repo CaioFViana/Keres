@@ -1,17 +1,18 @@
 import React from 'react';
+import type {
+  KeyboardEvent,
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   Dimensions,
   findNodeHandle,
   Keyboard,
-  KeyboardEvent,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleProp,
   StyleSheet,
   TextInput as RNTextInput,
-  UIManager,
-  ViewStyle,
+  UIManager
 } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 

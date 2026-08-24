@@ -1,9 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, Gallery, UpdateStoryUpdate } from '@keres/shared';
+import type { CreateStoryUpdate, DeleteStoryUpdate, Gallery, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { GallerySelect } from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { GallerySelect } from '../../db/schema';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
  * Aplica localmente as mudanças de *metadado* de uma mídia vindas do servidor.

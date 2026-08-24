@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DropDownPicker, { ItemType, ValueType } from 'react-native-dropdown-picker'; // Import ItemType and ValueType
+import type { ItemType, ValueType } from 'react-native-dropdown-picker';
+import DropDownPicker from 'react-native-dropdown-picker'; // Import ItemType and ValueType
 import { useTheme } from '../../../../theme';
 
 interface SelectOption {

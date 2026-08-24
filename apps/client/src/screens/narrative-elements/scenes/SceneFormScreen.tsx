@@ -1,7 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import type {
+  CustomAttributeValues} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
-  CustomAttributeValues,
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -11,23 +12,25 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import ScenePlotManager from '@/src/components/features/plots/ScenePlotManager/ScenePlotManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager, {
+import type {
   SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
-import { Effect } from '@keres/shared/entities/Effect';
-import { Plot } from '@keres/shared/entities/Plot';
-import { PlotScene } from '@keres/shared/entities/PlotScene';
-import { Scene } from '@keres/shared/entities/Scene';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
+import type { Effect } from '@keres/shared/entities/Effect';
+import type { Plot } from '@keres/shared/entities/Plot';
+import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import type { Scene } from '@keres/shared/entities/Scene';
+import type {
+  RouteProp} from '@react-navigation/native';
 import {
-  RouteProp,
   StackActions,
   useFocusEffect,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -37,10 +40,11 @@ import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
-import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
+import type {
+  CharacterSceneServiceInterface} from '../../../services/storymanagement/CharacterSceneService';
 import {
-  CharacterSceneServiceInterface,
   createCharacterSceneService,
 } from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { createEffectService } from '../../../services/storymanagement/EffectService';
@@ -55,7 +59,7 @@ import { useLocationStore } from '../../../state/locationStore'; // Import useLo
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
@@ -758,42 +762,7 @@ const SceneFormScreen = () => {
   ];
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    saveButton: {
-      marginTop: 10,
-      marginBottom: 0,
-    },
-    deleteButton: {
-      backgroundColor: 'red',
-      marginBottom: 15,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: {
       marginTop: 20,
       marginBottom: -10,

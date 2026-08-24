@@ -1,15 +1,18 @@
+import type {
+  FavoriteEntityType} from '@keres/shared';
 import {
   AttributeType,
   decodeAttributeValue,
-  FavoriteEntityType,
   joinSuggestionListForDisplay,
 } from '@keres/shared';
+import type {
+  GlobalSearchEntityType} from '@keres/shared/metadata/globalSearchFields';
 import {
-  globalSearchFieldConfig,
-  GlobalSearchEntityType,
+  globalSearchFieldConfig
 } from '@keres/shared/metadata/globalSearchFields';
-import { and, eq, inArray, ne, or, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { SQL } from 'drizzle-orm';
+import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
 import { attributeValues, chapters, scenes, storySchemaFields } from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
 import { truncate } from '../../utils/stringUtils';

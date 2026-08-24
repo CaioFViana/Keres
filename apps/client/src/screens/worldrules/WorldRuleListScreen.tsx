@@ -1,8 +1,10 @@
 import { useWorldRuleStore } from '@/src/state/worldRuleStore';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -13,12 +15,12 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import WorldRuleListItem from '@/src/components/features/list-items/WorldRuleListItem'; // Will create this later
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
-import { WorldRuleWithTags } from '../../db/schemas/worldRules';
+import type { TagSelect } from '../../db/schema';
+import type { WorldRuleWithTags } from '../../db/schemas/worldRules';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import {
+import type {
   MainSystemDrawerParamList,
   WorldRulesStackParamList,
 } from '../../navigation/MainSystemStack'; // Will create/update this later
@@ -153,10 +155,7 @@ const WorldRulesScreen = () => {
   }, [t]);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
   });
 
   if (isInitialLoading) {

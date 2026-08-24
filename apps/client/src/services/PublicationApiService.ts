@@ -1,5 +1,5 @@
 import type { PublicationLabelMode, ShowcaseVisibility, StoryPublication } from '@keres/shared';
-import { ServerSelect } from '../db/schemas/servers';
+import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 

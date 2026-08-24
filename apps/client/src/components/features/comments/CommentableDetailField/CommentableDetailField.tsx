@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import { CommentSelect } from '../../../../db/schema';
+import type { CommentSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
 

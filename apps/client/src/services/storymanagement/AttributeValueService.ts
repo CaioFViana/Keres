@@ -1,10 +1,12 @@
-import { AttributeType, explodeAttributeUsageValue, StorySchemaEntityType } from '@keres/shared';
+import type { AttributeType, StorySchemaEntityType } from '@keres/shared';
+import { explodeAttributeUsageValue } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
+import type {
+  AttributeValueInsert,
+  AttributeValueSelect} from '../../db/schema';
 import {
   attributeValues,
-  AttributeValueInsert,
-  AttributeValueSelect,
   storySchemaFields,
 } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';

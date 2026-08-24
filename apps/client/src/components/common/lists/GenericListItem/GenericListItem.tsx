@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import type { LayoutChangeEvent} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedReaction,
   useAnimatedStyle,

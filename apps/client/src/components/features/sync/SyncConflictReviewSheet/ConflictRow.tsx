@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ConflictSummary } from '../../../../services/ConflictSummaryService';
+import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
 import { useTheme } from '../../../../theme';
 
 interface ConflictRowProps {

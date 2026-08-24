@@ -1,9 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { and, eq, or, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 // Helper function to find an existing non-deleted relation for a given pair of characters
 const getExistingRelationForPair = async (

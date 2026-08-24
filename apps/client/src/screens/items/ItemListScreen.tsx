@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -13,19 +15,19 @@ import {
 import ItemListItem from '@/src/components/features/list-items/ItemListItem';
 import ItemJourneyRows from '@/src/components/features/item-journeys/ItemJourneyRows';
 import { useDrizzle } from '../../db';
-import {
+import type {
   ChapterSelect,
   ChoiceSelect,
   ItemJourneySelect,
   SceneSelect,
   TagSelect,
 } from '../../db/schema';
-import { ItemSelect } from '../../db/schemas/items';
+import type { ItemSelect } from '../../db/schemas/items';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -243,7 +245,7 @@ const ItemListScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    ...commonScreenStyleDefs(colors),
     headerRightContainer: { flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 },
   });
 

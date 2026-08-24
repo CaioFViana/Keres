@@ -1,7 +1,8 @@
+import type {
+  FullStoryExportType} from '@keres/shared';
 import {
   buildStoryZipBytes as buildSharedStoryZipBytes,
   FullStoryExportSchema,
-  FullStoryExportType,
   MEDIA_DIR_PREFIX,
   migrateStoryExport,
   STORY_JSON_ENTRY,

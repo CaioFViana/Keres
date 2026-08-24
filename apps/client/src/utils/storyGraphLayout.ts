@@ -1,5 +1,5 @@
 import { AVATAR_FALLBACK_PALETTE } from '@keres/shared';
-import { GraphLayoutDirection } from './graphLayoutDirection';
+import type { GraphLayoutDirection } from './graphLayoutDirection';
 /**
  * Posicionamento do grafo de uma história: cenas viram nós, escolhas viram arestas.
  *

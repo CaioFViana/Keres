@@ -1,4 +1,4 @@
-import { HelpPage } from './types';
+import type { HelpPage } from './types';
 
 interface IndexedHelpPage {
   page: HelpPage;

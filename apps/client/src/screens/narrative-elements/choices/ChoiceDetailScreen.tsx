@@ -9,16 +9,17 @@ import CommentableDetailField from '@/src/components/features/comments/Commentab
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import { Effect } from '@keres/shared/entities/Effect';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/Effect';
+import type { RouteProp} from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
-import { ChoiceSelect } from '../../../db/schema';
+import type { ChoiceSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
@@ -33,11 +34,11 @@ import { createItemService } from '../../../services/storymanagement/ItemService
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { getCommonContainerStyles } from '../../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 export type ChoiceDetailScreenParamList = {
   ChoiceDetail: { choiceId: string };
@@ -120,15 +121,7 @@ const ChoiceDetailScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
-    buttonContainer: { marginTop: 20 },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
     sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
     card: {
       borderWidth: 1,

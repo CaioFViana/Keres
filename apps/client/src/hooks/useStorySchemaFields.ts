@@ -1,7 +1,7 @@
-import { StorySchemaEntityType } from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '../db';
-import { StorySchemaFieldSelect } from '../db/schema';
+import type { StorySchemaFieldSelect } from '../db/schema';
 import { createStorySchemaFieldService } from '../services/storymanagement/StorySchemaFieldService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 

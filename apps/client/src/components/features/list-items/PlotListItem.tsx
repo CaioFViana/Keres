@@ -4,7 +4,7 @@ import { createSimpleEntityListItemStyles } from '@/src/components/features/list
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { PlotSelect } from '../../../db/schema';
+import type { PlotSelect } from '../../../db/schema';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 

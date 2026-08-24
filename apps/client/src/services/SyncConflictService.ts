@@ -1,12 +1,12 @@
-import {
+import type {
   ChapterReorderingStoryUpdate,
   StoryReorderingStoryUpdate,
   SyncConflictReason,
 } from '@keres/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import { OperationLogSelect, SyncConflictSelect } from '../db/schema';
+import type { OperationLogSelect, SyncConflictSelect } from '../db/schema';
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';

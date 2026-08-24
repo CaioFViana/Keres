@@ -1,4 +1,5 @@
-import { AppAlertButton, AppAlertOptions, useAppAlertStore } from '../state/appAlertStore';
+import type { AppAlertButton, AppAlertOptions} from '../state/appAlertStore';
+import { useAppAlertStore } from '../state/appAlertStore';
 
 /**
  * Substituto do `Alert.alert` do React Native: na web, `react-native-web`'s Alert é um

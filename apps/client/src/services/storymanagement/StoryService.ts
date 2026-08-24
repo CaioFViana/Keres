@@ -1382,37 +1382,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await tx.insert(choiceCheckGroups).values(groupToInsert).run();
           }
         }
-        if (fullStoryData.choiceChecks) {
-          for (const check of fullStoryData.choiceChecks) {
-            const checkToInsert: ChoiceCheckInsert = {
-              ...check,
-              storyId: check.storyId,
-              groupId: check.groupId,
-              createdAt: new Date(check.createdAt),
-              updatedAt: new Date(),
-              version: check.version,
-              isDeleted: false,
-              deletedAt: null,
-            };
-            await tx.insert(choiceChecks).values(checkToInsert).run();
-          }
-        }
-        if (fullStoryData.effects) {
-          for (const effect of fullStoryData.effects) {
-            const effectToInsert: EffectInsert = {
-              ...effect,
-              storyId: effect.storyId,
-              entityType: effect.entityType,
-              entityId: effect.entityId,
-              createdAt: new Date(effect.createdAt),
-              updatedAt: new Date(),
-              version: effect.version,
-              isDeleted: false,
-              deletedAt: null,
-            };
-            await tx.insert(effects).values(effectToInsert).run();
-          }
-        }
+        // ChoiceChecks e Effects são inseridos depois de Items: ambos podem ter itemId.
 
         // 5. Process Characters
         for (const character of fullStoryData.characters) {
@@ -1644,6 +1614,40 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               deletedAt: null,
             };
             await tx.insert(items).values(itemToInsert).run();
+          }
+        }
+
+        // 15b. Process ChoiceChecks/Effects after Items, because inventory checks and item
+        // grant/take effects have real foreign keys to the item table.
+        if (fullStoryData.choiceChecks) {
+          for (const check of fullStoryData.choiceChecks) {
+            const checkToInsert: ChoiceCheckInsert = {
+              ...check,
+              storyId: check.storyId,
+              groupId: check.groupId,
+              createdAt: new Date(check.createdAt),
+              updatedAt: new Date(),
+              version: check.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(choiceChecks).values(checkToInsert).run();
+          }
+        }
+        if (fullStoryData.effects) {
+          for (const effect of fullStoryData.effects) {
+            const effectToInsert: EffectInsert = {
+              ...effect,
+              storyId: effect.storyId,
+              entityType: effect.entityType,
+              entityId: effect.entityId,
+              createdAt: new Date(effect.createdAt),
+              updatedAt: new Date(),
+              version: effect.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(effects).values(effectToInsert).run();
           }
         }
 

@@ -4,6 +4,7 @@
   "version": "1.4.2",
   "scripts": {
     "prestart": "node scripts/generate-migrations-index.js && node scripts/generate-example-stories-index.js && node scripts/generate-help-index.js && node scripts/generate-story-devices-index.js",
+    "example-stories:build": "bun scripts/build-example-story.ts",
     "example-stories:generate": "node scripts/generate-example-stories-index.js",
     "start": "expo start",
     "start-clear": "expo start --clear",

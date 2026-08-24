@@ -24,6 +24,8 @@ export const ENTITY_TABLES = {
   LocationRelation: schema.locationRelations,
   Note: schema.notes,
   NoteRelation: schema.noteRelations,
+  Plot: schema.plots,
+  PlotScene: schema.plotScenes,
   Scene: schema.scenes,
   Stat: schema.stats,
   StatRelation: schema.statRelations,

@@ -1,14 +1,20 @@
 import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Rect } from 'react-native-svg';
+import Svg, { Line, Rect } from 'react-native-svg';
 import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
 import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../theme';
 import {
+  buildMatrixThreadSegments,
+  MATRIX_CELL_INSET,
   MATRIX_HEADER_HEIGHT,
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   MATRIX_ROW_HEIGHT,
+  MATRIX_THREAD_GAP_DASH,
+  MATRIX_THREAD_OPACITY,
+  MATRIX_THREAD_WIDTH,
+  matrixRowCenterY,
   PresenceMatrixLayout,
 } from '../../../utils/presenceMatrixLayout';
 
@@ -67,6 +73,23 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
       });
       return groups;
     }, [layout.scenes]);
+    // Uma lista achatada de linhas, e não um Fragment por faixa: o react-native-svg nativo
+    // percorre os filhos diretos do Svg, e agrupar é o tipo de coisa que funciona na web e
+    // falha no aparelho.
+    const threads = useMemo(
+      () =>
+        layout.rows.flatMap((row, rowIndex) =>
+          buildMatrixThreadSegments(row, layout.scenes, layout.sceneWidth).map(
+            (segment, position) => ({
+              key: `${row.id}-${position}`,
+              color: row.color,
+              y: matrixRowCenterY(rowIndex),
+              ...segment,
+            }),
+          ),
+        ),
+      [layout.rows, layout.sceneWidth, layout.scenes],
+    );
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
         <Svg width={layout.width} height={layout.height}>
@@ -93,6 +116,20 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
               </React.Fragment>
             );
           })}
+          {threads.map((thread) => (
+            <Line
+              key={thread.key}
+              x1={thread.x1}
+              y1={thread.y}
+              x2={thread.x2}
+              y2={thread.y}
+              stroke={thread.color}
+              strokeWidth={MATRIX_THREAD_WIDTH}
+              strokeOpacity={MATRIX_THREAD_OPACITY}
+              strokeLinecap="round"
+              strokeDasharray={thread.isGap ? MATRIX_THREAD_GAP_DASH : undefined}
+            />
+          ))}
         </Svg>
         {chapterGroups.map((chapter) => (
           <View
@@ -188,10 +225,13 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                     styles.cell,
                     {
                       left:
-                        MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * layout.sceneWidth + 10,
+                        MATRIX_PADDING +
+                        MATRIX_LABEL_WIDTH +
+                        sceneIndex * layout.sceneWidth +
+                        MATRIX_CELL_INSET,
                       top:
                         MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT + 10,
-                      width: layout.sceneWidth - 20,
+                      width: layout.sceneWidth - MATRIX_CELL_INSET * 2,
                       height: MATRIX_ROW_HEIGHT - 20,
                       borderColor: row.color,
                       backgroundColor: `${row.color}2E`,

@@ -21,6 +21,8 @@ import { attributeValues } from './attributeValues';
 import { favorites } from './favorites';
 import { seeAlsoRelations } from './seeAlsoRelations';
 import { comments } from './comments';
+import { plots } from './plots';
+import { plotScenes } from './plotScenes';
 import { storyTypeEnum } from '../enums';
 
 export const stories = table('stories', {
@@ -91,4 +93,6 @@ export const storiesRelations = relations(stories, ({ one, many }) => ({
   favorites: many(favorites),
   seeAlsoRelations: many(seeAlsoRelations),
   comments: many(comments),
+  plots: many(plots),
+  plotScenes: many(plotScenes),
 }));

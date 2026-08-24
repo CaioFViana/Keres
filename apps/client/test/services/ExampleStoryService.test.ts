@@ -54,6 +54,36 @@ it('ships every public-domain example at format v4 with the current local featur
   }
 });
 
+it('installs the plots of a linear example bound to the copy, not to the packaged ids', async () => {
+  const service = createExampleStoryService(database.db);
+
+  const installed = await service.installExampleStory('01ARZ3NDEKTSV4RRFFQ69G5FAY', 'cinderella', 'en');
+  expect(installed).toMatchObject({ status: 'installed' });
+  if (installed.status !== 'installed') return;
+
+  const packaged = exampleStoryRegistry
+    .find((entry) => entry.slug === 'cinderella')
+    ?.languages.find((entry) => entry.language === 'en')?.story as { plots: { id: string }[] };
+  const plots = await database.db.query.plots.findMany();
+  const relations = await database.db.query.plotScenes.findMany();
+  const sceneIds = new Set((await database.db.query.scenes.findMany()).map((scene) => scene.id));
+
+  expect(plots.length).toBe(packaged.plots.length);
+  expect(plots.every((plot) => plot.storyId === installed.storyId)).toBe(true);
+  // Os ids do pacote não podem sobreviver à cópia, senão instalar duas vezes colide.
+  expect(plots.some((plot) => packaged.plots.some((source) => source.id === plot.id))).toBe(false);
+
+  expect(relations.length).toBeGreaterThan(0);
+  expect(
+    relations.every(
+      (relation) =>
+        relation.storyId === installed.storyId &&
+        sceneIds.has(relation.sceneId) &&
+        plots.some((plot) => plot.id === relation.plotId),
+    ),
+  ).toBe(true);
+});
+
 it('installs the same bundled example as independent local copies', async () => {
   const service = createExampleStoryService(database.db);
 

@@ -979,9 +979,60 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 5,
+  "formatVersion": 6,
   "stats": [],
   "statStrengths": [],
   "statRelations": [],
-  "modes": []
+  "modes": [],
+  "plots": [
+    {
+      "id": "01KYXBHD0ME7CZXCJDMH2QPT01",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Main plot",
+      "details": "The narrative line that carries the story from beginning to end.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "plotScenes": [
+    {
+      "id": "01KYXBHD0ME7CZXCJDMH2QPS01",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "plotId": "01KYXBHD0ME7CZXCJDMH2QPT01",
+      "sceneId": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "note": "Sets the plot in motion.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    },
+    {
+      "id": "01KYXBHD0ME7CZXCJDMH2QPS02",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "plotId": "01KYXBHD0ME7CZXCJDMH2QPT01",
+      "sceneId": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "note": "Raises the stakes of the plot.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    },
+    {
+      "id": "01KYXBHD0ME7CZXCJDMH2QPS03",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "plotId": "01KYXBHD0ME7CZXCJDMH2QPT01",
+      "sceneId": "01KYXBHD0MKXH274VYGG8CD6H4",
+      "note": "Brings the plot to its turning point.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ]
 }

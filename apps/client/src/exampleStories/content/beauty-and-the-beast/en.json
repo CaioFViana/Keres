@@ -1250,9 +1250,11 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 5,
+  "formatVersion": 6,
   "stats": [],
   "statStrengths": [],
   "statRelations": [],
-  "modes": []
+  "modes": [],
+  "plots": [],
+  "plotScenes": []
 }

@@ -280,30 +280,52 @@ const StorySettingsScreen = () => {
     if (!storyId || !userId || !canManageStoryPolicy || newType === type) return;
 
     if (newType === 'branching') {
-      AppAlert.alert(
-        t('convert_to_branching_title'),
-        t('convert_to_branching_message'),
-        [
-          { text: t('cancel'), style: 'cancel' },
-          {
-            text: t('convert'),
-            onPress: async () => {
-              try {
-                setLoading(true);
-                await storyService().convertStoryType(userId, storyId, 'branching');
-                setType('branching');
-                AppAlert.alert(t('success'), t('story_type_converted_successfully'));
-              } catch (err) {
-                console.error('Failed to convert story to branching:', err);
-                AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
-              } finally {
-                setLoading(false);
-              }
-            },
-          },
-        ],
-        { cancelable: true },
-      );
+      // Tramas só existem em histórias lineares: avisa antes de perguntar, como no sentido
+      // contrário, em vez de deixar a conversão falhar sem explicação.
+      (async () => {
+        try {
+          setLoading(true);
+          const activePlots = await storyService().countActivePlots(storyId);
+          setLoading(false);
+
+          if (activePlots > 0) {
+            AppAlert.alert(
+              t('cannot_convert_to_branching_title'),
+              t('cannot_convert_to_branching_plots_message', { count: activePlots }),
+            );
+            return;
+          }
+
+          AppAlert.alert(
+            t('convert_to_branching_title'),
+            t('convert_to_branching_message'),
+            [
+              { text: t('cancel'), style: 'cancel' },
+              {
+                text: t('convert'),
+                onPress: async () => {
+                  try {
+                    setLoading(true);
+                    await storyService().convertStoryType(userId, storyId, 'branching');
+                    setType('branching');
+                    AppAlert.alert(t('success'), t('story_type_converted_successfully'));
+                  } catch (err) {
+                    console.error('Failed to convert story to branching:', err);
+                    AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
+                  } finally {
+                    setLoading(false);
+                  }
+                },
+              },
+            ],
+            { cancelable: true },
+          );
+        } catch (err) {
+          console.error('Failed to check plots before converting to branching:', err);
+          setLoading(false);
+          AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
+        }
+      })();
       return;
     }
 

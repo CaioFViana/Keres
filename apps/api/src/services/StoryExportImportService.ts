@@ -83,6 +83,13 @@ export class StoryExportImportService {
       where: (characterScenes, { eq, and }) =>
         and(eq(characterScenes.storyId, storyId), eq(characterScenes.isDeleted, false)),
     });
+    const plots = await db.query.plots.findMany({
+      where: (plots, { eq, and }) => and(eq(plots.storyId, storyId), eq(plots.isDeleted, false)),
+    });
+    const plotScenes = await db.query.plotScenes.findMany({
+      where: (plotScenes, { eq, and }) =>
+        and(eq(plotScenes.storyId, storyId), eq(plotScenes.isDeleted, false)),
+    });
     const galleryItems = await db.query.galleries.findMany({
       where: (galleries, { eq, and }) =>
         and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)),
@@ -178,6 +185,8 @@ export class StoryExportImportService {
       suggestions,
       characterRelations,
       characterScenes,
+      plots,
+      plotScenes,
       galleryItems,
       galleryRelations,
       items,
@@ -648,6 +657,46 @@ export class StoryExportImportService {
       if (newCharacterScenesData.length > 0) {
         await tx.insert(dbSchema.characterScenes).values(newCharacterScenesData);
       }
+
+      // --- Plots ---
+      const newPlotsData = (validatedFullStory.plots ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+          deletedAt: null,
+        };
+      });
+      if (newPlotsData.length > 0) await tx.insert(dbSchema.plots).values(newPlotsData);
+
+      // --- PlotScenes ---
+      const newPlotScenesData = (validatedFullStory.plotScenes ?? []).map((original) => {
+        const newId = nextId(original.id);
+        const plotId = idMap.get(original.plotId);
+        const sceneId = idMap.get(original.sceneId);
+        if (!plotId || !sceneId)
+          throw new Error(`Import Error: plot or scene missing for plot-scene ${original.id}.`);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          plotId,
+          sceneId,
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+          deletedAt: null,
+        };
+      });
+      if (newPlotScenesData.length > 0)
+        await tx.insert(dbSchema.plotScenes).values(newPlotScenesData);
 
       // --- GalleryItems ---
       const newGalleryItemsData = validatedFullStory.galleryItems.map((original) => {

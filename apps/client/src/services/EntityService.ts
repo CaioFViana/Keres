@@ -30,6 +30,8 @@ import {
   noteRelations,
   notes,
   operationLogs,
+  plots,
+  plotScenes,
   scenes,
   seeAlsoRelations,
   statRelations,
@@ -75,6 +77,8 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   noterelation: OperationLogEntityType.NoteRelation,
   tagrelation: OperationLogEntityType.TagRelation,
   characterscene: OperationLogEntityType.CharacterScene,
+  plot: OperationLogEntityType.Plot,
+  plotscene: OperationLogEntityType.PlotScene,
   gallery: OperationLogEntityType.Gallery,
   galleryrelation: OperationLogEntityType.GalleryRelation,
   favorite: OperationLogEntityType.Favorite,
@@ -446,6 +450,34 @@ export class EntityService {
           });
         }
         translatedEntityType = t('character_scene_relation');
+        break;
+      case OperationLogEntityType.Plot:
+        const plot = await db.query.plots.findFirst({
+          where: and(eq(plots.id, entityId), eq(plots.isDeleted, false)),
+          columns: { name: true },
+        });
+        entitySpecificName = plot?.name || entityId;
+        translatedEntityType = t('plots_title');
+        break;
+      case OperationLogEntityType.PlotScene:
+        const plotScene = await db.query.plotScenes.findFirst({
+          where: and(eq(plotScenes.id, entityId), eq(plotScenes.isDeleted, false)),
+          columns: { plotId: true, sceneId: true },
+        });
+        if (plotScene) {
+          const [relatedPlot, relatedScene] = await Promise.all([
+            db.query.plots.findFirst({
+              where: eq(plots.id, plotScene.plotId),
+              columns: { name: true },
+            }),
+            db.query.scenes.findFirst({
+              where: eq(scenes.id, plotScene.sceneId),
+              columns: { name: true },
+            }),
+          ]);
+          entitySpecificName = `${relatedPlot?.name || t('plots_title')} — ${relatedScene?.name || t('scenes_title')}`;
+        }
+        translatedEntityType = t('plot_scenes');
         break;
       case OperationLogEntityType.StorySchemaField:
         const schemaField = await db.query.storySchemaFields.findFirst({
@@ -1029,6 +1061,34 @@ export class EntityService {
           });
         }
         type = t('character_scene_relation');
+        break;
+      case OperationLogEntityType.Plot:
+        const plotForIdentifier = await db.query.plots.findFirst({
+          where: and(eq(plots.id, relationId), eq(plots.isDeleted, false)),
+          columns: { name: true },
+        });
+        name = plotForIdentifier?.name || relationId;
+        type = t('plots_title');
+        break;
+      case OperationLogEntityType.PlotScene:
+        const plotSceneForIdentifier = await db.query.plotScenes.findFirst({
+          where: and(eq(plotScenes.id, relationId), eq(plotScenes.isDeleted, false)),
+          columns: { plotId: true, sceneId: true },
+        });
+        if (plotSceneForIdentifier) {
+          const [plotForRelation, sceneForRelation] = await Promise.all([
+            db.query.plots.findFirst({
+              where: eq(plots.id, plotSceneForIdentifier.plotId),
+              columns: { name: true },
+            }),
+            db.query.scenes.findFirst({
+              where: eq(scenes.id, plotSceneForIdentifier.sceneId),
+              columns: { name: true },
+            }),
+          ]);
+          name = `${plotForRelation?.name || t('plots_title')} — ${sceneForRelation?.name || t('scenes_title')}`;
+        }
+        type = t('plot_scenes');
         break;
       case OperationLogEntityType.GalleryRelation:
         const galleryRelation = await db.query.galleryRelations.findFirst({

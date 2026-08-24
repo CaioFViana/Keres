@@ -24,6 +24,11 @@ interface GenericRelationDisplayProps<TItem extends BaseItem, TRelation extends 
    * to, so the row stays a plain, non-interactive display unless a caller opts in.
    */
   onItemPress?: (item: TItem) => void;
+  /**
+   * Fechado por padrão, como toda seção de relação. Aberto só onde as relações são o conteúdo
+   * principal da tela (o detalhe de um Plot é a lista das cenas dele), e não um apêndice.
+   */
+  initialExpanded?: boolean;
 }
 
 const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRelation>({
@@ -35,6 +40,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   renderItemExtraContent,
   title, // Destructure title prop
   onItemPress,
+  initialExpanded = false,
 }: GenericRelationDisplayProps<TItem, TRelation>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -47,7 +53,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
 
   return (
     <View style={styles.container}>
-      <CollapsibleCard title={title} initialExpanded={false}>
+      <CollapsibleCard title={title} initialExpanded={initialExpanded}>
         <View>
           {filteredRelations.length === 0 ? (
             <Text style={{ color: colors.textSecondary }}>{t(noItemsMessage)}</Text>

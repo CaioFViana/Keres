@@ -69,6 +69,7 @@ export const fieldSources: Record<string, string[]> = {
     'isFavorite',
   ],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],
+  plots: ['name', 'details', 'note'],
   'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
 };
 
@@ -86,6 +87,7 @@ export const entityMetadataHelpPages = {
   Scene: 'scenes',
   Choice: 'choices',
   Mode: 'character-modes',
+  Plot: 'plots',
 } as const;
 
 export const visibleEntityProperties = fieldSources;
@@ -336,6 +338,14 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   NoteRelation: {
     documented: ['noteId', 'relationId', 'relationType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Plot: {
+    documented: ['name', 'details', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  PlotScene: {
+    documented: ['plotId', 'sceneId', 'note', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   RegistrationSettings: {

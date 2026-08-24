@@ -38,6 +38,8 @@ import { EffectSyncHandler } from './entity-sync-handlers/EffectSyncHandler';
 import { GalleryRelationSyncHandler } from './entity-sync-handlers/GalleryRelationSyncHandler';
 import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
+import { PlotSyncHandler } from './entity-sync-handlers/PlotSyncHandler';
+import { PlotSceneSyncHandler } from './entity-sync-handlers/PlotSceneSyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationRelationSyncHandler } from './entity-sync-handlers/LocationRelationSyncHandler';
 import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
@@ -91,6 +93,8 @@ export class SyncService {
     this.registerEntityHandler(new CharacterRelationSyncHandler());
     this.registerEntityHandler(new ItemSyncHandler());
     this.registerEntityHandler(new ItemJourneySyncHandler());
+    this.registerEntityHandler(new PlotSyncHandler());
+    this.registerEntityHandler(new PlotSceneSyncHandler());
     this.registerEntityHandler(new SuggestionSyncHandler());
     this.registerEntityHandler(new TagSyncHandler());
     this.registerEntityHandler(new TagRelationSyncHandler());

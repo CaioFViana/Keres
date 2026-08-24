@@ -14,11 +14,14 @@ export function useNavigateToEntityDetail() {
   const navigation = useNavigation();
 
   return useCallback(
-    (entityType: NavigableEntityType, entityId: string) => {
+    // `options.onReturn` é repassado como está: quem sai da própria pilha (a matriz de Tramas
+    // abrindo uma Cena, por exemplo) precisa registrar a volta, senão o botão de voltar leva a
+    // pilha de destino para onde ela estava, e não de onde a pessoa veio.
+    (entityType: NavigableEntityType, entityId: string, options?: { onReturn?: () => void }) => {
       const drawerNavigation =
         navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
       if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, entityType, entityId);
+        navigateToEntityDetail(drawerNavigation, entityType, entityId, options);
       }
     },
     [navigation],

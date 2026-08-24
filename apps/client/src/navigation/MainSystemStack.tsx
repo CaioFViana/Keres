@@ -76,6 +76,12 @@ import WorldRuleDetailScreen, {
 } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
+import PlotListScreen from '../screens/plots/PlotListScreen';
+import PlotDetailScreen from '../screens/plots/PlotDetailScreen';
+import PlotFormScreen from '../screens/plots/PlotFormScreen';
+import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
+import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
+import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
@@ -97,6 +103,7 @@ export type MainSystemDrawerParamList = {
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
   TagsStack: NavigatorScreenParams<TagsStackParamList> | undefined;
   WorldRulesStack: NavigatorScreenParams<WorldRulesStackParamList> | undefined;
+  PlotsStack: NavigatorScreenParams<PlotsStackParamList> | undefined;
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
   Settings: undefined;
@@ -124,6 +131,7 @@ const mainSystemStackRootScreens = new Set([
   'Tags',
   'Notes',
   'WorldRules',
+  'Plots',
   'OperationLog',
   'CommentsList',
   'StorySchemaList',
@@ -150,6 +158,30 @@ const SuggestionsStackNavigator = () => {
       <SuggestionsStack.Screen name="Suggestions" component={SuggestionsScreen} />
       <SuggestionsStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
     </SuggestionsStack.Navigator>
+  );
+};
+//#endregion
+//#region Plots
+const PlotsStack = createNativeStackNavigator<PlotsStackParamList>();
+export type PlotsStackParamList = {
+  Plots: undefined;
+  PlotDetail: { plotId: string };
+  PlotForm: { plotId?: string };
+  PlotMatrix: undefined;
+  PlotProgress: undefined;
+  PlotReader: undefined;
+};
+const PlotsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <PlotsStack.Navigator screenOptions={{ headerShown: false }}>
+      <PlotsStack.Screen name="Plots" component={PlotListScreen} />
+      <PlotsStack.Screen name="PlotDetail" component={PlotDetailScreen} />
+      <PlotsStack.Screen name="PlotForm" component={PlotFormScreen} />
+      <PlotsStack.Screen name="PlotMatrix" component={PlotMatrixScreen} />
+      <PlotsStack.Screen name="PlotProgress" component={PlotProgressScreen} />
+      <PlotsStack.Screen name="PlotReader" component={PlotReaderScreen} />
+    </PlotsStack.Navigator>
   );
 };
 //#endregion
@@ -603,6 +635,19 @@ const MainSystemNavigator = () => {
             },
           })}
         />
+        {selectedStory?.type === 'linear' && (
+          <Drawer.Screen
+            name="PlotsStack"
+            component={PlotsStackNavigator}
+            options={{ title: t('plots_title'), drawerLabel: t('plots_title') }}
+            listeners={({ navigation }) => ({
+              drawerItemPress: (e) => {
+                e.preventDefault();
+                navigation.navigate('PlotsStack', { screen: 'Plots' });
+              },
+            })}
+          />
+        )}
         <Drawer.Screen
           name="LocationsStack"
           component={LocationStackNavigator}

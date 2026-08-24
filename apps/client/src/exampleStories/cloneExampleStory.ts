@@ -38,6 +38,8 @@ export function cloneExampleStoryForInstall(
   registerAll(example.suggestions);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
+  registerAll(example.plots);
+  registerAll(example.plotScenes);
   registerAll(example.galleryItems);
   registerAll(example.galleryRelations);
   registerAll(example.items);
@@ -136,6 +138,13 @@ export function cloneExampleStoryForInstall(
       ...cloneEntity(relation),
       storyId,
       characterId: remapId(relation.characterId),
+      sceneId: remapId(relation.sceneId),
+    })),
+    plots: example.plots?.map((plot) => ({ ...cloneEntity(plot), storyId })),
+    plotScenes: example.plotScenes?.map((relation) => ({
+      ...cloneEntity(relation),
+      storyId,
+      plotId: remapId(relation.plotId),
       sceneId: remapId(relation.sceneId),
     })),
     galleryItems: example.galleryItems.map((item) => ({ ...cloneEntity(item), storyId })),

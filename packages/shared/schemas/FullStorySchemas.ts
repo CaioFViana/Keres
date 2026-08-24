@@ -3,6 +3,8 @@ import { ChapterSchema } from './ChapterSchemas'; // Adjusted path
 import { CharacterSchema } from './CharacterSchemas'; // Adjusted path
 import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjusted path
 import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
+import { PlotSchema } from './PlotSchemas';
+import { PlotSceneSchema } from './PlotSceneSchemas';
 import { ChoiceSchema } from './ChoiceSchemas'; // Adjusted path
 import { ChoiceCheckGroupSchema } from './ChoiceCheckGroupSchemas';
 import { ChoiceCheckSchema } from './ChoiceCheckSchemas';
@@ -46,6 +48,9 @@ export const FullStoryExportSchema = z.object({
   suggestions: z.array(SuggestionSchema),
   characterRelations: z.array(CharacterRelationSchema),
   characterScenes: z.array(CharacterSceneSchema),
+  // Introduzidos no formato V6; migrações anteriores fornecem listas vazias.
+  plots: z.array(PlotSchema).optional(),
+  plotScenes: z.array(PlotSceneSchema).optional(),
   galleryItems: z.array(GallerySchema),
   // Opcional para que pacotes gerados antes da galeria virar N:N continuem importáveis.
   galleryRelations: z.array(GalleryRelationSchema).optional(),

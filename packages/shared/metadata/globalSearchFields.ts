@@ -20,7 +20,8 @@ export type GlobalSearchEntityType =
   | 'Chapter'
   | 'Note'
   | 'WorldRule'
-  | 'Mode';
+  | 'Mode'
+  | 'Plot';
 
 export interface GlobalSearchFieldConfig {
   /** Column used as the result's display title. */
@@ -89,5 +90,9 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
   Mode: {
     titleField: 'name',
     searchFields: ['name', 'modeChanges'],
+  },
+  Plot: {
+    titleField: 'name',
+    searchFields: ['name', 'details'],
   },
 };

@@ -1,8 +1,14 @@
 import {
+  buildMatrixThreadSegments,
+  MATRIX_CELL_INSET,
   MATRIX_HEADER_HEIGHT,
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   MATRIX_ROW_HEIGHT,
+  MATRIX_THREAD_GAP_DASH,
+  MATRIX_THREAD_OPACITY,
+  MATRIX_THREAD_WIDTH,
+  matrixRowCenterY,
   PresenceMatrixLayout,
 } from './presenceMatrixLayout';
 
@@ -54,6 +60,16 @@ export function renderPresenceMatrixSvg(
       `<text x="${x + 8}" y="${MATRIX_PADDING + 44}" font-size="10" fill="${options.text}">${escapeXml(truncate(`${index + 1}. ${scene.name}`, Math.max(10, Math.floor(layout.sceneWidth / 6))))}</text>`,
     );
   });
+  // O fio vem antes das células, como na tela: ele passa por baixo, não por cima.
+  layout.rows.forEach((row, rowIndex) => {
+    const threadY = matrixRowCenterY(rowIndex);
+    buildMatrixThreadSegments(row, layout.scenes, layout.sceneWidth).forEach((segment) => {
+      const dash = segment.isGap ? ` stroke-dasharray="${MATRIX_THREAD_GAP_DASH}"` : '';
+      body.push(
+        `<line x1="${segment.x1}" y1="${threadY}" x2="${segment.x2}" y2="${threadY}" stroke="${row.color}" stroke-width="${MATRIX_THREAD_WIDTH}" stroke-opacity="${MATRIX_THREAD_OPACITY}" stroke-linecap="round"${dash}/>`,
+      );
+    });
+  });
   layout.rows.forEach((row, rowIndex) => {
     const y = MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT;
     const percentage = Math.round((row.cells.size / layout.scenes.length || 0) * 100);
@@ -67,9 +83,10 @@ export function renderPresenceMatrixSvg(
     layout.scenes.forEach((scene, sceneIndex) => {
       const value = row.cells.get(scene.id);
       if (!value) return;
-      const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * layout.sceneWidth + 10;
+      const x =
+        MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * layout.sceneWidth + MATRIX_CELL_INSET;
       body.push(
-        `<rect x="${x}" y="${y + 11}" width="${layout.sceneWidth - 20}" height="${MATRIX_ROW_HEIGHT - 22}" rx="7" fill="${row.color}" fill-opacity="0.18" stroke="${row.color}"/>`,
+        `<rect x="${x}" y="${y + 11}" width="${layout.sceneWidth - MATRIX_CELL_INSET * 2}" height="${MATRIX_ROW_HEIGHT - 22}" rx="7" fill="${row.color}" fill-opacity="0.18" stroke="${row.color}"/>`,
       );
       body.push(
         `<text x="${x + 7}" y="${y + 33}" font-size="10" fill="${options.text}">${escapeXml(truncate(value, 15))}</text>`,

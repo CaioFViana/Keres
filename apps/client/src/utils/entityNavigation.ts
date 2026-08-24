@@ -17,7 +17,8 @@ export type NavigableEntityType =
   | 'Chapter'
   | 'Note'
   | 'WorldRule'
-  | 'Mode';
+  | 'Mode'
+  | 'Plot';
 
 interface EntityRoute {
   stack: keyof MainSystemDrawerParamList;
@@ -43,6 +44,7 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   // Modo não tem tela própria: a busca global devolve o id do personagem dono no lugar do id
   // do modo, e abrir um resultado leva ao detalhe dele, onde os modos são listados.
   Mode: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
+  Plot: { stack: 'PlotsStack', screen: 'PlotDetail', paramKey: 'plotId' },
 };
 
 /**

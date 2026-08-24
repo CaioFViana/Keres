@@ -83,6 +83,10 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
+  Plot: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'details', label: 'field_details', type: 'string', isSearchable: true },
+  ],
   Mode: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
     { name: 'modeChanges', label: 'field_modeChanges', type: 'string', isSearchable: true },

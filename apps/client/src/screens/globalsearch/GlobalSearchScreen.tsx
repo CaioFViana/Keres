@@ -46,6 +46,7 @@ const SECTION_ORDER: { entityType: GlobalSearchEntityType; titleKey: string }[] 
   { entityType: 'Tag', titleKey: 'tags_title' },
   { entityType: 'Note', titleKey: 'notes_title' },
   { entityType: 'WorldRule', titleKey: 'world_rules_title' },
+  { entityType: 'Plot', titleKey: 'plots_title' },
 ];
 
 const SEARCH_DEBOUNCE_MS = 400;

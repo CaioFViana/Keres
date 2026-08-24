@@ -37,6 +37,8 @@ import { GalleryClientSyncHandler } from './entity-sync-handlers/GalleryClientSy
 import { GalleryRelationClientSyncHandler } from './entity-sync-handlers/GalleryRelationClientSyncHandler';
 import { ItemClientSyncHandler } from './entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from './entity-sync-handlers/ItemJourneyClientSyncHandler';
+import { PlotClientSyncHandler } from './entity-sync-handlers/PlotClientSyncHandler';
+import { PlotSceneClientSyncHandler } from './entity-sync-handlers/PlotSceneClientSyncHandler';
 import { LocationClientSyncHandler } from './entity-sync-handlers/LocationClientSyncHandler';
 import { LocationRelationClientSyncHandler } from './entity-sync-handlers/LocationRelationClientSyncHandler';
 import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHandler';
@@ -101,6 +103,8 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Effect: 'effect_changed',
   Item: 'item_changed',
   ItemJourney: 'item_journey_changed',
+  Plot: 'plot_changed',
+  PlotScene: 'plot_scene_changed',
   Gallery: 'gallery_changed',
   GalleryRelation: 'gallery_relation_changed',
   StorySchemaField: 'story_schema_field_changed',
@@ -185,6 +189,8 @@ export class SyncEngineService {
     this.registerEntityHandler(new EffectClientSyncHandler());
     this.registerEntityHandler(new ItemClientSyncHandler());
     this.registerEntityHandler(new ItemJourneyClientSyncHandler());
+    this.registerEntityHandler(new PlotClientSyncHandler());
+    this.registerEntityHandler(new PlotSceneClientSyncHandler());
     this.registerEntityHandler(new SceneClientSyncHandler());
     this.registerEntityHandler(new GalleryClientSyncHandler());
     this.registerEntityHandler(new GalleryRelationClientSyncHandler());

@@ -91,11 +91,22 @@ const migrateV4ToV5: StoryExportMigration = {
   }),
 };
 
+/** V5 -> V6: plots e suas ligações com cenas. */
+const migrateV5ToV6: StoryExportMigration = {
+  fromVersion: 5,
+  migrate: (data) => ({
+    ...data,
+    plots: Array.isArray(data?.plots) ? data.plots : [],
+    plotScenes: Array.isArray(data?.plotScenes) ? data.plotScenes : [],
+  }),
+};
+
 const migrations: StoryExportMigration[] = [
   migrateV1ToV2,
   migrateV2ToV3,
   migrateV3ToV4,
   migrateV4ToV5,
+  migrateV5ToV6,
 ];
 
 /**

@@ -1017,9 +1017,60 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 5,
+  "formatVersion": 6,
   "stats": [],
   "statStrengths": [],
   "statRelations": [],
-  "modes": []
+  "modes": [],
+  "plots": [
+    {
+      "id": "01KYXBHD0JW7A6HKZ9XA71PT01",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Trama principal",
+      "details": "A linha narrativa que conduz a história do começo ao fim.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "plotScenes": [
+    {
+      "id": "01KYXBHD0JW7A6HKZ9XA71PS01",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "plotId": "01KYXBHD0JW7A6HKZ9XA71PT01",
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "note": "Coloca a trama em movimento.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    },
+    {
+      "id": "01KYXBHD0JW7A6HKZ9XA71PS02",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "plotId": "01KYXBHD0JW7A6HKZ9XA71PT01",
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
+      "note": "Aumenta o que está em jogo na trama.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    },
+    {
+      "id": "01KYXBHD0JW7A6HKZ9XA71PS03",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "plotId": "01KYXBHD0JW7A6HKZ9XA71PT01",
+      "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ",
+      "note": "Leva a trama ao seu ponto de virada.",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ]
 }

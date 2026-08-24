@@ -50,6 +50,10 @@ import {
   notes,
   NoteSelect,
   operationLogs,
+  PlotInsert,
+  plots,
+  PlotSceneInsert,
+  plotScenes,
   SceneInsert,
   scenes,
   SceneSelect,
@@ -145,6 +149,8 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(noteRelations).where(eq(noteRelations.storyId, storyId)).run();
   await tx.delete(notes).where(eq(notes.storyId, storyId)).run();
   await tx.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
+  await tx.delete(plotScenes).where(eq(plotScenes.storyId, storyId)).run();
+  await tx.delete(plots).where(eq(plots.storyId, storyId)).run();
   await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
   await tx.delete(seeAlsoRelations).where(eq(seeAlsoRelations.storyId, storyId)).run();
   await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
@@ -219,6 +225,12 @@ export interface StoryService {
   ): Promise<void>;
   deleteStory(storyId: string): Promise<void>;
   checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult>;
+  /**
+   * Quantas Tramas ativas a história tem. Tramas só existem em histórias lineares, então a
+   * tela de configurações consulta isto antes de oferecer a conversão para ramificada - o
+   * mesmo cuidado que `checkLinearCompatibility` toma no sentido contrário.
+   */
+  countActivePlots(storyId: string): Promise<number>;
   convertStoryType(
     currentUserId: string,
     storyId: string,
@@ -771,6 +783,15 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       return checkLinearCompatibilityGraph(db, storyId);
     },
 
+    async countActivePlots(storyId: string): Promise<number> {
+      const row = await db
+        .select({ count: count() })
+        .from(plots)
+        .where(and(eq(plots.storyId, storyId), eq(plots.isDeleted, false)))
+        .get();
+      return row?.count ?? 0;
+    },
+
     async convertStoryType(
       currentUserId: string,
       storyId: string,
@@ -787,6 +808,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       if (targetType === 'branching') {
+        const row = await db
+          .select({ count: count() })
+          .from(plots)
+          .where(and(eq(plots.storyId, storyId), eq(plots.isDeleted, false)))
+          .get();
+        if ((row?.count ?? 0) > 0) {
+          throw new Error('Remove all plots before converting this story to branching.');
+        }
         // Linear -> Branching: sempre permitido. Cada par de cenas consecutivas (por índice,
         // dentro do capítulo) vira uma Choice explícita, incluindo a ponte entre o fim de um
         // capítulo e o início do próximo - a mesma forma que a validação abaixo aceita na volta,
@@ -1135,6 +1164,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyStatStrengths,
         storyStatRelations,
         storyModes,
+        storyPlots,
+        storyPlotScenes,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -1163,6 +1194,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.statStrengths.findMany({ where: belongsToStory(statStrengths) }),
         db.query.statRelations.findMany({ where: belongsToStory(statRelations) }),
         db.query.modes.findMany({ where: belongsToStory(modes) }),
+        db.query.plots.findMany({ where: belongsToStory(plots) }),
+        db.query.plotScenes.findMany({ where: belongsToStory(plotScenes) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -1194,6 +1227,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         statStrengths: storyStatStrengths,
         statRelations: storyStatRelations,
         modes: storyModes,
+        plots: storyPlots,
+        plotScenes: storyPlotScenes,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -1505,6 +1540,30 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             deletedAt: null,
           };
           await tx.insert(characterScenes).values(charSceneToInsert).run();
+        }
+
+        // 12b. Process Plots
+        for (const plot of fullStoryData.plots ?? []) {
+          const plotToInsert: PlotInsert = {
+            ...plot,
+            createdAt: new Date(plot.createdAt),
+            updatedAt: new Date(),
+            isDeleted: false,
+            deletedAt: null,
+          };
+          await tx.insert(plots).values(plotToInsert).run();
+        }
+
+        // 12c. Process PlotScenes
+        for (const plotScene of fullStoryData.plotScenes ?? []) {
+          const plotSceneToInsert: PlotSceneInsert = {
+            ...plotScene,
+            createdAt: new Date(plotScene.createdAt),
+            updatedAt: new Date(),
+            isDeleted: false,
+            deletedAt: null,
+          };
+          await tx.insert(plotScenes).values(plotSceneToInsert).run();
         }
 
         // 13. Process TagRelations

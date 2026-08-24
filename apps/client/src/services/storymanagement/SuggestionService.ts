@@ -134,7 +134,9 @@ const suggestionConfig = {
 };
 
 export type SuggestionType = string;
-export type SuggestionUsageEntityType = GlobalSearchEntityType | 'CharacterRelation';
+export type SuggestionUsageEntityType =
+  | Exclude<GlobalSearchEntityType, 'Plot'>
+  | 'CharacterRelation';
 export interface SuggestionUsage {
   entityType: SuggestionUsageEntityType;
   id: string;
@@ -287,6 +289,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       );
       return matching.flatMap((row) => {
         const entityType = row.entityType as GlobalSearchEntityType;
+        if (entityType === 'Plot') return [];
         const title = titles.get(`${entityType}:${row.entityId}`);
         return title === undefined
           ? []

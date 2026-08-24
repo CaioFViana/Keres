@@ -70,6 +70,7 @@ describe('RelatedEntitiesList', () => {
       drawerNavigation,
       'Character',
       'char-1',
+      undefined,
     );
   });
 
@@ -92,6 +93,7 @@ describe('RelatedEntitiesList', () => {
       drawerNavigation,
       'WorldRule',
       'rule-1',
+      undefined,
     );
 
     await fireEvent.press(getVisibleByTestId(screen, 'related-entity-journey-1'));
@@ -99,6 +101,7 @@ describe('RelatedEntitiesList', () => {
       drawerNavigation,
       'ItemJourney',
       'journey-1',
+      undefined,
     );
   });
 

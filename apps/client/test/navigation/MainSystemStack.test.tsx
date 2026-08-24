@@ -267,6 +267,30 @@ jest.mock('../../src/screens/tags/TagListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/plots/PlotListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/plots/PlotDetailScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/plots/PlotFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/plots/PlotMatrixScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/plots/PlotProgressScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/plots/PlotReaderScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/worldrules/WorldRuleDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -298,7 +322,7 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(20);
+  expect(mockDrawerScreens).toHaveLength(21);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {

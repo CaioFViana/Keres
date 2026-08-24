@@ -13,6 +13,7 @@ const ENTITY_TYPES: NavigableEntityType[] = [
   'Chapter',
   'Note',
   'WorldRule',
+  'Plot',
   // Modo abre o detalhe do personagem dono - ver ENTITY_ROUTES.Mode.
   'Mode',
 ];

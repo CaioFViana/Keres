@@ -92,6 +92,13 @@
       "when": 1787270310933,
       "tag": "0012_past_gorgon",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1787590732956,
+      "tag": "0013_jittery_nomad",
+      "breakpoints": true
     }
   ]
 }

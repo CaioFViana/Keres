@@ -44,6 +44,7 @@ export const helpSections: HelpSection[] = [
       'chapters',
       'scenes',
       'scene-timing',
+      'plots',
       'locations',
       'location-map',
       'items',

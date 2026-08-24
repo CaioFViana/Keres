@@ -34,7 +34,8 @@ const page: HelpPage = {
       items: [
         'Escolha a lista desejada. Listas nativas e de atributos customizados mostram o tipo de elemento e o campo. Listas que você criou aparecem com o nome, e abaixo do título há uma chave de campo curta — no mesmo estilo dos atributos customizados, sem o identificador interno.',
         'Digite um novo valor e toque em Adicionar.',
-        'Use o lápis num valor para corrigi-lo, ou a lixeira para removê-lo. Apenas quem pode editar a história faz essas alterações.',
+        'Toque num valor para abrir seus detalhes. Lá é possível ver todas as entidades que o usam, renomeá-lo ou removê-lo dos valores salvos. Apenas quem pode editar a história faz essas alterações.',
+        'Ao renomear, escolha se todos os usos atuais da história também devem ser atualizados. Renomear para um valor já existente funde os dois: todos os usos atuais mudam e o valor salvo antigo é removido.',
         'Use o ícone de mais para criar uma lista nomeada. Informe o nome de exibição e guarde.',
         'Numa lista nomeada, use o lápis da barra para renomeá-la. Isso muda só o nome que você vê na lista e no histórico da história. A chave do campo permanece a mesma.',
         'Use o ícone de copiar para levar valores guardados para outras listas. Só entram valores únicos; o que já existir no destino é ignorado. As listas não ficam ligadas depois da cópia.',
@@ -50,7 +51,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A lista escolhida aparece nos formulários que usam aquele campo. Alterar a lista não reescreve valores que já estão salvos nas fichas; ela apenas muda as opções oferecidas nas próximas edições. Criar, renomear ou apagar uma lista nomeada fica no histórico de operações com o nome de exibição da lista, não com um identificador interno.',
+      text: 'A lista escolhida aparece nos formulários que usam aquele campo. Remover um valor só o retira do catálogo salvo; os usos existentes permanecem. Renomear pode reescrever todos os usos atuais, e cada entidade alterada fica registrada no histórico de operações. Criar, renomear ou apagar uma lista nomeada fica no histórico com o nome de exibição da lista, não com um identificador interno.',
     },
     {
       type: 'seeAlso',

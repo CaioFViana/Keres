@@ -80,8 +80,6 @@ const SuggestionsScreen = () => {
   const [storyValues, setStoryValues] = useState<StorySuggestion[]>([]);
   const [usageByValue, setUsageByValue] = useState<Map<string, number>>(new Map());
   const [newValue, setNewValue] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
   const [newListName, setNewListName] = useState('');
   const [creatingList, setCreatingList] = useState(false);
   const [renamingList, setRenamingList] = useState(false);
@@ -184,7 +182,7 @@ const SuggestionsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({
+      navigation.getParent()?.setOptions({
         title: t('standard_suggestions_title'),
         headerRight: () =>
           canEdit ? (
@@ -278,27 +276,6 @@ const SuggestionsScreen = () => {
       AppAlert.alert(t('error'), (error as Error).message);
     }
   };
-  const saveEdit = async () => {
-    if (!userId || !editingId || !editingValue.trim()) return;
-    try {
-      await suggestionService.updateSuggestion(userId, editingId, editingValue);
-      setEditingId(null);
-    } catch (error) {
-      AppAlert.alert(t('error'), (error as Error).message);
-    }
-  };
-  const remove = (id: string) =>
-    AppAlert.alert(t('delete'), t('delete_suggestion_message'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          if (userId) await suggestionService.deleteSuggestion(userId, id);
-        },
-      },
-    ]);
-
   const createList = async () => {
     if (!userId || !storyId || !newListName.trim()) return;
     try {
@@ -391,6 +368,7 @@ const SuggestionsScreen = () => {
     row: {
       flexDirection: 'row',
       alignItems: 'center',
+      height: 58,
       paddingVertical: 11,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
@@ -479,43 +457,30 @@ const SuggestionsScreen = () => {
           <Text style={styles.sectionTitle}>{t('suggestion_saved_values')}</Text>
         )}
         {stored.map((suggestion) => (
-          <View key={suggestion.id} style={styles.row}>
-            {editingId === suggestion.id ? (
-              <TextInput value={editingValue} onChangeText={setEditingValue} style={styles.input} />
-            ) : (
-              <Text style={styles.value}>{suggestion.value}</Text>
-            )}
-            {(usageByValue.get(suggestion.value) ?? 0) > 0 && (
-              <Text style={styles.usage}>{usageByValue.get(suggestion.value)}</Text>
-            )}
-            {canEdit &&
-              (editingId === suggestion.id ? (
-                <TouchableOpacity style={styles.icon} onPress={saveEdit}>
-                  <Ionicons name="checkmark" size={22} color={colors.primary} />
-                </TouchableOpacity>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.icon}
-                    onPress={() => {
-                      setEditingId(suggestion.id);
-                      setEditingValue(suggestion.value);
-                    }}
-                  >
-                    <Ionicons name="pencil-outline" size={20} color={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.icon} onPress={() => remove(suggestion.id)}>
-                    <Ionicons name="trash-outline" size={20} color={colors.error} />
-                  </TouchableOpacity>
-                </>
-              ))}
-          </View>
+          <TouchableOpacity
+            key={suggestion.id}
+            style={styles.row}
+            onPress={() =>
+              navigation.navigate('SuggestionUsage', {
+                type: selectedType,
+                value: suggestion.value,
+              })
+            }
+          >
+            <Text style={styles.value}>{suggestion.value}</Text>
+            <Text style={styles.usage}>{usageByValue.get(suggestion.value) ?? 0}</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
         ))}
         {storyValues.length > 0 && (
           <Text style={styles.sectionTitle}>{t('suggestion_values_in_story')}</Text>
         )}
         {storyValues.map(([value, usageCount]) => (
-          <View key={value} style={styles.row}>
+          <TouchableOpacity
+            key={value}
+            style={styles.row}
+            onPress={() => navigation.navigate('SuggestionUsage', { type: selectedType, value })}
+          >
             <Text style={styles.storyValue}>{value}</Text>
             <Text style={styles.usage}>{usageCount}</Text>
             <View style={styles.icon}>
@@ -526,7 +491,7 @@ const SuggestionsScreen = () => {
                 accessibilityLabel={t('suggestion_value_from_story')}
               />
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
         {selectedType && stored.length === 0 && storyValues.length === 0 && (
           <Text style={styles.empty}>{t('no_suggestions_available')}</Text>

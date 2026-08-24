@@ -251,6 +251,10 @@ jest.mock('../../src/screens/suggestions/SuggestionsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/suggestions/SuggestionUsageScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/tags/TagDetailScreen', () => ({
   __esModule: true,
   default: () => null,

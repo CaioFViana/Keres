@@ -67,6 +67,7 @@ import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTim
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
+import SuggestionUsageScreen from '../screens/suggestions/SuggestionUsageScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
@@ -104,7 +105,7 @@ export type MainSystemDrawerParamList = {
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
-  Suggestions: undefined;
+  SuggestionsStack: NavigatorScreenParams<SuggestionsStackParamList> | undefined;
   StorySelection: undefined;
   StatsDrawer: NavigatorScreenParams<StatsStackParamList>;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
@@ -126,12 +127,32 @@ const mainSystemStackRootScreens = new Set([
   'OperationLog',
   'CommentsList',
   'StorySchemaList',
+  'Suggestions',
   // As raízes dos stacks que o drawer abre direto: sem elas o header desenha uma seta de
   // voltar em cima da própria lista, que é justamente o lugar de onde não se volta.
   'StatList',
   'HelpIndex',
   'DeviceIndex',
 ]);
+
+//#region Suggestions
+const SuggestionsStack = createNativeStackNavigator<SuggestionsStackParamList>();
+
+export type SuggestionsStackParamList = {
+  Suggestions: undefined;
+  SuggestionUsage: { type: string; value: string };
+};
+
+const SuggestionsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <SuggestionsStack.Navigator screenOptions={{ headerShown: false }}>
+      <SuggestionsStack.Screen name="Suggestions" component={SuggestionsScreen} />
+      <SuggestionsStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
+    </SuggestionsStack.Navigator>
+  );
+};
+//#endregion
 
 //#region Character
 
@@ -681,12 +702,18 @@ const MainSystemNavigator = () => {
           })}
         />
         <Drawer.Screen
-          name="Suggestions"
-          component={SuggestionsScreen}
+          name="SuggestionsStack"
+          component={SuggestionsStackNavigator}
           options={{
             title: t('standard_suggestions_title'),
             drawerLabel: t('standard_suggestions_title'),
           }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('SuggestionsStack', { screen: 'Suggestions' });
+            },
+          })}
         />
         <Drawer.Screen
           name="StatsDrawer"

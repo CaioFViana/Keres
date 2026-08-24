@@ -1,9 +1,13 @@
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
 import { SceneSelect } from '../../../../db/schema';
+import { useChapterNames } from '../../../../hooks/useChapterNames';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
+import { useTheme } from '../../../../theme';
 import { createULID } from '../../../../utils/entityUtils';
+import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager';
 
 interface CharacterSceneManagerProps {
@@ -26,7 +30,9 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
   currentCharacterId,
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
+  const chapterNameOf = useChapterNames(availableScenes);
 
   const handleScenePress = useCallback(
     (scene: SceneSelect) => {
@@ -87,6 +93,19 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
       selectItemToAddMessage={t('select_scene_to_add_to_character')}
       deleteConfirmationTitle={t('remove_scene_from_character_title')}
       deleteConfirmationMessage={t('remove_scene_from_character_message')}
+      renderRelationItemExtraContent={(relation, scenes) => {
+        const scene = scenes.find((candidate) => candidate.id === relation.sceneId);
+        if (!scene) return null;
+        const chapterName = chapterNameOf(scene.chapterId);
+        return (
+          <View>
+            <Text style={{ fontSize: 16, color: colors.text }}>{scene.name}</Text>
+            {chapterName ? (
+              <RelationAttributeLine label={t('chapter')} value={chapterName} />
+            ) : null}
+          </View>
+        );
+      }}
       title={t('scenes_title')}
       onItemPress={handleScenePress}
     />

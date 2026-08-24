@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ItemJourneySelect, SceneSelect } from '@/src/db/schema';
+import { useChapterNames } from '@/src/hooks/useChapterNames';
 import { useTheme } from '@/src/theme';
 
 interface ItemJourneyRowsProps {
@@ -24,6 +25,7 @@ const ItemJourneyRows: React.FC<ItemJourneyRowsProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const sceneById = useMemo(() => new Map(scenes.map((scene) => [scene.id, scene])), [scenes]);
+  const chapterNameOf = useChapterNames(scenes);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -65,7 +67,13 @@ const ItemJourneyRows: React.FC<ItemJourneyRowsProps> = ({
         >
           <View style={styles.rowText}>
             <Text style={styles.scene} numberOfLines={1}>
-              {sceneById.get(journey.sceneId)?.name ?? t('unknown_scene')}
+              {(() => {
+                const scene = sceneById.get(journey.sceneId);
+                if (!scene) return t('unknown_scene');
+                const chapterName = chapterNameOf(scene.chapterId);
+                // O capítulo situa a parada: a lista mistura cenas de toda a história.
+                return chapterName ? `${scene.name} · ${chapterName}` : scene.name;
+              })()}
             </Text>
             <Text style={styles.state} numberOfLines={1}>
               {journey.newState}

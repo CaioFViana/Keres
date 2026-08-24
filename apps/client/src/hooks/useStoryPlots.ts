@@ -25,6 +25,8 @@ export interface StoryPlotsData {
   /** Relações de um Plot, na mesma ordem narrativa das cenas. */
   relationsOf: (plotId: string) => PlotSceneSelect[];
   sceneById: (sceneId: string) => SceneSelect | undefined;
+  /** Nome do capítulo de uma cena: é ele que situa a cena fora da lista do próprio capítulo. */
+  chapterNameOf: (chapterId: string) => string | undefined;
   plotById: (plotId: string) => PlotSelect | undefined;
   /** Cenas cobertas / cenas ativas da história, com o percentual arredondado. */
   coverageOf: (plotId: string) => { covered: number; total: number; percentage: number };
@@ -79,6 +81,7 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
     const sceneIndex = new Map(data.scenes.map((scene, position) => [scene.id, position]));
     const scenesById = new Map(data.scenes.map((scene) => [scene.id, scene]));
     const plotsById = new Map(data.plots.map((plot) => [plot.id, plot]));
+    const chapterNames = new Map(data.chapters.map((chapter) => [chapter.id, chapter.name]));
     // Relações apontando para uma cena removida não entram: o Plot passaria a "cobrir" uma
     // cena que não existe mais, e o leitor tentaria abrir um detalhe vazio.
     const relations = data.relations.filter((relation) => scenesById.has(relation.sceneId));
@@ -99,6 +102,7 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
       relations,
       relationsOf: (plotId: string) => byPlot.get(plotId) ?? [],
       sceneById: (sceneId: string) => scenesById.get(sceneId),
+      chapterNameOf: (chapterId: string) => chapterNames.get(chapterId),
       plotById: (plotId: string) => plotsById.get(plotId),
       coverageOf: (plotId: string) => {
         const covered = byPlot.get(plotId)?.length ?? 0;

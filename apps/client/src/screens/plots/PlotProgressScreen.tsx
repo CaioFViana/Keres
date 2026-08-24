@@ -54,9 +54,7 @@ const PlotProgressScreen = () => {
     () =>
       StyleSheet.create({
         scrollContent: { paddingBottom: scrollBottomPadding },
-        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-        title: { fontSize: 24, fontWeight: 'bold', color: colors.text, flex: 1 },
-        actionButton: { padding: 8 },
+        headerRightButton: { marginRight: 15 },
         summary: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
         hint: { color: colors.textSecondary, fontSize: 13, marginTop: 8, marginBottom: 16 },
         row: {
@@ -79,16 +77,6 @@ const PlotProgressScreen = () => {
         empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 30 },
       }),
     [colors, scrollBottomPadding],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('plot_progress_title'));
-      navigation.getParent()?.setOptions({
-        title: t('plot_progress_title'),
-        headerRight: undefined,
-      });
-    }, [navigation, t]),
   );
 
   const exportCoverage = useCallback(async () => {
@@ -125,6 +113,38 @@ const PlotProgressScreen = () => {
     }
   }, [average, colors, entries, notify, selectedStory, t]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setDocumentTitle(t('plot_progress_title'));
+      navigation.getParent()?.setOptions({
+        title: t('plot_progress_title'),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={exportCoverage}
+            disabled={saving || entries.length === 0}
+            style={styles.headerRightButton}
+            accessibilityLabel={t('plot_coverage_export')}
+          >
+            <Ionicons
+              name="image-outline"
+              size={24}
+              color={entries.length === 0 ? colors.textSecondary : colors.text}
+            />
+          </TouchableOpacity>
+        ),
+      });
+    }, [
+      colors.text,
+      colors.textSecondary,
+      entries.length,
+      exportCoverage,
+      navigation,
+      saving,
+      styles.headerRightButton,
+      t,
+    ]),
+  );
+
   if (selectedStory?.type !== 'linear') {
     return <ScreenError message={t('plots_linear_only')} onGoBack={() => navigation.goBack()} />;
   }
@@ -138,21 +158,6 @@ const PlotProgressScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollContent}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('plot_progress_title')}</Text>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={exportCoverage}
-          disabled={saving || entries.length === 0}
-          accessibilityLabel={t('plot_coverage_export')}
-        >
-          <Ionicons
-            name="image-outline"
-            size={24}
-            color={entries.length === 0 ? colors.textSecondary : colors.primary}
-          />
-        </TouchableOpacity>
-      </View>
       <Text style={styles.summary}>{t('plot_average_scenes', { count: average.toFixed(1) })}</Text>
       <Text style={styles.summary}>{t('plot_coverage_denominator', { count: scenes.length })}</Text>
       <Text style={styles.hint}>{t('plot_coverage_overlap_hint')}</Text>

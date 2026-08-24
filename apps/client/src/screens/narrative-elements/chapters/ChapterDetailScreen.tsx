@@ -347,6 +347,7 @@ const ChapterDetailScreen = () => {
       />
 
       <RelatedScenesList
+        showChapter={false}
         scenes={allScenes}
         matchesScene={(scene) => scene.chapterId === chapterId}
         sortScenes={(a, b) => a.index - b.index}

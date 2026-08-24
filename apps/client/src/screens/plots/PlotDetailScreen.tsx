@@ -5,6 +5,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
+import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -52,7 +53,7 @@ const PlotDetailScreen = () => {
   );
   const scrollBottomPadding = useFormScrollBottomPadding();
 
-  const { plotById, relationsOf, sceneById, coverageOf, loading } = useStoryPlots(
+  const { plotById, relationsOf, sceneById, chapterNameOf, coverageOf, loading } = useStoryPlots(
     selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
   );
   const plot = plotById(plotId);
@@ -144,6 +145,12 @@ const PlotDetailScreen = () => {
         renderItemExtraContent={(relation, scene) => (
           <View>
             <Text style={styles.relationText}>{scene.name}</Text>
+            {chapterNameOf(scene.chapterId) ? (
+              <RelationAttributeLine
+                label={t('chapter')}
+                value={chapterNameOf(scene.chapterId) as string}
+              />
+            ) : null}
             <Text style={styles.sceneNote}>{relation.note}</Text>
           </View>
         )}

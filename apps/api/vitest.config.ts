@@ -1,4 +1,5 @@
 import { configDefaults, defineConfig } from 'vitest/config';
+import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
   test: {
@@ -16,7 +17,7 @@ export default defineConfig({
       // Baixo por construção: esta config cobre só o que roda sem banco (utils, config,
       // adaptadores de armazenamento). Rotas, serviços e handlers são medidos por
       // `vitest.integration.config.ts`, que tem os seus próprios limiares.
-      thresholds: { lines: 14, functions: 20, branches: 4 },
+      thresholds: coverageThresholds.apiUnit,
     },
   },
 });

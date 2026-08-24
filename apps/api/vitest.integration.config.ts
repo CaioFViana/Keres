@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
   test: {
@@ -22,7 +23,7 @@ export default defineConfig({
       // unitárias, e `test:report` mostraria um dos dois no lugar do outro.
       reportsDirectory: 'coverage-integration',
       // Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 69, functions: 70, branches: 55 },
+      thresholds: coverageThresholds.apiIntegration,
     },
   },
 });

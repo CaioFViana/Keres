@@ -354,6 +354,12 @@ describe('export of a story with one row of every kind', () => {
     for (const [collection, rows] of Object.entries(pkg)) {
       if (!Array.isArray(rows)) continue;
       expect({ collection, length: rows.length }).toEqual({ collection, length: rows.length });
+      // Plots não coexistem com Choices: este fixture é branching para exercitar a parte
+      // ramificada do pacote, então as duas coleções lineares devem permanecer vazias.
+      if (collection === 'plots' || collection === 'plotScenes') {
+        expect(rows).toHaveLength(0);
+        continue;
+      }
       expect(rows.length).toBeGreaterThan(0);
     }
   });

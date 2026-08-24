@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
   test: {
@@ -12,7 +13,7 @@ export default defineConfig({
       include: ['entities/**', 'metadata/**', 'schemas/**', 'utils/**', 'index.ts'],
       // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para
       // subir junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 93, functions: 86, branches: 77 },
+      thresholds: coverageThresholds.shared,
     },
   },
 });

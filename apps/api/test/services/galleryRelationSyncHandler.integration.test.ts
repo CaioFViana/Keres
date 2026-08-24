@@ -88,7 +88,7 @@ beforeEach(async () => {
       chapterId,
       locationId,
       name: 'Chegada',
-      index: 0,
+      index: 1,
       summary: null,
       gap: null,
       gapType: null,

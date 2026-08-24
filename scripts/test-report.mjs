@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { coveragePercentage, mergeCoverage, parseLcov } from './coverage-utils.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const TEST_COMPOSE = 'apps/api/docker-compose.test.yml';
@@ -25,13 +26,16 @@ const projects = [
 // The API ratchet applies to the union of unit and integration coverage, not either report in
 // isolation. The other values mirror their workspace coverage configs, so the report shows the
 // same thresholds that CI enforces.
+const configuredThresholds = JSON.parse(
+  readFileSync(resolve(root, 'scripts/coverage-thresholds.json'), 'utf8'),
+);
 const ratchets = {
-  shared: { lines: 93, functions: 86, branches: 77 },
-  client: { lines: 34, functions: 32, branches: 24 },
-  api: { lines: 78, functions: 76, branches: 65 },
-  admin: { lines: 70, functions: 53, branches: 47 },
-  desktop: { lines: 95, functions: 94, branches: 81 },
-  site: { lines: 90, functions: 90, branches: 80 },
+  shared: configuredThresholds.shared,
+  client: configuredThresholds.client,
+  api: configuredThresholds.apiCombined,
+  admin: configuredThresholds.admin,
+  desktop: configuredThresholds.desktop,
+  site: configuredThresholds.site,
 };
 
 function run(command, args) {
@@ -82,58 +86,6 @@ function parseTests(output) {
   };
 }
 
-function parseLcov(projectPath, coverageDirectory) {
-  const file = resolve(root, projectPath, coverageDirectory, 'lcov.info');
-  if (!existsSync(file)) return null;
-  const files = new Map();
-  let current;
-  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
-    if (line.startsWith('SF:')) {
-      current = { lines: new Map(), functions: new Map(), branches: new Map() };
-      files.set(line.slice(3), current);
-    } else if (current && line.startsWith('DA:')) {
-      const [lineNumber, hits] = line.slice(3).split(',');
-      current.lines.set(lineNumber, Number(hits));
-    } else if (current && line.startsWith('FNDA:')) {
-      const [hits, name] = line.slice(5).split(',');
-      current.functions.set(name, Number(hits));
-    } else if (current && line.startsWith('BRDA:')) {
-      const [lineNumber, block, branch, hits] = line.slice(5).split(',');
-      current.branches.set(`${lineNumber}:${block}:${branch}`, hits === '-' ? 0 : Number(hits));
-    }
-  }
-  return files;
-}
-
-function mergeCoverage(reports) {
-  const merged = new Map();
-  for (const report of reports.filter(Boolean)) {
-    for (const [file, values] of report) {
-      const target = merged.get(file) ?? {
-        lines: new Map(),
-        functions: new Map(),
-        branches: new Map(),
-      };
-      merged.set(file, target);
-      for (const kind of ['lines', 'functions', 'branches']) {
-        for (const [key, hits] of values[kind])
-          target[kind].set(key, Math.max(target[kind].get(key) ?? 0, hits));
-      }
-    }
-  }
-  const total = (kind) => {
-    let found = 0;
-    let hit = 0;
-    for (const values of merged.values())
-      for (const count of values[kind].values()) {
-        found++;
-        if (count > 0) hit++;
-      }
-    return [found, hit];
-  };
-  return { lines: total('lines'), functions: total('functions'), branches: total('branches') };
-}
-
 function percent([found, hit]) {
   return found === 0 ? '—' : `${((hit / found) * 100).toFixed(1)}%`;
 }
@@ -142,7 +94,7 @@ function coverageWithRatchet(coverage, kind, ratchet) {
   if (!coverage) return '—';
   const [found, hit] = coverage[kind];
   if (found === 0) return '—';
-  const value = (hit / found) * 100;
+  const value = coveragePercentage(coverage, kind);
   const minimum = ratchet?.[kind];
   if (minimum === undefined) return `${value.toFixed(1)}%`;
   const difference = value - minimum;
@@ -154,8 +106,8 @@ function meetsRatchet(coverage, ratchet) {
   return (
     !ratchet ||
     Object.entries(ratchet).every(([kind, minimum]) => {
-      const [found, hit] = coverage[kind];
-      return found > 0 && (hit / found) * 100 >= minimum;
+      const value = coveragePercentage(coverage, kind);
+      return value !== null && value >= minimum;
     })
   );
 }
@@ -195,7 +147,7 @@ for (const [name, path, commands] of projects) {
   const code = executions.some((result) => result.code !== 0) ? 1 : 0;
   const coverage =
     code === 0
-      ? mergeCoverage(executions.map((result) => parseLcov(path, result.coverageDirectory)))
+      ? mergeCoverage(executions.map((result) => parseLcov(root, path, result.coverageDirectory)))
       : null;
   const ratchetFailure = coverage && !meetsRatchet(coverage, ratchets[name]);
   const finalCode = code || ratchetFailure ? 1 : 0;

@@ -141,7 +141,7 @@ const scene = (overrides: Record<string, unknown> = {}) => ({
   chapterId: ORIGINAL_CHAPTER_ID,
   locationId: ORIGINAL_LOCATION_ID,
   name: 'Abertura',
-  index: 0,
+  index: 1,
   summary: null,
   gap: null,
   gapType: null,

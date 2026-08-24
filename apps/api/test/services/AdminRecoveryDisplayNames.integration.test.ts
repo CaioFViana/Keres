@@ -78,7 +78,7 @@ beforeEach(async () => {
   } as never);
   await db
     .insert(chapters)
-    .values({ id: ids.chapter, storyId: ids.story, name: 'Capítulo 1', index: 0 } as never);
+    .values({ id: ids.chapter, storyId: ids.story, name: 'Capítulo 1', index: 1 } as never);
   await db
     .insert(locations)
     .values({ id: ids.location, storyId: ids.story, name: 'O Porto' } as never);
@@ -89,7 +89,7 @@ beforeEach(async () => {
       chapterId: ids.chapter,
       locationId: ids.location,
       name: 'A chegada',
-      index: 0,
+      index: 1,
     },
     {
       id: ids.otherScene,

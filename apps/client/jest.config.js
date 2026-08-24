@@ -1,3 +1,5 @@
+const coverageThresholds = require('../../scripts/coverage-thresholds.json');
+
 module.exports = {
   preset: 'jest-expo',
   // `src` entra aqui só para a *cobertura* enxergar os arquivos que nenhum teste importa.
@@ -20,6 +22,6 @@ module.exports = {
   // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para subir
   // junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
   coverageThreshold: {
-    global: { lines: 34, functions: 32, branches: 24 },
+    global: coverageThresholds.client,
   },
 };

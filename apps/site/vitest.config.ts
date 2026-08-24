@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { keresLogo } from './vite.keresIcon';
+import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
   // A marca é um módulo virtual gerado no build. Sem o plugin, qualquer teste que
@@ -14,7 +15,7 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['src/**'],
       exclude: ['src/main.tsx'],
-      thresholds: { lines: 90, functions: 90, branches: 80 },
+      thresholds: coverageThresholds.site,
     },
   },
 });

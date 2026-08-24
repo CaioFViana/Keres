@@ -136,8 +136,9 @@ renderização das telas e componentes React Native e das páginas do admin.
 
 ## Limiares de cobertura
 
-Cada workspace tem um piso em `coverage.thresholds` (Vitest) ou `coverageThreshold` (Jest),
-fixado um pouco abaixo do valor medido para absorver flutuação. `apps/api` tem dois conjuntos:
+Os pisos de todos os workspaces têm uma única fonte de verdade em
+`scripts/coverage-thresholds.json`; as configurações `coverage.thresholds` (Vitest),
+`coverageThreshold` (Jest) e `test-report.mjs` leem esse arquivo. `apps/api` tem dois conjuntos:
 um na config unitária e outro na de integração, medidos separadamente - a unitária cobre só o
 que roda sem banco, então o número dela é baixo por construção.
 
@@ -146,6 +147,13 @@ piso mantém uma margem de 3 pontos percentuais abaixo da cobertura de referênc
 flutuações pequenas. Baixar além dessa margem é uma decisão consciente, não um atalho para fazer
 o CI passar - se a cobertura caiu, ou o teste que faltou não foi escrito, ou código coberto foi
 removido, e as duas situações merecem ser ditas na descrição do commit.
+
+Depois de gerar LCOV com `bun run test:report`, `bun run coverage:update` recalcula os pisos com
+essa margem e **só os aumenta**. Para uma expansão intencional do escopo medido, a redução exige
+o comando explícito `bun run coverage:update -- --rebaseline`; mesmo nesse modo, só diminui a
+métrica cujo piso já está acima da cobertura medida, preservando as demais. Um único workspace pode ser
+recalculado com `--project client` (ou `shared`, `apiUnit`, `apiIntegration`, `apiCombined`,
+`admin`, `desktop`, `site`). Assim, uma queda não é silenciosamente aceita por uma execução comum.
 
 ### O que a cobertura do client mede
 

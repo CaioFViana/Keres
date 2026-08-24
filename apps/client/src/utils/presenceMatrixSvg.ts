@@ -3,7 +3,6 @@ import {
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   MATRIX_ROW_HEIGHT,
-  MATRIX_SCENE_WIDTH,
   PresenceMatrixLayout,
 } from './presenceMatrixLayout';
 
@@ -23,16 +22,35 @@ export function renderPresenceMatrixSvg(
     `<text x="${MATRIX_PADDING}" y="22" font-size="16" font-weight="bold" fill="${options.text}">${escapeXml(options.title)}</text>`,
     `<text x="${MATRIX_PADDING}" y="40" font-size="10" fill="${options.text}">${escapeXml(options.subtitle)}</text>`,
   ];
+  const chapterGroups: { name: string; color: string; start: number; end: number }[] = [];
   layout.scenes.forEach((scene, index) => {
-    const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * MATRIX_SCENE_WIDTH;
+    const last = chapterGroups.at(-1);
+    if (last && last.name === scene.chapterName) last.end = index;
+    else
+      chapterGroups.push({
+        name: scene.chapterName,
+        color: scene.chapterColor,
+        start: index,
+        end: index,
+      });
+  });
+  chapterGroups.forEach((chapter) => {
+    const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + chapter.start * layout.sceneWidth;
+    const width = (chapter.end - chapter.start + 1) * layout.sceneWidth;
     body.push(
-      `<rect x="${x}" y="${MATRIX_PADDING + MATRIX_HEADER_HEIGHT}" width="${MATRIX_SCENE_WIDTH}" height="${layout.rows.length * MATRIX_ROW_HEIGHT}" fill="${index % 2 ? options.surface : options.background}" stroke="${options.border}" stroke-width="0.5"/>`,
+      `<text x="${x + 5}" y="${MATRIX_PADDING + 9}" font-size="10" font-weight="bold" fill="${options.text}" fill-opacity="0.72">${escapeXml(truncate(chapter.name, Math.max(12, Math.floor(width / 7))))}</text>`,
+    );
+  });
+  layout.scenes.forEach((scene, index) => {
+    const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth;
+    body.push(
+      `<rect x="${x}" y="${MATRIX_PADDING + MATRIX_HEADER_HEIGHT}" width="${layout.sceneWidth}" height="${layout.rows.length * MATRIX_ROW_HEIGHT}" fill="${index % 2 ? options.surface : options.background}" stroke="${options.border}" stroke-width="0.5"/>`,
     );
     body.push(
-      `<rect x="${x}" y="${MATRIX_PADDING + 44}" width="${MATRIX_SCENE_WIDTH}" height="4" fill="${scene.chapterColor}"/>`,
+      `<rect x="${x}" y="${MATRIX_PADDING + MATRIX_HEADER_HEIGHT - 6}" width="${layout.sceneWidth}" height="4" fill="${scene.chapterColor}"/>`,
     );
     body.push(
-      `<text x="${x + 8}" y="${MATRIX_PADDING + 58}" font-size="10" fill="${options.text}">${escapeXml(truncate(scene.name, 18))}</text>`,
+      `<text x="${x + 8}" y="${MATRIX_PADDING + 44}" font-size="10" fill="${options.text}">${escapeXml(truncate(`${index + 1}. ${scene.name}`, Math.max(10, Math.floor(layout.sceneWidth / 6))))}</text>`,
     );
   });
   layout.rows.forEach((row, rowIndex) => {
@@ -43,9 +61,9 @@ export function renderPresenceMatrixSvg(
     layout.scenes.forEach((scene, sceneIndex) => {
       const value = row.cells.get(scene.id);
       if (!value) return;
-      const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * MATRIX_SCENE_WIDTH + 10;
+      const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * layout.sceneWidth + 10;
       body.push(
-        `<rect x="${x}" y="${y + 11}" width="${MATRIX_SCENE_WIDTH - 20}" height="${MATRIX_ROW_HEIGHT - 22}" rx="7" fill="${row.color}" fill-opacity="0.18" stroke="${row.color}"/>`,
+        `<rect x="${x}" y="${y + 11}" width="${layout.sceneWidth - 20}" height="${MATRIX_ROW_HEIGHT - 22}" rx="7" fill="${row.color}" fill-opacity="0.18" stroke="${row.color}"/>`,
       );
       body.push(
         `<text x="${x + 7}" y="${y + 33}" font-size="10" fill="${options.text}">${escapeXml(truncate(value, 15))}</text>`,

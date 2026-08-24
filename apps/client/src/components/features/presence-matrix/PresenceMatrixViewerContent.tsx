@@ -27,6 +27,7 @@ import { createItemJourneyService } from '../../../services/storymanagement/Item
 import { createItemService } from '../../../services/storymanagement/ItemService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useNotificationStore } from '../../../state/notificationStore';
+import { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { buildPresenceMatrixLayout, PresenceMatrixRow } from '../../../utils/presenceMatrixLayout';
@@ -53,13 +54,12 @@ const SERIES_COLORS = [
 const MAX_VISIBLE_SERIES = 12;
 const seriesColor = (index: number, total: number) =>
   getDistinctSeriesColor(index, total, SERIES_COLORS);
-type Request = { kind: 'character'; characterId: string } | { kind: 'item'; itemId: string };
 type BulkOrder = 'appearance' | 'alphabetical';
 
-const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => void }> = ({
-  request,
-  onClose,
-}) => {
+const PresenceMatrixViewerContent: React.FC<{
+  request: PresenceMatrixViewerRequest;
+  onClose: () => void;
+}> = ({ request, onClose }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -71,10 +71,12 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
   const [presence, setPresence] = useState<{ characterId: string; sceneId: string }[]>([]);
   const [items, setItems] = useState<ItemSelect[]>([]);
-  const [itemIds, setItemIds] = useState<string[]>(request.kind === 'item' ? [request.itemId] : []);
+  const [itemIds, setItemIds] = useState<string[]>(
+    request.kind === 'item' && request.itemId ? [request.itemId] : [],
+  );
   const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
   const [ids, setIds] = useState<string[]>(
-    request.kind === 'character' ? [request.characterId] : [],
+    request.kind === 'character' && request.characterId ? [request.characterId] : [],
   );
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
@@ -91,8 +93,8 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
     [itemIds],
   );
   useEffect(() => {
-    setIds(request.kind === 'character' ? [request.characterId] : []);
-    if (request.kind === 'item') setItemIds([request.itemId]);
+    setIds(request.kind === 'character' && request.characterId ? [request.characterId] : []);
+    setItemIds(request.kind === 'item' && request.itemId ? [request.itemId] : []);
   }, [request]);
   useEffect(() => {
     if (!story) return;
@@ -251,16 +253,6 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
     orderedScenes,
     selectedItems,
   ]);
-  const toggle = (id: string) =>
-    setIds((current) =>
-      current.includes(id)
-        ? current.length > 1
-          ? current.filter((x) => x !== id)
-          : current
-        : current.length < 4
-          ? [...current, id]
-          : current,
-    );
   const exportMap = useCallback(async () => {
     if (!story || !layout.rows.length) return;
     setSaving(true);
@@ -328,6 +320,27 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           paddingHorizontal: 12,
           paddingBottom: 8,
         },
+        matrixMeta: {
+          color: colors.textSecondary,
+          fontSize: 12,
+          paddingHorizontal: 12,
+          paddingBottom: 8,
+        },
+        emptyState: {
+          alignItems: 'center',
+          flex: 1,
+          justifyContent: 'center',
+          padding: 32,
+        },
+        emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 12 },
+        emptyDescription: {
+          color: colors.textSecondary,
+          fontSize: 14,
+          lineHeight: 20,
+          marginTop: 6,
+          maxWidth: 360,
+          textAlign: 'center',
+        },
         orderModal: { padding: 18, gap: 10 },
         orderModalTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },
         orderOption: {
@@ -389,6 +402,7 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           }))}
           selectedValues={ids}
           onSelectionChange={(next) => setIds(next.slice(0, MAX_VISIBLE_SERIES))}
+          maxSelections={MAX_VISIBLE_SERIES}
           placeholder={t('characters_title')}
           searchPlaceholder={t('search')}
           selectionSummary={
@@ -406,6 +420,7 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           }))}
           selectedValues={itemIds}
           onSelectionChange={(next) => setItemIds(next.slice(0, MAX_VISIBLE_SERIES))}
+          maxSelections={MAX_VISIBLE_SERIES}
           placeholder={t('items_title')}
           searchPlaceholder={t('search')}
           selectionSummary={
@@ -431,6 +446,12 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
       {isCompleteView && (
         <Text style={styles.bulkHint}>{t('presence_matrix_complete_view_hint')}</Text>
       )}
+      <Text style={styles.matrixMeta}>
+        {t('presence_matrix_context', {
+          series: activeIds.length,
+          scenes: orderedScenes.length,
+        })}
+      </Text>
       <ResponsiveModal
         visible={bulkOrderVisible}
         onClose={() => setBulkOrderVisible(false)}
@@ -455,32 +476,50 @@ const PresenceMatrixViewerContent: React.FC<{ request: Request; onClose: () => v
           </TouchableOpacity>
         </View>
       </ResponsiveModal>
-      <PresenceMatrixCanvas
-        ref={canvas}
-        layout={layout}
-        onPressScene={setSelectedSceneId}
-        onPressRow={(id) => {
-          if (request.kind === 'character') setSelectedCharacterId(id);
-          else setSelectedItemDetailsId(id);
-        }}
-      />
-      <View style={styles.controls}>
-        {[
-          ['add', () => canvas.current?.zoomBy(1.25)],
-          ['remove', () => canvas.current?.zoomBy(0.8)],
-          ['scan-outline', () => canvas.current?.fitToScreen()],
-          ['image-outline', exportMap],
-        ].map(([name, press]) => (
-          <TouchableOpacity
-            key={name as string}
-            style={styles.control}
-            onPress={press as () => void}
-            disabled={saving}
-          >
-            <Ionicons name={name as keyof typeof Ionicons.glyphMap} size={20} color={colors.text} />
-          </TouchableOpacity>
-        ))}
-      </View>
+      {layout.rows.length > 0 ? (
+        <PresenceMatrixCanvas
+          ref={canvas}
+          layout={layout}
+          onPressScene={setSelectedSceneId}
+          onPressRow={(id) => {
+            if (request.kind === 'character') setSelectedCharacterId(id);
+            else setSelectedItemDetailsId(id);
+          }}
+        />
+      ) : (
+        <View style={styles.emptyState}>
+          <Ionicons name="map-outline" size={42} color={colors.primary} />
+          <Text style={styles.emptyTitle}>{t('presence_matrix_start_title')}</Text>
+          <Text style={styles.emptyDescription}>
+            {request.kind === 'character'
+              ? t('presence_matrix_empty_characters', { count: MAX_VISIBLE_SERIES })
+              : t('presence_matrix_empty_items', { count: MAX_VISIBLE_SERIES })}
+          </Text>
+        </View>
+      )}
+      {layout.rows.length > 0 && (
+        <View style={styles.controls}>
+          {[
+            ['add', () => canvas.current?.zoomBy(1.25)],
+            ['remove', () => canvas.current?.zoomBy(0.8)],
+            ['scan-outline', () => canvas.current?.fitToScreen()],
+            ['image-outline', exportMap],
+          ].map(([name, press]) => (
+            <TouchableOpacity
+              key={name as string}
+              style={styles.control}
+              onPress={press as () => void}
+              disabled={saving}
+            >
+              <Ionicons
+                name={name as keyof typeof Ionicons.glyphMap}
+                size={20}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
       {selectedSceneId && (
         <GraphNodeSheet
           title={scenes.find((scene) => scene.id === selectedSceneId)?.name ?? ''}

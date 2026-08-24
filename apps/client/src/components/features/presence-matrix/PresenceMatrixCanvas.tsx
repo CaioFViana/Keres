@@ -9,7 +9,6 @@ import {
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   MATRIX_ROW_HEIGHT,
-  MATRIX_SCENE_WIDTH,
   PresenceMatrixLayout,
 } from '../../../utils/presenceMatrixLayout';
 
@@ -51,17 +50,32 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
         }),
       [],
     );
+    const chapterGroups = useMemo(() => {
+      const groups: { name: string; color: string; start: number; end: number }[] = [];
+      layout.scenes.forEach((scene, index) => {
+        const last = groups.at(-1);
+        if (last && last.name === scene.chapterName) last.end = index;
+        else
+          groups.push({
+            name: scene.chapterName,
+            color: scene.chapterColor,
+            start: index,
+            end: index,
+          });
+      });
+      return groups;
+    }, [layout.scenes]);
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
         <Svg width={layout.width} height={layout.height}>
           {layout.scenes.map((scene, index) => {
-            const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * MATRIX_SCENE_WIDTH;
+            const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth;
             return (
               <React.Fragment key={scene.id}>
                 <Rect
                   x={x}
                   y={MATRIX_PADDING + MATRIX_HEADER_HEIGHT}
-                  width={MATRIX_SCENE_WIDTH}
+                  width={layout.sceneWidth}
                   height={layout.rows.length * MATRIX_ROW_HEIGHT}
                   fill={index % 2 ? colors.surface : colors.background}
                   stroke={colors.border}
@@ -69,8 +83,8 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                 />
                 <Rect
                   x={x}
-                  y={MATRIX_PADDING + 44}
-                  width={MATRIX_SCENE_WIDTH}
+                  y={MATRIX_PADDING + MATRIX_HEADER_HEIGHT - 6}
+                  width={layout.sceneWidth}
                   height={4}
                   fill={scene.chapterColor}
                 />
@@ -78,16 +92,34 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
             );
           })}
         </Svg>
+        {chapterGroups.map((chapter) => (
+          <View
+            key={`${chapter.start}-${chapter.name}`}
+            style={{
+              position: 'absolute',
+              left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + chapter.start * layout.sceneWidth + 5,
+              top: MATRIX_PADDING,
+              width: (chapter.end - chapter.start + 1) * layout.sceneWidth - 10,
+            }}
+          >
+            <Text
+              numberOfLines={1}
+              style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}
+            >
+              {chapter.name}
+            </Text>
+          </View>
+        ))}
         {layout.scenes.map((scene, index) => (
           <TouchableOpacity
             key={`scene-${scene.id}`}
             onPress={() => onPressScene(scene.id)}
             style={{
               position: 'absolute',
-              left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * MATRIX_SCENE_WIDTH + 4,
-              top: MATRIX_PADDING,
-              width: MATRIX_SCENE_WIDTH - 8,
-              height: MATRIX_HEADER_HEIGHT - 8,
+              left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth + 4,
+              top: MATRIX_PADDING + 17,
+              width: layout.sceneWidth - 8,
+              height: MATRIX_HEADER_HEIGHT - 25,
               justifyContent: 'center',
             }}
           >
@@ -98,13 +130,13 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                 {
                   position: 'relative',
                   left: 4,
-                  width: MATRIX_SCENE_WIDTH - 12,
+                  width: layout.sceneWidth - 12,
                   color: colors.text,
                   fontSize: 10,
                 },
               ]}
             >
-              {scene.name}
+              {`${index + 1}. ${scene.name}`}
             </Text>
           </TouchableOpacity>
         ))}
@@ -147,10 +179,10 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                     styles.cell,
                     {
                       left:
-                        MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * MATRIX_SCENE_WIDTH + 10,
+                        MATRIX_PADDING + MATRIX_LABEL_WIDTH + sceneIndex * layout.sceneWidth + 10,
                       top:
                         MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT + 10,
-                      width: MATRIX_SCENE_WIDTH - 20,
+                      width: layout.sceneWidth - 20,
                       height: MATRIX_ROW_HEIGHT - 20,
                       borderColor: row.color,
                       backgroundColor: `${row.color}2E`,

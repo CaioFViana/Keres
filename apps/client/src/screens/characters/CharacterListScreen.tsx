@@ -18,6 +18,7 @@ import { TagSelect } from '../../db/schema';
 import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import {
   CharacterStackParamList,
@@ -30,6 +31,7 @@ import {
 import { createTagService } from '../../services/storymanagement/TagService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterStore } from '../../state/characterStore';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -45,6 +47,8 @@ const CharactersScreen = () => {
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
+  const selectedStory = useStoryStore((state) => state.selectedStory);
+  const { openCharacterList } = useOpenPresenceMatrixViewer();
 
   const {
     items: characters,
@@ -143,29 +147,30 @@ const CharactersScreen = () => {
       setDocumentTitle(t('characters_title'));
       navigation.getParent()?.setOptions({
         title: t('characters_title'),
-        headerRight: canEdit
-          ? () => (
-              <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-                <TouchableOpacity onPress={() => navigation.navigate('CharacterRelationView')}>
-                  <Ionicons name="git-network-outline" size={26} color={colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
-                >
-                  <Ionicons name="add" size={30} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-            )
-          : () => (
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 }}>
+            {selectedStory?.type === 'linear' && (
               <TouchableOpacity
-                onPress={() => navigation.navigate('CharacterRelationView')}
-                style={{ marginRight: 15 }}
+                onPress={openCharacterList}
+                accessibilityLabel={t('presence_matrix_title')}
               >
-                <Ionicons name="git-network-outline" size={26} color={colors.text} />
+                <Ionicons name="map-outline" size={26} color={colors.text} />
               </TouchableOpacity>
-            ),
+            )}
+            <TouchableOpacity onPress={() => navigation.navigate('CharacterRelationView')}>
+              <Ionicons name="git-network-outline" size={26} color={colors.text} />
+            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )}
+          </View>
+        ),
       });
-    }, [navigation, colors.text, t, canEdit]),
+    }, [navigation, colors.text, t, canEdit, openCharacterList, selectedStory?.type]),
   );
 
   const handleToggleFavorite = useCallback(

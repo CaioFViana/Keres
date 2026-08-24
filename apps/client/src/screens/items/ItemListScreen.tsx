@@ -23,6 +23,7 @@ import {
 import { ItemSelect } from '../../db/schemas/items';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
@@ -50,6 +51,7 @@ const ItemListScreen = () => {
   const drizzleDb = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const navigation = useNavigation<ItemsScreenNavigationProp>();
+  const { openItemList } = useOpenPresenceMatrixViewer();
 
   const {
     items,
@@ -242,8 +244,7 @@ const ItemListScreen = () => {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
-    headerButton: { marginLeft: 15 },
+    headerRightContainer: { flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 },
   });
 
   useFocusEffect(
@@ -251,20 +252,36 @@ const ItemListScreen = () => {
       setDocumentTitle(t('items_title'));
       navigation.getParent()?.setOptions({
         title: t('items_title'),
-        headerRight: canEdit
-          ? () => (
-              <View style={styles.headerRightContainer}>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('ItemForm', {})}
-                  style={styles.headerButton}
-                >
-                  <Ionicons name="add" size={30} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-            )
-          : undefined,
+        headerRight:
+          selectedStory?.type === 'linear' || canEdit
+            ? () => (
+                <View style={styles.headerRightContainer}>
+                  {selectedStory?.type === 'linear' && (
+                    <TouchableOpacity
+                      onPress={openItemList}
+                      accessibilityLabel={t('presence_matrix_item_title')}
+                    >
+                      <Ionicons name="map-outline" size={26} color={colors.text} />
+                    </TouchableOpacity>
+                  )}
+                  {canEdit && (
+                    <TouchableOpacity onPress={() => navigation.navigate('ItemForm', {})}>
+                      <Ionicons name="add" size={30} color={colors.text} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            : undefined,
       });
-    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit]),
+    }, [
+      navigation,
+      colors.text,
+      t,
+      styles.headerRightContainer,
+      canEdit,
+      openItemList,
+      selectedStory?.type,
+    ]),
   );
 
   if (isInitialLoading) {

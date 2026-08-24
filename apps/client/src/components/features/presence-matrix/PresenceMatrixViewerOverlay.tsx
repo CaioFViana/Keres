@@ -10,7 +10,7 @@ const PresenceMatrixViewerOverlay: React.FC = () => {
     <ThemedFullscreenModal visible={request !== null} onRequestClose={close}>
       {request && (
         <PresenceMatrixViewerContent
-          key={`${request.kind}-${request.kind === 'item' ? request.itemId : request.characterId}`}
+          key={`${request.kind}-${request.kind === 'item' ? (request.itemId ?? 'empty') : (request.characterId ?? 'empty')}`}
           request={request}
           onClose={close}
         />

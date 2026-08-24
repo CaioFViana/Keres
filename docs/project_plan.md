@@ -62,6 +62,28 @@ Uma coleção de cenas. Não significa ordem cronológica, mas sim "ordem de exi
 ### Scenes
 Unidades narrativas fundamentais.
 
+### Plots / Plot Scenes (Tramas)
+`Plot` representa uma linha narrativa dentro de uma história **linear**. Possui `name` e
+`details`, pertence a uma única `Story` e pode agrupar qualquer quantidade de cenas — inclusive
+nenhuma, enquanto ainda está sendo planejado. Uma cena pode participar de vários Plots, portanto
+a relação é N:N e não uma coluna em `Scene`.
+
+`PlotScene` materializa essa relação (`plotId` + `sceneId`) e guarda uma `note` obrigatória, de
+uma única linha e com no máximo 160 caracteres, explicando o papel daquela cena naquela trama. O
+par `(plotId, sceneId)` é único e as duas entidades precisam pertencer à mesma história. A relação
+é editada na seção de Plots do formulário da cena; não existe um formulário separado de
+`PlotScene`.
+
+Plots não são permitidos em histórias `branching` nesta fase. Uma história linear com Plots
+ativos também não pode ser convertida para branching antes que eles sejam removidos. `Plot` e
+`PlotScene` participam de exportação/importação, sincronização, tombstones e log de operações.
+`Plot` aparece na Busca Global por nome e detalhes; `PlotScene`, por ser uma junção, não é um
+destino navegável independente. Deliberadamente, Plots não recebem tags, favoritos, comentários,
+sugestões nem atributos customizados.
+
+O histórico das decisões e os critérios de aceite da implementação estão preservados em
+[`finished_planning/PLOT_IMPLEMENTATION_PLAN.md`](finished_planning/PLOT_IMPLEMENTATION_PLAN.md).
+
 ### Locations
 Informações gerais sobre um local.
 
@@ -78,6 +100,12 @@ Relações fixas. Como "irmãos", "Mestre/Escravo", "Mãe/Filha"...
 
 #### Location X Location (`LocationRelation`)
 Relação entre dois locais, com `relationType`: `contains` (direcional - `locationAId` é o local "pai" que contém `locationBId`) ou `connected_to` (par não-ordenado, ex: duas cidades ligadas por estrada).
+
+#### Plot X Scene (`PlotScene`)
+Relação N:N exclusiva de histórias lineares. Uma cena pode desenvolver várias tramas e uma trama
+pode atravessar cenas de capítulos diferentes. A nota curta da junção descreve o papel específico
+da cena naquela trama; a ordem de exibição continua sendo derivada do índice do capítulo e, em
+seguida, do índice da cena.
 
 #### Tag X <entidade> (`TagRelation`) / Note X <entidade> (`NoteRelation`)
 Mesmo padrão polimórfico de `GalleryRelation`: uma tabela de junção genérica ligando uma `Tag`/`Note` a qualquer entidade da história, em vez de uma coluna de FK fixa por tipo.
@@ -129,6 +157,7 @@ O cliente inclui um catálogo de ajuda em português e inglês, com busca local,
 - **Comentários:** colaboradores e leitores autorizados podem comentar um campo nativo ou personalizado de uma entidade navegável; cada comentário preserva o contexto do campo e a lista de comentários reúne essas conversas.
 - **Veja também:** cria uma ligação livre e recíproca entre elementos relacionados, sem substituir etiquetas ou notas.
 - **Histórias ramificadas:** escolhas podem ter condições (visitas, itens ou marcadores) e efeitos (dar/tirar item ou ligar/desligar marcador). Esses recursos formam o estado do leitor e são analisados junto ao mapa da história.
+- **Tramas em histórias lineares:** Plots agrupam cenas sobrepostas sem alterar sua ordem. O stack de Tramas oferece matriz Plot × Cena, gráfico de cobertura, média de cenas por trama e um leitor textual de resumos; uma cena pode contar para mais de uma trama, então percentuais de cobertura não precisam somar 100%.
 - **Colaboração:** uma história ligada a servidor pode ter colaboradores; permissões e comentários de leitores são configurados na própria história.
 
 ### Gráfico de Relações entre Entidades
@@ -147,6 +176,8 @@ graph LR
     story --> notes
     story --> tags
     story --> items
+    story --> plots
+    story --> plot_scenes
     story --> modes
     story --> stats
     story --> stat_strengths
@@ -163,6 +194,9 @@ graph LR
 
     chapters --> scenes
     locations -- occurs on --> scenes
+
+    plots --> plot_scenes
+    plot_scenes --> scenes
 
     scenes -- source --> choices
     choices -- target next_scene_id --> scenes

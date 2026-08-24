@@ -4,6 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // real require cycle (see db/index.ts's history for what that broke). A type-only import
 // erases at compile time and never touches the runtime require graph.
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 
 export type NavigableEntityType =
   | 'Character'
@@ -74,7 +75,11 @@ export function navigateToEntityDetail(
   drawerNavigation: DrawerNavigationProp<MainSystemDrawerParamList>,
   entityType: NavigableEntityType,
   entityId: string,
+  options?: { onReturn?: () => void },
 ): void {
+  if (options?.onReturn) {
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(options.onReturn);
+  }
   const route = ENTITY_ROUTES[entityType];
   (drawerNavigation.navigate as (name: string, params: unknown) => void)(route.stack, {
     screen: route.screen,

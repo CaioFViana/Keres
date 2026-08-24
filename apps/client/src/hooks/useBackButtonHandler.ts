@@ -33,6 +33,9 @@ export const useBackButtonHandler = ({
   const navigation = useNavigation();
   const setBackAction = useHeaderBackActionStore((state) => state.setBackAction);
   const clearBackAction = useHeaderBackActionStore((state) => state.clearBackAction);
+  const consumeCrossStackReturnAction = useHeaderBackActionStore(
+    (state) => state.consumeCrossStackReturnAction,
+  );
   // Um ref mantém a volta customizada fora das dependências dos efeitos: o chamador quase
   // sempre passa uma função nova a cada render, e sem isto o handler se registraria de novo
   // a cada tecla digitada na tela.
@@ -47,12 +50,22 @@ export const useBackButtonHandler = ({
 
       const backAction = () => {
         if (onBackRef.current) onBackRef.current();
-        else navigation.goBack();
+        else {
+          const crossStackReturn = consumeCrossStackReturnAction();
+          if (crossStackReturn) crossStackReturn();
+          else navigation.goBack();
+        }
       };
       setBackAction(backAction);
 
       return () => clearBackAction(backAction);
-    }, [clearBackAction, navigation, setBackAction, showWebBackButton]),
+    }, [
+      clearBackAction,
+      consumeCrossStackReturnAction,
+      navigation,
+      setBackAction,
+      showWebBackButton,
+    ]),
   );
 
   useEffect(() => {
@@ -60,6 +73,11 @@ export const useBackButtonHandler = ({
       // 0. Volta customizada: quem abriu a tela sabe para onde ela deve voltar.
       if (onBackRef.current) {
         onBackRef.current();
+        return true;
+      }
+      const crossStackReturn = consumeCrossStackReturnAction();
+      if (crossStackReturn) {
+        crossStackReturn();
         return true;
       }
       // 1. Try to go back within the current navigator (nested stack)
@@ -84,5 +102,5 @@ export const useBackButtonHandler = ({
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [navigation]);
+  }, [consumeCrossStackReturnAction, navigation]);
 };

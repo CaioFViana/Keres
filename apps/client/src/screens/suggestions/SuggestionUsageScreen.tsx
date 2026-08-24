@@ -186,7 +186,13 @@ const SuggestionUsageScreen = () => {
     const drawerNavigation =
       navigation.getParent() as DrawerNavigationProp<MainSystemDrawerParamList>;
     if (usage.entityType === 'CharacterRelation') return;
-    navigateToEntityDetail(drawerNavigation, usage.entityType as GlobalSearchEntityType, usage.id);
+    navigateToEntityDetail(drawerNavigation, usage.entityType as GlobalSearchEntityType, usage.id, {
+      onReturn: () =>
+        drawerNavigation.navigate('SuggestionsStack', {
+          screen: 'SuggestionUsage',
+          params: { type, value },
+        }),
+    });
   };
 
   const stylesForScreen = styles(colors);
@@ -231,6 +237,15 @@ const SuggestionUsageScreen = () => {
                             navigation.getParent() as DrawerNavigationProp<MainSystemDrawerParamList>,
                             'Character',
                             characterId,
+                            {
+                              onReturn: () =>
+                                (
+                                  navigation.getParent() as DrawerNavigationProp<MainSystemDrawerParamList>
+                                ).navigate('SuggestionsStack', {
+                                  screen: 'SuggestionUsage',
+                                  params: { type, value },
+                                }),
+                            },
                           )
                         }
                       >

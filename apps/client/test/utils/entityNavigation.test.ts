@@ -1,5 +1,6 @@
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import { navigateToEntityDetail, type NavigableEntityType } from '../../src/utils/entityNavigation';
+import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
 
 const ENTITY_TYPES: NavigableEntityType[] = [
   'Character',
@@ -29,6 +30,7 @@ function fakeDrawer() {
 }
 
 describe('navigateToEntityDetail', () => {
+  beforeEach(() => useHeaderBackActionStore.setState({ crossStackReturnAction: undefined }));
   it('routes to the entity stack, its detail screen and its id param', () => {
     const { navigate, drawer } = fakeDrawer();
 
@@ -86,6 +88,17 @@ describe('navigateToEntityDetail', () => {
     navigateToEntityDetail(drawer, 'Note', '01ARZ3NDEKTSV4RRFFQ69G5FAV');
 
     expect(navigate.mock.calls[0][1].params.noteId).toBe('01ARZ3NDEKTSV4RRFFQ69G5FAV');
+  });
+
+  it('records an optional one-shot return for cross-stack callers', () => {
+    const { drawer } = fakeDrawer();
+    const returnToOrigin = jest.fn();
+
+    navigateToEntityDetail(drawer, 'Character', 'char-1', { onReturn: returnToOrigin });
+
+    expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBe(
+      returnToOrigin,
+    );
   });
 });
 

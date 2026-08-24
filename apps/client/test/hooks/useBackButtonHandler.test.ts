@@ -54,7 +54,7 @@ beforeEach(() => {
   mockNavigation.canGoBack.mockReturnValue(false);
   mockNavigation.getParent.mockReturnValue(undefined);
   mockNavigation.getState.mockReturnValue({ type: 'stack' });
-  useHeaderBackActionStore.setState({ backAction: undefined });
+  useHeaderBackActionStore.setState({ backAction: undefined, crossStackReturnAction: undefined });
   (useResponsiveLayout as jest.Mock).mockReturnValue({ isWide: false });
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, listener) => {
     hardwareBack = () => listener() === true;
@@ -110,4 +110,16 @@ it('registers the focused child navigator as the header back action', async () =
   useHeaderBackActionStore.getState().backAction?.();
 
   expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+});
+
+it('uses a one-shot cross-stack return before the destination stack back action', async () => {
+  const returnToOrigin = jest.fn();
+  useHeaderBackActionStore.getState().setCrossStackReturnAction(returnToOrigin);
+  await renderHook(() => useBackButtonHandler({ showWebBackButton: true }));
+
+  useHeaderBackActionStore.getState().backAction?.();
+
+  expect(returnToOrigin).toHaveBeenCalledTimes(1);
+  expect(mockNavigation.goBack).not.toHaveBeenCalled();
+  expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBeUndefined();
 });

@@ -164,17 +164,24 @@ const StoryAnalysisScreen = () => {
 
   const styles = StyleSheet.create({
     scrollContent: {
-      padding: 20,
+      // O container comum já aplica 20px em todos os lados. Repetir o padding no conteúdo
+      // rolável deixava o cartão da checagem 40px afastado das bordas, diferente das demais
+      // telas do drawer.
+      flexGrow: 1,
     },
     subtitle: {
       color: colors.textSecondary,
       marginBottom: 16,
     },
     analysisCard: {
-      backgroundColor: colors.surface,
+      // Mesmas medidas dos cartões de resultado, para o controle de checagem não parecer
+      // uma região com recuo maior que o relatório abaixo.
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderWidth: 1,
       borderRadius: 8,
-      padding: 16,
-      marginBottom: 20,
+      padding: 15,
+      marginBottom: 10,
     },
     analysisHint: {
       color: colors.textSecondary,

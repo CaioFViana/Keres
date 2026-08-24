@@ -10,7 +10,17 @@ const baseInput = (): StoryAnalysisInput => ({
   characterRelations: [],
   locations: [{ id: 'location', name: 'Location' }],
   locationRelations: [],
-  scenes: [{ id: 'start', name: 'Start', locationId: 'location', isStart: true, isFinish: false }],
+  scenes: [
+    {
+      id: 'start',
+      name: 'Start',
+      locationId: 'location',
+      isStart: true,
+      isFinish: false,
+      chapterId: 'chapter',
+      index: 1,
+    },
+  ],
   choices: [],
   choiceCheckGroups: [],
   choiceChecks: [],
@@ -57,6 +67,8 @@ describe('buildStoryAnalysisReport', () => {
       locationId: 'location',
       isStart: false,
       isFinish: false,
+      chapterId: 'chapter',
+      index: 1,
     });
 
     const keys = (await buildStoryAnalysisReport(input)).map((finding) => finding.messageKey);
@@ -104,6 +116,8 @@ describe('buildStoryAnalysisReport', () => {
         locationId: 'location',
         isStart: false,
         isFinish: false,
+        chapterId: 'chapter',
+        index: 1,
       });
       input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'end', text: 'go' });
       input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'AND' });
@@ -128,8 +142,8 @@ describe('buildStoryAnalysisReport', () => {
     it('flags a scene-count check requiring more than one visit when there is no cycle to revisit it', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
-        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false },
+        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
+        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
       );
       input.choices.push(
         { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
@@ -157,8 +171,8 @@ describe('buildStoryAnalysisReport', () => {
     it('does not flag a scene-count check requiring more than one visit when the scene is revisitable via a cycle', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
-        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false },
+        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
+        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
       );
       input.choices.push(
         { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
@@ -192,6 +206,8 @@ describe('buildStoryAnalysisReport', () => {
         locationId: 'location',
         isStart: false,
         isFinish: false,
+        chapterId: 'chapter',
+        index: 1,
       });
       input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'end', text: 'go' });
       input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'OR' });
@@ -235,6 +251,8 @@ describe('buildStoryAnalysisReport', () => {
         locationId: 'location',
         isStart: false,
         isFinish: false,
+        chapterId: 'chapter',
+        index: 1,
       });
       input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'onlyVia', text: 'go' });
       input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'AND' });
@@ -268,8 +286,8 @@ describe('buildStoryAnalysisReport', () => {
     it('cascades through two levels: a choice gated on a scene that is itself only reachable via a never-satisfiable choice', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'sceneX', name: 'Scene X', locationId: 'location', isStart: false, isFinish: false },
-        { id: 'sceneY', name: 'Scene Y', locationId: 'location', isStart: false, isFinish: false },
+        { id: 'sceneX', name: 'Scene X', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
+        { id: 'sceneY', name: 'Scene Y', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
       );
       // Branch 1: start -> sceneX, gated on an item that is never granted anywhere - sceneX can
       // never actually be reached, even though it's structurally connected to the graph.
@@ -328,5 +346,99 @@ describe('buildStoryAnalysisReport', () => {
         ]),
       );
     });
+  });
+});
+
+/**
+ * A numeração fora de 1..N não é preciosismo: a API recusa uma reordenação cujos índices não
+ * formem 1..N contíguo, então a checagem é o aviso antes do conflito de sincronização.
+ */
+describe('narrative index checks', () => {
+  const linearInput = (): StoryAnalysisInput => {
+    const input = baseInput();
+    input.storyType = 'linear';
+    input.chapters = [{ id: 'chapter', name: 'Capítulo', index: 1 }];
+    input.scenes = [];
+    return input;
+  };
+  const scene = (id: string, index: number) => ({
+    id,
+    name: id,
+    locationId: 'location',
+    isStart: false,
+    isFinish: false,
+    chapterId: 'chapter',
+    index,
+  });
+
+  it('says nothing about numbering when chapters and scenes are 1..N', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 1), scene('b', 2));
+
+    const findings = await buildStoryAnalysisReport(input);
+
+    expect(findings.filter((finding) => finding.messageKey.includes('_index_'))).toEqual([]);
+  });
+
+  it('flags a gap in the scene numbering of a chapter', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 1), scene('b', 3));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_scene_index_gap',
+          messageParams: { chapterName: 'Capítulo' },
+        }),
+      ]),
+    );
+  });
+
+  it('flags two scenes fighting over the same number', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 1), scene('b', 1));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_scene_index_duplicate' }),
+      ]),
+    );
+  });
+
+  it('flags scenes still numbered from zero', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 0), scene('b', 1));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_scene_index_start' }),
+      ]),
+    );
+  });
+
+  it('flags chapter numbering that does not start at 1', async () => {
+    const input = linearInput();
+    input.chapters = [
+      { id: 'chapter', name: 'Capítulo', index: 2 },
+      { id: 'other', name: 'Outro', index: 3 },
+    ];
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_chapter_index_start' }),
+      ]),
+    );
+  });
+
+  it('stays out of branching stories, where the index is not the reading order', async () => {
+    const input = linearInput();
+    input.storyType = 'branching';
+    input.scenes.push(scene('a', 1), scene('b', 3));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_scene_index_gap' }),
+      ]),
+    );
   });
 });

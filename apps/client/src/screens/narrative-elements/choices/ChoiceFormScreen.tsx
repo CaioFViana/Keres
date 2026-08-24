@@ -332,7 +332,10 @@ const ChoiceFormScreen = () => {
         storyId: selectedStory.id,
         choiceId: currentChoiceId,
         combinator: 'AND',
-        order: checkGroups.length,
+        // Maior + 1, e não a contagem: excluir um grupo do meio faria a contagem repetir o
+        // número de um grupo que ainda existe, e a ordem dos dois passaria a depender do
+        // desempate por data.
+        order: Math.max(0, ...checkGroups.map((group) => group.order + 1)),
       });
       setCheckGroups((prev) => [...prev, newGroup]);
       entityEventEmitter.emit('choice_check_group_changed', selectedStory.id, currentChoiceId);
@@ -389,7 +392,7 @@ const ChoiceFormScreen = () => {
         groupId,
         mode: 'block',
         type: 'sceneCount',
-        order: checksInGroup.length,
+        order: Math.max(0, ...checksInGroup.map((check) => check.order + 1)),
         sceneId: null,
         minVisits: null,
         itemId: null,

@@ -44,6 +44,16 @@ export interface AnalysisScene {
   locationId: string;
   isStart: boolean;
   isFinish: boolean;
+  chapterId: string;
+  /** Posição dentro do capítulo: 1..N, sem buracos nem repetição. */
+  index: number;
+}
+
+export interface AnalysisChapter {
+  id: string;
+  name: string;
+  /** Posição na história: 1..N, sob a mesma regra das cenas. */
+  index: number;
 }
 
 export interface AnalysisChoice {
@@ -120,7 +130,7 @@ export interface StoryAnalysisInput {
   itemJourneys: { itemId: string }[];
   tags: AnalysisEntityRef[];
   tagRelations: { tagId: string }[];
-  chapters: AnalysisEntityRef[];
+  chapters: AnalysisChapter[];
   notes: AnalysisEntityRef[];
   worldRules: AnalysisEntityRef[];
   storySchemaFields: AnalysisStorySchemaField[];
@@ -166,6 +176,7 @@ export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): Stor
     ...checkItems(input),
     ...checkTags(input),
     ...checkSceneFinishWithChoices(input),
+    ...(input.storyType === 'linear' ? checkNarrativeIndexes(input) : []),
     // Integridade de Choice é O(choices), cabe aqui mesmo sendo "só ramificada" - dangling
     // references são baratas de achar, diferente de alcançabilidade/satisfazibilidade.
     ...(input.storyType === 'branching' ? checkChoices(input) : []),
@@ -359,6 +370,56 @@ function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFi
     .map((scene) =>
       buildFinding('scenes', 'warning', 'Scene', scene, 'analysis_scene_finish_with_choices'),
     );
+}
+
+/** `null` quando a lista já é 1..N contígua; senão, o que há de errado com ela. */
+function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null {
+  if (indexes.length === 0) return null;
+  const sorted = [...indexes].sort((a, b) => a - b);
+  if (new Set(sorted).size !== sorted.length) return 'duplicate';
+  if (sorted[0] !== 1) return 'start';
+  return sorted.every((value, position) => value === position + 1) ? null : 'gap';
+}
+
+/**
+ * Numeração de capítulos (1..N na história) e de cenas (1..M dentro do capítulo).
+ *
+ * Não é preciosismo: a API recusa uma reordenação cujos índices não formem 1..N contíguo, então
+ * uma numeração torta vira conflito de sincronização na primeira vez que a pessoa arrastar uma
+ * cena de lugar. Repetição é pior que buraco - duas cenas com o mesmo número deixam a ordem da
+ * história indefinida no Leitor, na Matriz e na conversão para ramificada.
+ *
+ * Só para histórias lineares: é lá que a ordem dos índices é a ordem da leitura.
+ */
+function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const findings: StoryAnalysisFinding[] = [];
+
+  const chapterProblem = inspectIndexes(input.chapters.map((chapter) => chapter.index));
+  if (chapterProblem && input.chapters.length > 0) {
+    findings.push(
+      buildFinding(
+        'scenes',
+        'warning',
+        'Chapter',
+        input.chapters[0]!,
+        `analysis_chapter_index_${chapterProblem}`,
+      ),
+    );
+  }
+
+  for (const chapter of input.chapters) {
+    const chapterScenes = input.scenes.filter((scene) => scene.chapterId === chapter.id);
+    if (chapterScenes.length === 0) continue;
+    const sceneProblem = inspectIndexes(chapterScenes.map((scene) => scene.index));
+    if (!sceneProblem) continue;
+    findings.push(
+      buildFinding('scenes', 'warning', 'Chapter', chapter, `analysis_scene_index_${sceneProblem}`, {
+        chapterName: chapter.name,
+      }),
+    );
+  }
+
+  return findings;
 }
 
 /**

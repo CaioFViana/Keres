@@ -871,8 +871,11 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         const intraEdges = intraEdgesByChapter.get(chapter.id) ?? [];
         const order = computeChapterChainOrder(chapterScenes, intraEdges);
         const sceneById = new Map(chapterScenes.map((s) => [s.id, s]));
-        order.forEach((sceneId, newIndex) => {
+        order.forEach((sceneId, position) => {
           const scene = sceneById.get(sceneId)!;
+          // 1..N dentro do capítulo, como toda cena: a conversão é justamente onde a ordem
+          // deixa de ser dada pelas escolhas e passa a ser dada pelo índice.
+          const newIndex = position + 1;
           if (scene.index !== newIndex) {
             sceneUpdates.push({ sceneId, changes: { index: newIndex } });
           }

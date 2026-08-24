@@ -54,6 +54,31 @@ it('ships every public-domain example at format v4 with the current local featur
   }
 });
 
+/**
+ * Um exemplo que chegasse 0-based instalaria uma história que a própria Análise acusa - e cuja
+ * primeira reordenação viraria conflito de sincronização.
+ */
+it('numbers every bundled example the way the app does: chapters 1..N, scenes 1..M per chapter', () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const story = language.story as {
+        chapters: { id: string; index: number }[];
+        scenes: { chapterId: string; index: number }[];
+      };
+      const sequential = (indexes: number[]) =>
+        [...indexes].sort((a, b) => a - b).every((value, position) => value === position + 1);
+
+      expect(sequential(story.chapters.map((chapter) => chapter.index))).toBe(true);
+      for (const chapter of story.chapters) {
+        const indexes = story.scenes
+          .filter((scene) => scene.chapterId === chapter.id)
+          .map((scene) => scene.index);
+        expect(sequential(indexes)).toBe(true);
+      }
+    }
+  }
+});
+
 it('installs the plots of a linear example bound to the copy, not to the packaged ids', async () => {
   const service = createExampleStoryService(database.db);
 

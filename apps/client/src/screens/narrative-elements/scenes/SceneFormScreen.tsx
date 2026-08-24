@@ -517,64 +517,26 @@ const SceneFormScreen = () => {
           throw new Error(t('scene_not_found'));
         }
 
-        if (chapterId && originalScene.chapterId !== chapterId) {
-          // --- BATCH UPDATE LOGIC ---
-          const batchUpdates: {
-            sceneId: string;
-            changes: Partial<Omit<Scene, 'id' | 'storyId'>>;
-          }[] = [];
-
-          // 1. Get scenes from old chapter and prepare re-indexing
-          const scenesInOldChapter = (
-            await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
-          ).filter((s) => s.chapterId === originalScene.chapterId);
-
-          scenesInOldChapter
-            .filter((s) => s.index > originalScene.index)
-            .forEach((s) => {
-              batchUpdates.push({
-                sceneId: s.id,
-                changes: { index: s.index - 1 },
-              });
-            });
-
-          // 2. Get scenes from new chapter to calculate new index
-          const scenesInNewChapter = (
-            await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
-          ).filter((s) => s.chapterId === chapterId);
-          const newIndex =
-            scenesInNewChapter.length > 0
-              ? Math.max(...scenesInNewChapter.map((s) => s.index || 0)) + 1
-              : 1;
-
-          // 3. Add the moved scene's update to the batch
-          batchUpdates.push({
-            sceneId: currentSceneId,
-            changes: { ...sceneData, index: newIndex },
-          });
-
-          // 4. Execute batch update
-          await sceneServiceRef.current!.batchUpdateScenes(userId, selectedStory.id, batchUpdates);
-          AppAlert.alert(t('success'), t('scene_updated_successfully'));
-        } else {
-          // --- SINGLE UPDATE LOGIC ---
-          const savedScene = await sceneServiceRef.current!.updateScene(
-            userId,
-            currentSceneId,
-            sceneData,
-          );
-          savedSceneId = savedScene.id;
-          AppAlert.alert(t('success'), t('scene_updated_successfully'));
-        }
+        // Trocar de capítulo (posição na nova fila e fechamento do buraco na antiga) é
+        // responsabilidade do serviço: aqui a tela só diz para qual capítulo a cena vai.
+        const savedScene = await sceneServiceRef.current!.updateScene(
+          userId,
+          currentSceneId,
+          sceneData,
+        );
+        savedSceneId = savedScene.id;
+        AppAlert.alert(t('success'), t('scene_updated_successfully'));
       } else {
         // --- CREATE NEW SCENE LOGIC ---
         const allScenesInChapter = (
           await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
         ).filter((scn) => scn.chapterId === chapterId);
+        // Primeira cena do capítulo é 1, e não 0: mesma convenção dos capítulos e a única que
+        // a API aceita quando essas cenas forem reordenadas depois.
         const nextIndex =
           allScenesInChapter.length > 0
             ? Math.max(...allScenesInChapter.map((scn) => scn.index || 0)) + 1
-            : 0;
+            : 1;
         const savedScene = await sceneServiceRef.current!.createScene(userId, {
           ...sceneData,
           storyId: selectedStory.id,

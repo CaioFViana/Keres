@@ -17,9 +17,12 @@ import {
   createStoryAnalysisService,
   StoryAnalysisReport,
 } from '../../services/storymanagement/StoryAnalysisService';
+import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
 import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import {
@@ -68,6 +71,7 @@ const StoryAnalysisScreen = () => {
   // MainDashboard, que passa storyId explicitamente) navega sem nenhum param - a mesma
   // história de selectedStory já corrigida em StorySettingsScreen.
   const { selectedStory } = useStoryStore();
+  const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
   const drizzleDb = useDrizzle();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -76,6 +80,7 @@ const StoryAnalysisScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [normalizing, setNormalizing] = useState(false);
   const [progressFraction, setProgressFraction] = useState(0);
   // Alcançabilidade/satisfazibilidade só valem pra história ramificada - pra história linear, a
   // checagem rápida já é o relatório completo, sem precisar do botão.
@@ -112,6 +117,34 @@ const StoryAnalysisScreen = () => {
       navigation.setOptions({ title: t('story_analysis_title') });
       setDocumentTitle(t('story_analysis_title'));
     }, [navigation, t]),
+  );
+
+  /**
+   * Renumera capítulos e cenas para 1..N. Fica atrás de um toque explícito, e não roda ao
+   * abrir a tela: mexe em muitas linhas de uma vez e vira operações de sincronização.
+   */
+  const normalizeIndexes = useCallback(async () => {
+    if (!storyId || !userId || normalizing) return;
+    setNormalizing(true);
+    try {
+      const changed = await createStoryIndexService(drizzleDb).normalizeIndexes(userId, storyId);
+      await loadCheapReport();
+      AppAlert.alert(t('success'), t('analysis_fix_indexes_done', changed));
+    } catch (normalizeError) {
+      console.error('StoryAnalysisScreen: failed to normalize indexes.', normalizeError);
+      AppAlert.alert(t('error'), t('analysis_fix_indexes_failed'));
+    } finally {
+      setNormalizing(false);
+    }
+  }, [drizzleDb, loadCheapReport, normalizing, storyId, t, userId]);
+
+  const hasIndexFindings = useMemo(
+    () =>
+      (report?.findings ?? []).some((finding) =>
+        finding.messageKey.startsWith('analysis_chapter_index_') ||
+        finding.messageKey.startsWith('analysis_scene_index_'),
+      ),
+    [report],
   );
 
   const runFullAnalysis = useCallback(async () => {
@@ -212,6 +245,9 @@ const StoryAnalysisScreen = () => {
       backgroundColor: colors.error,
       marginTop: 4,
     },
+    fixButton: {
+      marginTop: 8,
+    },
     findingRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -282,6 +318,16 @@ const StoryAnalysisScreen = () => {
       ) : (
         <Button onPress={runFullAnalysis} disabled={!storyId} testID="run-full-analysis">
           {t('story_analysis_run_button')}
+        </Button>
+      )}
+      {hasIndexFindings && (
+        <Button
+          onPress={normalizeIndexes}
+          disabled={normalizing || analyzing}
+          style={styles.fixButton}
+          testID="fix-indexes"
+        >
+          {normalizing ? t('loading') : t('analysis_fix_indexes_button')}
         </Button>
       )}
     </View>

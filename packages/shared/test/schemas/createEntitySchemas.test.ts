@@ -17,7 +17,7 @@ const sceneBase = {
   chapterId: ulid('chapter1'),
   locationId: ulid('location1'),
   name: 'Cena de abertura',
-  index: 0,
+  index: 1,
   summary: null,
   gap: null,
   gapType: null,
@@ -68,8 +68,14 @@ describe('create-entity schemas', () => {
     expect(CreateChapterDataSchema.safeParse({ ...chapterBase, index: 1.5 }).success).toBe(false);
   });
 
-  it('accepts a scene index of 0, since scenes are numbered from 0 inside a chapter', () => {
-    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 0 }).success).toBe(true);
+  /**
+   * Cena e capítulo seguem a mesma numeração de propósito. Aceitar 0 na cena era o que deixava
+   * criação e reordenação com contratos incompatíveis: o handler de reordenação da API recusa
+   * qualquer conjunto que não seja 1..N contíguo.
+   */
+  it('rejects a scene index below 1, like the chapter it lives in', () => {
+    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 1 }).success).toBe(true);
+    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 0 }).success).toBe(false);
     expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: -1 }).success).toBe(false);
   });
 

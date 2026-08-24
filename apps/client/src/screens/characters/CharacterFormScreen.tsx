@@ -690,7 +690,9 @@ const CharacterFormScreen = () => {
                 storyId: selectedStory.id,
                 characterId: currentCharacterId,
                 ...mode,
-                order: characterModes.length,
+                // Maior + 1: a contagem repetiria o número de um modo existente depois de
+                // uma exclusão no meio da lista.
+                order: Math.max(0, ...characterModes.map((existing) => existing.order + 1)),
               });
             }}
             onUpdate={(modeId, mode) => modeService().updateMode(userId!, modeId, mode)}

@@ -65,6 +65,75 @@ export interface SceneService {
 
 export const createSceneService = (db: AppDrizzleClient): SceneService => {
   const serverService = createServerService(db);
+
+  /**
+   * O índice de uma cena é 1..N **dentro do capítulo**, sem buracos - a mesma convenção dos
+   * capítulos, e a única que a API aceita ao reordenar (ela recusa uma reordenação cujo menor
+   * índice não seja 1 ou que não termine em N).
+   */
+  const nextIndexInChapter = async (storyId: string, chapterId: string): Promise<number> => {
+    const siblings = await db
+      .select({ index: scenes.index })
+      .from(scenes)
+      .where(
+        and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.chapterId, chapterId),
+          eq(scenes.isDeleted, false),
+        ),
+      )
+      .all();
+    return siblings.reduce((highest, scene) => Math.max(highest, scene.index), 0) + 1;
+  };
+
+  /**
+   * Renumera as cenas vivas de um capítulo para 1..N preservando a ordem atual.
+   *
+   * Chamado quando uma cena sai do capítulo (excluída ou movida): sem isto sobra um buraco na
+   * numeração, e um buraco basta para a próxima reordenação virar conflito de validação no
+   * servidor. Fica no serviço, e não na tela que move a cena, porque importação e correção
+   * automática passam por aqui também.
+   */
+  const renumberChapterScenes = async (
+    storyId: string,
+    chapterId: string,
+    userIdToLog: string,
+  ): Promise<void> => {
+    const living = await db
+      .select({ id: scenes.id, index: scenes.index, createdAt: scenes.createdAt })
+      .from(scenes)
+      .where(
+        and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.chapterId, chapterId),
+          eq(scenes.isDeleted, false),
+        ),
+      )
+      .all();
+
+    const ordered = [...living].sort(
+      (a, b) =>
+        a.index - b.index || a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id),
+    );
+
+    for (const [position, scene] of ordered.entries()) {
+      const newIndex = position + 1;
+      if (scene.index === newIndex) continue;
+      const [updated] = await db
+        .update(scenes)
+        .set({ index: newIndex, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+        .where(eq(scenes.id, scene.id))
+        .returning({ version: scenes.version });
+      // Um `update` por cena, e não um `reorder` do capítulo: a operação precisa valer sozinha,
+      // sem depender de o servidor já ter aplicado a exclusão ou a mudança de capítulo que a
+      // provocou.
+      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Scene', scene.id, {
+        index: newIndex,
+        version: updated?.version,
+      });
+    }
+  };
+
   return {
     async getScenesByStoryId(
       storyId,
@@ -227,6 +296,20 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         sceneData,
       );
 
+      // Trocar de capítulo é mudar de fila: a cena entra no fim da nova e o buraco que ela
+      // deixa na antiga é fechado logo abaixo. Aqui, e não na tela do formulário, para que
+      // qualquer caminho que mova uma cena mantenha as duas numerações íntegras.
+      const movedFromChapterId =
+        sceneData.chapterId && sceneData.chapterId !== originalScene.chapterId
+          ? originalScene.chapterId
+          : null;
+      if (movedFromChapterId) {
+        sceneData = {
+          ...sceneData,
+          index: await nextIndexInChapter(originalScene.storyId, sceneData.chapterId!),
+        };
+      }
+
       const potentialNewState = { ...originalScene, ...sceneData };
 
       const changes = getChangedFields(originalScene, potentialNewState);
@@ -266,6 +349,10 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         getChangedFields(originalScene, updatedScene),
       );
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+
+      if (movedFromChapterId) {
+        await renumberChapterScenes(updatedScene.storyId, movedFromChapterId, userIdToLog);
+      }
 
       return updatedScene;
     },
@@ -318,6 +405,8 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         },
       );
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+
+      await renumberChapterScenes(sceneToDelete.storyId, sceneToDelete.chapterId, userIdToLog);
     },
 
     async getAllByStoryId(storyId: string): Promise<SceneSelect[]> {

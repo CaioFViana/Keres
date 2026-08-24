@@ -5,6 +5,7 @@ import { useDrizzle } from '../../../../db';
 import { SceneSelect } from '../../../../db/schema';
 import { useChapterStore } from '../../../../state/chapterStore';
 import { useTheme } from '../../../../theme';
+import { buildReorderItems } from '../../../../utils/reorderIndexes';
 import Select from '@/src/components/common/inputs/Select/Select';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 
@@ -75,7 +76,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
       if (!selectedChapterId) return;
       await onReorderConfirm(
         selectedChapterId,
-        reordered.map((scene, idx) => ({ id: scene.id, newIndex: idx })),
+        buildReorderItems(reordered, (scene) => scene.id),
       );
     },
     [selectedChapterId, onReorderConfirm],

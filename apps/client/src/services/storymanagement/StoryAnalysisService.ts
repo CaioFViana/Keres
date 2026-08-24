@@ -93,6 +93,8 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
           locationId: schema.scenes.locationId,
           isStart: schema.scenes.isStart,
           isFinish: schema.scenes.isFinish,
+          chapterId: schema.scenes.chapterId,
+          index: schema.scenes.index,
         })
         .from(schema.scenes)
         .where(belongsToStory(schema.scenes)),
@@ -155,7 +157,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         .from(schema.tagRelations)
         .where(belongsToStory(schema.tagRelations)),
       db
-        .select({ id: schema.chapters.id, name: schema.chapters.name })
+        .select({ id: schema.chapters.id, name: schema.chapters.name, index: schema.chapters.index })
         .from(schema.chapters)
         .where(belongsToStory(schema.chapters)),
       db

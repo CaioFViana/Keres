@@ -75,6 +75,11 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     },
     content: {
       flexGrow: 1,
+      // SafeAreaWrapper já reserva os insets da janela para todo o aplicativo. O
+      // DrawerContentScrollView adicionaria esses mesmos insets de novo, deixando o
+      // primeiro item do menu mais afastado do topo que o último da base.
+      paddingBottom: 12,
+      paddingTop: 12,
     },
     scrollView: {
       // A alça é sobreposta à borda direita do drawer. Reservar a mesma largura para o

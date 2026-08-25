@@ -250,7 +250,7 @@ async function createWindow() {
  * propósito - assim uma tela nunca aparece com resquício da anterior (gaveta aberta, rolagem
  * no meio, modal fechando).
  */
-async function captureScreens(win: BrowserWindow, planPath: string): Promise<void> {
+export async function captureScreens(win: BrowserWindow, planPath: string): Promise<void> {
   try {
     const plan: CapturePlan = JSON.parse(await fs.readFile(planPath, 'utf8'));
     await fs.mkdir(plan.outputDirectory, { recursive: true });
@@ -289,7 +289,7 @@ async function captureScreens(win: BrowserWindow, planPath: string): Promise<voi
  * A janela da captura não tem DevTools ao alcance, e uma tela que não sobe some em silêncio -
  * foi assim que apareceu o `initialRouteName` apontando para uma rota inexistente.
  */
-function attachRendererLog(win: BrowserWindow): void {
+export function attachRendererLog(win: BrowserWindow): void {
   win.webContents.on('console-message', (event) => console.log('[renderer]', event.message));
   win.webContents.on('render-process-gone', (_event, details) =>
     console.log('[renderer] morreu:', JSON.stringify(details)),
@@ -303,7 +303,11 @@ function attachRendererLog(win: BrowserWindow): void {
  * ignora eventos sintéticos disparados de dentro da página, então é isto ou nada. É também o
  * único ponto da captura que simula gente usando o app.
  */
-async function pressControl(win: BrowserWindow, label: string, waitMs: number): Promise<void> {
+export async function pressControl(
+  win: BrowserWindow,
+  label: string,
+  waitMs: number,
+): Promise<void> {
   const point = await win.webContents.executeJavaScript(`
     (() => {
       const rotulo = ${JSON.stringify(label)};
@@ -323,8 +327,20 @@ async function pressControl(win: BrowserWindow, label: string, waitMs: number): 
     console.warn(`[capture] controle "${label}" não encontrado; seguindo sem acionar.`);
     return;
   }
-  win.webContents.sendInputEvent({ type: 'mouseDown', x: point.x, y: point.y, button: 'left', clickCount: 1 });
-  win.webContents.sendInputEvent({ type: 'mouseUp', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  win.webContents.sendInputEvent({
+    type: 'mouseDown',
+    x: point.x,
+    y: point.y,
+    button: 'left',
+    clickCount: 1,
+  });
+  win.webContents.sendInputEvent({
+    type: 'mouseUp',
+    x: point.x,
+    y: point.y,
+    button: 'left',
+    clickCount: 1,
+  });
   await new Promise((resolve) => setTimeout(resolve, waitMs));
 }
 
@@ -333,7 +349,9 @@ async function pressControl(win: BrowserWindow, label: string, waitMs: number): 
  * tamanho ou de conteúdo (`UnknownVizError`), e o erro é transitório: tentar de novo um instante
  * depois resolve. Sem isto, uma execução inteira morre por causa de uma foto.
  */
-async function capturePageWithRetry(win: BrowserWindow): Promise<Electron.NativeImage> {
+export async function capturePageWithRetry(
+  win: BrowserWindow,
+): Promise<Electron.NativeImage> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
@@ -369,7 +387,7 @@ async function waitForFrame(win: BrowserWindow): Promise<void> {
  * Quando ela sai como um retângulo de uma cor só, o quadro veio antes da pintura - e é o
  * mesmo quadro em que faltam os rótulos do gráfico ao lado.
  */
-function isFullyPainted(image: Electron.NativeImage): boolean {
+export function isFullyPainted(image: Electron.NativeImage): boolean {
   const { width, height } = image.getSize();
   const drawer = image.crop({ x: 0, y: 0, width: Math.min(240, width), height });
   const pixels = drawer.toBitmap();
@@ -387,7 +405,7 @@ function isFullyPainted(image: Electron.NativeImage): boolean {
  * quando o banco subiu, as migrações rodaram e a história de exemplo foi instalada. Adivinhar
  * pelo texto da página, como esta função fazia antes, rendia fotos da tela de carregamento.
  */
-async function waitForShowcase(win: BrowserWindow): Promise<void> {
+export async function waitForShowcase(win: BrowserWindow): Promise<void> {
   await win.webContents.executeJavaScript(`
     new Promise((resolve, reject) => {
       const deadline = Date.now() + 90000;

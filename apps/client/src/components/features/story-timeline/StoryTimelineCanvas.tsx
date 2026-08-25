@@ -5,13 +5,13 @@ import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useTheme } from '@/src/theme';
-import type { StoryTimelineLayout } from '@/src/utils/storyTimelineLayout';
+import type { StoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import {
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
   TIMELINE_ROW_HEIGHT,
-} from '@/src/utils/storyTimelineLayout';
+} from '@keres/shared/graphs/storyTimelineLayout';
 
 interface Props {
   layout: StoryTimelineLayout;

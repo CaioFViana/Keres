@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
-import { getContrastTextColor } from '../../../../utils/colorUtils';
+import { getContrastTextColor } from '@keres/shared';
 
 export interface MultiSelectOption {
   label: string;

@@ -136,7 +136,7 @@ const SuggestionUsageScreen = () => {
           </View>
         ),
       });
-    }, [canEdit, catalogOnly, colors, navigation, service, storedId, t, userId, value]),
+    }, [canEdit, colors, navigation, service, storedId, t, userId, value]),
   );
 
   const sections = useMemo<UsageSection[]>(() => {

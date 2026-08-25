@@ -44,9 +44,9 @@ import {
   hasSceneGap,
   hasSceneUniverseDuration,
 } from '../../../utils/sceneTiming';
-import type { GraphEdge, GraphNode } from '../../../utils/storyGraphLayout';
-import { buildStoryGraphLayout } from '../../../utils/storyGraphLayout';
-import { renderStoryMapSvg } from '../../../utils/storyGraphSvg';
+import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
+import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';

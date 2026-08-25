@@ -25,9 +25,9 @@ import type {
   GraphLocationRelation,
   LocationGraphNode,
   LocationRelationKind,
-} from '../../utils/locationGraphLayout';
-import { buildLocationGraphLayout } from '../../utils/locationGraphLayout';
-import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
+} from '@keres/shared/graphs/locationGraphLayout';
+import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
+import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';

@@ -5,7 +5,7 @@ import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '../../../../hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
-import type { GraphNode, StoryGraphLayout } from '../../../../utils/storyGraphLayout';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 
 /**
  * Desenho interativo do mapa da história.

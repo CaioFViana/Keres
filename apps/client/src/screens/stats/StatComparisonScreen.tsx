@@ -20,9 +20,12 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { deliverSvgMap } from '../../utils/storyTransfer';
-import { formatStatValueDetailed, type StatNotation } from '../../utils/statLadder';
-import { buildStatRadarLayout, MIN_PRIMARY_STATS_FOR_CHART } from '../../utils/statRadarLayout';
-import { renderStatRadarSvg } from '../../utils/statRadarSvg';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
+import {
+  buildStatRadarLayout,
+  MIN_PRIMARY_STATS_FOR_CHART,
+} from '@keres/shared/graphs/statRadarLayout';
+import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
 import { resolveStatValue } from '../../utils/statValues';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<

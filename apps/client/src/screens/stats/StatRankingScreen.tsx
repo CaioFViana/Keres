@@ -16,7 +16,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import type { StatNotation } from '../../utils/statLadder';
+import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import { buildStatRanking } from '../../utils/statRanking';
 
 type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;

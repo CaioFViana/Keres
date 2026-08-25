@@ -15,9 +15,9 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { buildPlotCoverage } from '../../utils/plotCoverageLayout';
-import { renderPlotCoverageSvg } from '../../utils/plotCoverageSvg';
-import { buildChapterColors } from '../../utils/storyGraphLayout';
+import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
+import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 

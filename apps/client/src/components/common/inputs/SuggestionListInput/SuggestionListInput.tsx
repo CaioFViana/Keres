@@ -18,7 +18,7 @@ import type {
 import { createSuggestionService } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { getContrastTextColor } from '../../../../utils/colorUtils';
+import { getContrastTextColor } from '@keres/shared';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';

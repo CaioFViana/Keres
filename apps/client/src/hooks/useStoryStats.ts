@@ -13,7 +13,7 @@ import { createStatRelationService } from '../services/storymanagement/StatRelat
 import { createStatService } from '../services/storymanagement/StatService';
 import { createStatStrengthService } from '../services/storymanagement/StatStrengthService';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { resolveLadder, type StatTier } from '../utils/statLadder';
+import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { indexStatValues, type StatValueIndex } from '../utils/statValues';
 
 /**

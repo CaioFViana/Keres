@@ -1,8 +1,8 @@
-import { buildCharacterRelationGraphLayout } from '../../src/utils/characterRelationGraphLayout';
+import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import {
   renderCharacterRelationMapSvg,
   type CharacterRelationMapSvgOptions,
-} from '../../src/utils/characterRelationGraphSvg';
+} from '@keres/shared/graphs/characterRelationGraphSvg';
 
 const options = (
   overrides: Partial<CharacterRelationMapSvgOptions> = {},

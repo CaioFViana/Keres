@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { ThemeColors } from './ThemeColors';
+import type { ThemeColors } from '@keres/shared';
 
 export interface ThemeContextType {
   colors: ThemeColors;

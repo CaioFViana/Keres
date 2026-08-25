@@ -1,9 +1,9 @@
 import { Platform, StyleSheet } from 'react-native';
-import type { ThemeColors } from './ThemeColors';
+import type { ThemeColors } from '@keres/shared';
 
 // Compatibility re-export: color analysis stays in the pure utility module so it can be
 // shared by themed and non-themed components without an import cycle.
-export { isColorLight } from '../utils/colorUtils';
+export { isColorLight } from '@keres/shared';
 
 // Helper function to slightly saturate a hex color
 export const saturateColor = (hex: string, factor: number = 1.1): string => {

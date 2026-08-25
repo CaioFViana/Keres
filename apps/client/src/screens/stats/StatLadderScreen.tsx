@@ -20,7 +20,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
-import { generateNumericLadder, sortLadder, type StatTier } from '../../utils/statLadder';
+import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
 
 type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;

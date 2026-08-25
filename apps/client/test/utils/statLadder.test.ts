@@ -8,7 +8,7 @@ import {
   sortLadder,
   tierOf,
   type StatTier,
-} from '../../src/utils/statLadder';
+} from '@keres/shared/graphs/statLadder';
 
 /** A escada do enunciado: F em 0, C em 50, A em 400. */
 const LETTER_LADDER: StatTier[] = [

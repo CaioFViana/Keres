@@ -2,8 +2,8 @@ import {
   buildPresenceMatrixLayout,
   MATRIX_THREAD_GAP_DASH,
   type PresenceMatrixRow,
-} from '../../src/utils/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '../../src/utils/presenceMatrixSvg';
+} from '@keres/shared/graphs/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
 
 const scene = (id: string) => ({
   id,

@@ -2,6 +2,7 @@ import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { StorySchemaEntityType } from '@keres/shared';
 import {
   AttributeType,
+  deriveAttributeKey,
   encodeAttributeValue,
   explodeAttributeUsageValue,
   isSuggestionAttributeType,
@@ -26,7 +27,6 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-import { deriveAttributeKey } from '@keres/shared';
 import { createAttributeValueService } from './AttributeValueService';
 import { getEntityTable } from '../entityTableRegistry';
 

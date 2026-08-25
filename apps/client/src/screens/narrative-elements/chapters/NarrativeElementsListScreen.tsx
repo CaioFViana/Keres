@@ -385,7 +385,6 @@ const NarrativeElementsListScreen = () => {
     choices,
     favoriteFilterState,
     outlineChapters,
-    scenes,
     scenesWithFavoriteState,
     searchQuery,
     sortDirection,

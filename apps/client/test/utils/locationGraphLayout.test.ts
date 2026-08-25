@@ -6,7 +6,7 @@ import {
   type GraphLocation,
   type GraphLocationRelation,
   type LocationRelationKind,
-} from '../../src/utils/locationGraphLayout';
+} from '@keres/shared/graphs/locationGraphLayout';
 
 const location = (id: string, name = `Local ${id}`): GraphLocation => ({ id, name });
 

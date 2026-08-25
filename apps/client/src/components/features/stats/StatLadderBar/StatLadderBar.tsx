@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../../../theme';
-import type { StatTier } from '../../../../utils/statLadder';
-import { buildStatLadderBar } from '../../../../utils/statLadderBarLayout';
+import type { StatTier } from '@keres/shared/graphs/statLadder';
+import { buildStatLadderBar } from '@keres/shared/graphs/statLadderBarLayout';
 
 /**
  * A régua de tiers de um status: onde cada degrau começa e onde o valor do personagem cai.

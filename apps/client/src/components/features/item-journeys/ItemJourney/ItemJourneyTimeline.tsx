@@ -23,7 +23,7 @@ import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntity
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
-import { buildChapterColors } from '../../../../utils/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 
 interface ItemJourneyTimelineProps {
   item: ItemSelect;

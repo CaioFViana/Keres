@@ -7,7 +7,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { themeDisplayOptions } from '../../../../theme/palettes';
+import { themeDisplayOptions } from '@keres/shared';
 import { getLanguageOptions } from '../../../../utils/i18n';
 
 interface StoryFieldsFormProps {

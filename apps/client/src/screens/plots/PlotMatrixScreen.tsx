@@ -16,12 +16,12 @@ import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { getDistinctSeriesColor } from '../../utils/colorUtils';
+import { getDistinctSeriesColor } from '@keres/shared';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import type { PresenceMatrixRow } from '../../utils/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '../../utils/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '../../utils/presenceMatrixSvg';
-import { buildChapterColors } from '../../utils/storyGraphLayout';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 

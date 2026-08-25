@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
-import type { StatRadarLayout } from '../../../../utils/statRadarLayout';
+import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
 import { useTheme } from '../../../../theme';
 
 /**

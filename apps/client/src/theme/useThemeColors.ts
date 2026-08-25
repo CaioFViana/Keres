@@ -1,6 +1,6 @@
 import { useThemeStore } from '../state/themeStore';
-import { themes } from './palettes';
-import type { ThemeColors } from './ThemeColors';
+import { themes } from '@keres/shared';
+import type { ThemeColors } from '@keres/shared';
 
 /**
  * As cores de uma paleta **arbitrária**, respeitando o claro/escuro atual - para mostrar a cara

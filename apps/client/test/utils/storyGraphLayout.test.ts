@@ -1,4 +1,4 @@
-import { wrapLabel } from '../../src/utils/storyGraphLayout';
+import { wrapLabel } from '@keres/shared/graphs/storyGraphLayout';
 
 describe('wrapLabel', () => {
   it('normalizes whitespace and keeps short labels intact', () => {

@@ -6,11 +6,11 @@ import Select from '../../../common/inputs/Select/Select';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import type { StoryStatsData } from '../../../../hooks/useStoryStats';
 import { useTheme } from '../../../../theme';
-import { formatStatValueDetailed, type StatNotation } from '../../../../utils/statLadder';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
-} from '../../../../utils/statRadarLayout';
+} from '@keres/shared/graphs/statRadarLayout';
 import { resolveStatValue } from '../../../../utils/statValues';
 import { StatRadarChart } from '../StatRadarChart/StatRadarChart';
 

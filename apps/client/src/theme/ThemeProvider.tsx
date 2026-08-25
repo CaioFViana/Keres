@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import type { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
-import { themes } from './palettes';
+import { themes } from '@keres/shared';
 import { ThemeContext } from './ThemeContext';
 
 interface ThemeProviderProps {

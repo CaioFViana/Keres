@@ -226,9 +226,11 @@ const StorySelectionScreen = () => {
     navigation.replace('MainSystem', { storyId: story.id });
   };
 
-  const handleCreateNewStory = () => {
+  // `useCallback` para poder entrar nas dependências do efeito do cabeçalho abaixo: como
+  // função solta, ela nasce de novo a cada render e faria o efeito rodar sempre.
+  const handleCreateNewStory = useCallback(() => {
     navigation.navigate('StoryForm', {});
-  };
+  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -245,7 +247,7 @@ const StorySelectionScreen = () => {
           </View>
         ),
       });
-    }, [colors.text, navigation, t]),
+    }, [colors.text, handleCreateNewStory, navigation, t]),
   );
 
   const handleEditStory = (storyId: string) => {

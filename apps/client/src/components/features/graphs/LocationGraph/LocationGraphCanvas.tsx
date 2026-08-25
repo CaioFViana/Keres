@@ -5,7 +5,10 @@ import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '../../../../hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
-import type { LocationGraphLayout, LocationGraphNode } from '../../../../utils/locationGraphLayout';
+import type {
+  LocationGraphLayout,
+  LocationGraphNode,
+} from '@keres/shared/graphs/locationGraphLayout';
 
 /**
  * Desenho interativo do grafo de estrutura de Locations. Mesma arquitetura dos outros dois

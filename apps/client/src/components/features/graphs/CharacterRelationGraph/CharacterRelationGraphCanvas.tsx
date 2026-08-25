@@ -8,7 +8,7 @@ import { useTheme } from '../../../../theme';
 import type {
   CharacterRelationGraphLayout,
   RelationGraphNode,
-} from '../../../../utils/characterRelationGraphLayout';
+} from '@keres/shared/graphs/characterRelationGraphLayout';
 
 /**
  * Desenho interativo do mapa de relações entre personagens.

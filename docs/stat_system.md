@@ -123,11 +123,12 @@ imediato em vez de conflito de sync opaco horas depois.
 
 ## 6. Onde está o quê
 
-- **Matemática pura** (sem React, sem banco): `apps/client/src/utils/statLadder.ts` (escada),
-  `statValues.ts` (herança), `statRadarLayout.ts` (geometria), `statRanking.ts` (tier list),
-  `statRadarSvg.ts` (arquivo exportado), `statLadderBarLayout.ts` (a régua de tiers). Mesma
-  disciplina dos layouts de grafo do app: a tela interativa e o SVG exportado consomem a mesma
-  geometria e nunca discordam.
+- **Matemática pura** (sem React, sem banco): `packages/shared/graphs/statLadder.ts` (escada),
+  `statRadarLayout.ts` (geometria), `statRadarSvg.ts` (arquivo exportado) e
+  `statLadderBarLayout.ts` (a régua de tiers), mais `apps/client/src/utils/statValues.ts`
+  (herança) e `statRanking.ts` (tier list). Mesma disciplina dos layouts de grafo do app: a tela
+  interativa e o SVG exportado consomem a mesma geometria e nunca discordam - e por serem
+  compartilhados, a vitrine do site desenha exatamente os mesmos gráficos.
 - **Telas**: `apps/client/src/screens/stats/` - lista, formulário, escada, comparação e ranking,
   todas sob a entrada "Status" do menu da história (`navigation/StatsStack.tsx`).
 - **No personagem**: painel no detalhe (`components/features/stats/CharacterStatPanel`), e no

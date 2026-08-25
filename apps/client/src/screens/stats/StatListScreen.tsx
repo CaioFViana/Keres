@@ -19,7 +19,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
-import { formatStatValue, type StatNotation } from '../../utils/statLadder';
+import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
@@ -133,7 +133,7 @@ const StatListScreen = () => {
             )
           : undefined,
       });
-    }, [canEdit, colors.text, data.stats.length, handleCreate, navigation, t]),
+    }, [canEdit, colors.text, handleCreate, navigation, t]),
   );
 
   if (!storyId) {

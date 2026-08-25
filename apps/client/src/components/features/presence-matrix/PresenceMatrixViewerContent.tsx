@@ -23,12 +23,12 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import type { PresenceMatrixRow } from '../../../utils/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '../../../utils/presenceMatrixLayout';
-import { buildChapterColors } from '../../../utils/storyGraphLayout';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../../utils/storyTransfer';
-import { renderPresenceMatrixSvg } from '../../../utils/presenceMatrixSvg';
-import { getDistinctSeriesColor } from '../../../utils/colorUtils';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
+import { getDistinctSeriesColor } from '@keres/shared';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 

@@ -1,6 +1,6 @@
-import type { StatTier } from '../../src/utils/statLadder';
-import { buildStatRadarLayout, type RadarStat } from '../../src/utils/statRadarLayout';
-import { renderStatRadarSvg, type StatRadarSvgOptions } from '../../src/utils/statRadarSvg';
+import type { StatTier } from '@keres/shared/graphs/statLadder';
+import { buildStatRadarLayout, type RadarStat } from '@keres/shared/graphs/statRadarLayout';
+import { renderStatRadarSvg, type StatRadarSvgOptions } from '@keres/shared/graphs/statRadarSvg';
 
 const LADDER: StatTier[] = [
   { label: 'F', minValue: 0 },

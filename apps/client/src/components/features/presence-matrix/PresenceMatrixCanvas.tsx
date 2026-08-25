@@ -5,7 +5,7 @@ import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '../../../hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../theme';
-import type { PresenceMatrixLayout } from '../../../utils/presenceMatrixLayout';
+import type { PresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import {
   buildMatrixThreadSegments,
   MATRIX_CELL_INSET,
@@ -17,7 +17,7 @@ import {
   MATRIX_THREAD_OPACITY,
   MATRIX_THREAD_WIDTH,
   matrixRowCenterY,
-} from '../../../utils/presenceMatrixLayout';
+} from '@keres/shared/graphs/presenceMatrixLayout';
 
 interface Props {
   layout: PresenceMatrixLayout;

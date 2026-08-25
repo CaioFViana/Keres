@@ -13,7 +13,11 @@ if (process.env.DATABASE_DRIVER === 'sqlite') {
   const { join } = await import('node:path');
   process.env.DATABASE_URL ??= `file:${join(tmpdir(), 'keres-test.db')}`;
 } else {
-  process.env.DATABASE_URL ??= 'postgres://keres_test:keres_test@localhost:45432/keres_test';
+  // A porta é a mesma do `docker-compose.test.yml`, e sai do mesmo lugar: `KERES_TEST_DB_PORT`.
+  // O padrão 45432 existe porque a faixa 55389-55488 fica reservada pelo Windows em máquinas
+  // com Hyper-V/WSL, e o Docker não consegue publicar nela.
+  const port = process.env.KERES_TEST_DB_PORT ?? '45432';
+  process.env.DATABASE_URL ??= `postgres://keres_test:keres_test@localhost:${port}/keres_test`;
 }
 process.env.JWT_SECRET ??= 'test-jwt-secret-that-is-at-least-thirty-two-characters';
 process.env.JWT_SECRET_REFRESH ??= 'test-refresh-secret-that-is-at-least-thirty-two-characters';

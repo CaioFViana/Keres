@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
-import { getContrastTextColor, isValidHexColor } from '../../../../utils/colorUtils';
+import { getContrastTextColor, isValidHexColor } from '@keres/shared';
 
 interface Tag {
   id: string;

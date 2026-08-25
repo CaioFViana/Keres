@@ -1,4 +1,4 @@
-import type { ThemeColors } from '../../../../theme/ThemeColors';
+import type { ThemeColors } from '@keres/shared';
 
 /**
  * The collapsible-header + rounded-row look shared by every "related entities" section

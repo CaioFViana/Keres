@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Animated, Easing, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/src/theme';
-import { getContrastTextColor } from '@/src/utils/colorUtils';
+import { getContrastTextColor } from '@keres/shared';
 
 interface ThemedSwitchProps {
   value: boolean;

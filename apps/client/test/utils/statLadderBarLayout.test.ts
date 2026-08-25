@@ -1,5 +1,5 @@
-import { OVERSHOOT_RATIO, type StatTier } from '../../src/utils/statLadder';
-import { buildStatLadderBar } from '../../src/utils/statLadderBarLayout';
+import { OVERSHOOT_RATIO, type StatTier } from '@keres/shared/graphs/statLadder';
+import { buildStatLadderBar } from '@keres/shared/graphs/statLadderBarLayout';
 
 /** A escada do enunciado: F em 0, C em 50, A em 400. */
 const LADDER: StatTier[] = [

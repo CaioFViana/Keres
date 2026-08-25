@@ -18,11 +18,11 @@ import {
   formatSceneGap,
   formatSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
-import { buildChapterColors } from '@/src/utils/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
-import type { StoryTimelineScaleMode } from '@/src/utils/storyTimelineLayout';
-import { buildStoryTimelineLayout } from '@/src/utils/storyTimelineLayout';
-import { renderStoryTimelineSvg } from '@/src/utils/storyTimelineSvg';
+import type { StoryTimelineScaleMode } from '@keres/shared/graphs/storyTimelineLayout';
+import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
+import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';

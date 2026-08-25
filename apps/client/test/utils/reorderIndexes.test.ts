@@ -1,4 +1,4 @@
-import { buildReorderItems } from '../../src/utils/reorderIndexes';
+import { buildReorderItems } from '@keres/shared';
 
 /**
  * A regra que o servidor aplica em `StorySyncHandler`/`ChapterSyncHandler` antes de aceitar uma

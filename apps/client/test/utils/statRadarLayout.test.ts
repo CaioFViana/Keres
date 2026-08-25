@@ -1,9 +1,9 @@
-import { OVERSHOOT_RATIO, type StatTier } from '../../src/utils/statLadder';
+import { OVERSHOOT_RATIO, type StatTier } from '@keres/shared/graphs/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
   type RadarStat,
-} from '../../src/utils/statRadarLayout';
+} from '@keres/shared/graphs/statRadarLayout';
 
 const LADDER: StatTier[] = [
   { label: 'F', minValue: 0 },

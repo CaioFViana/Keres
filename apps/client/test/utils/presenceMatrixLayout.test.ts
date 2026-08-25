@@ -6,7 +6,7 @@ import {
   MATRIX_PADDING,
   MATRIX_SCENE_WIDTH,
   type PresenceMatrixRow,
-} from '../../src/utils/presenceMatrixLayout';
+} from '@keres/shared/graphs/presenceMatrixLayout';
 
 const scene = (id: string) => ({
   id,

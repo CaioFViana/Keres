@@ -4,7 +4,7 @@ import {
   tierOf,
   type StatNotation,
   type StatTier,
-} from './statLadder';
+} from '@keres/shared/graphs/statLadder';
 import { resolveStatValue, type StatValueIndex } from './statValues';
 
 /**

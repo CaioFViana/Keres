@@ -60,7 +60,7 @@ import { CharacterStatPanel } from '../../components/features/stats/CharacterSta
 import { ModeManager } from '../../components/features/stats/ModeManager/ModeManager';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { useStoryStore } from '../../state/storyStore';
-import type { StatNotation } from '../../utils/statLadder';
+import type { StatNotation } from '@keres/shared/graphs/statLadder';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {

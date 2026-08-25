@@ -5,7 +5,7 @@ import {
   NODE_WIDTH,
   type GraphCharacter,
   type GraphRelation,
-} from '../../src/utils/characterRelationGraphLayout';
+} from '@keres/shared/graphs/characterRelationGraphLayout';
 
 const character = (id: string, name = `Personagem ${id}`): GraphCharacter => ({ id, name });
 

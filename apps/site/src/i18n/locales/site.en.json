@@ -333,7 +333,7 @@
     "lead": "Open a story and the side menu lists every kind of element. Lists with search, filters, and favorites; records with relationships; graphs when space or choices ask for a map."
   },
   "showcase": {
-    "title": "See the app, not a mock-up",
+    "title": "See the app",
     "lead": "Every picture below is a screenshot of Keres running, with one of the example stories that ship with the app open in it. Open the same story and you get the same screens.",
     "note": "Six example stories come with the app. Each screen here is from one of them, follows this page's language and light or dark setting, and opens larger when you click it.",
     "items": {

@@ -40,6 +40,9 @@ const TagList: React.FC<TagListProps> = ({
       flexWrap: 'wrap',
       marginTop: isChip ? 10 : 8,
       marginBottom: isChip ? 10 : 0,
+      // Espaço entre etiquetas no contêiner: em cada etiqueta, a última linha ainda cobrava a
+      // margem de baixo e sobrava um vão morto sob a lista.
+      gap: isChip ? 8 : 5,
     },
     chip: {
       flexDirection: 'row',
@@ -47,8 +50,6 @@ const TagList: React.FC<TagListProps> = ({
       borderRadius: isChip ? 15 : 5,
       paddingVertical: isChip ? 5 : 2,
       paddingHorizontal: isChip ? 10 : 6,
-      marginRight: isChip ? 8 : 5,
-      marginBottom: isChip ? 8 : 5,
     },
     chipText: {
       fontSize: isChip ? 14 : 12,

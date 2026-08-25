@@ -259,7 +259,6 @@ const GenericFilterSortList = <T,>({
                   overflow: 'hidden',
                   justifyContent: 'center',
                 }}
-                pillStyle={{ marginBottom: 0 }}
               />
             ) : (
               <Select

@@ -90,14 +90,16 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           flexDirection: 'row',
           flexWrap: 'wrap',
           marginTop: 10,
+          // Espaço entre selos no contêiner: em cada selo, a última linha ainda cobrava a
+          // margem de baixo e sobrava um vão morto sob a fileira.
+          columnGap: 8,
+          rowGap: 6,
         },
         badge: {
           borderRadius: 12,
           borderWidth: 1,
           paddingHorizontal: 10,
           paddingVertical: 3,
-          marginRight: 8,
-          marginBottom: 6,
         },
         badgeText: {
           fontSize: 11,

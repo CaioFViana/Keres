@@ -195,14 +195,16 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       alignItems: 'center',
       borderColor: colors.border,
       borderWidth: 1,
+      // O espaçamento entre pílulas é do contêiner, não de cada pílula. Com margem em cada
+      // uma, a última ainda cobrava a margem de baixo: o campo crescia ao escolher a primeira
+      // opção e a pílula ficava acima do centro, com uma sobra de 8px embaixo dela.
+      gap: 8,
     },
     pill: {
       flexDirection: 'row',
       borderRadius: 15,
       paddingVertical: 5,
       paddingHorizontal: 10,
-      marginRight: 8,
-      marginBottom: 8,
       alignItems: 'center',
     },
     pillText: {
@@ -319,6 +321,14 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       fontSize: 16,
       color: colors.text,
     },
+    // Espaço do visto sempre reservado: aparecendo só quando marcado, ele empurrava a linha
+    // uns pixels para baixo, e a lista inteira dançava a cada escolha.
+    optionCheck: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     noOptionsText: {
       padding: 15,
       color: colors.textSecondary,
@@ -343,6 +353,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
             return (
               <View
                 key={option.value}
+                testID={`multiselect-pill-${option.value}`}
                 style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
               >
                 <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
@@ -458,9 +469,11 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                       )}
                       <Text style={styles.optionText}>{option.label}</Text>
                     </View>
-                    {selectedValues.includes(option.value) && (
-                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                    )}
+                    <View testID={`multiselect-check-${option.value}`} style={styles.optionCheck}>
+                      {selectedValues.includes(option.value) && (
+                        <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                      )}
+                    </View>
                   </TouchableOpacity>
                 );
               })

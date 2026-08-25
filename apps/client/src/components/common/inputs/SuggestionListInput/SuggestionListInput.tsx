@@ -151,14 +151,15 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       flexWrap: 'wrap',
       alignItems: 'center',
       marginBottom: 6,
+      // Espaço entre pílulas no contêiner: em cada pílula, a última linha ainda cobrava a
+      // margem de baixo e sobrava um vão morto sob a fileira.
+      gap: 8,
     },
     pill: {
       flexDirection: 'row',
       borderRadius: 15,
       paddingVertical: 5,
       paddingHorizontal: 10,
-      marginRight: 8,
-      marginBottom: 8,
       alignItems: 'center',
       backgroundColor: pillBackgroundColor,
     },
@@ -218,6 +219,14 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       marginLeft: 8,
+    },
+    // Mesmo motivo do campo de opções: o visto reservado impede a linha de crescer ao ser
+    // marcada.
+    suggestionCheck: {
+      width: 20,
+      height: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     suggestionCount: {
       color: colors.textSecondary,
@@ -331,7 +340,9 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
                   <Text style={styles.suggestionText}>{item[0]}</Text>
                   <View style={styles.suggestionMeta}>
                     {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
-                    {selected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    <View style={styles.suggestionCheck}>
+                      {selected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    </View>
                   </View>
                 </TouchableOpacity>
               );

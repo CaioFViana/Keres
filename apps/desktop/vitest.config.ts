@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
-      // Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
+      // A floor, not a target - see the ratchet rule in TESTING_PLAN.md.
       thresholds: coverageThresholds.desktop,
     },
   },

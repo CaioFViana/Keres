@@ -1,19 +1,19 @@
 import { AVATAR_FALLBACK_PALETTE } from '../metadata/avatar';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
 /**
- * Posicionamento do grafo de uma história: cenas viram nós, escolhas viram arestas.
+ * Positioning for a story's graph: scenes become nodes, choices become edges.
  *
- * Este módulo é puro de propósito - nada de React, de banco ou de plataforma. Ele recebe
- * cenas/escolhas/capítulos e devolve coordenadas prontas, o que permite ter *dois* renderers
- * sobre o mesmo resultado (a tela interativa e o arquivo SVG exportado) sem duplicar a parte
- * difícil, e permite testar o posicionamento sem subir o app.
+ * This module is pure on purpose - no React, no database, no platform. It receives
+ * scenes/choices/chapters and returns finished coordinates, which allows *two* renderers over the
+ * same result (the interactive screen and the exported SVG file) without duplicating the hard part,
+ * and allows testing the positioning without starting the app.
  *
- * A escolha do algoritmo importa: um layout de força (o que a versão anterior usava) chuta
- * posições e relaxa até parar, então em grafo pequeno com nós grandes ele empilha tudo no
- * meio. Aqui o layout é em camadas (estilo Sugiyama): a camada de um nó vem da distância até
- * o início da história, e dentro da camada os nós ocupam colunas que nunca se sobrepõem - por
- * construção, não por sorte. Como efeito colateral o desenho é determinístico: a mesma
- * história gera sempre o mesmo mapa, então exportar duas vezes dá o mesmo arquivo.
+ * The choice of algorithm matters: a force-directed layout (what the previous version used) guesses
+ * positions and relaxes until it settles, so on a small graph with large nodes it piles everything
+ * in the middle. Here the layout is layered (Sugiyama style): a node's layer comes from its
+ * distance to the start of the story, and within a layer the nodes take columns that never overlap
+ * - by construction, not by luck. As a side effect the drawing is deterministic: the same story
+ * always produces the same map, so exporting twice gives the same file.
  */
 
 /** Cena, reduzida ao que o layout precisa (SceneSelect satisfaz esta forma). */
@@ -39,7 +39,7 @@ export interface GraphChoice {
   text: string;
 }
 
-/** Capítulo, reduzido ao que o layout precisa (ChapterSelect satisfaz esta forma). */
+/** A chapter, reduced to what the layout needs (ChapterSelect satisfies this shape). */
 export interface GraphChapter {
   id: string;
   name: string;
@@ -48,33 +48,33 @@ export interface GraphChapter {
 
 export const NODE_WIDTH = 168;
 export const NODE_HEIGHT = 72;
-/** Margem em volta de tudo que é desenhado, arestas incluídas. */
+/** Margin around everything that is drawn, edges included. */
 export const GRAPH_PADDING = 28;
-/** Espaço horizontal entre nós vizinhos na mesma camada. */
+/** Horizontal space between neighbouring nodes in the same layer. */
 const COLUMN_GAP = 34;
-/** Espaço vertical entre camadas - generoso porque é onde as arestas curvam. */
+/** Vertical space between layers - generous because that is where the edges curve. */
 const LAYER_GAP = 92;
-/** Separação entre trechos da história que não se conectam entre si. */
+/** Separation between stretches of the story that do not connect to each other. */
 const COMPONENT_GAP = 72;
 const COLUMN_STEP = NODE_WIDTH + COLUMN_GAP;
 const LAYER_STEP = NODE_HEIGHT + LAYER_GAP;
 
 const LABEL_MAX_LINES = 2;
-/** Caracteres por linha que caibam em NODE_WIDTH na fonte usada nos nós. */
+/** Characters per line that fit within NODE_WIDTH in the font used on the nodes. */
 const LABEL_MAX_CHARS = 20;
 
 const ARROW_LENGTH = 11;
 const ARROW_HALF_WIDTH = 5.5;
-/** Barriga do laço de uma cena que aponta para si mesma. */
+/** Belly of the loop of a scene that points at itself. */
 const SELF_LOOP_BULGE = 46;
 
 /**
- * Cores de capítulo escolhidas para funcionar sobre fundo claro *e* escuro.
+ * Chapter colours chosen to work on a light *and* a dark background.
  *
- * Puxar do tema daria cores mais integradas, mas o mapa exportado sai do app e é visto em
- * qualquer lugar; daí saturação média em vez de tons extremos.
+ * Pulling from the theme would give more integrated colours, but the exported map leaves the app and
+ * is seen anywhere; hence medium saturation instead of extreme tones.
  */
-/** A mesma paleta que serve de reserva para avatares - uma cópia só, em `@keres/shared`. */
+/** The same palette that serves as a fallback for avatars - a single copy, in `@keres/shared`. */
 export const CHAPTER_PALETTE = AVATAR_FALLBACK_PALETTE;
 
 export interface GraphPoint {
@@ -92,7 +92,7 @@ export interface GraphNode {
   chapterColor: string;
   isStart: boolean;
   isFinish: boolean;
-  /** Distância em camadas até o começo da história. */
+  /** Distance in layers to the beginning of the story. */
   layer: number;
   x: number;
   y: number;
@@ -103,11 +103,11 @@ export interface GraphNode {
 }
 
 /**
- * `forward` desce uma ou mais camadas (o fluxo normal), `lateral` liga cenas da mesma camada,
- * `backward` volta para uma cena anterior e `self` é a cena que aponta para si mesma.
+ * `forward` goes down one or more layers (the normal flow), `lateral` links scenes in the same
+ * layer, `backward` goes back to an earlier scene and `self` is a scene pointing at itself.
  *
- * A distinção existe porque um retorno desenhado como as outras arestas se perde no meio do
- * mapa, e retorno é justamente o que o autor de uma história ramificada mais precisa ver.
+ * The distinction exists because a return drawn like the other edges gets lost in the middle of the
+ * map, and returns are exactly what the author of a branching story most needs to see.
  */
 export type GraphEdgeKind = 'forward' | 'lateral' | 'backward' | 'self';
 
@@ -118,11 +118,11 @@ export interface GraphEdge {
   targetId: string;
   label: string;
   kind: GraphEdgeKind;
-  /** `d` de um path SVG - uma única curva cúbica. */
+  /** An SVG path's `d` - a single cubic curve. */
   path: string;
-  /** Triângulo da ponta, em coordenadas absolutas, pronto para `points`. */
+  /** The tip's triangle, in absolute coordinates, ready for `points`. */
   arrowPoints: string;
-  /** Meio da curva, onde o texto da escolha é ancorado. */
+  /** Middle of the curve, where the choice's text is anchored. */
   labelPosition: GraphPoint;
   color: string;
 }
@@ -137,24 +137,24 @@ export interface GraphChapterLegendEntry {
 export interface StoryGraphLayout {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  /** Tamanho total do desenho, já com as margens. */
+  /** Total size of the drawing, margins included. */
   width: number;
   height: number;
   chapters: GraphChapterLegendEntry[];
-  /** Escolhas ignoradas porque apontam para uma cena que não existe mais. */
+  /** Choices ignored because they point at a scene that no longer exists. */
   danglingChoiceCount: number;
   hasBackwardEdges: boolean;
   detachedSceneCount: number;
 }
 
-/** Nó em construção: guarda as ligações e a posição sendo calculada. */
+/** A node under construction: it holds the links and the position being computed. */
 interface WorkNode {
   scene: GraphScene;
   chapterIndex: number;
   outgoing: WorkEdge[];
   incoming: WorkEdge[];
   layer: number;
-  /** Índice dentro da camada; define a ordem, não a posição final. */
+  /** Index within the layer; it defines the order, not the final position. */
   order: number;
   x: number;
   component: number;
@@ -165,10 +165,10 @@ interface WorkEdge {
   source: WorkNode;
   target: WorkNode;
   /**
-   * Aresta que fecha um ciclo, detectada na busca em profundidade.
+   * An edge that closes a cycle, detected during the depth-first search.
    *
-   * Precisa ficar fora do cálculo de camadas: história ramificada tem volta ("tentar de
-   * novo", "voltar à sala"), e um ciclo faria a atribuição de camadas nunca terminar.
+   * It has to stay out of the layer computation: a branching story has returns ("try again", "back to
+   * the room"), and a cycle would make layer assignment never finish.
    */
   closesCycle: boolean;
 }
@@ -188,7 +188,7 @@ interface PlacedEdge {
   curve: Cubic;
 }
 
-/** Quebra o nome em linhas para caber no nó, com "…" quando não cabe. */
+/** Breaks the name into lines to fit the node, with "…" when it does not fit. */
 export function wrapLabel(
   text: string,
   maxChars = LABEL_MAX_CHARS,
@@ -217,7 +217,7 @@ export function wrapLabel(
       current = '';
       continue;
     }
-    // Palavra sozinha maior que a linha inteira (nome sem espaços): corta na força.
+    // A single word longer than the whole line (a name with no spaces): cut it by force.
     lines.push(word.slice(0, maxChars));
     cutMidWord = true;
     wordIndex += 1;
@@ -234,7 +234,7 @@ export function wrapLabel(
   return lines.length > 0 ? lines : [''];
 }
 
-/** Monta o layout completo. Devolve um grafo vazio quando não há cenas. */
+/** Builds the complete layout. Returns an empty graph when there are no scenes. */
 export function buildStoryGraphLayout(
   scenes: GraphScene[],
   choices: GraphChoice[],
@@ -289,8 +289,8 @@ export function buildStoryGraphLayout(
   }
 
   const components = findComponents(allNodes);
-  // Uma cena que nenhuma escolha alcança não tem lugar natural no fluxo. Essas vão para uma
-  // grade no fim do mapa em vez de virarem N "histórias" de um nó só espalhadas na horizontal.
+  // A scene no choice reaches has no natural place in the flow. Those go to a grid at the end of the
+  // map instead of becoming N single-node "stories" spread out horizontally.
   const flows = components.filter((component) => component.length > 1);
   const detached = components.filter((component) => component.length === 1).flat();
 
@@ -334,8 +334,8 @@ export function buildStoryGraphLayout(
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const placedEdges = placeEdges(workEdges, nodesById, direction);
 
-  // As curvas de retorno e os laços saem para fora dos nós, então a caixa do desenho só pode
-  // ser fechada depois de conhecê-las - senão o mapa exportado corta as voltas da história.
+  // Return curves and loops go outside the nodes, so the drawing's box can only be closed after they
+  // are known - otherwise the exported map cuts off the story's returns.
   const offset = normalizeToPadding(nodes, placedEdges);
   const labelAnchors = spreadLabelAnchors(placedEdges);
 
@@ -353,7 +353,7 @@ export function buildStoryGraphLayout(
   };
 }
 
-/** Gira o fluxo, preservando espaços adequados para cartões que não são quadrados. */
+/** Rotates the flow, preserving spacing appropriate for cards that are not square. */
 function orientNodesLeftToRight(nodes: GraphNode[]): void {
   const horizontalLayerStep = NODE_WIDTH + LAYER_GAP;
   const verticalColumnStep = NODE_HEIGHT + COLUMN_GAP;
@@ -400,7 +400,7 @@ function buildLegend(
     }));
 }
 
-/** Componentes ligados, ignorando a direção das arestas. */
+/** Connected components, ignoring the direction of the edges. */
 function findComponents(nodes: WorkNode[]): WorkNode[][] {
   const components: WorkNode[][] = [];
 
@@ -430,11 +430,11 @@ function findComponents(nodes: WorkNode[]): WorkNode[][] {
 }
 
 /**
- * Camada de cada nó = maior caminho desde uma cena inicial.
+ * Each node's layer = the longest path from a starting scene.
  *
- * O caminho *mais longo* (e não o mais curto) é o que garante que nenhuma aresta do fluxo
- * aponte para cima: se A leva a B, B fica em uma camada estritamente maior. É isso que faz o
- * mapa ser lido de cima para baixo, como a história é lida.
+ * The *longest* path (rather than the shortest) is what guarantees no flow edge points upwards: if A
+ * leads to B, B lands on a strictly greater layer. That is what makes the map read from top to
+ * bottom, the way the story is read.
  */
 function assignLayers(component: WorkNode[]): void {
   markCycleClosingEdges(component);
@@ -463,9 +463,9 @@ function assignLayers(component: WorkNode[]): void {
 
   if (processed === component.length) return;
 
-  // Rede de segurança: se sobrou alguém (só aconteceria se a detecção de ciclo deixasse algo
-  // passar), põe o nó abaixo do maior antecessor já resolvido, em vez de deixá-lo na camada 0
-  // sobrepondo o começo da história.
+  // Safety net: if anyone is left over (which would only happen if cycle detection let something
+  // through), the node is put below the highest already-resolved predecessor, instead of being left on
+  // layer 0 overlapping the beginning of the story.
   for (const node of component) {
     if (pendingIncoming.get(node) === 0) continue;
     const resolvedPredecessors = node.incoming
@@ -477,18 +477,18 @@ function assignLayers(component: WorkNode[]): void {
 }
 
 /**
- * Marca as arestas que voltam para uma cena já visitada no caminho atual.
+ * Marks the edges that go back to a scene already visited on the current path.
  *
- * Busca em profundidade iterativa (e não recursiva) porque uma história linear longa é uma
- * corrente de centenas de cenas, e recursão nessa profundidade estoura a pilha no aparelho
- * do usuário muito antes de estourar em qualquer teste.
+ * An iterative (not recursive) depth-first search, because a long linear story is a chain of hundreds
+ * of scenes, and recursion at that depth blows the stack on the user's device long before it blows
+ * in any test.
  */
 function markCycleClosingEdges(component: WorkNode[]): void {
   const state = new Map<WorkNode, 'unvisited' | 'onPath' | 'done'>();
   for (const node of component) state.set(node, 'unvisited');
 
-  // Começar pelas cenas iniciais faz as voltas serem detectadas onde o autor as enxerga: a
-  // aresta "de volta ao começo" é a que fecha o ciclo, não a que segue a história.
+  // Starting from the initial scenes makes the returns be detected where the author sees them: the
+  // "back to the beginning" edge is the one that closes the cycle, not the one that follows the story.
   const roots = [
     ...component.filter((node) => node.scene.isStart),
     ...component.filter((node) => !node.scene.isStart && node.incoming.length === 0),
@@ -537,11 +537,11 @@ function groupByLayer(component: WorkNode[]): WorkNode[][] {
 }
 
 /**
- * Ordena os nós dentro de cada camada para reduzir cruzamentos de arestas.
+ * Orders the nodes within each layer to reduce edge crossings.
  *
- * Heurística do baricentro: cada nó quer ficar na média das posições dos vizinhos da camada
- * adjacente. Alternar descida e subida algumas vezes converge rápido e é barato - minimizar
- * cruzamentos de verdade é NP-difícil e não valeria o custo numa tela de celular.
+ * The barycentre heuristic: each node wants to sit at the average of its neighbours' positions in
+ * the adjacent layer. Alternating downward and upward passes a few times converges quickly and is
+ * cheap - truly minimising crossings is NP-hard and would not be worth the cost on a phone screen.
  */
 function orderWithinLayers(layers: WorkNode[][]): void {
   for (let pass = 0; pass < 4; pass += 1) {
@@ -572,12 +572,12 @@ function orderWithinLayers(layers: WorkNode[][]): void {
 }
 
 /**
- * Converte a ordem dentro da camada em coordenadas x.
+ * Turns the order within a layer into x coordinates.
  *
- * Só distribuir em colunas fixas já evitaria sobreposição, mas deixaria correntes lineares em
- * ziguezague. As passadas de alinhamento puxam cada nó para a média dos vizinhos e depois
- * reimpõem o espaçamento mínimo - as cenas em sequência acabam alinhadas em coluna, que é o
- * que faz o mapa parecer desenhado à mão em vez de gerado.
+ * Merely spreading nodes across fixed columns would already avoid overlap, but it would leave linear
+ * chains zigzagging. The alignment passes pull each node towards its neighbours' average and then
+ * reimpose the minimum spacing - scenes in sequence end up aligned in a column, which is what makes
+ * the map look hand-drawn rather than generated.
  */
 function assignHorizontalPositions(layers: WorkNode[][]): void {
   for (const layer of layers) {
@@ -614,7 +614,7 @@ function sweepOrder(length: number, goingDown: boolean): number[] {
   return goingDown ? indices : indices.reverse();
 }
 
-/** Vizinhos de `node` que estão exatamente na camada `layerIndex`, ignorando ciclos. */
+/** Neighbours of `node` that are exactly on layer `layerIndex`, ignoring cycles. */
 function neighboursInLayer(node: WorkNode, incoming: boolean, layerIndex: number): WorkNode[] {
   return (incoming ? node.incoming : node.outgoing)
     .filter((edge) => !edge.closesCycle)
@@ -623,11 +623,12 @@ function neighboursInLayer(node: WorkNode, incoming: boolean, layerIndex: number
 }
 
 /**
- * Aproxima os nós das posições desejadas sem quebrar a ordem nem o espaçamento mínimo.
+ * Brings the nodes closer to their desired positions without breaking the order or the minimum
+ * spacing.
  *
- * A varredura só empurra para a direita, então a camada inteira sairia deslocada em relação
- * ao que os vizinhos pediam; devolver o bloco pela diferença das médias preserva todos os
- * espaçamentos e mantém a camada centrada onde ela deveria estar.
+ * The sweep only pushes to the right, so the whole layer would end up displaced relative to what the
+ * neighbours asked for; shifting the block back by the difference of the averages preserves every
+ * spacing and keeps the layer centred where it should be.
  */
 function applyWithMinimumSpacing(layer: WorkNode[], desired: number[]): void {
   if (layer.length === 0) return;
@@ -649,10 +650,10 @@ function average(values: number[]): number {
 }
 
 /**
- * Grade para as cenas que nenhuma escolha alcança, abaixo do fluxo.
+ * A grid for the scenes no choice reaches, below the flow.
  *
- * O número de colunas acompanha a largura do resto do mapa para a grade não ficar mais larga
- * que a história - com uma história vazia de escolhas, cai em três colunas.
+ * The number of columns follows the width of the rest of the map so the grid is not wider than the
+ * story - with a story empty of choices, it falls back to three columns.
  */
 function layOutDetachedNodes(detached: WorkNode[], flowWidth: number, flowHeight: number): void {
   if (detached.length === 0) return;
@@ -673,8 +674,8 @@ function placeEdges(
   nodesById: Map<string, GraphNode>,
   direction: GraphLayoutDirection,
 ): PlacedEdge[] {
-  // Arestas paralelas (duas escolhas diferentes entre as mesmas cenas) receberiam a mesma
-  // curva e ficariam indistinguíveis; a posição no grupo desloca cada uma para o lado.
+  // Parallel edges (two different choices between the same scenes) would get the same curve and become
+  // indistinguishable; the position within the group offsets each one sideways.
   const groups = new Map<string, WorkEdge[]>();
   for (const edge of edges) {
     const key = `${edge.source.scene.id}->${edge.target.scene.id}`;
@@ -707,10 +708,10 @@ function placeEdges(
 }
 
 /**
- * Lado em que o laço de uma cena cabe: direita (1) ou esquerda (-1).
+ * The side on which a scene's loop fits: right (1) or left (-1).
  *
- * Sem esta checagem o laço é desenhado sempre à direita e passa por dentro da cena vizinha,
- * já que o vão entre colunas é menor que a barriga da curva.
+ * Without this check the loop is always drawn on the right and passes through the neighbouring scene,
+ * since the gap between columns is smaller than the curve's belly.
  */
 function pickLoopSide(node: GraphNode, allNodes: GraphNode[]): 1 | -1 {
   const needed = SELF_LOOP_BULGE + 10;
@@ -728,10 +729,10 @@ function pickLoopSide(node: GraphNode, allNodes: GraphNode[]): 1 | -1 {
 }
 
 /**
- * Espalha os rótulos ao longo das curvas que chegam na mesma cena.
+ * Spreads the labels along the curves that arrive at the same scene.
  *
- * Várias escolhas convergindo para uma cena têm curvas quase juntas no meio, e os textos
- * ficariam empilhados. Variar o ponto de ancoragem separa-os na vertical sem mudar o desenho.
+ * Several choices converging on one scene have curves that nearly touch in the middle, and the texts
+ * would be stacked. Varying the anchor point separates them vertically without changing the drawing.
  */
 function spreadLabelAnchors(placed: PlacedEdge[]): Map<PlacedEdge, number> {
   const byTarget = new Map<string, PlacedEdge[]>();
@@ -783,7 +784,7 @@ function buildCurve(
   }
 
   if (kind === 'self') {
-    // Laço no flanco livre: a cena aponta para si mesma ("tentar de novo").
+    // A loop on the free flank: the scene points at itself ("try again").
     const flank = loopSide === 1 ? source.x + source.width : source.x;
     const bulge = (SELF_LOOP_BULGE + Math.abs(spread)) * loopSide;
     return {
@@ -795,7 +796,7 @@ function buildCurve(
   }
 
   if (kind === 'lateral') {
-    // Mesma camada: sai por um flanco e entra pelo outro, curvando por baixo dos dois nós.
+    // Same layer: it leaves through one flank and enters through the other, curving under both nodes.
     const goingRight = target.x >= source.x;
     const start = {
       x: goingRight ? source.x + source.width : source.x,
@@ -814,8 +815,8 @@ function buildCurve(
     };
   }
 
-  // Volta para trás: contorna por fora, do topo da origem até a base do destino. O lado vem
-  // da posição relativa para a curva não atravessar as cenas do meio.
+  // Going back: it goes around the outside, from the source's top to the target's bottom. The side
+  // comes from the relative position so the curve does not cross the scenes in between.
   const side = source.x >= target.x ? 1 : -1;
   const detour = source.width * 0.8 + Math.abs(spread);
   const sourceTop = { x: source.x + source.width / 2, y: source.y };
@@ -891,11 +892,11 @@ function buildLeftToRightCurve(
 }
 
 /**
- * Desloca tudo para que nada fique fora da margem e devolve o tamanho final do desenho.
+ * Shifts everything so nothing falls outside the margin, and returns the drawing's final size.
  *
- * Os pontos de controle das curvas entram na conta: uma curva de Bézier nunca sai do casco
- * dos seus pontos de controle, então incluí-los é uma folga segura e barata - garante que a
- * volta desenhada para fora do mapa não seja cortada na exportação.
+ * The curves' control points are part of the arithmetic: a Bézier curve never leaves the hull of its
+ * control points, so including them is a safe and cheap slack - it guarantees a return drawn outside
+ * the map is not cut off in the export.
  */
 function normalizeToPadding(
   nodes: GraphNode[],
@@ -981,7 +982,7 @@ function cubicPointAt(curve: Cubic, t: number): GraphPoint {
   };
 }
 
-/** Triângulo da ponta, alinhado com a tangente da curva no ponto de chegada. */
+/** The tip's triangle, aligned with the curve's tangent at the arrival point. */
 function buildArrowPoints(curve: Cubic): string {
   let dx = curve.end.x - curve.control2.x;
   let dy = curve.end.y - curve.control2.y;

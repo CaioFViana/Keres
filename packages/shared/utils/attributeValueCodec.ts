@@ -25,7 +25,7 @@ function parseSuggestionList(stored: string): string[] {
       return normalizeSuggestionListItems(parsed);
     }
   } catch {
-    // Texto legado / JSON inválido: um único item, para não perder o valor gravado.
+    // Legacy text / invalid JSON: a single item, so the stored value is not lost.
   }
   const trimmed = stored.trim();
   return trimmed ? [trimmed] : [];
@@ -48,15 +48,15 @@ export function joinSuggestionListForDisplay(items: string[] | null | undefined)
 }
 
 /**
- * `AttributeValue.value` (e `StorySchemaField.defaultValue`) são sempre uma única coluna de
- * texto, decodificada de acordo com `AttributeType` - não 4 colunas tipadas. Isso mantém a
- * tabela idêntica em SQLite e Postgres e evita migração de dados se um tipo for reinterpretado
- * no futuro, mas exige que number/boolean nunca sejam comparados como texto cru contra um valor
- * já tipado (o Postgres rejeita `text = integer`) - por isso esta é a ÚNICA função que sabe
- * codificar/decodificar cada tipo; nenhum outro ponto do código deve reimplementar isso.
+ * `AttributeValue.value` (and `StorySchemaField.defaultValue`) are always a single text column,
+ * decoded according to `AttributeType` - not 4 typed columns. That keeps the table identical in
+ * SQLite and Postgres and avoids a data migration if a type is reinterpreted in the future, but it
+ * requires that number/boolean are never compared as raw text against an already-typed value
+ * (Postgres rejects `text = integer`) - which is why this is the ONLY function that knows how to
+ * encode/decode each type; no other point of the code should reimplement it.
  *
- * `SUGGESTION_LIST` é um JSON de `string[]` nessa mesma coluna (`["elf","dwarf"]`). Lista
- * vazia vira `null`, igual aos outros tipos vazios.
+ * `SUGGESTION_LIST` is a JSON `string[]` in that same column (`["elf","dwarf"]`). An empty list
+ * becomes `null`, like the other empty types.
  */
 export function encodeAttributeValue(
   type: AttributeType,

@@ -3,11 +3,11 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * O que o `@keres/shared` pode saber.
+ * What `@keres/shared` is allowed to know.
  *
- * Ele é importado pelo cliente, pela API, pelo admin e pelo site - qualquer coisa que ele
- * conheça de um desses vira dependência dos outros quatro. As duas regras aqui passam hoje;
- * estão escritas para a primeira violação falhar num teste, e não virar hábito.
+ * It is imported by the client, the API, the admin panel and the site - anything it knows about one
+ * of those becomes a dependency of the other four. Both rules here pass today; they are written so
+ * the first violation fails in a test rather than becoming a habit.
  */
 
 const ROOT = resolve(__dirname, '../..');
@@ -42,17 +42,17 @@ function offenders(forbidden: RegExp, files = sourceFiles): string[] {
 
 describe('fronteiras do pacote compartilhado', () => {
   /**
-   * Dependência para cima: o compartilhado sabendo de um app faz o pacote deixar de ser
-   * compartilhado - e leva o cliente inteiro junto para dentro do build da API.
+   * An upward dependency: the shared package knowing about an app stops it from being shared - and
+   * drags the whole client into the API's build along with it.
    */
   it('não importa de nenhum app', () => {
     expect(offenders(/(^|\/)apps\//)).toEqual([]);
   });
 
   /**
-   * `graphs/` calcula posições e devolve SVG como texto. É o que permite os mesmos módulos
-   * desenharem na tela do app, na exportação de imagem e num script Node. Um import de React
-   * ou de React Native ali dentro amarraria tudo isso a uma árvore de componentes.
+   * `graphs/` computes positions and returns SVG as text. That is what lets the same modules draw on
+   * the app's screen, in the image export and in a Node script. A React or React Native import in
+   * there would tie all of that to a component tree.
    */
   it('mantém os módulos de gráfico livres de React e React Native', () => {
     const graphFiles = sourceFiles.filter((path) => relativeOf(path).startsWith('graphs/'));

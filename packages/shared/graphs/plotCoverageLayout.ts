@@ -1,12 +1,12 @@
 /**
- * A cobertura de uma trama, quebrada por capítulo.
+ * A plot's coverage, broken down by chapter.
  *
- * Uma barra sólida diz *quanto* da história a trama percorre; ela não diz *onde*. Duas tramas
- * com 7/12 contam histórias diferentes se uma se concentra no primeiro ato e a outra atravessa
- * os três - e essa é justamente a pergunta que a cobertura existe para responder.
+ * A solid bar says *how much* of the story a plot runs through; it does not say *where*. Two plots
+ * at 7/12 tell different stories if one is concentrated in the first act and the other crosses all
+ * three - and that is exactly the question coverage exists to answer.
  *
- * Por isso a barra é dividida em pedaços, um por capítulo, na ordem narrativa: a largura total
- * continua sendo a cobertura, e a composição interna mostra de onde ela vem.
+ * That is why the bar is split into pieces, one per chapter, in narrative order: the total width is
+ * still the coverage, and the internal composition shows where it comes from.
  */
 
 export interface CoverageChapter {
@@ -19,9 +19,9 @@ export interface CoverageSegment {
   chapterId: string;
   chapterName: string;
   color: string;
-  /** Cenas do capítulo cobertas por esta trama. */
+  /** Scenes of the chapter covered by this plot. */
   covered: number;
-  /** Fatia da barra inteira, em porcentagem do total de cenas da história. */
+  /** A slice of the whole bar, as a percentage of the story's total scenes. */
   percentage: number;
 }
 
@@ -37,16 +37,16 @@ export interface PlotCoverageEntry {
 export interface PlotCoverageInput {
   plots: { id: string; name: string }[];
   chapters: CoverageChapter[];
-  /** Cenas ativas da história, com o capítulo de cada uma, em ordem narrativa. */
+  /** The story's active scenes, each with its chapter, in narrative order. */
   scenes: { id: string; chapterId: string }[];
-  /** Relações trama-cena vivas. */
+  /** Live plot-scene relations. */
   relations: { plotId: string; sceneId: string }[];
 }
 
 /**
- * Uma entrada por trama, na ordem em que as tramas chegaram, cada uma com seus pedaços na
- * ordem dos capítulos. Tramas sem cena nenhuma entram com a barra vazia: elas contam para a
- * média e some-las esconderia justamente o caso que precisa de atenção.
+ * One entry per plot, in the order the plots arrived, each with its pieces in chapter order.
+ * Plots with no scene at all come in with an empty bar: they count towards the average, and hiding
+ * them would hide exactly the case that needs attention.
  */
 export function buildPlotCoverage(input: PlotCoverageInput): PlotCoverageEntry[] {
   const total = input.scenes.length;

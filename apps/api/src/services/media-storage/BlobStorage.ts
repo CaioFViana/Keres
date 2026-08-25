@@ -1,4 +1,4 @@
-/** Backend físico dos bytes de mídia. Metadados, autorização e deduplicação seguem no serviço acima dele. */
+/** The physical backend for media bytes. Metadata, authorization and deduplication stay in the service above it. */
 export type BlobBody = Blob | ReadableStream<Uint8Array>;
 
 export interface BlobStorage {
@@ -6,15 +6,15 @@ export interface BlobStorage {
   put(key: string, bytes: ArrayBuffer, mimeType: string): Promise<void>;
   get(key: string): Promise<BlobBody | null>;
   delete(key: string): Promise<void>;
-  /** Opcional porque só o backend de disco possui uploads temporários locais. */
+  /** Optional because only the disk backend has local temporary uploads. */
   cleanupTemporaryFiles?(olderThanMs: number): Promise<number>;
   /**
-   * URL temporária que o navegador pode buscar direto do armazenamento, sem passar pela API.
+   * A temporary URL the browser can fetch straight from storage, without going through the API.
    *
-   * Opcional porque só faz sentido em backend remoto: o disco local não tem endereço público
-   * para assinar, e quem chama trata a ausência caindo de volta em servir os bytes. Existe
-   * para o download de uma publicação (um .zip grande, potencialmente popular) não transformar
-   * o processo da API no gargalo de banda - que é justamente o motivo de usar S3.
+   * Optional because it only makes sense on a remote backend: local disk has no public address to sign,
+   * and the caller handles its absence by falling back to serving the bytes. It exists so downloading a
+   * publication (a large, potentially popular .zip) does not turn the API process into the bandwidth
+   * bottleneck - which is precisely the reason for using S3.
    */
   presignGet?(key: string, ttlSeconds: number): Promise<string>;
 }

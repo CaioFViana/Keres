@@ -1,33 +1,32 @@
 import avatarIconNames from './avatarIcons.json';
 
 /**
- * O avatar de um usuário: os ícones que ele pode escolher e a cor que aparece quando ele ainda
- * não escolheu nenhuma.
+ * A user's avatar: the icons they can choose and the colour shown while they have chosen none.
  *
- * Mora aqui, e não no app, porque três lugares precisam concordar sobre isto: o app (onde a
- * pessoa escolhe), a API (que guarda `avatarColor`/`avatarIcon`) e o site público (que desenha
- * o mesmo avatar para quem publicou uma história). Com a lista duplicada, um ícone novo
- * escolhido no app viraria um quadrado vazio no site.
+ * It lives here, rather than in the app, because three places have to agree about it: the app
+ * (where the person chooses), the API (which stores `avatarColor`/`avatarIcon`) and the public site
+ * (which draws the same avatar for whoever published a story). With the list duplicated, a new icon
+ * picked in the app would become an empty square on the site.
  */
 
 /**
- * Conjunto pequeno e escolhido a dedo, não uma busca entre milhares de ícones - o pedido foi um
- * sistema "simples e leve", e o app usa só Ionicons em todo o resto.
+ * A small, hand-picked set, not a search across thousands of icons - the request was for a
+ * "simple and light" system, and the app uses only Ionicons everywhere else.
  *
- * Os nomes são os do Ionicons: valem tanto como glifo da fonte (app) quanto como nome de
- * arquivo `.svg` (site). A lista mora num `.json` ao lado porque o build do site precisa lê-la
- * fora do TypeScript - o plugin do Vite roda em Node, que não carrega os `.ts` deste pacote.
+ * The names are Ionicons' own: they work both as a font glyph (app) and as an `.svg` file name
+ * (site). The list lives in a `.json` next door because the site's build has to read it outside
+ * TypeScript - the Vite plugin runs in Node, which does not load this package's `.ts` files.
  */
 export const AVATAR_ICON_OPTIONS: readonly string[] = avatarIconNames;
 
 export type AvatarIconName = string;
 
-/** Ícone de quem ainda não escolheu um (perfil recém-criado). */
+/** The icon for whoever has not chosen one yet (a freshly created profile). */
 export const DEFAULT_AVATAR_ICON = 'person';
 
 /**
- * Cores de reserva para quem não escolheu uma. É a mesma paleta que colore capítulos no Mapa da
- * História, escolhida para funcionar bem em fundo claro e escuro.
+ * Fallback colours for whoever has not chosen one. It is the same palette that colours chapters on
+ * the Story Map, chosen to work well on both light and dark backgrounds.
  */
 export const AVATAR_FALLBACK_PALETTE = [
   '#4F8DF7',
@@ -43,10 +42,10 @@ export const AVATAR_FALLBACK_PALETTE = [
 ];
 
 /**
- * Uma cor estável a partir de uma string (id ou nome de usuário).
+ * A stable colour from a string (an id or a username).
  *
- * Determinística de propósito: a mesma pessoa tem sempre a mesma cor, no app e no site, sem
- * nada ser gravado no banco.
+ * Deterministic on purpose: the same person always gets the same colour, in the app and on the site,
+ * with nothing written to the database.
  */
 export function avatarColorFromSeed(seed: string): string {
   let hash = 0;

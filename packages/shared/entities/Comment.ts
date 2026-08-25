@@ -1,13 +1,13 @@
 import type { CommentEntityType } from '../metadata/CommentEntityType';
 
 /**
- * Comentário anexado a um campo específico (nativo ou atributo customizado) de uma entidade.
- * Exatamente um de `fieldId`/`fieldKey` é preenchido - `fieldId` referencia
- * `StorySchemaField.id` para campos customizados, `fieldKey` é o nome da propriedade nativa
- * (ex: "biography") para os demais. `contentSnapshot` congela o valor do campo no momento do
- * comentário, para que o comentário continue fazendo sentido mesmo depois que o campo for
- * editado; `excerptText` é o trecho relevante dentro desse snapshot, digitado/colado pelo
- * autor (não uma seleção de texto real - ver `docs/project_plan.md`/plano de implementação).
+ * A comment attached to a specific field (native or custom attribute) of an entity. Exactly one
+ * of `fieldId`/`fieldKey` is filled in - `fieldId` references `StorySchemaField.id` for custom
+ * fields, `fieldKey` is the native property's name (e.g. "biography") for the rest.
+ * `contentSnapshot` freezes the field's value at the moment of the comment, so the comment still
+ * makes sense after the field is edited; `excerptText` is the relevant passage inside that
+ * snapshot, typed/pasted by the author (not a real text selection - see
+ * `docs/project_plan.md`/the implementation plan).
  */
 export interface Comment {
   id: string;
@@ -20,7 +20,7 @@ export interface Comment {
   excerptText: string | null;
   authorUserId: string;
   commentText: string;
-  /** 1 = informacional, 2 = relevante, 3 = atenção, 4 = grave, 5 = imediato. */
+  /** 1 = informational, 2 = relevant, 3 = attention, 4 = serious, 5 = immediate. */
   criticality: number;
   createdAt: Date;
   updatedAt: Date;

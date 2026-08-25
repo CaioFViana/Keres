@@ -10,8 +10,8 @@ export const seeAlsoRelations = table(
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
-    // Ambos os lados são polimórficos (Character/Location/Chapter/Scene/Item/ItemJourney/
-    // WorldRule/Choice) - sem FK de banco, validado em SeeAlsoRelationSyncHandler.
+    // Both sides are polymorphic (Character/Location/Chapter/Scene/Item/ItemJourney/WorldRule/Choice) -
+    // no database FK, validated in SeeAlsoRelationSyncHandler.
     entityAType: text('entity_a_type').$type<SeeAlsoEntityType>().notNull(),
     entityAId: text('entity_a_id').notNull(),
     entityBType: text('entity_b_type').$type<SeeAlsoEntityType>().notNull(),
@@ -23,8 +23,8 @@ export const seeAlsoRelations = table(
     deletedAt: timestamp('deleted_at'),
   },
   (table) => ({
-    // Só protege contra duplicatas se A/B forem sempre canonicalizados (ordenados) antes do
-    // insert - ver SeeAlsoRelationSyncHandler/SeeAlsoRelationService.
+    // It only protects against duplicates if A/B are always canonicalised (sorted) before the insert -
+    // see SeeAlsoRelationSyncHandler/SeeAlsoRelationService.
     unq: unique('see_also_story_a_b_unq').on(
       table.storyId,
       table.entityAType,

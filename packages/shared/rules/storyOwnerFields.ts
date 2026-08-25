@@ -1,11 +1,11 @@
 /**
- * Campos de uma história que só o dono altera.
+ * Fields of a story that only the owner may change.
  *
- * A regra existe dos dois lados: o cliente recusa a edição antes de gravar no log de operações
- * (senão a mudança ficaria presa, sendo rejeitada em todo push), e o servidor recusa de novo ao
- * receber a sincronização. Duas listas escritas à mão divergiram - o cliente tinha três campos e
- * o servidor cinco - e ninguém notou, porque a diferença só aparece quando um colaborador tenta
- * mudar exatamente o campo que faltava numa das listas.
+ * The rule exists on both sides: the client refuses the edit before writing to the operation log
+ * (otherwise the change would be stuck, rejected on every push), and the server refuses it again
+ * when the synchronization arrives. Two hand-written lists diverged - the client had three fields
+ * and the server five - and nobody noticed, because the difference only shows up when a
+ * collaborator tries to change exactly the field one of the lists was missing.
  */
 export const STORY_OWNER_ONLY_FIELDS = [
   'id',
@@ -17,7 +17,7 @@ export const STORY_OWNER_ONLY_FIELDS = [
 
 export type StoryOwnerOnlyField = (typeof STORY_OWNER_ONLY_FIELDS)[number];
 
-/** Os campos de uma alteração que só o dono poderia fazer. Vazio = a alteração é permitida. */
+/** The fields of a change that only the owner could make. Empty = the change is allowed. */
 export function ownerOnlyFieldsIn(changes: Record<string, unknown> | undefined | null): string[] {
   if (!changes) return [];
   return STORY_OWNER_ONLY_FIELDS.filter((field) => changes[field] !== undefined);

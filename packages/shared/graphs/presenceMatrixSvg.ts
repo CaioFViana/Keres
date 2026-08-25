@@ -60,7 +60,7 @@ export function renderPresenceMatrixSvg(
       `<text x="${x + 8}" y="${MATRIX_PADDING + 44}" font-size="10" fill="${options.text}">${escapeXml(truncate(`${index + 1}. ${scene.name}`, Math.max(10, Math.floor(layout.sceneWidth / 6))))}</text>`,
     );
   });
-  // O fio vem antes das células, como na tela: ele passa por baixo, não por cima.
+  // The thread comes before the cells, as on screen: it passes underneath, not on top.
   layout.rows.forEach((row, rowIndex) => {
     const threadY = matrixRowCenterY(rowIndex);
     buildMatrixThreadSegments(row, layout.scenes, layout.sceneWidth).forEach((segment) => {

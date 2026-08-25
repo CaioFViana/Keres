@@ -18,12 +18,11 @@ import { db } from '../../db';
 import * as dbSchema from '../../db/schema'; // Import the entire schema
 
 /**
- * Recusa de uma operação que o *usuário* pode resolver, em oposição a um erro de
- * programação ou de infraestrutura.
+ * Refusal of an operation the *user* can resolve, as opposed to a programming or infrastructure error.
  *
- * Existe para que o `SyncService` consiga distinguir os dois casos: um conflito volta
- * ao cliente descrito na resposta do push (que então abre a tela de resolução), e não
- * como um 500 que derruba o lote inteiro e não diz ao cliente o que fazer.
+ * It exists so `SyncService` can tell the two apart: a conflict goes back to the client described in
+ * the push's response (which then opens the resolution screen), and not as a 500 that takes the whole
+ * batch down and tells the client nothing about what to do.
  */
 export class SyncConflictError extends Error {
   readonly reason: SyncConflictReason;
@@ -61,13 +60,13 @@ export interface SyncEntityHandler {
   ): Promise<void>;
   checkOwnership(entity: any, userId: string): boolean;
   checkBelongsToStory(entity: any, storyId: string): boolean;
-  /** Payload que o log deve retransmitir: o que foi gravado, não o JSON cru do cliente. */
+  /** The payload the log should relay: what was written, not the client's raw JSON. */
   sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): Record<string, any>;
-  /** Create reenviado: o payload sanitizado descreve a mesma linha que já existe? */
+  /** A resent create: does the sanitised payload describe the same row that already exists? */
   createPayloadMatches(existing: any, incomingData: Record<string, any>): boolean;
-  /** Conta linhas não excluídas desta entidade nas histórias dadas. Usado por TierEnforcementService. */
+  /** Counts non-deleted rows of this entity in the given stories. Used by TierEnforcementService. */
   countForStoryIds(storyIds: string[]): Promise<number>;
-  /** Linhas excluídas (tombstones), opcionalmente restritas a uma história. Usado por AdminRecoveryService. */
+  /** Deleted rows (tombstones), optionally restricted to one story. Used by AdminRecoveryService. */
   findDeleted(storyId?: string): Promise<
     Array<{
       id: string;
@@ -75,7 +74,7 @@ export interface SyncEntityHandler {
       deletedAt: Date | null;
       version: number;
       name: string | null;
-      /** Linha crua para enriquecimento composto no AdminRecoveryService (não vai na resposta HTTP). */
+      /** The raw row, for composite enrichment in AdminRecoveryService (it does not go in the HTTP response). */
       row: Record<string, unknown>;
     }>
   >;
@@ -196,9 +195,9 @@ export abstract class BaseSyncEntityHandler<
     update: UpdateStoryUpdate,
     currentEntity: any,
   ): Promise<void> {
-    // `isDeleted`/`deletedAt` são tratados fora da validação porque não são uma edição
-    // comum de campo: são a *restauração* de uma entidade excluída. Extrair antes de
-    // validar evita depender de cada schema de entidade aceitar esses campos.
+    // `isDeleted`/`deletedAt` are handled outside validation because they are not an ordinary field edit:
+    // they are the *restoration* of a deleted entity. Extracting them before validating avoids depending on
+    // every entity schema accepting those fields.
     const incomingChanges: Record<string, any> = { ...update.changes };
     const restoreRequested = incomingChanges.isDeleted === false;
     delete incomingChanges.isDeleted;
@@ -210,9 +209,9 @@ export abstract class BaseSyncEntityHandler<
       this.isDeletedColumnName && currentEntity[this.isDeletedColumnName]
     );
     if (isDeletedOnServer && !restoreRequested) {
-      // A entidade foi excluída aqui enquanto o cliente a editava offline. Aplicar a
-      // edição em silêncio gravaria o trabalho do usuário numa linha que ninguém mais
-      // vê, então devolvemos o caso para ele decidir (restaurar ou aceitar a exclusão).
+      // The entity was deleted here while the client was editing it offline. Applying the edit silently
+      // would write the user's work into a row nobody else sees, so we hand the case back for them to decide
+      // (restore, or accept the deletion).
       throw new SyncConflictError(
         'deleted_on_server',
         `Conflict: ${this.entityName} ${update.id} was deleted on the server.`,
@@ -292,8 +291,8 @@ export abstract class BaseSyncEntityHandler<
     }
 
     if (currentEntity[this.isDeletedColumnName]) {
-      // Já está excluída: reenviar a mesma exclusão (porque a resposta anterior se
-      // perdeu, por exemplo) não é conflito, é a operação já ter surtido efeito.
+      // It is already deleted: resending the same deletion (because the previous response was lost, for
+      // instance) is not a conflict, it is the operation having already taken effect.
       return;
     }
 
@@ -331,7 +330,7 @@ export abstract class BaseSyncEntityHandler<
     }
   }
 
-  /** Rejeita horários no futuro (fora de 1s de folga para diferença de relógio). */
+  /** Rejects times in the future (beyond 1s of slack for clock skew). */
   protected parseOperationTime(operationTime: string | undefined): Date {
     const clientOperationTime = operationTime ? new Date(operationTime) : new Date();
     if (clientOperationTime.getTime() > new Date().getTime() + 1000) {
@@ -360,11 +359,11 @@ export abstract class BaseSyncEntityHandler<
   }
 
   /**
-   * Controle de concorrência otimista: a operação só é aceita se o cliente a construiu
-   * sobre a versão que o servidor tem agora.
+   * Optimistic concurrency control: the operation is only accepted if the client built it on the version
+   * the server holds right now.
    *
-   * A comparação é de igualdade, não `<`. Sem versão o servidor recusa: last-write-wins
-   * deixava um cliente adulterado sobrescrever qualquer edição concorrente.
+   * The comparison is equality, not `<`. With no version the server refuses: last-write-wins let a
+   * tampered-with client overwrite any concurrent edit.
    */
   protected checkVersionConflict(
     clientVersion: number | undefined,
@@ -447,8 +446,8 @@ export abstract class BaseSyncEntityHandler<
   }
 
   /**
-   * `storyId`/`userId`/`id` no body de um update são transplante ou roubo de identidade.
-   * `version` é a base do OCC e fica de fora desta checagem.
+   * `storyId`/`userId`/`id` in an update's body are a transplant or identity theft. `version` is the OCC
+   * base and stays out of this check.
    */
   protected assertNoImmutableFieldWrites(changes: Record<string, any>): void {
     const attempted = ['id', 'storyId', 'userId', 'authorUserId', 'lastOperationVersion'].filter(

@@ -1,10 +1,10 @@
 <div align="center">
   <img src="apps/client/assets/images/icon_keres.png" alt="Keres" width="112" />
   <h1>Keres</h1>
-  <p><strong>Organize universos, conecte narrativas e escreva em qualquer lugar.</strong></p>
-  <p>Uma plataforma offline-first para planejamento de histórias, disponível em mobile, web e desktop, com sincronização opcional entre dispositivos.</p>
+  <p><strong>Organize universes, connect narratives, and write anywhere.</strong></p>
+  <p>An offline-first story planning platform for mobile, web, and desktop, with optional synchronization across devices.</p>
   <p><a href="https://caiofviana.github.io/Keres/">Landing page</a></p>
-  <p><strong>Português</strong> · <a href="README.en.md">English</a></p>
+  <p><strong>English</strong> · <a href="README.pt.md">Português</a></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
   <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-54-000020?logo=expo" alt="Expo 54" /></a>
@@ -12,27 +12,27 @@
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&amp;logoColor=white" alt="Docker ready" /></a>
 </div>
 
-## Visão geral
+## Overview
 
-O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras de mundo, notas, mídias e relações em um único espaço. O cliente mantém cada história em um banco SQLite local e continua funcionando sem conexão. Quando um servidor é configurado, o mecanismo de sincronização replica as alterações para a API e trata conflitos de versão.
+Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, media, and relationships together in one workspace. The client stores each story in a local SQLite database and continues to work without a connection. When a server is configured, the synchronization engine replicates changes to the API and handles version conflicts.
 
-| Componente | Tecnologia | Responsabilidade |
+| Component | Technology | Responsibility |
 | --- | --- | --- |
-| `apps/client` | React Native, Expo, SQLite | Aplicação principal para Android, iOS e web |
-| `apps/desktop` | Electron | Distribuição desktop do mesmo cliente web |
-| `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Autenticação, sincronização, colaboração e mídia |
-| `apps/admin` | React, Vite | Painel administrativo servido pela própria API em `/admin` |
-| `apps/site` | React, Vite | Landing pública publicada no GitHub Pages |
-| `packages/shared` | TypeScript, Zod | Entidades, contratos e metadados compartilhados |
+| `apps/client` | React Native, Expo, SQLite | Main application for Android, iOS, and web |
+| `apps/desktop` | Electron | Desktop distribution of the same web client |
+| `apps/api` | Bun, Elysia, Drizzle, PostgreSQL | Authentication, synchronization, collaboration, and media |
+| `apps/admin` | React, Vite | Administration panel served by the API at `/admin` |
+| `apps/site` | React, Vite | Public landing page published on GitHub Pages |
+| `packages/shared` | TypeScript, Zod | Shared entities, contracts, and metadata |
 
 ```mermaid
 flowchart LR
-    C["Cliente Keres<br/>mobile · web · desktop"]
-    L[("SQLite local<br/>offline-first")]
-    A["API Keres<br/>Bun + Elysia"]
+    C["Keres client<br/>mobile · web · desktop"]
+    L[("Local SQLite<br/>offline-first")]
+    A["Keres API<br/>Bun + Elysia"]
     P[("PostgreSQL")]
-    M[("Arquivos de mídia")]
-    D["Painel admin<br/>/admin"]
+    M[("Media files")]
+    D["Admin panel<br/>/admin"]
 
     C <--> L
     C <-- "HTTPS + WebSocket" --> A
@@ -41,172 +41,172 @@ flowchart LR
     A --> D
 ```
 
-## Ajuda no aplicativo
+## In-app help
 
-O drawer **Ajuda** está disponível tanto no menu principal quanto no menu de uma história. Ele reúne páginas em português e inglês sobre cada recurso do Keres, com busca local, caminhos pela interface e explicações dos campos visíveis. Os ícones `?` nos cabeçalhos levam diretamente à página de ajuda da tela atual.
+The **Help** drawer is available from both the main menu and a story menu. It contains Portuguese and English pages for Keres features, with local search, interface paths, and explanations of visible fields. The `?` icons in headers open the help page for the current screen.
 
-## Início rápido
+## Quick start
 
-### Requisitos
+### Requirements
 
-- [Bun 1.2.19](https://bun.sh/) — versão usada no pipeline de release e na geração do lockfile.
-- [Node.js 20 ou superior](https://nodejs.org/) — usado por scripts auxiliares do cliente Expo.
-- [Docker com Compose](https://docs.docker.com/compose/) — necessário para o PostgreSQL local e para os fluxos em contêiner.
-- Para desenvolvimento nativo: Android Studio/JDK 17 no Android; macOS/Xcode no iOS.
+- [Bun 1.2.19](https://bun.sh/) — the version used by the release pipeline and to generate the lockfile.
+- [Node.js 20 or newer](https://nodejs.org/) — used by supporting Expo client scripts.
+- [Docker with Compose](https://docs.docker.com/compose/) — required for local PostgreSQL and container workflows.
+- For native development: Android Studio/JDK 17 for Android; macOS/Xcode for iOS.
 
-Instale todo o monorepo a partir da raiz:
+Install the entire monorepo from its root:
 
 ```bash
 bun install --frozen-lockfile
 ```
 
-### Desenvolvimento local
+### Local development
 
-1. Configure `apps/api/.env` com valores exclusivos para o ambiente local:
+1. Configure `apps/api/.env` with values used exclusively by your local environment:
 
    ```dotenv
    DATABASE_URL=postgresql://user:password@localhost:5432/keres_db
-   JWT_SECRET=troque-por-um-segredo-com-pelo-menos-32-caracteres
-   JWT_SECRET_REFRESH=troque-por-outro-segredo-com-pelo-menos-32-caracteres
+   JWT_SECRET=replace-with-a-secret-containing-at-least-32-characters
+   JWT_SECRET_REFRESH=replace-with-another-secret-containing-at-least-32-characters
    ROOT_ADMIN_USERNAME=root
-   ROOT_ADMIN_PASSWORD=troque-por-uma-senha-com-8-ou-mais-caracteres
+   ROOT_ADMIN_PASSWORD=replace-with-a-password-containing-8-or-more-characters
    ```
 
-   `ROOT_ADMIN_*` é opcional. Quando definido, o usuário é criado ou reconciliado como administrador em toda inicialização; a senha configurada também é reaplicada.
+   `ROOT_ADMIN_*` is optional. When defined, the user is created or reconciled as an administrator on every startup; the configured password is also reapplied.
 
-2. Inicie somente o PostgreSQL:
+2. Start PostgreSQL only:
 
    ```bash
    docker compose -f apps/api/docker-compose.yml up -d db
    ```
 
-3. Em um terminal, compile o painel e inicie a API:
+3. In one terminal, build the admin panel and start the API:
 
    ```bash
    bun run admin:build
    bun run api:start
    ```
 
-   As migrations do PostgreSQL são aplicadas automaticamente antes de a API aceitar conexões.
+   PostgreSQL migrations are applied automatically before the API accepts connections.
 
-4. Em outro terminal, inicie o cliente:
+4. In another terminal, start the client:
 
    ```bash
    bun run client:start
    ```
 
-Depois de iniciar, escolha o destino no terminal do Expo. No Keres, cadastre a URL do servidor de acordo com o dispositivo:
+After startup, choose a target in the Expo terminal. In Keres, register the appropriate server URL for your device:
 
-| Destino | URL da API local |
+| Target | Local API URL |
 | --- | --- |
-| Navegador ou iOS Simulator | `http://localhost:3000` |
-| Android Emulator padrão | `http://10.0.2.2:3000` |
-| Dispositivo físico | `http://IP-DA-SUA-MAQUINA:3000` |
+| Browser or iOS Simulator | `http://localhost:3000` |
+| Standard Android Emulator | `http://10.0.2.2:3000` |
+| Physical device | `http://YOUR-MACHINE-IP:3000` |
 
-Em um dispositivo físico, computador e aparelho precisam estar na mesma rede e a porta 3000 deve ser permitida pelo firewall local.
+For a physical device, the computer and device must be on the same network, and port 3000 must be allowed through the local firewall.
 
-Serviços disponíveis:
+Available services:
 
-- API e Swagger: `http://localhost:3000/api/swagger`
+- API and Swagger: `http://localhost:3000/api/swagger`
 - Health check: `http://localhost:3000/api/kerescheck`
-- Painel administrativo compilado: `http://localhost:3000/admin`
-- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/` — precisa de `bun run client:build`
-- Vitrine de histórias publicadas: `http://localhost:3000/showcase`
-- Painel administrativo com hot reload: `bun run admin:start` e abra `http://localhost:5173/admin/`
+- Built administration panel: `http://localhost:3000/admin`
+- Hosted web client (same origin, COOP/COEP): `http://localhost:3000/` — requires `bun run client:build`
+- Published-story showcase: `http://localhost:3000/showcase`
+- Administration panel with hot reload: `bun run admin:start`, then open `http://localhost:5173/admin/`
 
-### Stack Docker local
+### Local Docker stack
 
-Para construir a imagem a partir do checkout atual e subir API + PostgreSQL:
+To build an image from the current checkout and start the API and PostgreSQL:
 
 ```bash
 bun run docker:up
 docker compose -f apps/api/docker-compose.yml logs -f api
 ```
 
-O ambiente fica em `http://localhost:3000`. Banco e mídias usam volumes nomeados e sobrevivem à recriação dos contêineres. Para encerrar sem apagar os dados:
+The environment is available at `http://localhost:3000`. The database and media use named volumes and survive container recreation. To stop the stack without deleting its data:
 
 ```bash
 bun run docker:down
 ```
 
-Não acrescente `--volumes` ao comando de encerramento se pretende preservar banco e uploads.
+Do not add `--volumes` to the shutdown command if you intend to preserve the database and uploads.
 
-## Outros fluxos de desenvolvimento
+## Other development workflows
 
 ```bash
-# Cliente web
+# Web client
 bun run client:start  # e escolha a plataforma
 
-# Export web estático
+# Static web export
 bun run client:build
 
-# Electron em modo local
+# Electron in local mode
 bun run desktop:start
 
-# Gerar um pacote Electron para o sistema atual
+# Package Electron for the current system
 bun run desktop:package
 
-# Verificações do cliente
+# Client checks
 bun run --cwd apps/client lint
 bun run locales:audit
 ```
 
-Consulte o [guia específico do cliente](apps/client/README.md) para builds nativas, banco local e solução de problemas do Expo.
+See the [client-specific guide](apps/client/README.md) for native builds, the local database, and Expo troubleshooting.
 
-## Keres Server (sem Docker)
+## Keres Server (no Docker)
 
-Para um PC em casa sincronizar com o telemóvel **sem** PostgreSQL nem Compose, a API também corre em SQLite. O pacote **Keres Server** é essa API mais um assistente em linha de comando (português/inglês). Não substitui a imagem Docker: Postgres em produção continua no GHCR.
+To sync a home PC with a phone **without** PostgreSQL or Compose, the API can also run on SQLite. **Keres Server** is that API plus a command-line setup wizard (Portuguese/English). It does not replace the Docker image: production Postgres still ships via GHCR.
 
-### Download (utilizadores)
+### Download (users)
 
-Cada tag `v*.*.*` anexa os zips à [GitHub Release](https://github.com/caiofviana/keres/releases) correspondente, junto com o cliente desktop, o Android e a imagem Docker. Escolha o ficheiro do seu sistema:
+Each `v*.*.*` tag attaches the zips to the matching [GitHub Release](https://github.com/caiofviana/keres/releases), alongside the desktop client, Android builds, and the Docker image. Pick the file for your system:
 
-| Sistema | Ficheiro |
+| System | File |
 | --- | --- |
-| Windows x64 | `Keres-Server-windows-x64-<versão>.zip` |
-| Linux x64 | `Keres-Server-linux-x64-<versão>.zip` |
-| macOS Apple Silicon | `Keres-Server-macos-arm64-<versão>.zip` |
+| Windows x64 | `Keres-Server-windows-x64-<version>.zip` |
+| Linux x64 | `Keres-Server-linux-x64-<version>.zip` |
+| macOS Apple Silicon | `Keres-Server-macos-arm64-<version>.zip` |
 
-Descompacte, execute `keres-server` / `keres-server.exe`. Não é preciso Bun, Node nem Docker. O zip contém o executável, o addon nativo do libSQL, as migrações, o painel `/admin` e um `README.md` (instruções e cópia de segurança). O compile da Bun não embute o `.node` do libSQL, por isso não é um único ficheiro.
+Unzip and run `keres-server` / `keres-server.exe`. Bun, Node, and Docker are not required. The zip holds the executable, the libSQL native addon, migrations, the `/admin` panel, and a `README.md` (setup and backups). Bun's compiler cannot embed libSQL's `.node`, so this is not a single file.
 
-Na primeira execução o assistente pergunta banco (SQLite por omissão), mídia local ou S3, porta e se escuta só neste computador ou na rede local. Os dados ficam **fora** da pasta do zip (atualizar o executável não apaga o banco):
+On first run the wizard asks for the database (SQLite by default), local vs S3 media, the port, and whether to listen on this computer only or on the LAN. Data lives **outside** the zip folder (replacing the executable does not wipe the database):
 
-| Sistema | Pasta |
+| System | Folder |
 | --- | --- |
 | Windows | `%APPDATA%\KeresServer` |
 | macOS | `~/Library/Application Support/KeresServer` |
 | Linux | `~/.local/share/keres-server` |
 
-Enquanto corre, o CLI imprime os IPv4 atuais da LAN (`http://192.168.x.x:<porta>`) e volta a listá-los se o router mudar o endereço. Não há DNS local.
+While running, the CLI prints this machine's current LAN IPv4 addresses (`http://192.168.x.x:<port>`) and reprints them if the router assigns a new one. There is no local DNS.
 
-### Cópia de segurança (deve ser feita)
+### Backups (this should be done)
 
-O zip traz um `README.md` (português e inglês) ao lado do executável. **Faça uma cópia no mínimo uma vez por mês:** pare o servidor (`Ctrl+C`), na pasta do programa corra `keres-server --backup`, volte a iniciar. Cada cópia vai para uma pasta com data e hora (`KeresServer-backups\…`). Guarde essa pasta noutro disco.
+The zip includes a `README.md` (Portuguese and English) next to the executable. **Back up at least once a month:** stop the server (`Ctrl+C`), run `keres-server --backup` from the program folder, then start it again. Each copy lands in a folder named with the date and time (`KeresServer-backups\…`). Keep that folder on another disk.
 
-Se o pior acontecer: pare o servidor, esvazie a pasta de dados e copie para lá o conteúdo da pasta datada. O README do zip detalha os ficheiros. Quem usa PostgreSQL ou S3 fora desta máquina trata esse backup como operador.
+If the worst happens: stop the server, empty the data folder, and copy the dated folder’s contents into it. The zip README lists the files. PostgreSQL or S3 outside this machine stays the operator’s backup.
 
-### Desenvolvimento
+### Development
 
 ```bash
 bun run start:launcher
 bun run api:build
 ```
 
-`api:build` gera a mesma pasta e o mesmo zip que a release. `api:start` e o Compose **não** passam pelo assistente: leem `.env` como hoje.
+`api:build` builds the same folder and zip the release job publishes. `api:start` and Compose **do not** go through the wizard: they still read `.env`.
 
-## Deploy da API
+## API deployment
 
-Releases versionadas publicam a API e o painel admin no GitHub Container Registry:
+Versioned releases publish the API and administration panel to GitHub Container Registry:
 
 ```bash
 docker pull ghcr.io/caiofviana/keres:latest
 ```
 
-Para produção, prefira uma tag imutável, como `1.2.3`, em vez de `latest`. O arquivo `apps/api/docker-compose.deploy.yml` usa a imagem publicada, mantém PostgreSQL e mídias em volumes persistentes e expõe a API apenas em `127.0.0.1:3000` por padrão.
+For production, prefer an immutable tag such as `1.2.3` over `latest`. The `apps/api/docker-compose.deploy.yml` file uses the published image, keeps PostgreSQL and media in persistent volumes, and exposes the API only on `127.0.0.1:3000` by default.
 
-### 1. Prepare o servidor
+### 1. Prepare the server
 
-Instale Docker Engine com o plugin Compose. Copie `apps/api/docker-compose.deploy.yml` para um diretório próprio do serviço e crie, no mesmo diretório, um arquivo `.env`:
+Install Docker Engine with the Compose plugin. Copy `apps/api/docker-compose.deploy.yml` to a dedicated service directory and create a `.env` file alongside it:
 
 ```dotenv
 KERES_IMAGE_TAG=latest
@@ -215,28 +215,28 @@ KERES_PORT=3000
 
 POSTGRES_DB=keres
 POSTGRES_USER=keres
-POSTGRES_PASSWORD=gere-uma-senha-aleatoria-longa-sem-caracteres-de-url
+POSTGRES_PASSWORD=generate-a-long-random-password-without-url-characters
 
-JWT_SECRET=gere-um-segredo-aleatorio-com-pelo-menos-32-caracteres
-JWT_SECRET_REFRESH=gere-outro-segredo-independente-com-pelo-menos-32-caracteres
+JWT_SECRET=generate-a-random-secret-containing-at-least-32-characters
+JWT_SECRET_REFRESH=generate-another-independent-secret-containing-at-least-32-characters
 ROOT_ADMIN_USERNAME=root
-ROOT_ADMIN_PASSWORD=gere-uma-senha-administrativa-forte
+ROOT_ADMIN_PASSWORD=generate-a-strong-administrator-password
 MEDIA_MAX_BYTES=52428800
 ```
 
-Use valores aleatórios independentes e mantenha esse arquivo fora do controle de versão. Para gerar segredos adequados, pode-se usar `openssl rand -hex 32`. Como a senha do PostgreSQL compõe uma URL, use uma senha alfanumérica longa ou codifique corretamente caracteres reservados.
+Use independent random values and keep this file out of version control. You can generate suitable secrets with `openssl rand -hex 32`. Because the PostgreSQL password becomes part of a URL, use a long alphanumeric password or correctly encode reserved characters.
 
-Se o pacote GHCR estiver privado, autentique o host com um Personal Access Token que tenha `read:packages`:
+If the GHCR package is private, authenticate the host with a Personal Access Token carrying the `read:packages` permission:
 
 ```bash
-echo "$GHCR_TOKEN" | docker login ghcr.io -u SEU_USUARIO --password-stdin
+echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 ```
 
-Pacotes públicos não exigem login.
+Public packages do not require authentication.
 
-### 2. Suba e valide
+### 2. Start and validate
 
-No diretório que contém o Compose e o `.env`:
+From the directory containing the Compose file and `.env`:
 
 ```bash
 docker compose pull
@@ -245,128 +245,130 @@ docker compose ps
 docker compose logs -f api
 ```
 
-Valide localmente no servidor:
+Validate the deployment locally on the server:
 
 ```bash
 curl --fail http://127.0.0.1:3000/api/kerescheck
 ```
 
-Na primeira inicialização, a API espera o PostgreSQL ficar saudável, aplica as migrations e só então começa a servir tráfego.
+On its first startup, the API waits for PostgreSQL to become healthy, applies migrations, and only then begins serving traffic.
 
-### 3. Publique com HTTPS
+### 3. Publish with HTTPS
 
-Coloque Caddy, Nginx, Traefik ou o proxy da sua plataforma à frente de `127.0.0.1:3000` e termine TLS nele. Encaminhe o host completo, preserve os caminhos e habilite upgrade de WebSocket para `/api/ws`. Não publique a porta 5432 do PostgreSQL.
+Place Caddy, Nginx, Traefik, or your platform proxy in front of `127.0.0.1:3000` and terminate TLS there. Forward the complete host, preserve paths, and enable WebSocket upgrades for `/api/ws`. Do not publish PostgreSQL port 5432.
 
-Configure no cliente a URL HTTPS pública, sem sufixos como `/api`, `/swagger` ou `/admin` — por exemplo, `https://keres.example.com`.
+Configure the public HTTPS URL in the client without suffixes such as `/api`, `/swagger` or `/admin` — for example, `https://keres.example.com`.
 
-### Atualizações, rollback e backup
+### Updates, rollback, and backups
 
 ```bash
-# Atualizar para a tag definida em .env
+# Update to the tag configured in .env
 docker compose pull api
 docker compose up -d api
 
-# Acompanhar a inicialização e as migrations
+# Follow startup and migrations
 docker compose logs -f api
 ```
 
-Para rollback, altere `KERES_IMAGE_TAG` para uma versão anterior compatível e repita os comandos. Backup deste deploy Compose é responsabilidade de quem opera o host (a API aceita qualquer Postgres que lhe apontem; não corre `pg_dump` sozinha). Antes de qualquer atualização, copie o PostgreSQL **e** o volume de mídia; histórias sincronizadas e uploads são conjuntos distintos. Um dump lógico:
+To roll back, change `KERES_IMAGE_TAG` to a compatible earlier version and repeat the commands. Backups for this Compose deploy belong to whoever operates the host (the API accepts any Postgres you point it at; it will not run `pg_dump` itself). Before every update, copy both PostgreSQL **and** the media volume; synchronized stories and uploads are separate datasets. A logical dump:
 
 ```bash
 docker compose exec -T db pg_dump -U keres -d keres -Fc > keres.dump
 ```
 
-Adapte usuário e banco caso tenha mudado os valores padrão. Guarde também uma cópia consistente do volume `media_storage` e teste periodicamente o processo de restauração.
+Adjust the user and database if you changed their defaults. Keep a consistent copy of the `media_storage` volume as well, and periodically test the restoration process.
 
 ## Scripts
 
-Os scripts seguem um vocabulário só, em todos os pacotes: `start`, `build`, `test`,
-`test:coverage`, `typecheck`, `lint` e, onde faz sentido, `db:generate`/`db:migrate`. Cada
-pacote declara os seus pré-requisitos como gancho `prestart`/`prebuild`, que o `bun run`
-executa sozinho - o cliente reescreve os índices gerados antes de subir, o desktop constrói o
-export web do cliente antes de abrir o Electron, e a API constrói painel e cliente antes de
-empacotar o servidor. Ninguém precisa lembrar a ordem.
+Every package uses the same vocabulary: `start`, `build`, `test`, `test:coverage`, `typecheck`,
+`lint`, and, where it applies, `db:generate`/`db:migrate`. Each package declares its own
+prerequisites as a `prestart`/`prebuild` hook, which `bun run` executes on its own - the client
+rewrites its generated indexes before starting, the desktop app builds the client's web export
+before opening Electron, and the API builds the admin panel and the client before packaging the
+server. Nobody has to remember the order.
 
-Na raiz, cada projeto é chamado por `<projeto>:<verbo>`:
+At the root, each project is called as `<project>:<verb>`:
 
 ```bash
 bun run client:start      # Expo
-bun run api:start         # API em Postgres
-bun run admin:start       # painel com hot reload
-bun run site:start        # landing
+bun run api:start         # API on Postgres
+bun run admin:start       # admin panel with hot reload
+bun run site:start        # landing page
 bun run desktop:start     # Electron
-bun run api:build         # zip do Keres Server (constrói painel e cliente antes)
+bun run api:build         # Keres Server zip (builds panel and client first)
 ```
 
-E as verificações valem para o repositório inteiro:
+And the checks cover the whole repository:
 
 ```bash
-bun run typecheck         # todos os pacotes, mais os scripts do próprio repositório
+bun run typecheck         # every package, plus the repository's own scripts
 bun run lint
-bun run test              # ou test:coverage, que aplica os pisos de cobertura
-bun run test:report       # relatório completo, com integração (precisa de Docker)
-bun run release:check     # tudo acima, mais versões alinhadas e worktree limpo
+bun run test              # or test:coverage, which enforces the coverage floors
+bun run test:report       # full report, including integration (needs Docker)
+bun run release:check     # all of the above, plus aligned versions and a clean worktree
 ```
 
-`typecheck`, `lint`, `test` e `test:coverage` são o mesmo script rodado em cada pacote, na
-ordem em que eles dependem uns dos outros (ver `scripts/run-all.ts`). Todo script do
-repositório é TypeScript e roda com `bun`.
+`typecheck`, `lint`, `test` and `test:coverage` are the same script run in each package, in
+dependency order (see `scripts/run-all.ts`). Every repository script is TypeScript, run by
+`bun`.
 
 ## Releases
 
-O workflow `.github/workflows/release.yml` roda somente para tags semânticas no formato `v*.*.*`:
+The `.github/workflows/release.yml` workflow runs only for semantic tags matching `v*.*.*`:
 
 ```bash
 git tag v1.2.3
 git push origin v1.2.3
 ```
 
-Uma release publica:
+A release publishes:
 
-- imagem Docker `ghcr.io/caiofviana/keres:1.2.3` e `:latest`;
-- `Keres-Server-windows-x64-<versão>.zip`, `Keres-Server-linux-x64-<versão>.zip` e `Keres-Server-macos-arm64-<versão>.zip` (API caseira, sem Docker);
-- instalador e executável portátil para Windows;
-- DMG para macOS;
-- AppImage e Flatpak para Linux;
-- APK e AAB assinados para Android.
+- Docker images `ghcr.io/caiofviana/keres:1.2.3` and `:latest`;
+- `Keres-Server-windows-x64-<version>.zip`, `Keres-Server-linux-x64-<version>.zip`, and `Keres-Server-macos-arm64-<version>.zip` (home API, no Docker);
+- a Windows installer and portable executable;
+- a macOS DMG;
+- Linux AppImage and Flatpak packages;
+- signed Android APK and AAB packages.
 
 ## Landing (GitHub Pages)
 
-A página pública do projeto vive em `apps/site` e é publicada em [caiofviana.github.io/Keres](https://caiofviana.github.io/Keres/). Não é a vitrine de histórias de um servidor (isso é o Showcase, servido pela API): é a landing do produto, em português e inglês.
+The public project page lives in `apps/site` and is published at [caiofviana.github.io/Keres](https://caiofviana.github.io/Keres/). It is not a server's story showcase (that is the Showcase, served by the API): it is the product landing page, in Portuguese and English.
 
 ```bash
 bun run site:start      # http://localhost:5175
 bun run site:build
 ```
 
-As capturas da vitrine da landing são fotos do próprio app, tiradas abrindo o build web real
-dentro do Electron com uma história de exemplo instalada:
+The screenshots in the landing's showcase are photos of the app itself, taken by opening the
+real web build inside Electron with an example story installed:
 
 ```bash
 bun run desktop:capture
 ```
 
-Isso grava `apps/site/public/showcase/screens/<tela>.<idioma>.<tema>.png`, que fica versionado
-no repositório - o build da landing não roda a captura. Rode de novo quando uma tela da vitrine
-mudar de forma. As telas, histórias e tamanhos de janela ficam em
-`apps/desktop/scripts/capture-screens.ts`; o modo de URL que leva o app direto a uma tela fica
-em `apps/client/src/showcase/`.
+That writes `apps/site/public/showcase/screens/<screen>.<lang>.<theme>.png`, which is committed
+to the repository - the landing build does not run the capture. Re-run it when a screen in the
+showcase changes shape. The screens, stories and viewports live in
+`apps/desktop/scripts/capture-screens.ts`; the URL mode that puts the app straight into a
+given screen lives in `apps/client/src/showcase/`.
 
-O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` (a branch padrão). O environment `github-pages` recusa outras branches. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
+The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` (the default branch). The `github-pages` environment rejects other branches. The first time, under Settings → Pages, set the source to **GitHub Actions**.
 
-## Documentação técnica
+## Technical documentation
 
-- [Estrutura real do monorepo](docs/file_structure.md)
-- [Plano e arquitetura do projeto](docs/project_plan.md)
-- [Fluxo de telas](docs/screen_flow.md)
-- [Mecânicas de escolhas](docs/choice_mechanics.md)
-- [Sistema de status e gráfico radar](docs/stat_system.md)
-- [Sincronização e resolução de conflitos](docs/conflict_resolution_client_strategy.md)
+The documents below are currently maintained in Portuguese:
 
-## Segurança operacional
+- [Actual monorepo structure](docs/file_structure.md)
+- [Project plan and architecture](docs/project_plan.md)
+- [Screen flow](docs/screen_flow.md)
+- [Choice mechanics](docs/choice_mechanics.md)
+- [Stat system and radar chart](docs/stat_system.md)
+- [Sync and conflict resolution](docs/conflict_resolution_client_strategy.md)
 
-- Nunca reutilize os segredos de desenvolvimento em produção.
-- Mantenha a API atrás de HTTPS; tokens e credenciais não devem trafegar em HTTP público.
-- Restrinja acesso a `/admin` no proxy quando o painel não precisar ser público.
-- Faça backup de `db_data` e `media_storage`; remover volumes destrói dados persistidos. No Keres Server, siga o `README.md` do zip (cópia mensal da pasta de dados, servidor parado).
-- Fixe uma tag de imagem em produção e valide migrations e logs antes de descartar backups.
+## Operational security
+
+- Never reuse development secrets in production.
+- Keep the API behind HTTPS; tokens and credentials must not travel over public HTTP.
+- Restrict access to `/admin` at the proxy when the panel does not need to be public.
+- Back up `db_data` and `media_storage`; removing volumes destroys persistent data. For Keres Server, follow the zip's `README.md` (monthly copy of the data folder, server stopped).
+- Pin an image tag in production and validate migrations and logs before discarding backups.

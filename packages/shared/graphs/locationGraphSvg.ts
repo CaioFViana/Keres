@@ -6,15 +6,16 @@ import type {
 import { GRAPH_PADDING } from './locationGraphLayout';
 
 /**
- * Serializa o grafo de estrutura de Locations como um arquivo SVG completo - mesmo raciocínio
- * dos outros dois mapas exportáveis (`storyGraphSvg.ts`, `characterRelationGraphSvg.ts`): sai
- * inteiro independente do zoom da tela, e a geometria vem pronta de `locationGraphLayout`, então
- * a tela interativa e o arquivo exportado nunca discordam sobre onde uma Location está.
+ * Serialises the Location structure graph as a complete SVG file - the same reasoning as the
+ * other two exportable maps (`storyGraphSvg.ts`, `characterRelationGraphSvg.ts`): it comes out
+ * whole regardless of the screen's zoom, and the geometry arrives ready from
+ * `locationGraphLayout`, so the interactive screen and the exported file never disagree about
+ * where a Location is.
  */
 
 export interface LocationGraphSvgOptions {
   title: string;
-  /** Linha de contexto sob o título (contagens). */
+  /** Context line under the title (counts). */
   subtitle: string;
   labels: {
     isolated: string;
@@ -54,7 +55,7 @@ export function renderLocationGraphMapSvg(
     `<rect x="0" y="0" width="${canvasWidth}" height="${totalHeight}" fill="${options.colors.background}"/>`,
     renderHeader(options, hasContainsLegend, hasConnectedLegend, hasIsolatedLegend),
     `<g transform="translate(0 ${round(headerHeight)})">`,
-    // Arestas primeiro: passar por baixo dos nós evita que uma linha risque o nome da Location.
+    // Edges first: passing under the nodes keeps a line from striking through a Location's name.
     ...layout.edges.map((edge) => renderEdge(edge, options)),
     ...layout.nodes.map((node) => renderNode(node, options)),
     '</g>',
@@ -141,10 +142,10 @@ function renderNode(node: LocationGraphNode, options: LocationGraphSvgOptions): 
 }
 
 /**
- * Escapa o que quebraria o XML.
+ * Escapes whatever would break the XML.
  *
- * Nome de Location é texto livre digitado pelo autor: um `&` ou um `<` tornaria o arquivo
- * inteiro inválido, e o erro só apareceria ao tentar abrir o mapa.
+ * A Location's name is free text typed by the author: an `&` or a `<` would make the whole file
+ * invalid, and the error would only show up when trying to open the map.
  */
 function escapeXml(value: string): string {
   return (value ?? '')

@@ -2,15 +2,15 @@ import bcrypt from 'bcryptjs';
 import { env } from './env';
 
 /**
- * Custo de produção em todo lugar, exceto sob teste: um único `registerUser()` em teste de
- * integração hasheia a senha e 8 códigos de recuperação (`RecoveryCodeService.generateCodes`),
- * ~570ms a custo 12 - tempo que não valida nada além de "bcrypt funciona". Custo 4 cai isso
- * para ~2ms sem tocar o valor usado em produção.
+ * Production cost everywhere except under test: a single `registerUser()` in an integration test
+ * hashes the password and 8 recovery codes (`RecoveryCodeService.generateCodes`), ~570ms at cost 12
+ * - time that validates nothing beyond "bcrypt works". Cost 4 brings that down to ~2ms without
+ * touching the value used in production.
  *
- * `bcryptjs` (JS puro) em vez do addon nativo `bcrypt`: o `bun build --compile` do Keres
- * Server precisa carregar o módulo no runner do GitHub Actions (Node 24 / ABI 137 no
- * Windows), e o nativo não publica prebuild para essa combinação. Os hashes `$2b$` são
- * os mesmos - senhas já gravadas continuam válidas.
+ * `bcryptjs` (pure JS) instead of the native `bcrypt` addon: Keres Server's `bun build --compile`
+ * has to load the module on the GitHub Actions runner (Node 24 / ABI 137 on Windows), and the native
+ * one publishes no prebuild for that combination. The `$2b$` hashes are the same - already-stored
+ * passwords stay valid.
  */
 export const BCRYPT_COST = env.NODE_ENV === 'test' ? 4 : 12;
 

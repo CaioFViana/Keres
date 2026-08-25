@@ -9,7 +9,7 @@ type LogSink = (entry: {
 
 let sink: LogSink | null = null;
 
-/** Registrado por `server.ts` depois das migrações rodarem - ver comentário lá sobre por quê. */
+/** Registered by `server.ts` after the migrations run - see the comment there for why. */
 export function setLogSink(fn: LogSink) {
   sink = fn;
 }
@@ -47,7 +47,7 @@ function write(level: LogLevel, message: string, meta?: Record<string, unknown>)
     try {
       sink(entry);
     } catch {
-      // Nunca deixa uma falha de persistência derrubar quem chamou o logger.
+      // It never lets a persistence failure take down whoever called the logger.
     }
   }
 }

@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { UlidSchema } from './SyncSchemas';
 
 /**
- * Todo teto é nullable; `null` significa "ilimitado". Ver `tiers` em
- * `apps/api/src/db/schema/tables/tiers.ts` para a mesma convenção do lado do banco.
+ * Every ceiling is nullable; `null` means "unlimited". See `tiers` in
+ * `apps/api/src/db/schema/tables/tiers.ts` for the same convention on the database side.
  */
 export const TierCreateInputSchema = z.object({
   name: z.string().min(1, 'Name cannot be empty'),
@@ -29,7 +29,7 @@ export const TierSchema = TierCreateInputSchema.extend({
 export const PartialTierSchema = TierCreateInputSchema.partial();
 export type PartialTier = z.infer<typeof PartialTierSchema>;
 
-/** Snapshot do uso atual de um usuário comparado aos tetos do seu tier efetivo. Ver GET /user/tier-usage. */
+/** A snapshot of a user's current usage against their effective tier's ceilings. See GET /user/tier-usage. */
 export const TierUsageSchema = z.object({
   tier: TierSchema.nullable(),
   storiesUsed: z.number().int(),

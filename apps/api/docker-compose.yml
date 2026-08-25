@@ -38,9 +38,9 @@ services:
       db:
         condition: service_healthy
     volumes:
-      # O modo padrão é `local`, cujo caminho relativo resolve para este destino. Para S3,
-      # defina MEDIA_STORAGE_DRIVER=s3 e MEDIA_S3_* no env_file; não há sobrescrita aqui.
-      # Sem este volume, cada arquivo do modo local seria perdido ao recriar o container.
+      # The default mode is `local`, whose relative path resolves to this destination. For S3, set
+      # MEDIA_STORAGE_DRIVER=s3 and MEDIA_S3_* in the env_file; there is no override here. Without this
+      # volume, every file in local mode would be lost when the container is recreated.
       - media_storage:/app/apps/api/media-storage
 
 volumes:

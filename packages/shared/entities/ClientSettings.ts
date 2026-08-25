@@ -7,7 +7,7 @@ export interface ClientSettings {
   use24HourTime: boolean;
   /** Quando ativo, exibe o atalho de ajuda contextual nos headers do aplicativo. */
   showContextualHelp: boolean;
-  /** Quando ativo, o menu oferece a lista de recursos literários. */
+  /** When on, the menu offers the list of literary devices. */
   suggestLiteraryDevices: boolean;
   createdAt: Date;
   updatedAt: Date;

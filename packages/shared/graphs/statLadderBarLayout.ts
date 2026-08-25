@@ -1,15 +1,15 @@
 import { formatStatNumber, OVERSHOOT_RATIO, type StatTier } from './statLadder';
 
 /**
- * Geometria da régua de tiers: uma barra de 0 até o piso do degrau mais alto, com uma marca em
- * cada degrau e, opcionalmente, a posição do valor do personagem.
+ * Geometry of the tier ruler: a bar from 0 to the highest rung's floor, with a mark at each rung
+ * and, optionally, the position of the character's value.
  *
- * O eixo aqui é **numérico**, e não um degrau por fatia igual como no radar. São perguntas
- * diferentes: o radar compara personagens entre eixos (cada anel é um degrau), a régua mostra o
- * formato da própria escada enquanto o autor digita um número. Com F em 0, C em 50 e A em 400, é
- * a régua que deixa ver que C é uma faixa estreita e A é quase toda a barra.
+ * The axis here is **numeric**, not one rung per equal slice as on the radar. They answer different
+ * questions: the radar compares characters across axes (each ring is a rung), the ruler shows the
+ * shape of the ladder itself while the author types a number. With F at 0, C at 50 and A at 400, it
+ * is the ruler that makes it visible that C is a narrow band and A is almost the whole bar.
  *
- * Puro de propósito, como os outros layouts do app.
+ * Pure on purpose, like the app's other layouts.
  */
 
 export interface LadderBarSegment {
@@ -23,14 +23,14 @@ export interface LadderBarSegment {
 export interface LadderBarMarker {
   x: number;
   label: string;
-  /** O rótulo cabe sem encostar no vizinho já desenhado. */
+  /** The label fits without touching the neighbour already drawn. */
   showLabel: boolean;
 }
 
 export interface LadderBarValue {
   x: number;
   display: string;
-  /** O valor passou do último degrau e está desenhado na faixa de transbordo. */
+  /** The value went past the last rung and is drawn in the overshoot band. */
   isOverflow: boolean;
 }
 
@@ -39,7 +39,7 @@ export interface StatLadderBarLayout {
   /** Onde termina a escada; depois disso vem a faixa de transbordo. */
   ladderWidth: number;
   segments: LadderBarSegment[];
-  /** A faixa além do topo da escada, desenhada à parte para não passar por degrau. */
+  /** The band beyond the ladder's top, drawn separately so it does not pass through a rung. */
   overflow: { x: number; width: number };
   markers: LadderBarMarker[];
   value: LadderBarValue | null;
@@ -47,22 +47,22 @@ export interface StatLadderBarLayout {
 
 export interface StatLadderBarInput {
   ladder: readonly StatTier[];
-  /** Valor do personagem, ou `null` quando ainda não há um. */
+  /** The character's value, or `null` when there is not one yet. */
   value: number | null;
   width: number;
-  /** Largura média de um caractere do rótulo, para decidir o que cabe. */
+  /** Average width of a label character, to decide what fits. */
   characterWidth?: number;
-  /** Margem em que o marcador de valor não pode entrar, para o desenho dele não ser cortado. */
+  /** Margin the value marker must not enter, so its drawing is not cut off. */
   inset?: number;
 }
 
 const DEFAULT_CHARACTER_WIDTH = 6.2;
-/** Respiro mínimo entre dois rótulos vizinhos. */
+/** Minimum breathing room between two neighbouring labels. */
 const LABEL_GAP = 6;
 
 /**
- * `null` quando não há régua a desenhar: uma escada de um degrau só (ou nenhum) não tem faixa
- * nenhuma para mostrar, e uma escada cujo topo é zero não tem eixo.
+ * `null` when there is no ruler to draw: a ladder with a single rung (or none) has no band to
+ * show, and a ladder whose top is zero has no axis.
  */
 export function buildStatLadderBar(input: StatLadderBarInput): StatLadderBarLayout | null {
   const { ladder, value, width } = input;
@@ -72,27 +72,27 @@ export function buildStatLadderBar(input: StatLadderBarInput): StatLadderBarLayo
   if (top <= 0) return null;
 
   const characterWidth = input.characterWidth ?? DEFAULT_CHARACTER_WIDTH;
-  // A faixa de transbordo ocupa a mesma proporção do raio extra do radar, para os dois
-  // desenhos contarem a mesma história sobre "acima da escala".
+  // The overshoot band takes up the same proportion as the radar's extra radius, so both drawings
+  // tell the same story about "above the scale".
   const ladderWidth = width / (1 + OVERSHOOT_RATIO);
   const positionOf = (raw: number) => (Math.max(0, raw) / top) * ladderWidth;
 
   const segments: LadderBarSegment[] = ladder.map((tier, index) => {
     const start = positionOf(tier.minValue);
     const next = ladder[index + 1];
-    // O último degrau para onde a escada acaba: a faixa de transbordo é desenhada à parte,
-    // senão a barra pareceria ir até o fim e ninguém veria onde o topo está.
+    // The last rung is where the ladder ends: the overshoot band is drawn separately, otherwise the bar
+    // would look like it runs to the end and nobody would see where the top is.
     const end = next ? positionOf(next.minValue) : ladderWidth;
     return { x: start, width: Math.max(0, end - start), index, label: tier.label };
   });
 
   /**
-   * Onde o rótulo realmente ocupa espaço.
+   * Where the label actually takes up space.
    *
-   * As pontas não são desenhadas centradas - o primeiro sai da marca para a direita e o último
-   * para a esquerda, senão os dois vazariam da barra. A conta de colisão precisa usar a mesma
-   * regra do desenho: supor tudo centrado deixava o penúltimo e o último se sobreporem numa
-   * escada numérica ("90" colado em "100").
+   * The ends are not drawn centred - the first one goes from the mark to the right and the last one
+   * to the left, otherwise both would spill out of the bar. The collision arithmetic has to use the
+   * same rule as the drawing: assuming everything is centred made the second-to-last and the last
+   * overlap on a numeric ladder ("90" glued to "100").
    */
   const labelExtent = (index: number, x: number, label: string) => {
     const full = label.length * characterWidth;
@@ -101,8 +101,8 @@ export function buildStatLadderBar(input: StatLadderBarInput): StatLadderBarLayo
     return { start: x - full / 2, end: x + full / 2 };
   };
 
-  // Rótulos da esquerda para a direita, pulando os que encostariam no último desenhado. As duas
-  // pontas entram sempre: são elas que dizem onde a escada começa e onde ela termina.
+  // Labels from left to right, skipping the ones that would touch the last drawn. Both ends always
+  // go in: they are what say where the ladder starts and where it ends.
   let lastLabelEnd = Number.NEGATIVE_INFINITY;
   const markers: LadderBarMarker[] = ladder.map((tier, index) => {
     const x = positionOf(tier.minValue);
@@ -113,7 +113,7 @@ export function buildStatLadderBar(input: StatLadderBarInput): StatLadderBarLayo
     return { x, label: tier.label, showLabel };
   });
 
-  // O último tem prioridade: quem já foi aceito antes dele e ficaria por baixo sai.
+  // The last one wins: whoever was accepted before it and would end up underneath is dropped.
   const lastIndex = markers.length - 1;
   if (lastIndex > 0) {
     const lastStart = labelExtent(

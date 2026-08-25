@@ -3,16 +3,16 @@ import { boolean, integer, table, text, timestamp, timestampNow } from '../colum
 import { users } from './users';
 
 /**
- * Plano de assinatura: define os tetos de uso que `TierEnforcementService` aplica.
+ * A subscription plan: it defines the usage ceilings `TierEnforcementService` enforces.
  *
- * Convenção desta tabela: todas as colunas `max*` são nullable, e `null` significa
- * "ilimitado" - em vez de uma coluna `*Unlimited` separada para cada teto, o que
- * dobraria o número de colunas. Mesma ideia já usada em `deletedAt` no resto do schema.
+ * This table's convention: every `max*` column is nullable, and `null` means "unlimited" - instead of
+ * a separate `*Unlimited` column for each ceiling, which would double the number of columns. The same
+ * idea already used by `deletedAt` in the rest of the schema.
  */
 export const tiers = table('tiers', {
   id: text('id').primaryKey(),
   name: text('name').notNull().unique(),
-  /** Conveniência para a UI; a fonte da verdade de qual tier novos cadastros recebem é `registrationSettings.defaultTierId`. */
+  /** A convenience for the UI; the source of truth for which tier new signups receive is */
   isDefault: boolean('is_default').notNull().default(false),
   maxStories: integer('max_stories'),
   maxEntitiesPerStory: integer('max_entities_per_story'),

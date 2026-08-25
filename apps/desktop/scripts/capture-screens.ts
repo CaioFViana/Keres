@@ -1,13 +1,13 @@
 /**
- * Tira as fotos das telas do app para a vitrine do site.
+ * Takes the screenshots of the app's screens for the website's showcase.
  *
- * Roda o app de verdade dentro do Electron - o mesmo host que o desktop entrega ao usuário -
- * e fotografa cada tela pedida. Nada de navegador de automação: o Electron já é dependência
- * daqui e já resolve o que o app web precisa (protocolo `app://` com COOP/COEP, sem o qual o
- * SQLite do navegador não abre).
+ * It runs the real app inside Electron - the same host the desktop app ships to users - and
+ * photographs each requested screen. No automation browser: Electron is already a dependency
+ * here and already provides what the web app needs (the `app://` protocol with COOP/COEP,
+ * without which the browser's SQLite will not open).
  *
- * Cada foto sai de uma URL que o modo vitrine do app entende (ver `showcaseRequest.ts`), então
- * não há clique nenhum a simular: abrir, esperar, fotografar.
+ * Each photo comes from a URL the app's showcase mode understands (see `showcaseRequest.ts`), so
+ * there is no click to simulate: open, wait, photograph.
  *
  *   bun run desktop:capture
  */
@@ -18,37 +18,39 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import electronModule from 'electron';
 
-// Importado de fora do Electron, o pacote `electron` exporta o caminho do binário - a tipagem
-// publicada descreve a API do processo principal, que é o outro lado do mesmo pacote.
+// Imported from outside Electron, the `electron` package exports the binary's path - the
+// published typings describe the main-process API, which is the other side of the same package.
 const electronBinary = electronModule as unknown as string;
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const clientRoot = resolve(desktopRoot, '..', 'client');
 const outputDirectory = resolve(desktopRoot, '..', 'site', 'public', 'showcase', 'screens');
 
 /**
- * As telas da vitrine.
+ * The showcase screens.
  *
- * `story` escolhe a história de exemplo, e cada tela usa a que melhor a preenche: o mapa da
- * história precisa de uma ramificada, o elenco grande vive na Kaguya, as tramas na Cinderela.
+ * `story` picks the example story, and each screen uses the one that fills it best: the story map
+ * needs a branching one, the large cast lives in Kaguya, the plots in Cinderella.
  */
 const ONLY = process.env.KERES_CAPTURE_ONLY;
 /**
- * Só os grafos compactos pedem "ajustar à tela": nos grandes (mapa da história, matriz,
- * linha do tempo) o ajuste encolhe tudo a ponto de não se ler nada, e a foto fica melhor com o
- * desenho em tamanho real saindo pela borda - que é como o app se apresenta ao abrir.
+ * Only the compact graphs ask for "fit to screen": on the large ones (story map, matrix,
+ * timeline) fitting shrinks everything to the point of being unreadable, and the photo looks
+ * better with the drawing at real size running past the edge - which is how the app presents
+ * itself when it opens.
  */
 const FIT = { en: 'Fit to screen', pt: 'Ajustar à tela' };
 const SCREENS: Screen[] = [
   { name: 'narrative-elements', stack: 'NarrativeElementsStack', story: 'cinderella' },
-  // O clique abre o item na própria lista - é assim que o app mostra um personagem sem trocar
-  // de tela. O nome é igual nos dois idiomas, então serve para as duas capturas.
+  // The click opens the item within the list itself - that is how the app shows a character without
+  // changing screens. The name is the same in both languages, so it serves both captures.
   {
     name: 'character-list',
     stack: 'CharactersStack',
     story: 'princess-kaguya',
     press: { en: 'Kaguya-hime', pt: 'Kaguya-hime' },
   },
-  // O painel abre com o resumo recolhido; sem o clique a foto seria uma página quase vazia.
+  // The dashboard opens with the summary collapsed; without the click the photo would be a nearly
+  // empty page.
   {
     name: 'dashboard',
     stack: 'MainDashboard',
@@ -63,8 +65,8 @@ const SCREENS: Screen[] = [
     story: 'alice-in-wonderland',
     settleMs: 2500,
   },
-  // Sem "ajustar à tela" aqui: nesta tela o ajuste empurra a coluna de nomes das cenas para
-  // fora do quadro. A vista de abertura já mostra a linha do tempo inteira.
+  // No "fit to screen" here: on this screen fitting pushes the scene-name column out of frame. The
+  // opening view already shows the whole timeline.
   {
     name: 'story-timeline',
     stack: 'NarrativeElementsStack',
@@ -108,9 +110,9 @@ const SCREENS: Screen[] = [
 const LANGUAGES = (process.env.KERES_CAPTURE_LANGS || 'en,pt').split(',');
 const THEMES = (process.env.KERES_CAPTURE_THEMES || 'light,dark').split(',');
 /**
- * Desktop largo o bastante para a gaveta aberta, que é como o app se apresenta em tela grande.
- * Uma tela pode pedir outra altura (`viewport`) quando o conteúdo é baixo e a janela cheia
- * fotografaria meia página vazia.
+ * A desktop wide enough for the open drawer, which is how the app presents itself on a large
+ * screen. A screen can ask for a different height (`viewport`) when its content is short and the
+ * full window would photograph half a blank page.
  */
 const VIEWPORT = { width: 1440, height: 900 };
 
@@ -188,8 +190,8 @@ async function main() {
   const planPath = join(planDirectory, 'plan.json');
   await writeFile(planPath, JSON.stringify(plan), 'utf8');
 
-  // Perfil novo a cada execução: o app guarda história instalada e tema no próprio banco, e
-  // uma sobra da execução anterior mudaria a foto sem ninguém perceber.
+  // A fresh profile on every run: the app keeps the installed story and the theme in its own
+  // database, and a leftover from the previous run would change the photo without anyone noticing.
   const userDataDirectory = await mkdtemp(join(tmpdir(), 'keres-capture-profile-'));
   try {
     await run(

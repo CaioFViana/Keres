@@ -1,12 +1,12 @@
 import * as path from 'path';
 
 /**
- * Resolução de caminho do processo main, isolada do Electron para poder ser testada sem subir
- * um app: as duas funções recebem a raiz e o probe de existência em vez de lerem
- * `app.getPath()`/`fs` por conta própria.
+ * Path resolution for the main process, isolated from Electron so it can be tested without
+ * starting an app: both functions receive the root and the existence probe instead of reading
+ * `app.getPath()`/`fs` on their own.
  */
 
-/** Impede que um caminho relativo escape da raiz - `path.join` já normaliza os `..`. */
+/** Stops a relative path from escaping the root - `path.join` already normalises the `..`. */
 function assertInsideRoot(
   root: string,
   resolved: string,
@@ -18,7 +18,7 @@ function assertInsideRoot(
   }
 }
 
-/** Resolve um caminho no formato "media/<storyId>/<hash>.<ext>", rejeitando qualquer escape. */
+/** Resolves a path in the form "media/<storyId>/<hash>.<ext>", rejecting any escape. */
 export function resolveMediaPath(mediaRoot: string, relativePath: string): string {
   const resolved = path.join(mediaRoot, relativePath);
   assertInsideRoot(mediaRoot, resolved, relativePath, 'media storage');
@@ -26,10 +26,10 @@ export function resolveMediaPath(mediaRoot: string, relativePath: string): strin
 }
 
 /**
- * Resolve uma requisição `app://` para um arquivo dentro do export web do client. O export
- * estático do Expo Router organiza rotas como diretórios com index.html próprio (estilo
- * Next.js), mas um export plano "rota.html" também é aceito; qualquer coisa sem correspondência
- * cai no index.html da raiz, para que a navegação client-side sobreviva a um refresh.
+ * Resolves an `app://` request to a file inside the client's web export. Expo Router's static
+ * export organises routes as directories with their own index.html (Next.js style), but a flat
+ * "route.html" export is accepted too; anything without a match falls back to the root's
+ * index.html, so client-side navigation survives a refresh.
  */
 export function resolveClientFile(
   clientDist: string,
@@ -42,7 +42,7 @@ export function resolveClientFile(
 
   for (const candidate of candidates) {
     const filePath = path.join(clientDist, candidate);
-    // O `path.sep` importa: sem ele, "../client-dist-qualquer/x" passaria no prefixo.
+    // The `path.sep` matters: without it, "../client-dist-anything/x" would pass the prefix check.
     if (
       (filePath === clientDist || filePath.startsWith(clientDist + path.sep)) &&
       exists(filePath)

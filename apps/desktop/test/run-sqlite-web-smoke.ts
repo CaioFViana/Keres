@@ -6,16 +6,16 @@ import { fileURLToPath } from 'node:url';
 import electronModule from 'electron';
 
 /**
- * Sobe o app web dentro do Electron uma vez e confere que o SQLite do navegador abre.
+ * Brings the web app up inside Electron once and checks that the browser's SQLite opens.
  *
- * É o único caminho que exerce wa-sqlite + OPFS + SharedArrayBuffer de ponta a ponta, e depende
- * dos cabeçalhos COOP/COEP que o protocolo `app://` do processo principal entrega - nenhum
- * teste unitário cobre essa combinação.
+ * It is the only path that exercises wa-sqlite + OPFS + SharedArrayBuffer end to end, and it
+ * depends on the COOP/COEP headers the main process's `app://` protocol delivers - no unit test
+ * covers that combination.
  */
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const clientRoot = resolve(desktopRoot, '..', 'client');
-// Importado de fora do Electron, o pacote `electron` exporta o caminho do binário - a tipagem
-// publicada descreve a API do processo principal, que é o outro lado do mesmo pacote.
+// Imported from outside Electron, the `electron` package exports the binary's path - the
+// published typings describe the main-process API, which is the other side of the same package.
 const electronBinary = electronModule as unknown as string;
 const smokeEnvironment: NodeJS.ProcessEnv = {
   ...process.env,

@@ -4,9 +4,9 @@ export const MATRIX_SCENE_WIDTH = 124;
 export const MATRIX_HEADER_HEIGHT = 82;
 export const MATRIX_ROW_HEIGHT = 58;
 /**
- * Respiro entre a borda da coluna e a célula desenhada dentro dela. Vive aqui, e não como um
- * `10` solto em cada desenho, porque o fio das séries é recortado exatamente por ele: se a
- * célula e o fio discordarem sobre onde a célula começa, um invade o outro.
+ * Breathing room between a column's border and the cell drawn inside it. It lives here, instead of
+ * a loose `10` in each drawing, because the series thread is clipped by exactly this value: if the
+ * cell and the thread disagree about where the cell starts, one invades the other.
  */
 export const MATRIX_CELL_INSET = 10;
 
@@ -52,34 +52,36 @@ export function buildPresenceMatrixLayout(
   };
 }
 
-/** Espessura e opacidade do fio: presente o bastante para se seguir, discreto o bastante para
- *  doze séries empilhadas não virarem sopa. */
+/**
+ * Thickness and opacity of the thread: present enough to be followed, discreet enough that twelve
+ * stacked series do not turn into soup.
+ */
 export const MATRIX_THREAD_WIDTH = 2;
 export const MATRIX_THREAD_OPACITY = 0.35;
-/** Vãos são tracejados; o traço acompanha a espessura para não sumir em zoom pequeno. */
+/** Gaps are dashed; the dash follows the thickness so it does not vanish at small zoom levels. */
 export const MATRIX_THREAD_GAP_DASH = '5 4';
 
 export interface MatrixThreadSegment {
   x1: number;
   x2: number;
-  /** O trecho passa por cenas em que a série não aparece. */
+  /** The stretch passes through scenes in which the series does not appear. */
   isGap: boolean;
 }
 
 /**
- * O fio de uma série: da primeira à última cena em que ela aparece, quebrado em trechos
- * sólidos (células vizinhas) e trechos de vão (cenas em que ela não está).
+ * A series' thread: from the first to the last scene in which it appears, broken into solid
+ * stretches (neighbouring cells) and gap stretches (scenes it is not in).
  *
- * Cada trecho começa na borda direita de uma célula e termina na borda esquerda da próxima:
- * o fio liga as células por fora, sem cruzar por baixo delas - o preenchimento translúcido
- * deixaria o risco aparecer por cima da nota.
+ * Each stretch starts at one cell's right border and ends at the next one's left border: the thread
+ * links the cells from outside, without crossing underneath them - the translucent fill would let
+ * the stroke show through over the note.
  *
- * O fio deliberadamente **não** atravessa a faixa inteira. Uma linha reta de ponta a ponta
- * seria decorativa - cada série já ocupa uma faixa só dela - e ainda sugeriria presença onde
- * não há. Assim ele responde o que contar células não responde de relance: onde a série
- * começa, onde termina, e se ela é contínua ou aparece em rajadas.
+ * The thread deliberately does **not** cross the whole band. A straight line from end to end would
+ * be decorative - each series already has a band of its own - and would also suggest presence where
+ * there is none. This way it answers what counting cells does not answer at a glance: where the
+ * series starts, where it ends, and whether it is continuous or shows up in bursts.
  *
- * Devolve vazio para menos de duas aparições: uma cena só não tem trajeto.
+ * Returns empty for fewer than two appearances: a single scene has no trajectory.
  */
 export function buildMatrixThreadSegments(
   row: PresenceMatrixRow,

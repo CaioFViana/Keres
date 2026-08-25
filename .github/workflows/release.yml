@@ -41,14 +41,14 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      # Um comando só, o mesmo que se roda na máquina antes de criar a tag: traduções,
-      # typecheck, lint, formatação, alinhamento das versões e as suítes unitárias com
-      # cobertura. O alinhamento das versões é o que faltava aqui - uma tag cujo
-      # `AppRelease.ts` ficou para trás falha agora, antes de qualquer artefato ser compilado,
-      # em vez de sair uma release inteira reportando a versão errada.
-      # As suítes de integração ficam de fora de propósito: precisam de Postgres e SeaweedFS de
-      # pé e têm job próprio em ci.yml, que é onde uma regressão deve aparecer - antes do
-      # release, não durante ele.
+      # A single command, the same one you run on your machine before creating the tag:
+      # translations, typecheck, lint, formatting, version alignment, and the unit suites with
+      # coverage. Version alignment is what was missing here - a tag whose `AppRelease.ts` fell
+      # behind now fails before any artifact is compiled, instead of shipping a whole release
+      # reporting the wrong version.
+      # The integration suites stay out on purpose: they need Postgres and SeaweedFS up and have
+      # their own job in ci.yml, which is where a regression should show up - before the release,
+      # not during it.
       - run: bun run release:check --ci
 
   # ---- Server: build + publish the API's Docker image to GHCR ----
@@ -82,7 +82,7 @@ jobs:
           # build-push-action v6 auto-uploads a GitHub Actions artifact with the build's summary
           # (a proprietary `.dockerbuild` file, not a real zip) for Docker Desktop's dashboard
           # integration - `create-release` below downloads every artifact from the run with no
-          # filter, and `actions/download-artifact` chokes on that one ("não é um zip válido").
+          # filter, and `actions/download-artifact` chokes on that one ("not a valid zip").
           # Not needed here, so turned off at the source instead of trying to filter it out.
           DOCKER_BUILD_SUMMARY: false
         with:
@@ -247,9 +247,9 @@ jobs:
           path: apps/client/android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
-  # ---- Keres Server: zip portátil da API (SQLite, sem Docker) por SO ----
-  # Compila no runner de cada plataforma porque o sidecar nativo do libSQL tem de
-  # coincidir com o destino; `--target` da Bun não traz o `.node` certo.
+  # ---- Keres Server: portable zip of the API (SQLite, no Docker) per OS ----
+  # Built on each platform's runner because libSQL's native sidecar has to match the target;
+  # Bun's `--target` does not bring the right `.node`.
   keres-server:
     needs: [version, verify]
     strategy:

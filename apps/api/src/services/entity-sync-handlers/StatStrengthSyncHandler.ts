@@ -45,10 +45,10 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
   }
 
   /**
-   * Dois degraus com o mesmo piso tornam a escada ambígua: o intervalo de um deles teria
-   * largura zero e nenhum valor cairia nele. É o caso que você pediu para o sistema de
-   * conflitos sinalizar, então vira `SyncConflictError` e não erro genérico - assim o cliente
-   * abre a tela de resolução e escolhe qual degrau fica.
+   * Two rungs with the same floor make the ladder ambiguous: one of them would have a zero-width range
+   * and no value would land in it. It is the case you asked the conflict system to flag, so it becomes a
+   * `SyncConflictError` rather than a generic error - that way the client opens the resolution screen
+   * and chooses which rung stays.
    */
   private async assertNoDuplicateFloor(
     storyId: string,

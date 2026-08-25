@@ -12,9 +12,8 @@ import {
 import { stories } from './stories';
 
 /**
- * Uma mídia da história. Os bytes ficam em `media_blobs`, endereçados pelo `hash`; esta
- * tabela guarda só os metadados, que sincronizam pelo log de operações como qualquer
- * outra entidade.
+ * A media file belonging to the story. The bytes live in `media_blobs`, addressed by the `hash`; this
+ * table holds only the metadata, which synchronizes through the operation log like any other entity.
  */
 export const galleries = table(
   'galleries',
@@ -26,7 +25,7 @@ export const galleries = table(
     mediaType: text('media_type').notNull(), // 'image' | 'video' | 'audio'
     mimeType: text('mime_type').notNull(),
     fileName: text('file_name').notNull(),
-    /** Checksum do conteúdo; liga esta linha ao blob correspondente. */
+    /** Content checksum; it ties this row to the corresponding blob. */
     hash: text('hash').notNull(),
     sizeBytes: integer('size_bytes').notNull().default(0),
     title: text('title'),
@@ -39,16 +38,16 @@ export const galleries = table(
     deletedAt: timestamp('deleted_at'),
   },
   (table) => [
-    // A rota de download confere se a história de fato referencia o hash pedido antes de
-    // servir o arquivo; sem este índice essa checagem varreria a tabela a cada request.
+    // The download route checks that the story really does reference the requested hash before serving the
+    // file; without this index that check would scan the table on every request.
     index('galleries_story_hash_idx').on(table.storyId, table.hash),
   ],
 );
 
 /**
- * Vínculo N:N entre uma mídia e uma entidade da história (`Character`, `Location`,
- * `Note`, `Scene` ou `Item`). O dono é polimórfico, então não há foreign key: a
- * existência do dono é validada no handler de sincronização, como em `tag_relations`.
+ * An N:N link between a media file and an entity of the story (`Character`, `Location`, `Note`,
+ * `Scene` or `Item`). The owner is polymorphic, so there is no foreign key: the owner's existence is
+ * validated in the synchronization handler, as in `tag_relations`.
  */
 export const galleryRelations = table(
   'gallery_relations',
@@ -75,12 +74,11 @@ export const galleryRelations = table(
 );
 
 /**
- * Os bytes de uma mídia, endereçados pelo conteúdo.
+ * A media file's bytes, addressed by content.
  *
- * Global de propósito: dois usuários que subam a mesma imagem compartilham uma linha e um
- * arquivo. Isso não vaza nada, porque a autorização não acontece aqui - a rota de
- * download só serve um hash depois de confirmar que a história pedida tem permissão de
- * leitura *e* referencia aquele hash em `galleries`.
+ * Global on purpose: two users uploading the same image share one row and one file. That leaks
+ * nothing, because authorization does not happen here - the download route only serves a hash after
+ * confirming that the requested story has read permission *and* references that hash in `galleries`.
  */
 export const mediaBlobs = table(
   'media_blobs',

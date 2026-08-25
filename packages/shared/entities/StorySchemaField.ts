@@ -2,18 +2,18 @@ import type { AttributeType } from '../metadata/AttributeType';
 import type { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
 
 /**
- * Definição de um atributo customizado, compartilhada por toda entidade de `entityType` dentro
- * de `storyId` - nunca por instância individual. `key` é imutável após a criação (só
- * `name`/`description`/`isRequired`/`defaultValue`/`order` são editáveis); `AttributeValue`
- * referencia esta linha por `fieldId`, então renomear `name` nunca desconecta valores já salvos.
+ * The definition of a custom attribute, shared by every entity of `entityType` within `storyId` -
+ * never per individual instance. `key` is immutable after creation (only
+ * `name`/`description`/`isRequired`/`defaultValue`/`order` are editable); `AttributeValue`
+ * references this row by `fieldId`, so renaming `name` never disconnects already-saved values.
  */
 export interface StorySchemaField {
   id: string;
   storyId: string;
   entityType: StorySchemaEntityType;
-  /** Nome de exibição, editável. */
+  /** Display name, editable. */
   name: string;
-  /** lowercase snake_case, único dentro de (storyId, entityType), imutável após criação. */
+  /** lowercase snake_case, unique within (storyId, entityType), immutable after creation. */
   key: string;
   description: string | null;
   type: AttributeType;
@@ -22,7 +22,7 @@ export interface StorySchemaField {
   isRequired: boolean;
   /** Sempre texto puro, igual a `AttributeValue.value` - ver `attributeValueCodec.ts`. */
   defaultValue: string | null;
-  /** Ordem de exibição em forms/details, crescente. Não é editável. Não é tão importante pra editar ordem! */
+  /** Display order in forms/details, ascending. Not editable. Not important enough to reorder! */
   order: number;
   createdAt: Date;
   updatedAt: Date;

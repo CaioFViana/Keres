@@ -10,8 +10,10 @@ import { db } from '../../db';
 import { locationRelations, locations } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
-/** Limite defensivo contra loop infinito se os dados de alguma forma ficarem corrompidos -
- *  numa hierarquia válida (single-parent, sem ciclos) a cadeia de ancestrais nunca chega perto disso. */
+/**
+ * A defensive limit against an infinite loop if the data somehow becomes corrupted - in a valid
+ * hierarchy (single-parent, no cycles) the ancestor chain never comes close to it.
+ */
 const MAX_ANCESTOR_WALK = 500;
 
 export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
@@ -77,9 +79,11 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  /** Só se aplica a 'contains': cada Location tem no máximo um pai vivo, então a cadeia de
-   *  ancestrais é uma lista simples (não é preciso uma busca em grafo geral). Rejeita se
-   *  `childId` aparecer entre os ancestrais de `newParentId` - isso fecharia um ciclo. */
+  /**
+   * It only applies to 'contains': each Location has at most one live parent, so the ancestor chain is a
+   * simple list (no general graph search needed). It rejects if `childId` appears among `newParentId`'s
+   * ancestors - that would close a cycle.
+   */
   private async validateNoCycle(
     storyId: string,
     childId: string,
@@ -115,7 +119,7 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  /** Para 'contains': o filho (locationBId) só pode ter um pai vivo por vez. */
+  /** For 'contains': the child (locationBId) can only have one live parent at a time. */
   private async findExistingParentEdge(storyId: string, childId: string, excludeId?: string) {
     const existing = await db.query.locationRelations.findFirst({
       where: and(
@@ -173,7 +177,7 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
         );
       }
     } else {
-      // 'contains': locationAId é o pai, locationBId é o filho - a ordem importa, não ordenar.
+      // 'contains': locationAId is the parent, locationBId is the child - order matters, do not sort.
       await this.validateRelatedEntities(storyId, locationAId, locationBId);
 
       const existingParentEdge = await this.findExistingParentEdge(storyId, locationBId);

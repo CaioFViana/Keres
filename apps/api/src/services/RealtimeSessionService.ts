@@ -6,10 +6,10 @@ export type RealtimeEvent =
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
   /**
-   * Uma história ganhou (ou perdeu) uma versão pública. Vai para o dono e para todo mundo com
-   * permissão nela. Sem payload de conteúdo, como os demais: é só um empurrão para o cliente
-   * refazer o GET autoritativo - o barramento é em memória e não reenvia nada a quem estava
-   * offline, então o cliente também refaz esse GET a cada reconexão.
+   * A story gained (or lost) a public version. It goes to the owner and to everybody with permission on
+   * it. With no content payload, like the others: it is only a nudge for the client to redo the
+   * authoritative GET - the bus is in memory and resends nothing to whoever was offline, so the client
+   * also redoes that GET on every reconnection.
    */
   | { type: 'story.published'; storyId: string };
 
@@ -36,7 +36,7 @@ interface RealtimeSessionDependencies {
   createId?: () => string;
 }
 
-/** Lógica de tickets e assinaturas independente do adaptador WebSocket do Elysia. */
+/** Ticket and subscription logic, independent of Elysia's WebSocket adapter. */
 export class RealtimeSessionService {
   private readonly tickets = new Map<string, { user: JWTPayload; expiresAt: number }>();
   private readonly now: () => number;

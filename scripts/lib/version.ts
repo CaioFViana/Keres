@@ -3,9 +3,9 @@ import { join } from 'node:path';
 import { repoRoot } from './packages';
 
 /**
- * A versão distribuída do Keres mora em vários arquivos, e todos têm que dizer a mesma coisa:
- * o `package.json` de cada pacote, o `app.json` do Expo e o `AppRelease.ts` que cliente e API
- * exibem. Este módulo é o único lugar que escreve nesses arquivos.
+ * The released version of Keres lives in several files, and all of them have to say the same
+ * thing: every package's `package.json`, Expo's `app.json`, and the `AppRelease.ts` that client
+ * and API display. This module is the only place that writes to those files.
  */
 export const VERSIONED_JSON_FILES = [
   'package.json',

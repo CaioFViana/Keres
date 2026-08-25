@@ -63,14 +63,14 @@ const APP_NAME = 'Keres';
 const SQLITE_WEB_SMOKE_TEST = process.argv.includes('--sqlite-web-smoke-test');
 
 /**
- * Captura das telas para a vitrine do site.
+ * Screen capture for the website's showcase.
  *
- * O Electron já é o host que o app web precisa (protocolo `app://` com COOP/COEP, ver
- * `withIsolationHeaders`), então capturar aqui dispensa navegador de automação: é o mesmo
- * runtime que o desktop entrega ao usuário, tirando foto de si mesmo.
+ * Electron is already the host the web app needs (the `app://` protocol with COOP/COEP, see
+ * `withIsolationHeaders`), so capturing here needs no automation browser: it is the same runtime
+ * the desktop app ships to users, photographing itself.
  *
- * `--capture-screens=<arquivo.json>` recebe a lista de imagens a tirar; cada item vira uma URL
- * `app://app/?showcase=...` que o modo vitrine do app entende (ver `showcaseRequest.ts`).
+ * `--capture-screens=<file.json>` receives the list of images to take; each item becomes an
+ * `app://app/?showcase=...` URL that the app's showcase mode understands (see `showcaseRequest.ts`).
  */
 const CAPTURE_ARGUMENT = process.argv.find((argument) => argument.startsWith('--capture-screens='));
 const CAPTURE_PLAN_PATH = CAPTURE_ARGUMENT?.split('=').slice(1).join('=');
@@ -81,14 +81,14 @@ interface CaptureShot {
   query: string;
   width: number;
   height: number;
-  /** Espera extra depois do carregamento, para gráficos que se desenham em duas passadas. */
+  /** Extra wait after loading, for graphs that draw themselves in two passes. */
   settleMs?: number;
   /**
-   * Rótulo de acessibilidade de um controle a acionar antes da foto - os gráficos abrem no
-   * canto superior esquerdo e só cabem inteiros depois do "ajustar à tela".
+   * Accessibility label of a control to press before the photo - the graphs open in the top-left
+   * corner and only fit whole after "fit to screen".
    */
   press?: string;
-  /** Espera depois do clique, para animações mais longas que o padrão. */
+  /** Wait after the click, for animations longer than the default. */
   pressWaitMs?: number;
 }
 
@@ -161,20 +161,19 @@ async function createWindow() {
     console.error('[desktop] renderer process gone:', details.reason);
   });
 
-  // Um link para fora (o endereço público de uma história, a documentação, um servidor) vai
-  // para o navegador do sistema, não para dentro desta janela: o app não tem barra de
-  // endereço, botão de voltar nem as sessões que a pessoa já tem no navegador dela.
+  // An outbound link (a story's public address, the documentation, a server) goes to the system
+  // browser, not inside this window: the app has no address bar, no back button and none of the
+  // sessions the person already has in their browser.
   //
-  // Os dois caminhos precisam ser cobertos, porque o `Linking.openURL` do React Native Web
-  // pode virar tanto um `window.open` quanto uma navegação da própria página, dependendo da
-  // plataforma e do alvo:
+  // Both paths need covering, because React Native Web's `Linking.openURL` can become either a
+  // `window.open` or a navigation of the page itself, depending on platform and target:
   //   - setWindowOpenHandler: `window.open` / `target="_blank"`
-  //   - will-navigate: `location.href = ...` / clique num link comum
+  //   - will-navigate: `location.href = ...` / clicking an ordinary link
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isExternalBrowserUrl(url)) {
       void shell.openExternal(url);
     }
-    // `deny` sempre: nem mesmo um esquema recusado deve abrir uma janela nova do Electron.
+    // Always `deny`: not even a rejected scheme should open a new Electron window.
     return { action: 'deny' };
   });
   win.webContents.on('will-navigate', (event, url) => {
@@ -205,9 +204,9 @@ async function createWindow() {
   if (process.env.KERES_CAPTURE_DEBUG) attachRendererLog(win);
 
   if (CAPTURE_PLAN_PATH) {
-    // A janela precisa estar visível: escondida não compõe quadros e `capturePage()` devolve
-    // imagem em branco; jogada para fora da tela, o compositor do Windows recusa a captura
-    // (`UnknownVizError`). `showInactive` ao menos não rouba o foco de quem roda o script.
+    // The window has to be visible: hidden it composes no frames and `capturePage()` returns a blank
+    // image; moved off-screen, the Windows compositor refuses the capture (`UnknownVizError`).
+    // `showInactive` at least does not steal focus from whoever is running the script.
     win.showInactive();
     await captureScreens(win, CAPTURE_PLAN_PATH);
     return;
@@ -241,12 +240,12 @@ async function createWindow() {
 }
 
 /**
- * Uma imagem por item do plano: redimensiona a janela, abre a URL da vitrine, espera a tela
- * assentar e grava o PNG.
+ * One image per plan item: resize the window, open the showcase URL, wait for the screen to
+ * settle and write the PNG.
  *
- * Cada foto recarrega a página do zero em vez de navegar dentro do app: é mais lento e é de
- * propósito - assim uma tela nunca aparece com resquício da anterior (gaveta aberta, rolagem
- * no meio, modal fechando).
+ * Each photo reloads the page from scratch instead of navigating inside the app: it is slower and
+ * it is deliberate - that way a screen never shows a remnant of the previous one (an open drawer,
+ * a scroll halfway down, a modal closing).
  */
 export async function captureScreens(win: BrowserWindow, planPath: string): Promise<void> {
   try {
@@ -255,12 +254,12 @@ export async function captureScreens(win: BrowserWindow, planPath: string): Prom
 
     for (const shot of plan.shots) {
       win.setContentSize(shot.width, shot.height);
-      // Um instante para o compositor acompanhar o novo tamanho antes de carregar a página.
+      // A moment for the compositor to catch up with the new size before loading the page.
       await new Promise((resolve) => setTimeout(resolve, 250));
       await win.loadURL(`${SCHEME}://app/?${shot.query}`);
       await waitForShowcase(win);
-      // Assentamento: os dados já estão prontos, mas a tela ainda monta e os gráficos se
-      // desenham em duas passadas (medir, depois desenhar).
+      // Settling: the data is ready, but the screen is still mounting and the graphs draw themselves in
+      // two passes (measure, then draw).
       await new Promise((resolve) => setTimeout(resolve, shot.settleMs ?? 1800));
       if (shot.press) await pressControl(win, shot.press, shot.pressWaitMs ?? 900);
       const image = await capturePageWithRetry(win);
@@ -282,10 +281,10 @@ export async function captureScreens(win: BrowserWindow, planPath: string): Prom
 }
 
 /**
- * Espelha o console do renderizador no terminal, com `KERES_CAPTURE_DEBUG=1`.
+ * Mirrors the renderer's console into the terminal, with `KERES_CAPTURE_DEBUG=1`.
  *
- * A janela da captura não tem DevTools ao alcance, e uma tela que não sobe some em silêncio -
- * foi assim que apareceu o `initialRouteName` apontando para uma rota inexistente.
+ * The capture window has no DevTools within reach, and a screen that fails to come up disappears
+ * silently - that is how the `initialRouteName` pointing at a nonexistent route showed up.
  */
 export function attachRendererLog(win: BrowserWindow): void {
   win.webContents.on('console-message', (event) => console.log('[renderer]', event.message));
@@ -295,11 +294,11 @@ export function attachRendererLog(win: BrowserWindow): void {
 }
 
 /**
- * Aciona um controle da tela pelo rótulo de acessibilidade.
+ * Presses a control on the screen by its accessibility label.
  *
- * Usa `sendInputEvent`, que entrega um clique **confiável** ao renderizador - o React Native Web
- * ignora eventos sintéticos disparados de dentro da página, então é isto ou nada. É também o
- * único ponto da captura que simula gente usando o app.
+ * It uses `sendInputEvent`, which delivers a **trusted** click to the renderer - React Native Web
+ * ignores synthetic events dispatched from inside the page, so it is this or nothing. It is also
+ * the only point of the capture that simulates a person using the app.
  */
 export async function pressControl(
   win: BrowserWindow,
@@ -309,8 +308,8 @@ export async function pressControl(
   const point = await win.webContents.executeJavaScript(`
     (() => {
       const rotulo = ${JSON.stringify(label)};
-      // Rótulo de acessibilidade primeiro; depois texto visível, que é como se acha um item de
-      // lista (um personagem, uma cena) sem inventar identificadores só para a foto.
+      // Accessibility label first; then visible text, which is how a list item (a character, a scene)
+      // is found without inventing identifiers just for the photo.
       const alvo =
         document.querySelector('[aria-label="' + rotulo + '"]') ??
         Array.from(document.querySelectorAll('div,span,a,button')).find(
@@ -343,9 +342,9 @@ export async function pressControl(
 }
 
 /**
- * O compositor do Windows recusa a captura de vez em quando logo depois de a janela mudar de
- * tamanho ou de conteúdo (`UnknownVizError`), e o erro é transitório: tentar de novo um instante
- * depois resolve. Sem isto, uma execução inteira morre por causa de uma foto.
+ * The Windows compositor refuses the capture every now and then right after the window changes
+ * size or content (`UnknownVizError`), and the error is transient: trying again a moment later
+ * works. Without this, a whole run dies because of a single photo.
  */
 export async function capturePageWithRetry(win: BrowserWindow): Promise<Electron.NativeImage> {
   let lastError: unknown;
@@ -356,9 +355,9 @@ export async function capturePageWithRetry(win: BrowserWindow): Promise<Electron
       if (image.isEmpty()) {
         lastError = new Error('imagem vazia');
       } else if (!isFullyPainted(image)) {
-        // Acontece de o compositor entregar um quadro com camadas ainda não rasterizadas: a
-        // foto sai com a gaveta lateral preta, ou com as linhas do gráfico sem os rótulos.
-        // Nada disso é imagem "vazia", então só olhando o conteúdo dá para recusar.
+        // It happens that the compositor hands over a frame with layers not yet rasterised: the photo
+        // comes out with the side drawer black, or with the graph's lines missing their labels. None of
+        // that is an "empty" image, so only by looking at the content can it be refused.
         lastError = new Error('quadro pintado pela metade');
       } else {
         return image;
@@ -379,9 +378,9 @@ async function waitForFrame(win: BrowserWindow): Promise<void> {
 }
 
 /**
- * A faixa da esquerda é a gaveta do app: menu escrito, item selecionado em destaque, borda.
- * Quando ela sai como um retângulo de uma cor só, o quadro veio antes da pintura - e é o
- * mesmo quadro em que faltam os rótulos do gráfico ao lado.
+ * The left band is the app's drawer: a written menu, the selected item highlighted, a border.
+ * When it comes out as a rectangle of a single colour, the frame arrived before the painting -
+ * and it is the same frame in which the graph's labels are missing next to it.
  */
 export function isFullyPainted(image: Electron.NativeImage): boolean {
   const { width, height } = image.getSize();
@@ -395,20 +394,20 @@ export function isFullyPainted(image: Electron.NativeImage): boolean {
 }
 
 /**
- * Espera a tela pedida estar de pé.
+ * Waits for the requested screen to be up.
  *
- * O app avisa por conta própria (`data-keres-showcase="ready"`, ver `prepareShowcase.ts`)
- * quando o banco subiu, as migrações rodaram e a história de exemplo foi instalada. Adivinhar
- * pelo texto da página, como esta função fazia antes, rendia fotos da tela de carregamento.
+ * The app announces it on its own (`data-keres-showcase="ready"`, see `prepareShowcase.ts`) once
+ * the database is up, the migrations have run and the example story is installed. Guessing from
+ * the page's text, as this function used to do, produced photos of the loading screen.
  */
 export async function waitForShowcase(win: BrowserWindow): Promise<void> {
   await win.webContents.executeJavaScript(`
     new Promise((resolve, reject) => {
       const deadline = Date.now() + 90000;
       const poll = () => {
-        // Duas condições: os dados prontos (bandeira do app) e a tela já pintada. A bandeira
-        // sozinha ainda pegava a tela de carregamento, porque montar a gaveta inteira leva
-        // seu tempo depois que os dados chegam.
+        // Two conditions: the data ready (the app's flag) and the screen already painted. The flag alone
+        // still caught the loading screen, because mounting the whole drawer takes its time after the
+        // data arrives.
         const dadosProntos = document.documentElement.dataset.keresShowcase === 'ready';
         const texto = (document.body?.innerText ?? '').trim();
         const pintou = texto.length > 60 && !/^(Loading|Carregando)/i.test(texto);
@@ -466,10 +465,9 @@ async function readAuthVault(): Promise<EncryptedTokenVault> {
 }
 
 async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
-  // Nome único por escrita: duas chamadas concorrentes (ex.: `saveTokens` de um servidor e
-  // `auth:remove` de outro, disparadas perto o bastante uma da outra) que compartilhassem o
-  // mesmo `.tmp` faziam a segunda `rename` falhar com ENOENT - a primeira já tinha consumido
-  // (movido) o arquivo temporário antes da segunda tentar renomeá-lo.
+  // A unique name per write: two concurrent calls (say, `saveTokens` for one server and
+  // `auth:remove` for another, fired close enough together) sharing the same `.tmp` made the second
+  // `rename` fail with ENOENT - the first one had already consumed (moved) the temporary file.
   const tempPath = `${AUTH_VAULT_FILE}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
   await fs.mkdir(path.dirname(AUTH_VAULT_FILE), { recursive: true });
   await fs.writeFile(tempPath, JSON.stringify(vault), { mode: 0o600 });
@@ -477,12 +475,11 @@ async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
 }
 
 /**
- * Serializa toda leitura-modificação-escrita do vault. Nomes de arquivo temporário únicos
- * (acima) já evitam a colisão de `rename`, mas duas chamadas concorrentes ainda podiam se
- * pisar de outro jeito: cada uma lê o vault inteiro, muda só a própria entrada, e escreve o
- * vault inteiro de volta - sem isto, a segunda escrita a terminar sobrescrevia o arquivo
- * inteiro com uma cópia que não tinha a mudança da primeira (um "lost update" silencioso,
- * sem qualquer erro no log).
+ * Serialises every read-modify-write of the vault. Unique temporary file names (above) already
+ * avoid the `rename` collision, but two concurrent calls could still step on each other another
+ * way: each one reads the whole vault, changes only its own entry, and writes the whole vault
+ * back - without this, the second write to finish overwrote the entire file with a copy that did
+ * not have the first one's change (a silent "lost update", with no error in the log).
  */
 let vaultQueue: Promise<unknown> = Promise.resolve();
 
@@ -492,7 +489,7 @@ function withVaultLock<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
-/** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
+/** Exported so the test can register the channels without needing the app to be ready. */
 export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
     assertTrustedRenderer(event);
@@ -551,7 +548,7 @@ Menu.setApplicationMenu(null);
 
 const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 
-/** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
+/** Exported so the test can register the channels without needing the app to be ready. */
 export function registerMediaIpcHandlers() {
   ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {
     const filePath = resolveMediaPath(relativePath);

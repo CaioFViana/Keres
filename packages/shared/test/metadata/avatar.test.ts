@@ -31,7 +31,7 @@ describe('avatarColorFromSeed', () => {
     }
   });
 
-  // O mesmo usuário precisa ter a mesma cor no app e no site, sem nada guardado no banco.
+  // The same user has to get the same colour in the app and on the site, with nothing stored in the database.
   it('gives the same seed the same color every time', () => {
     expect(avatarColorFromSeed('ana')).toBe(avatarColorFromSeed('ana'));
     expect(avatarColorFromSeed('ana')).not.toBe(avatarColorFromSeed('ana '));

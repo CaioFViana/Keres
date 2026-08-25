@@ -13,12 +13,12 @@ export const jwtRefresh = jwt({
 });
 
 /**
- * Token de acesso a uma história do Showcase protegida por senha.
+ * Access token for a password-protected Showcase story.
  *
- * Segredo derivado do principal em vez de uma variável de ambiente nova - assim ninguém
- * precisa configurar mais nada - mas *diferente* dele de propósito: um token de vitrine não
- * pode ser aceito como token de sessão, nem o contrário, mesmo que os payloads passassem
- * despercebidos pela validação de schema.
+ * The secret is derived from the main one rather than a new environment variable - so nobody has to
+ * configure anything else - but *different* from it on purpose: a showcase token must not be accepted
+ * as a session token, nor the other way around, even if the payloads happened to slip past schema
+ * validation.
  */
 export const jwtShowcase = jwt({
   name: 'jwtShowcase',

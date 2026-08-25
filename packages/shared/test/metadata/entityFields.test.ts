@@ -38,9 +38,9 @@ describe('entityFieldMetadata', () => {
 });
 
 /**
- * `globalSearchFieldConfig` names columns as plain strings and é usado para montar LIKEs; um
- * rename de campo que esqueça este arquivo só apareceria como "a busca global parou de achar
- * X". Amarrar as duas tabelas de metadados pega esse drift no teste.
+ * `globalSearchFieldConfig` names columns as plain strings and is used to build LIKEs; a field
+ * rename that forgets this file would only show up as "global search stopped finding X". Tying the
+ * two metadata tables together catches that drift in a test.
  */
 describe('globalSearchFieldConfig', () => {
   it.each(globalSearchEntities)('%s has matching entity field metadata', (entityName) => {

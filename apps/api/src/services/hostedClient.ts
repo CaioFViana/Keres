@@ -1,14 +1,13 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import * as path from 'node:path';
 
-/** Prefixo público da vitrine, depois de a raiz passar a ser o cliente web. */
+/** The showcase's public prefix, after the root became the web client. */
 export const SHOWCASE_PATH_PREFIX = '/showcase';
 
 /**
- * Isolamento entre origens: o `expo-sqlite` web precisa de `SharedArrayBuffer`, e o Chromium
- * só cria esse objeto numa página `crossOriginIsolated`. Os mesmos dois cabeçalhos que o
- * Electron já põe no esquema `app://`. Não misturar com o CSP do painel — o bundle Expo
- * usa workers e `blob:` para mídia.
+ * Cross-origin isolation: web `expo-sqlite` needs `SharedArrayBuffer`, and Chromium only creates that
+ * object on a `crossOriginIsolated` page. The same two headers Electron already sets on the `app://`
+ * scheme. Do not mix this with the panel's CSP - the Expo bundle uses workers and `blob:` for media.
  */
 export const CLIENT_APP_ISOLATION_HEADERS: Record<string, string> = {
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -36,16 +35,16 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 };
 
 /**
- * Marca o HTML servido pela API para o cliente saber que está co-hospedado (sessão cookie,
- * same-origin). O Electron e o `expo start --web` não passam por esta reescrita.
+ * Marks the HTML the API serves so the client knows it is co-hosted (cookie session, same-origin).
+ * Electron and `expo start --web` do not go through this rewrite.
  */
 export const HOSTED_CLIENT_META = '<meta name="keres-hosted" content="1" />';
 
 /**
- * Expo Router só tem a rota de ficheiro `/`. O React Navigation escreve o nome da tela
- * na barra (`/StorySelection`, …); o Router trata isso como unmatched (404). A solução
- * mais simples: o URL hospedado fica sempre em `/`. F5 recarrega o cliente; o estado
- * das telas é o do React Navigation, não o path. O Electron não vê este script.
+ * Expo Router only has the `/` file route. React Navigation writes the screen's name into the bar
+ * (`/StorySelection`, …); the Router treats that as unmatched (404). The simplest solution: the hosted
+ * URL always stays at `/`. F5 reloads the client; the screens' state is React Navigation's, not the
+ * path's. Electron never sees this script.
  */
 export const HOSTED_CLIENT_HISTORY_GUARD = `<script>(function(){function here(){return "/"+location.search+location.hash}var push=history.pushState.bind(history),rep=history.replaceState.bind(history);history.pushState=function(){return push(null,"",here())};history.replaceState=function(){return rep(null,"",here())};try{rep(null,"",here())}catch(e){}})();</script>`;
 
@@ -72,8 +71,8 @@ export function hostedClientMimeType(filePath: string): string {
 }
 
 /**
- * Resolve um pedido na raiz do origin para um ficheiro do export Expo. Sem extensão
- * (rota de SPA / React Navigation) cai no `index.html`.
+ * Resolves a request at the origin's root to a file from the Expo export. With no extension (an SPA /
+ * React Navigation route) it falls back to `index.html`.
  */
 export function resolveHostedClientFile(
   clientDist: string,

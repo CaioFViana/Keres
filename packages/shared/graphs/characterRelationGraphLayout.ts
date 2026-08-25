@@ -3,27 +3,27 @@ import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
 
 /**
- * Posicionamento do grafo de relações entre personagens: personagens viram nós, relações
- * viram arestas. Puro de propósito, como `storyGraphLayout.ts` - nada de React, banco ou
- * plataforma, para poder testar o posicionamento isolado e reaproveitar entre tela e (no
- * futuro, se fizer sentido) exportação.
+ * Positioning for the character relation graph: characters become nodes, relations become edges.
+ * Pure on purpose, like `storyGraphLayout.ts` - no React, no database, no platform, so the
+ * positioning can be tested in isolation and reused between the screen and (later, if it makes
+ * sense) the export.
  *
- * O grafo de escolhas tem uma direção natural (início -> fim de uma história) e por isso usa
- * um layout em camadas. Aqui não: "quem conhece quem" não tem começo nem fim, então camadas
- * não fazem sentido - o layout usado é radial (um círculo por grupo de personagens
- * conectados). A escolha também é sobre escala: um layout de força (simulação iterativa que
- * relaxa até parar) dá um resultado mais "orgânico", mas o custo cresce com o quadrado do
- * número de personagens em simulação síncrona na thread de JS - inviável para a história
- * "massiva" que este recurso precisa aguentar. Um círculo é O(n log n) (só ordenação),
- * determinístico (a mesma história sempre desenha o mesmo mapa) e o custo não depende de
- * quantas iterações rodar, porque não há iteração nenhuma.
+ * The choice graph has a natural direction (start -> end of a story) and therefore uses a layered
+ * layout. Not here: "who knows whom" has no beginning and no end, so layers make no sense - the
+ * layout used is radial (one circle per group of connected characters). The choice is also about
+ * scale: a force-directed layout (an iterative simulation that relaxes until it settles) gives a
+ * more "organic" result, but its cost grows with the square of the number of characters in a
+ * synchronous simulation on the JS thread - unworkable for the "massive" story this feature has to
+ * withstand. A circle is O(n log n) (sorting only), deterministic (the same story always draws the
+ * same map) and its cost does not depend on how many iterations are run, because there is no
+ * iteration at all.
  *
- * Cada componente conectado (grupo de personagens ligados entre si, ignorando o resto) vira
- * o seu próprio círculo, e os círculos são empacotados lado a lado como prateleiras. Isso
- * evita um único círculo gigante quando a história tem várias famílias/facções sem relação
- * entre si - cada uma fica legível no seu canto em vez de se perder num círculo só.
- * Personagens sem nenhuma relação registrada vão para uma grade separada, do mesmo jeito que
- * cenas inalcançáveis vão para a grade de "desconectadas" no mapa de história.
+ * Each connected component (a group of characters linked to one another, ignoring the rest)
+ * becomes its own circle, and the circles are packed side by side like shelves. That avoids a
+ * single giant circle when a story has several unrelated families/factions - each one stays
+ * readable in its own corner instead of getting lost in one big circle. Characters with no
+ * recorded relation go to a separate grid, the same way unreachable scenes go to the
+ * "disconnected" grid on the story map.
  */
 
 export interface GraphCharacter {
@@ -41,13 +41,13 @@ export interface GraphRelation {
 export const NODE_WIDTH = 112;
 export const NODE_HEIGHT = 44;
 export const GRAPH_PADDING = 28;
-/** Espaço mínimo entre nós vizinhos no mesmo círculo. */
+/** Minimum space between neighbouring nodes on the same circle. */
 const NODE_GAP = 18;
-/** Espaço entre clusters/linhas na grade de empacotamento. */
+/** Space between clusters/rows in the packing grid. */
 const CLUSTER_GAP = 60;
-/** Raio mínimo mesmo para clusters de 2-3 personagens, para não ficarem espremidos. */
+/** Minimum radius even for clusters of 2-3 characters, so they are not squeezed together. */
 const MIN_CLUSTER_RADIUS = NODE_HEIGHT * 1.6;
-/** Afastamento da ponta da aresta em relação à borda do nó - a linha não deve tocar o texto. */
+/** How far the edge's tip stays from the node's border - the line must not touch the text. */
 const EDGE_NODE_GAP = 4;
 const LABEL_MAX_CHARS = 14;
 const LABEL_MAX_LINES = 2;
@@ -56,7 +56,7 @@ export interface RelationGraphNode {
   id: string;
   character: GraphCharacter;
   labelLines: string[];
-  /** Quantas relações este personagem tem - 0 para os que caem na grade "sem relações". */
+  /** How many relations this character has - 0 for those that land in the "no relations" grid. */
   degree: number;
   isIsolated: boolean;
   x: number;
@@ -71,7 +71,7 @@ export interface RelationGraphEdge {
   sourceId: string;
   targetId: string;
   label: string;
-  /** `d` de um path SVG - um segmento reto entre as bordas dos dois nós (sem seta: a relação não tem direção). */
+  /** An SVG path's `d` - a straight segment between the two nodes' borders (no arrow: the relation has no direction). */
   path: string;
   labelPosition: GraphPoint;
 }
@@ -86,7 +86,7 @@ export interface CharacterRelationGraphLayout {
   isolatedCount: number;
 }
 
-/** Nó em construção: guarda os vizinhos enquanto os componentes ainda não foram separados. */
+/** A node under construction: it holds the neighbours while the components have not been separated yet. */
 interface WorkNode {
   character: GraphCharacter;
   neighbors: WorkEdge[];
@@ -99,7 +99,7 @@ interface WorkEdge {
   b: WorkNode;
 }
 
-/** Monta o layout completo. Devolve um grafo vazio quando não há personagens. */
+/** Builds the complete layout. Returns an empty graph when there are no characters. */
 export function buildCharacterRelationGraphLayout(
   characters: GraphCharacter[],
   relations: GraphRelation[],
@@ -114,8 +114,8 @@ export function buildCharacterRelationGraphLayout(
   for (const relation of relations) {
     const a = nodeById.get(relation.character1Id);
     const b = nodeById.get(relation.character2Id);
-    // Personagem excluído mas a relação ainda não foi limpa - mesmo tratamento que uma
-    // escolha pendurada no mapa de história: ignorada em vez de quebrar o desenho.
+    // A deleted character whose relation has not been cleaned up yet - the same treatment as a choice
+    // left dangling on the story map: ignored rather than breaking the drawing.
     if (!a || !b) continue;
     const edge: WorkEdge = { relation, a, b };
     a.neighbors.push(edge);
@@ -180,7 +180,7 @@ export function buildCharacterRelationGraphLayout(
   };
 }
 
-/** Componentes ligados, ignorando qualquer noção de direção - aqui nunca existiu uma. */
+/** Connected components, ignoring any notion of direction - there never was one here. */
 function findComponents(nodes: WorkNode[]): WorkNode[][] {
   const components: WorkNode[][] = [];
 
@@ -210,10 +210,10 @@ function findComponents(nodes: WorkNode[]): WorkNode[][] {
 }
 
 /**
- * Ordena os personagens de um cluster para percorrer o círculo por proximidade de relação,
- * não por nome. Começar pelo mais conectado e visitar vizinhos em largura (BFS) faz quem se
- * relaciona direto ficar perto no círculo, o que reduz cordas cruzando o meio do desenho -
- * sem isso, uma ordem arbitrária cruzaria arestas para todo lado.
+ * Orders a cluster's characters so the circle is walked by relation proximity rather than by
+ * name. Starting from the most connected one and visiting neighbours breadth-first (BFS) puts
+ * directly related characters near each other on the circle, which reduces chords crossing the
+ * middle of the drawing - without that, an arbitrary order would cross edges everywhere.
  */
 function orderByBreadthFromHub(members: WorkNode[]): WorkNode[] {
   const hub = [...members].sort(
@@ -247,7 +247,7 @@ interface ClusterBox {
   height: number;
 }
 
-/** Distribui um cluster em círculo, com raio grande o bastante para os nós não se sobreporem. */
+/** Spreads a cluster around a circle, with a radius large enough that the nodes do not overlap. */
 function layoutComponentCircular(members: WorkNode[]): ClusterBox {
   const ordered = orderByBreadthFromHub(members);
   const count = ordered.length;
@@ -277,10 +277,10 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
 }
 
 /**
- * Empacota os clusters em prateleiras (shelf packing): preenche uma linha até estourar uma
- * largura-alvo, depois começa a próxima. Longe de ótimo, mas simples, O(k) e suficiente para
- * uma história com dezenas de famílias/facções sem relação entre si não virar uma faixa
- * horizontal quilométrica.
+ * Packs the clusters into shelves (shelf packing): it fills a row until a target width is
+ * exceeded, then starts the next one. Far from optimal, but simple, O(k) and enough to keep a
+ * story with dozens of unrelated families/factions from turning into a kilometre-long horizontal
+ * strip.
  */
 function packClusters(
   clusters: ClusterBox[],
@@ -325,7 +325,7 @@ function packClusters(
   return { nodes, width: packedWidth, height: rowY + rowHeight };
 }
 
-/** Em telas largas, personagens sem relação ficam à direita dos grupos conectados. */
+/** On wide screens, characters with no relations sit to the right of the connected groups. */
 function layoutIsolatedColumn(
   isolated: WorkNode[],
   startX: number,
@@ -345,10 +345,11 @@ function layoutIsolatedColumn(
 }
 
 /**
- * Grade para os personagens sem nenhuma relação registrada, abaixo dos clusters.
+ * A grid for the characters with no recorded relation, below the clusters.
  *
- * O número de colunas acompanha a largura do resto do mapa para a grade não ficar mais larga
- * que os clusters - sem nenhum cluster (história só com personagens soltos), cai em quatro.
+ * The number of columns follows the width of the rest of the map so the grid is not wider than the
+ * clusters - with no cluster at all (a story with nothing but loose characters), it falls back to
+ * four.
  */
 function layoutIsolatedGrid(
   isolated: WorkNode[],
@@ -404,10 +405,10 @@ function normalizeToPadding(nodes: RelationGraphNode[]): { width: number; height
 }
 
 /**
- * Ponto na borda do nó, na direção de `towards` - onde a aresta deve começar/terminar para
- * não atravessar por cima do texto do personagem. O nó é tratado como uma elipse para este
- * cálculo: aproximação visual barata, o suficiente para uma linha reta encostar na borda
- * arredondada em vez de parar no meio do nome.
+ * A point on the node's border, in the direction of `towards` - where the edge should
+ * start/finish so it does not cross over the character's text. The node is treated as an ellipse
+ * for this calculation: a cheap visual approximation, enough for a straight line to touch the
+ * rounded border instead of stopping in the middle of the name.
  */
 function pointOnNodeBoundary(node: RelationGraphNode, towards: GraphPoint): GraphPoint {
   const centerX = node.x + node.width / 2;
@@ -444,8 +445,8 @@ function buildEdge(
 }
 
 /**
- * `Math.max(...values)`/`Math.min(...values)` estouram a pilha de argumentos em arrays muito
- * grandes - exatamente o risco que este módulo existe para evitar num grafo "massivo".
+ * `Math.max(...values)`/`Math.min(...values)` blow the argument stack on very large arrays -
+ * exactly the risk this module exists to avoid on a "massive" graph.
  */
 function minOf(values: number[]): number {
   return values.reduce((min, value) => (value < min ? value : min), values[0] ?? 0);

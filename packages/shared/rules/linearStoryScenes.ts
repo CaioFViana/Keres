@@ -1,4 +1,4 @@
-/** O mínimo que a regra precisa saber de uma cena. */
+/** The minimum the rule needs to know about a scene. */
 export interface SceneStartFinishFlags {
   id: string;
   isStart?: boolean | null;
@@ -6,13 +6,13 @@ export interface SceneStartFinishFlags {
 }
 
 /**
- * Numa história linear existe no máximo uma cena de início e uma de fim; se o arquivo importado
- * trouxer mais de uma, a primeira vence e as demais perdem a marca.
+ * In a linear story there is at most one start scene and one finish scene; if the imported file
+ * brings more than one, the first wins and the rest lose the flag.
  *
- * Importar acontece nos dois lados - o cliente lê um `.keres` do disco, o servidor recebe uma
- * história publicada - e os dois faziam a mesma varredura, linha por linha, cada um na sua
- * cópia. A decisão de quais cenas perdem a marca é a mesma; o que muda é só o `update` que cada
- * banco executa depois.
+ * Importing happens on both sides - the client reads a `.keres` from disk, the server receives a
+ * published story - and both ran the same scan, line by line, each in its own copy. The decision of
+ * which scenes lose the flag is the same; all that differs is the `update` each database runs
+ * afterwards.
  */
 export function scenesToUnflag(scenes: readonly SceneStartFinishFlags[]): {
   start: string[];

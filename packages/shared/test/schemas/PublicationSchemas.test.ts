@@ -39,8 +39,8 @@ describe('buildPublicationLabel', () => {
     );
   });
 
-  // operationVersion é monotônico por história, então estes modos não deveriam colidir - mas
-  // se colidirem (dado corrompido), a função ainda devolve algo único em vez de duplicar.
+  // operationVersion is monotonic per story, so these modes should not collide - but if they do
+  // (corrupted data), the function still returns something unique instead of duplicating.
   it('still resolves a collision in a version-bearing mode', () => {
     expect(buildPublicationLabel('version', 12, AUG_19, ['v12'])).toBe('v12-02');
   });

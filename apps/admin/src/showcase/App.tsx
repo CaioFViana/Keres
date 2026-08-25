@@ -6,8 +6,8 @@ import { StoryPage } from './pages/StoryPage';
 import { ShowcaseThemeProvider } from './theme/ShowcaseThemeProvider';
 
 /**
- * O site público. Sem login, sem rota de sessão e sem nenhum caminho para `/admin` - o painel
- * administrativo é outro app, com outro build, servido em outro prefixo.
+ * The public site. No login, no session route and no path to `/admin` - the administration panel
+ * is another app, with another build, served under another prefix.
  */
 export function ShowcaseApp() {
   return (

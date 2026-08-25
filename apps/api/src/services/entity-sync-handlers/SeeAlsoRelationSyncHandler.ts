@@ -29,8 +29,10 @@ import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandle
 
 type EntityRef = { type: SeeAlsoEntityType; id: string };
 
-/** Ordenação canônica (A/B) e recusa do auto-vínculo vêm de `@keres/shared`: são as mesmas
- *  regras que o cliente aplica antes de gravar no log de operações. */
+/**
+ * The canonical (A/B) ordering and the refusal of self-links come from `@keres/shared`: they are the
+ * same rules the client applies before writing to the operation log.
+ */
 const sortEntityRefs = sortEntityPair as (a: EntityRef, b: EntityRef) => [EntityRef, EntityRef];
 
 export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
@@ -207,8 +209,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    // Um vínculo "Veja também" ou existe ou não existe - não há edição parcial que faça
-    // sentido além de restaurar a partir de um tombstone (tratado pela classe base).
+    // A "See also" link either exists or it does not - there is no partial edit that makes sense beyond
+    // restoring from a tombstone (handled by the base class).
     if (
       validatedChanges.entityAType ||
       validatedChanges.entityAId ||

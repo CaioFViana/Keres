@@ -66,7 +66,7 @@ describe('AdminUserService integration', () => {
 
     const regenerated = await service.regenerateRecoveryCodes(created.id);
     expect(regenerated).toHaveLength(8);
-    // Novo lote, sem sobreposição com o do create() - o anterior foi invalidado.
+    // A new batch, with no overlap with create()'s - the previous one was invalidated.
     expect(regenerated.some((code) => created.recoveryCodes.includes(code))).toBe(false);
   });
 

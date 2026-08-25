@@ -2,15 +2,15 @@ import { createHash } from 'node:crypto';
 import { access, readFile, writeFile } from 'node:fs/promises';
 
 /**
- * Adaptador mínimo das APIs do Bun usadas pela camada de mídia.
+ * A minimal adapter for the Bun APIs the media layer uses.
  *
- * A API roda em produção sob o Bun, mas as suítes rodam em Node - `Bun.CryptoHasher` (que
- * recalcula o hash de todo upload) e `Bun.write`/`Bun.file` (o backend local de blobs) não
- * existem lá. Sem isto, toda rota de upload falha por `Bun is not defined` e devolve 400,
- * escondendo o comportamento que se queria testar.
+ * The API runs in production under Bun, but the suites run in Node - `Bun.CryptoHasher` (which
+ * recomputes every upload's hash) and `Bun.write`/`Bun.file` (the local blob backend) do not exist
+ * there. Without this, every upload route fails with `Bun is not defined` and returns 400, hiding the
+ * behaviour we meant to test.
  *
- * Mesma abordagem já usada em `test/services/media-storage/LocalFilesystemBlobStorage.test.ts`,
- * centralizada aqui para as suítes de integração compartilharem uma única versão.
+ * The same approach already used in `test/services/media-storage/LocalFilesystemBlobStorage.test.ts`,
+ * centralised here so the integration suites share a single version.
  */
 export function installBunShim(): void {
   if ((globalThis as { Bun?: unknown }).Bun) {

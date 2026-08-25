@@ -35,12 +35,11 @@ beforeEach(async () => {
 });
 
 /**
- * Antes da correção, `operation_version` era calculado por `coalesce(max(...), 0) + 1` sem
- * lock nem transação envolvendo os dois passos - duas requisições concorrentes na mesma
- * história podiam calcular o mesmo próximo número antes de qualquer uma commitar. Um dos
- * dois ficava então invisível para sempre no `pull` incremental de outros colaboradores
- * (o filtro usa `operation_version > cursor`). Isto nunca foi exercitado com concorrência
- * real - só sequencialmente, onde o bug não aparece.
+ * Before the fix, `operation_version` was computed by `coalesce(max(...), 0) + 1` with neither a lock
+ * nor a transaction wrapping both steps - two concurrent requests on the same story could compute the
+ * same next number before either committed. One of the two then became invisible forever in other
+ * collaborators' incremental `pull` (the filter uses `operation_version > cursor`). This was never
+ * exercised with real concurrency - only sequentially, where the bug does not show up.
  */
 describe('concurrent pushes to the same story', () => {
   it('never assigns the same operationVersion to two operations', async () => {
@@ -95,10 +94,10 @@ describe('concurrent pushes to the same story', () => {
 });
 
 /**
- * Antes da correção, a escrita da entidade e o registro no log de operações eram dois
- * passos separados sem transação compartilhada. Uma falha entre os dois deixava a entidade
- * mutada mas invisível a outros clientes - e um reenvio da mesma operação pelo próprio
- * cliente batia um `version_conflict` falso contra o próprio trabalho já aplicado.
+ * Before the fix, writing the entity and recording it in the operation log were two separate steps
+ * with no shared transaction. A failure between the two left the entity mutated but invisible to
+ * other clients - and a resend of the same operation by that very client hit a false
+ * `version_conflict` against its own already-applied work.
  */
 describe('atomicity between the entity write and the operation log', () => {
   it('rolls back the entity write when appending the operation log fails', async () => {

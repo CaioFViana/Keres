@@ -1,13 +1,13 @@
 /**
- * Condição bruta dentro de um `ChoiceCheckGroup`. Tabela única com colunas nulláveis por
- * tipo (mesmo padrão de `Comment.fieldId`/`fieldKey`) - exatamente o subconjunto de campos
- * relevante para `type` é preenchido:
+ * A raw condition inside a `ChoiceCheckGroup`. A single table with nullable columns per type
+ * (the same pattern as `Comment.fieldId`/`fieldKey`) - exactly the subset of fields relevant to
+ * `type` is filled in:
  * - `sceneCount`: `sceneId` + `minVisits`
  * - `inventory`: `itemId` + `itemPresence`
  * - `trigger`: `triggerName` + `triggerState`
  *
- * `mode` decide o sentido da condição: em `block`, a condição verdadeira bloqueia a
- * choice; em `enable`, a condição verdadeira é o que a habilita.
+ * `mode` decides which way the condition reads: in `block`, a true condition blocks the choice;
+ * in `enable`, a true condition is what enables it.
  */
 export interface ChoiceCheck {
   id: string;

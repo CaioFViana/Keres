@@ -39,7 +39,7 @@ const OLD = new Date('2020-01-01T00:00:00.000Z');
 
 let service: StoryExportImportService;
 
-/** Coleções que todo pacote precisa trazer, mesmo vazias. */
+/** Collections every package has to carry, even when empty. */
 const EMPTY_COLLECTIONS = {
   chapters: [],
   scenes: [],
@@ -341,7 +341,7 @@ describe('id remapping on a plain import', () => {
     expect(importedLocation.id).not.toBe(ORIGINAL_LOCATION_ID);
   });
 
-  /** O ponto que importa: uma relação não pode continuar apontando para o id antigo. */
+  /** The point that matters: a relation cannot keep pointing at the old id. */
   it('rewires the relations to the new ids', async () => {
     const storyId = await service.importStory(IMPORTER_ID, buildExport());
 
@@ -366,10 +366,9 @@ describe('id remapping on a plain import', () => {
 });
 
 /**
- * O caminho de "vincular ao servidor uma história criada offline": a partir daí o cliente
- * continua referenciando cada entidade pelo id local, para sempre. Se qualquer filho ganhasse
- * id novo, toda operação futura sobre ele falharia com "not found" - não uma corrida
- * transitória, mas um descasamento estrutural que nenhuma retentativa conserta.
+ * The "link a story created offline to the server" path: from then on the client keeps referencing
+ * every entity by its local id, forever. If any child got a new id, every future operation on it
+ * would fail with "not found" - not a transient race, but a structural mismatch no retry can fix.
  */
 describe('id preservation when uploading a local story', () => {
   it('keeps the story id the client asked to preserve', async () => {
@@ -431,7 +430,7 @@ describe('rejected packages', () => {
     await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/not found in ID map/);
   });
 
-  /** Import parcial seria pior que import nenhum: o usuário ficaria com uma história quebrada. */
+  /** A partial import would be worse than no import: the user would be left with a broken story. */
   it('leaves nothing behind when the import fails halfway', async () => {
     const broken = buildExport({ scenes: [scene({ chapterId: newId() })] });
 

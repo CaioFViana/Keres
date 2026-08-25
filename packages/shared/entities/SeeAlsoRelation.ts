@@ -1,10 +1,10 @@
 import type { SeeAlsoEntityType } from '../metadata/SeeAlsoEntityType';
 
 /**
- * Vínculo "Veja também" entre duas entidades quaisquer do sistema (dentro dos tipos
- * suportados por `SeeAlsoEntityType`). Mútuo por natureza - uma única linha não-ordenada
- * (A/B) representa o vínculo dos dois lados, ao contrário de `NoteRelation`/`TagRelation`
- * que têm um lado "dono" fixo. Não há `relationType`: existe apenas um tipo de vínculo.
+ * A "See also" link between any two entities in the system (within the types supported by
+ * `SeeAlsoEntityType`). Mutual by nature - a single unordered row (A/B) represents the link from
+ * both sides, unlike `NoteRelation`/`TagRelation`, which have a fixed "owner" side. There is no
+ * `relationType`: only one kind of link exists.
  */
 export interface SeeAlsoRelation {
   id: string;

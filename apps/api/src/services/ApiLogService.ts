@@ -12,8 +12,10 @@ interface LogEntry {
   timestamp: string;
 }
 
-/** Extrai `userId`/`storyId` do `meta` quando presentes como string - convenção que a
- * maioria dos call sites do logger já segue (ver `webSocket.route.ts`/`sync.route.ts`). */
+/**
+ * Extracts `userId`/`storyId` from `meta` when they are present as strings - a convention most of the
+ * logger's call sites already follow (see `webSocket.route.ts`/`sync.route.ts`).
+ */
 function extractStringField(meta: Record<string, unknown> | undefined, key: string): string | null {
   const value = meta?.[key];
   return typeof value === 'string' ? value : null;
@@ -36,11 +38,11 @@ function rowFromEntry(
 }
 
 /**
- * Sink de `utils/logger.ts` - registrado por `server.ts` depois das migrações rodarem.
- * Nunca chama `logger.*` no próprio catch (isso recursaria de volta pro sink); usa apenas
- * `console.error` bruto, e nunca deixa uma falha de persistência propagar de volta pra quem
- * originou o log (o `write()` do logger já embrulha esta chamada num try/catch por
- * segurança, mas o próprio corpo também não lança).
+ * The sink for `utils/logger.ts` - registered by `server.ts` after the migrations run. It never calls
+ * `logger.*` in its own catch (that would recurse back into the sink); it uses raw `console.error`
+ * only, and never lets a persistence failure propagate back to whoever originated the log (the
+ * logger's `write()` already wraps this call in a try/catch for safety, but the body itself does not
+ * throw either).
  */
 export async function persistApiLog(entry: LogEntry): Promise<void> {
   const userId = extractStringField(entry.meta, 'userId');
@@ -48,9 +50,9 @@ export async function persistApiLog(entry: LogEntry): Promise<void> {
   try {
     await db.insert(apiLogs).values(rowFromEntry(entry, userId, storyId));
   } catch (error) {
-    // `userId`/`storyId` vêm do meta (e, num 401, dos params da URL) - podem apontar para
-    // linhas que este servidor nunca viu. Sem as FKs isso já não acontece; o retry cobre
-    // um banco que ainda não rodou a migração que as removeu.
+    // `userId`/`storyId` come from the meta (and, on a 401, from the URL's params) - they can point at
+    // rows this server has never seen. Without the FKs that no longer happens; the retry covers a database
+    // that has not yet run the migration that removed them.
     if ((userId || storyId) && isForeignKeyConstraint(error)) {
       try {
         await db.insert(apiLogs).values(rowFromEntry(entry, null, null));

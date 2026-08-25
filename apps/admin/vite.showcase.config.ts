@@ -9,16 +9,15 @@ import { keresAvatarIcons, keresFavicon, keresLogo } from './vite.keresIcon';
 const adminDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * A entrada se chama `showcase.html` para conviver com o `index.html` do painel na mesma
- * pasta; o servidor, porém, procura `index.html` no diretório de saída, como em qualquer SPA.
- * Renomear na emissão é mais simples do que criar um diretório-raiz só para o arquivo.
+ * The entry point is called `showcase.html` so it can live alongside the panel's `index.html` in
+ * the same folder; the server, however, looks for `index.html` in the output directory, as in any
+ * SPA. Renaming on emit is simpler than creating a root directory just for the file.
  */
 function emitAsIndexHtml(): Plugin {
   return {
     name: 'keres-showcase-index',
-    // Depois do build inteiro: o HTML é emitido pelo próprio plugin de HTML do Vite, então
-    // renomear em `generateBundle` competiria com ele pela ordem dos hooks. Renomear o arquivo
-    // já escrito é determinístico.
+    // After the whole build: the HTML is emitted by Vite's own HTML plugin, so renaming in
+    // `generateBundle` would race it for hook order. Renaming the already-written file is deterministic.
     async closeBundle() {
       const outDir = path.resolve(adminDirectory, 'dist-showcase');
       const source = path.join(outDir, 'showcase.html');
@@ -30,10 +29,10 @@ function emitAsIndexHtml(): Plugin {
 }
 
 /**
- * Serve `showcase.html` em desenvolvimento.
+ * Serves `showcase.html` in development.
  *
- * `rollupOptions.input` só vale no build: sem isto, `vite dev` entrega o `index.html` da pasta,
- * que é o do painel admin - o servidor de desenvolvimento do site subia mostrando o painel.
+ * `rollupOptions.input` only applies to the build: without this, `vite dev` serves the folder's
+ * `index.html`, which is the admin panel's - the site's development server came up showing the panel.
  */
 function serveShowcaseHtmlInDev(): Plugin {
   return {
@@ -42,7 +41,7 @@ function serveShowcaseHtmlInDev(): Plugin {
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
         const url = req.url?.split('?')[0];
-        // Só navegação: qualquer pedido de módulo ou asset segue o caminho normal.
+        // Navigation only: any module or asset request follows the normal path.
         if (url && !url.includes('.') && req.headers.accept?.includes('text/html')) {
           req.url = '/showcase.html';
         }
@@ -53,15 +52,15 @@ function serveShowcaseHtmlInDev(): Plugin {
 }
 
 /**
- * A segunda saída de build deste mesmo projeto: o site público (Showcase).
+ * This same project's second build output: the public site (Showcase).
  *
- * `base: '/_showcase/'` com as *páginas* em `/showcase` é deliberado. Montar os arquivos
- * estáticos direto em `/` sombrearia o cliente web (e as rotas da API); o prefixo próprio
- * entrega os assets em `/_showcase/` e o HTML em `/showcase` (ver apps/api/src/index.ts).
+ * `base: '/_showcase/'` with the *pages* at `/showcase` is deliberate. Mounting the static files
+ * directly at `/` would shadow the web client (and the API routes); its own prefix serves the
+ * assets under `/_showcase/` and the HTML at `/showcase` (see apps/api/src/index.ts).
  *
- * O painel admin continua saindo em `dist/` com `base: '/admin/'`, intocado.
+ * The admin panel still builds into `dist/` with `base: '/admin/'`, untouched.
  *
- * Favicon e marca saem do mesmo ícone do app de desktop que o painel já usa - ver
+ * Favicon and wordmark come from the same desktop app icon the panel already uses - see
  * vite.keresIcon.ts.
  */
 export default defineConfig(({ command }) => ({
@@ -73,9 +72,9 @@ export default defineConfig(({ command }) => ({
     keresLogo(),
     keresAvatarIcons(),
   ],
-  // O prefixo só existe por causa de como a API monta os estáticos em produção. Em
-  // desenvolvimento o site tem uma porta só para ele, e usar o prefixo aqui faria as páginas
-  // responderem num caminho que não é o de verdade.
+  // The prefix only exists because of how the API mounts the static files in production. In
+  // development the site has a port to itself, and using the prefix here would make the pages answer
+  // on a path that is not the real one.
   base: command === 'build' ? '/_showcase/' : '/',
   build: {
     outDir: 'dist-showcase',
@@ -87,7 +86,7 @@ export default defineConfig(({ command }) => ({
   server: {
     port: 5174,
     proxy: {
-      // O site só fala com `/public/*` - não existe rota autenticada aqui.
+      // The site only talks to `/public/*` - there is no authenticated route here.
       '/public': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
         changeOrigin: true,

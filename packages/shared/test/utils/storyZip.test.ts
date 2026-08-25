@@ -78,8 +78,8 @@ describe('buildStoryZipBytes', () => {
   });
 
   it('stores media uncompressed - the gallery is already compressed media', async () => {
-    // 4 KB de zeros: DEFLATE reduziria isso a quase nada, STORE não reduz. O tamanho final do
-    // pacote é o que separa os dois casos sem depender de detalhes internos do JSZip.
+    // 4 KB of zeros: DEFLATE would reduce that to almost nothing, STORE does not reduce it. The
+    // package's final size is what separates the two cases without depending on JSZip's internals.
     const compressible = new Uint8Array(4096);
     const result = await buildStoryZipBytes(
       storyExport([galleryItem('aaa', 'image/png')]),

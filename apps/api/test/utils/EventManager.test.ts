@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { eventManager } from '../../src/utils/EventManager';
 
-// `eventManager` é um singleton de módulo: sem limpar os listeners, um teste vaza para o
-// seguinte exatamente como vazaria entre requisições.
+// `eventManager` is a module singleton: without clearing the listeners, one test leaks into the next
+// exactly as it would leak between requests.
 const registered: { event: string; callback: (payload: unknown) => void }[] = [];
 
 function listen(event: string, callback: (payload: unknown) => void) {

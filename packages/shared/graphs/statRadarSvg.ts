@@ -1,16 +1,16 @@
 import type { StatRadarLayout } from './statRadarLayout';
 
 /**
- * Serializa o radar como um arquivo SVG completo - mesmo raciocínio dos mapas
- * (`characterRelationGraphSvg.ts`): a geometria vem pronta de `buildStatRadarLayout`, então a
- * tela e o arquivo exportado nunca discordam sobre onde um vértice está.
+ * Serialises the radar as a complete SVG file - the same reasoning as the maps
+ * (`characterRelationGraphSvg.ts`): the geometry arrives ready from `buildStatRadarLayout`, so the
+ * screen and the exported file never disagree about where a vertex is.
  */
 
 export interface StatRadarSvgOptions {
   title: string;
-  /** Linha de contexto sob o título (personagem e modo, ou o que está sendo comparado). */
+  /** Context line under the title (character and mode, or whatever is being compared). */
   subtitle: string;
-  /** Legenda por série; omitida quando há uma só. */
+  /** Legend per series; omitted when there is only one. */
   showLegend: boolean;
   colors: {
     background: string;
@@ -37,7 +37,7 @@ export function renderStatRadarSvg(layout: StatRadarLayout, options: StatRadarSv
     `<text x="${PADDING}" y="${HEADER_TOP}" font-size="18" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
     `<text x="${PADDING}" y="${HEADER_TOP + 18}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
     `<g transform="translate(0 ${round(headerHeight)})">`,
-    // Anéis e eixos primeiro: passar por baixo dos polígonos evita riscar as áreas coloridas.
+    // Rings and axes first: passing under the polygons keeps them from striking through the coloured areas.
     ...layout.rings.map((ring) => renderRing(ring, options)),
     ...layout.axes.map((axis) => renderAxis(axis, layout, options)),
     ...layout.series.map((series) => renderSeries(series)),

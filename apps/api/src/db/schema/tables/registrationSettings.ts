@@ -3,23 +3,22 @@ import { boolean, integer, table, text, timestampNow } from '../columns';
 import { tiers } from './tiers';
 
 /**
- * Configuração global de cadastro. Tabela de uma linha só - `id` é sempre o literal
- * 'singleton', então o app localiza a linha por essa constante em vez de manter uma
- * tabela de lookup separada. `RegistrationSettingsService` cria essa linha sob demanda
- * na primeira leitura se ela ainda não existir, então nenhuma migração/seed precisa
- * inserir dados.
+ * Global registration configuration. A single-row table - `id` is always the literal 'singleton', so
+ * the app finds the row by that constant instead of maintaining a separate lookup table.
+ * `RegistrationSettingsService` creates that row on demand at the first read if it does not exist yet,
+ * so no migration/seed has to insert data.
  */
 export const REGISTRATION_SETTINGS_SINGLETON_ID = 'singleton';
 
 export const registrationSettings = table('registration_settings', {
   id: text('id').primaryKey(),
   isRegistrationOpen: boolean('is_registration_open').notNull().default(true),
-  /** null = sem teto de usuários. */
+  /** null = no user ceiling. */
   maxUsers: integer('max_users'),
   /**
-   * Quando true, `isRegistrationOpen` é recalculado a cada tentativa de cadastro a
-   * partir de `maxUsers` (usuários atuais < maxUsers), em vez de usar o valor gravado
-   * abaixo. Quando false, `isRegistrationOpen` é a chave manual do administrador.
+   * When true, `isRegistrationOpen` is recomputed on every signup attempt from `maxUsers` (current
+   * users < maxUsers), instead of using the value stored below. When false, `isRegistrationOpen` is the
+   * administrator's manual switch.
    */
   autoManage: boolean('auto_manage').notNull().default(false),
   defaultTierId: text('default_tier_id').references(() => tiers.id),

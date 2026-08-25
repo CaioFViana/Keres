@@ -3,30 +3,29 @@ import * as sqlite from 'drizzle-orm/sqlite-core';
 import { usingSqlite } from '../dialect';
 
 /**
- * Uma definição de tabela, dois dialetos.
+ * One table definition, two dialects.
  *
- * O drizzle não tem schema agnóstico: `pgTable` e `sqliteTable` são construtores diferentes,
- * com tipos de coluna diferentes. Em vez de manter duas cópias das 40 tabelas - que
- * inevitavelmente divergiriam - cada arquivo de tabela importa os construtores daqui, e é este
- * módulo que escolhe o dialeto, uma vez, a partir de `DATABASE_DRIVER`.
+ * drizzle has no dialect-agnostic schema: `pgTable` and `sqliteTable` are different builders, with
+ * different column types. Instead of keeping two copies of the 40 tables - which would inevitably
+ * diverge - each table file imports its builders from here, and it is this module that picks the
+ * dialect, once, from `DATABASE_DRIVER`.
  *
- * Os tipos declarados são os do Postgres, que é o dialeto de referência. Isso não é uma mentira
- * conveniente: os modos do SQLite abaixo foram escolhidos justamente para o tipo *inferido* de
- * cada coluna ficar idêntico nos dois lados - `timestamp` devolve `Date`, `boolean` devolve
- * `boolean`, `json` devolve o objeto. Um serviço não tem como notar a diferença, e é por isso
- * que nenhum deles precisou mudar.
+ * The declared types are Postgres's, which is the reference dialect. That is not a convenient lie:
+ * the SQLite modes below were chosen precisely so each column's *inferred* type is identical on both
+ * sides - `timestamp` returns `Date`, `boolean` returns `boolean`, `json` returns the object. A
+ * service cannot tell the difference, which is why none of them had to change.
  *
- * O que o SQLite não tem:
- *   - tipo `timestamp`: vira inteiro em milissegundos (`timestamp_ms`), convertido de/para
- *     `Date` pelo drizzle. Milissegundos, e não segundos, porque a sincronização ordena
- *     operações por `updatedAt` - truncar para o segundo empataria escritas próximas;
- *   - tipo `boolean`: vira inteiro 0/1, convertido do mesmo jeito;
- *   - `jsonb`: vira texto, serializado pelo drizzle;
- *   - tipos ENUM: viram texto com a lista de valores válidos no tipo do TypeScript;
- *   - `bigint` de 64 bits distinto: `INTEGER` já é 64 bits.
+ * What SQLite does not have:
+ *   - a `timestamp` type: it becomes an integer in milliseconds (`timestamp_ms`), converted to and
+ *     from `Date` by drizzle. Milliseconds, not seconds, because synchronization orders operations
+ *     by `updatedAt` - truncating to the second would tie nearby writes;
+ *   - a `boolean` type: it becomes a 0/1 integer, converted the same way;
+ *   - `jsonb`: it becomes text, serialised by drizzle;
+ *   - ENUM types: they become text with the list of valid values in the TypeScript type;
+ *   - a distinct 64-bit `bigint`: `INTEGER` is already 64 bits.
  */
 
-/** `pgTable`/`sqliteTable`. A assinatura é a mesma nos dois. */
+/** `pgTable`/`sqliteTable`. The signature is the same in both. */
 export const table = (usingSqlite ? sqlite.sqliteTable : pg.pgTable) as typeof pg.pgTable;
 
 export const text = (usingSqlite ? sqlite.text : pg.text) as typeof pg.text;
@@ -34,12 +33,12 @@ export const text = (usingSqlite ? sqlite.text : pg.text) as typeof pg.text;
 export const integer = (usingSqlite ? sqlite.integer : pg.integer) as typeof pg.integer;
 
 /**
- * Número com casas decimais. `real` existe nos dois dialetos e o tipo inferido é `number` dos
- * dois lados, então serviços não notam a diferença - mesmo critério das colunas acima.
+ * A number with decimals. `real` exists in both dialects and the inferred type is `number` on both
+ * sides, so services cannot tell the difference - the same criterion as the columns above.
  */
 export const real = (usingSqlite ? sqlite.real : pg.real) as typeof pg.real;
 
-/** Inteiro de 64 bits. `INTEGER` do SQLite já é 64 bits; no Postgres é `bigint`. */
+/** A 64-bit integer. SQLite's `INTEGER` is already 64 bits; on Postgres it is `bigint`. */
 export const bigintNumber = (
   usingSqlite
     ? (name: string) => sqlite.integer(name)
@@ -50,20 +49,20 @@ export const boolean = (
   usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'boolean' }) : pg.boolean
 ) as typeof pg.boolean;
 
-/** Data/hora anulável. */
+/** A nullable date/time. */
 export const timestamp = (
   usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'timestamp_ms' }) : pg.timestamp
 ) as typeof pg.timestamp;
 
 /**
- * Data/hora obrigatória, preenchida com "agora" quando quem insere não informa.
+ * A required date/time, filled with "now" when the inserter does not provide one.
  *
- * Existe como um construtor próprio porque `.defaultNow()` só existe no Postgres, e o padrão
- * `timestamp(...).notNull().defaultNow()` aparece 70 e poucas vezes: encadear métodos devolve
- * um construtor novo a cada passo, então não há como acrescentar `defaultNow` ao do SQLite sem
- * embrulhar tudo em proxy. No SQLite o valor sai do próprio processo (`$defaultFn`), o que dá
- * no mesmo para quem insere pelo drizzle - e é o único caminho aqui, já que nenhuma escrita
- * desta API é feita em SQL cru.
+ * It exists as a builder of its own because `.defaultNow()` only exists in Postgres, and the pattern
+ * `timestamp(...).notNull().defaultNow()` shows up 70-odd times: chaining methods returns a new
+ * builder at every step, so there is no way to add `defaultNow` to SQLite's without wrapping
+ * everything in a proxy. On SQLite the value comes from the process itself (`$defaultFn`), which
+ * amounts to the same thing for whoever inserts through drizzle - and that is the only path here,
+ * since no write in this API is done in raw SQL.
  */
 export const timestampNow = (
   usingSqlite
@@ -75,8 +74,8 @@ export const timestampNow = (
     : (name: string) => pg.timestamp(name).notNull().defaultNow()
 ) as (
   name: string,
-  // O tipo precisa carregar a marca de "tem valor padrão", senão o drizzle passa a exigir
-  // `createdAt`/`updatedAt` em todo insert.
+  // The type has to carry the "has a default" mark, otherwise drizzle starts requiring
+  // `createdAt`/`updatedAt` on every insert.
 ) => ReturnType<ReturnType<ReturnType<typeof pg.timestamp>['notNull']>['defaultNow']>;
 
 /** Documento JSON. `jsonb` no Postgres, texto serializado pelo drizzle no SQLite. */
@@ -99,19 +98,19 @@ export const unique = (usingSqlite ? sqlite.unique : pg.unique) as typeof pg.uni
 export const alias = (usingSqlite ? sqlite.alias : pg.alias) as typeof pg.alias;
 
 /**
- * Um conjunto fechado de valores.
+ * A closed set of values.
  *
- * No Postgres é um tipo ENUM de verdade; no SQLite é uma coluna de texto cujo tipo no
- * TypeScript é a união dos valores - o banco não recusa um valor fora da lista, mas o
- * compilador sim, e todas as escritas passam pelo drizzle.
+ * On Postgres it is a real ENUM type; on SQLite it is a text column whose TypeScript type is the
+ * union of the values - the database does not refuse a value outside the list, but the compiler does,
+ * and every write goes through drizzle.
  *
- * `enumValues` é exposto porque algumas rotas montam o schema de validação a partir dele
- * (`story.route.ts`, `SyncService`), e isso precisa funcionar igual nos dois dialetos.
+ * `enumValues` is exposed because some routes build their validation schema from it
+ * (`story.route.ts`, `SyncService`), and that has to work the same in both dialects.
  */
 export function dbEnum<const T extends readonly [string, ...string[]]>(name: string, values: T) {
   const pgType = pg.pgEnum(name, values);
-  // No Postgres o próprio `pgEnum` é o construtor de coluna - devolvê-lo intacto mantém o
-  // `CREATE TYPE` nas migrações. No SQLite, texto com a união de valores no tipo.
+  // On Postgres `pgEnum` is itself the column builder - returning it untouched keeps the `CREATE TYPE`
+  // in the migrations. On SQLite, text with the union of values in the type.
   const column = usingSqlite
     ? (columnName: string) => sqlite.text(columnName, { enum: values })
     : pgType;

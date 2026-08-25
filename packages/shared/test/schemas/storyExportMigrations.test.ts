@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CURRENT_STORY_FORMAT_VERSION } from '../../schemas/StoryExportVersion';
 import { migrateStoryExport, StoryExportVersionError } from '../../schemas/storyExportMigrations';
 
-/** As coleções que a migração V4 -> V5 materializa vazias. */
+/** The collections the V4 -> V5 migration materialises as empty. */
 const EMPTY_V5_COLLECTIONS = { stats: [], statStrengths: [], statRelations: [], modes: [] };
 const EMPTY_V6_COLLECTIONS = { plots: [], plotScenes: [] };
 

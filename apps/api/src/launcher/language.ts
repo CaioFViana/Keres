@@ -15,7 +15,7 @@ function languageFromTag(value: string | undefined): LauncherLanguage | undefine
 }
 
 /**
- * Sistema → pt ou en; qualquer outra coisa (ou vazio) → inglês, como o painel admin.
+ * System → pt or en; anything else (or empty) → English, like the admin panel.
  */
 export function detectSystemLanguage(
   env: NodeJS.ProcessEnv = process.env,

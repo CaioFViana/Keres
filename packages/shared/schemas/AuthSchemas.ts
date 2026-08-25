@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 /**
- * Payload for `POST /auth/forgot-password` - recupera o acesso com um recovery code em vez
- * da senha atual (ver RecoveryCodeService no servidor). O `recoveryCode` inclui o hífen
- * (formato `XXXXX-XXXXX`); a comparação no servidor é sensível a maiúsculas/minúsculas
- * porque o alfabeto do código já evita ambiguidade.
+ * Payload for `POST /auth/forgot-password` - recovers access with a recovery code instead of the
+ * current password (see RecoveryCodeService on the server). The `recoveryCode` includes the hyphen
+ * (format `XXXXX-XXXXX`); the comparison on the server is case-sensitive because the code's
+ * alphabet already avoids ambiguity.
  */
 export const ForgotPasswordSchema = z.object({
   username: z.string().min(1, 'Username is required'),

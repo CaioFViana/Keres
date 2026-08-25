@@ -4,14 +4,14 @@ import type { Config } from 'drizzle-kit';
 dotenv.config({ path: './.env' });
 
 /**
- * Geração das migrações do SQLite.
+ * Generation of the SQLite migrations.
  *
- * `DATABASE_DRIVER` é fixado aqui antes de qualquer coisa: `src/db/schema/columns.ts` lê essa
- * variável no momento em que é importado para decidir se constrói tabelas `pgTable` ou
- * `sqliteTable`. Sem isto, o drizzle-kit leria o schema no dialeto do Postgres e tentaria
- * gerar SQL de SQLite a partir dele.
+ * `DATABASE_DRIVER` is set here before anything else: `src/db/schema/columns.ts` reads that
+ * variable at import time to decide whether to build `pgTable` or `sqliteTable` tables. Without
+ * this, drizzle-kit would read the schema in the Postgres dialect and try to generate SQLite SQL
+ * from it.
  *
- * As migrações do Postgres continuam saindo de `drizzle.config.ts`, em `drizzle/`, intocadas.
+ * The Postgres migrations still come from `drizzle.config.ts`, into `drizzle/`, untouched.
  */
 process.env.DATABASE_DRIVER = 'sqlite';
 
@@ -20,8 +20,8 @@ export default {
   out: './drizzle-sqlite',
   dialect: 'sqlite',
   dbCredentials: {
-    // Só usado por comandos que falam com o banco (`push`, `studio`); `generate` compara o
-    // schema com o que já está em `drizzle-sqlite/` e não abre conexão nenhuma.
+    // Only used by commands that talk to the database (`push`, `studio`); `generate` compares the
+    // schema with what is already in `drizzle-sqlite/` and opens no connection at all.
     url: process.env.DATABASE_URL?.startsWith('file:')
       ? process.env.DATABASE_URL
       : 'file:./keres.db',

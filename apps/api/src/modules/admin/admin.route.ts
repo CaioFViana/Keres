@@ -7,13 +7,13 @@ import { adminTierRoutes } from './adminTier.route';
 import { adminUserRoutes } from './adminUser.route';
 
 /**
- * Composição de todas as rotas administrativas, montadas em `/api/admin/*`; `/admin/*`
- * é reservado para servir o app estático do painel, ver index.ts.
+ * Composition of every administrative route, mounted at `/api/admin/*`; `/admin/*` is reserved for
+ * serving the panel's static app, see index.ts.
  *
- * Cada módulo (adminUser.route.ts etc.) chama `requireAdmin(user)` diretamente em vez de
- * compor um plugin Elysia via `.use()` - testado que propagar um `.derive()` de guard
- * através de módulos/grupos não flui de forma confiável para o TypeScript nesta versão do
- * Elysia. Uma função simples é mais simples e evita essa armadilha.
+ * Each module (adminUser.route.ts and friends) calls `requireAdmin(user)` directly instead of
+ * composing an Elysia plugin via `.use()` - it was tested that propagating a guard's `.derive()`
+ * through modules/groups does not flow reliably into TypeScript in this version of Elysia. A plain
+ * function is simpler and avoids that trap.
  */
 export const adminRoutes = new Elysia()
   .group('/users', (app) => app.use(adminUserRoutes))

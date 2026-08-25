@@ -13,8 +13,8 @@ beforeEach(async () => {
 });
 
 /**
- * O painel inteiro vive atrás de `requireAdmin`. Até esta suíte existir, nada verificava que
- * um usuário comum autenticado não conseguia listar contas, criar tiers ou reabrir o cadastro.
+ * The whole panel lives behind `requireAdmin`. Until this suite existed, nothing verified that an
+ * ordinary authenticated user could not list accounts, create tiers or reopen registration.
  */
 describe('requireAdmin gate', () => {
   const endpoints: [string, string, unknown?][] = [
@@ -141,9 +141,9 @@ describe('admin user lifecycle', () => {
   });
 
   /**
-   * Username e tag não compartilham unicidade: criar "bia" quando outra conta já usa "bia"
-   * como tag precisa cair no sufixo, e não estourar. Este era o caminho que a violação de
-   * unicidade embrulhada pelo drizzle deixava morto (ver `isUniqueViolation`).
+   * Username and tag do not share uniqueness: creating "bia" when another account already uses "bia" as
+   * a tag has to fall into the suffix path, not blow up. That was the path the uniqueness violation
+   * wrapped by drizzle left dead (see `isUniqueViolation`).
    */
   it('falls back to a suffixed tag when the username is taken as a tag', async () => {
     await request('PUT', '/user/tag', { token: comum.token, body: { tag: 'bia' } });

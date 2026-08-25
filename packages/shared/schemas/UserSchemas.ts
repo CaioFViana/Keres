@@ -23,11 +23,11 @@ export const UpdateUserPasswordSchema = z.object({
 export type UpdateUserPasswordType = z.infer<typeof UpdateUserPasswordSchema>;
 
 /**
- * Payload for `PUT /user/recovery-codes` - regenera o lote de backup codes, invalidando o
- * anterior. Exige a senha atual pelo mesmo motivo de `UpdateUserPasswordSchema`: é uma ação
- * sensível o bastante para não ficar disponível a quem só tem a sessão (token) sem saber a
- * senha - ainda que, ao contrário da troca de senha, isto não seja a única defesa possível
- * (ver nota em RecoveryCodeService sobre sessão comprometida).
+ * Payload for `PUT /user/recovery-codes` - regenerates the batch of backup codes, invalidating the
+ * previous one. It requires the current password for the same reason as `UpdateUserPasswordSchema`:
+ * it is sensitive enough not to be available to whoever only holds the session (token) without
+ * knowing the password - even though, unlike changing the password, this is not the only possible
+ * defence (see the note in RecoveryCodeService about a compromised session).
  */
 export const RegenerateRecoveryCodesSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),

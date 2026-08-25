@@ -4,11 +4,11 @@ import { resolve } from 'node:path';
 export const COVERAGE_KINDS = ['lines', 'functions', 'branches'] as const;
 export type CoverageKind = (typeof COVERAGE_KINDS)[number];
 
-/** Contagens de um arquivo: chave do item (linha, função, ramo) para número de execuções. */
+/** One file's counts: item key (line, function, branch) to number of executions. */
 type FileCoverage = Record<CoverageKind, Map<string, number>>;
 export type LcovReport = Map<string, FileCoverage>;
 
-/** Totais do projeto inteiro: `[encontrados, cobertos]` por tipo. */
+/** Whole-project totals: `[found, covered]` per kind. */
 export type CoverageTotals = Record<CoverageKind, [number, number]>;
 
 const emptyFileCoverage = (): FileCoverage => ({
@@ -46,10 +46,10 @@ export function parseLcov(
 }
 
 /**
- * Junta relatórios do mesmo projeto por localização no código.
+ * Merges reports from the same project by source location.
  *
- * A API tem duas suítes (unitária e de integração) cobrindo os mesmos arquivos: somar os dois
- * lcov contaria cada linha duas vezes. Aqui vale a maior contagem de cada item.
+ * The API has two suites (unit and integration) covering the same files: adding both lcov files
+ * would count every line twice. Here the highest count for each item wins.
  */
 export function mergeCoverage(reports: (LcovReport | null)[]): CoverageTotals {
   const merged: LcovReport = new Map();

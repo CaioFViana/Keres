@@ -1,24 +1,25 @@
 import { PACKAGES, run, runInPackage, scriptsOf } from './lib/packages';
 
 /**
- * Roda o mesmo script em todos os pacotes que o declaram.
+ * Runs the same script in every package that declares it.
  *
  *   bun scripts/run-all.ts typecheck
  *
- * Existe para a raiz não ter seis correntes de `bun run --cwd ... && bun run --cwd ...` que
- * ninguém consegue ler nem manter em ordem. Quem não declara o script é pulado - só a `api`
- * tem testes de integração, só o cliente tem `db:generate` - e a primeira falha interrompe:
- * numa cadeia em ordem de dependência, o segundo erro costuma ser consequência do primeiro.
+ * It exists so the root does not carry six chains of `bun run --cwd ... && bun run --cwd ...`
+ * that nobody can read or keep in order. A package that does not declare the script is skipped
+ * - only the `api` has integration tests, only the client has `db:generate` - and the first
+ * failure stops everything: in a chain ordered by dependency, the second error is usually a
+ * consequence of the first.
  */
 const script = process.argv[2];
 if (!script) {
-  console.error('Uso: bun scripts/run-all.ts <script>, por exemplo "typecheck".');
+  console.error('Usage: bun scripts/run-all.ts <script>, for example "typecheck".');
   process.exit(1);
 }
 
 const targets = PACKAGES.filter((pkg) => scriptsOf(pkg).includes(script));
 if (targets.length === 0) {
-  console.error(`Nenhum pacote declara o script "${script}".`);
+  console.error(`No package declares the script "${script}".`);
   process.exit(1);
 }
 
@@ -26,15 +27,16 @@ for (const pkg of targets) {
   console.log(`\n=== ${pkg.name}: ${script}`);
   const code = runInPackage(pkg, script);
   if (code !== 0) {
-    console.error(`\n${pkg.name}: "${script}" falhou (código ${code}).`);
+    console.error(`\n${pkg.name}: "${script}" failed (exit code ${code}).`);
     process.exit(code);
   }
 }
 
-// Os scripts do próprio repositório não são um pacote, mas são TypeScript: entram na checagem
-// de tipos junto com o resto, senão seriam a única parte do repositório sem rede nenhuma.
+// The repository's own scripts are not a package, but they are TypeScript: they go through the
+// type check along with everything else, or they would be the only part of the repository with
+// no safety net at all.
 if (script === 'typecheck') {
-  console.log('\n=== scripts do repositório: typecheck');
+  console.log('\n=== repository scripts: typecheck');
   const code = run('bunx', ['tsc', '--noEmit', '-p', 'scripts/tsconfig.json']);
   if (code !== 0) process.exit(code);
 }

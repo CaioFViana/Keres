@@ -4,17 +4,17 @@ import { usingSqlite } from '../../src/db/dialect';
 import { users } from '../../src/db/schema';
 
 /**
- * Promove um usuário a admin escrevendo direto na tabela.
+ * Promotes a user to admin by writing straight to the table.
  *
- * Não há rota para isso de propósito - em produção o admin raiz vem de
- * `ROOT_ADMIN_USERNAME`/`ROOT_ADMIN_PASSWORD`, reconciliados no boot, que é justamente o
- * caminho que `createApp()` não executa. Mexer na coluna é o equivalente mais fiel.
+ * There is no route for that on purpose - in production the root admin comes from
+ * `ROOT_ADMIN_USERNAME`/`ROOT_ADMIN_PASSWORD`, reconciled at boot, which is precisely the path
+ * `createApp()` does not run. Touching the column is the closest equivalent.
  */
 export async function promoteToAdmin(userId: string): Promise<void> {
   await db.update(users).set({ isAdmin: true }).where(eq(users.id, userId));
 }
 
-/** Marca o usuário como excluído, para exercitar a porta do `requireAdmin`. */
+/** Marks the user as deleted, to exercise `requireAdmin`'s gate. */
 export async function softDeleteUser(userId: string): Promise<void> {
   await db
     .update(users)
@@ -23,11 +23,11 @@ export async function softDeleteUser(userId: string): Promise<void> {
 }
 
 /**
- * Esvazia todas as tabelas entre os testes.
+ * Empties every table between tests.
  *
- * Lê a lista do próprio catálogo em vez de enumerar o schema do drizzle: uma tabela nova
- * passa a ser limpa sozinha, sem ninguém precisar lembrar de atualizar esta lista. O
- * `__drizzle_migrations` fica de fora nos dois motores - as migrações continuam aplicadas.
+ * It reads the list from the catalog itself rather than enumerating drizzle's schema: a new table
+ * starts being cleaned automatically, with nobody having to remember to update this list.
+ * `__drizzle_migrations` is left out on both engines - the migrations stay applied.
  */
 export async function truncateAll(): Promise<void> {
   if (usingSqlite) {
@@ -48,12 +48,12 @@ export async function truncateAll(): Promise<void> {
 }
 
 /**
- * O SQLite não tem `TRUNCATE` nem `CASCADE`, então é `DELETE` tabela a tabela - com as chaves
- * estrangeiras desligadas durante a limpeza, já que sem `CASCADE` a ordem passaria a importar.
+ * SQLite has neither `TRUNCATE` nor `CASCADE`, so it is `DELETE` table by table - with foreign keys
+ * turned off during the cleanup, since without `CASCADE` the order would start to matter.
  */
 async function truncateAllSqlite(): Promise<void> {
-  // `db` é tipado como a conexão do Postgres (ver src/db/index.ts); `all`/`run` são os métodos
-  // que só o driver do SQLite expõe, e este bloco só roda quando é ele que está ativo.
+  // `db` is typed as the Postgres connection (see src/db/index.ts); `all`/`run` are the methods only
+  // the SQLite driver exposes, and this block only runs when that is the active one.
   const sqliteDb = db as unknown as {
     all: (query: unknown) => Promise<unknown>;
     run: (query: unknown) => Promise<unknown>;

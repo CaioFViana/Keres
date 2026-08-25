@@ -3,11 +3,11 @@ import { extname, join, resolve } from 'node:path';
 import { repoRoot } from './lib/packages';
 
 /**
- * Conta linhas de código (sem comentários nem linhas vazias) por aplicação.
+ * Counts lines of code (comments and blank lines excluded) per application.
  *
  *   bun run code:lines
  *
- * Ferramenta de leitura, não de check: nada na CI depende dela.
+ * A reading tool, not a check: nothing in CI depends on it.
  */
 
 const applications: [name: string, path: string, excluded?: string[]][] = [
@@ -20,7 +20,7 @@ const applications: [name: string, path: string, excluded?: string[]][] = [
   ['Site', 'apps/site'],
 ];
 
-// Diretórios de dependências, saída de build, metadados ou código gerado.
+// Dependency, build output, metadata or generated-code directories.
 const ignoredDirectories = new Set([
   '.git',
   '.expo',
@@ -131,9 +131,9 @@ const total = [...results, tests].reduce(
 );
 
 console.table(
-  [...results, { name: 'Testes', ...tests }, { name: 'Total', ...total }].map((result) => ({
-    Aplicação: result.name,
-    Arquivos: result.files,
-    'Linhas de código': result.lines,
+  [...results, { name: 'Tests', ...tests }, { name: 'Total', ...total }].map((result) => ({
+    Application: result.name,
+    Files: result.files,
+    'Lines of code': result.lines,
   })),
 );

@@ -8,13 +8,13 @@ export const attributeValues = table(
   'attribute_values',
   {
     id: text('id').primaryKey(),
-    // Denormalizado do campo, para consultas/índices sem join - mesmo padrão de outras tabelas.
+    // Denormalised from the field, for queries/indexes without a join - the same pattern as other tables.
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
     entityType: text('entity_type').$type<StorySchemaEntityType>().notNull(),
-    // FK polimórfica (characters.id/locations.id/etc conforme entityType) - mesmo padrão de
-    // NoteRelation.relationId/TagRelation.relationId, sem FK de banco de dados de fato.
+    // A polymorphic FK (characters.id/locations.id/etc according to entityType) - the same pattern as
+    // NoteRelation.relationId/TagRelation.relationId, with no actual database FK.
     entityId: text('entity_id').notNull(),
     fieldId: text('field_id')
       .notNull()

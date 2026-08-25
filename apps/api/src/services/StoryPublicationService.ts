@@ -19,8 +19,8 @@ import { showcaseSettingsService } from './ShowcaseSettingsService';
 import { StoryExportImportService } from './StoryExportImportService';
 
 /**
- * Quantas versões de uma história o servidor guarda. Publicar a sexta apaga a mais antiga,
- * pacote incluído - o histórico completo é do autor, no app; aqui é só a vitrine.
+ * How many versions of a story the server keeps. Publishing the sixth deletes the oldest, package
+ * included - the full history belongs to the author, in the app; here it is only the showcase.
  */
 export const MAX_PUBLICATIONS_PER_STORY = 5;
 
@@ -47,9 +47,9 @@ export class StoryPublicationService {
   }
 
   /**
-   * Só o dono publica. Uma permissão de `writer` não serve: publicar expõe a história ao
-   * mundo, e essa é uma decisão de quem é dono dela - a mesma linha que `SyncService` traça
-   * para editar/apagar a própria entidade Story.
+   * Only the owner publishes. A `writer` permission is not enough: publishing exposes the story to the
+   * world, and that is the owner's decision - the same line `SyncService` draws for editing/deleting the
+   * Story entity itself.
    */
   private async assertOwnership(userId: string, storyId: string) {
     const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
@@ -75,12 +75,12 @@ export class StoryPublicationService {
   }
 
   /**
-   * Dono + todo mundo com permissão viva na história.
+   * The owner + everybody with a live permission on the story.
    *
-   * O dono entra porque o evento também serve para os *outros* aparelhos dele atualizarem a
-   * lista de versões - não só para avisar alguém. Quem decide se isso vira um aviso na tela é
-   * o cliente, que silencia histórias das quais a pessoa é dona: ela acabou de publicar, não
-   * precisa ser informada disso (ver `PublicationService.performPublicationSync`).
+   * The owner is included because the event also serves for *their other* devices to refresh the version
+   * list - not only to notify somebody. Whether that becomes an on-screen notice is the client's call,
+   * and it silences stories the person owns: they have just published, they do not need to be told (see
+   * `PublicationService.performPublicationSync`).
    */
   private async audienceFor(storyId: string, ownerUserId: string): Promise<string[]> {
     const collaborators = await db
@@ -97,11 +97,11 @@ export class StoryPublicationService {
   }
 
   /**
-   * Roda a transação de publicação, removendo o pacote já gravado se ela não vingar.
+   * Runs the publication transaction, removing the already-written package if it does not go through.
    *
-   * O .zip é gravado antes da transação de propósito (ver `publish`), então o caminho de erro
-   * precisa desfazer isso explicitamente - caso contrário uma publicação recusada, por exemplo
-   * por um nome de versão repetido, deixaria um arquivo que nenhuma linha referencia.
+   * The .zip is written before the transaction on purpose (see `publish`), so the error path has to undo
+   * that explicitly - otherwise a refused publication, because of a repeated version name for instance,
+   * would leave a file no row references.
    */
   private async runPublishTransaction<T>(
     work: Parameters<typeof db.transaction<T>>[0],
@@ -126,9 +126,8 @@ export class StoryPublicationService {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
 
-    // O cliente também barra o botão, mas quem decide é o servidor: publicar uma história com
-    // mudança local pendente geraria um pacote que não corresponde ao que existe em lugar
-    // nenhum - nem no aparelho, nem aqui.
+    // The client also blocks the button, but the server decides: publishing a story with a pending local
+    // change would produce a package matching what exists nowhere - not on the device, not here.
     if (clientOperationVersion !== story.lastOperationVersion) {
       throw new AppError(
         409,
@@ -144,9 +143,9 @@ export class StoryPublicationService {
     const publicationId = ulid();
     const zip = await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash));
 
-    // Bytes antes da linha: uma linha sem blob é um download quebrado exposto no site, enquanto
-    // um blob sem linha é invisível. Se a transação abaixo falhar, o arquivo é removido no
-    // `catch` - sem isso, cada publicação recusada deixaria um .zip órfão ocupando disco.
+    // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
+    // no row is invisible. If the transaction below fails, the file is removed in the `catch` - without
+    // that, every refused publication would leave an orphaned .zip taking up disk.
     await publicationStorageService.store(storyId, publicationId, zip.bytes);
 
     const passwordHash = visibility === 'password' ? await hashPassword(password!) : null;
@@ -158,10 +157,9 @@ export class StoryPublicationService {
           .from(storyPublications)
           .where(eq(storyPublications.storyId, storyId));
 
-        // A visibilidade é gravada em toda publicação, não só quando muda: ela faz parte do que
-        // a pessoa escolheu *nesta* publicação. Sem reescrever, publicar com o cadeado desligado
-        // deixaria silenciosamente uma história que já estava protegida como estava - a ação
-        // pareceria não ter efeito nenhum.
+        // Visibility is written on every publication, not only when it changes: it is part of what the person
+        // chose for *this* publication. Without rewriting it, publishing with the padlock off would silently
+        // leave a story that was already protected as it was - the action would seem to have no effect at all.
         await tx
           .insert(storyShowcaseEntries)
           .values({ storyId, ownerUserId: userId, labelMode, visibility, passwordHash })
@@ -188,8 +186,8 @@ export class StoryPublicationService {
           snapshot: this.snapshotOf(story),
         });
 
-        // O corte é feito aqui e não no SQL porque `OFFSET` sem `LIMIT` é inválido no SQLite,
-        // e são no máximo seis linhas por história - não vale um `LIMIT` artificial só por isso.
+        // The trimming is done here rather than in SQL because `OFFSET` without `LIMIT` is invalid on SQLite,
+        // and there are at most six rows per story - not worth an artificial `LIMIT` just for that.
         const existingIds = await tx
           .select({ id: storyPublications.id })
           .from(storyPublications)
@@ -207,8 +205,8 @@ export class StoryPublicationService {
       () => publicationStorageService.delete(storyId, publicationId),
     );
 
-    // Depois do commit: se um delete de blob falhar, o pior caso é um arquivo órfão, não uma
-    // versão listada no site cujo download não existe mais.
+    // After the commit: if a blob delete fails, the worst case is an orphaned file, not a version listed
+    // on the site whose download no longer exists.
     for (const id of prunedIds) {
       await publicationStorageService.delete(storyId, id).catch(() => undefined);
     }
@@ -237,8 +235,8 @@ export class StoryPublicationService {
     return {
       visibility: (entry?.visibility ?? 'public') as ShowcaseVisibility,
       labelMode: (entry?.labelMode ?? 'both') as PublicationLabelMode,
-      // Só se existe uma senha, nunca qual - o app precisa disso para dizer "protegida por
-      // senha" e oferecer trocá-la, e nada além disso.
+      // Only whether a password exists, never which one - the app needs that to say "password protected" and
+      // to offer changing it, and nothing beyond that.
       hasPassword: !!entry?.passwordHash,
       isPublished: !!entry,
       publications,
@@ -246,9 +244,9 @@ export class StoryPublicationService {
   }
 
   /**
-   * Todas as publicações das histórias que a pessoa pode ler - dela e das compartilhadas com
-   * ela. É o que o app usa para descobrir, na reconexão, o que foi publicado enquanto ele
-   * estava fora: o barramento de eventos é em memória e não reenvia nada.
+   * Every publication of the stories the person can read - their own and the ones shared with them. It
+   * is what the app uses to find out, on reconnection, what was published while it was away: the event
+   * bus is in memory and resends nothing.
    */
   async listVisibleTo(userId: string) {
     const owned = await db
@@ -301,8 +299,8 @@ export class StoryPublicationService {
       .where(eq(storyShowcaseEntries.storyId, storyId))
       .returning();
 
-    // O hash não volta nem para o dono: ele não tem uso nenhum do lado de fora, e o que não
-    // sai daqui não pode acabar num log ou numa aba de rede aberta.
+    // The hash does not come back even for the owner: it has no use outside, and what does not leave here
+    // cannot end up in a log or an open network tab.
     return {
       storyId: updated.storyId,
       ownerUserId: updated.ownerUserId,
@@ -327,7 +325,7 @@ export class StoryPublicationService {
         .select({ id: storyPublications.id })
         .from(storyPublications)
         .where(eq(storyPublications.storyId, storyId));
-      // Sem versão nenhuma não há o que mostrar: a história sai da vitrine junto.
+      // With no version left there is nothing to show: the story leaves the showcase along with it.
       if (left.length === 0) {
         await tx.delete(storyShowcaseEntries).where(eq(storyShowcaseEntries.storyId, storyId));
       } else {

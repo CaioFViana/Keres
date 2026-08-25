@@ -1,7 +1,7 @@
 /**
- * Layout puro da linha do tempo narrativa. A ordem das cenas nunca muda; o eixo horizontal
- * apenas dá uma noção compactada de duração. Isso evita fingir que meses, anos e éons têm
- * conversões universais.
+ * A pure layout for the narrative timeline. The order of the scenes never changes; the horizontal
+ * axis only gives a compacted sense of duration. That avoids pretending that months, years and eons
+ * have universal conversions.
  */
 export interface StoryTimelineScene {
   id: string;
@@ -18,7 +18,7 @@ export interface StoryTimelineScene {
   duration?: number | null;
   durationType?: string | null;
   durationLabel?: string;
-  /** A cena inicia um recorte de capítulos sem o predecessor imediato selecionado. */
+  /** The scene starts a chapter selection whose immediate predecessor is not selected. */
   hideGapBefore?: boolean;
 }
 
@@ -43,9 +43,9 @@ const UNIT_RANK: Record<string, number> = {
 };
 
 /**
- * Convenção apenas visual: aproxima unidades de calendário para preservar proporções úteis.
- * O valor original nunca é alterado e continua explícito no rótulo. Um éon vale visualmente
- * um bilhão de anos, permitindo que mundos fictícios usem a unidade sem quebrar o desenho.
+ * A purely visual convention: it approximates calendar units to preserve useful proportions. The
+ * original value is never altered and stays explicit in the label. An eon is worth a billion years
+ * visually, letting fictional worlds use the unit without breaking the drawing.
  */
 const VISUAL_SECONDS_PER_UNIT: Record<string, number> = {
   seconds: 1,
@@ -105,7 +105,7 @@ export interface StoryTimelineLayout {
   width: number;
   height: number;
   scaleMode: StoryTimelineScaleMode;
-  /** O menor trecho se tornou quase imperceptível na escala proporcional. */
+  /** The smallest stretch became almost imperceptible on the proportional scale. */
   hasProportionalScaleWarning: boolean;
 }
 
@@ -121,9 +121,9 @@ function segment(
 }
 
 /**
- * Escala logarítmica de segunda ordem: evita uma largura infinita para éons, mas mantém a
- * diferença entre minutos, horas e dias bastante visível. Não há teto artificial: o gráfico
- * cresce horizontalmente e pode ser explorado por pan/zoom.
+ * A second-order logarithmic scale: it avoids an infinite width for eons, while keeping the
+ * difference between minutes, hours and days clearly visible. There is no artificial ceiling: the
+ * chart grows horizontally and can be explored by pan/zoom.
  */
 function compactLength(value: number, unit: string, minimum: number): number {
   const seconds = Math.abs(value) * (VISUAL_SECONDS_PER_UNIT[unit] ?? 1);
@@ -193,9 +193,9 @@ function buildRulerTicks(
 }
 
 /**
- * Constrói uma timeline para cenas já ordenadas. O primeiro gap da seleção é contexto anterior
- * e não ocupa espaço: sem a cena predecessora desenhada, mostrá-lo sugeriria uma continuidade
- * que o recorte não contém.
+ * Builds a timeline for already-ordered scenes. The selection's first gap is prior context and takes
+ * up no space: without the preceding scene drawn, showing it would suggest a continuity the
+ * selection does not contain.
  */
 export function buildStoryTimelineLayout(
   scenes: StoryTimelineScene[],

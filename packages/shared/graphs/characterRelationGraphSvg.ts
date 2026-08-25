@@ -6,15 +6,15 @@ import type {
 import { GRAPH_PADDING } from './characterRelationGraphLayout';
 
 /**
- * Serializa o mapa de relações como um arquivo SVG completo - mesmo raciocínio do mapa de
- * história (`storyGraphSvg.ts`): SVG sai inteiro independente do zoom da tela e abre legível
- * em qualquer tamanho, e a geometria vem pronta de `characterRelationGraphLayout`, então a
- * tela interativa e o arquivo exportado nunca discordam sobre onde um personagem está.
+ * Serialises the relation map as a complete SVG file - the same reasoning as the story map
+ * (`storyGraphSvg.ts`): SVG comes out whole regardless of the screen's zoom and opens readable at
+ * any size, and the geometry arrives ready from `characterRelationGraphLayout`, so the interactive
+ * screen and the exported file never disagree about where a character is.
  */
 
 export interface CharacterRelationMapSvgOptions {
   title: string;
-  /** Linha de contexto sob o título (contagens). */
+  /** Context line under the title (counts). */
   subtitle: string;
   showEdgeLabels: boolean;
   labels: {
@@ -32,7 +32,7 @@ export interface CharacterRelationMapSvgOptions {
 
 const HEADER_TOP = 30;
 const LEGEND_ROW_HEIGHT = 24;
-/** Largura média de um caractere a 12px - só para dimensionar fundo de rótulo. */
+/** Average width of a character at 12px - only to size a label's background. */
 const APPROX_CHAR_WIDTH = 6.2;
 const MIN_CANVAS_WIDTH = 560;
 
@@ -49,7 +49,7 @@ export function renderCharacterRelationMapSvg(
     `<rect x="0" y="0" width="${canvasWidth}" height="${totalHeight}" fill="${options.colors.background}"/>`,
     renderHeader(options, hasIsolatedLegend),
     `<g transform="translate(0 ${round(headerHeight)})">`,
-    // Arestas primeiro: passar por baixo dos nós evita que uma linha risque o nome do personagem.
+    // Edges first: passing under the nodes keeps a line from striking through a character's name.
     ...layout.edges.map((edge) => renderEdge(edge, options)),
     ...(options.showEdgeLabels ? layout.edges.map((edge) => renderEdgeLabel(edge, options)) : []),
     ...layout.nodes.map((node) => renderNode(node, options)),
@@ -72,9 +72,9 @@ function renderHeader(options: CharacterRelationMapSvgOptions, hasIsolatedLegend
     `<text x="${GRAPH_PADDING}" y="${HEADER_TOP + 20}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
   ];
 
-  // Único item possível de legenda: o traço tracejado marca personagens sem nenhuma relação.
-  // Diferente do mapa de história (vários capítulos), aqui nunca há mais de uma linha a
-  // desenhar, então a máquina de quebrar em várias linhas daquele arquivo não se aplica.
+  // The only possible legend item: the dashed stroke marks characters with no relation at all.
+  // Unlike the story map (several chapters), there is never more than one line to draw here, so that
+  // file's multi-line wrapping machinery does not apply.
   if (hasIsolatedLegend) {
     const y = HEADER_TOP + 44;
     parts.push(
@@ -133,10 +133,10 @@ function truncate(value: string, maxChars: number): string {
 }
 
 /**
- * Escapa o que quebraria o XML.
+ * Escapes whatever would break the XML.
  *
- * Nome de personagem e tipo de relação são texto livre digitado pelo autor: um `&` ou um `<`
- * tornaria o arquivo inteiro inválido, e o erro só apareceria ao tentar abrir o mapa.
+ * A character's name and a relation type are free text typed by the author: an `&` or a `<` would
+ * make the whole file invalid, and the error would only show up when trying to open the map.
  */
 function escapeXml(value: string): string {
   return (value ?? '')

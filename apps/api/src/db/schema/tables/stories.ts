@@ -46,9 +46,9 @@ export const stories = table('stories', {
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
-  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: boolean('stat_system').notNull().default(false),
-  /** 'letter' | 'number' - como os valores de status são exibidos. */
+  /** 'letter' | 'number' - how stat values are displayed. */
   statNotation: text('stat_notation').notNull().default('letter'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
@@ -56,14 +56,14 @@ export const stories = table('stories', {
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),
   /**
-   * Contador do próximo `operation_log.operation_version` a usar nesta história - não
-   * confundir com `version` acima, que é a concorrência otimista da própria Story.
+   * Counter for the next `operation_log.operation_version` to use in this story - not to be confused
+   * with `version` above, which is the Story's own optimistic concurrency.
    *
-   * Incrementado por um único `UPDATE ... SET last_operation_version = last_operation_version
-   * + 1 RETURNING ...` (ver `SyncService.appendOperationLog`): o lock de linha do Postgres
-   * nessa instrução já serializa duas requisições concorrentes para a mesma história, sem
-   * precisar de lock explícito nem de recalcular via `max(operation_version)` (que corria
-   * risco de duas transações lerem o mesmo máximo antes de qualquer uma commitar).
+   * Incremented by a single `UPDATE ... SET last_operation_version = last_operation_version + 1
+   * RETURNING ...` (see `SyncService.appendOperationLog`): Postgres's row lock on that statement already
+   * serialises two concurrent requests for the same story, with no need for an explicit lock or for
+   * recomputing via `max(operation_version)` (which risked two transactions reading the same maximum
+   * before either committed).
    */
   lastOperationVersion: integer('last_operation_version').notNull().default(0),
 });

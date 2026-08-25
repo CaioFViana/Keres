@@ -4,8 +4,8 @@ import { isDatabaseConnectivityError } from '../src/index';
 const withCode = (code: string, cause?: unknown) => Object.assign(new Error(code), { code, cause });
 
 /**
- * Este classificador decide entre 503 ("o banco caiu, tente de novo") e 500 ("bug nosso") em
- * `onError`. Errar para o lado do 500 esconde uma queda de banco atrás de um erro genérico.
+ * This classifier decides between 503 ("the database went down, try again") and 500 ("our bug") in
+ * `onError`. Erring towards 500 hides a database outage behind a generic error.
  */
 describe('isDatabaseConnectivityError', () => {
   it.each([

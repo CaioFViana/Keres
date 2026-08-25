@@ -7,17 +7,17 @@ import { users } from '../db/schema';
 import { logger } from '../utils/logger';
 
 /**
- * Garante que a conta admin "root" configurada via env sempre exista e sempre seja admin,
- * rodando a cada boot da API - em vez de um script de bootstrap de execução única, que
- * deixaria uma janela sem nenhum admin até alguém lembrar de rodá-lo, e nada impediria o
- * último admin de ser removido depois.
+ * Guarantees that the "root" admin account configured through the env always exists and is always
+ * an admin, running at every boot of the API - rather than a run-once bootstrap script, which would
+ * leave a window with no admin at all until somebody remembered to run it, and nothing would stop
+ * the last admin from being removed afterwards.
  *
- * É uma linha de verdade em `users` (não uma identidade virtual que contorna o banco), então
- * passa pelos mesmos caminhos de sempre: login normal, a mesma checagem de `requireAdmin` no
- * banco que qualquer outro admin, e um `userId` válido para o log de operações quando essa
- * conta restaura algo pelo painel.
+ * It is a real row in `users` (not a virtual identity bypassing the database), so it goes through the
+ * usual paths: ordinary login, the same `requireAdmin` check against the database as any other
+ * admin, and a valid `userId` for the operation log when that account restores something through the
+ * panel.
  *
- * Pulado inteiramente se as env vars não estiverem definidas.
+ * Skipped entirely if the env vars are not set.
  */
 export async function reconcileRootAdmin(): Promise<void> {
   if (!env.ROOT_ADMIN_USERNAME || !env.ROOT_ADMIN_PASSWORD) {

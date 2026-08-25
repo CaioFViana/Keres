@@ -2,7 +2,7 @@ const TRUSTED_RENDERER_SCHEME = 'app:';
 const TRUSTED_RENDERER_HOST = 'app';
 const SERVER_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
-/** Verifica a origem antes de aceitar uma chamada IPC do renderer. */
+/** Checks the origin before accepting an IPC call from the renderer. */
 export function isTrustedRendererUrl(url: string | undefined): boolean {
   if (!url) return false;
   try {
@@ -19,19 +19,19 @@ export function isTrustedRendererUrl(url: string | undefined): boolean {
   }
 }
 
-/** IDs de servidor também viram nome de chave no cofre local; não podem conter caminhos. */
+/** Server ids also become key names in the local vault; they cannot contain paths. */
 export function assertValidServerId(serverId: string): void {
   if (!SERVER_ID_PATTERN.test(serverId)) throw new Error('Invalid server identifier.');
 }
 
 /**
- * Endereços que devem sair do app e abrir no navegador do sistema.
+ * Addresses that should leave the app and open in the system browser.
  *
- * O Keres desktop é a janela de um app, não um navegador: abrir a página pública de uma
- * história (ou qualquer outro site) dentro dela deixaria a pessoa presa num Chromium sem barra
- * de endereço, sem histórico e sem os logins que ela já tem. Só `http`/`https` saem - qualquer
- * outro esquema (`file:`, `app:`, e principalmente coisas como `javascript:`) é recusado, para
- * um link não virar um jeito de mandar o sistema operacional executar algo.
+ * Keres desktop is an app's window, not a browser: opening a story's public page (or any other
+ * site) inside it would leave the person stuck in a Chromium with no address bar, no history and
+ * none of the logins they already have. Only `http`/`https` leave - any other scheme (`file:`,
+ * `app:`, and especially things like `javascript:`) is refused, so a link cannot become a way to
+ * make the operating system run something.
  */
 export function isExternalBrowserUrl(url: string | undefined): boolean {
   if (!url) return false;
@@ -43,7 +43,7 @@ export function isExternalBrowserUrl(url: string | undefined): boolean {
   }
 }
 
-/** Se esta navegação sai da aplicação - ou seja, não é o próprio renderer confiável. */
+/** Whether this navigation leaves the application - that is, it is not the trusted renderer itself. */
 export function isInAppNavigation(url: string | undefined): boolean {
   return isTrustedRendererUrl(url);
 }

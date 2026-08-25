@@ -1,7 +1,7 @@
 import { assertSemver, setAppRelease, setPackageVersions } from './lib/version';
 
 /**
- * Alinha a versão distribuída em todos os arquivos que a declaram.
+ * Aligns the released version across every file that declares one.
  *
  *   bun run version:set 1.4.2 Galatea
  */
@@ -17,7 +17,7 @@ try {
   setAppRelease(version, name);
 } catch (error) {
   console.error(
-    `Uso: bun run version:set <versão> <nome da release>, por exemplo "bun run version:set 1.4.2 Galatea"\n${error instanceof Error ? error.message : error}`,
+    `Usage: bun run version:set <version> <release name>, for example "bun run version:set 1.4.2 Galatea"\n${error instanceof Error ? error.message : error}`,
   );
   process.exit(1);
 }

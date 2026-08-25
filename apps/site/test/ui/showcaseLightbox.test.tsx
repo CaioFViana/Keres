@@ -6,14 +6,13 @@ import siteEn from '../../src/i18n/locales/site.en.json';
 import { click, render } from '../helpers/react';
 
 /**
- * A foto ampliada abre sobre a página. Antes ela era um link comum, e clicar levava o leitor
- * para uma aba com o PNG cru - saindo da landing para ver uma imagem dela.
+ * The enlarged screenshot opens on top of the page. It used to be a plain link, and clicking it
+ * took the reader to a tab with the raw PNG - leaving the landing page to look at an image of it.
  */
 describe('foto ampliada da vitrine', () => {
   /**
-   * Dentro de `StrictMode`, como a página de verdade (ver `main.tsx`): é o que faz o efeito
-   * montar, limpar e montar de novo - o ciclo em que a foto chegou a se fechar sozinha no
-   * primeiro clique.
+   * Inside `StrictMode`, like the real page (see `main.tsx`): that is what makes the effect mount,
+   * clean up and mount again - the cycle in which the screenshot once closed itself on the first click.
    */
   const renderShowcase = () =>
     render(
@@ -67,7 +66,7 @@ describe('foto ampliada da vitrine', () => {
     await unmount();
   });
 
-  /** Ctrl+clique continua sendo "abrir em outra aba": o link de verdade segue lá. */
+  /** Ctrl+click still means "open in another tab": the real link is still there. */
   it('mantém o endereço do arquivo no link', async () => {
     const { container, unmount } = await renderShowcase();
 

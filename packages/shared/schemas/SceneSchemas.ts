@@ -44,8 +44,8 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   deletedAt: true,
 }).extend({
   name: z.string().min(1, 'Scene name cannot be empty'),
-  // 1..N dentro do capítulo, como o índice de capítulo: é o que a API exige ao reordenar, e
-  // aceitar 0 aqui era o que deixava criação e reordenação com contratos incompatíveis.
+  // 1..N within the chapter, like the chapter index: it is what the API requires when reordering, and
+  // accepting 0 here is what left creation and reordering with incompatible contracts.
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
   isFavorite: z.boolean().default(false),
   isStart: z.boolean().default(false),

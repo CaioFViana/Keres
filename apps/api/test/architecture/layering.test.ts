@@ -3,12 +3,12 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * As camadas da API, verificadas em vez de combinadas.
+ * The API's layers, verified rather than agreed upon.
  *
- * A rota lê a requisição, chama um serviço e devolve a resposta. O serviço é quem fala com o
- * banco. Quando a rota monta a própria consulta, a regra passa a existir dentro de um handler
- * HTTP: não dá para reusar em outra rota, nem testar sem levantar servidor - e é assim que
- * duas rotas passam a filtrar "não apagado" de dois jeitos diferentes.
+ * The route reads the request, calls a service and returns the response. The service is what talks to
+ * the database. When the route builds its own query, the rule starts living inside an HTTP handler:
+ * it cannot be reused by another route, nor tested without starting a server - and that is how two
+ * routes end up filtering "not deleted" in two different ways.
  */
 
 const MODULES_ROOT = resolve(__dirname, '../../src/modules');
@@ -26,9 +26,9 @@ const routeFiles = listFiles(MODULES_ROOT, '.route.ts');
 const relativeOf = (path: string) => relative(MODULES_ROOT, path).split('\\').join('/');
 
 /**
- * Rotas que ainda montam a própria consulta. É dívida conhecida, não licença: a lista só pode
- * encolher, e `toEqual` recusa tanto uma rota nova aqui quanto um nome que ficou para trás
- * depois de a consulta ter descido para um serviço.
+ * Routes that still build their own query. Known debt, not a licence: the list can only shrink, and
+ * `toEqual` refuses both a new route here and a name left behind after its query moved down into a
+ * service.
  */
 const ROUTES_THAT_STILL_QUERY = ['auth/auth.route.ts', 'media/media.route.ts'];
 
@@ -40,9 +40,9 @@ describe('camadas da API', () => {
   it('mantém a consulta ao banco dentro dos serviços', () => {
     const offenders = routeFiles
       .filter((path) =>
-        // O sinal é o construtor de consulta. Importar o schema sozinho é outra coisa e
-        // continua valendo: `story.route.ts` tira dele os valores do enum para validar o
-        // corpo da requisição, sem tocar no banco.
+        // The signal is the query builder. Importing the schema alone is a different thing and remains
+        // acceptable: `story.route.ts` takes the enum's values from it to validate the request body, without
+        // touching the database.
         Array.from(readFileSync(path, 'utf8').matchAll(IMPORT), (match) => match[1]).some(
           (specifier) => /^drizzle-orm(\/|$)/.test(specifier),
         ),

@@ -7,21 +7,21 @@ import type {
 import { GRAPH_PADDING } from './storyGraphLayout';
 
 /**
- * Serializa o mapa da história como um arquivo SVG completo.
+ * Serialises the story map as a complete SVG file.
  *
- * SVG e não PNG de propósito. Um mapa de história cresce muito mais que a tela, e a captura
- * de tela só pega o que está visível - o autor pediu o mapa "como um todo". SVG resolve os
- * dois lados: sai inteiro, independente do zoom em que a tela estava, e por ser vetorial abre
- * legível em qualquer tamanho (navegador, editor de imagem, impressão) sem serrilhado.
+ * SVG and not PNG on purpose. A story map grows far beyond the screen, and a screenshot only
+ * captures what is visible - the author asked for the map "as a whole". SVG solves both sides: it
+ * comes out whole, regardless of the zoom the screen was at, and being vector it opens readable at
+ * any size (browser, image editor, print) with no aliasing.
  *
- * A geometria vem pronta de `storyGraphLayout`; aqui só se decide aparência, então a tela
- * interativa e o arquivo exportado nunca discordam sobre onde uma cena está.
+ * The geometry arrives ready from `storyGraphLayout`; here only appearance is decided, so the
+ * interactive screen and the exported file never disagree about where a scene is.
  */
 
-/** Cores e textos vêm de fora porque este módulo não conhece tema nem idioma. */
+/** Colours and texts come from outside because this module knows neither theme nor language. */
 export interface StoryMapSvgOptions {
   title: string;
-  /** Linha de contexto sob o título (contagens, data). */
+  /** Context line under the title (counts, date). */
   subtitle: string;
   showEdgeLabels: boolean;
   labels: {
@@ -45,7 +45,7 @@ const HEADER_TOP = 30;
 const LEGEND_ROW_HEIGHT = 24;
 const LEGEND_GAP = 14;
 const SWATCH_SIZE = 12;
-/** Largura média de um caractere a 12px - só para dimensionar fundo de rótulo e chips. */
+/** Average width of a character at 12px - only to size label backgrounds and chips. */
 const APPROX_CHAR_WIDTH = 6.4;
 const MIN_CANVAS_WIDTH = 560;
 
@@ -60,7 +60,7 @@ export function renderStoryMapSvg(layout: StoryGraphLayout, options: StoryMapSvg
     `<rect x="0" y="0" width="${canvasWidth}" height="${totalHeight}" fill="${options.colors.background}"/>`,
     renderHeader(options, canvasWidth, legendRows),
     `<g transform="translate(0 ${round(headerHeight)})">`,
-    // Arestas primeiro: passar por baixo dos nós evita que uma curva risque o texto da cena.
+    // Edges first: passing under the nodes keeps a curve from striking through the scene's text.
     ...layout.edges.map((edge) => renderEdge(edge)),
     ...(options.showEdgeLabels ? layout.edges.map((edge) => renderEdgeLabel(edge, options)) : []),
     ...layout.nodes.map((node) => renderNode(node, options)),
@@ -80,7 +80,7 @@ export function renderStoryMapSvg(layout: StoryGraphLayout, options: StoryMapSvg
 interface LegendItem {
   label: string;
   color: string;
-  /** Traço tracejado em vez de quadradinho, para a entrada das voltas. */
+  /** A dashed stroke instead of a little square, for the entry of the returns. */
   style: 'swatch' | 'outline' | 'dashed';
   width: number;
 }
@@ -225,8 +225,8 @@ function renderNode(node: GraphNode, options: StoryMapSvgOptions): string {
       : options.colors.border;
   const strokeWidth = node.isStart || node.isFinish ? 2.5 : 1.2;
 
-  // Retângulo colorido atrás e retângulo de fundo à frente: o que sobra do primeiro é a faixa
-  // do capítulo no topo, com os cantos já arredondados, sem precisar de path ou clip.
+  // A coloured rectangle behind and a background rectangle in front: what is left of the first one is
+  // the chapter's band at the top, with the corners already rounded, needing no path or clip.
   const parts = [
     `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="10" fill="${node.chapterColor}"/>`,
     `<rect x="${round(node.x)}" y="${round(node.y + 5)}" width="${node.width}" height="${node.height - 5}" rx="9" fill="${options.colors.surface}" stroke="${stroke}" stroke-width="${strokeWidth}"/>`,
@@ -256,10 +256,10 @@ function truncate(value: string, maxChars: number): string {
 }
 
 /**
- * Escapa o que quebraria o XML.
+ * Escapes whatever would break the XML.
  *
- * Um título de cena é texto livre digitado pelo autor: um `&` ou um `<` num nome tornaria o
- * arquivo inteiro inválido, e o erro só apareceria ao tentar abrir o mapa.
+ * A scene's title is free text typed by the author: an `&` or a `<` in a name would make the whole
+ * file invalid, and the error would only show up when trying to open the map.
  */
 function escapeXml(value: string): string {
   return (value ?? '')

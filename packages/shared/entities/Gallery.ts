@@ -1,12 +1,12 @@
 import type { MediaType } from '../schemas/GallerySchemas';
 
 /**
- * Uma mídia da história (imagem, vídeo ou áudio).
+ * A media file belonging to the story (image, video or audio).
  *
- * O arquivo é identificado pelo conteúdo (`hash`), e não pelo caminho: é isso que permite
- * a mesma mídia ser reaproveitada por várias entidades e detectar, na sincronização, se os
- * bytes mudaram. O caminho local do arquivo no aparelho é uma preocupação do cliente e não
- * faz parte desta interface.
+ * The file is identified by its content (`hash`), not by its path: that is what lets the same
+ * media be reused by several entities and what makes it possible to detect, during
+ * synchronization, whether the bytes changed. The file's local path on the device is the client's
+ * concern and is not part of this interface.
  */
 export interface Gallery {
   id: string;
@@ -14,7 +14,7 @@ export interface Gallery {
   mediaType: MediaType;
   mimeType: string;
   fileName: string;
-  /** Checksum do conteúdo em hex (ver `MediaHashSchema`). */
+  /** Checksum of the content in hex (see `MediaHashSchema`). */
   hash: string;
   sizeBytes: number;
   title: string | null;

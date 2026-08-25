@@ -5,16 +5,16 @@ import { stories } from './stories';
 import { users } from './users';
 
 /**
- * Uma versão pública de uma história: o .zip imutável que o Showcase oferece para download.
+ * A public version of a story: the immutable .zip the Showcase offers for download.
  *
- * Deliberadamente fora do motor de sincronização - sem `version`, sem `isDeleted`, sem handler
- * em `entity-sync-handlers/`, sem entrada no log de operações. Publicar não é uma edição da
- * história; é um objeto paralelo, rastreado do mesmo jeito que `friendships` já é. Por isso o
- * apagar aqui é físico (a linha some junto com o blob), não uma lápide para o sync propagar.
+ * Deliberately outside the synchronization engine - no `version`, no `isDeleted`, no handler in
+ * `entity-sync-handlers/`, no entry in the operation log. Publishing is not an edit of the story; it
+ * is a parallel object, tracked the same way `friendships` already is. That is why deletion here is
+ * physical (the row goes away along with the blob), not a tombstone for sync to propagate.
  *
- * `snapshot` é cópia, não join, de propósito: o site descreve a história como ela estava
- * naquela versão. Se o autor renomear a história amanhã, a versão publicada continua
- * anunciando o nome com que foi publicada.
+ * `snapshot` is a copy, not a join, on purpose: the site describes the story as it stood in that
+ * version. If the author renames the story tomorrow, the published version keeps announcing the name it
+ * was published under.
  */
 export const storyPublications = table(
   'story_publications',
@@ -23,17 +23,17 @@ export const storyPublications = table(
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
-    /** Dono no momento da publicação. Cópia de `stories.userId`, para o site não depender de join. */
+    /** The owner at the moment of publication. A copy of `stories.userId`, so the site does not depend on a join. */
     ownerUserId: text('owner_user_id')
       .notNull()
       .references(() => users.id),
-    /** Nome da versão, no estilo que o dono escolheu (ver `buildPublicationLabel`). */
+    /** The version's name, in the style the owner chose (see `buildPublicationLabel`). */
     label: text('label').notNull(),
-    /** `stories.lastOperationVersion` no instante da publicação. */
+    /** `stories.lastOperationVersion` at the instant of publication. */
     operationVersion: integer('operation_version').notNull(),
-    /** `CURRENT_STORY_FORMAT_VERSION` no instante da publicação. */
+    /** `CURRENT_STORY_FORMAT_VERSION` at the instant of publication. */
     formatVersion: integer('format_version').notNull(),
-    /** `bigint` porque um pacote com galeria passa folgado de 2 GB no limite teórico. */
+    /** `bigint` because a package with a gallery comfortably exceeds 2 GB at the theoretical limit. */
     byteSize: bigintNumber('byte_size').notNull(),
     mediaIncluded: integer('media_included').notNull().default(0),
     mediaTotal: integer('media_total').notNull().default(0),

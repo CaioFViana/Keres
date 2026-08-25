@@ -3,8 +3,8 @@ import { keresLogo } from './vite.keresIcon';
 import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
-  // A marca é um módulo virtual gerado no build. Sem o plugin, qualquer teste que
-  // renderize o layout falha ao resolver `virtual:keres-logo`.
+  // The wordmark is a virtual module generated at build time. Without the plugin, any test that
+  // renders the layout fails to resolve `virtual:keres-logo`.
   plugins: [keresLogo()],
   test: {
     environment: 'jsdom',

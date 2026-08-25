@@ -4,13 +4,13 @@ export interface ReorderItem {
 }
 
 /**
- * A ordem final de uma lista arrastada, no formato que a sincronização espera: `newIndex`
- * **1..N contíguo**.
+ * The final order of a dragged list, in the format synchronization expects: `newIndex`
+ * **contiguous 1..N**.
  *
- * A base não é escolha de estilo. O servidor recusa uma reordenação cujo menor índice não seja 1
- * ou que não termine em N, e a recusa não aparece como erro na tela: vira um conflito de
- * sincronização, com a nova ordem ficando só no aparelho. Uma função só, usada por todas as
- * modais de reordenação, para essa regra não precisar ser lembrada em cada uma.
+ * The base is not a matter of style. The server refuses a reorder whose lowest index is not 1 or
+ * which does not end at N, and the refusal does not show up as an error on screen: it becomes a
+ * synchronization conflict, with the new order staying on the device alone. A single function, used
+ * by every reorder modal, so that rule does not have to be remembered in each one.
  */
 export function buildReorderItems<T>(
   items: readonly T[],
@@ -20,11 +20,11 @@ export function buildReorderItems<T>(
 }
 
 /**
- * O que há de errado com um conjunto de índices de reordenação, ou `null` se não há nada.
+ * What is wrong with a set of reorder indices, or `null` if nothing is.
  *
- * É a checagem que o servidor faz ao receber a reordenação - estava copiada em dois handlers de
- * sincronização, com a mesma mensagem escrita duas vezes. Do lado do cliente, é o que
- * `buildReorderItems` garante por construção; o teste de ambos aponta para cá.
+ * It is the check the server runs when a reorder arrives - it used to be copied into two
+ * synchronization handlers, with the same message written twice. On the client side, it is what
+ * `buildReorderItems` guarantees by construction; the test for both points here.
  */
 export function reorderIndicesProblem(indices: readonly number[]): string | null {
   if (indices.length === 0) return null;

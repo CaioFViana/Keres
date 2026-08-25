@@ -5,7 +5,7 @@ import showcaseEn from '../../src/i18n/locales/showcase.en.json';
 import showcasePt from '../../src/i18n/locales/showcase.pt.json';
 import { detectLanguage, LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from '../../src/i18n';
 
-/** Todas as chaves de um dicionário, achatadas em `a.b.c`. */
+/** Every key of a dictionary, flattened into `a.b.c`. */
 function flatten(value: unknown, prefix = ''): string[] {
   if (typeof value !== 'object' || value === null) {
     return [prefix];
@@ -15,7 +15,7 @@ function flatten(value: unknown, prefix = ''): string[] {
   );
 }
 
-/** Os marcadores `{{...}}` de um texto - eles precisam sobreviver à tradução. */
+/** A text's `{{...}}` placeholders - they have to survive translation. */
 function placeholders(value: string): string[] {
   return [...value.matchAll(/\{\{(\w+)\}\}/g)].map((match) => match[1]).sort();
 }
@@ -36,8 +36,8 @@ describe.each([
   ['admin', adminEn, adminPt],
   ['showcase', showcaseEn, showcasePt],
 ])('%s dictionary', (_name, english, portuguese) => {
-  // Uma chave só em inglês cai no fallback e aparece em inglês no meio de uma tela em
-  // português; uma chave só em português é texto morto que ninguém vê.
+  // A key that exists only in English falls back and shows up in English in the middle of a
+  // Portuguese screen; a key that exists only in Portuguese is dead text nobody sees.
   it('has exactly the same keys in both languages', () => {
     expect(flatten(portuguese).sort()).toEqual(flatten(english).sort());
   });
@@ -58,7 +58,7 @@ describe.each([
     }
   });
 
-  // Sem isto o seletor de idioma fica sem rótulo acessível numa das telas.
+  // Without this the language selector is left with no accessible label on one of the screens.
   it('names the language control', () => {
     expect(flatten(english)).toContain('language.label');
   });
@@ -77,7 +77,7 @@ describe('language detection', () => {
     localStorage.removeItem('test_language');
   });
 
-  // `navigator.language` vem como `pt-BR`; o app não distingue variantes regionais.
+  // `navigator.language` arrives as `pt-BR`; the app does not distinguish regional variants.
   it('falls back to the browser language, ignoring the region', () => {
     const original = navigator.language;
     Object.defineProperty(navigator, 'language', { value: 'pt-BR', configurable: true });

@@ -20,11 +20,11 @@ interface SiteThemeState {
 const SiteThemeContext = createContext<SiteThemeState | null>(null);
 
 /**
- * Claro / escuro / sistema, com sistema por padrão.
+ * Light / dark / system, system by default.
  *
- * Mesma mecânica do site público do servidor (atributo `data-theme` no `<html>`,
- * escolha em `localStorage`, `matchMedia` ao vivo). Chave própria: landing e
- * vitrine não compartilham preferência.
+ * Same mechanics as the server's public site (a `data-theme` attribute on `<html>`, the choice
+ * in `localStorage`, live `matchMedia`). Its own key: the landing page and the showcase do not
+ * share a preference.
  */
 export function SiteThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreference] = useState<ThemePreference>(() =>

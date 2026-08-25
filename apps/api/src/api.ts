@@ -14,12 +14,12 @@ import { userRoutes } from './modules/user/user.route';
 import { wsRoutes } from './modules/webSocket/webSocket.route';
 
 /**
- * Contrato HTTP do Keres. A interface hospedada ocupa a origem (`/`, `/admin`,
- * `/showcase`); toda rota programática, inclusive WebSocket e documentação, vive aqui.
+ * Keres's HTTP contract. The hosted interface occupies the origin (`/`, `/admin`, `/showcase`);
+ * every programmatic route, WebSocket and documentation included, lives here.
  */
 export const API_PREFIX = '/api';
 
-/** Rotas que desapareceram da raiz na migração para `/api`; nunca podem cair no SPA fallback. */
+/** Routes that disappeared from the root in the move to `/api`; they must never fall into the SPA fallback. */
 export const LEGACY_API_PATH_PREFIXES = [
   '/auth',
   '/sync',
@@ -66,7 +66,7 @@ const scalarCss = `
   }
 `;
 
-/** Monta a API abaixo de `/api`; o app principal apenas hospeda as UIs estáticas. */
+/** Mounts the API below `/api`; the main app only hosts the static UIs. */
 export function createApiRoutes() {
   return new Elysia({ prefix: API_PREFIX })
     .use(

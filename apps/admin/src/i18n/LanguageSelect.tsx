@@ -7,10 +7,10 @@ import {
 } from './index';
 
 /**
- * O seletor de idioma, usado pelo painel e pelo site.
+ * The language selector, used by the panel and by the site.
  *
- * Um `<select>` puro: são dois idiomas, e um controle nativo já traz teclado, leitor de tela e
- * o comportamento do sistema em celular de graça.
+ * A plain `<select>`: there are two languages, and a native control already brings keyboard,
+ * screen reader and the system's behaviour on mobile for free.
  */
 export function LanguageSelect({
   storageKey,

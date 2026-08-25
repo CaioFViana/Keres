@@ -1,21 +1,20 @@
-// Configuração mínima para importar a aplicação sem depender de um arquivo .env do operador.
+// Minimal configuration for importing the application without depending on the operator's .env file.
 //
-// O `??=` importa: definir a variável ANTES de qualquer módulo carregar faz o `dotenv.config()`
-// de `src/db` e `src/config/env` não sobrescrevê-la (dotenv nunca substitui chave já
-// existente). É isso que garante que uma suíte nunca encoste no banco de desenvolvimento.
+// The `??=` matters: setting the variable BEFORE any module loads keeps `src/db`'s and
+// `src/config/env`'s `dotenv.config()` from overwriting it (dotenv never replaces an existing key).
+// That is what guarantees a suite never touches the development database.
 //
-// O padrão aponta para o Postgres descartável de `docker-compose.test.yml`, então
-// `bun run test:integration` funciona localmente sem configurar nada. Com
-// `DATABASE_DRIVER=sqlite` a suíte roda sobre um arquivo temporário e não precisa de banco
-// nenhum no ar - ver `test:integration:sqlite`.
+// The default points at `docker-compose.test.yml`'s disposable Postgres, so `bun run test:integration`
+// works locally with nothing to configure. With `DATABASE_DRIVER=sqlite` the suite runs over a
+// temporary file and needs no database up at all - see `test:integration:sqlite`.
 if (process.env.DATABASE_DRIVER === 'sqlite') {
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   process.env.DATABASE_URL ??= `file:${join(tmpdir(), 'keres-test.db')}`;
 } else {
-  // A porta é a mesma do `docker-compose.test.yml`, e sai do mesmo lugar: `KERES_TEST_DB_PORT`.
-  // O padrão 45432 existe porque a faixa 55389-55488 fica reservada pelo Windows em máquinas
-  // com Hyper-V/WSL, e o Docker não consegue publicar nela.
+  // The port is the same as `docker-compose.test.yml`'s, and comes from the same place:
+  // `KERES_TEST_DB_PORT`. The 45432 default exists because the 55389-55488 range is reserved by Windows
+  // on machines with Hyper-V/WSL, and Docker cannot publish on it.
   const port = process.env.KERES_TEST_DB_PORT ?? '45432';
   process.env.DATABASE_URL ??= `postgres://keres_test:keres_test@localhost:${port}/keres_test`;
 }
@@ -23,8 +22,8 @@ process.env.JWT_SECRET ??= 'test-jwt-secret-that-is-at-least-thirty-two-characte
 process.env.JWT_SECRET_REFRESH ??= 'test-refresh-secret-that-is-at-least-thirty-two-characters';
 process.env.NODE_ENV = 'test';
 
-// Mídia gravada em disco vai para uma pasta descartável, nunca para a `./media-storage` do
-// operador (o padrão de `env.ts`, relativo ao diretório de onde o processo subiu).
+// Media written to disk goes to a disposable folder, never to the operator's `./media-storage`
+// (`env.ts`'s default, relative to the directory the process started from).
 import * as os from 'node:os';
 import * as path from 'node:path';
 process.env.MEDIA_STORAGE_PATH ??= path.join(os.tmpdir(), 'keres-media-test');

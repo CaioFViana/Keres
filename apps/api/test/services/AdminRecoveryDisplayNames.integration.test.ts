@@ -44,7 +44,7 @@ const ids = {
   galleryNoTitle: '',
 };
 
-/** Um id que não existe no banco, para exercitar o rótulo de fallback. */
+/** An id that does not exist in the database, to exercise the fallback label. */
 const MISSING_ID = '01JQMISSINGMISSINGMISSING';
 
 function deleted(
@@ -311,7 +311,7 @@ describe('enrichDeletedDisplayNames', () => {
     ]);
 
     expect(storyTitles.get(ids.story)).toBe('A Queda');
-    // Tipos sem composição mantêm o nome que já veio.
+    // Types with no composition keep the name they already came with.
     expect(names.get(`Chapter:${ids.chapter}`)).toBe('Capítulo 1');
   });
 
@@ -361,7 +361,7 @@ describe('enrichOperationLogNames', () => {
         entityId: newId(),
         storyId: ids.story,
         userId: ids.user,
-        // O registro já não existe; só o payload da operação carrega as pontas.
+        // The record no longer exists; only the operation's payload carries the ends.
         payload: { characterId: ids.characterB, sceneId: ids.otherScene },
       },
     ]);

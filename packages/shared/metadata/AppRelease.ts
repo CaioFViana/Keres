@@ -1,8 +1,8 @@
 /**
- * Identidade da versão distribuída do Keres.
+ * Identity of the released version of Keres.
  *
- * Atualize com `bun run version:set <versão> <nome>` na raiz do repositório. Este módulo é
- * consumido tanto pelo cliente quanto pela API, portanto não há uma versão separada do servidor.
+ * Update it with `bun run version:set <version> <name>` at the repository root. This module is
+ * consumed by both the client and the API, so there is no separate server version.
  */
 export const APP_RELEASE = {
   name: 'Galatea',

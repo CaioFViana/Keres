@@ -4,8 +4,8 @@ import { ulid } from 'ulid';
 import type { BlobStorage } from './BlobStorage';
 
 /**
- * Armazenamento local para instalações pequenas. Arquivos passam por `tmp/` e só aparecem
- * no caminho definitivo após uma troca atômica dentro do mesmo volume.
+ * Local storage for small installations. Files pass through `tmp/` and only appear at their final path
+ * after an atomic swap within the same volume.
  */
 export class LocalFilesystemBlobStorage implements BlobStorage {
   private readonly root: string;
@@ -35,8 +35,8 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
   }
 
   async put(key: string, bytes: ArrayBuffer, mimeType: string): Promise<void> {
-    // A interface preserva o MIME para o backend S3; no sistema de arquivos ele já é salvo
-    // no banco, então não há metadado adicional a gravar ao lado do blob.
+    // The interface preserves the MIME type for the S3 backend; on the filesystem it is already saved in
+    // the database, so there is no extra metadata to write next to the blob.
     void mimeType;
     const destination = this.absolutePath(key);
     const temporaryPath = path.join(this.temporaryRoot, `${ulid()}.part`);
@@ -44,8 +44,8 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
     await Bun.write(temporaryPath, bytes);
     await mkdir(path.dirname(destination), { recursive: true });
 
-    // O hash torna o destino imutável: se outro upload igual já venceu a corrida, basta
-    // descartar o temporário. Nunca sobrescrevemos um blob pronto.
+    // The hash makes the destination immutable: if another identical upload already won the race, it is
+    // enough to discard the temporary file. We never overwrite a finished blob.
     if (await Bun.file(destination).exists()) {
       await unlink(temporaryPath);
       return;
@@ -54,8 +54,8 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
     try {
       await rename(temporaryPath, destination);
     } catch (error: any) {
-      // Em alguns sistemas (especialmente Windows), a corrida acima se manifesta como erro
-      // de rename. Se o vencedor deixou o mesmo destino pronto, ainda é sucesso.
+      // On some systems (Windows especially), the race above shows up as a rename error. If the winner left
+      // the same destination ready, it is still a success.
       if (await Bun.file(destination).exists()) {
         await unlink(temporaryPath).catch(() => undefined);
         return;

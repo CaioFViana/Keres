@@ -1,20 +1,20 @@
 name: CI
 
-# Toda mudança, não só releases: `release.yml` dispara apenas em tag, então sem este workflow
-# uma regressão só apareceria na hora de cortar a versão.
+# Every change, not only releases: `release.yml` fires on tags alone, so without this workflow
+# a regression would only show up when cutting the version.
 on:
   push:
     branches: ['**']
   pull_request:
 
-# Um push novo na mesma branch/PR torna a execução anterior irrelevante.
+# A new push on the same branch/PR makes the previous run irrelevant.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  # Mesma versão fixada em release.yml, pelo mesmo motivo: instalar sempre com o formato de
-  # lockfile com que o bun.lock foi gerado.
+  # Same version pinned in release.yml, for the same reason: always install with the lockfile
+  # format bun.lock was generated with.
   BUN_VERSION: '1.2.19'
 
 jobs:
@@ -26,16 +26,16 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      # Os três agregam todos os pacotes (ver scripts/run-all.ts); `typecheck` cobre também
-      # os scripts do próprio repositório.
+      # All three aggregate every package (see scripts/run-all.ts); `typecheck` also covers the
+      # repository's own scripts.
       - run: bun run typecheck
       - run: bun run lint
-      # Com cobertura, e não `bun run test`: é o que aplica os limiares definidos em cada
-      # workspace. Sem isto os pisos existiriam no arquivo e nunca seriam checados.
+      # With coverage, not `bun run test`: that is what enforces the thresholds set in each
+      # workspace. Without it the floors would sit in the file and never be checked.
       - run: bun run test:coverage
 
-  # Separado de `verify` para que uma falha de banco não se confunda com uma falha de código, e
-  # para as duas rodarem em paralelo. Localmente o equivalente é
+  # Separate from `verify` so a database failure is not mistaken for a code failure, and so both
+  # run in parallel. The local equivalent is
   # `docker compose -f apps/api/docker-compose.test.yml up -d && bun run test:integration`.
   integration:
     runs-on: ubuntu-latest
@@ -53,8 +53,8 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-      # O teste de S3 usa SeaweedFS real em localhost:8333. Sem este serviço o job
-      # iniciava somente o Postgres, apesar de docker-compose.test.yml definir ambos.
+      # The S3 test uses a real SeaweedFS at localhost:8333. Without this service the job started
+      # Postgres alone, even though docker-compose.test.yml defines both.
       seaweedfs:
         image: chrislusf/seaweedfs
         env:
@@ -69,7 +69,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # Mesma porta publicada pelo serviço acima e mesmo padrão de `test/setup.ts`.
+      # Same port the service above publishes and the same default as `test/setup.ts`.
       DATABASE_URL: postgres://keres_test:keres_test@localhost:45432/keres_test
       JWT_SECRET: ci-jwt-secret-that-is-at-least-thirty-two-characters
       JWT_SECRET_REFRESH: ci-refresh-secret-that-is-at-least-thirty-two-characters

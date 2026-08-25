@@ -1,11 +1,11 @@
 import { initI18n } from '../src/i18n';
 
 /**
- * Inicia a tradução uma vez para toda a suíte, como as entradas do painel e do site fazem
- * antes de renderizar. Sem isto, `t()` devolve a própria chave e qualquer teste que afirme o
- * texto de uma tela falha por um motivo que não é o dele.
+ * Starts translation once for the whole suite, as the panel's and the site's entry points do
+ * before rendering. Without this, `t()` returns the key itself and any test asserting a screen's
+ * text fails for a reason that is not its own.
  *
- * O namespace padrão é `admin` porque é o que a maior parte dos testes renderiza; os testes do
- * site pedem `showcase` explicitamente quando precisam.
+ * The default namespace is `admin` because that is what most tests render; the site's tests ask
+ * for `showcase` explicitly when they need it.
  */
 initI18n('keres_test_language', 'admin');

@@ -29,9 +29,9 @@ const sceneBase = {
 const chapterBase = { name: 'Capítulo 1', index: 1, summary: null, extraNotes: null };
 
 /**
- * Estes schemas são a fronteira de validação compartilhada entre client e API: o mesmo objeto
- * é validado no cliente antes do push e de novo no servidor antes de gravar. Um campo que
- * silenciosamente vira opcional aqui abre um buraco nos dois lados de uma vez.
+ * These schemas are the validation boundary shared by client and API: the same object is validated
+ * in the client before the push and again on the server before writing. A field that silently
+ * becomes optional here opens a hole on both sides at once.
  */
 describe('create-entity schemas', () => {
   it.each([
@@ -69,9 +69,9 @@ describe('create-entity schemas', () => {
   });
 
   /**
-   * Cena e capítulo seguem a mesma numeração de propósito. Aceitar 0 na cena era o que deixava
-   * criação e reordenação com contratos incompatíveis: o handler de reordenação da API recusa
-   * qualquer conjunto que não seja 1..N contíguo.
+   * Scene and chapter follow the same numbering on purpose. Accepting 0 for a scene is what left
+   * creation and reordering with incompatible contracts: the API's reorder handler refuses any set
+   * that is not contiguous 1..N.
    */
   it('rejects a scene index below 1, like the chapter it lives in', () => {
     expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 1 }).success).toBe(true);

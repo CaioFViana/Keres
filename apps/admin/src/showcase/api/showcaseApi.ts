@@ -1,12 +1,12 @@
 import type { ShowcaseStoryCard, ShowcaseStoryDetail, ShowcaseStoryResponse } from '@keres/shared';
 
 /**
- * O cliente HTTP do site público.
+ * The public site's HTTP client.
  *
- * `fetch` puro em vez do axios do painel: aqui não existe sessão, interceptador de 401 nem
- * token em `localStorage` - misturar os dois traria justamente o que este site não deve ter.
- * A única credencial que circula é o token de desbloqueio de uma história protegida, guardado
- * em `sessionStorage` (some ao fechar a aba) e escopado a uma história só.
+ * Plain `fetch` instead of the panel's axios: there is no session here, no 401 interceptor and no
+ * token in `localStorage` - mixing the two would bring in exactly what this site must not have.
+ * The only credential that circulates is the unlock token for a protected story, kept in
+ * `sessionStorage` (gone when the tab closes) and scoped to a single story.
  */
 
 const UNLOCK_TOKEN_PREFIX = 'keres_showcase_unlock_';
@@ -53,14 +53,14 @@ export async function fetchConfig(): Promise<ShowcaseConfig> {
 }
 
 export interface StoryListResult {
-  /** `null` quando o servidor respondeu 304 - a lista em mãos continua válida. */
+  /** `null` when the server answered 304 - the list in hand is still valid. */
   stories: ShowcaseStoryCard[] | null;
   etag: string | null;
 }
 
 /**
- * A listagem, com `If-None-Match`. A página consulta em intervalo, e sem isto cada consulta
- * baixaria o catálogo inteiro de novo só para descobrir que nada mudou.
+ * The listing, with `If-None-Match`. The page polls, and without this every poll would download
+ * the whole catalog again just to find out nothing changed.
  */
 export async function fetchStories(previousEtag: string | null): Promise<StoryListResult> {
   const response = await fetch('/api/public/stories', {
@@ -99,7 +99,7 @@ export async function unlockStory(storyId: string, password: string): Promise<Sh
 
   const detail = await fetchStory(storyId);
   if ('protected' in detail) {
-    // Não deveria acontecer: o token acabou de ser emitido para esta história.
+    // Should not happen: the token was just issued for this story.
     clearUnlockToken(storyId);
     throw new Error('Could not open this story.');
   }
@@ -107,11 +107,11 @@ export async function unlockStory(storyId: string, password: string): Promise<Sh
 }
 
 /**
- * O endereço de download de uma versão.
+ * A version's download address.
  *
- * Um `<a download>` não manda cabeçalho, então para uma história protegida o servidor devolve
- * um link com um token de 60 segundos embutido, em vez de aceitar o token de uma hora numa URL
- * que ficaria no histórico do navegador.
+ * An `<a download>` sends no headers, so for a protected story the server returns a link with a
+ * 60-second token embedded, rather than accepting the one-hour token in a URL that would end up in
+ * the browser's history.
  */
 export async function fetchDownloadUrl(storyId: string, publicationId: string): Promise<string> {
   const response = await fetch(

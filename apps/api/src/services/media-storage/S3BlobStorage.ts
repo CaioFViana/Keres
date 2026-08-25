@@ -18,7 +18,7 @@ function isMissingObject(error: unknown): boolean {
   );
 }
 
-/** Adaptador para AWS S3 e endpoints compatíveis, como SeaweedFS e Ceph RGW. */
+/** An adapter for AWS S3 and compatible endpoints, such as SeaweedFS and Ceph RGW. */
 export class S3BlobStorage implements BlobStorage {
   private readonly client: S3Client;
 

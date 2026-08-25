@@ -8,7 +8,7 @@ import './styles.css';
 
 // Apply theme before first paint to avoid a light flash when preference is dark.
 applyResolvedTheme(resolveTheme(readThemePreference()));
-// Antes de renderizar, senão a primeira passagem sai com as chaves cruas na tela.
+// Before rendering, otherwise the first pass shows raw keys on screen.
 initI18n(ADMIN_LANGUAGE_KEY, 'admin');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

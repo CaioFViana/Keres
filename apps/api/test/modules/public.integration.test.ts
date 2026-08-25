@@ -6,7 +6,7 @@ import { registerUser, request, type TestUser } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
-// O empacotamento da publicação grava o .zip pelo backend local de blobs, que usa `Bun.write`.
+// Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();
 
 let ana: TestUser;
@@ -64,7 +64,7 @@ describe('GET /public/stories', () => {
     expect(data[0].snapshot.title).toBe('A Queda');
     expect(data[0].owner.username).toBe('ana');
     expect(data[0].versionCount).toBe(1);
-    // Nada de id de usuário no payload anônimo.
+    // No user id in the anonymous payload.
     expect(JSON.stringify(data)).not.toContain(ana.userId);
   });
 

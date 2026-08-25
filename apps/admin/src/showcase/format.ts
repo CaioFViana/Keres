@@ -1,4 +1,4 @@
-/** Formatações que a listagem e a página de história compartilham. */
+/** Formatting shared by the listing and the story page. */
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -13,8 +13,8 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
- * `language` vem do i18n, e não do navegador: quem escolheu ler a página em português espera a
- * data em português, mesmo num navegador configurado em inglês.
+ * `language` comes from i18n, not from the browser: someone who chose to read the page in
+ * Portuguese expects the date in Portuguese, even in a browser set to English.
  */
 export function formatDate(isoDate: string, language?: string): string {
   const date = new Date(isoDate);
@@ -27,10 +27,11 @@ export function formatDate(isoDate: string, language?: string): string {
 }
 
 /**
- * `stories.genre` é texto livre no app - quem escreve separa como quer. Dividir por vírgula,
- * barra e ponto-e-vírgula cobre o que as pessoas de fato digitam sem inventar uma regra nova.
+ * `stories.genre` is free text in the app - whoever writes separates it however they like.
+ * Splitting on comma, slash and semicolon covers what people actually type without inventing a new
+ * rule.
  *
- * Não é traduzido: é conteúdo de quem escreveu a história.
+ * It is not translated: it is content written by the story's author.
  */
 export function genreList(genre: string | null): string[] {
   if (!genre) return [];

@@ -3,18 +3,18 @@ import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
 
 /**
- * Posicionamento do grafo de estrutura de Locations: cada Location vira um nó, e as duas
- * relações (`contains`/`connected_to`) viram arestas com estilos diferentes.
+ * Positioning for the Location structure graph: each Location becomes a node, and the two
+ * relations (`contains`/`connected_to`) become edges with different styles.
  *
- * Diferente do grafo de relações entre personagens (radial, sem hierarquia), `contains` TEM
- * uma direção natural (pai -> filho) e - por construção, ver `LocationRelationSyncHandler` no
- * servidor - forma sempre uma floresta (cada Location tem no máximo um pai vivo, sem ciclos).
- * Isso permite um layout em árvore simples (topo-para-baixo, sem minimização de cruzamentos)
- * em vez do layout em camadas mais complexo do mapa de história (que precisa lidar com DAGs
- * arbitrários). `connected_to` não tem hierarquia - essas arestas são desenhadas por cima,
- * entre onde quer que os nós já tenham caído pela árvore, sem influenciar o posicionamento.
+ * Unlike the character relation graph (radial, no hierarchy), `contains` DOES have a natural
+ * direction (parent -> child) and - by construction, see `LocationRelationSyncHandler` on the
+ * server - always forms a forest (each Location has at most one live parent, no cycles). That
+ * allows a simple tree layout (top-down, with no crossing minimisation) instead of the story map's
+ * more complex layered layout (which has to handle arbitrary DAGs). `connected_to` has no
+ * hierarchy - those edges are drawn on top, between wherever the nodes already landed via the
+ * tree, without influencing the positioning.
  *
- * Puro de propósito (sem React/banco/plataforma), como os outros dois layouts de grafo do app.
+ * Pure on purpose (no React/database/platform), like the app's other two graph layouts.
  */
 
 export interface GraphLocation {
@@ -40,16 +40,16 @@ const CLUSTER_GAP = 60;
 const EDGE_NODE_GAP = 4;
 const LABEL_MAX_CHARS = 14;
 const LABEL_MAX_LINES = 2;
-/** Defesa contra dado corrompido (um ciclo que escapou da validação) - nunca deveria ser atingido numa árvore válida. */
+/** A defence against corrupted data (a cycle that escaped validation) - it should never be reached on a valid tree. */
 const MAX_TREE_DEPTH = 500;
 
 export interface LocationGraphNode {
   id: string;
   location: GraphLocation;
   labelLines: string[];
-  /** Camada na árvore 'contains' - 0 para raízes. Sempre 0 para nós isolados. */
+  /** Layer in the 'contains' tree - 0 for roots. Always 0 for isolated nodes. */
   depth: number;
-  /** Sem nenhuma relação (nem contains, nem connected_to). */
+  /** No relation at all (neither contains nor connected_to). */
   isIsolated: boolean;
   x: number;
   y: number;
@@ -63,7 +63,7 @@ export interface LocationGraphEdge {
   relationType: LocationRelationKind;
   sourceId: string;
   targetId: string;
-  /** `d` de um path SVG entre as bordas dos dois nós. */
+  /** An SVG path's `d` between the two nodes' borders. */
   path: string;
 }
 
@@ -72,9 +72,9 @@ export interface LocationGraphLayout {
   edges: LocationGraphEdge[];
   width: number;
   height: number;
-  /** Árvores 'contains' com mais de um nó ou com ao menos uma conexão. */
+  /** 'contains' trees with more than one node or with at least one connection. */
   treeCount: number;
-  /** Locations sem nenhuma relação registrada. */
+  /** Locations with no recorded relation. */
   isolatedCount: number;
 }
 
@@ -110,8 +110,8 @@ export function buildLocationGraphLayout(
 
   const locationById = new Map(locations.map((location) => [location.id, location]));
 
-  // Relações penduradas numa Location já excluída mas ainda não limpa - mesmo tratamento que o
-  // resto do app dá a esse tipo de linha órfã: ignorada, não quebra o desenho.
+  // Relations dangling from a Location that was deleted but not cleaned up yet - the same treatment
+  // the rest of the app gives that kind of orphan row: ignored, it does not break the drawing.
   const containsEdges = relations.filter(
     (r) =>
       r.relationType === 'contains' &&
@@ -153,8 +153,8 @@ export function buildLocationGraphLayout(
     }
   }
 
-  // Compartilhado entre as árvores: uma Location alcançável por mais de um caminho (dois `contains`
-  // apontando para ela, ou um ciclo) é desenhada uma vez só, não uma vez por caminho.
+  // Shared between the trees: a Location reachable by more than one path (two `contains` pointing at
+  // it, or a cycle) is drawn once, not once per path.
   const placed = new Set<string>();
   const treeBoxes = treeRoots
     .map((root) => layoutTree(root, childrenOf, locationById, placed))
@@ -197,7 +197,7 @@ export function buildLocationGraphLayout(
   };
 }
 
-/** Converte a árvore vertical em uma árvore lida da esquerda para a direita. */
+/** Turns the vertical tree into a tree read from left to right. */
 function orientNodesLeftToRight(nodes: LocationGraphNode[]): void {
   const horizontalLayerStep = NODE_WIDTH + LAYER_GAP;
   const verticalColumnStep = NODE_HEIGHT + NODE_GAP;
@@ -212,15 +212,15 @@ function orientNodesLeftToRight(nodes: LocationGraphNode[]): void {
 }
 
 /**
- * Raízes da floresta `contains`.
+ * Roots of the `contains` forest.
  *
- * Normalmente é só "quem não tem pai". O caso extra existe para dado corrompido: num ciclo
- * `contains` fechado (a contém b, b contém a) toda Location tem pai, nenhuma seria raiz, e o
- * mapa inteiro sairia vazio - o pior resultado possível, porque o usuário não veria nem o
- * problema nem o resto da história. O servidor (`LocationRelationSyncHandler`) impede esse
- * dado; isto é a rede de segurança para quando ele chega assim mesmo. Elege a Location de
- * menor id de cada grupo inalcançável como raiz, de forma determinística, para o grupo
- * aparecer no mapa em vez de sumir dele.
+ * Normally it is just "whoever has no parent". The extra case exists for corrupted data: in a
+ * closed `contains` cycle (a contains b, b contains a) every Location has a parent, none would be
+ * a root, and the whole map would come out empty - the worst possible result, because the user
+ * would see neither the problem nor the rest of the story. The server
+ * (`LocationRelationSyncHandler`) prevents that data; this is the safety net for when it arrives
+ * that way anyway. It elects the lowest-id Location of each unreachable group as a root,
+ * deterministically, so the group shows up on the map instead of vanishing from it.
  */
 function collectRoots(
   locations: GraphLocation[],
@@ -230,8 +230,8 @@ function collectRoots(
   const roots = locations.filter((location) => !parentOf.has(location.id));
   const reachable = new Set<string>();
 
-  // Iterativo, não recursivo: a profundidade aqui é a da árvore de Locations do usuário, e
-  // este módulo existe justamente para aguentar uma história grande sem estourar a pilha.
+  // Iterative, not recursive: the depth here is that of the user's Location tree, and this module
+  // exists precisely to withstand a large story without blowing the stack.
   const markReachable = (startId: string) => {
     const stack = [startId];
     while (stack.length > 0) {
@@ -257,12 +257,12 @@ function collectRoots(
 }
 
 /**
- * Layout em árvore topo-para-baixo de uma única raiz: largura de cada subárvore calculada de
- * baixo para cima (pós-ordem), pai centralizado acima dos filhos. Sem minimização de
- * cruzamentos (desnecessária - é uma árvore, não um DAG geral) e sem simulação iterativa.
+ * Top-down tree layout for a single root: each subtree's width computed bottom-up (post-order),
+ * the parent centred above its children. No crossing minimisation (unnecessary - it is a tree, not
+ * a general DAG) and no iterative simulation.
  *
- * `placed` é compartilhado entre as árvores da mesma chamada e garante que cada Location seja
- * posicionada uma única vez, mesmo quando mais de um caminho leva até ela.
+ * `placed` is shared between the trees of the same call and guarantees each Location is positioned
+ * exactly once, even when more than one path leads to it.
  */
 function layoutTree(
   root: GraphLocation,
@@ -274,9 +274,9 @@ function layoutTree(
 
   function measureAndPlace(nodeId: string, depth: number, xOffset: number): number {
     const location = locationById.get(nodeId);
-    // Marcado na entrada, antes de descer: cobre tanto "já desenhado por outro caminho" quanto
-    // um ciclo `contains` corrompido, que aqui simplesmente para de descer em vez de recursão
-    // infinita. O `MAX_TREE_DEPTH` continua como última defesa.
+    // Marked on entry, before descending: it covers both "already drawn via another path" and a
+    // corrupted `contains` cycle, which here simply stops descending instead of recursing forever.
+    // `MAX_TREE_DEPTH` remains the last line of defence.
     if (!location || placed.has(nodeId) || depth > MAX_TREE_DEPTH) {
       return NODE_WIDTH;
     }
@@ -326,7 +326,7 @@ function layoutTree(
   };
 }
 
-/** Empacota as árvores em prateleiras (shelf packing) - mesma técnica de `characterRelationGraphLayout`. */
+/** Packs the trees into shelves (shelf packing) - the same technique as `characterRelationGraphLayout`. */
 function packTrees(trees: TreeBox[]): {
   nodes: LocationGraphNode[];
   width: number;

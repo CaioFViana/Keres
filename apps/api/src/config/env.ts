@@ -3,13 +3,12 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
-// Independente do diretório em que `bun run` foi chamado; o `.env` da API fica em apps/api.
+// Independent of the directory `bun run` was called from; the API's `.env` lives in apps/api.
 const environmentDirectory = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(environmentDirectory, '..', '..', '.env') });
 
-// Docker Compose expande variáveis não configuradas como string vazia. Para os campos S3
-// opcionais, vazio deve significar "não configurado", não um endpoint/segredo inválido no
-// modo local.
+// Docker Compose expands unset variables as an empty string. For the optional S3 fields, empty has
+// to mean "not configured", not an invalid endpoint/secret in local mode.
 const optionalEnvironmentString = z.preprocess(
   (value) => (value === '' ? undefined : value),
   z.string().min(1).optional(),
@@ -22,11 +21,11 @@ const envSchema = z.object({
    */
   DATABASE_DRIVER: z.enum(['postgres', 'sqlite']).optional().default('postgres'),
   /**
-   * Com `postgres`, a URL de conexão. Com `sqlite`, o arquivo - `file:./keres.db` ou um
-   * caminho absoluto.
+   * With `postgres`, the connection URL. With `sqlite`, the file - `file:./keres.db` or an absolute
+   * path.
    *
-   * A validação depende do motor: `z.url()` sozinho aceitaria "localhost:5432" (vira protocolo
-   * "localhost:") e o erro só apareceria como falha de conexão no boot.
+   * The validation depends on the engine: `z.url()` alone would accept "localhost:5432" (reading
+   * "localhost:" as the protocol) and the error would only surface as a connection failure at boot.
    */
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
@@ -38,11 +37,11 @@ const envSchema = z.object({
    */
   HOST: optionalEnvironmentString,
   NODE_ENV: z.string().optional().default('development'),
-  /** Backend físico da galeria. Não altere em um banco que já possua mídia sem migrá-la. */
+  /** The gallery's physical backend. Do not change it on a database that already holds media without migrating it. */
   MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).optional().default('local'),
-  /** Raiz onde os arquivos de mídia da galeria são gravados (endereçados por hash). */
+  /** Root where the gallery's media files are written (addressed by hash). */
   MEDIA_STORAGE_PATH: z.string().optional().default('./media-storage'),
-  /** Endpoint opcional para provedores S3 compatíveis; ausente usa o endpoint da AWS. */
+  /** Optional endpoint for S3-compatible providers; absent, it uses AWS's endpoint. */
   MEDIA_S3_ENDPOINT: z.preprocess(
     (value) => (value === '' ? undefined : value),
     z.url().optional(),
@@ -57,7 +56,7 @@ const envSchema = z.object({
     .optional()
     .default('false')
     .transform((value) => value === 'true'),
-  /** Teto por arquivo. Vídeo de celular passa fácil de 20 MB, daí o padrão de 50 MB. */
+  /** Per-file ceiling. A phone video easily goes past 20 MB, hence the 50 MB default. */
   MEDIA_MAX_BYTES: z.coerce
     .number()
     .int()
@@ -65,11 +64,11 @@ const envSchema = z.object({
     .optional()
     .default(50 * 1024 * 1024),
   /**
-   * Credenciais do admin "root", reconciliadas no banco a cada boot (ver `reconcileRootAdmin`
-   * em `index.ts`). Resolve o problema de "e se ninguém for admin": em vez de um script de
-   * bootstrap que só roda uma vez, esta conta é recriada/corrigida (isAdmin sempre forçado
-   * para true, senha sempre re-hasheada a partir do valor atual da env) toda vez que a API
-   * sobe. Ambas opcionais - se não definidas, a reconciliação é simplesmente pulada.
+   * Credentials for the "root" admin, reconciled in the database at every boot (see
+   * `reconcileRootAdmin` in `index.ts`). It solves the "what if nobody is an admin" problem: instead
+   * of a bootstrap script that runs once, this account is recreated/corrected (isAdmin always forced
+   * to true, the password always re-hashed from the env's current value) every time the API comes up.
+   * Both are optional - if they are not set, the reconciliation is simply skipped.
    */
   ROOT_ADMIN_USERNAME: z.string().min(1).optional(),
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),

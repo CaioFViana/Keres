@@ -1,25 +1,25 @@
 import { assertSemver, readReleaseName, setAppRelease, setPackageVersions } from '../lib/version';
 
 /**
- * Escreve a versão vinda da tag do Git em todo arquivo que declara uma.
+ * Writes the version coming from the Git tag into every file that declares one.
  *
  *   bun scripts/ci/set-version.ts 1.2.3
  *
- * Sem o "v" da tag - o workflow tira antes de chamar (ver `.github/workflows/release.yml`).
- * Assim a tag é a única fonte da verdade, em vez de cada arquivo depender de alguém ter
- * lembrado de subir o número à mão.
+ * Without the tag's "v" - the workflow strips it before calling (see
+ * `.github/workflows/release.yml`). That makes the tag the single source of truth, instead of
+ * every file depending on somebody having remembered to bump the number by hand.
  */
 const version = process.argv[2];
 if (!version) {
-  console.error(`Uso: bun scripts/ci/set-version.ts <versão>, por exemplo "1.2.3".`);
+  console.error(`Usage: bun scripts/ci/set-version.ts <version>, for example "1.2.3".`);
   process.exit(1);
 }
 
 try {
   assertSemver(version);
   setPackageVersions(version);
-  // A CI tira da tag só a versão. O nome da release continua sendo o que foi commitado por
-  // `version:set`, e todo artefato passa a reportar a versão da tag.
+  // CI takes only the version from the tag. The release name stays whatever `version:set`
+  // committed, and every artifact reports the tag's version.
   setAppRelease(version, readReleaseName());
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

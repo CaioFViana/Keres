@@ -4,12 +4,12 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
 
 export const THEME_PREFERENCE_KEY = 'keres_admin_theme_preference';
-/** Paleta escolhida no painel. Vazio/ausente = a paleta `default`, que é o visual histórico. */
+/** Palette chosen in the panel. Empty/absent = the `default` palette, which is the historical look. */
 export const THEME_PALETTE_KEY = 'keres_admin_theme_palette';
 
 /**
- * `key` existe porque o site público (apps/admin/src/showcase) usa exatamente esta mecânica
- * com uma chave própria - painel e site são coisas separadas e cada um lembra da sua escolha.
+ * `key` exists because the public site (apps/admin/src/showcase) uses exactly these mechanics with
+ * a key of its own - panel and site are separate things and each remembers its own choice.
  */
 export function readThemePreference(key: string = THEME_PREFERENCE_KEY): ThemePreference {
   const raw = localStorage.getItem(key);
@@ -47,12 +47,12 @@ export function applyResolvedTheme(theme: ResolvedTheme): void {
 }
 
 /**
- * Paleta do painel.
+ * The panel's palette.
  *
- * As cores em `styles.css` sempre foram uma cópia manual da paleta `default` do app. Agora que
- * as paletas moram em `@keres/shared`, o painel pode usar qualquer uma delas: escolher uma
- * sobrescreve as variáveis em `<html>`, e "default" simplesmente remove as sobrescritas,
- * deixando o CSS original valer - por isso nada muda de aparência até alguém escolher.
+ * The colours in `styles.css` were always a manual copy of the app's `default` palette. Now that
+ * the palettes live in `@keres/shared`, the panel can use any of them: choosing one overrides the
+ * variables on `<html>`, and "default" simply removes the overrides, letting the original CSS
+ * stand - which is why nothing changes in appearance until somebody picks one.
  */
 export const PALETTE_NAMES = Object.keys(themes);
 
@@ -72,7 +72,7 @@ export function paletteLabel(name: string): string {
     .trim();
 }
 
-/** Tokens que podem ser copiados direto: cada um já é usado no seu próprio fundo. */
+/** Tokens that can be copied straight across: each one is already used on its own background. */
 const PALETTE_TO_CSS_VAR: Array<[keyof ThemeColors, string]> = [
   ['primary', '--color-primary'],
   ['primaryVariant', '--color-primary-variant'],
@@ -87,7 +87,7 @@ const PALETTE_TO_CSS_VAR: Array<[keyof ThemeColors, string]> = [
   ['primary', '--color-focus'],
 ];
 
-/** Mistura duas cores hexadecimais; `amount` é quanto da segunda entra (0 a 1). */
+/** Mixes two hexadecimal colours; `amount` is how much of the second one goes in (0 to 1). */
 function mixHexColors(base: string, blend: string, amount: number): string {
   const parse = (hex: string) => {
     const value = hex.replace('#', '');
@@ -112,13 +112,13 @@ function mixHexColors(base: string, blend: string, amount: number): string {
 }
 
 /**
- * Cores derivadas, calculadas a partir do fundo em que cada uma vai ser desenhada.
+ * Derived colours, computed from the background each one will be drawn on.
  *
- * A barra lateral é o caso que obrigou isto: ela usa `primaryVariant` como fundo e antes usava
- * `onPrimary` como texto. Nas paletas do app esses dois tokens não são um par - `onPrimary`
- * acompanha `primary`, não `primaryVariant` - e em boa parte dos temas o resultado era texto
- * claro sobre fundo claro, ilegível. Aqui o texto sai da luminância do fundo real
- * (`getContrastTextColor`, a mesma função que o app usa), então qualquer paleta serve.
+ * The sidebar is the case that forced this: it uses `primaryVariant` as its background and used to
+ * use `onPrimary` as its text. In the app's palettes those two tokens are not a pair - `onPrimary`
+ * goes with `primary`, not with `primaryVariant` - and in a good number of themes the result was
+ * light text on a light background, unreadable. Here the text comes from the real background's
+ * luminance (`getContrastTextColor`, the same function the app uses), so any palette works.
  */
 function derivedPaletteVars(colors: ThemeColors): Array<[string, string]> {
   const sidebarBackground = colors.primaryVariant;
@@ -128,11 +128,11 @@ function derivedPaletteVars(colors: ThemeColors): Array<[string, string]> {
   return [
     ['--color-sidebar-bg', sidebarBackground],
     ['--color-sidebar-text', sidebarForeground],
-    // Secundário e hover são o mesmo texto/fundo puxados um para o outro, em vez de tokens
-    // separados: assim continuam legíveis em qualquer paleta, clara ou escura.
+    // Secondary and hover are the same text/background pulled towards each other, rather than separate
+    // tokens: that way they stay readable in any palette, light or dark.
     ['--color-sidebar-muted', mixHexColors(sidebarForeground, sidebarBackground, 0.35)],
     ['--color-sidebar-hover', mixHexColors(sidebarBackground, sidebarForeground, 0.18)],
-    // O texto sobre os botões primários segue a mesma regra, pelo mesmo motivo.
+    // The text on primary buttons follows the same rule, for the same reason.
     [
       '--color-on-primary',
       getContrastTextColor(colors.primary) === 'black' ? '#000000' : '#ffffff',
@@ -143,7 +143,7 @@ function derivedPaletteVars(colors: ThemeColors): Array<[string, string]> {
   ];
 }
 
-/** Todas as variáveis que uma paleta escreve - usada também para limpá-las. */
+/** Every variable a palette writes - also used to clear them. */
 const MANAGED_CSS_VARS = [
   ...PALETTE_TO_CSS_VAR.map(([, cssVar]) => cssVar),
   '--color-sidebar-bg',

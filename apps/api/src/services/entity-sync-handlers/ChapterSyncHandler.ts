@@ -101,8 +101,8 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
           );
         }
 
-        // A regra (1..N contíguo, sem repetição) mora em `@keres/shared`: o cliente monta a
-        // lista com `buildReorderItems` a partir dela, e este handler cobra a mesma coisa.
+        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
+        // `buildReorderItems` from it, and this handler enforces the same thing.
         const problem = reorderIndicesProblem(
           validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
         );

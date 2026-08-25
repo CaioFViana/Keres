@@ -4,9 +4,9 @@ import { db } from '../db';
 import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, users } from '../db/schema';
 
 /**
- * Configuração de cadastro é uma linha só (`id = 'singleton'`). Em vez de exigir um passo
- * de seed separado, a linha é criada com valores padrão na primeira leitura/escrita -
- * cadastro aberto, sem teto, sem gestão automática, sem tier padrão.
+ * Registration configuration is a single row (`id = 'singleton'`). Instead of requiring a separate
+ * seed step, the row is created with default values on the first read/write - registration open, no
+ * ceiling, no automatic management, no default tier.
  */
 export class RegistrationSettingsService {
   async getOrCreate() {
@@ -23,8 +23,8 @@ export class RegistrationSettingsService {
       .onConflictDoNothing()
       .returning();
 
-    // Corrida entre dois requests concorrentes na primeira leitura: o insert perdedor não
-    // retorna linha (onConflictDoNothing), então busca a que o outro acabou de criar.
+    // A race between two concurrent requests on the first read: the losing insert returns no row
+    // (onConflictDoNothing), so it fetches the one the other just created.
     return (
       created ??
       (await db.query.registrationSettings.findFirst({
@@ -44,9 +44,9 @@ export class RegistrationSettingsService {
   }
 
   /**
-   * Avaliado ao vivo a cada tentativa de cadastro em vez de um job agendado (a API não
-   * tem dependência de scheduler/queue) ou de confiar num booleano guardado que ficaria
-   * desatualizado assim que `maxUsers` fosse alcançado.
+   * Evaluated live on every signup attempt rather than by a scheduled job (the API has no
+   * scheduler/queue dependency) or by trusting a stored boolean that would go stale the moment
+   * `maxUsers` was reached.
    */
   async isOpenForRegistration(): Promise<boolean> {
     const settings = await this.getOrCreate();

@@ -4,15 +4,15 @@ import coverageThresholds from '../../scripts/coverage-thresholds.json';
 export default defineConfig({
   test: {
     environment: 'node',
-    // O pacote é flat (sem `src/`), então a cobertura exclui explicitamente o que não é código
-    // de produção em vez de apontar para um único diretório.
+    // The package is flat (no `src/`), so coverage explicitly excludes what is not production code
+    // instead of pointing at a single directory.
     include: ['test/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['entities/**', 'metadata/**', 'schemas/**', 'utils/**', 'index.ts'],
-      // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para
-      // subir junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
+      // A floor, not a target: pinned slightly below the measured value to absorb fluctuation, and to rise
+      // along with coverage. See the ratchet rule in TESTING_PLAN.md.
       thresholds: coverageThresholds.shared,
     },
   },

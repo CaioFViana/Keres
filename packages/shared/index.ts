@@ -97,9 +97,9 @@ export * from './utils/storyZip';
 export * from './theme/ThemeColors';
 export * from './theme/palettes';
 
-// Regras de domínio que valem nos dois lados da sincronização: o cliente aplica antes de
-// gravar no log de operações e o servidor aplica de novo ao receber. Cada uma delas já existiu
-// duplicada, e ao menos uma já tinha divergido.
+// Domain rules that hold on both sides of synchronization: the client applies them before writing to
+// the operation log and the server applies them again on receipt. Each of them once existed
+// duplicated, and at least one had already diverged.
 export * from './rules/entityPair';
 export * from './rules/linearStoryScenes';
 export * from './rules/reorderIndices';

@@ -1,31 +1,31 @@
 /**
- * A escada de valores de um status e a conversão de um valor em posição no gráfico.
+ * A stat's ladder of values and the conversion of a value into a position on the chart.
  *
- * Cada degrau guarda só o próprio piso; o intervalo dele é `[minValue, piso do próximo[`. Isso
- * significa que a escada inteira sai de ordenar os degraus, e que mover um degrau nunca deixa
- * um buraco entre dois outros.
+ * Each rung stores only its own floor; its range is `[minValue, next one's floor[`. That means the
+ * whole ladder comes from sorting the rungs, and that moving a rung never leaves a hole between two
+ * others.
  *
- * Puro de propósito (sem React, sem banco, sem plataforma), como os layouts de grafo do app.
+ * Pure on purpose (no React, no database, no platform), like the app's graph layouts.
  */
 
 export interface StatTier {
-  /** Presente quando o degrau já existe no banco; ausente enquanto está sendo criado na tela. */
+  /** Present when the rung already exists in the database; absent while it is being created on screen. */
   id?: string;
   label: string;
   minValue: number;
 }
 
-/** Quanto do raio, além do último anel, a faixa de transbordo ocupa. */
+/** How much of the radius, beyond the last ring, the overshoot band takes up. */
 export const OVERSHOOT_RATIO = 0.2;
 
 /**
- * Rótulo do degrau implícito que abre a escada no zero. Fica numa constante porque o auditor de
- * traduções lê todo `label: '...'` literal como chave de i18n (ver `verify-translations.ts`), e
- * este aqui é texto de desenho, não chave.
+ * Label of the implicit rung that opens the ladder at zero. It sits in a constant because the
+ * translation auditor reads every literal `label: '...'` as an i18n key (see
+ * `verify-translations.ts`), and this one is drawing text, not a key.
  */
 const IMPLICIT_TIER_LABEL = '—';
 
-/** O que aparece no lugar de um valor que não existe. */
+/** What is shown in place of a value that does not exist. */
 const EMPTY_VALUE = '—';
 
 export type StatNotation = 'letter' | 'number';
@@ -37,15 +37,15 @@ export type StatNotation = 'letter' | 'number';
 export function sortLadder(tiers: readonly StatTier[]): StatTier[] {
   const sorted = [...tiers].sort((a, b) => a.minValue - b.minValue);
   if (sorted.length === 0 || sorted[0]!.minValue > 0) {
-    // O degrau implícito não tem id: ele não existe no banco, só fecha o vão até o zero.
+    // The implicit rung has no id: it does not exist in the database, it only closes the gap down to zero.
     sorted.unshift({ label: IMPLICIT_TIER_LABEL, minValue: 0 });
   }
   return sorted;
 }
 
 /**
- * A escada que vale para um status: a própria, quando ele tem uma, senão a padrão da história.
- * `strengths` é a lista crua da história inteira (escada padrão e overrides misturados).
+ * The ladder that applies to a stat: its own, when it has one, otherwise the story's default.
+ * `strengths` is the raw list for the whole story (default ladder and overrides mixed together).
  */
 export function resolveLadder(
   statId: string,
@@ -57,16 +57,16 @@ export function resolveLadder(
 }
 
 export interface TierPosition {
-  /** Índice do degrau que contém o valor. */
+  /** Index of the rung that contains the value. */
   index: number;
   label: string;
-  /** Posição dentro do degrau, de 0 (no piso) a 1 (no piso do próximo). */
+  /** Position within the rung, from 0 (at the floor) to 1 (at the next one's floor). */
   fraction: number;
-  /** O valor passou do último degrau. */
+  /** The value went past the last rung. */
   isOverflow: boolean;
 }
 
-/** Em que degrau um valor cai, e quão longe está de encostar no próximo. */
+/** Which rung a value falls on, and how close it is to reaching the next one. */
 export function tierOf(value: number, ladder: readonly StatTier[]): TierPosition | null {
   if (ladder.length === 0) return null;
 
@@ -79,8 +79,8 @@ export function tierOf(value: number, ladder: readonly StatTier[]): TierPosition
   const tier = ladder[index]!;
   const next = ladder[index + 1];
   if (!next) {
-    // Último degrau: não tem topo, então a fração usa a largura do degrau anterior como
-    // unidade. Numa escada de um degrau só não há largura nenhuma para medir.
+    // Last rung: it has no ceiling, so the fraction uses the previous rung's width as its unit. On a
+    // one-rung ladder there is no width to measure at all.
     const previous = ladder[index - 1];
     const width = previous ? tier.minValue - previous.minValue : 0;
     const excess = value - tier.minValue;
@@ -102,11 +102,11 @@ export function tierOf(value: number, ladder: readonly StatTier[]): TierPosition
 }
 
 /**
- * O raio (0 no centro, 1 no anel externo) que um valor ocupa no radar.
+ * The radius (0 at the centre, 1 at the outer ring) a value occupies on the radar.
  *
- * Com pisos `c0=0 < c1 < … < cn`, o anel *k* fica em `k/n` e um valor em `[ck, ck+1[` fica em
- * `(k + fração) / n`. Acima de `cn` o desenho entra na faixa de transbordo: um degrau inteiro
- * além do topo preenche a faixa toda, e daí para cima trava na borda dela.
+ * With floors `c0=0 < c1 < … < cn`, ring *k* sits at `k/n` and a value in `[ck, ck+1[` sits at
+ * `(k + fraction) / n`. Above `cn` the drawing enters the overshoot band: a whole rung beyond the
+ * top fills the entire band, and from there up it clamps to its edge.
  */
 export function normalizeValue(value: number, ladder: readonly StatTier[]): number {
   const position = tierOf(value, ladder);
@@ -121,7 +121,7 @@ export function normalizeValue(value: number, ladder: readonly StatTier[]): numb
   return Math.min(1, Math.max(0, (position.index + position.fraction) / intervals));
 }
 
-/** Como o valor é mostrado ao leitor: o rótulo do degrau, ou o próprio número. */
+/** How the value is shown to the reader: the rung's label, or the number itself. */
 export function formatStatValue(
   value: number | null,
   ladder: readonly StatTier[],
@@ -133,9 +133,9 @@ export function formatStatValue(
 }
 
 /**
- * O rótulo do degrau seguido do número, que é o que a leitura de um personagem precisa: o tier
- * diz a faixa, o número diz onde dentro dela. Na notação numérica não há tier a mostrar, então
- * sobra o próprio número.
+ * The rung's label followed by the number, which is what reading a character needs: the tier says
+ * the range, the number says where inside it. In numeric notation there is no tier to show, so the
+ * number is all that remains.
  */
 export function formatStatValueDetailed(
   value: number | null,
@@ -149,11 +149,11 @@ export function formatStatValueDetailed(
 }
 
 /**
- * Só o rótulo do degrau, para dizer ao lado do campo em que rank o número digitado caiu - a
- * pergunta que uma escada de pisos arbitrários (F em 0, C em 50, A em 400) não responde sozinha.
- * Vale nas duas notações: na numérica o rótulo é o piso do degrau, que ainda diz algo que o
- * número digitado não diz. Passar do último degrau vira `S+`, o mesmo que a faixa tracejada da
- * régua mostra em desenho.
+ * The rung's label alone, to be shown beside the field telling which rank the typed number landed
+ * on - the question a ladder with arbitrary floors (F at 0, C at 50, A at 400) does not answer on
+ * its own. It applies in both notations: in the numeric one the label is the rung's floor, which
+ * still says something the typed number does not. Going past the last rung becomes `S+`, the same
+ * thing the ruler's dashed band shows in the drawing.
  */
 export function formatTierLabel(value: number | null, ladder: readonly StatTier[]): string {
   if (value === null) return EMPTY_VALUE;
@@ -162,7 +162,7 @@ export function formatTierLabel(value: number | null, ladder: readonly StatTier[
   return tier.isOverflow ? `${tier.label}+` : tier.label;
 }
 
-/** Só o número, para quando o tier já está dito em outro lugar (o cabeçalho do ranking). */
+/** Only the number, for when the tier is already stated elsewhere (the ranking's header). */
 export function formatStatNumber(value: number | null): string {
   return value === null ? EMPTY_VALUE : formatNumber(value);
 }
@@ -172,8 +172,8 @@ function formatNumber(value: number): string {
 }
 
 /**
- * Monta uma escada numérica regular ("de 0 a 100 de 10 em 10"). No modo numérico o rótulo é o
- * próprio piso, então a mesma tabela serve às duas notações e o desenho tem um caminho só.
+ * Builds a regular numeric ladder ("from 0 to 100 in steps of 10"). In numeric mode the label is
+ * the floor itself, so the same table serves both notations and the drawing has a single path.
  */
 export function generateNumericLadder(min: number, max: number, step: number): StatTier[] {
   if (!Number.isFinite(min) || !Number.isFinite(max) || !Number.isFinite(step)) {
@@ -184,7 +184,7 @@ export function generateNumericLadder(min: number, max: number, step: number): S
   if (min < 0) throw new Error('A numeric ladder cannot start below zero.');
 
   const tiers: StatTier[] = [];
-  // Tolerância contra o acúmulo de erro de ponto flutuante em passos fracionários (0.1 e afins).
+  // Tolerance against accumulated floating-point error on fractional steps (0.1 and the like).
   const epsilon = step / 1000;
   for (let floor = min; floor <= max + epsilon; floor += step) {
     const rounded = Number(floor.toFixed(6));

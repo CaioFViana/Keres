@@ -11,11 +11,11 @@ export class InvalidRecoveryCodeError extends Error {
   }
 }
 
-/** Sem caracteres ambíguos (0/O, 1/I/L) - o código é lido e digitado à mão. */
+/** No ambiguous characters (0/O, 1/I/L) - the code is read and typed by hand. */
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODES_PER_USER = 8;
 
-/** Sem isto, o endpoint seria o único da API que aceita tentativas ilimitadas sem sessão prévia. */
+/** Without this, the endpoint would be the only one in the API accepting unlimited attempts with no */
 const recoveryAttemptLimiter = createAttemptLimiter({
   maxAttempts: 5,
   windowMs: 15 * 60 * 1000,
@@ -31,16 +31,16 @@ function generatePlainCode(): string {
 }
 
 /**
- * Backup codes para recuperar a conta sem saber a senha atual - a alternativa a exigir a
- * senha atual (`UserService.changeOwnPassword`), que derrota o propósito de "esqueci minha
- * senha". Mostrados em texto puro só uma vez (no registro ou ao regenerar); daí em diante
- * só o hash bcrypt de cada um é guardado, igual à senha.
+ * Backup codes for recovering an account without knowing the current password - the alternative to
+ * requiring the current password (`UserService.changeOwnPassword`), which defeats the purpose of "I
+ * forgot my password". Shown in plain text only once (at registration or when regenerating); from
+ * then on only each one's bcrypt hash is stored, like the password.
  *
- * Sem tabela indexável por hash (bcrypt sala cada um diferente), a verificação compara o
- * código contra todo código não usado do usuário - aceitável para um lote de 8.
+ * With no table indexable by hash (bcrypt salts each one differently), verification compares the code
+ * against every unused code of the user - acceptable for a batch of 8.
  */
 export class RecoveryCodeService {
-  /** Gera um novo lote, descartando qualquer código anterior (usado ou não). */
+  /** Generates a new batch, discarding any previous code (used or not). */
   async generateCodes(userId: string): Promise<string[]> {
     const plainCodes = Array.from({ length: CODES_PER_USER }, generatePlainCode);
     const rows = await Promise.all(
@@ -67,9 +67,9 @@ export class RecoveryCodeService {
   }
 
   /**
-   * Consome um código válido e não usado e troca a senha. O código é marcado usado mesmo
-   * dentro da mesma transação que a senha, para que uma falha no meio não deixe o código
-   * "meio gasto" - ou os dois efeitos acontecem juntos, ou nenhum.
+   * Consumes a valid, unused code and changes the password. The code is marked used inside the very
+   * transaction that changes the password, so a failure halfway through does not leave the code "half
+   * spent" - either both effects happen or neither does.
    */
   async redeemCode(
     username: string,

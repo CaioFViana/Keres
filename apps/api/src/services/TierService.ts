@@ -18,7 +18,7 @@ export class TierNameAlreadyTakenError extends Error {
   }
 }
 
-/** Recusa excluir um tier ainda em uso, para não deixar usuários/config apontando para um id morto. */
+/** Refuses to delete a tier still in use, so users/config are not left pointing at a dead id. */
 export class TierInUseError extends Error {
   constructor(reason: string) {
     super(`Cannot delete tier: ${reason}`);

@@ -1,11 +1,10 @@
 import { z } from 'zod';
 
 /**
- * Entidades que podem ter mídia acoplada.
+ * Entities that can have media attached.
  *
- * Vale como valor em runtime (a validação polimórfica do servidor percorre esta lista)
- * e como tipo, para que adicionar uma entidade aqui quebre a compilação nos lugares que
- * precisam de um `case` novo.
+ * It works as a runtime value (the server's polymorphic validation walks this list) and as a type,
+ * so that adding an entity here breaks compilation everywhere a new `case` is needed.
  */
 export const GALLERY_OWNER_ENTITIES = ['Character', 'Location', 'Note', 'Scene', 'Item'] as const;
 export type GalleryOwnerEntity = (typeof GALLERY_OWNER_ENTITIES)[number];
@@ -14,9 +13,9 @@ export const MEDIA_TYPES = ['image', 'video', 'audio'] as const;
 export type MediaType = (typeof MEDIA_TYPES)[number];
 
 /**
- * Formatos aceitos, restritos ao que o Expo/React Native consegue exibir ou tocar sem
- * transcodificação. Aceitar mais do que isto só produziria mídia que sobe, sincroniza e
- * depois não abre no aparelho.
+ * Accepted formats, restricted to what Expo/React Native can display or play without transcoding.
+ * Accepting more than this would only produce media that uploads, synchronizes and then fails to
+ * open on the device.
  */
 export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = {
   image: [
@@ -48,7 +47,7 @@ export const ALL_SUPPORTED_MEDIA_MIME_TYPES: readonly string[] = MEDIA_TYPES.fla
 /** Filtro para o seletor de arquivos: `['image/*', 'video/*', 'audio/*']`. */
 export const MEDIA_PICKER_MIME_FILTERS: readonly string[] = MEDIA_TYPES.map((type) => `${type}/*`);
 
-/** Extensões usadas para nomear o arquivo local quando o mime type não traz uma. */
+/** Extensions used to name the local file when the mime type does not bring one. */
 export const MEDIA_MIME_TYPE_EXTENSIONS: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -76,7 +75,7 @@ export function isSupportedMediaMimeType(mimeType: string | null | undefined): b
   return !!mimeType && ALL_SUPPORTED_MEDIA_MIME_TYPES.includes(mimeType.toLowerCase());
 }
 
-/** `'image/png' -> 'image'`. Devolve `null` para o que não é suportado. */
+/** `'image/png' -> 'image'`. Returns `null` for anything unsupported. */
 export function mediaTypeForMimeType(mimeType: string | null | undefined): MediaType | null {
   if (!mimeType) {
     return null;
@@ -98,32 +97,32 @@ export function extensionForMimeType(mimeType: string | null | undefined): strin
 }
 
 /**
- * Hash do conteúdo do arquivo, em hexadecimal.
+ * Hash of the file's content, in hexadecimal.
  *
- * É MD5 porque é o único digest que o `expo-file-system` calcula nativamente - fazer
- * SHA-256 em JS sobre um vídeo de dezenas de MB travaria a interface. Serve como
- * *checksum de conteúdo* (endereçamento e detecção de mudança), nunca como primitiva de
- * segurança: o servidor recalcula o hash dos bytes recebidos antes de aceitá-los, então
- * um cliente não consegue registrar um hash que não corresponde ao que enviou.
+ * It is MD5 because that is the only digest `expo-file-system` computes natively - doing SHA-256 in
+ * JS over a video of tens of MB would freeze the interface. It serves as a *content checksum*
+ * (addressing and change detection), never as a security primitive: the server recomputes the hash
+ * of the bytes it receives before accepting them, so a client cannot register a hash that does not
+ * match what it uploaded.
  */
 export const MediaHashSchema = z
   .string()
   .regex(/^[a-f0-9]{32}$/, 'Media hash must be a 32-character lowercase hex digest');
 
 /**
- * Uma mídia da história.
+ * A media file belonging to the story.
  *
- * Não tem dono: o vínculo com personagens, locais, notas, cenas e itens vive em
- * `GalleryRelation`, para que a mesma imagem possa ser usada por várias entidades sem ser
- * duplicada. O arquivo em si não trafega por aqui - estes campos descrevem os bytes
- * (`hash`, `sizeBytes`, `mimeType`) e o binário sobe/desce pelas rotas `/media`.
+ * It has no owner: the link to characters, locations, notes, scenes and items lives in
+ * `GalleryRelation`, so the same image can be used by several entities without being duplicated.
+ * The file itself does not travel through here - these fields describe the bytes (`hash`,
+ * `sizeBytes`, `mimeType`) and the binary goes up and down through the `/media` routes.
  */
 export const GallerySchema = z.object({
   id: z.string(),
   storyId: z.string(),
   mediaType: z.enum(MEDIA_TYPES),
   mimeType: z.string().min(1),
-  /** Nome original do arquivo, preservado só para exibição. */
+  /** The file's original name, preserved for display only. */
   fileName: z.string().min(1),
   hash: MediaHashSchema,
   sizeBytes: z.number().int().min(0),
@@ -158,10 +157,10 @@ export type GalleryType = z.infer<typeof GallerySchema>;
 export type PartialGalleryType = z.infer<typeof PartialGallerySchema>;
 
 /**
- * Vínculo entre uma mídia e uma entidade da história.
+ * A link between a media file and an entity of the story.
  *
- * Mesma forma de `TagRelation`: uma linha por par, com tombstone, para que adicionar e
- * remover vínculos sincronize pelo mesmo caminho de qualquer outra entidade.
+ * The same shape as `TagRelation`: one row per pair, with a tombstone, so adding and removing links
+ * synchronizes through the same path as any other entity.
  */
 export const GalleryRelationSchema = z.object({
   id: z.string(),

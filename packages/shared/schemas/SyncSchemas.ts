@@ -6,9 +6,9 @@ import { STORY_SCHEMA_ENTITY_TYPES } from '../metadata/StorySchemaEntityType';
 export const UlidSchema = z.string().regex(/^[0-9A-Z]{26}$/, 'Invalid ULID format');
 
 /**
- * Campos que o cliente nunca pode escrever via sync. Schemas de update omitem estes
- * campos; o handler-base e o log de operações também os descartam. `version` no
- * envelope/`changes` é só a base do OCC - não é escrita na coluna.
+ * Fields the client may never write through sync. Update schemas omit these fields; the base
+ * handler and the operation log discard them too. `version` in the envelope/`changes` is only the
+ * OCC base - it is not written to the column.
  */
 export const SYNC_CLIENT_IMMUTABLE_FIELDS = [
   'id',
@@ -30,7 +30,7 @@ export const SYNC_CLIENT_IMMUTABLE_FIELD_SET: ReadonlySet<string> = new Set(
 /** Teto do lote de push. O cap HTTP ainda vale; isto evita um lote de dezenas de milhares de ops. */
 export const MAX_SYNC_BATCH_SIZE = 200;
 
-/** Teto de operações devolvidas num único pull. O cliente puxa de novo a partir do cursor. */
+/** Ceiling of operations returned in a single pull. The client pulls again from the cursor. */
 export const MAX_SYNC_PULL_BATCH = 500;
 
 export function omitSyncImmutableFields<T extends Record<string, unknown>>(
@@ -44,69 +44,68 @@ export function omitSyncImmutableFields<T extends Record<string, unknown>>(
   return out;
 }
 
-// 1. Define o tipo de operação de sincronização
+// 1. Defines the kind of synchronization operation
 export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete', 'reorder']); // Added 'reorder'
 export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 
-// 2. Schema base para qualquer StoryUpdate
-// Contém campos comuns a todas as operações
+// 2. Base schema for any StoryUpdate
+// It holds the fields common to every operation
 export const BaseStoryUpdateSchema = z
   .object({
     entity: z.string().min(1, 'Entity name cannot be empty'), // Nome da entidade (ex: 'Story', 'Character')
-    // Create, update, delete e reorder exigem o ULID; o envelope deixa opcional e cada
-    // variante concreta re-declara quando é obrigatório.
+    // Create, update, delete and reorder all require the ULID; the envelope leaves it optional and each
+    // concrete variant re-declares it where it is mandatory.
     id: UlidSchema.optional(),
     /**
-     * A versão da *entidade*, base do controle de concorrência otimista.
+     * The *entity's* version, the basis of optimistic concurrency control.
      *
-     * O campo é direcional:
-     * - push (cliente -> servidor): é a versão que o cliente leu ANTES de aplicar a
-     *   mudança (a "base"). O servidor rejeita a operação se a sua própria versão
-     *   divergir dessa base, porque isso significa que alguém escreveu no meio.
-     * - pull (servidor -> cliente): é a versão da entidade DEPOIS da operação, para
-     *   que o cliente saiba em que base as próximas edições dele se apoiam.
+     * The field is directional:
+     * - push (client -> server): it is the version the client read BEFORE applying the change (the
+     *   "base"). The server rejects the operation if its own version differs from that base, because
+     *   that means somebody wrote in between.
+     * - pull (server -> client): it is the entity's version AFTER the operation, so the client knows
+     *   which base its next edits rest on.
      *
-     * ATENÇÃO, para operações `update`: quem o servidor lê como base é `changes.version`,
-     * não este campo (ver `BaseSyncEntityHandler.checkVersionConflict`, alimentado por
-     * `update.changes.version`). `UpdateStoryUpdateSchema` exige `changes.version`; um push
-     * que omita esse campo é recusado na validação (422), não vira last-write-wins.
-     * `SyncEngineService` duplica o valor nos dois lugares.
+     * CAREFUL, for `update` operations: what the server reads as the base is `changes.version`, not this
+     * field (see `BaseSyncEntityHandler.checkVersionConflict`, fed by `update.changes.version`).
+     * `UpdateStoryUpdateSchema` requires `changes.version`; a push omitting that field is refused at
+     * validation (422), it does not become last-write-wins. `SyncEngineService` duplicates the value in
+     * both places.
      *
-     * Nunca deve receber a versão da *operação* (`operationVersion`): são contadores
-     * diferentes e confundi-los desliga a detecção de conflitos.
+     * It must never receive the *operation's* version (`operationVersion`): they are different counters
+     * and confusing them switches conflict detection off.
      */
     version: z.number().int().min(0).optional(),
-    // A versão da *operação* no log de operações do servidor
+    // The *operation's* version in the server's operation log
     operationVersion: z.number().int().min(0).optional(),
   })
   .extend({
     operationTime: z.string().datetime().optional(), // CHANGED: Expect ISO string, as per user's instruction
     originatingUser: z.string().optional(),
     /**
-     * Id da linha do log de operações *local do cliente*. Enviado no push e devolvido
-     * intacto na resposta, para que o cliente saiba exatamente quais operações foram
-     * aplicadas e quais conflitaram, em vez de tratar o lote como tudo-ou-nada.
+     * Id of the row in the *client's local* operation log. Sent on push and returned untouched in the
+     * response, so the client knows exactly which operations were applied and which conflicted, instead
+     * of treating the batch as all-or-nothing.
      */
     clientOperationId: z.string().optional(),
     /**
-     * Id da linha do log de operações *do servidor*. Preenchido no pull para que o
-     * cliente possa gravar a operação remota de forma idempotente (re-pulls não
-     * duplicam nem colidem no log local).
+     * Id of the row in the *server's* operation log. Filled in on pull so the client can record the
+     * remote operation idempotently (re-pulls neither duplicate nor collide in the local log).
      */
     operationId: z.string().optional(),
   });
 
-// 3. Schema para operações de criação
+// 3. Schema for create operations
 export const CreateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('create'),
-  // O cliente gera o ULID antes de enviar - sem id o servidor não tem o que gravar.
+  // The client generates the ULID before sending - with no id the server has nothing to write.
   id: UlidSchema,
-  // 'data' contém o objeto completo da nova entidade
+  // 'data' holds the complete object of the new entity
   data: z.record(z.string(), z.any()), // Placeholder, pode ser mais específico depois
 });
 export type CreateStoryUpdate = z.infer<typeof CreateStoryUpdateSchema>;
 
-// 4. Schema para operações de atualização
+// 4. Schema for update operations
 export const UpdateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('update'),
   id: UlidSchema, // ID é obrigatório para atualizações
@@ -116,14 +115,14 @@ export const UpdateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
 });
 export type UpdateStoryUpdate = z.infer<typeof UpdateStoryUpdateSchema>;
 
-// 5. Schema para operações de exclusão
+// 5. Schema for delete operations
 export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('delete'),
   id: UlidSchema, // ID é obrigatório para exclusões
-  // Opcional de propósito: `StoryService.deleteStory`/`unlinkFromServer` omitem a versão
-  // porque o `stories.version` local nunca ficou em lockstep com o servidor. Sem versão o
-  // servidor só aceita o delete da própria Story quando o caller é o dono (força o
-  // tombstone na versão atual). Demais entidades continuam exigindo a base no handler.
+  // Optional on purpose: `StoryService.deleteStory`/`unlinkFromServer` omit the version because the
+  // local `stories.version` never stayed in lockstep with the server. With no version, the server only
+  // accepts deleting the Story itself when the caller is the owner (it forces the tombstone at the
+  // current version). Other entities still require the base in the handler.
   version: z.number().int().min(0).optional(),
 });
 export type DeleteStoryUpdate = z.infer<typeof DeleteStoryUpdateSchema>;
@@ -134,7 +133,7 @@ export const ReorderItemSchema = z.object({
   newIndex: z.number().int().min(1),
 });
 
-// 6. Schema para operações de reordenação de cenas dentro de um capítulo
+// 6. Schema for reordering scenes within a chapter
 export const ChapterReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('reorder'),
   entity: z.literal('Chapter'), // Entity to which reorderItems belong
@@ -143,20 +142,20 @@ export const ChapterReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
 });
 export type ChapterReorderingStoryUpdate = z.infer<typeof ChapterReorderingStoryUpdateSchema>;
 
-// 7. Schema para operações de reordenação de capítulos dentro de uma história
+// 7. Schema for reordering chapters within a story
 export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('reorder'),
   entity: z.literal('Story'), // Entity to which reorderItems belong
   id: UlidSchema, // ID of the Story whose chapters are being reordered
   reorderItems: z.array(ReorderItemSchema), // Array of chapter IDs and their new indices
   reorderTarget: z.literal('StorySchemaField').optional(),
-  // O conjunto fechado, e não `z.string()`: a coluna guarda exatamente estes valores, e um
-  // tipo desconhecido só produziria uma consulta que não acha nada - em silêncio.
+  // The closed set, and not `z.string()`: the column stores exactly these values, and an unknown type
+  // would only produce a query that finds nothing - silently.
   schemaEntityType: z.enum(STORY_SCHEMA_ENTITY_TYPES).optional(),
 });
 export type StoryReorderingStoryUpdate = z.infer<typeof StoryReorderingStoryUpdateSchema>;
 
-// 8. Union type para todas as operações de StoryUpdate
+// 8. Union type for every StoryUpdate operation
 export const StoryUpdateSchema = z.union([
   CreateStoryUpdateSchema,
   UpdateStoryUpdateSchema,
@@ -166,77 +165,75 @@ export const StoryUpdateSchema = z.union([
 ]);
 export type StoryUpdate = z.infer<typeof StoryUpdateSchema>;
 
-// 9. Schema para um array de StoryUpdates (o que o servidor receberá)
+// 9. Schema for an array of StoryUpdates (what the server will receive)
 export const StoryUpdatesArraySchema = z.array(StoryUpdateSchema).max(MAX_SYNC_BATCH_SIZE);
 export type StoryUpdatesArray = z.infer<typeof StoryUpdatesArraySchema>;
 
-// 10. Resultado por operação de um push
+// 10. Per-operation result of a push
 //
-// O push deixou de ser tudo-ou-nada: cada operação é aplicada isoladamente e o
-// servidor devolve o que passou e o que conflitou. Sem isso o cliente não tem como
-// distinguir "o servidor recusou a minha edição" de "o lote inteiro falhou", e acaba
-// marcando operações recusadas como sincronizadas (perdendo o trabalho do usuário)
-// ou reenviando-as para sempre.
+// The push stopped being all-or-nothing: each operation is applied on its own and the server returns
+// what went through and what conflicted. Without that the client cannot tell "the server refused my
+// edit" from "the whole batch failed", and ends up marking refused operations as synchronized
+// (losing the user's work) or resending them forever.
 
-/** Por que o servidor recusou a operação. Determina o que a tela de conflito oferece. */
+/** Why the server refused the operation. It determines what the conflict screen offers. */
 export const SyncConflictReasonSchema = z.enum([
-  /** A base enviada pelo cliente não é a versão atual do servidor: alguém editou no meio. */
+  /** The base the client sent is not the server's current version: somebody edited in between. */
   'version_conflict',
-  /** A entidade não existe no servidor (nunca chegou lá, ou foi removida em definitivo). */
+  /** The entity does not exist on the server (it never got there, or it was permanently removed). */
   'not_found',
-  /** A entidade foi excluída no servidor, mas o cliente ainda a estava editando. */
+  /** The entity was deleted on the server, but the client was still editing it. */
   'deleted_on_server',
   /** A entidade foi editada no servidor, mas o cliente a excluiu localmente. */
   'edited_on_server',
   /** O cliente e o servidor mudaram os mesmos campos da mesma entidade. */
   'concurrent_edit',
   /**
-   * A operação referencia outra entidade (personagem, cena, item...) que foi excluída no
-   * servidor. "Manter a minha versão" nunca vai passar sozinho aqui - a referência continua
-   * apontando para algo que não existe mais - então a tela de conflito trata este caso à
-   * parte, sem oferecer essa opção.
+   * The operation references another entity (character, scene, item...) that was deleted on the
+   * server. "Keep my version" will never go through on its own here - the reference still points at
+   * something that no longer exists - so the conflict screen handles this case separately, without
+   * offering that option.
    */
   'referenced_entity_deleted',
-  /** O payload não passou na validação do servidor. Não é resolvível pelo usuário. */
+  /** The payload failed the server's validation. Not resolvable by the user. */
   'validation',
-  /** O usuário não tem permissão para a operação. Não é resolvível pelo usuário. */
+  /** The user has no permission for the operation. Not resolvable by the user. */
   'unauthorized',
   /**
-   * O plano do usuário não permite mais uma história/entidade/bytes de armazenamento.
-   * Não é resolvível editando a operação - é só informativo, não abre a tela de conflito.
+   * The user's plan does not allow another story/entity/byte of storage. Not resolvable by editing the
+   * operation - it is informational only and does not open the conflict screen.
    */
   'limit_exceeded',
-  /** Qualquer outra falha ao aplicar a operação. */
+  /** Any other failure while applying the operation. */
   'unknown',
 ]);
 export type SyncConflictReason = z.infer<typeof SyncConflictReasonSchema>;
 
 export const SyncConflictSchema = z.object({
-  /** Ecoa o `clientOperationId` da operação recusada, para o cliente correlacionar. */
+  /** Echoes the refused operation's `clientOperationId`, so the client can correlate. */
   clientOperationId: z.string().optional(),
   entity: z.string(),
   entityId: z.string(),
   type: StoryUpdateTypeSchema,
   reason: SyncConflictReasonSchema,
-  /** Mensagem técnica para log. A tela de conflito usa `reason`, não isto. */
+  /** A technical message for the log. The conflict screen uses `reason`, not this. */
   message: z.string(),
-  /** Versão base que o cliente enviou. */
+  /** The base version the client sent. */
   clientVersion: z.number().int().optional(),
-  /** Versão atual da entidade no servidor. */
+  /** The entity's current version on the server. */
   serverVersion: z.number().int().optional(),
   /** Estado atual da entidade no servidor, para a tela poder mostrar o comparativo. */
   serverEntity: z.record(z.string(), z.any()).nullable().optional(),
   /** O que o cliente tentou gravar, para a tela poder mostrar o comparativo. */
   attemptedChanges: z.record(z.string(), z.any()).optional(),
   /**
-   * Só presente para `reason: 'version_conflict'` num `update`: os campos que de fato mudaram
-   * na entidade desde a versão que o cliente leu como base (reconstruído do histórico de
-   * operações do servidor, não um diff contra `serverEntity`). Sem isto o cliente não consegue
-   * distinguir "a base ficou velha porque outro campo mudou" (mesclável em silêncio) de "o
-   * mesmo campo que eu editei também mudou lá" (uma decisão real) - comparar `serverEntity`
-   * direto contra o que o cliente quer escrever não serve, porque o valor atual de um campo que
-   * o cliente está editando sempre parece "diferente" do valor novo, tenha o servidor mexido
-   * nele ou não.
+   * Only present for `reason: 'version_conflict'` on an `update`: the fields that actually changed on
+   * the entity since the version the client read as its base (reconstructed from the server's
+   * operation history, not a diff against `serverEntity`). Without this the client cannot tell "the
+   * base went stale because another field changed" (silently mergeable) from "the same field I edited
+   * also changed over there" (a real decision) - comparing `serverEntity` directly against what the
+   * client wants to write does not work, because the current value of a field the client is editing
+   * always looks "different" from the new value, whether the server touched it or not.
    */
   changedFields: z.array(z.string()).optional(),
 });
@@ -245,13 +242,13 @@ export type SyncConflict = z.infer<typeof SyncConflictSchema>;
 export const SyncAppliedOperationSchema = z.object({
   clientOperationId: z.string().optional(),
   /**
-   * Id da operação no log do servidor. Ausente quando a operação já estava aplicada e
-   * portanto já tinha sido registrada num push anterior (reenvio idempotente).
+   * Id of the operation in the server's log. Absent when the operation was already applied and had
+   * therefore already been recorded by an earlier push (an idempotent resend).
    */
   operationId: z.string().optional(),
-  /** Posição da operação na sequência do servidor. */
+  /** The operation's position in the server's sequence. */
   operationVersion: z.number().int(),
-  /** Versão da entidade depois da operação, para o cliente rebasear as próximas edições. */
+  /** The entity's version after the operation, so the client can rebase its next edits. */
   entityVersion: z.number().int().optional(),
   entity: z.string(),
   entityId: z.string(),

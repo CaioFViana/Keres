@@ -9,9 +9,9 @@ import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 /**
- * Reordenar é o único caminho de `update` que os handlers de Chapter e Story escrevem por
- * conta própria, em vez de delegar à classe base: mexe em várias linhas numa transação e
- * recusa lotes inconsistentes. É esse caminho que este arquivo exercita.
+ * Reordering is the only `update` path the Chapter and Story handlers write themselves, instead of
+ * delegating to the base class: it touches several rows in one transaction and refuses inconsistent
+ * batches. It is that path this file exercises.
  */
 let userId: string;
 let storyId: string;

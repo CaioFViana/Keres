@@ -45,8 +45,8 @@ export function getContrastTextColor(hexColor: string): 'black' | 'white' {
 }
 
 /**
- * Retorna uma cor de série distinta para gráficos. Uma paleta explícita é preservada enquanto
- * houver espaço; comparações maiores recebem matizes distribuídos pelo círculo cromático.
+ * Returns a distinct series colour for charts. An explicit palette is preserved while there is room;
+ * larger comparisons get hues spread around the colour wheel.
  */
 export function getDistinctSeriesColor(
   index: number,

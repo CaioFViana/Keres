@@ -1,7 +1,7 @@
 /**
- * Tipos de entidade que podem ser marcados como "Veja também" um do outro - as entidades
- * navegáveis do sistema exceto Tag/Note (que já têm seus próprios sistemas de relação
- * flexíveis via TagRelation/NoteRelation) e Gallery (que não é navegável).
+ * Entity types that can be marked as "See also" of one another - the system's navigable entities
+ * except Tag/Note (which already have their own flexible relation systems via
+ * TagRelation/NoteRelation) and Gallery (which is not navigable).
  */
 export const SEE_ALSO_ENTITY_TYPES = [
   'Character',

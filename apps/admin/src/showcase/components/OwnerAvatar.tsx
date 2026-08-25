@@ -7,24 +7,24 @@ import {
 import avatarIcons from 'virtual:keres-avatar-icons';
 
 /**
- * O mesmo avatar que a pessoa escolheu no aplicativo: o ícone do Ionicons sobre a cor dela.
+ * The same avatar the person picked in the application: the Ionicons icon over their colour.
  *
- * Espelha `apps/client/src/components/common/display/Avatar/Avatar.tsx` - inclusive a cor de
- * reserva determinística por semente e o tom do ícone decidido pela luminância do fundo. As
- * regras vêm de `@keres/shared`, então as duas telas não podem divergir; o que é local aqui é
- * só o desenho em SVG, já que o site não tem a fonte de ícones do app.
+ * It mirrors `apps/client/src/components/common/display/Avatar/Avatar.tsx` - including the
+ * deterministic fallback colour from a seed and the icon tone decided by the background's
+ * luminance. The rules come from `@keres/shared`, so the two screens cannot diverge; what is local
+ * here is only the SVG drawing, since the site does not have the app's icon font.
  */
 
-/** O ícone é semi-transparente sobre a cor, para o desenho não competir com ela. */
+/** The icon is semi-transparent over the colour, so the artwork does not compete with it. */
 const ICON_TINT_ON_LIGHT = 'rgba(0, 0, 0, 0.6)';
 const ICON_TINT_ON_DARK = 'rgba(255, 255, 255, 0.75)';
 
-/** Os SVGs do Ionicons vêm no viewBox de 512. */
+/** The Ionicons SVGs come in a 512 viewBox. */
 const ICON_VIEWBOX = 512;
 
 export function OwnerAvatar({ owner, size = 32 }: { owner: ShowcaseOwner; size?: number }) {
   const background = owner.avatarColor || avatarColorFromSeed(owner.username);
-  // Um ícone que este build não conhece (app mais novo) cai no padrão em vez de sumir.
+  // An icon this build does not know (a newer app) falls back to the default instead of disappearing.
   const iconMarkup = avatarIcons[owner.avatarIcon ?? ''] ?? avatarIcons[DEFAULT_AVATAR_ICON];
   const tint = isColorLight(background) ? ICON_TINT_ON_LIGHT : ICON_TINT_ON_DARK;
   const inset = size * 0.21;
@@ -41,8 +41,7 @@ export function OwnerAvatar({ owner, size = 32 }: { owner: ShowcaseOwner; size?:
         height={size - inset * 2}
         viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}
         fill={tint}
-        // O conteúdo vem do pacote ionicons, recortado em tempo de build - não de dados
-        // enviados por ninguém.
+        // The content comes from the ionicons package, cut out at build time - not from data sent by anyone.
         dangerouslySetInnerHTML={{ __html: iconMarkup }}
       />
     </span>

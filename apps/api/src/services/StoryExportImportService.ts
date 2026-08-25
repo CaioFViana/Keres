@@ -222,9 +222,9 @@ export class StoryExportImportService {
     }
     const validatedFullStory = FullStoryExportSchema.parse(migrated);
 
-    // Falha rápido antes de abrir a transação: importar uma história inteira e só
-    // então recusar deixaria o usuário sem saber por que nada foi salvo, e gastaria
-    // trabalho de banco à toa numa importação que já ia ser descartada.
+    // Fails fast before opening the transaction: importing a whole story and only then refusing it would
+    // leave the user with no idea why nothing was saved, and would burn database work on an import that
+    // was going to be discarded anyway.
     try {
       await tierEnforcementService.assertCanCreateStory(userId);
     } catch (error) {
@@ -310,8 +310,8 @@ export class StoryExportImportService {
       }
 
       // --- Locations ---
-      // Antes de Scenes de propósito: toda Scene tem um locationId obrigatório, que
-      // precisa já estar no idMap quando o bloco de Scenes rodar logo abaixo.
+      // Before Scenes on purpose: every Scene has a mandatory locationId, which has to already be in the
+      // idMap by the time the Scenes block runs just below.
       const newLocationsData = validatedFullStory.locations.map((original) => {
         const newId = nextId(original.id);
         idMap.set(original.id, newId);
@@ -331,7 +331,7 @@ export class StoryExportImportService {
       }
 
       // --- LocationRelations (Optional) ---
-      // Depois de Locations de propósito: locationAId/locationBId precisam já estar no idMap.
+      // After Locations on purpose: locationAId/locationBId have to already be in the idMap.
       if (validatedFullStory.locationRelations && validatedFullStory.locationRelations.length > 0) {
         const newLocationRelationsData = validatedFullStory.locationRelations.map((original) => {
           const newId = nextId(original.id);
@@ -404,8 +404,8 @@ export class StoryExportImportService {
           columns: { id: true, isStart: true, isFinish: true, version: true },
         });
 
-        // Quem perde a marca é decidido em `@keres/shared` - a mesma função que o cliente usa
-        // ao importar um `.keres` do disco.
+        // Which scenes lose the flag is decided in `@keres/shared` - the same function the client uses when
+        // importing a `.keres` from disk.
         const unflag = scenesToUnflag(importedScenes);
         const versionOf = new Map(importedScenes.map((scene) => [scene.id, scene.version]));
         for (const sceneId of unflag.start) {
@@ -729,7 +729,7 @@ export class StoryExportImportService {
       }
 
       // --- ChoiceCheckGroups (Optional, map choice ID) ---
-      // Depois de Choices de propósito: choiceId precisa já estar no idMap.
+      // After Choices on purpose: choiceId has to already be in the idMap.
       if (validatedFullStory.choiceCheckGroups && validatedFullStory.choiceCheckGroups.length > 0) {
         const newChoiceCheckGroupsData = validatedFullStory.choiceCheckGroups.map((original) => {
           const newId = nextId(original.id);
@@ -756,8 +756,8 @@ export class StoryExportImportService {
       }
 
       // --- ChoiceChecks (Optional, map group ID, and optional scene/item IDs) ---
-      // Depois de ChoiceCheckGroups, Scenes e Items de propósito: groupId/sceneId/itemId
-      // precisam já estar no idMap.
+      // After ChoiceCheckGroups, Scenes and Items on purpose: groupId/sceneId/itemId have to already be in
+      // the idMap.
       if (validatedFullStory.choiceChecks && validatedFullStory.choiceChecks.length > 0) {
         const newChoiceChecksData = validatedFullStory.choiceChecks.map((original) => {
           const newId = nextId(original.id);
@@ -804,8 +804,8 @@ export class StoryExportImportService {
       }
 
       // --- Effects (Optional, map polymorphic entity ID via entityType, and optional item ID) ---
-      // Depois de Scenes, Choices e Items de propósito: entityId (Scene ou Choice) e
-      // itemId precisam já estar no idMap.
+      // After Scenes, Choices and Items on purpose: entityId (Scene or Choice) and itemId have to already
+      // be in the idMap.
       if (validatedFullStory.effects && validatedFullStory.effects.length > 0) {
         const newEffectsData = validatedFullStory.effects.map((original) => {
           const newId = nextId(original.id);
@@ -919,8 +919,7 @@ export class StoryExportImportService {
       }
 
       // --- GalleryRelations (map gallery ID and owner ID) ---
-      // Por último de propósito: o dono pode ser um Item, e os itens só entram no
-      // mapa de IDs no bloco acima.
+      // Last on purpose: the owner can be an Item, and items only enter the id map in the block above.
       if (validatedFullStory.galleryRelations && validatedFullStory.galleryRelations.length > 0) {
         const newGalleryRelationsData = validatedFullStory.galleryRelations.map((original) => {
           const newId = nextId(original.id);
@@ -955,8 +954,8 @@ export class StoryExportImportService {
       }
 
       // --- StorySchemaFields (Optional) ---
-      // Só depende da Story - pode entrar em qualquer ponto do idMap, mas fica perto de
-      // AttributeValues (que dependem dela) por clareza de leitura.
+      // It only depends on the Story - it could go anywhere in the idMap, but it sits near AttributeValues
+      // (which depend on it) for readability.
       if (validatedFullStory.storySchemaFields && validatedFullStory.storySchemaFields.length > 0) {
         const newStorySchemaFieldsData = validatedFullStory.storySchemaFields.map((original) => {
           const newId = nextId(original.id);
@@ -986,9 +985,9 @@ export class StoryExportImportService {
       );
 
       // --- AttributeValues (Optional) ---
-      // Por último de propósito: entityId pode apontar pra qualquer um dos 7 tipos de
-      // entidade suportados (Character/Location/Item/Scene/Chapter/Note/WorldRule), todos
-      // já precisam estar no idMap, e fieldId depende do bloco de StorySchemaFields acima.
+      // Last on purpose: entityId can point at any of the 7 supported entity types
+      // (Character/Location/Item/Scene/Chapter/Note/WorldRule), all of which have to already be in the
+      // idMap, and fieldId depends on the StorySchemaFields block above.
       if (validatedFullStory.attributeValues && validatedFullStory.attributeValues.length > 0) {
         const newAttributeValuesData = validatedFullStory.attributeValues.map((original) => {
           const newId = nextId(original.id);
@@ -1071,8 +1070,8 @@ export class StoryExportImportService {
             storyId: targetStoryId,
             entityId,
             fieldId,
-            // Comentários importados pertencem ao usuário que importou, como os
-            // Favorites: o autor de outro servidor pode nem existir neste banco.
+            // Imported comments belong to the user who imported them, like Favorites: the author from another
+            // server may not even exist in this database.
             authorUserId: userId,
             version: 1,
             createdAt: now,
@@ -1084,8 +1083,8 @@ export class StoryExportImportService {
         await tx.insert(dbSchema.comments).values(newCommentsData);
       }
 
-      // --- Sistema de status ---
-      // Ordem obrigatória: Stat e Mode antes de StatStrength/StatRelation, que os referenciam.
+      // --- Stat system ---
+      // A mandatory order: Stat and Mode before StatStrength/StatRelation, which reference them.
       if (validatedFullStory.stats && validatedFullStory.stats.length > 0) {
         const newStatsData = validatedFullStory.stats.map((original) => {
           const newId = nextId(original.id);
@@ -1133,7 +1132,7 @@ export class StoryExportImportService {
         const newStatStrengthsData = validatedFullStory.statStrengths.map((original) => {
           const newId = nextId(original.id);
           idMap.set(original.id, newId);
-          // statId nulo é a escada padrão da história, que não referencia stat nenhum.
+          // A null statId is the story's default ladder, which references no stat at all.
           const statId = original.statId ? idMap.get(original.statId) : null;
           if (original.statId && !statId) {
             throw new Error(

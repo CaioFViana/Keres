@@ -48,8 +48,8 @@ export function RegistrationSettingsPage() {
     }
   };
 
-  // A página reúne mais de um assunto: cadastro, site público e aparência. Os dois últimos não
-  // dependem do carregamento do primeiro, então continuam utilizáveis mesmo se ele falhar.
+  // The page gathers more than one subject: registration, public site and appearance. The last two
+  // do not depend on the first one loading, so they stay usable even if it fails.
   return (
     <div>
       <div className="page-header">

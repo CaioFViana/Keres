@@ -120,7 +120,7 @@ describe('showcase home', () => {
     await unmount();
   });
 
-  // O site é o rosto público do servidor; o painel administrativo não é parte dele.
+  // The site is the server's public face; the administration panel is not part of it.
   it('links nowhere near /admin', async () => {
     const { container, unmount } = await renderAt('/');
     await flush();
@@ -153,7 +153,8 @@ describe('showcase story page', () => {
     expect(text).toContain('Twilight');
     expect(text).toContain('v7-2026-08-19');
     expect(text).toContain('v3-2026-08-01');
-    // 1 de 2 mídias empacotadas: o número é a diferença entre um pacote completo e um parcial.
+    // 1 of 2 media files packaged: the number is the difference between a complete package and a
+    // partial one.
     expect(text).toContain('1/2 media');
     await unmount();
   });
@@ -228,9 +229,9 @@ describe('password-protected story', () => {
 
 describe('author and uploader', () => {
   /**
-   * São coisas diferentes: o autor é texto livre da história (um pseudônimo, uma equipe, uma
-   * obra de domínio público que a pessoa só transcreveu), e quem publicou é a conta que subiu
-   * o pacote. Confundir os dois atribui a alguém uma obra que pode não ser dela.
+   * They are different things: the author is the story's free text (a pen name, a team, a
+   * public-domain work the person merely transcribed), and the publisher is the account that uploaded
+   * the package. Confusing the two attributes to somebody a work that may not be theirs.
    */
   it('credits the story author and the uploading account separately', async () => {
     const { container, unmount } = await renderAt('/story/story-1');
@@ -255,7 +256,7 @@ describe('author and uploader', () => {
 
     const facts = container.querySelector('.story-facts')?.textContent ?? '';
     expect(facts).not.toContain('Author');
-    // Quem publicou continua sendo dito - isso é um fato sobre a página.
+    // The publisher is still stated - that is a fact about the page.
     expect(container.textContent).toContain('published this story');
     await unmount();
   });
@@ -277,7 +278,7 @@ describe('author and uploader', () => {
 });
 
 describe('owner avatar', () => {
-  // O app deixa a pessoa escolher um ícone e uma cor; o site desenha os dois, não uma inicial.
+  // The app lets a person choose an icon and a colour; the site draws both, not an initial.
   it('draws the chosen icon on the chosen color', async () => {
     const { container, unmount } = await renderAt('/');
     await flush();
@@ -300,7 +301,7 @@ describe('owner avatar', () => {
 
     const avatar = container.querySelector('.avatar') as HTMLElement;
     expect(avatar.style.background).not.toBe('');
-    // Ainda desenha um ícone: o padrão, já que a pessoa não escolheu nenhum.
+    // It still draws an icon: the default one, since the person picked none.
     expect(avatar.querySelector('svg')).not.toBeNull();
     await unmount();
   });

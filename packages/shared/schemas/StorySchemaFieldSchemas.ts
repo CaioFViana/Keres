@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { AttributeType } from '../metadata/AttributeType';
 import { STORY_SCHEMA_ENTITY_TYPES } from '../metadata/StorySchemaEntityType';
 
-/** lowercase, snake_case, começa com letra - ver `deriveAttributeKey` em `utils/attributeKey.ts`. */
+/** lowercase, snake_case, starts with a letter - see `deriveAttributeKey` in `utils/attributeKey.ts`. */
 export const AttributeKeyRegex = /^[a-z][a-z0-9_]*$/;
 
 export const StorySchemaEntityTypeSchema = z.enum(STORY_SCHEMA_ENTITY_TYPES);

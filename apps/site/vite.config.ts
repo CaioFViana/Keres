@@ -8,11 +8,11 @@ import { keresFavicon, keresLogo } from './vite.keresIcon';
 const siteDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * GitHub Pages trata o repositório como um site de projeto (`/<repo>/`). Sem `base`
- * certo, os assets 404. Em desenvolvimento a raiz é `/`, para `vite dev` abrir direto.
+ * GitHub Pages treats the repository as a project site (`/<repo>/`). Without the right
+ * `base`, the assets 404. In development the root is `/`, so `vite dev` opens directly.
  *
- * `VITE_BASE` existe para o workflow de Pages injetar o nome real do repositório —
- * maiúsculas inclusas — em vez de assumir `/keres/`.
+ * `VITE_BASE` exists so the Pages workflow can inject the real repository name - uppercase
+ * letters included - instead of assuming `/keres/`.
  */
 function publicBase(command: 'build' | 'serve'): string {
   if (process.env.VITE_BASE) {
@@ -23,10 +23,10 @@ function publicBase(command: 'build' | 'serve'): string {
 }
 
 /**
- * GitHub Pages corre Jekyll por omissão (o que ignora pastas que começam com `_`)
- * e não tem fallback de SPA: um refresh em qualquer caminho que não seja a raiz
- * vira 404. `.nojekyll` desliga o Jekyll; copiar `index.html` para `404.html` faz
- * o GitHub devolver a landing, que o navegador trata como a home.
+ * GitHub Pages runs Jekyll by default (which ignores folders starting with `_`) and has no
+ * SPA fallback: a refresh on any path other than the root turns into a 404. `.nojekyll`
+ * turns Jekyll off; copying `index.html` to `404.html` makes GitHub return the landing page,
+ * which the browser treats as the home page.
  */
 function githubPagesExtras(): Plugin {
   return {

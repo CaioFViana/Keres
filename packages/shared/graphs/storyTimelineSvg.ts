@@ -45,8 +45,8 @@ export function renderStoryTimelineSvg(
     );
   } else {
     body.push(
-      // Abaixo da legenda, nunca em cima dela: com poucos capítulos a linha subia até os 68px
-      // do rodapé do cabeçalho e as duas frases se sobrepunham.
+      // Below the legend, never on top of it: with few chapters the line rose to the header's 68px footer
+      // and the two sentences overlapped.
       `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_PADDING}" y="${Math.max(86, startY - 20 - layout.chapterLaneCount * 18)}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.storyDuration.title)}${options.storyDuration.value ? `: ${escapeXml(options.storyDuration.value)}` : ''}</text>`,
     );
     layout.chapters.forEach((chapter) =>
@@ -63,9 +63,9 @@ export function renderStoryTimelineSvg(
     const barWidth = Math.max(4, Math.abs(row.barEnd - row.barStart));
     body.push(
       `<rect x="${TIMELINE_PADDING}" y="${y}" width="${layout.width - TIMELINE_PADDING * 2}" height="${TIMELINE_ROW_HEIGHT}" fill="${index % 2 ? options.colors.surface : options.colors.background}" stroke="${options.colors.border}" stroke-width="0.4"/>`,
-      // O nome da cena e o do capítulo dividem a mesma coluna: o segundo é encostado à
-      // direita, e o primeiro é cortado pelo espaço que sobra. Cortar os dois por um número
-      // fixo de caracteres fazia os dois se atropelarem em títulos longos.
+      // The scene's name and the chapter's share the same column: the second is flush right, and the first
+      // is cut by whatever space is left. Cutting both at a fixed number of characters made the two run
+      // into each other on long titles.
       ...(() => {
         const chapterLabel = truncate(row.chapterName, 14);
         const chapterWidth = chapterLabel.length * 5;

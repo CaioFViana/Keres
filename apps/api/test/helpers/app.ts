@@ -5,9 +5,9 @@ import { createApp } from '../../src/index';
 const API_PREFIX = '/api';
 
 /**
- * A aplicação real, montada uma vez por arquivo de teste e exercitada em memória por
- * `app.handle(new Request(...))` - mesmo caminho que `test/health/kerescheck.test.ts` já usa.
- * Sem porta aberta: o que se testa é a aplicação, não o servidor HTTP do runtime.
+ * The real application, mounted once per test file and exercised in memory through
+ * `app.handle(new Request(...))` - the same path `test/health/kerescheck.test.ts` already uses. No
+ * open port: what is tested is the application, not the runtime's HTTP server.
  */
 let appPromise: Promise<Awaited<ReturnType<typeof createApp>>> | null = null;
 
@@ -23,9 +23,9 @@ export interface ApiResponse<T = any> {
 }
 
 export interface RequestOptions {
-  /** Objeto simples vira JSON; um `FormData` é enviado como multipart, sem cabeçalho manual. */
+  /** A plain object becomes JSON; a `FormData` is sent as multipart, with no manual header. */
   body?: unknown;
-  /** Enviado como `Authorization: Bearer`. Omitir para exercitar o caminho não autenticado. */
+  /** Sent as `Authorization: Bearer`. Omit it to exercise the unauthenticated path. */
   token?: string;
   headers?: Record<string, string>;
   query?: Record<string, string | number | boolean | undefined>;
@@ -41,7 +41,7 @@ export async function request<T = any>(
   const headers: Record<string, string> = { ...options.headers };
   let body: string | FormData | undefined;
   if (options.body instanceof FormData) {
-    // Sem `content-type` manual: só o próprio `Request` sabe gerar o boundary do multipart.
+    // No manual `content-type`: only the `Request` itself knows how to generate the multipart boundary.
     body = options.body;
   } else if (options.body !== undefined) {
     headers['content-type'] = 'application/json';
@@ -92,11 +92,11 @@ export interface TestUser {
 }
 
 /**
- * Cria um usuário pela rota real de registro e devolve credenciais utilizáveis.
+ * Creates a user through the real registration route and returns usable credentials.
  *
- * Passar pela rota (em vez de inserir na tabela) é deliberado: assim o usuário nasce com o
- * mesmo tier padrão, a mesma `tag` e a mesma senha hasheada que um usuário de verdade, e um
- * teste nunca passa por depender de um estado que a aplicação não produziria.
+ * Going through the route (instead of inserting into the table) is deliberate: that way the user is
+ * born with the same default tier, the same `tag` and the same hashed password as a real user, and a
+ * test never passes by depending on state the application would not produce.
  */
 export async function registerUser(
   username = `user_${ulid().slice(-10).toLowerCase()}`,

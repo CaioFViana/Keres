@@ -10,10 +10,10 @@ const TRACK_HEIGHT = 12;
 const WIDTH = 720;
 
 /**
- * A cobertura das tramas como SVG, no mesmo espírito de `presenceMatrixSvg`: o que a tela
- * mostra, num arquivo que a pessoa pode levar embora.
+ * Plot coverage as SVG, in the same spirit as `presenceMatrixSvg`: what the screen shows, in a
+ * file the person can take with them.
  *
- * Cada barra é dividida por capítulo, na ordem narrativa - ver `plotCoverageLayout`.
+ * Each bar is split by chapter, in narrative order - see `plotCoverageLayout`.
  */
 export function renderPlotCoverageSvg(
   entries: PlotCoverageEntry[],
@@ -28,7 +28,7 @@ export function renderPlotCoverageSvg(
     primary: string;
   },
 ): string {
-  // A legenda só existe se houver capítulo desenhado em alguma barra.
+  // The legend only exists if some bar has a chapter drawn in it.
   const legend = entries
     .flatMap((entry) => entry.segments)
     .reduce<{ name: string; color: string }[]>((unique, segment) => {
@@ -70,8 +70,8 @@ export function renderPlotCoverageSvg(
       `<rect x="${PADDING}" y="${y + 24}" width="${trackWidth}" height="${TRACK_HEIGHT}" rx="${TRACK_HEIGHT / 2}" fill="${options.surface}" stroke="${options.border}"/>`,
     );
 
-    // Os pedaços são desenhados encostados, da esquerda para a direita, na ordem dos
-    // capítulos: a largura somada é a cobertura, e a composição diz de onde ela vem.
+    // The pieces are drawn flush against each other, left to right, in chapter order: the summed width
+    // is the coverage, and the composition says where it comes from.
     let cursor = PADDING;
     entry.segments.forEach((segment, position) => {
       const width = (trackWidth * segment.percentage) / 100;
@@ -79,8 +79,8 @@ export function renderPlotCoverageSvg(
       const isFirst = position === 0;
       const isLast = position === entry.segments.length - 1;
       const radius = TRACK_HEIGHT / 2;
-      // Só as pontas da barra são arredondadas; emendas no meio ficam retas para os pedaços
-      // parecerem um trilho contínuo, e não pastilhas soltas.
+      // Only the bar's ends are rounded; joints in the middle stay square so the pieces look like a
+      // continuous rail rather than loose pills.
       const shape =
         isFirst || isLast
           ? `<path d="${roundedSegment(cursor, y + 24, width, TRACK_HEIGHT, isFirst ? radius : 0, isLast ? radius : 0)}" fill="${segment.color}"/>`
@@ -93,7 +93,7 @@ export function renderPlotCoverageSvg(
   return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${height}" viewBox="0 0 ${WIDTH} ${height}" font-family="Helvetica, Arial, sans-serif"><title>${escapeXml(options.title)}</title><desc>${escapeXml(options.subtitle)}</desc>${body.join('')}</svg>`;
 }
 
-/** Retângulo com raio só nas pontas pedidas, para emendar pedaços sem costura visível. */
+/** A rectangle with a radius only on the requested ends, so pieces can be joined with no visible seam. */
 function roundedSegment(
   x: number,
   y: number,

@@ -67,8 +67,8 @@ export const syncRoute = new Elysia()
         message: `Sync updates received and processed for story ${storyId}`,
         processedUpdates: parsedUpdates.length,
         serverMaxOperationVersion: lastOperationVersion,
-        // Resultado por operação: sem isto o cliente não distingue quais operações passaram
-        // e quais foram recusadas, e acaba marcando as recusadas como sincronizadas.
+        // A per-operation result: without it the client cannot tell which operations went through and which
+        // were refused, and ends up marking the refused ones as synchronized.
         applied,
         conflicts,
       };

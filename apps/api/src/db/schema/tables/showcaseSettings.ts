@@ -1,19 +1,19 @@
 import { boolean, table, text, timestampNow } from '../columns';
 
 /**
- * Configuração global do Showcase. Tabela de uma linha só, mesmo padrão de
- * `registration_settings`: `id` é sempre o literal 'singleton', e `ShowcaseSettingsService`
- * cria a linha sob demanda na primeira leitura - nenhuma migração precisa inserir dados.
+ * Global Showcase configuration. A single-row table, the same pattern as `registration_settings`:
+ * `id` is always the literal 'singleton', and `ShowcaseSettingsService` creates the row on demand at
+ * the first read - no migration has to insert data.
  *
- * Desligado por padrão de propósito: subir a API não pode, sozinho, colocar um site público no
- * ar. Quem hospeda decide se esse servidor tem cara pública ou não.
+ * Off by default on purpose: bringing the API up must not, on its own, put a public site on the air.
+ * Whoever hosts it decides whether that server has a public face.
  */
 export const SHOWCASE_SETTINGS_SINGLETON_ID = 'singleton';
 
 export const showcaseSettings = table('showcase_settings', {
   id: text('id').primaryKey(),
   isShowcaseEnabled: boolean('is_showcase_enabled').notNull().default(false),
-  /** O cliente Expo hospedado em `/`; desligado, a raiz vira a landing mínima do servidor. */
+  /** The Expo client hosted at `/`; when off, the root becomes the server's minimal landing page. */
   isHostedClientEnabled: boolean('is_hosted_client_enabled').notNull().default(true),
   updatedAt: timestampNow('updated_at'),
 });

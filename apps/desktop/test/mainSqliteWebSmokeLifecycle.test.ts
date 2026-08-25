@@ -20,8 +20,8 @@ const electronMocks = vi.hoisted(() => {
   const BrowserWindow = vi.fn(function () {
     const window = {
       loadURL: vi.fn(async () => {}),
-      // `setWindowOpenHandler` faz parte do desvio de links para o navegador do sistema
-      // (main.ts); sem ele no dublê, `createWindow` explode antes de carregar a página.
+      // `setWindowOpenHandler` is part of routing links to the system browser (main.ts); without it in
+      // the double, `createWindow` blows up before loading the page.
       webContents: { on: vi.fn(), executeJavaScript, setWindowOpenHandler: vi.fn() },
     };
     windows.push(window);

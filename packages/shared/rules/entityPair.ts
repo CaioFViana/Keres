@@ -5,12 +5,12 @@ export interface EntityPairRef {
 }
 
 /**
- * Ordenação canônica de um par não-ordenado.
+ * Canonical ordering of an unordered pair.
  *
- * Um vínculo "Veja também" entre A e B é o mesmo vínculo entre B e A, mas o banco guarda duas
- * colunas. Sem uma ordem fixa, o mesmo par entra duas vezes - a checagem de duplicidade procura
- * na ordem em que chegou e não encontra o registro guardado na ordem contrária. Cliente e
- * servidor precisam ordenar igual, e cada um tinha a sua cópia da função.
+ * A "See also" link between A and B is the same link between B and A, but the database stores two
+ * columns. Without a fixed order, the same pair goes in twice - the duplicate check looks in the
+ * order it arrived and does not find the row stored the other way around. Client and server have to
+ * sort identically, and each one had its own copy of the function.
  */
 export function sortEntityPair(a: EntityPairRef, b: EntityPairRef): [EntityPairRef, EntityPairRef] {
   return `${a.type}:${a.id}` <= `${b.type}:${b.id}` ? [a, b] : [b, a];
@@ -20,5 +20,5 @@ export function isSameEntity(a: EntityPairRef, b: EntityPairRef): boolean {
   return a.type === b.type && a.id === b.id;
 }
 
-/** Mensagem única para as duas pontas recusarem o vínculo de uma entidade com ela mesma. */
+/** A single message for both ends to refuse linking an entity to itself. */
 export const SELF_LINK_ERROR = 'Validation Error: an entity cannot be See-Also-linked to itself.';

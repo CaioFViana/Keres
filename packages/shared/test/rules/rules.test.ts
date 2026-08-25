@@ -5,9 +5,9 @@ import { buildReorderItems, reorderIndicesProblem } from '../../rules/reorderInd
 import { ownerOnlyFieldsIn, STORY_OWNER_ONLY_FIELDS } from '../../rules/storyOwnerFields';
 
 /**
- * As regras que valem nos dois lados da sincronização. Cada uma delas já existiu escrita duas
- * vezes - cliente e servidor - e o teste vive aqui justamente para haver um lugar só onde a
- * regra é afirmada.
+ * The rules that hold on both sides of synchronization. Each of them once existed written twice -
+ * client and server - and the test lives here precisely so there is a single place where the rule is
+ * asserted.
  */
 describe('cenas de início e fim numa história linear', () => {
   it('não desmarca nada quando já há no máximo uma de cada', () => {
@@ -69,7 +69,7 @@ describe('índices de reordenação', () => {
     expect(reorderIndicesProblem([])).toBeNull();
   });
 
-  /** O produtor e o validador têm que concordar: é o ponto de existir os dois aqui. */
+  /** The producer and the validator have to agree: that is the point of having both here. */
   it('produz uma lista que o próprio validador aceita', () => {
     const items = buildReorderItems(['x', 'y', 'z'], (id) => id);
 
@@ -121,7 +121,7 @@ describe('campos que só o dono altera', () => {
     expect(ownerOnlyFieldsIn(undefined)).toEqual([]);
   });
 
-  /** `undefined` é "não mexeu"; `null` é uma alteração e tem que ser barrada. */
+  /** `undefined` is "untouched"; `null` is a change and has to be blocked. */
   it('considera null uma tentativa de alteração', () => {
     expect(ownerOnlyFieldsIn({ favoriteBehavior: null })).toEqual(['favoriteBehavior']);
   });

@@ -4,10 +4,10 @@ import { showcaseSettingsService } from '../../services/ShowcaseSettingsService'
 import { requireAdmin } from '../../utils/adminAuth';
 
 /**
- * A chave do site público, na mão de quem hospeda o servidor.
+ * The public site's switch, in the hands of whoever hosts the server.
  *
- * A vitrine pode ser desligada sem apagar o que já foi publicado. O cliente hospedado em `/`
- * tem controle próprio e, desligado, dá lugar à landing mínima do servidor.
+ * The showcase can be turned off without erasing what has already been published. The client hosted
+ * at `/` has a control of its own and, when off, gives way to the server's minimal landing page.
  */
 export const adminShowcaseRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)

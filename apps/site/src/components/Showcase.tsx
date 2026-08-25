@@ -5,14 +5,14 @@ import { useSiteTheme } from '../theme/SiteThemeProvider';
 import { ScreenshotLightbox } from './ScreenshotLightbox';
 
 /**
- * O app, fotografado.
+ * The app, photographed.
  *
- * As imagens vêm de `apps/desktop/scripts/capture-screens.cjs`: o app de verdade aberto dentro
- * do Electron, com uma história de exemplo instalada, no idioma e no tema pedidos. Não há
- * réplica em HTML nenhuma aqui - a tentativa anterior reconstruía as telas com
- * `react-native-web` e nunca ficava igual ao que o usuário vê.
+ * The images come from `apps/desktop/scripts/capture-screens.ts`: the real app opened inside
+ * Electron, with an example story installed, in the requested language and theme. There is no
+ * HTML replica here - the earlier attempt rebuilt the screens with `react-native-web` and never
+ * looked like what the user sees.
  *
- * Idioma e tema da página escolhem o arquivo, então a seção acompanha quem está lendo.
+ * The page's language and theme pick the file, so the section follows whoever is reading.
  */
 export function Showcase() {
   const { t, i18n } = useTranslation();

@@ -19,9 +19,9 @@ import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettin
 import { TierApiService } from '../../src/api/TierApiService';
 
 /**
- * Estes módulos são finos de propósito, mas são o mapa entre a tela e a rota: um verbo ou uma
- * URL errada aqui só aparece em runtime, como um 404 ou - pior - uma escrita indo para o
- * recurso errado. O que se verifica é exatamente isso, mais o desembrulho do `data`.
+ * These modules are thin on purpose, but they are the map between screen and route: a wrong verb
+ * or URL here only shows up at runtime, as a 404 or - worse - a write going to the wrong resource.
+ * That is exactly what is checked here, plus the unwrapping of `data`.
  */
 beforeEach(() => {
   vi.clearAllMocks();

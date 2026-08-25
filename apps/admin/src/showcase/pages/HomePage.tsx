@@ -4,7 +4,7 @@ import type { ShowcaseStoryCard } from '@keres/shared';
 import { fetchStories } from '../api/showcaseApi';
 import { StoryCard } from '../components/StoryCard';
 
-/** De quanto em quanto tempo a lista é reconsultada. Com ETag, quase sempre custa um 304. */
+/** How often the list is polled. With an ETag, it almost always costs a 304. */
 const POLL_INTERVAL_MS = 30_000;
 
 export function HomePage() {
@@ -17,7 +17,7 @@ export function HomePage() {
     try {
       const result = await fetchStories(etagRef.current);
       etagRef.current = result.etag;
-      // `null` = 304: nada mudou, e sobrescrever o estado só causaria um re-render à toa.
+      // `null` = 304: nothing changed, and overwriting the state would only cause a pointless re-render.
       if (result.stories) {
         setStories(result.stories);
       }
@@ -30,8 +30,8 @@ export function HomePage() {
   useEffect(() => {
     void refresh();
     const timer = window.setInterval(() => void refresh(), POLL_INTERVAL_MS);
-    // Voltar para a aba é o momento mais provável de haver algo novo - não vale esperar o
-    // próximo tique do intervalo para descobrir isso.
+    // Coming back to the tab is the most likely moment for something new to exist - it is not worth
+    // waiting for the next interval tick to find that out.
     const onFocus = () => void refresh();
     window.addEventListener('focus', onFocus);
     return () => {

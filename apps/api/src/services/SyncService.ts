@@ -62,7 +62,7 @@ import { StatStrengthSyncHandler } from './entity-sync-handlers/StatStrengthSync
 import { StatSyncHandler } from './entity-sync-handlers/StatSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
-/** Campos de bookkeeping que nunca contam como "mudança de conteúdo" em `getChangedFieldsSinceVersion`. */
+/** Bookkeeping fields that never count as a "content change" in `getChangedFieldsSinceVersion`. */
 const CHANGED_FIELDS_BOOKKEEPING = new Set([
   'id',
   'storyId',
@@ -122,14 +122,13 @@ export class SyncService {
   }
 
   /**
-   * Aplica um lote de operações vindas de um cliente, uma a uma.
+   * Applies a batch of operations coming from a client, one at a time.
    *
-   * O lote deliberadamente *não* é tudo-ou-nada. Antes, a primeira operação recusada
-   * lançava e abortava o resto - mas as operações anteriores já tinham sido escritas nas
-   * tabelas de entidade e o log de operações só era gravado no fim, então o lote quebrado
-   * deixava o servidor com dados que nenhum outro cliente jamais veria. Agora cada
-   * operação é aplicada e registrada individualmente, e as recusadas voltam descritas em
-   * `conflicts` para o cliente resolver com o usuário.
+   * The batch is deliberately *not* all-or-nothing. Before, the first refused operation threw and
+   * aborted the rest - but the earlier operations had already been written to the entity tables and
+   * the operation log was only recorded at the end, so a broken batch left the server with data no
+   * other client would ever see. Now each operation is applied and recorded individually, and the
+   * refused ones come back described in `conflicts` for the client to resolve with the user.
    */
   async processAndRecordUpdates(
     userId: string,
@@ -169,10 +168,9 @@ export class SyncService {
     const applied: SyncAppliedOperation[] = [];
     const conflicts: SyncConflict[] = [];
     /**
-     * Entidades que já conflitaram neste lote. As operações seguintes sobre elas foram
-     * construídas em cima de uma base que acabamos de recusar, então aplicá-las
-     * corromperia o estado - são recusadas junto, e a tela de conflito trata a entidade
-     * como um caso único.
+     * Entities that already conflicted in this batch. The following operations on them were built on
+     * top of a base we have just refused, so applying them would corrupt the state - they are refused
+     * along with it, and the conflict screen treats the entity as a single case.
      */
     const blockedEntities = new Set<string>();
 
@@ -235,8 +233,8 @@ export class SyncService {
       }
 
       if (update.entity === 'Story' && update.type === 'update' && role !== 'owner') {
-        // A lista vem de `@keres/shared`: é a mesma que o cliente usa para recusar a edição
-        // antes de gravar no log de operações.
+        // The list comes from `@keres/shared`: it is the same one the client uses to refuse the edit before
+        // writing to the operation log.
         const attempted = ownerOnlyFieldsIn(
           (update as UpdateStoryUpdate).changes as Record<string, unknown> | undefined,
         );
@@ -275,25 +273,24 @@ export class SyncService {
             : update.version,
       });
 
-      /** Já estava aplicada: nada a escrever, mas o cliente precisa saber que passou. */
+      /** Already applied: nothing to write, but the client needs to know it went through. */
       let alreadyApplied = false;
-      /** Preenchido dentro da transação quando a operação grava algo de novo. */
+      /** Filled in inside the transaction when the operation writes something new. */
       let writeResult: {
         logged: { id: string; operationVersion: number };
         entityAfter: any;
       } | null = null;
 
       try {
-        // A escrita da entidade e o registro no log de operações rodam na mesma transação:
-        // sem isto, uma falha entre os dois passos (ex.: o processo cair) deixava a entidade
-        // mudada mas invisível para outros clientes, e um reenvio da mesma operação pelo
-        // próprio cliente que a originou batia um `version_conflict` falso contra o próprio
-        // trabalho dele. `db` resolve para esta transação em qualquer chamada feita durante
-        // `withTransaction`, incluindo dentro dos handlers de entidade - eles não precisam
-        // saber disso.
+        // Writing the entity and recording it in the operation log run in the same transaction: without
+        // that, a failure between the two steps (say, the process dying) left the entity changed but
+        // invisible to other clients, and a resend of the same operation by the very client that originated
+        // it hit a false `version_conflict` against its own work. `db` resolves to this transaction in any
+        // call made during `withTransaction`, including inside the entity handlers - they do not need to
+        // know about it.
         await withTransaction(async () => {
-          // Leitura dentro da transação: a decisão create-vs-alreadyApplied / not_found
-          // tem que ver a mesma linha que o write vai tocar.
+          // A read inside the transaction: the create-vs-alreadyApplied / not_found decision has to see the
+          // same row the write is going to touch.
           currentEntity = await handler.findById(entityId);
 
           if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
@@ -305,8 +302,8 @@ export class SyncService {
 
           if (update.type === 'create') {
             if (currentEntity) {
-              // Reenvio idempotente só se o payload descreve a mesma linha. Um create
-              // com o mesmo id e dados diferentes não é retry, é colisão.
+              // An idempotent resend only if the payload describes the same row. A create with the same id and
+              // different data is not a retry, it is a collision.
               if (
                 !handler.createPayloadMatches(currentEntity, (update as CreateStoryUpdate).data)
               ) {
@@ -320,8 +317,8 @@ export class SyncService {
               if (update.entity === 'Story') {
                 await tierEnforcementService.assertCanCreateStory(userId);
               } else if (update.entity !== 'Favorite' && update.entity !== 'Comment') {
-                // Comments são anotações, não conteúdo da história - não devem consumir nem
-                // ser bloqueados pelo limite de entidades do tier, mesmo padrão de Favorite.
+                // Comments are annotations, not story content - they must neither consume nor be blocked by the
+                // tier's entity limit, the same as Favorite.
                 await tierEnforcementService.assertCanCreateEntity(userId, storyId);
               }
               await handler.create(userId, storyId, update as CreateStoryUpdate);
@@ -336,14 +333,13 @@ export class SyncService {
             await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
           } else if (update.type === 'delete') {
             if (!currentEntity) {
-              // Excluir algo que o servidor não tem é o resultado desejado, não um erro.
+              // Deleting something the server does not have is the desired outcome, not an error.
               alreadyApplied = true;
             } else {
-              // Comentário: o dono da história pode excluir qualquer comentário (moderação);
-              // escritor/leitor só o próprio - mesmo com acesso de leitura a comentários
-              // desligado depois, o autor original (se writer/reader) só perde a capacidade de
-              // excluir o próprio; o dono sempre pode. Verificado aqui, não em
-              // CommentSyncHandler, porque `role` só está disponível nesta função.
+              // Comment: a story's owner can delete any comment (moderation); a writer/reader only their own -
+              // even with read access to comments turned off afterwards, the original author (if writer/reader)
+              // only loses the ability to delete their own; the owner always can. Checked here rather than in
+              // CommentSyncHandler, because `role` is only available in this function.
               if (
                 update.entity === 'Comment' &&
                 role !== 'owner' &&
@@ -371,8 +367,8 @@ export class SyncService {
 
           if (alreadyApplied) return;
 
-          // Versão da entidade *depois* da operação, lida de volta para que o cliente saiba
-          // sobre qual base as próximas edições dele se apoiam.
+          // The entity's version *after* the operation, read back so the client knows which base its next
+          // edits rest on.
           const entityAfter = await handler.findById(entityId).catch(() => undefined);
           const logged = await this.appendOperationLog({
             storyId,
@@ -391,9 +387,9 @@ export class SyncService {
         if (error instanceof SyncConflictError) {
           const context = conflictContext();
           const clientVersion = error.clientVersion ?? context.clientVersion;
-          // Só faz sentido pra `version_conflict` num `update` de uma entidade que ainda
-          // existe - as outras razões (exclusão, referência quebrada, validação...) não são
-          // "a base ficou velha", não têm um delta de campos pra calcular.
+          // It only makes sense for a `version_conflict` on an `update` of an entity that still exists - the
+          // other reasons (deletion, broken reference, validation...) are not "the base went stale", they have
+          // no field delta to compute.
           const changedFields =
             error.reason === 'version_conflict' &&
             update.type === 'update' &&
@@ -422,9 +418,9 @@ export class SyncService {
           );
           continue;
         }
-        // Falha inesperada ao aplicar esta operação. Registrada como conflito em vez de
-        // derrubar o lote: as outras operações do usuário ainda podem ser salvas, e o
-        // cliente para de reenviar em loop uma operação que nunca vai passar.
+        // An unexpected failure while applying this operation. Recorded as a conflict rather than taking the
+        // batch down: the user's other operations can still be saved, and the client stops resending in a
+        // loop an operation that will never go through.
         logger.error(`SyncService: failed to apply ${update.type} on ${entityKey}`, error);
         recordConflict(
           'unknown',
@@ -480,16 +476,16 @@ export class SyncService {
   }
 
   /**
-   * Quais campos realmente mudaram nesta entidade desde a versão que o cliente leu como base -
-   * a diferença entre "a base do cliente ficou velha" (`version_conflict`, que só compara o
-   * número da versão) e "algo que o cliente também editou de fato mudou". Sem isto, o cliente
-   * não tem como saber se um `version_conflict` foi causado por uma edição num campo diferente
-   * do seu (perfeitamente mesclável) ou no mesmo campo (uma decisão real) - `serverEntity`
-   * sozinho não chega a essa resposta, porque o valor atual de um campo que o cliente está
-   * editando sempre "parece" diferente do valor que o cliente quer escrever, tenha o servidor
-   * mexido nele ou não. `entityVersion` (a versão da entidade *depois* de cada operação, ver
-   * `db/schema/tables/operationLog.ts`) é o que permite reconstruir exatamente as operações
-   * ocorridas entre a base do cliente e agora.
+   * Which fields actually changed on this entity since the version the client read as its base - the
+   * difference between "the client's base went stale" (`version_conflict`, which only compares the
+   * version number) and "something the client also edited genuinely changed". Without it, the client
+   * has no way to know whether a `version_conflict` was caused by an edit to a field other than its
+   * own (perfectly mergeable) or to the same field (a real decision) - `serverEntity` alone does not
+   * get to that answer, because the current value of a field the client is editing always "looks"
+   * different from the value the client wants to write, whether the server touched it or not.
+   * `entityVersion` (the entity's version *after* each operation, see
+   * `db/schema/tables/operationLog.ts`) is what makes it possible to reconstruct exactly the
+   * operations that happened between the client's base and now.
    */
   private async getChangedFieldsSinceVersion(
     storyId: string,
@@ -497,13 +493,12 @@ export class SyncService {
     entityId: string,
     sinceVersion: number,
   ): Promise<string[] | undefined> {
-    // Sem filtro por `entityVersion` aqui de propósito: uma linha com `entity_version` nulo
-    // (gravada antes dessa coluna existir, ver seu comentário em `db/schema/tables/operationLog.ts`)
-    // não tem como ser comparada contra `sinceVersion` - `gt(entityVersion, sinceVersion)` no
-    // Postgres nunca é verdadeiro para NULL, então essa linha simplesmente desapareceria da
-    // união sem nenhum aviso, e o conjunto de campos mudados voltaria incompleto (podendo tanto
-    // esconder uma disputa real quanto, na direção oposta, mesclar por cima dela em silêncio).
-    // Buscar tudo e decidir em código deixa esse caso detectável.
+    // Deliberately no filter on `entityVersion` here: a row with a null `entity_version` (written before
+    // that column existed, see its comment in `db/schema/tables/operationLog.ts`) cannot be compared
+    // against `sinceVersion` - `gt(entityVersion, sinceVersion)` in Postgres is never true for NULL, so
+    // that row would simply disappear from the union with no warning, and the set of changed fields
+    // would come back incomplete (possibly hiding a real dispute, or, in the other direction, merging
+    // silently over it). Fetching everything and deciding in code keeps that case detectable.
     const rows = await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
@@ -522,9 +517,9 @@ export class SyncService {
       if ((row.entityVersion as number) <= sinceVersion) continue;
       const payload = row.payload as Record<string, unknown> | null;
       for (const key of Object.keys(payload ?? {})) {
-        // `version` é a base que cada operação declarou, não um campo de conteúdo - está
-        // presente em todo payload de update por construção, então incluí-lo aqui faria
-        // parecer que "a versão" é sempre um campo em disputa.
+        // `version` is the base each operation declared, not a content field - it is present in every update
+        // payload by construction, so including it here would make it look as if "the version" were always a
+        // disputed field.
         if (CHANGED_FIELDS_BOOKKEEPING.has(key)) continue;
         fields.add(key);
       }
@@ -533,13 +528,13 @@ export class SyncService {
   }
 
   /**
-   * Histórias enviadas ao servidor como snapshot podem já conter favoritos. Essas linhas
-   * não passaram pelo SyncService e, portanto, não possuem uma operação que os outros
-   * colaboradores possam receber. Ao tornar os favoritos públicos, materializamos uma
-   * operação de criação para cada linha ainda sem histórico.
+   * Stories uploaded to the server as a snapshot may already contain favourites. Those rows never went
+   * through SyncService and therefore have no operation the other collaborators could receive. When
+   * favourites are made public, we materialise a create operation for each row that still has no
+   * history.
    *
-   * O bloqueio da Story serializa dois pulls que tentem fazer a reparação ao mesmo tempo.
-   * O id do log continua sendo um ULID normal; a detecção é feita pelo id da entidade.
+   * The lock on the Story serialises two pulls trying to run the repair at the same time. The log's id
+   * is still an ordinary ULID; detection is by the entity's id.
    */
   private async ensurePublicFavoriteOperationLogs(
     storyId: string,
@@ -564,9 +559,9 @@ export class SyncService {
               eq(operationLog.operationType, 'create'),
             ),
           ),
-        // Mesmo contador que `appendOperationLog` usa - o `for update` acima garante que os
-        // dois não pisam um no outro: qualquer push concorrente que tente incrementar
-        // `lastOperationVersion` desta história espera esta transação terminar.
+        // The same counter `appendOperationLog` uses - the `for update` above guarantees the two do not step
+        // on each other: any concurrent push trying to increment this story's `lastOperationVersion` waits
+        // for this transaction to finish.
         tx
           .select({ lastOperationVersion: stories.lastOperationVersion })
           .from(stories)
@@ -609,15 +604,15 @@ export class SyncService {
   }
 
   /**
-   * Grava uma operação no log já com o próximo `operationVersion` da história.
+   * Records an operation in the log already carrying the story's next `operationVersion`.
    *
-   * A numeração vem de um `UPDATE` de uma linha só em `stories.lastOperationVersion` (ver
-   * comentário na própria coluna), não mais de `max(operation_log.operation_version)`: dois
-   * pushes concorrentes na mesma história agora nunca recebem o mesmo número, o que antes
-   * fazia um dos dois ficar invisível para sempre nos pulls incrementais de outros clientes.
+   * The numbering comes from a single-row `UPDATE` on `stories.lastOperationVersion` (see the comment
+   * on the column itself), no longer from `max(operation_log.operation_version)`: two concurrent pushes
+   * on the same story now never receive the same number, which used to make one of the two invisible
+   * forever in other clients' incremental pulls.
    *
-   * Pública para que AdminRecoveryService possa registrar uma restauração feita pelo
-   * painel administrativo com a mesma lógica de numeração, em vez de duplicá-la.
+   * Public so AdminRecoveryService can record a restore made through the administration panel with the
+   * same numbering logic, instead of duplicating it.
    */
   async appendOperationLog(args: {
     storyId: string;
@@ -643,11 +638,10 @@ export class SyncService {
       };
     }
 
-    // Contador atômico em vez de `coalesce(max(...), 0) + 1`: essa subquery deixava duas
-    // chamadas concorrentes para a mesma história calcularem o mesmo próximo número antes de
-    // qualquer uma commitar (nada as serializava). O `UPDATE` de uma linha só é, em si,
-    // serializado pelo lock de linha do Postgres - a segunda chamada concorrente espera a
-    // primeira committar e enxerga o valor já incrementado.
+    // An atomic counter instead of `coalesce(max(...), 0) + 1`: that subquery let two concurrent calls
+    // for the same story compute the same next number before either committed (nothing serialised them).
+    // A single-row `UPDATE` is itself serialised by Postgres's row lock - the second concurrent call
+    // waits for the first to commit and sees the already-incremented value.
     const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await db
       .update(stories)
       .set({ lastOperationVersion: sql`${stories.lastOperationVersion} + 1` })
@@ -755,9 +749,8 @@ export class SyncService {
         op.userId === userId,
     );
 
-    // Um cursor próprio permite publicar também favoritos anteriores à troca de comportamento.
-    // O Map remove a sobreposição natural com a consulta principal quando ambos os cursores
-    // ainda estão próximos.
+    // A cursor of its own makes it possible to publish favourites predating the behaviour change too.
+    // The Map removes the natural overlap with the main query while both cursors are still close together.
     const historicalPublicFavorites =
       story.favoriteBehavior === 'individual_public'
         ? await db.query.operationLog.findMany({
@@ -795,12 +788,12 @@ export class SyncService {
         operationTime = op.createdAt; // Start with Date object from DB
 
         /**
-         * A versão da *entidade* após esta operação. `operationVersion` é a posição da
-         * operação na sequência da história - um número muito maior - e mandá-lo no lugar
-         * inflava a versão que o cliente guarda, fazendo toda checagem de conflito passar.
+         * The *entity's* version after this operation. `operationVersion` is the operation's position in the
+         * story's sequence - a far larger number - and sending it in this field inflated the version the
+         * client stores, making every conflict check pass.
          *
-         * Linhas gravadas antes da coluna `entityVersion` existir não têm o dado; para elas
-         * o comportamento antigo é mantido, porque não há de onde tirar o valor correto.
+         * Rows written before the `entityVersion` column existed do not have the data; for those the old
+         * behaviour is kept, because there is nowhere to take the correct value from.
          */
         const resultingEntityVersion = op.entityVersion ?? op.operationVersion;
 
@@ -929,10 +922,10 @@ export class SyncService {
           .where(eq(operationLog.storyId, storyId))
       ).at(0)?.maxVersion || 0;
 
-    // O log continua sendo usado para realtime e para a tela de operações, mas não é
-    // uma fonte confiável para reconstruir snapshots importados antes da existência dos
-    // favoritos públicos. Enviar o estado autoritativo dos *outros* usuários faz cada
-    // cliente convergir sem tocar em um favorito próprio que ainda esteja pendente de push.
+    // The log is still used for realtime and for the operations screen, but it is not a reliable source
+    // for reconstructing snapshots imported before public favourites existed. Sending the authoritative
+    // state of *other* users makes each client converge without touching a favourite of its own that is
+    // still pending a push.
     const publicFavorites =
       story.favoriteBehavior === 'individual_public'
         ? await db.query.favorites.findMany({

@@ -152,9 +152,8 @@ export const authRoutes = new Elysia()
       // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
-      // Avaliado ao vivo a cada tentativa (ver RegistrationSettingsService) em vez de
-      // confiar num booleano que ficaria desatualizado assim que o teto de usuários fosse
-      // atingido no modo de gestão automática.
+      // Evaluated live on every attempt (see RegistrationSettingsService) rather than trusting a boolean
+      // that would go stale as soon as the user ceiling was reached in automatic management mode.
       const isOpen = await registrationSettingsService.isOpenForRegistration();
       if (!isOpen) {
         set.status = 403;
@@ -205,10 +204,9 @@ export const authRoutes = new Elysia()
               })
               .returning({ id: users.id, username: users.username, tag: users.tag });
           } catch (retryError) {
-            // A tag era só a primeira restrição que o banco reclamou: o username também está
-            // tomado, e a tag nova não muda isso. Qual das duas o banco reporta primeiro varia
-            // de motor para motor - o Postgres acusa o username, o SQLite acusa a tag -, então
-            // o desfecho não pode depender disso.
+            // The tag was only the first constraint the database complained about: the username is taken too, and
+            // a new tag does not change that. Which of the two the database reports first varies from engine to
+            // engine - Postgres flags the username, SQLite flags the tag - so the outcome must not depend on it.
             if (isUniqueViolation(retryError)) {
               set.status = 409;
               return { message: 'User already exists' };
@@ -232,8 +230,8 @@ export const authRoutes = new Elysia()
         return { message: 'Failed to create user' };
       }
 
-      // Mostrados só agora, em texto puro - depois disto só o hash de cada um existe (ver
-      // RecoveryCodeService). É a única chance que este usuário tem de salvá-los.
+      // Shown only now, in plain text - after this only each one's hash exists (see RecoveryCodeService).
+      // It is this user's only chance to save them.
       const recoveryCodes = await recoveryCodeService.generateCodes(newUser.id);
 
       // Sign JWT with userId and username as per the schema defined in index.ts
@@ -313,8 +311,8 @@ export const authRoutes = new Elysia()
         throw error;
       }
 
-      // Mesma resposta de /login: a pessoa acabou de provar quem é tão bem quanto uma senha
-      // provaria, não faz sentido pedir pra ela logar de novo em seguida.
+      // The same response as /login: the person has just proved who they are as well as a password would,
+      // so it makes no sense to ask them to log in again right afterwards.
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
 

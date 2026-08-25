@@ -10,15 +10,16 @@ interface ScreenshotLightboxProps {
 }
 
 /**
- * A foto ampliada, sobre a página.
+ * The enlarged screenshot, on top of the page.
  *
- * `<dialog>` nativo, e não um `div` com `position: fixed`: Esc fecha, o resto da página fica
- * inerte e o foco não escapa para trás do fundo - tudo isso de graça e sem biblioteca.
+ * A native `<dialog>`, not a `div` with `position: fixed`: Esc closes it, the rest of the page
+ * goes inert and focus does not escape behind the backdrop - all of it for free and with no
+ * library.
  *
- * O zoom é um alternador, não um controle contínuo: as fotos têm 1440px e a página as encolhe
- * para caber, então os dois estados que interessam são "a tela inteira" e "tamanho real, onde
- * o texto das cenas volta a ser legível". Ampliada, a imagem rola dentro da moldura, e o ponto
- * clicado é o que fica no meio.
+ * Zoom is a toggle, not a continuous control: the screenshots are 1440px wide and the page
+ * shrinks them to fit, so the two states that matter are "the whole screen" and "real size,
+ * where the scene text becomes readable again". Enlarged, the image scrolls inside the frame,
+ * and the point that was clicked is the one that ends up in the middle.
  */
 export function ScreenshotLightbox({
   source,
@@ -34,15 +35,15 @@ export function ScreenshotLightbox({
 
   useEffect(() => {
     const element = dialog.current;
-    // Sem limpeza que feche o diálogo: `close()` dispara o evento `close` nativo, que é o mesmo
-    // caminho do Esc e chamaria `onClose`. Em `StrictMode` o efeito monta, limpa e monta de
-    // novo - e a foto se fechava sozinha no primeiro clique. Desmontar já tira o elemento do
-    // DOM, que é o que fecha a camada de topo. A guarda cobre a segunda montagem: `showModal`
-    // num diálogo já aberto lança.
+    // No cleanup that closes the dialog: `close()` fires the native `close` event, which is the
+    // same path as Esc and would call `onClose`. In `StrictMode` the effect mounts, cleans up and
+    // mounts again - and the screenshot closed itself on the first click. Unmounting already
+    // removes the element from the DOM, which is what closes the top layer. The guard covers the
+    // second mount: `showModal` on an already-open dialog throws.
     if (element && !element.open) element.showModal?.();
   }, []);
 
-  /** Onde o leitor clicou, em fração da imagem: é o ponto que fica no meio depois de ampliar. */
+  /** Where the reader clicked, as a fraction of the image: the point that ends up centred after zooming. */
   const focus = useRef({ horizontal: 0.5, vertical: 0.5 });
 
   const toggleZoom = (event: MouseEvent<HTMLImageElement>) => {
@@ -54,9 +55,9 @@ export function ScreenshotLightbox({
     setZoomed((previous) => !previous);
   };
 
-  // `useLayoutEffect`, e não `requestAnimationFrame`: o efeito de layout roda depois do DOM já
-  // ter a imagem em tamanho real, e roda mesmo com a aba escondida - onde o rAF não dispara e
-  // a rolagem ficaria no canto.
+  // `useLayoutEffect`, not `requestAnimationFrame`: the layout effect runs after the DOM already
+  // has the image at full size, and it runs even with the tab hidden - where rAF does not fire
+  // and the scroll would stay in the corner.
   useLayoutEffect(() => {
     const area = viewport.current;
     if (!zoomed || !area) return;
@@ -70,8 +71,8 @@ export function ScreenshotLightbox({
       className="lightbox"
       aria-label={title}
       onClose={onClose}
-      // Clique no fundo fecha: com o `<dialog>` esticado, o alvo só é o próprio elemento
-      // quando o clique cai fora do conteúdo.
+      // Clicking the backdrop closes it: with the `<dialog>` stretched out, the target is the element
+      // itself only when the click lands outside the content.
       onClick={(event) => {
         if (event.target === dialog.current) onClose();
       }}

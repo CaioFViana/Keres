@@ -4,12 +4,12 @@ const COMBINING_MARKS = new RegExp(
 );
 
 /**
- * "Power Type" -> "power_type". Vive em `packages/shared` (não só no client) para que a API
- * consiga re-derivar/validar a chave de forma independente do que o cliente mandou, em vez de
- * só confiar no valor recebido.
+ * "Power Type" -> "power_type". It lives in `packages/shared` (not only in the client) so the API
+ * can re-derive/validate the key independently of what the client sent, instead of merely trusting
+ * the received value.
  *
- * Resultado sempre casa com `AttributeKeyRegex` (começa com letra, só [a-z0-9_]): um nome
- * começando com dígito ou vazio ganha o prefixo `f_` para nunca falhar a validação do schema.
+ * The result always matches `AttributeKeyRegex` (it starts with a letter, only [a-z0-9_]): a name
+ * starting with a digit, or an empty one, gets the `f_` prefix so it never fails schema validation.
  */
 export function deriveAttributeKey(displayName: string): string {
   const base = displayName

@@ -26,14 +26,14 @@ describe('desktop IPC security', () => {
 });
 
 describe('leaving the app for the system browser', () => {
-  // O app é a janela de um programa, não um navegador: uma página aberta aqui dentro ficaria
-  // sem barra de endereço, sem histórico e sem os logins que a pessoa já tem.
+  // The app is a program's window, not a browser: a page opened in here would have no address bar,
+  // no history and none of the logins the person already has.
   it('sends http and https addresses out', () => {
     expect(isExternalBrowserUrl('https://keres.example/story/01ARZ3ND')).toBe(true);
     expect(isExternalBrowserUrl('http://localhost:3000/story/01ARZ3ND')).toBe(true);
   });
 
-  // Um link não pode virar um jeito de mandar o sistema executar alguma coisa.
+  // A link must not become a way to make the system run something.
   it('refuses every other scheme', () => {
     expect(isExternalBrowserUrl('javascript:alert(1)')).toBe(false);
     expect(isExternalBrowserUrl('file:///etc/passwd')).toBe(false);

@@ -27,8 +27,8 @@ export const storySchemaFields = table(
   },
   (table) => {
     return {
-      // Não filtrado por isDeleted - ver StorySchemaFieldSyncHandler.delete(), que muta `key`
-      // no soft-delete pra liberar o slot em vez de depender de um índice parcial.
+      // Not filtered by isDeleted - see StorySchemaFieldSyncHandler.delete(), which mutates `key` on the
+      // soft delete to free the slot instead of relying on a partial index.
       unq: unique('story_entitytype_key_unq').on(table.storyId, table.entityType, table.key),
     };
   },

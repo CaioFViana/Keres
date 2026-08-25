@@ -6,10 +6,10 @@ import en from '../src/i18n/locales/site.en.json';
 import pt from '../src/i18n/locales/site.pt.json';
 
 /**
- * A vitrine é a única parte da landing cujo conteúdo não está no repositório como texto: as
- * fotos vêm de `apps/desktop/scripts/capture-screens.cjs`, que abre o app no Electron e
- * fotografa a tela. Se uma faltar, a página publica um quadrado quebrado - e isso não aparece
- * em nenhum outro teste.
+ * The showcase is the only part of the landing page whose content is not in the repository as
+ * text: the screenshots come from `apps/desktop/scripts/capture-screens.ts`, which opens the app
+ * in Electron and photographs the screen. If one goes missing, the page publishes a broken square
+ * - and no other test catches that.
  */
 const screensDirectory = join(__dirname, '../public/showcase/screens');
 const LANGUAGES = ['en', 'pt'] as const;
@@ -17,10 +17,10 @@ const THEMES = ['light', 'dark'] as const;
 const fileOf = (id: string, language: string, theme: string) =>
   join(screensDirectory, `${id}.${language}.${theme}.png`);
 
-/** Assinatura PNG: 8 bytes fixos no começo de todo arquivo válido. */
+/** PNG signature: 8 fixed bytes at the start of every valid file. */
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-/** Largura e altura moram no cabeçalho IHDR, logo depois da assinatura. */
+/** Width and height live in the IHDR header, right after the signature. */
 function pngSize(file: string): { width: number; height: number } {
   const header = readFileSync(file).subarray(0, 24);
   return { width: header.readUInt32BE(16), height: header.readUInt32BE(20) };
@@ -39,7 +39,7 @@ describe('vitrine', () => {
     expect(missing).toEqual([]);
   });
 
-  /** A captura já falhou entregando PNG em branco; tamanho e cabeçalho pegam isso. */
+  /** The capture has already failed by producing a blank PNG; size and header catch that. */
   it('grava PNG de verdade, no tamanho que a página anuncia', () => {
     for (const screen of SHOWCASE_SCREENS) {
       for (const language of LANGUAGES) {
@@ -53,7 +53,7 @@ describe('vitrine', () => {
     }
   });
 
-  /** Claro e escuro têm que ser fotos diferentes; iguais significa tema não aplicado. */
+  /** Light and dark have to be different photos; identical ones mean the theme was not applied. */
   it('diferencia a tela clara da escura', () => {
     for (const screen of SHOWCASE_SCREENS) {
       const light = readFileSync(fileOf(screen.id, 'en', 'light'));
@@ -62,7 +62,7 @@ describe('vitrine', () => {
     }
   });
 
-  /** O app inteiro é traduzido, inclusive as histórias de exemplo: a foto muda com o idioma. */
+  /** The whole app is translated, example stories included: the photo changes with the language. */
   it('fotografa em português e em inglês', () => {
     for (const screen of SHOWCASE_SCREENS) {
       const english = readFileSync(fileOf(screen.id, 'en', 'light'));

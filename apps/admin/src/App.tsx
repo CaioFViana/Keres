@@ -11,8 +11,8 @@ import { UserFormPage } from './pages/users/UserFormPage';
 import { UsersListPage } from './pages/users/UsersListPage';
 import { ThemeProvider } from './theme/ThemeProvider';
 
-// Caminhos relativos ao `basename="/admin"` definido em main.tsx (que por sua vez casa
-// com o `base: '/admin/'` do vite.config.ts) - nenhuma rota aqui repete o prefixo /admin.
+// Paths relative to the `basename="/admin"` set in main.tsx (which in turn matches vite.config.ts's
+// `base: '/admin/'`) - no route here repeats the /admin prefix.
 export function App() {
   return (
     <ThemeProvider>

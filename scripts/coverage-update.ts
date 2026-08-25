@@ -4,13 +4,13 @@ import { COVERAGE_KINDS, coveragePercentage, mergeCoverage, parseLcov } from './
 import { repoRoot } from './lib/packages';
 
 /**
- * Sobe os pisos de cobertura até o que a última medição alcançou.
+ * Raises the coverage floors to whatever the last measurement reached.
  *
- *   bun run coverage:update                     sobe o que dá para subir
- *   bun run coverage:update --rebaseline        aceita também baixar um piso que já não passa
- *   bun run coverage:update --project client    só um projeto
+ *   bun run coverage:update                     raise whatever can be raised
+ *   bun run coverage:update --rebaseline        also accept lowering a floor that no longer passes
+ *   bun run coverage:update --project client    a single project
  *
- * Lê os `lcov.info` que `bun run test:report` deixou; rode aquele antes.
+ * Reads the `lcov.info` files `bun run test:report` left behind; run that one first.
  */
 const thresholdsFile = resolve(repoRoot, 'scripts/coverage-thresholds.json');
 type Thresholds = Record<string, Record<string, number>> & {
@@ -23,7 +23,7 @@ const projectArgumentIndex = process.argv.indexOf('--project');
 const selectedProject =
   projectArgumentIndex === -1 ? null : process.argv[projectArgumentIndex + 1]?.trim();
 
-/** Onde mora o lcov de cada piso. A API tem três: unitário, integração e a união dos dois. */
+/** Where each floor's lcov lives. The API has three: unit, integration, and the union of both. */
 const reports: Record<string, [string, string][]> = {
   shared: [['packages/shared', 'coverage']],
   client: [['apps/client', 'coverage']],
@@ -40,7 +40,7 @@ const reports: Record<string, [string, string][]> = {
 
 if (selectedProject && !reports[selectedProject]) {
   console.error(
-    `Projeto desconhecido: ${selectedProject}. Opções: ${Object.keys(reports).join(', ')}`,
+    `Unknown project: ${selectedProject}. Options: ${Object.keys(reports).join(', ')}`,
   );
   process.exit(1);
 }
@@ -55,7 +55,7 @@ for (const name of names) {
   );
   if (parsedReports.some((report) => report === null)) {
     console.error(
-      `Cobertura ausente para ${name}. Execute bun run test:report antes de atualizar os pisos.`,
+      `No coverage for ${name}. Run bun run test:report before updating the floors.`,
     );
     process.exitCode = 1;
     continue;
@@ -67,17 +67,17 @@ for (const name of names) {
   for (const kind of COVERAGE_KINDS) {
     const measured = coveragePercentage(coverage, kind);
     if (measured === null) {
-      console.error(`${name} não possui pontos mensuráveis para ${kind}.`);
+      console.error(`${name} has no measurable points for ${kind}.`);
       process.exitCode = 1;
       continue;
     }
-    // Uma casa decimal evita perder quase outro ponto inteiro além da margem acordada.
+    // One decimal place avoids losing almost another whole point beyond the agreed margin.
     const candidate = Math.max(0, Math.floor((measured - margin) * 10) / 10);
-    // Rebaseline só reduz um piso que a medição atual já viola. Métricas que continuam
-    // passando preservam o ratchet conquistado, mesmo durante uma recalibração explícita.
+    // Rebaselining only lowers a floor the current measurement already violates. Metrics that
+    // still pass keep the ratchet they earned, even during an explicit recalibration.
     const current = thresholds[name][kind];
     next[kind] = rebaseline && current > measured ? candidate : Math.max(current, candidate);
-    details.push(`${kind} ${measured.toFixed(2)}% → piso ${next[kind]}%`);
+    details.push(`${kind} ${measured.toFixed(2)}% → floor ${next[kind]}%`);
   }
 
   if (JSON.stringify(next) !== JSON.stringify(thresholds[name])) {
@@ -90,13 +90,13 @@ for (const name of names) {
 if (process.exitCode) process.exit();
 
 if (!changed) {
-  console.log('Nenhum piso precisava ser alterado.');
+  console.log('No floor needed changing.');
   process.exit();
 }
 
 writeFileSync(thresholdsFile, `${JSON.stringify(thresholds, null, 2)}\n`, 'utf8');
 console.log(
   rebaseline
-    ? 'Pisos recalculados, inclusive reduções explícitas de baseline.'
-    : 'Ratchet atualizado; nenhum piso existente foi reduzido.',
+    ? 'Floors recalculated, explicit baseline reductions included.'
+    : 'Ratchet updated; no existing floor was lowered.',
 );

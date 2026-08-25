@@ -53,21 +53,21 @@ function matchesSearch(item: DeletedItem, search: string): boolean {
 
 export class AdminRecoveryService {
   /**
-   * Lista tombstones (linhas com isDeleted=true) através dos handlers de sincronização -
-   * a mesma fonte de tabelas usadas pelo pipeline de sync, então nunca diverge dela.
-   * Sem `entityType`, varre todos os tipos; sem paginação de verdade (soft-deletes são
-   * tipicamente uma pequena minoria das linhas, e isto é uma ferramenta interna de admin).
+   * Lists tombstones (rows with isDeleted=true) through the synchronization handlers - the same source
+   * of tables the sync pipeline uses, so it never diverges from it. Without an `entityType`, it sweeps
+   * every type; with no real pagination (soft deletes are typically a small minority of the rows, and
+   * this is an internal admin tool).
    *
-   * Nomes: campo simples por tipo (`getSimpleDisplayName`) + compostos rasos com batch de FKs.
-   * `search` filtra depois do enriquecimento (substring case-insensitive).
+   * Names: a simple field per type (`getSimpleDisplayName`) + shallow composites with batched FKs.
+   * `search` filters after enrichment (case-insensitive substring).
    */
   async listDeleted(filters: AdminDeletedItemsQuery): Promise<DeletedItem[]> {
     const handlers = syncService.getEntityHandlers();
     const entityTypes = filters.entityType ? [filters.entityType] : [...handlers.keys()];
 
-    // 'Story' não tem `storyIdColumnName` (uma história não pertence a outra), então um
-    // filtro de storyId não a restringe - sem este pulo, "itens excluídos na história X"
-    // devolveria também histórias completamente alheias que por acaso estão excluídas.
+    // 'Story' has no `storyIdColumnName` (one story does not belong to another), so a storyId filter does
+    // not restrict it - without this skip, "items deleted in story X" would also return completely
+    // unrelated stories that happen to be deleted.
     const entries: Array<[string, SyncEntityHandler]> = entityTypes
       .filter((entityType) => !(entityType === 'Story' && filters.storyId && !filters.entityType))
       .map((entityType) => [entityType, handlers.get(entityType)] as const)
@@ -119,10 +119,10 @@ export class AdminRecoveryService {
   }
 
   /**
-   * Restaura uma entidade excluída reaproveitando o mesmo mecanismo que o sync já usa
-   * para restore (enviar `changes.isDeleted === false` para `BaseSyncEntityHandler.update`),
-   * só que chamado diretamente do painel em vez de via `/sync/:storyId`. Registra a
-   * restauração no log de operações, atribuída ao admin, para o rastro de auditoria.
+   * Restores a deleted entity by reusing the very mechanism sync already uses for restores (sending
+   * `changes.isDeleted === false` to `BaseSyncEntityHandler.update`), only called directly from the
+   * panel instead of through `/sync/:storyId`. It records the restore in the operation log, attributed to
+   * the admin, for the audit trail.
    */
   async restore(entityType: string, id: string, adminUserId: string) {
     const handler = syncService.getEntityHandlers().get(entityType);
@@ -135,8 +135,8 @@ export class AdminRecoveryService {
       throw new RecoveryEntityNotFoundError();
     }
 
-    // 'Story' não pertence a outra história - para ela, `storyId` (o parâmetro de contexto
-    // que o resto do pipeline de sync usa para atribuir o log) é o próprio id da história.
+    // 'Story' does not belong to another story - for it, `storyId` (the context parameter the rest of the
+    // sync pipeline uses to attribute the log) is the story's own id.
     const storyId: string = entityType === 'Story' ? id : current.storyId;
 
     const update: UpdateStoryUpdate = {
@@ -147,11 +147,10 @@ export class AdminRecoveryService {
       operationTime: new Date().toISOString(),
     };
 
-    // A escrita e o registro no log de operações rodam na mesma transação - sem isto, uma
-    // falha entre os dois passos (ex.: o processo cair logo após o `update`) deixava a
-    // entidade restaurada mas sem nenhuma entrada no log de operações, quebrando o rastro de
-    // auditoria que este método existe para manter (mesmo raciocínio do push em
-    // `SyncService.processAndRecordUpdates`).
+    // The write and the operation log record run in the same transaction - without that, a failure between
+    // the two steps (say, the process dying right after the `update`) left the entity restored but with no
+    // entry in the operation log, breaking the audit trail this method exists to maintain (the same
+    // reasoning as the push in `SyncService.processAndRecordUpdates`).
     return withTransaction(async () => {
       await handler.update(adminUserId, storyId, update, current);
       const restored = await handler.findById(id);

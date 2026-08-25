@@ -1,6 +1,6 @@
 import type { StoryPublicationSnapshot } from './StoryPublication';
 
-/** O autor, como o site anônimo pode vê-lo: nada de e-mail, nada de id interno além do público. */
+/** The author, as the anonymous site can see them: no email, no internal id beyond the public one. */
 export interface ShowcaseOwner {
   username: string;
   tag: string;
@@ -8,7 +8,7 @@ export interface ShowcaseOwner {
   avatarIcon: string | null;
 }
 
-/** Uma versão baixável, como o site a lista. */
+/** A downloadable version, as the site lists it. */
 export interface ShowcaseVersion {
   id: string;
   label: string;
@@ -18,7 +18,7 @@ export interface ShowcaseVersion {
   createdAt: string;
 }
 
-/** Um card na página inicial do Showcase. */
+/** A card on the Showcase's home page. */
 export interface ShowcaseStoryCard {
   storyId: string;
   snapshot: StoryPublicationSnapshot;
@@ -28,7 +28,7 @@ export interface ShowcaseStoryCard {
   updatedAt: string;
 }
 
-/** A página de uma história. */
+/** A story's page. */
 export interface ShowcaseStoryDetail {
   storyId: string;
   snapshot: StoryPublicationSnapshot;
@@ -38,8 +38,8 @@ export interface ShowcaseStoryDetail {
 }
 
 /**
- * O que uma história protegida por senha responde antes do unlock. Só isso - nem título, nem
- * autor, nem quantas versões existem: um link vazado não pode ser interessante por si só.
+ * What a password-protected story answers before the unlock. Only this - no title, no author, no
+ * count of versions: a leaked link must not be interesting on its own.
  */
 export interface ShowcaseProtectedStub {
   storyId: string;

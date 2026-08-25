@@ -7,13 +7,13 @@ import {
 } from './statLadder';
 
 /**
- * Geometria do gráfico radar dos status. Puro, como `storyGraphLayout`/`locationGraphLayout`:
- * a tela interativa e o SVG exportado consomem este mesmo objeto, então nunca discordam sobre
- * onde um vértice está.
+ * Geometry of the stats radar chart. Pure, like `storyGraphLayout`/`locationGraphLayout`: the
+ * interactive screen and the exported SVG consume this same object, so they never disagree about
+ * where a vertex is.
  *
- * O desenho reserva `OVERSHOOT_RATIO` do raio além do último anel para os valores que passam do
- * topo da escada; o anel externo dessa faixa é tracejado, e é o que dá para ver "acima da
- * escala" sem reescalar o gráfico inteiro por causa de um personagem.
+ * The drawing reserves `OVERSHOOT_RATIO` of the radius beyond the last ring for values that go past
+ * the ladder's top; that band's outer ring is dashed, and it is what makes "above the scale"
+ * visible without rescaling the whole chart because of one character.
  */
 
 export const MIN_PRIMARY_STATS_FOR_CHART = 3;
@@ -40,7 +40,7 @@ export interface RadarPoint {
 export interface RadarAxis {
   statId: string;
   label: string;
-  /** Radianos, começando no topo e girando no sentido horário. */
+  /** Radians, starting at the top and turning clockwise. */
   angle: number;
   end: RadarPoint;
   labelPoint: RadarPoint;
@@ -87,7 +87,7 @@ export interface StatRadarLayoutInput {
   notation: StatNotation;
   /** Lado do quadrado do desenho, em pixels. */
   size: number;
-  /** Espaço reservado para os rótulos dos eixos. */
+  /** Space reserved for the axis labels. */
   padding?: number;
 }
 
@@ -110,8 +110,8 @@ function anchorFor(x: number, centerX: number): 'start' | 'middle' | 'end' {
 }
 
 /**
- * Devolve `null` quando não há polígono possível: com menos de três eixos o desenho vira uma
- * linha, e a tela mostra um convite a cadastrar mais status no lugar do gráfico.
+ * Returns `null` when no polygon is possible: with fewer than three axes the drawing becomes a
+ * line, and the screen shows an invitation to register more stats in place of the chart.
  */
 export function buildStatRadarLayout(input: StatRadarLayoutInput): StatRadarLayout | null {
   const { stats, series, notation, size } = input;
@@ -119,8 +119,8 @@ export function buildStatRadarLayout(input: StatRadarLayoutInput): StatRadarLayo
 
   const padding = input.padding ?? DEFAULT_PADDING;
   const center: RadarPoint = { x: size / 2, y: size / 2 };
-  // A faixa de transbordo precisa caber dentro da caixa, então o anel externo da escada é
-  // menor que o raio disponível na proporção do transbordo.
+  // The overshoot band has to fit inside the box, so the ladder's outer ring is smaller than the
+  // available radius by the overshoot's proportion.
   const radius = Math.max(1, (size / 2 - padding) / (1 + OVERSHOOT_RATIO));
 
   const step = (Math.PI * 2) / stats.length;
@@ -143,9 +143,9 @@ export function buildStatRadarLayout(input: StatRadarLayoutInput): StatRadarLayo
   const ringPolygon = (ringRadius: number) =>
     toPoints(axes.map((axis) => pointOn(center, axis.angle, ringRadius)));
 
-  // Os anéis vêm da escada do primeiro eixo: as escadas podem ter tamanhos diferentes por
-  // status, e o radar precisa de um único conjunto de anéis. Os rótulos, por isso, valem para
-  // aquele eixo - os demais leem o próprio valor no vértice.
+  // The rings come from the first axis's ladder: ladders can have different sizes per stat, and the
+  // radar needs a single set of rings. The labels, therefore, apply to that axis - the others read
+  // their own value at the vertex.
   const referenceLadder = stats[0]!.ladder;
   const intervals = Math.max(1, referenceLadder.length - 1);
   const rings: RadarRing[] = [];

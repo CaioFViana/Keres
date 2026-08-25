@@ -11,11 +11,11 @@ import {
 import { repoRoot } from './lib/packages';
 
 /**
- * Roda todas as suítes do monorepo e imprime uma tabela: suítes, testes e cobertura contra o
- * piso de cada projeto.
+ * Runs every suite in the monorepo and prints a table: suites, tests, and coverage against each
+ * project's floor.
  *
- * Precisa da infraestrutura de teste de pé (Postgres e SeaweedFS), porque a cobertura da API
- * só faz sentido somando as suítes unitária e de integração.
+ * Needs the test infrastructure up (Postgres and SeaweedFS), because the API's coverage only
+ * makes sense as the sum of its unit and integration suites.
  */
 const TEST_COMPOSE = 'apps/api/docker-compose.test.yml';
 
@@ -36,9 +36,9 @@ const projects: [name: string, path: string, runs: ProjectRun[]][] = [
   ['site', 'apps/site', [['test:coverage', 'coverage']]],
 ];
 
-// O ratchet da API vale para a união das suítes unitária e de integração, não para cada
-// relatório isolado. Os demais espelham a configuração de cobertura do próprio workspace, para
-// o relatório mostrar os mesmos pisos que a CI cobra.
+// The API ratchet applies to the union of the unit and integration suites, not to either report
+// in isolation. The others mirror their own workspace's coverage configuration, so the report
+// shows the same floors CI enforces.
 const configuredThresholds = JSON.parse(
   readFileSync(resolve(repoRoot, 'scripts/coverage-thresholds.json'), 'utf8'),
 ) as Record<string, Record<CoverageKind, number>>;
@@ -92,7 +92,7 @@ async function requireTestInfrastructure(): Promise<boolean> {
 }
 
 function parseTests(output: string): { suites: number; tests: number } {
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: sequências ANSI da saída dos runners
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI sequences from the runners' output
   const normalized = output.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
   const suites = [...normalized.matchAll(/(?:Test Files|Test Suites):?\s*(\d+)\s+passed/gi)].map(
     (match) => Number(match[1]),
@@ -140,7 +140,7 @@ function meetsRatchet(
 }
 
 function printTable(rows: string[][]): void {
-  const headers = ['Projeto', 'Status', 'Suites', 'Testes', 'Linhas', 'Funções', 'Branches'];
+  const headers = ['Project', 'Status', 'Suites', 'Tests', 'Lines', 'Functions', 'Branches'];
   const widths = headers.map((header, index) =>
     Math.max(header.length, ...rows.map((row) => row[index].length)),
   );
@@ -158,7 +158,7 @@ function printTable(rows: string[][]): void {
 
 if (!(await requireTestInfrastructure())) {
   console.error(
-    `Infraestrutura de teste indisponível. Suba Postgres e SeaweedFS com:\n  docker compose -f ${TEST_COMPOSE} up -d`,
+    `Test infrastructure unavailable. Start Postgres and SeaweedFS with:\n  docker compose -f ${TEST_COMPOSE} up -d`,
   );
   process.exit(1);
 }
@@ -174,7 +174,7 @@ interface ProjectResult {
 
 const results: ProjectResult[] = [];
 for (const [name, path, runs] of projects) {
-  process.stdout.write(`Executando ${name}... `);
+  process.stdout.write(`Running ${name}... `);
   const executions: (RunResult & { coverageDirectory: string })[] = [];
   for (const [script, coverageDirectory] of runs) {
     const result = await run('bun', ['run', '--cwd', path, script]);
@@ -201,7 +201,7 @@ for (const [name, path, runs] of projects) {
     coverage,
     ratchetFailure,
   });
-  console.log(finalCode === 0 ? 'ok' : ratchetFailure ? 'abaixo do ratchet' : 'falhou');
+  console.log(finalCode === 0 ? 'ok' : ratchetFailure ? 'below the ratchet' : 'failed');
 }
 
 printTable(
@@ -218,10 +218,10 @@ printTable(
 
 const failed = results.filter((result) => result.code !== 0);
 if (failed.length) {
-  console.error('\nFalhas (últimas linhas de cada saída):');
+  console.error('\nFailures (last lines of each output):');
   for (const result of failed) {
     const message = result.ratchetFailure
-      ? `Cobertura abaixo do ratchet: ${JSON.stringify(ratchets[result.name])}`
+      ? `Coverage below the ratchet: ${JSON.stringify(ratchets[result.name])}`
       : result.output.trim().split(/\r?\n/).slice(-30).join('\n');
     console.error(`\n[${result.name}]\n${message}`);
   }

@@ -3,10 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient, clearToken, getToken, setToken } from '../../src/api/apiClient';
 
 /**
- * Os interceptors são a única coisa entre o painel e a API: o de requisição é o que autentica
- * toda chamada, e o de resposta é o que derruba a sessão num 401 e transforma o erro do axios
- * numa mensagem que a tela pode mostrar. Exercitados através de um adapter falso, para o
- * comportamento real do axios (ordem, encadeamento) fazer parte do teste.
+ * The interceptors are the only thing between the panel and the API: the request one authenticates
+ * every call, and the response one drops the session on a 401 and turns the axios error into a
+ * message the screen can show. Exercised through a fake adapter, so axios's real behaviour (order,
+ * chaining) is part of the test.
  */
 const seen: AxiosRequestConfig[] = [];
 
@@ -32,7 +32,7 @@ function respondWith(response: { status: number; data?: unknown }) {
   };
 }
 
-/** Falha de rede: o axios rejeita sem `response` nenhuma. */
+/** A network failure: axios rejects with no `response` at all. */
 function respondWithNetworkFailure(message: string) {
   apiClient.defaults.adapter = async (config) => {
     seen.push(config);

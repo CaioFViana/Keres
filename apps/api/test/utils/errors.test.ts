@@ -89,9 +89,9 @@ describe('postgresErrorConstraint', () => {
 });
 
 /**
- * Esta é a checagem que decide se um `INSERT` que bateu numa restrição de unicidade cai no
- * caminho alternativo da rota (tag com sufixo, mensagem de "já existe") ou vira um 500. Antes
- * de existir, o `catch` comparava `error.code` direto e nunca era verdadeiro sob o drizzle.
+ * This is the check that decides whether an `INSERT` that hit a uniqueness constraint takes the
+ * route's alternative path (a suffixed tag, an "already exists" message) or becomes a 500. Before it
+ * existed, the `catch` compared `error.code` directly and was never true under drizzle.
  */
 describe('isUniqueViolation', () => {
   it('recognises a unique violation raised by pg', () => {

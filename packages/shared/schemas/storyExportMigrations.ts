@@ -1,8 +1,8 @@
 import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
 
 /**
- * Um export com `formatVersion` maior que o suportado por este app - a pessoa importando
- * está numa versão do Keres mais antiga que quem exportou.
+ * An export whose `formatVersion` is greater than this app supports - the person importing is on an
+ * older version of Keres than whoever exported.
  */
 export class StoryExportVersionError extends Error {
   constructor(message: string) {
@@ -19,8 +19,8 @@ type StoryExportMigration = {
 /**
  * V1 -> V2
  *
- * As mudanças reais deste formato são favoritos por entidade, os campos novos de Story e a
- * remoção de `Suggestion.isDefault`, que deixou de ter significado no produto.
+ * This format's real changes are per-entity favourites, Story's new fields and the removal of
+ * `Suggestion.isDefault`, which stopped meaning anything in the product.
  */
 const migrateV1ToV2: StoryExportMigration = {
   fromVersion: 1,
@@ -28,7 +28,7 @@ const migrateV1ToV2: StoryExportMigration = {
     const story = data?.story
       ? {
           ...data.story,
-          // V1 representava favoritos como estado global da história.
+          // V1 represented favourites as global story state.
           favoriteBehavior: data.story.favoriteBehavior ?? 'global',
           normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
         }
@@ -50,7 +50,7 @@ const migrateV1ToV2: StoryExportMigration = {
   },
 };
 
-/** V2 -> V3: comentários de campos e relações bidirecionais "Veja também". */
+/** V2 -> V3: per-field comments and bidirectional "See also" relations. */
 const migrateV2ToV3: StoryExportMigration = {
   fromVersion: 2,
   migrate: (data) => ({
@@ -79,7 +79,7 @@ const migrateV4ToV5: StoryExportMigration = {
     story: data?.story
       ? {
           ...data.story,
-          // Pacotes anteriores não tinham o sistema; importá-los não pode ligar a feature.
+          // Earlier packages had no such system; importing them must not switch the feature on.
           statSystem: data.story.statSystem ?? false,
           statNotation: data.story.statNotation ?? 'letter',
         }
@@ -91,7 +91,7 @@ const migrateV4ToV5: StoryExportMigration = {
   }),
 };
 
-/** V5 -> V6: plots e suas ligações com cenas. */
+/** V5 -> V6: plots and their links to scenes. */
 const migrateV5ToV6: StoryExportMigration = {
   fromVersion: 5,
   migrate: (data) => ({
@@ -110,11 +110,11 @@ const migrations: StoryExportMigration[] = [
 ];
 
 /**
- * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)
- * para o formato atual, rodando qualquer migração pendente.
+ * Normalises a raw export (already-parsed JSON, not yet validated by `FullStoryExportSchema`) to
+ * the current format, running any pending migration.
  *
- * Exports de antes deste campo existir não têm `formatVersion` - tratados como versão 0.
- * Deve rodar antes de `FullStoryExportSchema.parse()`, tanto no client quanto na API.
+ * Exports predating this field have no `formatVersion` - they are treated as version 0. It must run
+ * before `FullStoryExportSchema.parse()`, both in the client and in the API.
  */
 export function migrateStoryExport(raw: any): any {
   const version = typeof raw?.formatVersion === 'number' ? raw.formatVersion : 0;

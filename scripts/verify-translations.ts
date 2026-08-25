@@ -73,7 +73,7 @@ const siteLocalesPath = path.join(siteSrcPath, 'i18n', 'locales');
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
 const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
 const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'storyDevices', 'content');
-// Prosa autorada por idioma: não usa chaves de tradução e não deve entrar na auditoria.
+// Prose authored per language: it uses no translation keys and must stay out of the audit.
 const DOC_CONTENT_PATHS = [HELP_CONTENT_PATH, STORY_DEVICES_CONTENT_PATH];
 
 const AUDIT_TARGETS: LocaleAuditTarget[] = [
@@ -89,7 +89,7 @@ const AUDIT_TARGETS: LocaleAuditTarget[] = [
     localesPath: adminLocalesPath,
     localeFilePattern: /^admin\.(en|pt)\.json$/,
     scanRoots: [adminSrcPath],
-    // Showcase é outro bundle e outro namespace, apesar de viver no mesmo app Vite.
+    // The showcase is a different bundle and a different namespace, even though it lives in the same Vite app.
     excludedPaths: [showcaseSrcPath],
   },
   {
@@ -224,8 +224,8 @@ function patternFromTemplate(node: ts.TemplateExpression): RegExp {
 
 function indirectPatternFromTemplate(node: ts.TemplateExpression): RegExp | null {
   const staticText = node.head.text + node.templateSpans.map((span) => span.literal.text).join('');
-  // `${value}` e outros templates sem âncora textual útil casariam com todo o catálogo e
-  // esconderiam qualquer chave realmente órfã.
+  // `${value}` and other templates with no useful textual anchor would match the whole catalog
+  // and hide any genuinely orphaned key.
   return staticText.length >= 3 ? patternFromTemplate(node) : null;
 }
 
@@ -263,10 +263,10 @@ function scanFile(filePath: string): ScanResult {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
       allLiterals.add(node.text);
     }
-    // Assim como literais indiretos, templates podem chegar a `t()` depois de atravessar
-    // helpers (`buildFinding(..., `analysis_scene_${problem}`)`). Servem como evidência de uso,
-    // mas não como pedido autoritativo de chave: templates comuns da aplicação não devem gerar
-    // falso "missing translation".
+    // Like indirect literals, templates can reach `t()` after going through helpers
+    // (`buildFinding(..., `analysis_scene_${problem}`)`). They count as evidence of use, but not
+    // as an authoritative request for a key: ordinary application templates must not produce a
+    // false "missing translation".
     if (ts.isTemplateExpression(node)) {
       const pattern = indirectPatternFromTemplate(node);
       if (pattern) allTemplatePatterns.push(pattern);
@@ -294,9 +294,9 @@ function scanFile(filePath: string): ScanResult {
     // somewhere else entirely, so it never appears as a `t(...)` call site itself.
     if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'label') {
       const init = node.initializer;
-      // Um literal vazio é a ausência de rótulo (o grupo único de um MultiSelectPill não tem
-      // cabeçalho), nunca uma chave: `t('')` não existe, e tratá-lo como chave só produz um
-      // "Missing key ''" que não dá para corrigir no locale.
+      // An empty literal is the absence of a label (a MultiSelectPill's single group has no header),
+      // never a key: `t('')` does not exist, and treating it as one only produces a "Missing key ''"
+      // that cannot be fixed in the locale.
       if (
         (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) &&
         init.text.trim() !== ''
@@ -309,8 +309,8 @@ function scanFile(filePath: string): ScanResult {
       }
     }
 
-    // Props que carregam chaves: `noItemsMessage` é traduzida dentro do componente genérico;
-    // `Trans i18nKey` é resolvida pelo react-i18next sem uma chamada `t()` explícita.
+    // Props that carry keys: `noItemsMessage` is translated inside the generic component;
+    // `Trans i18nKey` is resolved by react-i18next without an explicit `t()` call.
     if (
       ts.isJsxAttribute(node) &&
       ts.isIdentifier(node.name) &&

@@ -6,10 +6,10 @@ import {
 } from '../../api/ShowcaseSettingsApiService';
 
 /**
- * Controles das páginas hospedadas no mesmo origin da API.
+ * Controls for the pages hosted on the API's own origin.
  *
- * A vitrine começa desligada, enquanto o cliente hospedado começa ligado. Desligar qualquer
- * opção não apaga dados: religar restaura o que já estava publicado ou o cliente em `/`.
+ * The showcase starts off, while the hosted client starts on. Turning either off deletes no data:
+ * turning it back on restores whatever was already published, or the client at `/`.
  */
 export function ShowcaseSettingsCard() {
   const { t } = useTranslation('admin');

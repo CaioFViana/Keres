@@ -1,6 +1,6 @@
 /**
- * Limite da nota de uma relação Plot-Cena: uma linha curta explicando o papel daquela cena
- * naquela trama, não um segundo resumo da cena.
+ * The limit for a plot-scene relation's note: a short line explaining that scene's role in that
+ * plot, not a second summary of the scene.
  */
 export const PLOT_SCENE_NOTE_MAX_LENGTH = 160;
 

@@ -84,11 +84,11 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     update: UpdateStoryUpdate,
     currentEntity: any,
   ): Promise<void> {
-    // entityType e key são imutáveis após a criação: AttributeValue referencia o campo por
-    // fieldId (não por key), então nada quebraria tecnicamente, mas mudar o tipo de entidade ou
-    // a chave por baixo de valores já salvos os deixaria com um rótulo/tipo incoerente sem
-    // nenhum aviso - a UI de gerenciamento nunca oferece essa opção, e o servidor não confia
-    // apenas nisso: ignora essas duas chaves aqui mesmo se um cliente antigo/adulterado mandar.
+    // entityType and key are immutable after creation: AttributeValue references the field by fieldId (not
+    // by key), so nothing would technically break, but changing the entity type or the key underneath
+    // already-saved values would leave them with an inconsistent label/type and no warning at all - the
+    // management UI never offers that option, and the server does not rely on that alone: it ignores those
+    // two keys right here even if an old/tampered-with client sends them.
     const changes = { ...update.changes };
     delete changes.entityType;
     delete changes.key;
@@ -108,20 +108,20 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     await super.delete(userId, storyId, update, currentEntity);
 
     if (alreadyDeleted) {
-      // Reenvio idempotente da mesma exclusão - a mutação de key já rodou da primeira vez.
+      // An idempotent resend of the same deletion - the key mutation already ran the first time.
       return;
     }
 
-    // Libera o slot da constraint unique(storyId, entityType, key), que não é filtrada por
-    // isDeleted - sem isso, recriar um atributo com a mesma chave depois de apagar o antigo
-    // falharia contra a linha tombstone. Só afeta esta própria linha (nunca lido de volta por
-    // ninguém além desta constraint), então não precisa ser propagado a outros clientes.
+    // It frees the slot of the unique(storyId, entityType, key) constraint, which is not filtered by
+    // isDeleted - without that, recreating an attribute with the same key after deleting the old one would
+    // fail against the tombstone row. It only affects this very row (never read back by anyone other than
+    // that constraint), so it does not need to be propagated to other clients.
     //
-    // Cascata para AttributeValue é responsabilidade do CLIENTE (StorySchemaFieldService.
-    // deleteField), não daqui: uma mutação direta em SQL nesta tabela não passa pelo
-    // operationLog, então outros dispositivos nunca saberiam da cascata via pull - o cliente
-    // precisa mandar exclusões explícitas de AttributeValue no mesmo lote, cada uma seguindo o
-    // caminho normal (AttributeValueSyncHandler.delete), pra sincronizar corretamente.
+    // Cascading to AttributeValue is the CLIENT's responsibility (StorySchemaFieldService.deleteField), not
+    // this file's: a direct SQL mutation on this table does not go through the operationLog, so other
+    // devices would never learn about the cascade through a pull - the client has to send explicit
+    // AttributeValue deletions in the same batch, each following the normal path
+    // (AttributeValueSyncHandler.delete), for it to synchronize correctly.
     await db
       .update(storySchemaFields)
       .set({ key: sql`${storySchemaFields.key} || '__deleted_' || ${ulid()}` })

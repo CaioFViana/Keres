@@ -17,7 +17,7 @@ interface ThemeState {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   cyclePreference: () => void;
-  /** Nome da paleta de `@keres/shared`; `default` reproduz o visual original do painel. */
+  /** A palette name from `@keres/shared`; `default` reproduces the panel's original look. */
   palette: string;
   setPalette: (name: string) => void;
 }
@@ -50,7 +50,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener('change', onChange);
   }, [preference]);
 
-  // Claro e escuro têm cores diferentes na mesma paleta, então reaplicar depende dos dois.
+  // Light and dark have different colours in the same palette, so reapplying depends on both.
   useEffect(() => {
     applyPalette(palette, resolved);
     writePaletteName(palette);

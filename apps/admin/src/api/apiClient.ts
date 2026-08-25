@@ -59,9 +59,9 @@ function notifySessionCleared(): void {
 }
 
 /**
- * Cliente próprio, deliberadamente não compartilhado com o `apiClient` do apps/client -
- * aquele é acoplado a React Native/AsyncStorage e a um modelo de múltiplos servidores que
- * não se aplica aqui. Este painel é uma ferramenta interna simples: um token, localStorage.
+ * A client of its own, deliberately not shared with apps/client's `apiClient` - that one is
+ * coupled to React Native/AsyncStorage and to a multi-server model that does not apply here. This
+ * panel is a simple internal tool: one token, localStorage.
  */
 export const apiClient = axios.create({
   baseURL: '/api',

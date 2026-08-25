@@ -21,7 +21,7 @@ const listFor = (token: string, story = storyId) =>
 const pull = (token: string, story = storyId) =>
   request('GET', `/sync/${story}/pull`, { token, query: { lastOperationVersion: 0 } });
 
-/** Compartilhar uma história só é permitido entre amigos, então o vínculo vem antes. */
+/** Sharing a story is only allowed between friends, so the friendship comes first. */
 async function befriend(a: TestUser, b: TestUser) {
   const requested = await request('POST', `/friend/request/${b.userId}`, { token: a.token });
   if (requested.status >= 400) {
@@ -224,8 +224,8 @@ describe('what a collaborator can do with the story', () => {
   });
 
   /**
-   * A revogação é soft delete (a linha sobrevive para virar tombstone no sync), então o
-   * acesso só some de fato se todo leitor de permissão descartar a linha excluída.
+   * Revocation is a soft delete (the row survives to become a tombstone in sync), so access only really
+   * goes away if every permission reader discards the deleted row.
    */
   it('stops a former collaborator from exporting it', async () => {
     await grant(ana.token, bia.userId, 'reader');

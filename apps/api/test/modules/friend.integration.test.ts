@@ -33,10 +33,10 @@ beforeEach(async () => {
 });
 
 /**
- * Toda recusa aqui é uma decisão da aplicação com mensagem que o usuário precisa ler ("vocês
- * já são amigos", "existe um pedido pendente"). Os status concretos estão fixados de
- * propósito: antes desta suíte, todas caíam no fallback do `onError` e chegavam ao cliente
- * como 500 "Internal server error.", indistinguíveis de uma falha de verdade.
+ * Every refusal here is an application decision with a message the user needs to read ("you are
+ * already friends", "there is a pending request"). The concrete statuses are pinned on purpose:
+ * before this suite, they all fell into `onError`'s fallback and reached the client as 500 "Internal
+ * server error.", indistinguishable from a real failure.
  */
 describe('sending a friend request', () => {
   it('creates a pending relation', async () => {
@@ -279,7 +279,7 @@ describe('blacklisting', () => {
     expect(data.message).toBe('Cannot blacklist self.');
   });
 
-  /** Estar bloqueado não é privilégio para se desbloquear. */
+  /** Being blocked is not a privilege for unblocking yourself. */
   it('does not let the blocked user lift the block', async () => {
     await blacklist(ana, bia);
 

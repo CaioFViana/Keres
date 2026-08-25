@@ -1,13 +1,13 @@
 import { initI18n } from '../src/i18n';
 
 declare global {
-  // React 19 lê isto no `act()`. Sem a declaração, `tsc` recusa o índice em `globalThis`.
+  // React 19 reads this in `act()`. Without the declaration, `tsc` rejects the index on `globalThis`.
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
-// React 19 recusa `act()` se o ambiente de teste não se declara. Sem isto, cada
-// render/click do helper imprime "The current testing environment is not configured
-// to support act(...)" e os testes ainda passam — o ruído é que some.
+// React 19 refuses `act()` if the test environment does not declare itself. Without this, every
+// render/click in the helper prints "The current testing environment is not configured to
+// support act(...)" and the tests still pass - what goes away is the noise.
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 if (typeof window.matchMedia !== 'function') {
@@ -23,9 +23,9 @@ if (typeof window.matchMedia !== 'function') {
 }
 
 /**
- * O jsdom não implementa `<dialog>`: `showModal`/`close` não existem. A foto ampliada usa o
- * elemento nativo justamente para ganhar Esc e foco preso, então aqui basta registrar a
- * abertura e o fechamento para o teste conseguir afirmar o comportamento.
+ * jsdom does not implement `<dialog>`: `showModal`/`close` do not exist. The enlarged screenshot
+ * uses the native element precisely to get Esc and trapped focus, so here it is enough to record
+ * the opening and the closing for the test to be able to assert the behaviour.
  */
 if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.showModal) {
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {

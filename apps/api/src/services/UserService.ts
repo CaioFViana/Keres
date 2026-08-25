@@ -89,7 +89,7 @@ export class UserService {
     return updated;
   }
 
-  /** Auto-serviço: exige a senha atual, diferente do reset do painel admin que a ignora. */
+  /** Self-service: it requires the current password, unlike the admin panel's reset, which ignores it. */
   async changeOwnPassword(
     userId: string,
     currentPassword: string,
@@ -115,7 +115,7 @@ export class UserService {
       .where(eq(users.id, userId));
   }
 
-  /** Auto-serviço: exige a senha atual, mesma justificativa de changeOwnPassword. */
+  /** Self-service: it requires the current password, same justification as changeOwnPassword. */
   async regenerateRecoveryCodes(userId: string, currentPassword: string): Promise<string[]> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),

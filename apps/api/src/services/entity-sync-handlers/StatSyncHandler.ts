@@ -20,8 +20,9 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
   }
 
   /**
-   * O radar não sobrevive a mais de 12 eixos, então o teto é invariante de dado e não só de UI:
-   * um cliente antigo (ou adulterado) não pode empurrar o 13º primário pela sincronização.
+   * The radar does not survive more than 12 axes, so the ceiling is a data invariant and not merely a
+   * UI one: an old (or tampered-with) client must not be able to push the 13th primary through
+   * synchronization.
    */
   private async assertPrimaryLimit(storyId: string, excludeId?: string): Promise<void> {
     const [row] = await db
@@ -75,7 +76,7 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    // Só custa uma contagem quando o secundário está sendo promovido.
+    // It only costs a count when the secondary is being promoted.
     if (validatedChanges.isPrimary === true && currentEntity.isPrimary === false) {
       await this.assertPrimaryLimit(storyId, update.id!);
     }

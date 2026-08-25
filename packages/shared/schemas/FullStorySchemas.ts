@@ -48,38 +48,37 @@ export const FullStoryExportSchema = z.object({
   suggestions: z.array(SuggestionSchema),
   characterRelations: z.array(CharacterRelationSchema),
   characterScenes: z.array(CharacterSceneSchema),
-  // Introduzidos no formato V6; migrações anteriores fornecem listas vazias.
+  // Introduced in format V6; earlier migrations provide empty lists.
   plots: z.array(PlotSchema).optional(),
   plotScenes: z.array(PlotSceneSchema).optional(),
   galleryItems: z.array(GallerySchema),
-  // Opcional para que pacotes gerados antes da galeria virar N:N continuem importáveis.
+  // Optional so packages generated before the gallery became N:N remain importable.
   galleryRelations: z.array(GalleryRelationSchema).optional(),
   items: z.array(ItemSchema).optional(),
   itemJourneys: z.array(ItemJourneySchema),
-  // Opcionais para manter importáveis exports legados que antecedem esses recursos.
+  // Optional to keep legacy exports predating these features importable.
   storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
   attributeValues: z.array(AttributeValueSchema).optional(),
-  // Introduzido no formato V2; a migração V1 -> V2 fornece uma lista vazia quando ausente.
+  // Introduced in format V2; the V1 -> V2 migration provides an empty list when absent.
   favorites: z.array(FavoriteSchema).optional(),
-  // Introduzidos no formato V3; migrações anteriores fornecem listas vazias.
+  // Introduced in format V3; earlier migrations provide empty lists.
   comments: z.array(CommentSchema).optional(),
   seeAlsoRelations: z.array(SeeAlsoRelationSchema).optional(),
-  // Mesmo motivo: exports legados sem este recurso continuam importáveis.
+  // Same reason: legacy exports without this feature remain importable.
   locationRelations: z.array(LocationRelationSchema).optional(),
-  // Introduzidos no formato V4 (checks/effects de Choice); migrações anteriores fornecem listas vazias.
+  // Introduced in format V4 (Choice checks/effects); earlier migrations provide empty lists.
   choiceCheckGroups: z.array(ChoiceCheckGroupSchema).optional(),
   choiceChecks: z.array(ChoiceCheckSchema).optional(),
   effects: z.array(EffectSchema).optional(),
-  // Introduzidos no formato V5 (sistema de status e modos); migrações anteriores fornecem
-  // listas vazias.
+  // Introduced in format V5 (the stat system and modes); earlier migrations provide empty lists.
   stats: z.array(StatSchema).optional(),
   statStrengths: z.array(StatStrengthSchema).optional(),
   statRelations: z.array(StatRelationSchema).optional(),
   modes: z.array(ModeSchema).optional(),
   serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
-  // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
-  // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só
-  // uma rede de segurança para chamadas que pulem a migração.
+  // Absent from exports predating this field - `migrateStoryExport` normalises it to
+  // `CURRENT_STORY_FORMAT_VERSION` before this validation runs, so the default here is only a safety
+  // net for callers that skip the migration.
   formatVersion: z.number().int().min(1).default(CURRENT_STORY_FORMAT_VERSION),
   // Add other entities as they are defined in the schema
 });

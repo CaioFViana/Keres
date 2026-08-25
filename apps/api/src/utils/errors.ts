@@ -20,16 +20,16 @@ export class AppError extends Error {
 const UNIQUE_VIOLATION = '23505';
 /** `foreign_key_violation` do Postgres. */
 const FOREIGN_KEY_VIOLATION = '23503';
-/** O SQLite não distingue qual restrição foi violada pelo código; o texto é que diz. */
+/** SQLite does not distinguish which constraint was violated by code; the text is what says so. */
 const SQLITE_CONSTRAINT = 'SQLITE_CONSTRAINT';
 
 /**
- * Código de erro do banco, procurado também em `.cause`.
+ * The database's error code, also looked for in `.cause`.
  *
- * O drizzle não repassa o erro do driver: ele lança um `Error` próprio ("Failed query: ...")
- * com o original pendurado em `cause`. Por isso um `(error as { code?: string }).code ===
- * '23505'` escrito direto no `catch` nunca é verdadeiro numa query feita pelo drizzle - o
- * tratamento vira código morto e a rota devolve 500 no lugar do resultado que ela pretendia dar.
+ * drizzle does not pass the driver's error through: it throws an `Error` of its own ("Failed query:
+ * ...") with the original hanging off `cause`. That is why a `(error as { code?: string }).code ===
+ * '23505'` written directly in the `catch` is never true for a query made through drizzle - the
+ * handling becomes dead code and the route returns a 500 instead of the result it meant to give.
  */
 export function postgresErrorCode(error: unknown): string | undefined {
   let current: unknown = error;
@@ -43,7 +43,7 @@ export function postgresErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-/** Mensagem de erro do driver, procurada também em `.cause` (mesmo motivo do código acima). */
+/** The driver's error message, also looked for in `.cause` (the same reason as the code above). */
 function errorMessageChain(error: unknown): string {
   const messages: string[] = [];
   let current: unknown = error;
@@ -58,12 +58,12 @@ function errorMessageChain(error: unknown): string {
 }
 
 /**
- * Violação de restrição de unicidade, não importa o motor.
+ * A uniqueness constraint violation, whichever the engine.
  *
- * O Postgres tem um código só para isso (`23505`). O SQLite devolve `SQLITE_CONSTRAINT` para
- * qualquer restrição - chave estrangeira, `NOT NULL`, `CHECK` - e só o texto diz qual foi, daí
- * a checagem pela mensagem. Confundir uma violação de chave estrangeira com uma de unicidade
- * faria, por exemplo, o cadastro tentar de novo com outra tag para sempre.
+ * Postgres has a code just for that (`23505`). SQLite returns `SQLITE_CONSTRAINT` for any constraint -
+ * foreign key, `NOT NULL`, `CHECK` - and only the text says which one it was, hence the check by
+ * message. Mistaking a foreign key violation for a uniqueness one would, for instance, make
+ * registration retry with another tag forever.
  */
 export function isUniqueViolation(error: unknown): boolean {
   const code = postgresErrorCode(error);
@@ -74,13 +74,13 @@ export function isUniqueViolation(error: unknown): boolean {
 }
 
 /**
- * Violação de chave estrangeira, não importa o motor.
+ * A foreign key violation, whichever the engine.
  *
- * Espelho de `isUniqueViolation`: o Postgres tem código próprio (`23503`); o SQLite devolve
- * o mesmo `SQLITE_CONSTRAINT` de qualquer restrição e só o texto ("FOREIGN KEY constraint
- * failed") diz qual foi. Usado pelo sink de `api_logs`, que tenta gravar `userId`/`storyId`
- * extraídos do meta e não pode deixar um 401 contra uma história inexistente neste servidor
- * virar um stack dump no lugar do próprio log.
+ * A mirror of `isUniqueViolation`: Postgres has its own code (`23503`); SQLite returns the same
+ * `SQLITE_CONSTRAINT` for any constraint and only the text ("FOREIGN KEY constraint failed") says
+ * which one it was. Used by the `api_logs` sink, which tries to write `userId`/`storyId` extracted
+ * from the meta and must not let a 401 against a story that does not exist on this server become a
+ * stack dump in place of the log itself.
  */
 export function isForeignKeyConstraint(error: unknown): boolean {
   const code = postgresErrorCode(error);
@@ -93,12 +93,11 @@ export function isForeignKeyConstraint(error: unknown): boolean {
 }
 
 /**
- * Nome da constraint/índice que causou a violação (ex.: `users_username_unique`), procurado
- * em `.cause` pelo mesmo motivo de `postgresErrorCode`. Uma tabela pode ter mais de uma
- * restrição de unicidade - `isUniqueViolation` sozinho não diz qual delas foi violada, e
- * assumir que só pode ser uma específica (ex.: username vs tag em `users`) faz um retry
- * pensado para uma colisão de verdade re-tentar a mesma operação, sem checar isto, contra
- * uma restrição diferente que nunca vai passar.
+ * Name of the constraint/index that caused the violation (e.g. `users_username_unique`), looked for
+ * in `.cause` for the same reason as `postgresErrorCode`. A table can have more than one uniqueness
+ * constraint - `isUniqueViolation` alone does not say which one was violated, and assuming it can only
+ * be a specific one (say, username vs tag in `users`) makes a retry designed for a real collision
+ * retry the same operation, without checking this, against a different constraint that will never pass.
  */
 export function postgresErrorConstraint(error: unknown): string | undefined {
   let current: unknown = error;
@@ -110,9 +109,9 @@ export function postgresErrorConstraint(error: unknown): string | undefined {
     current = (current as { cause?: unknown }).cause;
   }
 
-  // O SQLite não expõe a restrição num campo: ela vem no texto, e de duas formas. Para um
-  // índice de expressão (`lower(tag)`) ele dá o nome do índice - que é justamente o que quem
-  // chama compara; para um índice comum, dá as colunas.
+  // SQLite does not expose the constraint in a field: it comes in the text, and in two shapes. For an
+  // expression index (`lower(tag)`) it gives the index's name - which is exactly what the caller
+  // compares; for an ordinary index, it gives the columns.
   const message = errorMessageChain(error);
   const namedIndex = /UNIQUE constraint failed: index '([^']+)'/i.exec(message)?.[1];
   if (namedIndex) {

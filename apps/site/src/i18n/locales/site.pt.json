@@ -335,7 +335,7 @@
   "showcase": {
     "title": "Veja o app, não uma maquete",
     "lead": "Cada imagem abaixo é uma foto do Keres rodando, com uma das histórias de exemplo que vêm com o app aberta nele. Abra a mesma história e você vê as mesmas telas.",
-    "note": "Seis histórias de exemplo vêm com o app. Cada tela aqui é de uma delas, acompanha o idioma e o modo claro ou escuro desta página, e abre em tamanho real numa nova aba.",
+    "note": "Seis histórias de exemplo vêm com o app. Cada tela aqui é de uma delas, acompanha o idioma e o modo claro ou escuro desta página, e abre ampliada ao clicar.",
     "items": {
       "narrative-elements": {
         "title": "Capítulos e cenas",
@@ -373,6 +373,11 @@
         "title": "Como a história está",
         "body": "Tudo o que você escreveu, contado, ao lado do que a análise encontrou - e do que mudou por último."
       }
+    },
+    "lightbox": {
+      "close": "Fechar",
+      "zoom": "Clique na imagem para ver em tamanho real.",
+      "shrink": "Clique de novo para a imagem caber na tela."
     }
   },
   "stack": {

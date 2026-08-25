@@ -83,6 +83,16 @@ describe('vitrine', () => {
     }
   });
 
+  it('tem os textos da foto ampliada nos dois idiomas', () => {
+    for (const locale of [en, pt]) {
+      expect((locale as { showcase: { lightbox: unknown } }).showcase.lightbox).toMatchObject({
+        close: expect.any(String),
+        zoom: expect.any(String),
+        shrink: expect.any(String),
+      });
+    }
+  });
+
   it('não deixa texto de tela que saiu da vitrine para trás', () => {
     const ids = SHOWCASE_SCREENS.map((screen) => screen.id).sort();
     for (const locale of [en, pt]) {

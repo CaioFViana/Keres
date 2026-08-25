@@ -22,4 +22,19 @@ if (typeof window.matchMedia !== 'function') {
   });
 }
 
+/**
+ * O jsdom não implementa `<dialog>`: `showModal`/`close` não existem. A foto ampliada usa o
+ * elemento nativo justamente para ganhar Esc e foco preso, então aqui basta registrar a
+ * abertura e o fechamento para o teste conseguir afirmar o comportamento.
+ */
+if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.open = true;
+  };
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    this.open = false;
+    this.dispatchEvent(new Event('close'));
+  };
+}
+
 initI18n('keres_test_language');

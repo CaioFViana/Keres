@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SHOWCASE_SCREENS } from '../content/catalog';
+import { SHOWCASE_SCREENS, type ShowcaseScreenId } from '../content/catalog';
 import { useSiteTheme } from '../theme/SiteThemeProvider';
+import { ScreenshotLightbox } from './ScreenshotLightbox';
 
 /**
  * O app, fotografado.
@@ -16,6 +18,8 @@ export function Showcase() {
   const { t, i18n } = useTranslation();
   const { resolved } = useSiteTheme();
   const language = i18n.language.startsWith('pt') ? 'pt' : 'en';
+  const [opened, setOpened] = useState<ShowcaseScreenId | null>(null);
+  const openedScreen = SHOWCASE_SCREENS.find((screen) => screen.id === opened);
 
   return (
     <section className="band" id="showcase">
@@ -34,13 +38,21 @@ export function Showcase() {
                   <h3>{t(`showcase.items.${screen.id}.title`)}</h3>
                   <p>{t(`showcase.items.${screen.id}.body`)}</p>
                 </figcaption>
-                {/* A foto tem 1440px e a página a encolhe para caber; o link abre o arquivo no
-                  tamanho real, que é onde o texto das cenas volta a ser legível. */}
+                {/* Continua sendo um link para o arquivo: quem abre em nova aba, copia o
+                  endereço ou navega pelo teclado espera isso. O clique comum, esse, abre a
+                  foto ampliada sem tirar ninguém da página. */}
                 <a
                   className="showcase-window"
                   href={source}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+                      return;
+                    }
+                    event.preventDefault();
+                    setOpened(screen.id);
+                  }}
                 >
                   <img
                     src={source}
@@ -55,6 +67,16 @@ export function Showcase() {
           })}
         </div>
         <p className="showcase-note">{t('showcase.note')}</p>
+
+        {openedScreen && (
+          <ScreenshotLightbox
+            source={`${import.meta.env.BASE_URL}showcase/screens/${openedScreen.id}.${language}.${resolved}.png`}
+            title={t(`showcase.items.${openedScreen.id}.title`)}
+            width={openedScreen.width}
+            height={openedScreen.height}
+            onClose={() => setOpened(null)}
+          />
+        )}
       </div>
     </section>
   );

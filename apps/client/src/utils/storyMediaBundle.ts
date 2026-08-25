@@ -14,13 +14,13 @@ import { reviveDates } from './reviveDates';
 import { StoryImportError } from './StoryImportError';
 
 /**
- * Remove um BOM UTF-8 (`﻿`) do início do texto, se houver.
+ * Removes a UTF-8 BOM (`﻿`) from the start of the text, if there is one.
  *
- * `Blob.text()` (usado no import pelo seletor da web) já descarta o BOM por especificação,
- * mas `File.text()` do `expo-file-system` (usado no import nativo) não documenta esse
- * comportamento - sem isto, o mesmo arquivo `.json`/`.zip` (por exemplo, um reexportado por
- * um editor de texto que adiciona BOM) importaria na web e falharia com "Unexpected token"
- * no aparelho.
+ * `Blob.text()` (used in the web picker's import) already discards the BOM by specification,
+ * but `expo-file-system`'s `File.text()` (used in the native import) does not document that
+ * behaviour - without this, the same `.json`/`.zip` file (for instance, one re-exported by
+ * a text editor that adds a BOM) would import on the web and fail with "Unexpected token"
+ * on the device.
  */
 export function stripUtf8Bom(text: string): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
@@ -28,26 +28,26 @@ export function stripUtf8Bom(text: string): string {
 
 export interface BuildZipResult {
   bytes: Uint8Array;
-  /** Quantas mídias entraram no pacote, do total que a história referencia. */
+  /** How many media entered the package, out of the total the story references. */
   includedCount: number;
   totalCount: number;
 }
 
 /**
- * Empacota uma história com a mídia da galeria, ou lê um pacote desses de volta.
+ * Packages a story with the gallery's media, or reads one of those packages back.
  *
- * O formato do .zip (e o passo de montagem) mora em `@keres/shared` - `buildStoryZipBytes`
- * lá - porque a API produz exatamente o mesmo arquivo ao publicar uma história no Showcase.
- * O que é do app e continua aqui: de onde vêm os bytes (o disco do aparelho, via
- * `mediaFileService`) e a leitura de volta, que só o app faz.
+ * The .zip's format (and the assembly step) lives in `@keres/shared` - `buildStoryZipBytes`
+ * there - because the API produces exactly the same file when publishing a story to the Showcase.
+ * What belongs to the app and stays here: where the bytes come from (the device's disk, through
+ * `mediaFileService`) and the reading back, which only the app does.
  */
 
 /**
- * Monta os bytes do .zip para uma história já exportada (`storyService.exportFullStory`).
+ * Assembles the .zip bytes for an already exported story (`storyService.exportFullStory`).
  *
- * Mídia que não está baixada neste aparelho (`localPath` nulo, ou o arquivo sumiu) é
- * simplesmente deixada de fora - o pacote continua útil com o resto, e quem chama recebe a
- * contagem para avisar a pessoa em vez de fingir que está tudo lá.
+ * Media not downloaded on this device (a null `localPath`, or the file has vanished) is
+ * simply left out - the package is still useful with the rest, and the caller gets the
+ * count so as to warn the person instead of pretending everything is there.
  */
 export async function buildStoryZipBytes(
   storyExport: FullStoryExportType,
@@ -74,11 +74,11 @@ export interface ExtractedStoryZip {
 }
 
 /**
- * Lê um .zip produzido por `buildStoryZipBytes` de volta em memória.
+ * Reads a .zip produced by `buildStoryZipBytes` back into memory.
  *
- * O mime type de cada mídia extraída vem do `story.json` (indexado por hash), não da
- * extensão do arquivo dentro do .zip - a extensão existe só para o arquivo ter um nome
- * legível, `extensionForMimeType` já não é necessariamente 1:1 (heic/heif, jpg/jpeg).
+ * Each extracted medium's mime type comes from `story.json` (indexed by hash), not from the
+ * file's extension inside the .zip - the extension exists only so the file has a
+ * readable name, `extensionForMimeType` is already not necessarily 1:1 (heic/heif, jpg/jpeg).
  */
 export async function extractStoryZip(
   bytes: Uint8Array,
@@ -104,8 +104,8 @@ export async function extractStoryZip(
 
   let parsedJson: unknown;
   try {
-    // `JSON.parse` nunca revive `Date` - mesmo cuidado de `pickStoryExportFile` com o `.json`
-    // solto, senão a validação abaixo rejeitaria toda data como string.
+    // `JSON.parse` never revives a `Date` - the same care as `pickStoryExportFile` with the loose
+    // `.json`, otherwise the validation below would reject every date as a string.
     parsedJson = reviveDates(JSON.parse(stripUtf8Bom(await storyEntry.async('string'))));
   } catch {
     throw new StoryImportError(
@@ -146,8 +146,8 @@ export async function extractStoryZip(
     const hash = entry.name.slice(MEDIA_DIR_PREFIX.length).split('.')[0];
     const mimeType = mimeTypeByHash.get(hash);
     if (!mimeType) {
-      // Entrada que o story.json não referencia (pacote adulterado ou de uma versão
-      // diferente); ignorar em vez de falhar a importação inteira por causa dela.
+      // An entry story.json does not reference (a tampered package, or one from a different
+      // version); ignore it instead of failing the whole import because of it.
       continue;
     }
     media.push({ hash, mimeType, bytes: await entry.async('uint8array') });

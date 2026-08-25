@@ -46,7 +46,7 @@ const row = (sceneIds: string[]): PresenceMatrixRow => ({
 const scenes = (count: number) => Array.from({ length: count }, (_, index) => scene(`${index}`));
 const columnOf = (index: number, width = MATRIX_SCENE_WIDTH) =>
   MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * width;
-/** Borda esquerda e direita da célula: o fio começa e termina nelas, não no centro. */
+/** The cell's left and right borders: the thread starts and ends on them, not in the centre. */
 const cellStart = (index: number, width = MATRIX_SCENE_WIDTH) =>
   columnOf(index, width) + MATRIX_CELL_INSET;
 const cellEnd = (index: number, width = MATRIX_SCENE_WIDTH) =>
@@ -78,8 +78,8 @@ describe('matrix thread', () => {
   it('stays in the gutter between cells instead of running underneath them', () => {
     const [segment] = buildMatrixThreadSegments(row(['0', '1']), scenes(3), MATRIX_SCENE_WIDTH);
 
-    // Uma célula ocupa [cellStart, cellEnd]; o trecho vive inteiro depois de uma e antes da
-    // outra, senão o risco apareceria por cima da nota através do preenchimento translúcido.
+    // A cell occupies [cellStart, cellEnd]; the stretch lives entirely after one and before the other,
+    // otherwise the stroke would show over the note through the translucent fill.
     expect(segment.x1).toBeGreaterThanOrEqual(cellEnd(0));
     expect(segment.x2).toBeLessThanOrEqual(cellStart(1));
     expect(segment.x2 - segment.x1).toBe(MATRIX_CELL_INSET * 2);

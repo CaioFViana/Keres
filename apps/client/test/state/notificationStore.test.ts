@@ -13,9 +13,9 @@ beforeEach(() => {
 });
 
 /**
- * A sincronização roda em timer, então uma falha persistente reaparece a cada ciclo. As três
- * faixas com fila e a supressão de duplicatas existem para o usuário não ser soterrado pela
- * mesma mensagem - e para nenhuma mensagem se perder no caminho.
+ * Synchronization runs on a timer, so a persistent failure reappears on every cycle. The three
+ * queued lanes and the duplicate suppression exist so the user is not buried under the
+ * same message - and so no message is lost along the way.
  */
 describe('showNotification', () => {
   it('puts the first notification in the first free lane', () => {

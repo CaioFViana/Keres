@@ -1,4 +1,4 @@
-/** Campos visíveis que a ajuda deve explicar. Mantido separado do modelo para não expor dados internos. */
+/** Visible fields the help has to explain. Kept apart from the model so as not to expose internal data. */
 export const fieldSources: Record<string, string[]> = {
   'create-story': [
     'title',
@@ -73,7 +73,7 @@ export const fieldSources: Record<string, string[]> = {
   'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
 };
 
-/** Página que explica os campos expostos pela metadata usada na busca avançada. */
+/** The page that explains the fields exposed by the metadata used in advanced search. */
 export const entityMetadataHelpPages = {
   Character: 'characters',
   Tag: 'tags',
@@ -95,13 +95,13 @@ export const visibleEntityProperties = fieldSources;
 export type EntityPropertyClassification = {
   /** Campos apresentados ao leitor em uma tela, fluxo ou artigo de ajuda. */
   documented: string[];
-  /** Chaves de identidade, sincronização ou ligação interna que não são campos editáveis. */
+  /** Identity, synchronization or internal-link keys that are not editable fields. */
   invisible: string[];
 };
 
 /**
- * Cobertura do modelo compartilhado. Esta lista torna explícita a decisão para
- * cada propriedade: ela é explicada ao leitor ou é detalhe interno do sistema.
+ * Coverage of the shared model. This list makes the decision explicit for every property: is it
+ * explained to the reader, or is it an internal detail of the system?
  */
 export const entityPropertyClassifications: Record<string, EntityPropertyClassification> = {
   AdminUserInfo: {
@@ -376,11 +376,11 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: ['entityAType', 'entityAId', 'entityBType', 'entityBId', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
-  /*
-   * As formas do Showcase (site público) descrevem o que o *servidor* devolve para uma página
-   * web anônima, não uma tela do app. Nada aqui é editável por quem escreve - o autor escolhe
-   * publicar e com que nome, e o resto é montado a partir da própria história. Por isso são
-   * integralmente internas para efeito de ajuda.
+  /**
+   * The Showcase (public site) shapes describe what the *server* returns to an anonymous web page, not
+   * an app screen. Nothing here is editable by the writer - the author chooses to publish and under what
+   * name, and the rest is assembled from the story itself. That is why they are entirely internal as far
+   * as help is concerned.
    */
   ShowcaseOwner: {
     documented: [],

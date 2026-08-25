@@ -1,14 +1,14 @@
 import type { ChapterSelect, SceneSelect } from '../db/schema';
 
 /**
- * A ordem em que as cenas de uma história linear são lidas: capítulo primeiro, cena depois.
+ * The order in which a linear story's scenes are read: chapter first, scene second.
  *
- * Existe uma função só porque detalhe de Plot, Leitor, Matriz e Cobertura precisam concordar
- * sobre "a próxima cena". Cada tela ordenando por conta própria já foi o suficiente para a
- * mesma história aparecer em duas ordens diferentes em telas vizinhas.
+ * There is a single function only because a Plot's detail, the Reader, the Matrix and the Coverage need to agree
+ * about "the next scene". Each screen sorting on its own was already enough for the
+ * same story to appear in two different orders on neighbouring screens.
  *
- * Cenas de capítulo desconhecido (capítulo apagado, importação incompleta) vão para o fim em
- * vez de sumirem: elas continuam sendo cenas da história.
+ * Scenes with an unknown chapter (a deleted chapter, an incomplete import) go to the end instead
+ * of disappearing: they are still the story's scenes.
  */
 export function compareNarrativeScenes(
   chapters: Pick<ChapterSelect, 'id' | 'index'>[],

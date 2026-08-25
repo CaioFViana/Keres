@@ -21,14 +21,14 @@ export const stories = sqliteTable('stories', {
   normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' })
     .notNull()
     .default(false),
-  // Só relevante para histórias vinculadas a um servidor - só lá existe a distinção
-  // reader/writer que este campo governa (ver CommentSyncHandler/SyncService no servidor).
+  // Only relevant for stories linked to a server - only there does the reader/writer distinction this
+  // field governs exist (see CommentSyncHandler/SyncService on the server).
   allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' })
     .notNull()
     .default(false),
-  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: integer('stat_system', { mode: 'boolean' }).notNull().default(false),
-  /** 'letter' | 'number' - como os valores de status são exibidos. */
+  /** 'letter' | 'number' - how stat values are displayed. */
   statNotation: text('stat_notation').notNull().default('letter'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -38,8 +38,8 @@ export const stories = sqliteTable('stories', {
   serverId: text('server_id'),
   lastOperationLog: integer('last_operation_log').notNull().default(0),
   lastServerSyncedLog: integer('last_server_synced_log').notNull().default(0),
-  // Cursor independente para permitir que, ao tornar favoritos públicos, o cliente busque
-  // o histórico relacional anterior sem retroceder ou reproduzir o restante da história.
+  // An independent cursor, so that when favourites are made public the client can fetch the earlier
+  // relational history without rewinding or replaying the rest of the story.
   lastPublicFavoriteLog: integer('last_public_favorite_log').notNull().default(0),
   // Caller's effective access level on the server for this story ('owner'/'writer'/'reader'),
   // refreshed on every pull. Null means never synced yet (a purely local story).

@@ -3,14 +3,14 @@ import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 import { servers } from './servers';
 
 /**
- * Espelho local das versões públicas de uma história (Showcase).
+ * A local mirror of a story's public versions (Showcase).
  *
- * Fora do motor de sincronização, de propósito - como `friendships`: nada aqui entra no log de
- * operações nem tem handler de sync. A tabela existe por dois motivos, e só eles:
- *   1. a tela de publicação lista as versões sem precisar de rede a cada abertura;
- *   2. ela é a base de comparação que revela o que foi publicado enquanto este aparelho estava
- *      offline - o servidor avisa por WebSocket, mas o barramento dele é em memória e não
- *      reenvia nada, então o app refaz o GET a cada reconexão e compara com o que já tinha.
+ * Deliberately outside the synchronization engine - like `friendships`: nothing here enters the
+ * operation log nor has a sync handler. The table exists for two reasons, and only those:
+ *   1. the publication screen lists the versions without needing the network on every opening;
+ *   2. it is the comparison basis that reveals what was published while this device was
+ *      offline - the server warns over WebSocket, but its bus is in memory and does not
+ *      redeliver anything, so the app redoes the GET on every reconnection and compares with what it had.
  */
 export const storyPublications = sqliteTable(
   'story_publications',
@@ -24,11 +24,11 @@ export const storyPublications = sqliteTable(
     label: text('label').notNull(),
     operationVersion: integer('operation_version').notNull(),
     byteSize: integer('byte_size').notNull(),
-    /** Instante da publicação no servidor, não de quando este aparelho ficou sabendo. */
+    /** The instant of publication on the server, not of when this device found out about it. */
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     /**
-     * Falso enquanto a pessoa ainda não foi avisada. Sem isto, a primeira sincronização depois
-     * de instalar o app dispararia um aviso para cada versão que já existia.
+     * False while the person has not been told yet. Without this, the first synchronization after
+     * installing the app would fire a warning for every version that already existed.
      */
     notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
   },

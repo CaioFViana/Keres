@@ -1,22 +1,22 @@
-# Plano: histórias de exemplo como vitrine completa do sistema
+# Plan: example stories as a complete showcase of the system
 
-## Objetivo
+## Goal
 
-Cada história empacotada em `apps/client/src/exampleStories/content/<slug>/{en,pt}.json` deve
-exercitar **tudo** que o formato de exportação carrega e que o tipo daquela história permite.
-Instalar um exemplo tem que ser suficiente para a pessoa abrir qualquer tela, qualquer gráfico e
-qualquer exportação SVG e ver algo cheio e coerente — não uma tela vazia com "nenhum item".
+Every story packaged in `apps/client/src/exampleStories/content/<slug>/{en,pt}.json` should
+exercise **everything** the export format carries and that the story's type allows.
+Installing an example has to be enough for the person to open any screen, any chart and
+any SVG export and see something full and coherent — not an empty screen saying "no items".
 
-Hoje isso não acontece: nenhum exemplo tem status, modos, mais de um capítulo, ou presença de
-personagem em mais de duas cenas. Metade dos produtos visuais do app abre praticamente vazia.
+Today that does not happen: no example has stats, modes, more than one chapter, or a character's
+presence in more than two scenes. Half of the app's visual products open practically empty.
 
-## Estado atual
+## Current state
 
-Contagens por coleção (idioma `en`; `pt` é paralelo):
+Counts per collection (the `en` language; `pt` is parallel):
 
-| Coleção | alice | beauty | cinder | goldi | mermaid | kaguya |
+| Collection | alice | beauty | cinder | goldi | mermaid | kaguya |
 |---|---:|---:|---:|---:|---:|---:|
-| tipo | branching | branching | linear | linear | linear | linear |
+| type | branching | branching | linear | linear | linear | linear |
 | chapters | 1 | 1 | 1 | 1 | 1 | 1 |
 | scenes | 7 | 10 | 7 | 5 | 7 | 8 |
 | characters | 5 | 6 | 6 | 4 | 5 | 9 |
@@ -41,231 +41,231 @@ Contagens por coleção (idioma `en`; `pt` é paralelo):
 | favorites | 1 | 1 | 1 | 1 | 1 | 1 |
 | storySchemaFields / attributeValues | 2 / 4 | 2 / 4 | 2 / 4 | 2 / 4 | 2 / 4 | 2 / 4 |
 | suggestions | 12 | 12 | 12 | 12 | 12 | 12 |
-| cenas com tempo (gap/duration) | 0 | 1 | 0 | 0 | 0 | 0 |
+| scenes with timing (gap/duration) | 0 | 1 | 0 | 0 | 0 | 0 |
 
-Buracos de variedade, além das contagens:
+Gaps in variety, beyond the counts:
 
-- `effects` é sempre um único `triggerSet`; `itemGrant`, `itemTake` e `triggerUnset` nunca
-  aparecem.
-- `choiceChecks` é sempre um único `sceneCount`; `inventory` e `trigger` nunca aparecem.
-- `storySchemaFields` são sempre dois campos do tipo `suggestion`; os outros seis tipos
-  (`text`, `long_text`, `number`, `boolean`, `date`, `suggestion_list`, `entity`) nunca aparecem.
-- `locationRelations` é sempre um único `connected_to`; `contains` nunca aparece, então o mapa
-  de locais nunca mostra hierarquia.
-- `seeAlsoRelations` é sempre `Character ↔ Location`, de oito tipos possíveis.
-- `comments` sempre em `Character.description`, criticidade 2, de uma escala de 1 a 5.
-- `favorites` sempre na própria `Story`.
-- Todas as histórias têm `statSystem: false`.
+- `effects` is always a single `triggerSet`; `itemGrant`, `itemTake` and `triggerUnset` never
+  appear.
+- `choiceChecks` is always a single `sceneCount`; `inventory` and `trigger` never appear.
+- `storySchemaFields` are always two fields of the `suggestion` type; the other six types
+  (`text`, `long_text`, `number`, `boolean`, `date`, `suggestion_list`, `entity`) never appear.
+- `locationRelations` is always a single `connected_to`; `contains` never appears, so the locations
+  map never shows a hierarchy.
+- `seeAlsoRelations` is always `Character ↔ Location`, out of eight possible types.
+- `comments` are always on `Character.description`, criticality 2, out of a scale from 1 to 5.
+- `favorites` are always on the `Story` itself.
+- Every story has `statSystem: false`.
 
-### Linha de base da Análise da História
+### The Story Analysis baseline
 
-Rodando `buildStoryAnalysisReport` sobre cada exemplo de hoje:
+Running `buildStoryAnalysisReport` over each of today's examples:
 
-| História | Achados | Quais |
+| Story | Findings | Which |
 |---|---:|---|
-| alice-in-wonderland | 4 | 3× personagem sem cena, 1× local sem ligação |
-| beauty-and-the-beast | 5 | 4× personagem sem cena, 1× local sem ligação |
-| cinderella | 4 | 4× personagem sem cena |
-| goldilocks | 4 | 2× personagem sem cena, 1× personagem sem relação, 1× local não usado |
-| little-mermaid | 4 | 3× personagem sem cena, 1× local sem ligação |
-| princess-kaguya | 8 | 7× personagem sem cena, 1× local sem ligação |
+| alice-in-wonderland | 4 | 3× a character with no scene, 1× a location with no link |
+| beauty-and-the-beast | 5 | 4× a character with no scene, 1× a location with no link |
+| cinderella | 4 | 4× a character with no scene |
+| goldilocks | 4 | 2× a character with no scene, 1× a character with no relation, 1× an unused location |
+| little-mermaid | 4 | 3× a character with no scene, 1× a location with no link |
+| princess-kaguya | 8 | 7× a character with no scene, 1× a location with no link |
 
-Nenhum exemplo passa limpo hoje. A boa notícia é que os achados são exatamente os que as fases
-2 e 3 resolvem por consequência: personagem sem cena some quando todo personagem entra em
-`characterScenes`, e local sem ligação some quando o mapa de locais ganha hierarquia. Ou seja,
-"zero achados" não é uma meta extra — é o efeito colateral de atingir os alvos das tabelas
-acima, e por isso vale como guarda automatizada.
+No example passes clean today. The good news is that the findings are exactly the ones phases
+2 and 3 resolve as a consequence: a character with no scene disappears when every character enters
+`characterScenes`, and a location with no link disappears when the locations map gains a hierarchy. That is,
+"zero findings" is not an extra goal — it is the side effect of hitting the targets in the tables
+above, and that is why it works as an automated guard.
 
-As duas histórias ramificadas já passam limpo nas checagens caras (alcançabilidade e
-satisfazibilidade de escolha); a Fase 6 precisa manter isso ao adicionar ciclo e finais
-alternativos.
+The two branching stories already pass clean on the expensive checks (choice reachability and
+satisfiability); Phase 6 has to keep that while adding a cycle and alternative
+endings.
 
-## O que cada produto visual exige para "ficar completo"
+## What each visual product requires in order to "be complete"
 
-| Produto | Onde | Precisa de |
+| Product | Where | It needs |
 |---|---|---|
-| Mapa da história (SVG) | `storyGraphSvg` | história ramificada com múltiplos capítulos (cores por capítulo), bifurcação, reencontro, pelo menos um ciclo e um final alternativo |
-| Mapa de locais (SVG) | `locationGraphSvg` | `contains` **e** `connected_to`, com ao menos dois níveis de hierarquia |
-| Mapa de relações (SVG) | `characterRelationGraphSvg` | ≥ 6 personagens e relações que formem grupos, não uma estrela só |
-| Matriz de presença (SVG) | `presenceMatrixSvg` | **muitos `characterScenes`** — hoje 2 por história deixa a matriz quase vazia; com o fio novo, ideal é ter personagem contínuo, personagem com vão e personagem de uma cena só |
-| Matriz de itens (SVG) | mesma matriz, `kind: item` | ≥ 3 itens com ≥ 3 paradas cada, com estados diferentes |
-| Matriz de tramas (SVG) | `presenceMatrixSvg` via Plot | ≥ 3 tramas com sobreposição parcial de cenas (linear) |
-| Cobertura de tramas (SVG) | `plotCoverageSvg` | tramas com coberturas bem diferentes entre si, incluindo uma trama vazia |
-| Linha do tempo (SVG) | `storyTimelineSvg` | `gap`/`gapType` e `duration`/`durationType` na maioria das cenas, com unidades variadas |
-| Radar de status | `statRadarSvg` | `statSystem: true`, 4–6 status primários, ≥ 3 personagens com valores, e ao menos um personagem com **modo** |
-| Régua de tiers | `statLadderBarLayout` | escada padrão da história + ao menos um status com escada própria |
-| Ranking / comparação | telas de Stats | valores suficientemente espalhados para o ranking não ser um empate |
-| Leitor de tramas | `PlotReaderScreen` | resumo preenchido em todas as cenas |
-| Análise da história | `storyAnalysisChecks` | idealmente **zero** achados: o exemplo é a referência de história bem-formada |
+| The story map (SVG) | `storyGraphSvg` | a branching story with multiple chapters (colours per chapter), a fork, a reunion, at least one cycle and one alternative ending |
+| The locations map (SVG) | `locationGraphSvg` | `contains` **and** `connected_to`, with at least two levels of hierarchy |
+| The relations map (SVG) | `characterRelationGraphSvg` | ≥ 6 characters and relations forming groups, not a single star |
+| The presence matrix (SVG) | `presenceMatrixSvg` | **many `characterScenes`** — today's 2 per story leaves the matrix almost empty; with the new thread, ideally there should be a continuous character, a character with a gap and a character in a single scene |
+| The item matrix (SVG) | the same matrix, `kind: item` | ≥ 3 items with ≥ 3 stops each, with different states |
+| The plot matrix (SVG) | `presenceMatrixSvg` through Plot | ≥ 3 plots with partial scene overlap (linear) |
+| Plot coverage (SVG) | `plotCoverageSvg` | plots with markedly different coverage from one another, including an empty plot |
+| The timeline (SVG) | `storyTimelineSvg` | `gap`/`gapType` and `duration`/`durationType` on most scenes, with varied units |
+| The stat radar | `statRadarSvg` | `statSystem: true`, 4–6 primary stats, ≥ 3 characters with values, and at least one character with a **mode** |
+| The tier bar | `statLadderBarLayout` | the story's default ladder + at least one stat with a ladder of its own |
+| Ranking / comparison | the Stats screens | values spread out enough for the ranking not to be a tie |
+| The plot reader | `PlotReaderScreen` | a filled-in summary on every scene |
+| Story analysis | `storyAnalysisChecks` | ideally **zero** findings: the example is the reference for a well-formed story |
 
-## Alvo por história
+## The target per story
 
-Regra geral: **toda** história cobre tudo que o tipo dela permite. O que muda entre elas é a
-escala e o tema, não quais recursos aparecem.
+The general rule: **every** story covers everything its type allows. What changes between them is the
+scale and the theme, not which features appear.
 
-### Mínimos comuns (linear e ramificada)
+### Common minimums (linear and branching)
 
-| Coleção | Mínimo | Observação |
+| Collection | Minimum | Note |
 |---|---:|---|
-| chapters | 3 | dá cor de capítulo aos gráficos e valida a numeração 1..N |
-| scenes | 12 | 3–5 por capítulo |
-| cenas com `gap` + `duration` | 80% | unidades variadas (`minutes`, `hours`, `days`, `years`) |
+| chapters | 3 | it gives the charts a chapter colour and validates the 1..N numbering |
+| scenes | 12 | 3–5 per chapter |
+| scenes with `gap` + `duration` | 80% | varied units (`minutes`, `hours`, `days`, `years`) |
 | characters | 6 | |
-| characterScenes | 18 | ≥ 3 personagens presentes em ≥ 4 cenas cada |
-| characterRelations | 6 | pelo menos dois agrupamentos distintos |
+| characterScenes | 18 | ≥ 3 characters present in ≥ 4 scenes each |
+| characterRelations | 6 | at least two distinct groupings |
 | locations | 5 | |
-| locationRelations | 4 | ao menos 2 `contains` e 2 `connected_to` |
+| locationRelations | 4 | at least 2 `contains` and 2 `connected_to` |
 | items | 3 | |
-| itemJourneys | 9 | ≥ 3 paradas por item, com troca de dono e de estado |
+| itemJourneys | 9 | ≥ 3 stops per item, with a change of owner and of state |
 | worldRules | 3 | |
-| notes / noteRelations | 3 / 4 | notas ligadas a tipos de entidade diferentes |
-| tags / tagRelations | 4 / 10 | mesma tag em tipos diferentes de entidade |
-| comments | 4 | campos diferentes, criticidades 1, 3 e 5 |
-| seeAlsoRelations | 4 | ao menos 4 pares de tipos diferentes |
+| notes / noteRelations | 3 / 4 | notes linked to different entity types |
+| tags / tagRelations | 4 / 10 | the same tag on different entity types |
+| comments | 4 | different fields, criticalities 1, 3 and 5 |
+| seeAlsoRelations | 4 | at least 4 pairs of different types |
 | favorites | 3 | Story + Character + Scene |
-| storySchemaFields | 8 | **um de cada tipo** de `AttributeType` |
-| attributeValues | 12 | todo campo com valor em ao menos duas entidades |
+| storySchemaFields | 8 | **one of each** `AttributeType` |
+| attributeValues | 12 | every field with a value on at least two entities |
 | stats | 5 | `statSystem: true` |
-| statStrengths | 12 | escada padrão + uma escada própria de um status |
-| statRelations | 20 | ≥ 4 personagens × 5 status |
-| modes | 2 | ao menos um personagem com modo, com valores próprios |
-| effects | 4 | um de cada: `itemGrant`, `itemTake`, `triggerSet`, `triggerUnset` |
-| suggestions | 12+ | catálogos dos campos de sugestão usados |
+| statStrengths | 12 | the default ladder + one stat's own ladder |
+| statRelations | 20 | ≥ 4 characters × 5 stats |
+| modes | 2 | at least one character with a mode, with values of its own |
+| effects | 4 | one of each: `itemGrant`, `itemTake`, `triggerSet`, `triggerUnset` |
+| suggestions | 12+ | the catalogues of the suggestion fields used |
 
-### Só em história linear (Cinderela, Cachinhos, Sereia, Kaguya)
+### Linear stories only (Cinderella, Goldilocks, the Mermaid, Kaguya)
 
-| Coleção | Mínimo | Observação |
+| Collection | Minimum | Note |
 |---|---:|---|
-| plots | 4 | incluindo **uma trama vazia**, para a média de cobertura mostrar o caso |
-| plotScenes | 14 | coberturas distintas: uma trama quase completa, uma esparsa, uma concentrada em um ato |
+| plots | 4 | including **one empty plot**, so the coverage average shows that case |
+| plotScenes | 14 | distinct coverage: one nearly complete plot, one sparse, one concentrated in a single act |
 
-### Só em história ramificada (Alice, A Bela e a Fera)
+### Branching stories only (Alice, Beauty and the Beast)
 
-| Coleção | Mínimo | Observação |
+| Collection | Minimum | Note |
 |---|---:|---|
-| choices | 16 | bifurcação, reencontro, ciclo e ≥ 2 finais |
-| choiceCheckGroups | 4 | ao menos um `AND` e um `OR` |
-| choiceChecks | 6 | ao menos um de cada tipo (`sceneCount`, `inventory`, `trigger`) e ao menos um em modo `enable` e um em `block` |
+| choices | 16 | a fork, a reunion, a cycle and ≥ 2 endings |
+| choiceCheckGroups | 4 | at least one `AND` and one `OR` |
+| choiceChecks | 6 | at least one of each type (`sceneCount`, `inventory`, `trigger`) and at least one in `enable` mode and one in `block` |
 
-## Restrições invioláveis
+## Inviolable constraints
 
-Estas não são preferências — quebrar qualquer uma delas produz um exemplo que falha na
-instalação, na sincronização ou na Análise:
+These are not preferences — breaking any of them produces an example that fails on
+installation, on synchronization or in the Analysis:
 
-1. **Numeração 1..N.** Capítulos 1..N na história; cenas 1..M **dentro do capítulo**, sem
-   buracos nem repetição. Já existe teste que trava isso (`ExampleStoryService.test.ts`).
-2. **Tramas só em história linear**, escolhas/checks só em ramificada. Os serviços recusam o
-   contrário, e o drawer esconde Tramas em histórias ramificadas.
-3. **`formatVersion: 6`** e todas as coleções presentes (mesmo vazias, quando o schema exige).
-4. **Ids em formato ULID** (26 caracteres, alfabeto de Crockford — sem `I`, `L`, `O`, `U`),
-   únicos dentro do arquivo. A instalação remapeia todos, mas ids repetidos dentro do mesmo
-   arquivo colapsariam duas entidades numa só.
-5. **Toda referência tem que existir no próprio arquivo**: `chapterId`, `locationId`,
-   `sceneId`, `itemId`, `characterId`, `plotId`, `fieldId`, `entityId` de comentário/atributo/
-   favorito/see-also.
-6. **Nota de PlotScene**: uma linha, ≤ 160 caracteres.
-7. **Máximo de 12 status primários** por história.
-8. **`userId`** continua `EXAMPLEUSERPLACEHOLDER0000` em story, comentários e favoritos.
-9. **Domínio público**: só obras e textos de domínio público, escritos com nossas palavras.
-10. **en e pt paralelos**: mesmos ids, mesma estrutura, só o texto muda. Um recurso presente em
-    um idioma tem que existir no outro.
+1. **1..N numbering.** Chapters 1..N in the story; scenes 1..M **within the chapter**, with no
+   holes or repeats. There is already a test locking that down (`ExampleStoryService.test.ts`).
+2. **Plots only in linear stories**, choices/checks only in branching ones. The services refuse
+   the opposite, and the drawer hides Plots in branching stories.
+3. **`formatVersion: 6`** and every collection present (even empty, where the schema requires it).
+4. **Ids in ULID format** (26 characters, Crockford's alphabet — no `I`, `L`, `O`, `U`),
+   unique within the file. Installation remaps them all, but repeated ids inside the same
+   file would collapse two entities into one.
+5. **Every reference has to exist within the file itself**: `chapterId`, `locationId`,
+   `sceneId`, `itemId`, `characterId`, `plotId`, `fieldId`, and the `entityId` of a comment/attribute/
+   favourite/see-also.
+6. **The PlotScene note**: a single line, ≤ 160 characters.
+7. **At most 12 primary stats** per story.
+8. **`userId`** stays `EXAMPLEUSERPLACEHOLDER0000` on the story, comments and favourites.
+9. **Public domain**: only public-domain works and texts, written in our own words.
+10. **en and pt in parallel**: the same ids, the same structure, only the text changes. A feature present in
+    one language has to exist in the other.
 
-## Fora de escopo, e por quê
+## Out of scope, and why
 
-- **Galeria (`galleryItems`, `galleryRelations`)**: uma linha de galeria aponta para um arquivo
-  de mídia local; exemplos são JSON estático, sem mídia empacotada (ver `ExampleStoryService`).
-  Uma linha sem arquivo apareceria como miniatura quebrada — pior que a lista vazia. Fica de
-  fora até existir uma forma de empacotar mídia com o exemplo.
-- **Dados de sincronização** (`serverLastOperationVersion` > 0, conflitos, permissões,
-  publicações): pertencem a uma conta e a um servidor, não ao conteúdo da história.
-- **Sugestões literárias / Story Devices**: catálogo do app, não dado de história.
+- **The gallery (`galleryItems`, `galleryRelations`)**: a gallery row points at a local media
+  file; examples are static JSON, with no packaged media (see `ExampleStoryService`).
+  A row with no file would appear as a broken thumbnail — worse than an empty list. It stays
+  out until there is a way of packaging media with the example.
+- **Synchronization data** (`serverLastOperationVersion` > 0, conflicts, permissions,
+  publications): they belong to an account and a server, not to the story's content.
+- **Literary suggestions / Story Devices**: an app catalogue, not story data.
 
-## Execução
+## Execution
 
-Cada fase é independente e verificável; nenhuma depende da fase seguinte.
+Each phase is independent and verifiable; none depends on the next.
 
-### Fase 0 — Ferramenta de autoria (antes de tocar em conteúdo)
+### Phase 0 — An authoring tool (before touching any content)
 
-Escrever `apps/client/scripts/build-example-story.ts` que monte o JSON a partir de uma descrição
-enxuta (capítulos → cenas → quem aparece, itens, tramas) e gere ids ULID determinísticos por
-slug. Escrever 12 arquivos de ~2.000 linhas à mão, em dois idiomas, com referências cruzadas
-corretas, é onde o erro humano entra.
+Write `apps/client/scripts/build-example-story.ts` that assembles the JSON from a lean
+description (chapters → scenes → who appears, items, plots) and generates deterministic ULID ids per
+slug. Writing 12 files of ~2,000 lines by hand, in two languages, with correct cross
+references, is where human error creeps in.
 
-O script cuida de: numeração 1..N, `createdAt/updatedAt` fixos, `version: 1`, campos nulos
-obrigatórios, e paridade en/pt (mesmos ids nos dois).
+The script takes care of: 1..N numbering, fixed `createdAt/updatedAt`, `version: 1`, required
+null fields, and en/pt parity (the same ids in both).
 
-### Fase 1 — Estrutura narrativa
+### Phase 1 — Narrative structure
 
-Para as seis histórias: dividir em 3 capítulos, chegar a ≥ 12 cenas, preencher `summary` em
-todas, e distribuir `gap`/`duration` com unidades variadas. É a fase que enche a Linha do tempo
-e dá cor de capítulo a todos os mapas.
+For the six stories: split into 3 chapters, reach ≥ 12 scenes, fill in `summary` on
+all of them, and distribute `gap`/`duration` with varied units. It is the phase that fills the Timeline
+and gives every map a chapter colour.
 
-### Fase 2 — Elenco e presença
+### Phase 2 — Cast and presence
 
-Subir para ≥ 6 personagens, ≥ 18 `characterScenes` (com os três perfis: contínuo, com vão, de
-uma cena só), ≥ 6 relações formando grupos. Enche a Matriz de presença e o Mapa de relações.
+Rise to ≥ 6 characters, ≥ 18 `characterScenes` (with the three profiles: continuous, with a gap, in
+a single scene), ≥ 6 relations forming groups. It fills the presence matrix and the relations map.
 
-### Fase 3 — Mundo
+### Phase 3 — The world
 
-≥ 5 locais com hierarquia (`contains`) e ligações (`connected_to`); ≥ 3 regras de mundo. Enche o
-Mapa de locais.
+≥ 5 locations with a hierarchy (`contains`) and links (`connected_to`); ≥ 3 world rules. It fills the
+locations map.
 
-### Fase 4 — Itens
+### Phase 4 — Items
 
-≥ 3 itens com ≥ 3 paradas cada, com troca de dono e de estado. Enche a Matriz de itens e a
-Trajetória.
+≥ 3 items with ≥ 3 stops each, with a change of owner and of state. It fills the item matrix and the
+journey.
 
-### Fase 5 — Status e modos
+### Phase 5 — Stats and modes
 
-`statSystem: true`, 5 status, escada padrão + uma escada própria, valores para ≥ 4 personagens,
-2 modos com valores próprios. Enche Radar, Régua, Ranking e Comparação — hoje todos vazios.
+`statSystem: true`, 5 stats, the default ladder + one ladder of its own, values for ≥ 4 characters,
+2 modes with values of their own. It fills the Radar, the Bar, the Ranking and the Comparison — all empty today.
 
-### Fase 6 — Tramas (linear) e ramificação (ramificada)
+### Phase 6 — Plots (linear) and branching (branching)
 
-Lineares: 4 tramas (uma vazia) e ≥ 14 relações com coberturas distintas.
-Ramificadas: ≥ 16 escolhas com bifurcação, reencontro, ciclo e dois finais; 4 grupos de
-condição cobrindo `AND`/`OR` e os três tipos de check; 4 efeitos cobrindo os quatro tipos.
+Linear: 4 plots (one empty) and ≥ 14 relations with distinct coverage.
+Branching: ≥ 16 choices with a fork, a reunion, a cycle and two endings; 4 check
+groups covering `AND`/`OR` and the three check types; 4 effects covering the four types.
 
-### Fase 7 — Camada editorial
+### Phase 7 — The editorial layer
 
-Esquema da história com um campo de **cada** tipo de atributo e valores preenchidos; tags
-aplicadas a tipos diferentes de entidade; notas ligadas a entidades diferentes; 4 comentários em
-campos e criticidades diferentes; 4 "veja também" entre pares de tipos diferentes; favoritos em
-três tipos.
+A story schema with a field of **each** attribute type and values filled in; tags
+applied to different entity types; notes linked to different entities; 4 comments on
+different fields and criticalities; 4 "see also"s between pairs of different types; favourites on
+three types.
 
-### Fase 8 — Guardas
+### Phase 8 — Guards
 
-Testes novos em `apps/client/test/services/ExampleStoryService.test.ts`:
+New tests in `apps/client/test/services/ExampleStoryService.test.ts`:
 
-- **matriz de cobertura**: para cada exemplo, cada coleção aplicável ao tipo da história tem no
-  mínimo a contagem-alvo desta tabela. É o teste que impede um exemplo novo entrar pela metade;
-- **variedade**: os quatro tipos de efeito, os três tipos de check, os oito tipos de atributo,
-  os dois tipos de relação de local, ≥ 3 criticidades de comentário;
-- **integridade referencial**: toda referência aponta para um id existente no mesmo arquivo;
-- **ids**: todos únicos e em formato ULID válido;
-- **paridade en/pt**: mesmos ids e mesmas contagens nos dois idiomas;
-- **Análise limpa**: `buildStoryAnalysisReport` de cada exemplo instalado devolve zero achados —
-  o exemplo é a referência de história bem-formada;
-- **tamanho**: cada arquivo abaixo de 250 KB (hoje: 30–46 KB; o alvo triplica o conteúdo, então
-  o teto dá folga sem deixar o bundle crescer sem limite).
+- **a coverage matrix**: for each example, every collection applicable to the story's type has at
+  least this table's target count. It is the test that stops a new example entering half-finished;
+- **variety**: the four effect types, the three check types, the eight attribute types,
+  the two location relation types, ≥ 3 comment criticalities;
+- **referential integrity**: every reference points at an id existing in the same file;
+- **ids**: all unique and in valid ULID format;
+- **en/pt parity**: the same ids and the same counts in both languages;
+- **a clean Analysis**: `buildStoryAnalysisReport` of each installed example returns zero findings —
+  the example is the reference for a well-formed story;
+- **size**: each file under 250 KB (today: 30–46 KB; the target triples the content, so
+  the ceiling leaves slack without letting the bundle grow without limit).
 
-### Fase 9 — Verificação visual
+### Phase 9 — Visual verification
 
-Com uma história instalada, conferir os nove produtos SVG/gráficos da tabela acima, em tema
-claro e escuro, e exportar cada um. É a única fase que não dá para automatizar aqui.
+With a story installed, check the nine SVG/chart products from the table above, in light
+and dark themes, and export each one. It is the only phase that cannot be automated here.
 
-## Riscos
+## Risks
 
-- **Tamanho do bundle**: os exemplos são `import` estático dentro do JS do app. Seis histórias
-  triplicando de tamanho saem de ~240 KB para ~700 KB de JSON. Aceitável, mas é o motivo do
-  teto de 250 KB por arquivo na Fase 8. Se apertar, o caminho é carregar o conteúdo sob demanda
-  em vez de cortar recursos.
-- **Tradução**: dobrar o conteúdo dobra o texto a escrever em pt e en. A paridade estrutural é
-  testável (Fase 8), a qualidade do texto não.
-- **Manutenção**: cada recurso novo do sistema passa a implicar atualizar seis histórias em dois
-  idiomas. O teste de cobertura da Fase 8 é o que transforma esse esquecimento em falha de
-  build em vez de exemplo silenciosamente desatualizado.
-- **Ordem de entrega**: as fases 1 e 2 mudam ids e contagens que as fases seguintes referenciam.
-  Fazer uma história inteira de ponta a ponta antes de repetir nas outras cinco é mais seguro
-  que fazer uma fase por vez nas seis — sugestão: **Cinderela** primeiro (linear, já é a mais
-  completa) e **Alice** em seguida (ramificada), e só então replicar o padrão.
+- **Bundle size**: the examples are a static `import` inside the app's JS. Six stories
+  tripling in size go from ~240 KB to ~700 KB of JSON. Acceptable, but it is the reason for the
+  250 KB per file ceiling in Phase 8. If it gets tight, the way out is loading the content on demand
+  instead of cutting features.
+- **Translation**: doubling the content doubles the text to write in pt and en. The structural parity is
+  testable (Phase 8), the text's quality is not.
+- **Maintenance**: every new feature of the system comes to imply updating six stories in two
+  languages. The Phase 8 coverage test is what turns that oversight into a build failure
+  instead of a silently outdated example.
+- **Delivery order**: phases 1 and 2 change ids and counts the following phases reference.
+  Doing one whole story end to end before repeating it in the other five is safer
+  than doing one phase at a time across all six — a suggestion: **Cinderella** first (linear, already the most
+  complete) and **Alice** next (branching), and only then replicate the pattern.

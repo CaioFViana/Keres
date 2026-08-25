@@ -5,26 +5,26 @@ import { View } from 'react-native';
 import { isColorLight } from '../../../../theme/commonStyles';
 
 /**
- * O ícone padrão, a paleta de reserva e a semente de cor moram em `@keres/shared`: o site
- * público desenha exatamente o mesmo avatar de quem publicou uma história, e duas cópias das
- * mesmas regras acabariam divergindo.
+ * The default icon, the fallback palette and the colour seed live in `@keres/shared`: the public site
+ * draws exactly the same avatar for whoever published a story, and two copies of the same rules would
+ * end up diverging.
  */
 
 /**
- * O cinza semi-transparente original ficava pouco visível em várias cores de fundo da paleta -
- * preto ou branco (também semi-transparentes, pro "cinza/transparente" do pedido original)
- * garantem contraste em qualquer cor escolhida, decidido pela mesma luminância que já orienta
- * texto sobre cor no resto do app (`isColorLight`, usado por Tag).
+ * The original semi-transparent grey was barely visible on several of the palette's background
+ * colours - black or white (also semi-transparent, for the original request's "grey/transparent")
+ * guarantee contrast on any chosen colour, decided by the same luminance that already guides text over
+ * colour in the rest of the app (`isColorLight`, used by Tag).
  */
 const ICON_TINT_ON_LIGHT = 'rgba(0, 0, 0, 0.6)';
 const ICON_TINT_ON_DARK = 'rgba(255, 255, 255, 0.75)';
 
 export interface AvatarProps {
-  /** Cor de fundo escolhida pelo usuário; `null`/ausente cai no fallback determinístico. */
+  /** The background colour the user picked; `null`/absent falls back to the deterministic one. */
   color?: string | null;
-  /** Nome do ícone Ionicons escolhido; `null`/ausente cai no ícone padrão. */
+  /** The name of the Ionicons icon picked; `null`/absent falls back to the default icon. */
   icon?: string | null;
-  /** Usado só quando `color` não foi escolhido, para gerar um fallback estável (id ou username). */
+  /** Only used when no `color` was chosen, to generate a stable fallback (an id or a username). */
   seed: string;
   size?: number;
 }

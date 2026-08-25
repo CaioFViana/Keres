@@ -48,9 +48,8 @@ describe('prepareNewEntityData', () => {
 });
 
 /**
- * O diff alimenta o payload de `update` do log de operações: um campo que ele deixa de
- * reportar simplesmente nunca chega ao servidor, e um falso positivo gera conflito de versão
- * onde nada mudou.
+ * The diff feeds the operation log's `update` payload: a field it stops reporting simply never reaches
+ * the server, and a false positive produces a version conflict where nothing changed.
  */
 describe('getChangedFields', () => {
   it('returns nothing when the objects are equal', () => {

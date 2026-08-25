@@ -33,7 +33,7 @@ type StatComparisonNavigationProp = NativeStackNavigationProp<
   'StatComparison'
 >;
 
-/** Quatro polígonos sobrepostos ainda são legíveis; acima disso o desenho vira sopa. */
+/** Four overlapping polygons are still readable; beyond that the drawing turns to soup. */
 const MAX_SERIES = 4;
 const CHART_SIZE_COMPACT = 320;
 const CHART_SIZE_WIDE = 420;
@@ -70,8 +70,8 @@ const StatComparisonScreen = () => {
   );
   const [exporting, setExporting] = useState(false);
 
-  // Aberta a partir do detalhe de um personagem, a volta é para ele - e não para a lista de
-  // status, que é onde a pilha deste stack começa. Ver `onBack` em useBackButtonHandler.
+  // Opened from a character's detail, the way back is to them - not to the stats list, which is where
+  // this stack begins. See `onBack` in useBackButtonHandler.
   const openedFromCharacterId = route.params?.characterId;
   useBackButtonHandler({
     showWebBackButton: true,
@@ -92,7 +92,7 @@ const StatComparisonScreen = () => {
     }, [navigation, t]),
   );
 
-  // Uma cor de tema por série: as quatro são distinguíveis em todas as paletas do app.
+  // One theme colour per series: all four are distinguishable in every palette of the app.
   const seriesColors = useMemo(
     () => [colors.primary, colors.error, colors.secondary, colors.accent],
     [colors],
@@ -140,8 +140,8 @@ const StatComparisonScreen = () => {
     () =>
       StyleSheet.create({
         content: { padding: 16, paddingBottom: 32 },
-        // Cada série selecionada só precisa configurar seu modo. A seleção em si fica em um
-        // único campo acima, para não parecer que existem cartões vazios para preencher.
+        // Each selected series only has to configure its mode. The selection itself sits in a single field
+        // above, so it does not look as if there are empty cards to fill in.
         slotCard: {
           borderColor: colors.border,
           borderWidth: 1,

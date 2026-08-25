@@ -59,8 +59,10 @@ export interface KeresAxiosInstance extends AxiosInstance {
   setActiveServer(server: ServerSelect | null): void; // New method
 }
 
-/** Marca por requisição que impede o ciclo de renovação de token de reentrar para sempre - ver
- *  uso no interceptor de resposta. */
+/**
+ * A per-request mark that stops the token refresh cycle from re-entering forever - see
+ * its use in the response interceptor.
+ */
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean };
 
 // There is only ever one token refresh strategy for the whole app, so this can
@@ -92,12 +94,12 @@ export function clearServerTokenCache(serverId: string): void {
 }
 
 /**
- * Token de acesso de um servidor, para quem precisa autenticar fora do Axios.
+ * A server's access token, for whoever needs to authenticate outside Axios.
  *
- * O interceptor de request resolve o cabeçalho sozinho e essa é a via normal. Downloads de
- * mídia, porém, vão direto para o disco pelo `expo-file-system` - trazer um vídeo para a
- * memória do JS só para o Axios repassá-lo estouraria o heap -, e por não passarem pelo
- * interceptor precisam montar o `Authorization` à mão.
+ * The request interceptor resolves the header on its own and that is the normal route. Media
+ * downloads, however, go straight to disk through `expo-file-system` - bringing a video into
+ * the JS memory just for Axios to pass it on would blow the heap -, and since they do not go through the
+ * interceptor they have to assemble the `Authorization` by hand.
  */
 export function getServerAccessToken(serverId: string): string | null {
   return serverTokenCache.get(serverId)?.jwtToken || null;
@@ -226,11 +228,11 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
           !retriableRequest.url?.includes('/auth/refresh') &&
           !retriableRequest._retriedAfterRefresh
         ) {
-          // Um 401 depois de já termos renovado o token e reenviado esta mesma requisição não é
-          // token expirado - é o servidor recusando o próprio conteúdo da requisição (ex.: senha
-          // atual errada em PUT /user/password ou /user/recovery-codes). Sem esta marca, cada
-          // reenvio gera outro 401, que dispara outra renovação (o refresh token continua válido)
-          // e reenvia de novo - um loop infinito em vez de deixar o erro chegar até quem chamou.
+          // A 401 after we have already refreshed the token and resent this same request is not
+          // an expired token - it is the server refusing the request's own content (e.g. the wrong current
+          // password on PUT /user/password or /user/recovery-codes). Without this mark, every
+          // resend produces another 401, which fires another refresh (the refresh token is still valid)
+          // and resends again - an infinite loop instead of letting the error reach the caller.
           retriableRequest._retriedAfterRefresh = true;
           const serverId = currentServer.id;
           const refreshState = getRefreshState(serverId);
@@ -336,10 +338,10 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
           );
         } else if (error.response) {
           console.log('API Response Error:', error.response.status, error.response.data);
-          // O `onError` global da API (apps/api/src/index.ts) sempre escolhe uma mensagem
-          // seguro para o usuário antes de responder - descartá-la e usar um texto genérico
-          // fixo escondia coisas como "Story limit reached for your plan" atrás de "An
-          // unexpected error occurred", que não ajuda ninguém a entender o que aconteceu.
+          // The API's global `onError` (apps/api/src/index.ts) always picks a message that is
+          // safe for the user before responding - discarding it and using a fixed generic
+          // text hid things like "Story limit reached for your plan" behind "An
+          // unexpected error occurred", which helps nobody understand what happened.
           const serverMessage = (error.response.data as { message?: string } | undefined)?.message;
           const errorMessage = serverMessage || 'An unexpected error occurred.';
           return Promise.reject(

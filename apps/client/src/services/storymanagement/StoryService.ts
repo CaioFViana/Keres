@@ -230,9 +230,9 @@ export interface StoryService {
   deleteStory(storyId: string): Promise<void>;
   checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult>;
   /**
-   * Quantas Tramas ativas a história tem. Tramas só existem em histórias lineares, então a
-   * tela de configurações consulta isto antes de oferecer a conversão para ramificada - o
-   * mesmo cuidado que `checkLinearCompatibility` toma no sentido contrário.
+   * How many active Plots the story has. Plots only exist in linear stories, so the
+   * settings screen consults this before offering the conversion to branching - the
+   * same care `checkLinearCompatibility` takes in the opposite direction.
    */
   countActivePlots(storyId: string): Promise<number>;
   convertStoryType(
@@ -331,10 +331,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await assertStoryIsWritable(db, storyId);
 
       const dataToPersist = { ...storyData };
-      // A lista é a de `@keres/shared` - a mesma que o servidor cobra ao receber a
-      // sincronização (`SyncService`). Um colaborador que reenvia o valor atual tem o campo
-      // removido, para não virar operação no log; quem tenta mudar de verdade recebe erro, em
-      // vez de gravar uma política que o push devolveria para sempre.
+      // The list is `@keres/shared`'s - the same one the server enforces on receiving the
+      // synchronization (`SyncService`). A collaborator who resends the current value has the field
+      // removed, so it does not become an operation in the log; whoever genuinely tries to change it gets an error, instead
+      // of writing a policy the push would return forever.
       if (originalStory.serverId && originalStory.myRole !== 'owner') {
         const editable = dataToPersist as Record<string, unknown>;
         const original = originalStory as unknown as Record<string, unknown>;
@@ -821,10 +821,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         if ((row?.count ?? 0) > 0) {
           throw new Error('Remove all plots before converting this story to branching.');
         }
-        // Linear -> Branching: sempre permitido. Cada par de cenas consecutivas (por índice,
-        // dentro do capítulo) vira uma Choice explícita, incluindo a ponte entre o fim de um
-        // capítulo e o início do próximo - a mesma forma que a validação abaixo aceita na volta,
-        // pra a conversão de ida e volta ser estável.
+        // Linear -> Branching: always allowed. Each pair of consecutive scenes (by index,
+        // within the chapter) becomes an explicit Choice, including the bridge between the end of one
+        // chapter and the start of the next - the same shape the validation below accepts on the way back,
+        // so the round-trip conversion is stable.
         const { storyChapters, storyScenes } = await loadStoryGraph(db, storyId);
         const nonEmptyChapters = groupScenesByChapter(storyChapters, storyScenes);
 
@@ -854,9 +854,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         return;
       }
 
-      // Branching -> Linear: só quando o grafo é compatível - a UI deve chamar
-      // `checkLinearCompatibility` antes e nem oferecer esta conversão se não for; a checagem
-      // aqui é só a rede de segurança contra uma corrida entre as duas chamadas.
+      // Branching -> Linear: only when the graph is compatible - the UI should call
+      // `checkLinearCompatibility` first and not even offer this conversion if it is not; the check
+      // here is only the safety net against a race between the two calls.
       const compatibility = await checkLinearCompatibilityGraph(db, storyId);
       if (!compatibility.compatible) {
         throw new Error(
@@ -878,8 +878,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         const sceneById = new Map(chapterScenes.map((s) => [s.id, s]));
         order.forEach((sceneId, position) => {
           const scene = sceneById.get(sceneId)!;
-          // 1..N dentro do capítulo, como toda cena: a conversão é justamente onde a ordem
-          // deixa de ser dada pelas escolhas e passa a ser dada pelo índice.
+          // 1..N within the chapter, like every scene: the conversion is precisely where the order
+          // stops being given by the choices and starts being given by the index.
           const newIndex = position + 1;
           if (scene.index !== newIndex) {
             sceneUpdates.push({ sceneId, changes: { index: newIndex } });
@@ -890,9 +890,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         await sceneService.batchUpdateScenes(currentUserId, storyId, sceneUpdates);
       }
 
-      // Todas as escolhas somem na conversão pra Linear - o modo linear nunca guarda dados de
-      // navegação por Choice, e uma futura reconversão pra Branching gera escolhas novas a
-      // partir da ordem das cenas (ver o ramo acima).
+      // Every choice disappears in the conversion to Linear - linear mode never stores per-Choice
+      // navigation data, and a future reconversion to Branching generates new choices
+      // from the scenes' order (see the branch above).
       const remainingChoices = await db
         .select({ id: choices.id })
         .from(choices)
@@ -974,14 +974,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             const client = createKeresAxiosInstance({ baseURL: server.url });
             client.setTokenProvider(authTokenManager);
             client.setActiveServer(server);
-            // Sem `version`: o `stories.version` local nunca ficou em lockstep com o do
-            // servidor, então mandar o número daqui faria o OCC recusar o delete. O servidor
-            // preenche a versão atual quando o dono omite a base (só para delete de Story).
-            // Sem `operationTime` também: o servidor recusa qualquer horário mais de 1s à
-            // frente do próprio relógio dele (`parseOperationTime`), e o relógio do
-            // aparelho/emulador não tem garantia nenhuma de estar sincronizado com o do
-            // servidor. Omitir deixa o servidor usar o `new Date()` dele mesmo - o único
-            // relógio que essa checagem pode comparar com segurança.
+            // No `version`: the local `stories.version` was never in lockstep with the
+            // server's, so sending the number from here would make OCC refuse the delete. The server
+            // fills in the current version when the owner omits the base (for a Story delete only).
+            // No `operationTime` either: the server refuses any time more than 1s
+            // ahead of its own clock (`parseOperationTime`), and the
+            // device/emulator clock has no guarantee whatsoever of being in sync with the
+            // server's. Omitting it lets the server use its own `new Date()` - the only
+            // clock that check can safely compare against.
             const response = await client.post(`/sync/${storyId}`, [
               {
                 entity: 'Story',
@@ -1035,8 +1035,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         if (server?.idUser) {
           await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
         } else {
-          // A história baixada guarda apenas os favoritos da própria conta. Se o cadastro do
-          // servidor sumiu, essas linhas são a única fonte restante para recuperar a identidade.
+          // The downloaded story keeps only the account's own favourites. If the server
+          // registration has vanished, those rows are the only remaining source for recovering the identity.
           const formerUserIds = await db
             .selectDistinct({ userId: favorites.userId })
             .from(favorites)
@@ -1127,13 +1127,13 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     /**
-     * Monta o pacote completo de uma história a partir do banco local.
+     * Assembles a story's complete package from the local database.
      *
-     * É a contraparte de `importFullStory` e usa a mesma forma (`FullStoryExportSchema`)
-     * que o servidor, então um arquivo exportado aqui pode ser importado lá e vice-versa.
+     * It is `importFullStory`'s counterpart and uses the same shape (`FullStoryExportSchema`)
+     * as the server, so a file exported here can be imported there and vice versa.
      *
-     * Registros marcados como excluídos ficam de fora: o pacote representa a história como
-     * ela é, não o histórico de como chegou até aqui.
+     * Records marked as deleted are left out: the package represents the story as
+     * it is, not the history of how it got here.
      */
     async exportFullStory(storyId: string): Promise<FullStoryExportType> {
       const story = await db.select().from(stories).where(eq(stories.id, storyId)).get();
@@ -1243,15 +1243,15 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         modes: storyModes,
         plots: storyPlots,
         plotScenes: storyPlotScenes,
-        // Condições e efeitos das escolhas: são o que faz uma história ramificada funcionar.
-        // Ficaram de fora da exportação por anos - o importador daqui sempre soube lê-los, e a
-        // API sempre os exportou, então um pacote gerado no aparelho voltava sem a lógica das
-        // escolhas e ninguém via erro nenhum, porque no schema estes campos são opcionais.
+        // The choices' conditions and effects: they are what makes a branching story work.
+        // They were left out of the export for years - the importer here always knew how to read them, and the
+        // API always exported them, so a package generated on the device came back without the choices'
+        // logic and nobody saw any error, because in the schema these fields are optional.
         choiceCheckGroups: storyChoiceCheckGroups,
         choiceChecks: storyChoiceChecks,
         effects: storyEffects,
-        // O importador usa este número como ponto de partida da sincronização. Preservar o
-        // marcador local mantém o pacote útil para uma história já ligada a um servidor.
+        // The importer uses this number as the synchronization's starting point. Preserving the
+        // local marker keeps the package useful for a story already linked to a server.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
         formatVersion: CURRENT_STORY_FORMAT_VERSION,
       });
@@ -1339,8 +1339,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
           const now = new Date(); // Use a single timestamp for these cleanup updates
 
-          // Quem perde a marca é decidido em `@keres/shared` - a mesma função que o servidor
-          // usa ao importar uma história publicada.
+          // Who loses the mark is decided in `@keres/shared` - the same function the server
+          // uses when importing a published story.
           const unflag = scenesToUnflag(importedScenes);
           const versionOf = new Map(importedScenes.map((scene) => [scene.id, scene.version]));
           for (const sceneId of unflag.start) {
@@ -1373,9 +1373,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           await tx.insert(choices).values(choiceToInsert).run();
         }
 
-        // 4.1 Process ChoiceCheckGroups/ChoiceChecks/Effects (Optional) - novos na história,
-        // arrays opcionais pelo mesmo motivo de locationRelations acima: um export antigo (ou
-        // uma história de exemplo empacotada antes desses campos existirem) não os tem.
+        // 4.1 Process ChoiceCheckGroups/ChoiceChecks/Effects (Optional) - new to the story,
+        // optional arrays for the same reason as locationRelations above: an old export (or
+        // an example story packaged before those fields existed) does not have them.
         if (fullStoryData.choiceCheckGroups) {
           for (const group of fullStoryData.choiceCheckGroups) {
             const groupToInsert: ChoiceCheckGroupInsert = {
@@ -1391,7 +1391,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await tx.insert(choiceCheckGroups).values(groupToInsert).run();
           }
         }
-        // ChoiceChecks e Effects são inseridos depois de Items: ambos podem ter itemId.
+        // ChoiceChecks and Effects are inserted after Items: both may have an itemId.
 
         // 5. Process Characters
         for (const character of fullStoryData.characters) {
@@ -1421,8 +1421,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           await tx.insert(locations).values(locationToInsert).run();
         }
 
-        // 6.1 Process LocationRelations (Optional) - depois de Locations de propósito, ver
-        // comentário equivalente em StoryExportImportService.ts (API).
+        // 6.1 Process LocationRelations (Optional) - after Locations on purpose, see the
+        // equivalent comment in StoryExportImportService.ts (API).
         if (fullStoryData.locationRelations) {
           for (const locationRelation of fullStoryData.locationRelations) {
             const locationRelationToInsert: LocationRelationInsert = {
@@ -1570,9 +1570,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 14. Process GalleryItems
         if (fullStoryData.galleryItems) {
           for (const galleryItem of fullStoryData.galleryItems) {
-            // Um pacote `.zip` já trouxe os bytes desta mídia para o aparelho antes desta
-            // transação começar (ver `ImportExportScreen.handleImport`); um `.json` puro
-            // carrega só os metadados, e os bytes ficam no servidor, endereçados pelo hash.
+            // A `.zip` package has already brought this medium's bytes to the device before this
+            // transaction began (see `ImportExportScreen.handleImport`); a plain `.json`
+            // carries only the metadata, and the bytes stay on the server, addressed by the hash.
             const localPath = localMediaPaths?.get(galleryItem.hash);
             const galleryItemToInsert: GalleryInsert = {
               ...galleryItem,
@@ -1583,9 +1583,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               isDeleted: false,
               deletedAt: null,
               localPath: localPath ?? null,
-              // Com o arquivo já aqui, falta subir para o servidor (se/quando a história
-              // for vinculada a um); sem ele, falta baixar - a sincronização decide sozinha
-              // com base nestes dois estados.
+              // With the file already here, what is missing is the upload to the server (if/when the story
+              // is linked to one); without it, what is missing is the download - synchronization decides on its own
+              // from these two states.
               uploadState: localPath ? 'pending' : 'uploaded',
               downloadState: localPath ? 'downloaded' : 'pending',
             };
@@ -1714,10 +1714,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-        // 19. Process AttributeValues (Optional) - por último de propósito: entityId pode
-        // apontar pra qualquer um dos 7 tipos de entidade suportados, todos já inseridos acima,
-        // e fieldId depende do bloco de StorySchemaFields logo acima. Em importações locais,
-        // os IDs já chegaram remapeados por cloneStoryForLocalImport.
+        // 19. Process AttributeValues (Optional) - last on purpose: entityId may
+        // point at any of the 7 supported entity types, all already inserted above,
+        // and fieldId depends on the StorySchemaFields block just above. In local imports,
+        // the IDs have already arrived remapped by cloneStoryForLocalImport.
         if (fullStoryData.attributeValues) {
           for (const attributeValue of fullStoryData.attributeValues) {
             const attributeValueToInsert: AttributeValueInsert = {
@@ -1735,8 +1735,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-        // Relações "Veja também" só entram depois das entidades às quais apontam. A relação
-        // já vem canonicalizada pelo serviço que a criou; a cópia local já remapeou ambos os lados.
+        // "See also" relations only enter after the entities they point at. The relation
+        // already arrives canonicalized by the service that created it; the local copy has already remapped both sides.
         if (fullStoryData.seeAlsoRelations) {
           for (const relation of fullStoryData.seeAlsoRelations) {
             const relationToInsert: SeeAlsoRelationInsert = {
@@ -1751,9 +1751,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-        // Em cópia local, o autor do comentário passa a ser o usuário local, exatamente como
-        // Favorites. Ao importar uma história já vinculada a servidor, preservamos o autor
-        // original para não reatribuir anotações colaborativas.
+        // In a local copy, the comment's author becomes the local user, exactly like
+        // Favorites. When importing a story already linked to a server, we preserve the original
+        // author so as not to reassign collaborative annotations.
         if (fullStoryData.comments) {
           for (const comment of fullStoryData.comments) {
             const commentToInsert: CommentInsert = {

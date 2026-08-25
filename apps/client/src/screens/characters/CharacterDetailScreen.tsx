@@ -69,7 +69,7 @@ export type CharacterDetailScreenParamList = {
 
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
 
-/** A tela de detalhe nunca escreve; o manager exige os callbacks, então recebem uma no-op. */
+/** The detail screen never writes; the manager requires the callbacks, so they get a no-op. */
 const noopModeWrite = async () => {};
 
 const CharacterDetailScreen = () => {
@@ -120,8 +120,8 @@ const CharacterDetailScreen = () => {
   const { canEdit } = useStoryRole(character?.storyId);
   const { selectedStory } = useStoryStore();
   const statSystemEnabled = !!selectedStory?.statSystem;
-  // Sempre carregado: modos existem mesmo com o sistema de status desligado, e é aqui que o
-  // leitor os consulta (criar e editar é no formulário).
+  // Always loaded: modes exist even with the stats system turned off, and this is where
+  // the reader consults them (creating and editing happens on the form).
   const statData = useStoryStats(character?.storyId);
   const characterModes = useMemo(
     () => statData.modes.filter((mode) => mode.characterId === characterId),

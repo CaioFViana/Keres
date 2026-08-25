@@ -77,8 +77,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   const renderFieldInput = useCallback(
     (field: EntityFieldMetadata, styleOverrides?: any) => {
       const value = searchCriteria[field.name];
-      // Campos customizados de Story Schema já vêm com o texto de exibição pronto (`rawLabel`,
-      // definido pelo usuário) - não é uma chave de tradução, então não passa por `t()`.
+      // A Story Schema's custom fields already come with their display text ready (`rawLabel`, defined by
+      // the user) - it is not a translation key, so it does not go through `t()`.
       const fieldLabel = field.rawLabel ?? t(field.label);
       const fieldLabelText = (
         <Text style={[styles.filledFieldLabel, { color: colors.textSecondary }]}>{fieldLabel}</Text>
@@ -152,9 +152,9 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             </View>
           );
         case 'date':
-          // Nenhum campo NATIVO é `type: 'date'` em `entityFields.ts` - este case só é alcançado
-          // por atributo customizado, então usa o mesmo picker do formulário. O filtro casa por
-          // substring (ver `attributeSearchPredicate`), então uma data completa acha o dia exato.
+          // No NATIVE field is `type: 'date'` in `entityFields.ts` - this case is only reached through a custom
+          // attribute, so it uses the same picker as the form. The filter matches by substring (see
+          // `attributeSearchPredicate`), so a complete date finds the exact day.
           return (
             <View
               key={field.name}

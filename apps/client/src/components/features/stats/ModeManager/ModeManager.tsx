@@ -11,7 +11,7 @@ import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
 
 /**
- * CRUD dos modos de um personagem, no formulário. A tela de detalhe só exibe.
+ * CRUD for a character's modes, in the form. The detail screen only displays them.
  */
 interface ModeManagerProps {
   modes: ModeSelect[];
@@ -44,8 +44,8 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
         name: { color: colors.text, fontSize: 15, fontWeight: '600' },
         changes: { color: colors.textSecondary, marginTop: 4 },
         iconButton: { padding: 8 },
-        // Os inputs do app têm `marginBottom: 0` (ver commonStyles), então o espaçamento
-        // vertical precisa vir daqui - sem isto rótulo, campo e botão ficam colados.
+        // The app's inputs have `marginBottom: 0` (see commonStyles), so the vertical spacing has to come from
+        // here - without it, label, field and button end up glued together.
         form: { marginTop: 20, gap: 8 },
         label: { color: colors.text, fontWeight: 'bold', marginTop: 8, marginBottom: 6 },
         firstLabel: { marginTop: 0 },

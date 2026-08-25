@@ -38,7 +38,7 @@ describe('buildStatLadderBar', () => {
     const [first, middle, last] = layout.markers;
 
     expect(first!.x).toBe(0);
-    // 50 de 400 é um oitavo da escada, e não a metade como no radar.
+    // 50 out of 400 is an eighth of the ladder, and not half as on the radar.
     expect(middle!.x).toBeCloseTo(layout.ladderWidth / 8, 5);
     expect(last!.x).toBeCloseTo(layout.ladderWidth, 5);
   });
@@ -47,7 +47,7 @@ describe('buildStatLadderBar', () => {
     const layout = build()!;
     const lastSegment = layout.segments.at(-1)!;
 
-    // Se o último degrau tomasse a barra inteira, ninguém veria onde fica o topo da escada.
+    // If the last tier took the whole bar, nobody would see where the top of the ladder is.
     expect(lastSegment.x + lastSegment.width).toBeCloseTo(layout.ladderWidth, 5);
     expect(lastSegment.label).toBe('A');
     expect(layout.overflow.x).toBeCloseTo(layout.ladderWidth, 5);
@@ -99,7 +99,7 @@ describe('buildStatLadderBar', () => {
   });
 
   it('drops labels that would collide, keeping the ends readable', () => {
-    // Seis degraus amontoados na base: os do meio não cabem lado a lado.
+    // Six tiers crammed at the base: the middle ones do not fit side by side.
     const crowded: StatTier[] = [
       { label: 'F', minValue: 0 },
       { label: 'E', minValue: 2 },
@@ -123,8 +123,8 @@ describe('buildStatLadderBar', () => {
   });
 
   it('accounts for the ends being drawn against the edge, not centred on their tick', () => {
-    // Caso real: escada numérica de 0 a 100 de 10 em 10 numa largura apertada. Supondo todos os
-    // rótulos centrados, "90" e "100" passavam na conta e saíam colados no desenho.
+    // A real case: a numeric ladder from 0 to 100 in steps of 10 at a tight width. Assuming all the
+    // labels centred, "90" and "100" passed the check and came out glued to the drawing.
     const numeric: StatTier[] = Array.from({ length: 11 }, (_, index) => ({
       label: String(index * 10),
       minValue: index * 10,

@@ -172,12 +172,12 @@ it('round-trips portable story data after a permanent local purge and clears sta
 });
 
 /**
- * A exportação do aparelho não levava as condições e os efeitos das escolhas: o importador
- * daqui sempre soube lê-los e a API sempre os exportou, mas quem gerava o pacote no app
- * mandava a história sem a lógica das escolhas - e sem erro, porque os três campos são
- * opcionais no schema.
+ * The device's export did not carry the choices' conditions and effects: the importer here always knew
+ * how to read them and the API always exported them, but whoever generated the package in the app sent
+ * the story without the choices' logic - and with no error, because the three fields are optional in
+ * the schema.
  */
-it('exporta condições, grupos de condição e efeitos das escolhas', async () => {
+it('exports the choices checks, check groups and effects', async () => {
   const SCENE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC0';
   const CHAPTER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC1';
   const LOCATION_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC2';
@@ -246,11 +246,11 @@ it('exporta condições, grupos de condição e efeitos das escolhas', async () 
 });
 
 /**
- * Trava estrutural: toda entidade que o formato conhece tem que sair na exportação, nem que
- * seja como lista vazia. Uma entidade nova esquecida aqui não quebra nada visível - o pacote só
- * sai incompleto, e a perda aparece semanas depois, na importação de volta.
+ * A structural guard: every entity the format knows about has to come out in the export, even as an
+ * empty list. A new entity forgotten here breaks nothing visible - the package merely comes out
+ * incomplete, and the loss shows up weeks later, on the way back in.
  */
-it('exporta uma lista para cada entidade que o formato de exportação conhece', async () => {
+it('exports one list for every entity the export format knows about', async () => {
   const exported = await createStoryService(database.db).exportFullStory(STORY_ID);
 
   const missing = Object.keys(FullStoryExportSchema.shape).filter(

@@ -24,9 +24,9 @@ interface ScenePlotManagerProps {
 }
 
 /**
- * As tramas de que esta cena participa, com a nota de uma linha de cada uma. Mesmo formato das
- * relações de personagem: card colapsável, linhas com ações e um modal para adicionar/editar -
- * a cena é o único lugar onde essa relação é editada.
+ * The plots this scene takes part in, with each one's one-line note. The same shape as the
+ * character relations: a collapsible card, rows with actions and a modal for adding/editing -
+ * the scene is the only place this relation is edited.
  */
 const ScenePlotManager: React.FC<ScenePlotManagerProps> = ({
   relations,

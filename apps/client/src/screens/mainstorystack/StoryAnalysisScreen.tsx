@@ -27,12 +27,12 @@ import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/st
 import { StoryAnalysisCancelledError } from '../../utils/storyAnalysisChecks';
 
 /**
- * Relatório de análise estrutural: não é busca, é achar o que o escritor dificilmente notaria
- * sozinho (ver `storyAnalysisChecks.ts`). As checagens rápidas recarregam ao focar - a pessoa
- * normalmente chega aqui, corrige um problema, volta e quer ver o relatório atualizado sem
- * precisar recarregar à mão. Alcançabilidade/satisfazibilidade de Choice (as caras, que percorrem
- * o grafo inteiro em rodadas de ponto fixo) só rodam sob demanda pelo botão: rodar isso a cada
- * foco de tela travaria a UI em histórias ramificadas grandes.
+ * The structural analysis report: it is not search, it is finding what the writer would hardly notice
+ * on their own (see `storyAnalysisChecks.ts`). The quick checks reload on focus - the person usually
+ * arrives here, fixes a problem, comes back and wants to see the updated report without reloading by
+ * hand. Choice reachability/satisfiability (the expensive ones, which walk the whole graph in
+ * fixed-point rounds) only run on demand through the button: running that on every screen focus would
+ * freeze the UI on large branching stories.
  */
 
 type StoryAnalysisNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'StoryAnalysis'>;
@@ -62,9 +62,9 @@ const StoryAnalysisScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<StoryAnalysisNavigationProp>();
   useBackButtonHandler({ showWebBackButton: true });
-  // Não usa route.params: chegar aqui direto pelo drawer (em vez de vindo do
-  // MainDashboard, que passa storyId explicitamente) navega sem nenhum param - a mesma
-  // história de selectedStory já corrigida em StorySettingsScreen.
+  // It does not use route.params: arriving here straight from the drawer (rather than from the
+  // MainDashboard, which passes storyId explicitly) navigates with no param at all - the same story as
+  // selectedStory, already fixed in StorySettingsScreen.
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
@@ -77,8 +77,8 @@ const StoryAnalysisScreen = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [normalizing, setNormalizing] = useState(false);
   const [progressFraction, setProgressFraction] = useState(0);
-  // Alcançabilidade/satisfazibilidade só valem pra história ramificada - pra história linear, a
-  // checagem rápida já é o relatório completo, sem precisar do botão.
+  // Reachability/satisfiability only apply to a branching story - for a linear one the quick check is
+  // already the full report, with no need for the button.
   const [hasRunFull, setHasRunFull] = useState(selectedStory?.type !== 'branching');
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -101,8 +101,8 @@ const StoryAnalysisScreen = () => {
   useFocusEffect(
     useCallback(() => {
       loadCheapReport();
-      // Cancela a análise pesada em andamento ao sair da tela - não faz sentido continuar
-      // rodando em background depois que ninguém mais está vendo o progresso.
+      // It cancels the heavy analysis in progress when leaving the screen - there is no point in carrying on
+      // in the background once nobody is watching the progress.
       return () => abortControllerRef.current?.abort();
     }, [loadCheapReport]),
   );
@@ -115,8 +115,8 @@ const StoryAnalysisScreen = () => {
   );
 
   /**
-   * Renumera capítulos e cenas para 1..N. Fica atrás de um toque explícito, e não roda ao
-   * abrir a tela: mexe em muitas linhas de uma vez e vira operações de sincronização.
+   * Renumbers chapters and scenes to 1..N. It sits behind an explicit tap and does not run when the
+   * screen opens: it touches many rows at once and becomes synchronization operations.
    */
   const normalizeIndexes = useCallback(async () => {
     if (!storyId || !userId || normalizing) return;
@@ -194,9 +194,8 @@ const StoryAnalysisScreen = () => {
   const styles = StyleSheet.create({
     ...commonDetailStyleDefs(colors),
     scrollContent: {
-      // O container comum já aplica 20px em todos os lados. Repetir o padding no conteúdo
-      // rolável deixava o cartão da checagem 40px afastado das bordas, diferente das demais
-      // telas do drawer.
+      // The common container already applies 20px on every side. Repeating the padding on the scrollable
+      // content left the check's card 40px away from the edges, unlike the drawer's other screens.
       flexGrow: 1,
     },
     subtitle: {
@@ -204,8 +203,8 @@ const StoryAnalysisScreen = () => {
       marginBottom: 16,
     },
     analysisCard: {
-      // Mesmas medidas dos cartões de resultado, para o controle de checagem não parecer
-      // uma região com recuo maior que o relatório abaixo.
+      // The same measurements as the result cards, so the check control does not look like a region with a
+      // deeper inset than the report below it.
       backgroundColor: colors.card,
       borderColor: colors.border,
       borderWidth: 1,

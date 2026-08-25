@@ -2,12 +2,12 @@ import { getTableColumns } from 'drizzle-orm';
 import * as schema from '../db/schema';
 
 /**
- * Mapa de nome de entidade (o mesmo usado no log de operações e no protocolo de
- * sincronização) para a tabela local correspondente.
+ * A map from entity name (the same one used in the operation log and in the
+ * synchronization protocol) to the corresponding local table.
  *
- * Existe porque a resolução de conflitos precisa escrever numa entidade escolhida em
- * tempo de execução: a tela sabe que o conflito é de um `'Chapter'`, mas não pode
- * importar a tabela de capítulos estaticamente sem repetir esse switch em cada caminho.
+ * It exists because conflict resolution needs to write to an entity chosen at
+ * runtime: the screen knows the conflict is a `'Chapter'` one, but it cannot
+ * import the chapters table statically without repeating that switch in every path.
  */
 export const ENTITY_TABLES = {
   Chapter: schema.chapters,
@@ -50,8 +50,8 @@ export function getEntityTable(entityType: string) {
 const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'deletedAt']);
 
 /**
- * Campos que nunca devem ser sobrescritos a partir de um payload externo, porque são
- * identidade da linha ou são administrados pelo próprio motor de sincronização.
+ * Fields that must never be overwritten from an external payload, because they are the row's
+ * identity or are administered by the synchronization engine itself.
  */
 const PROTECTED_FIELDS = new Set([
   'id',
@@ -68,8 +68,8 @@ const PROTECTED_BY_ENTITY: Record<string, ReadonlySet<string>> = {
 };
 
 /**
- * Normaliza um objeto vindo de JSON para algo que o drizzle aceite num `.set()`:
- * converte datas, descarta campos protegidos e ignora chaves que não existem na tabela.
+ * Normalizes an object coming from JSON into something drizzle accepts in a `.set()`:
+ * it converts dates, discards protected fields and ignores keys that do not exist in the table.
  */
 export function toEntityColumns(
   entityType: string,
@@ -101,7 +101,7 @@ export function toEntityColumns(
   return normalized;
 }
 
-/** Descarta colunas de bookkeeping local mesmo quando a entidade não está no registro. */
+/** It discards local bookkeeping columns even when the entity is not in the registry. */
 export function omitClientProtectedFields(
   entityType: string,
   payload: Record<string, any> | undefined,

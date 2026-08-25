@@ -9,9 +9,10 @@ interface ColorPickerInputProps {
   onSelectColor: (color: string) => void;
   currentColor: string;
   placeholder?: string;
-  /** Só posicionamento (margem, largura). NÃO passe `commonInputStyles.input` aqui: este
-   *  componente já desenha a moldura do campo, e uma segunda borda/altura por fora desalinha
-   *  o conteúdo interno. */
+  /**
+   * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
+   * draws the field's frame, and a second border/height around it misaligns the inner content.
+   */
   style?: any;
 }
 
@@ -30,11 +31,11 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
   };
 
   const styles = StyleSheet.create({
-    // Uma borda só. `commonInputStyles.input` NÃO entra aqui: ele já traz borda + `height: 50`,
-    // e somado à borda deste wrapper desenhava duas molduras encaixadas - e mais alto do que
-    // deveria, porque `customComponentInput` ainda acrescenta `paddingBottom: 50`.
-    // `marginBottom: 0` como `commonInputStyles.input`: o ritmo vertical dos forms vem do
-    // `marginTop` do rótulo seguinte, não do campo.
+    // A single border. `commonInputStyles.input` does NOT go here: it already brings a border +
+    // `height: 50`, and added to this wrapper's border it drew two nested frames - and taller than it
+    // should be, because `customComponentInput` still adds `paddingBottom: 50`. `marginBottom: 0` like
+    // `commonInputStyles.input`: the forms' vertical rhythm comes from the next label's `marginTop`, not
+    // from the field.
     container: {
       marginBottom: 0,
       width: '100%',

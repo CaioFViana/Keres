@@ -10,10 +10,10 @@ interface SyncConflictBannerProps {
 }
 
 /**
- * Linha tocável, não-bloqueante, resumindo quantos conflitos de sync esperam revisão - mesma
- * convenção visual de `AnalysisSummaryBanner` (`SummaryCard.tsx`). Substitui o antigo
- * `SyncConflictModal`, que se abria sozinho sobre qualquer tela: um conflito trava a
- * sincronização daquela entidade, mas não justifica interromper o que o usuário está fazendo.
+ * A tappable, non-blocking line summarising how many sync conflicts are waiting for review - the same
+ * visual convention as `AnalysisSummaryBanner` (`SummaryCard.tsx`). It replaces the old
+ * `SyncConflictModal`, which opened itself over any screen: a conflict stalls that entity's
+ * synchronization, but it does not justify interrupting what the user is doing.
  */
 const SyncConflictBanner: React.FC<SyncConflictBannerProps> = ({ count, onPress }) => {
   const { colors } = useTheme();

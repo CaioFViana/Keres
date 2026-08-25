@@ -13,9 +13,9 @@ interface HostedMeResponse {
 }
 
 /**
- * Recupera a sessão web depois de um F5: os JWT estão no cookie HttpOnly, não no cofre.
- * Cria ou atualiza o servidor local apontando para a origem desta página. Mobile e
- * Electron nunca chamam isto com efeito — `usesHttpOnlyCookieSession()` é falso lá.
+ * Recovers the web session after an F5: the JWTs are in the HttpOnly cookie, not in the vault. It
+ * creates or updates the local server pointing at this page's origin. Mobile and Electron never call
+ * this with any effect - `usesHttpOnlyCookieSession()` is false there.
  */
 export async function restoreHostedCookieSession(
   db: AppDrizzleClient,

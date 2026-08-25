@@ -1,24 +1,24 @@
-# Plano de implementação: Plots
+# Implementation plan: Plots
 
-## Objetivo
+## Goal
 
-Adicionar **Plots** como linhas narrativas para histórias lineares. Um Plot agrupa cenas que
-podem pertencer a mais de uma linha narrativa. Cada associação explica, em uma nota curta, o
-papel daquela cena naquele Plot.
+To add **Plots** as narrative threads for linear stories. A Plot groups scenes that
+may belong to more than one narrative thread. Each association explains, in a short note, that
+scene's role in that Plot.
 
-Plots não existirão em histórias branching nesta fase.
+Plots will not exist in branching stories at this stage.
 
-## Decisões confirmadas
+## Confirmed decisions
 
-- `Plot` é uma entidade própria, com formulário e tela de detalhes.
-- `PlotScene` é uma relação N:N entre Plot e Scene, com nota de uma linha.
-- A relação será editada dentro de `SceneFormScreen`, não haverá `PlotSceneFormScreen`.
-- Não haverá tags, favoritos, comentários, sugestões ou atributos customizados para Plots.
-- Plots entrarão na Busca global por nome e detalhes. `PlotScene` não entra: é uma relação, não
-  um destino independente.
-- O leitor de Plot é textual, em fluxo vertical, e não uma coleção de cartões.
+- `Plot` is an entity of its own, with a form and a detail screen.
+- `PlotScene` is an N:N relation between Plot and Scene, with a one-line note.
+- The relation will be edited inside `SceneFormScreen`; there will be no `PlotSceneFormScreen`.
+- There will be no tags, favourites, comments, suggestions or custom attributes for Plots.
+- Plots will enter the Global Search by name and details. `PlotScene` does not: it is a relation, not
+  an independent destination.
+- The Plot reader is textual, in a vertical flow, and not a collection of cards.
 
-## Modelo de dados
+## Data model
 
 ### Plot
 
@@ -39,20 +39,20 @@ note
 createdAt, updatedAt, version, isDeleted, deletedAt
 ```
 
-Regras de integridade:
+Integrity rules:
 
-- índice único em `(plotId, sceneId)`;
-- `note` obrigatória, sem quebras de linha, com limite curto (recomendação: 160 caracteres);
-- Plot, Scene e relação precisam pertencer à mesma história;
-- serviços e sync handlers rejeitam criação/edição em histórias que não sejam lineares;
-- uma história linear com Plots não pode ser convertida para branching até que seus Plots sejam
-  removidos. A interface deve explicar o bloqueio;
-- leituras, gráficos e Reader ignoram registros soft-deleted e relações com cenas removidas.
+- a unique index on `(plotId, sceneId)`;
+- `note` required, with no line breaks, with a short limit (recommendation: 160 characters);
+- the Plot, the Scene and the relation must belong to the same story;
+- the services and sync handlers reject creation/editing in stories that are not linear;
+- a linear story with Plots cannot be converted to branching until its Plots are
+  removed. The interface must explain the block;
+- reads, charts and the Reader ignore soft-deleted records and relations with removed scenes.
 
-## Navegação
+## Navigation
 
-Novo drawer `PlotsStack`, abaixo de `NarrativeElementsStack`, disponível apenas para histórias
-lineares:
+A new `PlotsStack` drawer, below `NarrativeElementsStack`, available only for linear
+stories:
 
 ```text
 PlotsStack
@@ -64,131 +64,131 @@ PlotsStack
 └─ PlotReaderScreen
 ```
 
-O item do drawer é ocultado em histórias branching. A proteção de serviços continua obrigatória,
-pois esconder uma tela não protege dados sincronizados ou importados.
+The drawer item is hidden in branching stories. Protecting the services remains mandatory,
+since hiding a screen does not protect synchronized or imported data.
 
-## Telas e fluxos
+## Screens and flows
 
 ### PlotListScreen
 
-- Lista simples, com busca por nome e ordenação básica; sem Advanced Search.
-- Cada item mostra nome, trecho dos detalhes e quantidade de cenas relacionadas.
-- Header: criar Plot, abrir Matriz de Plots e abrir Cobertura de Plots.
-- Um Plot sem cenas é válido, mas deve ser visualmente identificável como `0 cenas`.
+- A simple list, with search by name and basic sorting; no Advanced Search.
+- Each item shows the name, an excerpt of the details and the number of related scenes.
+- Header: create a Plot, open the Plot Matrix and open the Plot Coverage.
+- A Plot with no scenes is valid, but must be visually identifiable as `0 scenes`.
 
 ### PlotFormScreen
 
-- Cria e edita apenas `name` e `details`.
-- Não gerencia cenas: isso evita que a mesma relação tenha dois editores concorrentes.
+- Creates and edits `name` and `details` only.
+- It does not manage scenes: that avoids the same relation having two competing editors.
 
-### SceneFormScreen: seção “Plots”
+### SceneFormScreen: the "Plots" section
 
-Nova seção visível apenas em histórias lineares, inspirada no gerenciamento de relações de
-personagem:
+A new section visible only in linear stories, inspired by the character relation
+management:
 
-- relações já existentes aparecem como `Nome do Plot + nota`;
-- adicionar relação escolhe um Plot disponível e preenche a nota de uma linha;
-- editar altera apenas a nota ou troca o Plot, respeitando a unicidade;
-- remover desfaz somente a relação;
-- ao salvar a Scene, alterações pendentes de PlotScene são persistidas usando os mesmos padrões
-  de log de operação, sincronização e feedback já usados pelas relações de personagem.
+- existing relations appear as `Plot name + note`;
+- adding a relation chooses an available Plot and fills in the one-line note;
+- editing changes only the note or swaps the Plot, respecting uniqueness;
+- removing undoes only the relation;
+- when the Scene is saved, pending PlotScene changes are persisted using the same operation log,
+  synchronization and feedback patterns already used by the character relations.
 
-`PlotDetailScreen` é deliberadamente uma visão de leitura: mostra nome, detalhes e as cenas
-relacionadas em ordem narrativa. A linha da cena abre o detalhe da Scene; a edição da relação
-continua centralizada em `SceneFormScreen`.
+`PlotDetailScreen` is deliberately a reading view: it shows the name, the details and the related
+scenes in narrative order. The scene's row opens the Scene's detail; editing the relation
+stays centralised in `SceneFormScreen`.
 
-## Ordem narrativa compartilhada
+## A shared narrative order
 
-Extrair ou reutilizar uma função única para ordenar cenas lineares por:
+Extract or reuse a single function for sorting linear scenes by:
 
-1. índice do Chapter;
-2. índice da Scene.
+1. the Chapter's index;
+2. the Scene's index.
 
-Essa ordem será usada no detalhe do Plot, Reader, Matriz e Cobertura. Não duplicar a ordenação
-local hoje presente em Matrix, Item Journey e Timeline.
+That order will be used in the Plot's detail, the Reader, the Matrix and the Coverage. Do not duplicate the
+local sorting present today in the Matrix, the Item Journey and the Timeline.
 
 ## PlotMatrixScreen
 
-Gráfico SVG e interativo inspirado na matriz de presença:
+An SVG, interactive chart inspired by the presence matrix:
 
-- linhas: Plots selecionados;
-- colunas: cenas em ordem narrativa, agrupadas visualmente por Chapter;
-- célula: nota da relação PlotScene;
-- clique na linha abre o Plot; clique na célula ou cabeçalho abre a Scene;
-- MultiSelectPill, estado vazio orientado, limite inicial de 12 e opção de selecionar todos;
-- zoom, ajuste à tela e exportação SVG;
-- cores, claro/escuro e exportação seguem os padrões dos SVGs atuais.
+- rows: the selected Plots;
+- columns: the scenes in narrative order, visually grouped by Chapter;
+- cell: the PlotScene relation's note;
+- clicking the row opens the Plot; clicking the cell or the header opens the Scene;
+- a MultiSelectPill, a guided empty state, an initial limit of 12 and a select-all option;
+- zoom, fit to screen and SVG export;
+- colours, light/dark and the export follow the current SVGs' patterns.
 
-Em vez de encaixar Plot no modal global de Presence Matrix, extrair a infraestrutura comum para
-uma matriz de séries × cenas. Characters usam checkmark, Items usam estado e Plots usam nota.
-Cada produto continua em sua própria screen e stack.
+Instead of fitting Plot into the global Presence Matrix modal, extract the common infrastructure into
+a series × scenes matrix. Characters use a checkmark, Items use a state and Plots use a note.
+Each product stays in its own screen and stack.
 
 ## PlotProgressScreen
 
-Gráfico de cobertura, também exportável como SVG:
+A coverage chart, also exportable as SVG:
 
 ```text
-Plot principal   ███████░░░  7/12 cenas · 58%
+Main plot   ███████░░░  7/12 scenes · 58%
 ```
 
-- denominador: todas as cenas ativas da história;
-- média no cabeçalho: total de relações PlotScene dividido pela quantidade de Plots, incluindo
-  Plots vazios;
-- barras ordenadas por nome, com opção futura de ordenar por cobertura;
-- toque em uma barra abre o Plot;
-- aviso curto: cenas podem pertencer a vários Plots, portanto percentuais não precisam somar 100%.
+- the denominator: all of the story's active scenes;
+- the average in the header: the total number of PlotScene relations divided by the number of Plots, including
+  empty Plots;
+- bars sorted by name, with a future option to sort by coverage;
+- tapping a bar opens the Plot;
+- a short warning: scenes may belong to several Plots, so the percentages need not add up to 100%.
 
-O nome correto da métrica é **cobertura**, não participação, pois os Plots podem se sobrepor.
+The metric's correct name is **coverage**, not participation, since Plots may overlap.
 
 ## PlotReaderScreen
 
-Modo de leitura estrutural, com selector `Todas as cenas` ou um Plot.
+A structural reading mode, with an `All scenes` or single-Plot selector.
 
-- `Todas as cenas`: cada Scene aparece uma vez, em ordem narrativa.
-- Plot selecionado: apenas cenas relacionadas àquele Plot, na mesma ordem.
-- Renderização deliberadamente textual: número/título pequeno da Scene seguido pelo `summary` em
-  parágrafo contínuo, com divisores discretos — sem cartões, bordas de card ou controles de
-  edição.
-- Toque no título leva ao detalhe completo da Scene.
-- O cabeçalho informa o escopo e a quantidade, por exemplo `Plot de redenção · 6 cenas`.
+- `All scenes`: each Scene appears once, in narrative order.
+- A selected Plot: only the scenes related to that Plot, in the same order.
+- Deliberately textual rendering: the Scene's small number/title followed by the `summary` in
+  a continuous paragraph, with discreet dividers — no cards, card borders or editing
+  controls.
+- Tapping the title leads to the Scene's full detail.
+- The header states the scope and the count, for example `Redemption plot · 6 scenes`.
 
-O Reader não mostra a nota de PlotScene no corpo principal: seu objetivo é ler o resumo da
-história, não revisar metadados. A nota continua disponível no detalhe do Plot e na Matriz.
+The Reader does not show the PlotScene note in the main body: its aim is to read the story's
+summary, not to review metadata. The note stays available in the Plot's detail and in the Matrix.
 
-## Dados, sincronização e importação
+## Data, synchronization and import
 
-Adicionar Plot e PlotScene em todas as camadas já exigidas por entidades da história:
+Add Plot and PlotScene to every layer already required by the story's entities:
 
-1. Entidades e schemas Zod compartilhados; exportações de `@keres/shared`.
-2. `OperationLogEntityType`, tipos recuperáveis e apresentação de operações.
-3. Tabelas, relações ORM e migrations no cliente SQLite e API/Postgres.
-4. Serviços client-side com validação de história linear, unicidade, soft delete, operação local e
-   eventos `plot_changed` / `plot_scene_changed`.
-5. Handlers de sync de cliente e servidor, registro no Sync Engine e eventos remotos.
-6. Export/import completo, remapeamento de IDs, migração de versão e clonagem de exemplos.
-7. Busca global: `Plot` busca `name` e `details`, usa ícone próprio e abre `PlotDetailScreen`.
+1. Shared entities and Zod schemas; `@keres/shared` exports.
+2. `OperationLogEntityType`, recoverable types and operation presentation.
+3. Tables, ORM relations and migrations in the SQLite client and the API/Postgres.
+4. Client-side services with linear-story validation, uniqueness, soft delete, a local operation and
+   `plot_changed` / `plot_scene_changed` events.
+5. Client and server sync handlers, registration in the Sync Engine and remote events.
+6. Full export/import, id remapping, version migration and example cloning.
+7. Global Search: `Plot` searches `name` and `details`, uses an icon of its own and opens `PlotDetailScreen`.
 
-PlotScene não é adicionado à Busca global, Tags, Comments, See Also ou Favorites nesta fase.
+PlotScene is not added to the Global Search, Tags, Comments, See Also or Favorites at this stage.
 
-## Testes e critérios de aceite
+## Tests and acceptance criteria
 
-- Criar, editar, remover e sincronizar Plot e PlotScene.
-- Rejeitar associação duplicada, Scene de outra história, nota vazia e história branching.
-- Bloquear conversão de linear para branching com Plots ativos.
-- Garantir ordem narrativa idêntica em detalhe, Reader e ambos os gráficos.
-- Validar export/import e exemplo clonado com Plots e relações.
-- Validar Matrix, SVG de cobertura, média incluindo Plot vazio, sobreposição de Plot e tema
-  claro/escuro.
-- Validar Reader em `Todos` e em Plot selecionado.
-- Validar descoberta pela Busca global e retorno correto para a tela anterior.
-- Atualizar traduções, help contextual, catálogo de ajuda e documentação de release/formato.
+- Create, edit, remove and synchronize a Plot and a PlotScene.
+- Reject a duplicate association, a Scene from another story, an empty note and a branching story.
+- Block the conversion from linear to branching with active Plots.
+- Guarantee an identical narrative order in the detail, the Reader and both charts.
+- Validate export/import and a cloned example with Plots and relations.
+- Validate the Matrix, the coverage SVG, the average including an empty Plot, Plot overlap and the light/dark
+  theme.
+- Validate the Reader in `All` and with a selected Plot.
+- Validate discovery through the Global Search and the correct return to the previous screen.
+- Update the translations, the contextual help, the help catalogue and the release/format documentation.
 
-## Sequência de entrega
+## Delivery sequence
 
-1. Modelo compartilhado, banco, sync, import/export e testes de serviço.
-2. `PlotsStack`, lista, formulário e detalhe.
-3. Seção de Plots dentro de `SceneFormScreen`.
-4. Busca global, help e documentação.
-5. Matriz Plot × Cena e exportação.
-6. Cobertura de Plots e exportação.
-7. Plot Reader, validação responsiva e regressão completa.
+1. The shared model, database, sync, import/export and service tests.
+2. `PlotsStack`, the list, the form and the detail.
+3. The Plots section inside `SceneFormScreen`.
+4. Global Search, help and documentation.
+5. The Plot × Scene matrix and its export.
+6. Plot coverage and its export.
+7. The Plot Reader, responsive validation and a full regression.

@@ -4,12 +4,12 @@ import { createServerService } from '../services/ServerService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 /**
- * Se este aparelho tem ao menos um servidor registrado.
+ * Whether this device has at least one registered server.
  *
- * A fonte honesta é a tabela `servers` (`activeServer` só existe enquanto uma história ligada
- * a servidor está aberta, e `stories.serverId` é por história), mas lê-la é assíncrono - daí
- * um hook, e não um seletor de store. Reage a `server_connection_changed`, o mesmo evento que
- * `SyncInitializer` já escuta ao registrar ou remover um servidor.
+ * The honest source is the `servers` table (`activeServer` only exists while a server-linked story is
+ * open, and `stories.serverId` is per story), but reading it is asynchronous - hence a hook rather than
+ * a store selector. It reacts to `server_connection_changed`, the same event `SyncInitializer` already
+ * listens to when a server is registered or removed.
  */
 export function useHasRegisteredServer(): boolean {
   const drizzleDb = useDrizzle();
@@ -25,8 +25,7 @@ export function useHasRegisteredServer(): boolean {
           setHasServers(servers.length > 0);
         }
       } catch (error) {
-        // Falha de leitura não pode derrubar a navegação; assume "nenhum" e tenta de novo no
-        // próximo evento.
+        // A read failure must not take navigation down; it assumes "none" and tries again on the next event.
         console.log('useHasRegisteredServer: could not read servers.', error);
         if (!cancelled) {
           setHasServers(false);

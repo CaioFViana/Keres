@@ -2,10 +2,10 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
 /**
- * Converte cada migração SQL do drizzle-kit num módulo TypeScript e escreve o índice.
+ * Converts each drizzle-kit SQL migration into a TypeScript module and writes the index.
  *
- * O Metro só empacota o que está importado estaticamente: no dispositivo não existe pasta para
- * listar em tempo de execução. Por isso o SQL vira `.ts` e o índice nasce aqui, antes do build.
+ * Metro only bundles what is statically imported: on the device there is no folder to list at runtime.
+ * That is why the SQL becomes `.ts` and the index is born here, before the build.
  */
 export function generateMigrationsIndex(clientRoot: string): void {
   const drizzleDirectory = join(clientRoot, 'drizzle');

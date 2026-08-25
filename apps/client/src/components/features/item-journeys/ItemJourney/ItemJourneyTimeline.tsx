@@ -32,13 +32,13 @@ interface ItemJourneyTimelineProps {
 }
 
 /**
- * A história de um Item como uma sequência de cartões conectados - a cena onde ele nasceu
- * (a partir do próprio Item, `characterOwnerId`/`initialState`) seguida de cada Item Journey,
- * na ordem narrativa (`orderItemJourneysByNarrative`), com um cartão final pra criar a
- * próxima. Inspirado visualmente na tela do Mapa da História (`ChoiceViewScreen`) - cor por
- * capítulo, cartões nativos - mas como uma linha do tempo simples: a jornada de um item é uma
- * sequência única por definição (é o que a estratégia de ordenação garante), não um grafo
- * ramificado, então não precisa do canvas de pan/zoom nem das curvas SVG daquela tela.
+ * An Item's history as a sequence of connected cards - the scene where it was born (from the Item
+ * itself, `characterOwnerId`/`initialState`) followed by each Item Journey, in narrative order
+ * (`orderItemJourneysByNarrative`), with a final card for creating the next one. Visually inspired by
+ * the Story Map screen (`ChoiceViewScreen`) - colour per chapter, native cards - but as a simple
+ * timeline: an item's journey is a single sequence by definition (which is what the ordering strategy
+ * guarantees), not a branching graph, so it needs neither the pan/zoom canvas nor that screen's SVG
+ * curves.
  */
 const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId, storyType }) => {
   const { t } = useTranslation();

@@ -3,14 +3,13 @@ import { Platform } from 'react-native';
 import { DESKTOP_MEDIA_URI_PREFIX, resolveBlobUri } from '../services/webMediaStore';
 
 /**
- * Resolve um `localPath`/`thumbnailPath` de mídia para algo que `<Image>`/`<video>`/
- * `<audio>` conseguem carregar.
+ * Resolves a media `localPath`/`thumbnailPath` into something `<Image>`/`<video>`/`<audio>` can load.
  *
- * Nativo: o valor guardado já é um `file://` direto, devolvido sem mudança. Web: o valor
- * guardado é um path estável em disco (`desktop-media:media/...` - ver MediaFileService.ts),
- * que não é carregável diretamente; precisa virar um `blob:` URL primeiro, o que só pode
- * acontecer de forma assíncrona (ler o arquivo via IPC do processo main). Por isso o hook
- * começa em `null` (ainda resolvendo) até o efeito completar.
+ * Native: the stored value is already a direct `file://`, returned unchanged. Web: the stored value is
+ * a stable path on disk (`desktop-media:media/...` - see MediaFileService.ts), which is not directly
+ * loadable; it has to become a `blob:` URL first, which can only happen asynchronously (reading the
+ * file through the main process's IPC). That is why the hook starts at `null` (still resolving) until
+ * the effect completes.
  */
 export function useResolvedMediaUri(path: string | null | undefined): string | null {
   const [resolved, setResolved] = useState<string | null>(null);

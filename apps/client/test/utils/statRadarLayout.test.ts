@@ -63,7 +63,7 @@ describe('buildStatRadarLayout', () => {
   it('draws one ring per interval of the reference ladder, plus the overflow ring', () => {
     const layout = build(statsOf(['A', 'B', 'C']))!;
 
-    // A escada tem 3 degraus, ou seja 2 intervalos: 2 anéis + o de transbordo.
+    // The ladder has 3 tiers, that is 2 intervals: 2 rings + the overflow one.
     expect(layout.rings).toHaveLength(3);
     expect(layout.rings.filter((ring) => !ring.isOverflow).map((ring) => ring.label)).toEqual([
       'C',
@@ -147,7 +147,7 @@ describe('buildStatRadarLayout', () => {
       size: SIZE,
     })!;
 
-    // 400 no eixo A e 10 no eixo B são o topo de escadas diferentes: os dois no anel externo.
+    // 400 on axis A and 10 on axis B are the top of different ladders: both on the outer ring.
     const [first, second] = layout.series[0]!.vertices;
     expect(layout.center.y - first!.y).toBeCloseTo(layout.radius, 1);
     expect(second!.display).toBe('ten');

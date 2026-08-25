@@ -1,25 +1,25 @@
 /**
- * Uma história de exemplo empacotada com o app, num idioma específico.
+ * An example story packaged with the app, in a specific language.
  *
- * `story` fica como `unknown` de propósito: o conteúdo vem de `generated/registry.ts` (gerado
- * a partir de `content/<slug>/<lang>.json` por `scripts/generate-example-stories-index.js`,
- * sem validação nenhuma nesse passo). A validação de verdade (`FullStoryExportSchema`) só
- * acontece no momento da instalação, em `ExampleStoryService` - o mesmo ponto que já valida
- * um arquivo `.json` escolhido pelo usuário em `pickStoryExportFile`. Um arquivo de exemplo
- * mal formado deve falhar ali, com um erro claro, e não em algum cast silencioso aqui.
+ * `story` is deliberately left as `unknown`: the content comes from `generated/registry.ts` (generated
+ * from `content/<slug>/<lang>.json` by `scripts/generate-example-stories-index.js`,
+ * with no validation at all in that step). The real validation (`FullStoryExportSchema`) only
+ * happens at installation time, in `ExampleStoryService` - the same point that already validates
+ * a `.json` file chosen by the user in `pickStoryExportFile`. A malformed example file
+ * should fail there, with a clear error, and not in some silent cast here.
  */
 export interface ExampleStoryLanguage {
-  /** Código do idioma, no mesmo formato dos locales do app ('pt', 'en', ...) - vem do nome do arquivo. */
+  /** The language code, in the same format as the app's locales ('pt', 'en', ...) - it comes from the file name. */
   language: string;
   story: unknown;
 }
 
 /**
- * Uma história de exemplo, em todos os idiomas em que foi empacotada.
+ * An example story, in every language it was packaged in.
  *
- * `slug` vem do nome da pasta em `content/` e identifica a história através dos idiomas -
- * cada idioma é o mesmo "roteiro", mas cada instalação ganha uma cópia com IDs novos e
- * vínculos internos remapeados. Essa regra vale apenas para o catálogo de exemplos.
+ * `slug` comes from the folder name in `content/` and identifies the story across languages -
+ * each language is the same "script", but every installation gets a copy with new IDs and
+ * internal links remapped. That rule applies to the examples catalogue only.
  */
 export interface ExampleStoryEntry {
   slug: string;

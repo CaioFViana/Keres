@@ -2,11 +2,11 @@ import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'nod
 import { basename, join } from 'node:path';
 
 /**
- * Escreve o índice das histórias de exemplo: uma pasta por história em `content/<slug>/`, e um
- * `<lang>.json` dentro dela por idioma.
+ * Writes the index of the example stories: one folder per story in `content/<slug>/`, and one
+ * `<lang>.json` inside it per language.
  *
- * Mesmo motivo do índice de migrações: o Metro precisa de `import` estático, então a varredura
- * da pasta acontece aqui, antes do build, e não no dispositivo.
+ * The same reason as the migrations index: Metro needs a static `import`, so the folder scan happens
+ * here, before the build, and not on the device.
  */
 export function generateExampleStoriesIndex(clientRoot: string): void {
   const contentDirectory = join(clientRoot, 'src/exampleStories/content');

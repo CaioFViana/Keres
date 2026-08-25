@@ -9,13 +9,13 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import { useStoryRole } from './useStoryRole';
 
 /**
- * Comentários de uma entidade, buscados uma vez por tela (não por campo) e agrupados por
- * `fieldKey`/`fieldId` para lookup O(1) em cada `CommentableDetailField` - evitar N queries
- * redundantes por tela (um DetailField típico tem 10+ campos).
+ * An entity's comments, fetched once per screen (not per field) and grouped by
+ * `fieldKey`/`fieldId` for O(1) lookup in each `CommentableDetailField` - to avoid N redundant
+ * queries per screen (a typical DetailField has 10+ fields).
  *
- * Também resolve se o usuário atual pode comentar: sempre para owner/writer; para reader,
- * só se a história permitir (`stories.allowReaderComments`, só relevante quando vinculada a
- * um servidor - ver plano de implementação/StorySettingsScreen).
+ * It also resolves whether the current user may comment: always for owner/writer; for a reader,
+ * only if the story allows it (`stories.allowReaderComments`, only relevant when linked to
+ * a server - see the implementation plan/StorySettingsScreen).
  */
 export function useEntityComments(
   storyId: string | undefined,

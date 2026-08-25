@@ -23,7 +23,7 @@ import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLad
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
-/** A raiz do menu "Status": os eixos cadastrados, e os atalhos para escada, comparação e ranking. */
+/** The root of the "Stats" menu: the registered axes, and the shortcuts to the ladder, the comparison and the ranking. */
 const StatListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
@@ -113,7 +113,7 @@ const StatListScreen = () => {
   const handleCreate = useCallback(() => {
     const primaries = data.stats.filter((stat) => stat.isPrimary).length;
     if (primaries >= MAX_PRIMARY_STATS) {
-      // Avisar antes de abrir o formulário poupa preencher tudo para ser recusado no save.
+      // Warning before opening the form saves filling everything in only to be refused on save.
       AppAlert.alert(t('error'), t('stat_limit_reached', { count: MAX_PRIMARY_STATS }));
     }
     navigation.navigate('StatForm', {});

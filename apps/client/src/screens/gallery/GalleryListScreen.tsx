@@ -45,7 +45,7 @@ const GalleryListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
 
-  /** Importar mídia é I/O de arquivo, não instantâneo; sem isto a tela pareceria travada. */
+  /** Importing media is file I/O, not instantaneous; without this the screen would look frozen. */
   const [importing, setImporting] = useState(false);
 
   const {
@@ -75,11 +75,11 @@ const GalleryListScreen = () => {
   const { canEdit } = useStoryRole(storyId);
 
   /**
-   * Importa os arquivos escolhidos.
+   * Imports the chosen files.
    *
-   * Mídia já presente na história (mesmo hash) não vira um registro novo: o endereçamento
-   * por conteúdo torna a duplicata detectável, e criar outra linha só encheria a galeria de
-   * cópias da mesma imagem.
+   * Media already present in the story (the same hash) does not become a new record: content addressing
+   * makes the duplicate detectable, and creating another row would only fill the gallery with copies of
+   * the same image.
    */
   const handleAddMedia = useCallback(async () => {
     if (!storyId || !userId) {

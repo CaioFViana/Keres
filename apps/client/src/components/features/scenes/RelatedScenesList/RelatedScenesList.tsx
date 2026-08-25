@@ -20,11 +20,11 @@ interface RelatedScenesListProps {
   noItemsMessage: string;
   getDetails?: (scene: SceneSelect) => SceneDetail[];
   sortScenes?: (a: SceneSelect, b: SceneSelect) => number;
-  /** Fora quando a lista já vive dentro de um capítulo e repetir o nome não situa nada. */
+  /** Off when the list already lives inside a chapter and repeating the name situates nothing. */
   showChapter?: boolean;
 }
 
-/** Lista colapsável de cenas relacionadas a uma entidade, com navegação para o detalhe da cena. */
+/** A collapsible list of scenes related to an entity, with navigation to the scene's detail. */
 const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   scenes,
   matchesScene,

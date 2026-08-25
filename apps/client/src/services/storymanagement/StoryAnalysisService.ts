@@ -17,11 +17,15 @@ export interface StoryAnalysisReport {
 }
 
 export interface StoryAnalysisService {
-  /** Só as checagens baratas (O(entidades)) - segura pra rodar a cada foco/mudança de dados,
-   *  ex.: o badge de issues do dashboard. Não inclui alcançabilidade/satisfazibilidade de Choice. */
+  /**
+   * Only the cheap checks (O(entities)) - safe to run on every focus/data change, e.g. the dashboard's
+   * issue badge. It does not include Choice reachability/satisfiability.
+   */
   analyzeStoryCheap(storyId: string): Promise<StoryAnalysisReport>;
-  /** Relatório completo, incluindo alcançabilidade/satisfazibilidade de Choice - caro em
-   *  histórias ramificadas grandes, ver `StoryAnalysisScreen`. Só deve rodar sob demanda. */
+  /**
+   * The full report, including Choice reachability/satisfiability - expensive on large branching stories,
+   * see `StoryAnalysisScreen`. It should only run on demand.
+   */
   analyzeStoryFull(
     storyId: string,
     options?: RunStoryAnalysisOptions,
@@ -29,10 +33,10 @@ export interface StoryAnalysisService {
 }
 
 /**
- * Busca tudo que as checagens de `storyAnalysisChecks.ts` precisam de uma vez só, na mesma
- * linha do `MainDashboardScreen.fetchCounts` (consultas diretas no schema, sem passar pela
- * camada de serviço por entidade) - é uma leitura agregada de só-contagem/cross-referência,
- * não uma operação de escrita que precise das checagens de cada serviço individual.
+ * It fetches everything `storyAnalysisChecks.ts`'s checks need in one go, along the same lines as
+ * `MainDashboardScreen.fetchCounts` (direct queries on the schema, without going through the per-entity
+ * service layer) - it is an aggregate count-only/cross-reference read, not a write operation that would
+ * need each individual service's checks.
  */
 export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisService => {
   const fetchAnalysisInput = async (storyId: string): Promise<StoryAnalysisInput> => {

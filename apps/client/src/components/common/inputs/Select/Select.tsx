@@ -7,7 +7,7 @@ import { useTheme } from '../../../../theme';
 interface SelectOption {
   label: string;
   value: string;
-  /** Cor opcional exibida como marcador na lista e na badge de seleção. */
+  /** An optional colour shown as a marker in the list and in the selection badge. */
   color?: string | null;
 }
 

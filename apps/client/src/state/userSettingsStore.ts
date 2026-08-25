@@ -8,7 +8,7 @@ interface UserSettingsState {
   userId: string | null; // Add userId to state
   username: string | null;
   language: string | null;
-  /** `true` = 24h, `false` = AM/PM. Vale para toda exibição/edição de hora das features de Data. */
+  /** `true` = 24h, `false` = AM/PM. It applies to every time display/edit in the Date features. */
   use24HourTime: boolean;
   showContextualHelp: boolean;
   suggestLiteraryDevices: boolean;

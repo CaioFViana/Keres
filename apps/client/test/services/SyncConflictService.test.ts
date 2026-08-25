@@ -100,11 +100,10 @@ afterEach(() => {
 });
 
 /**
- * Esta tabela é a razão de o cliente não perder mais o trabalho feito offline. Enquanto o
- * conflito está pendente, as operações locais ficam fora do push - nem reenviadas em loop, nem
- * descartadas em silêncio. As duas resoluções precisam sempre terminar destravando aquelas
- * operações; um conflito que fecha deixando operação `conflicted` para trás prende a edição
- * do usuário para sempre.
+ * This table is the reason the client no longer loses work done offline. While the conflict is pending,
+ * the local operations stay out of the push - neither resent in a loop nor silently discarded. Both
+ * resolutions always have to end by unblocking those operations; a conflict that closes leaving a
+ * `conflicted` operation behind traps the user's edit forever.
  */
 describe('recordConflict', () => {
   it('stores the conflict as pending, with both sides for the comparison screen', async () => {
@@ -132,7 +131,7 @@ describe('recordConflict', () => {
     expect(await pushableOperations()).toEqual([]);
   });
 
-  /** Um conflito é por entidade: cinco edições offline da mesma cena são uma decisão só. */
+  /** A conflict is per entity: five offline edits of the same scene are a single decision. */
   it('folds a second conflict for the same entity into the existing one', async () => {
     await seedOperation('op-1');
     await seedOperation('op-2');
@@ -212,11 +211,11 @@ describe('resolveKeepLocal', () => {
   });
 
   /**
-   * Regressão: se o valor que o usuário quer manter já é exatamente o que o servidor tem
-   * (ex.: os dois lados renomearam pro mesmo texto, ou uma operação atrasada reenviando algo
-   * que já foi aplicado), reenviar mesmo assim só cria uma entrada nova no log sem nenhuma
-   * informação de fato nova. A versão local ainda precisa avançar (pra não conflitar de novo
-   * na próxima edição), só a operação nova é que não deveria existir.
+   * Regression: if the value the user wants to keep is already exactly what the server holds (both sides
+   * renaming to the same text, say, or a late operation resending something already applied), resending
+   * it anyway only creates a new log entry with no actually new information. The local version still has
+   * to advance (so it does not conflict again on the next edit), it is only the new operation that should
+   * not exist.
    */
   it('does not queue an operation when the kept value already matches the server', async () => {
     await seedCharacter({ name: 'Original' });
@@ -254,8 +253,8 @@ describe('resolveKeepLocal', () => {
   });
 
   /**
-   * Rebasear é o que faz "manter o meu" funcionar: a edição é reenviada apoiada na versão que
-   * o servidor tem agora, então passa na checagem de concorrência em vez de conflitar de novo.
+   * Rebasing is what makes "keep mine" work: the edit is resent resting on the version the server holds
+   * now, so it passes the concurrency check instead of conflicting again.
    */
   it('queues a fresh operation based on the current server version', async () => {
     await seedCharacter();
@@ -305,9 +304,9 @@ describe('resolveKeepLocal', () => {
   });
 
   /**
-   * Uma entidade que o servidor nunca teve precisa voltar como `create`. Reenviar `update`
-   * traria de volta o mesmo `not_found` a cada ciclo - o laço que prendia uma GalleryRelation
-   * para sempre quando o dono dela ainda não existia no servidor.
+   * An entity the server never had has to go back as a `create`. Resending an `update` would bring back
+   * the same `not_found` on every cycle - the loop that kept a GalleryRelation stuck forever when its
+   * owner did not exist on the server yet.
    */
   it('resends as a create when the server never had the entity', async () => {
     await seedCharacter();
@@ -388,7 +387,7 @@ describe('resolveKeepServer', () => {
     });
   });
 
-  /** Aceitar que o servidor não tem a entidade é removê-la aqui - sem gravar operação. */
+  /** Accepting that the server does not have the entity means removing it here - without recording an */
   it('deletes the entity locally when the server does not have it', async () => {
     await seedCharacter();
     await service.recordConflict(
@@ -475,9 +474,9 @@ describe('resolveKeepServer', () => {
 });
 
 /**
- * Reorder não tem uma linha de entidade só pra "a ordem" - o valor em disputa é
- * `reorderItems`, que mexe em N linhas de outra tabela (Scenes de um Chapter). Por isso as
- * duas resoluções não passam pelo caminho genérico de `writeEntity`/`recordRebasedOperation`.
+ * A reorder has no entity row for "the order" - the disputed value is `reorderItems`, which touches N
+ * rows of another table (a Chapter's Scenes). That is why both resolutions bypass the generic
+ * `writeEntity`/`recordRebasedOperation` path.
  */
 describe('reorder conflicts', () => {
   const CHAPTER_ID = 'chapter-1';
@@ -572,8 +571,8 @@ describe('reorder conflicts', () => {
     expect(op!.isSynced).toBe(false);
     expect(JSON.parse(op!.payload).version).toBe(3); // serverVersion (2) + 1
 
-    // A ordem local não foi tocada - "manter a minha" para reorder não escreve nas Scenes,
-    // só libera a operação pendente pra ser reenviada.
+    // The local order was untouched - "keep mine" for a reorder writes nothing to the Scenes, it only
+    // releases the pending operation to be resent.
     const sceneA = await database.db.query.scenes.findFirst({
       where: eq(schema.scenes.id, 'scene-a'),
     });
@@ -623,8 +622,8 @@ describe('dismissConflict', () => {
   });
 
   /**
-   * Sem soltar as operações, dispensar só esconderia o conflito da lista enquanto as edições
-   * continuariam `conflicted` para sempre - fora de todo push futuro, sem forma de resolver.
+   * Without releasing the operations, dismissing would only hide the conflict from the list while the
+   * edits stayed `conflicted` forever - out of every future push, with no way to resolve them.
    */
   it('releases the blocked operations instead of leaving them stranded', async () => {
     const operationId = await seedOperation('op-1');
@@ -649,9 +648,9 @@ describe('findContestedFields', () => {
   });
 
   /**
-   * A chave tem que estar *presente* no lado do servidor. No pull, `serverValues` traz só o
-   * que a operação remota mudou: um campo ausente significa que o servidor não opinou, e
-   * compará-lo com `undefined` marcaria como disputado o que deveria mesclar em silêncio.
+   * The key has to be *present* on the server's side. On a pull, `serverValues` carries only what the
+   * remote operation changed: an absent field means the server had no opinion, and comparing it with
+   * `undefined` would flag as disputed what should merge silently.
    */
   it('ignores a field the server did not touch', () => {
     expect(findContestedFields({ name: 'Meu', title: 'Só meu' }, { name: 'Meu' })).toEqual([]);
@@ -691,7 +690,7 @@ describe('mergeLocalOperationPayloads', () => {
     expect(merged).toEqual({ name: 'A', title: 'B' });
   });
 
-  /** Operações mais novas vêm depois e ganham: é a última intenção do usuário. */
+  /** Newer operations come later and win: it is the user's latest intent. */
   it('lets the newest operation win a field', () => {
     const merged = mergeLocalOperationPayloads([
       operation({ name: 'Antigo' }),

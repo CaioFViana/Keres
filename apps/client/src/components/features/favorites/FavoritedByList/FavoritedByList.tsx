@@ -83,9 +83,9 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     const handleStoryChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) fetchFavoriters();
     };
-    // O hook `useUserProfileResolver` já limpa o cache compartilhado de perfis remotos ao
-    // ouvir este mesmo evento - este listener continua existindo aqui só para acionar o
-    // refetch dos `profiles` já exibidos (o hook não sabe disso, só invalida o cache).
+    // The `useUserProfileResolver` hook already clears the shared cache of remote profiles when it
+    // hears this same event - this listener still exists here only to trigger the
+    // refetch of the `profiles` already displayed (the hook does not know about that, it only invalidates the cache).
     const handleFriendshipChange = () => {
       fetchFavoriters();
     };

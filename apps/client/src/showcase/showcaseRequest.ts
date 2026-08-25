@@ -1,18 +1,18 @@
 import { Platform } from 'react-native';
 
 /**
- * Modo vitrine: o app abre já dentro de uma tela específica, com uma história de exemplo
- * instalada, no tema e no idioma pedidos.
+ * Showcase mode: the app opens straight into a specific screen, with an example story installed, in
+ * the requested theme and language.
  *
- * Existe para a captura de telas do site (`apps/desktop/scripts/capture-screens.cjs`). A
- * alternativa seria o capturador clicar pela abertura - idioma, nome, seleção de história,
- * instalação do exemplo, gaveta, tela - uma dúzia de passos que quebram quando um rótulo muda.
- * Aqui a captura vira "abrir uma URL e esperar".
+ * It exists for the website's screen capture (`apps/desktop/scripts/capture-screens.ts`). The
+ * alternative would be the capturer clicking through the opening - language, name, story selection,
+ * installing the example, drawer, screen - a dozen steps that break whenever a label changes. Here the
+ * capture becomes "open a URL and wait".
  *
- * Só existe na web e só com o parâmetro na URL: em qualquer outro caminho, `null`.
+ * It only exists on the web and only with the parameter in the URL: on any other path, `null`.
  */
 export interface ShowcaseRequest {
-  /** Pasta da história em `exampleStories/content`. */
+  /** The story's folder in `exampleStories/content`. */
   story: string;
   /** Item da gaveta, ex.: `PlotsStack`. */
   stack: string;
@@ -47,12 +47,12 @@ export function readShowcaseRequest(): ShowcaseRequest | null {
 }
 
 /**
- * A rota inicial de um navegador quando a vitrine pediu uma tela dele - e o padrão do app em
- * qualquer outro caso.
+ * A navigator's initial route when the showcase asked for one of its screens - and the app's default
+ * in every other case.
  *
- * Rota inicial, e não navegação imperativa: não depende de o navegador já estar montado, não
- * corre contra o carregamento dos dados e não deixa a tela anterior aparecer num piscar antes
- * da captura.
+ * An initial route, and not imperative navigation: it does not depend on the navigator already being
+ * mounted, it does not race the data loading and it does not let the previous screen flash before the
+ * capture.
  */
 export function showcaseInitialRoute<T extends string>(stack: string, fallback: T): T {
   const request = readShowcaseRequest();

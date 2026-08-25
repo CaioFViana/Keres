@@ -38,8 +38,8 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
 
   const renderHeaderContent = (scn: SceneSelect) => (
     <ListItemTitle
-      // O índice da cena já é a contagem humana: 1..N dentro do capítulo, a mesma convenção
-      // dos capítulos (ver `StoryIndexService`).
+      // The scene's index is already the human count: 1..N within the chapter, the same convention
+      // as the chapters (see `StoryIndexService`).
       text={storyType === 'linear' ? `${scn.index}. ${scn.name}` : scn.name}
       headerLeftStyle={styles.headerLeft}
       nameStyle={styles.name}

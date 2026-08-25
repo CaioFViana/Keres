@@ -41,10 +41,10 @@ beforeEach(() => {
 });
 
 /**
- * Uma história pode tratar favoritos como um atributo da entidade (global, todo mundo vê o
- * mesmo) ou como uma marca de cada pessoa (individual). Estes helpers são o que decide, a cada
- * escrita, se o `isFavorite` vai para a coluna da entidade ou para a tabela por usuário -
- * errar aqui faz a marcação de uma pessoa aparecer para as outras.
+ * A story can treat favourites as an attribute of the entity (global, everybody sees the same) or as
+ * each person's own mark (individual). These helpers are what decides, on every write, whether
+ * `isFavorite` goes into the entity's column or into the per-user table - getting it wrong makes one
+ * person's marking show up for the others.
  */
 describe('normalizeFavoriteUpdate', () => {
   it('leaves the changes alone when the update does not touch the favourite', async () => {
@@ -139,7 +139,7 @@ describe('normalizeFavoriteCreate', () => {
     expect(result).toEqual({ data, individualFavorite: undefined });
   });
 
-  /** A entidade nasce sem a marca; o favorito da pessoa é gravado depois, já com o id real. */
+  /** The entity is born without the mark; the person's favourite is saved afterwards, with the real id */
   it('strips the favourite from the entity and hands it back to the caller', async () => {
     mockFavoriteService.getBehavior.mockResolvedValue('individual');
 

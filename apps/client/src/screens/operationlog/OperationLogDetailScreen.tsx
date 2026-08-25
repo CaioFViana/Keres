@@ -28,10 +28,10 @@ function humanizeFieldName(key: string): string {
 }
 
 /**
- * Campos de payload que são um ID de outra entidade, e qual entidade. Não vem de
- * `entityFieldMetadata` (que só marca `type: 'id'`, sem dizer qual entidade) - é o mapeamento
- * que faltava para reaproveitar `EntityService.getEntityIdentifier` (o mesmo resolvedor de
- * nome que `TagRelation`/`NoteRelation`/etc já usam) num campo qualquer do payload.
+ * Payload fields that are another entity's ID, and which entity. It does not come from
+ * `entityFieldMetadata` (which only marks `type: 'id'`, without saying which entity) - it is the mapping
+ * that was missing in order to reuse `EntityService.getEntityIdentifier` (the same name resolver
+ * that `TagRelation`/`NoteRelation`/etc already use) on any payload field.
  */
 const REFERENCE_FIELD_ENTITY_TYPES: Record<string, OperationLogEntityType> = {
   characterId: OperationLogEntityType.Character,
@@ -123,11 +123,11 @@ const OperationLogDetailScreen: React.FC = () => {
     fetchOperationLogDetails();
   }, [fetchOperationLogDetails]);
 
-  // Sem isto, o Status de Sincronização mostrado é só a foto do momento em que a tela abriu -
-  // se o push/pull terminar de sincronizar esta operação segundos depois (o caso comum, já que
-  // a tela costuma ser aberta antes do próximo ciclo de sync rodar), "Pending (v0)" fica preso
-  // ali para sempre até a pessoa sair e voltar. Mesmo evento que OperationLogListScreen já usa
-  // para se atualizar sozinha.
+  // Without this, the Synchronization Status shown is only a snapshot of the moment the screen opened -
+  // if the push/pull finishes synchronizing this operation seconds later (the common case, since
+  // the screen tends to be opened before the next sync cycle runs), "Pending (v0)" stays stuck
+  // there forever until the person leaves and comes back. The same event OperationLogListScreen already uses
+  // to refresh itself.
   useEffect(() => {
     const handleOperationLogUpdated = (updatedStoryId: string) => {
       if (!operationLog || operationLog.storyId === updatedStoryId) {
@@ -355,8 +355,8 @@ const OperationLogDetailScreen: React.FC = () => {
                   <View key={item.id} style={styles.reorderItemRow}>
                     <Text style={styles.reorderIndex}>{item.newIndex}.</Text>
                     <ResolvedFieldValue
-                      // Um 'reorder' registrado em 'Story' reordena Capítulos; registrado em
-                      // 'Chapter' reordena as Cenas daquele capítulo (ver
+                      // A 'reorder' recorded on 'Story' reorders Chapters; recorded on
+                      // 'Chapter' it reorders that chapter's Scenes (see
                       // ChapterService.reorderChapters / SceneService.reorderScenes).
                       entityType={
                         operationLog.entityType === OperationLogEntityType.Story
@@ -373,9 +373,9 @@ const OperationLogDetailScreen: React.FC = () => {
             ) : Object.keys(payload).length === 0 ? (
               <Text style={styles.emptyValue}>{t('operation_log_no_changes')}</Text>
             ) : (
-              // Cada campo do payload já é uma mudança real de verdade (ver os serviços em
-              // services/storymanagement/*.ts) - o rótulo vem de entityFieldMetadata quando a
-              // entidade tem metadados cadastrados, senão de uma versão "humanizada" da chave.
+              // Every payload field is already a genuine change (see the services in
+              // services/storymanagement/*.ts) - the label comes from entityFieldMetadata when the
+              // entity has metadata registered, otherwise from a "humanized" version of the key.
               Object.entries(payload).map(([key, value]) => {
                 const fieldMeta = entityFieldMetadata[operationLog.entityType]?.find(
                   (f) => f.name === key,
@@ -431,10 +431,12 @@ const OperationLogDetailScreen: React.FC = () => {
   );
 };
 
-/** Resolve um ID de referência dentro do payload para o nome da entidade que ele aponta, via
- * o mesmo resolvedor que `TagRelation`/`NoteRelation`/etc já usam (`EntityService`) - não uma
- * segunda implementação. Cai para o ID cru se a entidade não existir mais (excluída) ou o
- * resolvedor não souber o tipo. */
+/**
+ * Resolves a reference ID inside the payload into the name of the entity it points at, through
+ * the same resolver `TagRelation`/`NoteRelation`/etc already use (`EntityService`) - not a
+ * second implementation. It falls back to the raw ID if the entity no longer exists (deleted) or the
+ * resolver does not know the type.
+ */
 const ResolvedFieldValue: React.FC<{
   entityType: OperationLogEntityType;
   entityId: string;

@@ -4,13 +4,13 @@ import type { ChapterSelect, SceneSelect } from '../../db/schema';
 import { chapters, choices, scenes } from '../../db/schema';
 
 /**
- * Validação e apoio para conversão de tipo de história (Linear <-> Branching).
+ * Validation and support for the story type conversion (Linear <-> Branching).
  *
- * Ordenação linear é por capítulo (`Scene.index` dentro de `chapterId`) - não existe (nem
- * nunca existiu) navegação entre capítulos numa história linear. A única exceção é a aresta
- * que liga o fim de um capítulo ao início do próximo: ela é o que define a sequência dos
- * capítulos, então é a única aresta cruzando capítulos que uma conversão Branching -> Linear
- * aceita sem rejeitar.
+ * Linear ordering is per chapter (`Scene.index` within `chapterId`) - there is no (and never
+ * was) navigation between chapters in a linear story. The only exception is the edge
+ * that links the end of one chapter to the start of the next: it is what defines the chapters'
+ * sequence, so it is the only chapter-crossing edge a Branching -> Linear conversion
+ * accepts without rejecting.
  */
 
 export interface Edge {
@@ -70,7 +70,7 @@ export async function loadStoryGraph(
   return { storyChapters, storyScenes, storyChoices };
 }
 
-/** Capítulos com pelo menos uma cena, na ordem de `chapters.index`, cada um com suas cenas na ordem de `scenes.index`. */
+/** Chapters with at least one scene, in `chapters.index` order, each with its scenes in `scenes.index` order. */
 export function groupScenesByChapter(
   chaptersOrdered: ChapterSelect[],
   allScenes: SceneSelect[],
@@ -90,9 +90,9 @@ export function groupScenesByChapter(
 }
 
 /**
- * Separa as escolhas da história em arestas intra-capítulo (por capítulo) e capítulos-fonte
- * de escolhas cruzando capítulos que NÃO batem com o padrão legítimo (última cena do
- * capítulo M -> primeira cena do próximo capítulo não-vazio M+1).
+ * Splits the story's choices into intra-chapter edges (per chapter) and the source chapters
+ * of chapter-crossing choices that do NOT match the legitimate pattern (the last scene of
+ * chapter M -> the first scene of the next non-empty chapter M+1).
  */
 export function classifyEdges(
   nonEmptyChapters: ChapterWithScenes[],
@@ -188,7 +188,7 @@ export async function checkLinearCompatibility(
     }
 
     if (chapterScenes.length > 1) {
-      // Componentes conexos (não-direcionado), só com as arestas intra-capítulo.
+      // Connected components (undirected), with the intra-chapter edges only.
       const parent = new Map<string, string>(chapterScenes.map((s) => [s.id, s.id]));
       const find = (id: string): string => {
         let root = id;
@@ -207,9 +207,9 @@ export async function checkLinearCompatibility(
       }
     }
 
-    // Com grau <=1 nos dois sentidos e um único componente conexo (checagens acima), a única
-    // forma de nenhuma cena do capítulo ter inDegree 0 é ele formar um ciclo - não sobra
-    // nenhuma cena candidata a "primeira" da cadeia.
+    // With degree <=1 in both directions and a single connected component (the checks above), the only
+    // way for no scene of the chapter to have inDegree 0 is for it to form a cycle - no scene is
+    // left as a candidate for the chain's "first".
     if (!structuralViolation && chapterScenes.length > 0) {
       const hasChainStart = chapterScenes.some((s) => (inDegree.get(s.id) ?? 0) === 0);
       if (!hasChainStart) {
@@ -222,8 +222,8 @@ export async function checkLinearCompatibility(
 }
 
 /**
- * Ordem da cadeia de um capítulo (só chamar depois de `checkLinearCompatibility` confirmar
- * compatibilidade - assume grau <=1 nos dois sentidos e um único componente conexo).
+ * The order of a chapter's chain (only call it after `checkLinearCompatibility` has confirmed
+ * compatibility - it assumes degree <=1 in both directions and a single connected component).
  */
 export function computeChapterChainOrder(
   chapterScenes: SceneSelect[],

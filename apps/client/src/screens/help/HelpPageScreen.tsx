@@ -13,7 +13,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 
 type HelpPageScreenProps = {
-  /** Qual biblioteca renderizar. O padrão mantém esta tela como a página da Ajuda. */
+  /** Which library to render. The default keeps this screen as the Help page. */
   library?: DocLibrary;
 };
 

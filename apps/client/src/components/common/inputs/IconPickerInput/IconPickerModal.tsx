@@ -15,9 +15,9 @@ import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 
 /**
- * A lista mora em `@keres/shared` porque o site público desenha o mesmo avatar - ver
- * `metadata/avatar.ts`. Reexportada aqui para os imports existentes continuarem válidos, e
- * tipada como glifo do Ionicons, que é o que este app precisa.
+ * The list lives in `@keres/shared` because the public site draws the same avatar - see
+ * `metadata/avatar.ts`. Re-exported here so the existing imports stay valid, and typed as an Ionicons
+ * glyph, which is what this app needs.
  */
 export const AVATAR_ICON_OPTIONS =
   SHARED_AVATAR_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[];

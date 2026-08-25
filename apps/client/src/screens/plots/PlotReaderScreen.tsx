@@ -20,9 +20,9 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 const ALL_SCENES = '__all__';
 
 /**
- * Leitura estrutural da história: número/título discreto da cena e o resumo em parágrafo
- * corrido. Sem cartões e sem controles de edição de propósito - a nota da relação fica no
- * detalhe da trama e na matriz, aqui o objetivo é ler o resumo.
+ * A structural reading of the story: the scene's discreet number/title and the summary in running
+ * paragraphs. Deliberately without cards and without editing controls - the relation's note lives on the
+ * plot's detail and in the matrix; here the aim is to read the summary.
  */
 const PlotReaderScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -30,7 +30,7 @@ const PlotReaderScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const navigateToDetail = useNavigateToEntityDetail();
-  // O título da cena leva ao detalhe dela, em outra pilha; a volta traz o leitor de novo.
+  // The scene's title leads to its detail, on another stack; coming back brings the reader again.
   const openScene = useCallback(
     (sceneId: string) =>
       navigateToDetail('Scene', sceneId, {

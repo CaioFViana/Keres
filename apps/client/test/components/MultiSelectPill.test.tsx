@@ -135,18 +135,18 @@ describe('MultiSelectPill flat mode (options)', () => {
 });
 
 /**
- * O campo tinha altura variável: cada pílula trazia `marginBottom`, então escolher a primeira
- * opção esticava o campo em 8px e deixava a pílula acima do centro, com a sobra embaixo. Em
- * telas com o campo estreito - a matriz de presença, a de tramas - isso era o suficiente para
- * a barra inteira pular. O espaço agora é `gap` do contêiner.
+ * The field had a variable height: each pill carried a `marginBottom`, so choosing the first option
+ * stretched the field by 8px and left the pill above the centre, with the slack underneath. On screens
+ * with a narrow field - the presence matrix, the plot one - that was enough to make the whole bar jump.
+ * The spacing is now the container's `gap`.
  */
-describe('MultiSelectPill, espaçamento das pílulas', () => {
+describe('MultiSelectPill, pill spacing', () => {
   const options = [
     { label: 'Atena', value: 'atena' },
     { label: 'Keres', value: 'keres' },
   ];
 
-  /** Estilo do campo, já achatado - é onde moram altura mínima e espaçamento. */
+  /** The field's style, already flattened - it is where the minimum height and the spacing live. */
   const triggerStyleOf = (screen: {
     getByTestId: (id: string) => { props: { style?: unknown } };
   }) =>
@@ -155,7 +155,7 @@ describe('MultiSelectPill, espaçamento das pílulas', () => {
       minHeight?: number;
     };
 
-  it('separa as pílulas pelo contêiner, sem margem em cada uma', async () => {
+  it('separates the pills through the container, with no margin on each one', async () => {
     const screen = await render(
       <MultiSelectPill
         options={options}
@@ -171,7 +171,7 @@ describe('MultiSelectPill, espaçamento das pílulas', () => {
     expect(pill.marginRight).toBeUndefined();
   });
 
-  it('mantém a mesma altura mínima com e sem seleção', async () => {
+  it('keeps the same minimum height with and without a selection', async () => {
     const empty = await render(
       <MultiSelectPill options={options} selectedValues={[]} onSelectionChange={jest.fn()} />,
     );
@@ -184,18 +184,18 @@ describe('MultiSelectPill, espaçamento das pílulas', () => {
     );
 
     expect(triggerStyleOf(filled).minHeight).toBe(triggerStyleOf(empty).minHeight);
-    // A altura do conteúdo não pode passar do mínimo: pílula (14px de texto + 10 de padding
-    // vertical) somada ao padding do contêiner cabe nos 50px.
+    // The content's height must not exceed the minimum: a pill (14px of text + 10 of vertical padding)
+    // plus the container's padding fits within the 50px.
     expect(triggerStyleOf(filled).minHeight).toBe(50);
   });
 });
 
 /**
- * A lista de opções também mudava de altura: o visto só existia na opção marcada, e como ele
- * é mais alto que o texto, marcar uma opção empurrava as de baixo alguns pixels. O espaço do
- * visto agora existe sempre, marcado ou não.
+ * The options list also changed height: the check only existed on the ticked option, and since it is
+ * taller than the text, ticking an option pushed the ones below it a few pixels down. The check's space
+ * now always exists, ticked or not.
  */
-describe('MultiSelectPill, altura das opções no modal', () => {
+describe('MultiSelectPill, option height in the modal', () => {
   const options = [
     { label: 'Atena', value: 'atena' },
     { label: 'Keres', value: 'keres' },
@@ -210,7 +210,7 @@ describe('MultiSelectPill, altura das opções no modal', () => {
       height?: number;
     };
 
-  it('reserva o espaço do visto na opção marcada e na não marcada', async () => {
+  it('reserves the checkmark space on both the selected and the unselected option', async () => {
     const screen = await render(
       <MultiSelectPill
         options={options}

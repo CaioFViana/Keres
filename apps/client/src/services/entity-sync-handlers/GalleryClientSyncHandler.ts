@@ -11,12 +11,12 @@ import type { GallerySelect } from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
- * Aplica localmente as mudanças de *metadado* de uma mídia vindas do servidor.
+ * Applies a media file's *metadata* changes coming from the server locally.
  *
- * O arquivo não vem por aqui. Uma mídia criada em outro aparelho chega com
- * `downloadState: 'pending'` e sem `localPath`; é o `MediaSyncService` que depois busca os
- * bytes pelo hash. Por isso as colunas locais nunca são lidas do payload remoto - ela
- * descrevem este aparelho, e o servidor não tem o que dizer sobre elas.
+ * The file does not come through here. Media created on another device arrives with
+ * `downloadState: 'pending'` and no `localPath`; it is `MediaSyncService` that later fetches the bytes
+ * by hash. That is why the local columns are never read from the remote payload - they describe this
+ * device, and the server has nothing to say about them.
  */
 export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Gallery';
@@ -50,7 +50,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
       deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
-      // Chegou de fora: os bytes ainda não estão neste aparelho, e não há nada a subir.
+      // It arrived from outside: the bytes are not on this device yet, and there is nothing to upload.
       localPath: null,
       uploadState: 'uploaded',
       downloadState: 'pending',
@@ -68,9 +68,9 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<Gallery>;
 
-    // Se o conteúdo mudou, o arquivo que está aqui não corresponde mais ao registro e
-    // precisa ser rebaixado; sem isto a mídia continuaria exibindo a versão antiga para
-    // sempre, já que nada mais dispararia o download.
+    // If the content changed, the file here no longer matches the record and has to be demoted; without
+    // this the media would keep showing the old version forever, since nothing else would trigger the
+    // download.
     const existing = await this.getById(update.id);
     const hashChanged = !!changes.hash && !!existing && changes.hash !== existing.hash;
 

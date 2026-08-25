@@ -12,12 +12,12 @@ export interface ThemeContextType {
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
- * As cores da história atual, para qualquer componente.
+ * The current story's colours, for any component.
  *
- * Vive à parte do `ThemeProvider` de propósito: o provider precisa do store de tema, que
- * precisa do serviço de configurações, que precisa do banco - e um componente que só desenha
- * um cartão passava a arrastar o drizzle e o expo-sqlite inteiros por causa deste único hook.
- * Aqui ele custa `react` e um tipo.
+ * It deliberately lives apart from `ThemeProvider`: the provider needs the theme store, which
+ * needs the settings service, which needs the database - and a component that only draws
+ * a card started dragging the whole of drizzle and expo-sqlite along because of this single hook.
+ * Here it costs `react` and a type.
  */
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);

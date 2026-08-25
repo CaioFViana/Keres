@@ -330,9 +330,9 @@ const ChoiceFormScreen = () => {
         storyId: selectedStory.id,
         choiceId: currentChoiceId,
         combinator: 'AND',
-        // Maior + 1, e não a contagem: excluir um grupo do meio faria a contagem repetir o
-        // número de um grupo que ainda existe, e a ordem dos dois passaria a depender do
-        // desempate por data.
+        // The highest + 1, and not the count: deleting a group from the middle would make the count repeat the
+        // number of a group that still exists, and the order of the two would start depending on
+        // the date tie-break.
         order: Math.max(0, ...checkGroups.map((group) => group.order + 1)),
       });
       setCheckGroups((prev) => [...prev, newGroup]);

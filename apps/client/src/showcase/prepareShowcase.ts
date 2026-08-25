@@ -11,11 +11,10 @@ import i18n from '../utils/i18n';
 import type { ShowcaseRequest } from './showcaseRequest';
 
 /**
- * Deixa o app pronto para a captura: idioma, tema, história de exemplo instalada e selecionada.
+ * Gets the app ready for the capture: language, theme, an example story installed and selected.
  *
- * Reaproveita o caminho normal de instalação (`installExampleStory`), então a história que a
- * imagem mostra é a mesma que a pessoa recebe ao instalar o exemplo pelo menu - com ids
- * remapeados e tudo.
+ * It reuses the normal installation path (`installExampleStory`), so the story the image shows is the
+ * same one a person gets when installing the example from the menu - with ids remapped and everything.
  */
 export async function prepareShowcase(
   db: AppDrizzleClient,
@@ -24,9 +23,8 @@ export async function prepareShowcase(
   try {
     await i18n.changeLanguage(request.language);
 
-    // Perfil limpo: a captura roda num diretório novo a cada vez, então a vitrine faz por
-    // conta própria o que a tela de abertura faria - senão a primeira imagem seria a de
-    // boas-vindas.
+    // A clean profile: the capture runs in a fresh directory every time, so the showcase does on its own
+    // what the opening screen would do - otherwise the first image would be the welcome one.
     if (!(await getClientSettings(db))) {
       await createClientSettings(db, {
         localUsername: 'Keres',
@@ -48,9 +46,9 @@ export async function prepareShowcase(
     await useThemeStore.getState().setDarkMode(db, request.theme === 'dark');
 
     const storyService = createStoryService(db);
-    // O título do exemplo empacotado identifica a história instalada. Procurar só pelo idioma
-    // fazia a segunda foto reaproveitar a história da primeira - todas as telas saíam da mesma
-    // história, independentemente da que foi pedida.
+    // The packaged example's title identifies the installed story. Searching by language alone made the
+    // second photo reuse the first one's story - every screen came out of the same story, regardless of
+    // which was requested.
     const packaged = exampleStoryRegistry
       .find((entry) => entry.slug === request.story)
       ?.languages.find((entry) => entry.language === request.language)?.story as
@@ -76,12 +74,12 @@ export async function prepareShowcase(
       })());
 
     if (!target) return false;
-    // O serviço devolve a linha do banco, com os campos abertos como texto; a store guarda a
-    // entidade. Os valores são os mesmos - só o tipo é mais estreito.
+    // The service returns the database row, with the fields open as text; the store holds the entity. The
+    // values are the same - only the type is narrower.
     useStoryStore.getState().setSelectedStory(target as unknown as Story);
-    // Bandeira para o capturador: dados prontos. Ele ainda espera um tempo de assentamento
-    // para o desenho, mas não precisa mais adivinhar pelo texto da tela - era isso que fazia
-    // uma foto sair na tela de carregamento de vez em quando.
+    // A flag for the capturer: the data is ready. It still waits a settling time for the drawing, but it no
+    // longer has to guess from the screen's text - that was what made a photo come out on the loading
+    // screen every now and then.
     if (typeof document !== 'undefined') {
       document.documentElement.dataset.keresShowcase = 'ready';
     }

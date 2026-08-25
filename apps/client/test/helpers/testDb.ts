@@ -5,26 +5,26 @@ import migrations from '../../src/db/migrations';
 import * as schema from '../../src/db/schema';
 
 /**
- * Banco de teste em memória para os serviços que falam com o SQLite.
+ * An in-memory test database for the services that talk to SQLite.
  *
- * `expo-sqlite` não roda em Node, mas as tabelas são declaradas com `drizzle-orm/sqlite-core` -
- * as mesmas definições servem para o driver `better-sqlite3`, então os serviços rodam contra o
- * schema de verdade em vez de um mock de banco.
+ * `expo-sqlite` does not run in Node, but the tables are declared with `drizzle-orm/sqlite-core` - the
+ * same definitions work for the `better-sqlite3` driver, so the services run against the real schema
+ * rather than a database mock.
  *
- * As migrações também são as de produção, sem cópia: cada arquivo em `src/db/migrations` é uma
- * função que recebe algo com `execAsync(sql)`, então basta entregar um objeto com esse método
- * apoiado no `exec` do better-sqlite3. Se uma migração nova quebrar o schema, esta suíte
- * quebra junto, que é exatamente o que se quer.
+ * The migrations are the production ones too, with no copy: each file in `src/db/migrations` is a
+ * function receiving something with `execAsync(sql)`, so it is enough to hand it an object with that
+ * method backed by better-sqlite3's `exec`. If a new migration breaks the schema, this suite breaks
+ * with it, which is exactly what we want.
  */
 export interface TestDatabase {
   /**
-   * Tipado como o cliente de produção (`AppDrizzleClient`, sobre expo-sqlite) para os serviços
-   * poderem ser chamados sem cast em cada teste.
+   * Typed as the production client (`AppDrizzleClient`, over expo-sqlite) so the services can be called
+   * without a cast in every test.
    *
-   * A conversão é segura e fica contida neste ponto: as duas instâncias são o mesmo
-   * `SQLiteDatabase` do drizzle sobre o mesmo schema, e divergem só no tipo do `RunResult` que
-   * cada driver devolve (`lastInsertRowId`/`changes` do expo-sqlite contra o do
-   * better-sqlite3) - um valor que nenhum serviço deste app lê.
+   * The conversion is safe and stays contained at this point: both instances are the same drizzle
+   * `SQLiteDatabase` over the same schema, and they differ only in the type of the `RunResult` each driver
+   * returns (expo-sqlite's `lastInsertRowId`/`changes` against better-sqlite3's) - a value no service in
+   * this app reads.
    */
   db: AppDrizzleClient;
   raw: Database.Database;
@@ -32,24 +32,24 @@ export interface TestDatabase {
 }
 
 /**
- * better-sqlite3 é síncrono por natureza: seu `.transaction(fn)` nativo checa, na volta de
- * `fn`, se o resultado tem `.then` e lança `TypeError: Transaction function cannot return a
- * promise` se tiver - e chamar uma função `async` sempre devolve uma Promise, não importa o
- * que tenha dentro. Isso quebra todo `db.transaction(async (tx) => {...})` do app (que roda
- * fino em produção, sobre `expo-sqlite`, que é async de verdade).
+ * better-sqlite3 is synchronous by nature: its native `.transaction(fn)` checks, when `fn` returns,
+ * whether the result has a `.then` and throws `TypeError: Transaction function cannot return a promise`
+ * if it does - and calling an `async` function always returns a Promise, whatever is inside it. That
+ * breaks every `db.transaction(async (tx) => {...})` in the app (which runs fine in production, over
+ * `expo-sqlite`, which is genuinely async).
  *
- * Detectar "é uma função async" antes de chamar não é confiável: o Babel do Jest transpila
- * `async (tx) => {...}` para uma função comum apoiada em generator (`asyncToGenerator`), então
- * `fn.constructor.name`/`Object.prototype.toString.call(fn)` não acusam `AsyncFunction` em
- * teste, só em produção. Detectar errado é pior que não detectar: cair no wrapper nativo por
- * engano faz ele lançar o `TypeError` de imediato, sem nunca dar `await` no resultado - e como
- * ninguém mais segura essa Promise, a continuação do callback (o código depois do primeiro
- * `await`) roda mais tarde, sem transação nenhuma por baixo, como uma rejeição não tratada.
+ * Detecting "it is an async function" before calling is not reliable: Jest's Babel transpiles
+ * `async (tx) => {...}` into an ordinary generator-backed function (`asyncToGenerator`), so
+ * `fn.constructor.name`/`Object.prototype.toString.call(fn)` do not report `AsyncFunction` under test,
+ * only in production. Detecting it wrongly is worse than not detecting it: falling into the native
+ * wrapper by mistake makes it throw the `TypeError` immediately, without ever awaiting the result - and
+ * since nobody else holds that Promise, the callback's continuation (the code after the first `await`)
+ * runs later, with no transaction underneath, as an unhandled rejection.
  *
- * Por isso a instância é sobrescrita (não o protótipo - fica isolado a este banco de teste)
- * para SEMPRE rodar a própria implementação, decidindo só depois de chamar `fn`: se o retorno
- * for "thenable", dá `await` de verdade nele antes de decidir commit/rollback; se não for,
- * decide na hora, igual ao wrapper nativo faria com um callback síncrono.
+ * That is why the instance is overridden (not the prototype - it stays isolated to this test database)
+ * to ALWAYS run its own implementation, deciding only after calling `fn`: if the return value is
+ * "thenable", it genuinely awaits it before deciding commit/rollback; if it is not, it decides right
+ * away, just as the native wrapper would with a synchronous callback.
  */
 function patchAsyncTransactions(raw: Database.Database): void {
   const isThenable = (value: unknown): value is PromiseLike<unknown> =>
@@ -112,7 +112,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
   };
 }
 
-/** Tabelas presentes no banco, para checar que as migrações realmente rodaram. */
+/** The tables present in the database, to check the migrations really did run. */
 export function listTables(raw: Database.Database): string[] {
   return raw
     .prepare<[], { name: string }>(

@@ -18,8 +18,8 @@ export const seeAlsoRelations = sqliteTable(
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   (table) => [
-    // Só protege contra duplicatas se A/B forem sempre canonicalizados (ordenados) antes do
-    // insert - ver SeeAlsoRelationService.sortEntityRefs.
+    // It only protects against duplicates if A/B are always canonicalized (sorted) before the
+    // insert - see SeeAlsoRelationService.sortEntityRefs.
     unique('see_also_story_a_b_unq').on(
       table.storyId,
       table.entityAType,

@@ -16,7 +16,7 @@ interface GenericListItemProps {
   isOpen: boolean;
   onPress: () => void;
   rightActions?: React.ReactNode;
-  /** Itens de uma estrutura pai usam menos separação sem perder o mesmo comportamento. */
+  /** Items of a parent structure use less separation without losing the same behaviour. */
   density?: 'default' | 'nested';
 }
 

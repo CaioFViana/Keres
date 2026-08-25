@@ -14,11 +14,11 @@ interface ConflictRowProps {
 }
 
 /**
- * Uma linha por conflito. Quando dá pra resolver sem comparar campo a campo (toda relação, e
- * todo conflito de conteúdo binário - exclusão, sem cópia no servidor, sem campo realmente
- * disputado), dois botões de ícone resolvem na hora, sem navegar pra lugar nenhum - mesmo
- * idioma visual dos botões de ação inline de `FriendshipListScreen`. Só abre o drill-in de
- * diff quando há mesmo múltiplos campos de conteúdo pra comparar.
+ * One row per conflict. When it can be resolved without comparing field by field (every relation, and
+ * every binary content conflict - a deletion, no copy on the server, no genuinely disputed
+ * field), two icon buttons resolve it on the spot, without navigating anywhere - the same
+ * visual language as `FriendshipListScreen`'s inline action buttons. It only opens the diff
+ * drill-in when there really are multiple content fields to compare.
  */
 const ConflictRow: React.FC<ConflictRowProps> = ({
   summary,

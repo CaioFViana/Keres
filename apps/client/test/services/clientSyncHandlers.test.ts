@@ -26,9 +26,9 @@ const CREATED_AT = '2026-08-10T12:00:00.000Z';
 let database: TestDatabase;
 
 /**
- * Cada entidade sincronizável tem o seu handler, e é ele que escreve no banco do aparelho o
- * que chega do servidor. Um erro aqui corrompe os dados locais do usuário no pull, em silêncio.
- * O contrato é o mesmo para os 20+ handlers; estes quatro cobrem as formas que existem.
+ * Every synchronizable entity has its handler, and it is the handler that writes what arrives from the
+ * server into the device's database. A mistake here silently corrupts the user's local data on the
+ * pull. The contract is the same for all 20+ handlers; these four cover the shapes that exist.
  */
 const HANDLERS = [
   {

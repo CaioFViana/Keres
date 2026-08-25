@@ -30,10 +30,10 @@ async function seedStory(overrides: Partial<typeof schema.stories.$inferInsert> 
 }
 
 /**
- * Espera o efeito assíncrono do hook assentar antes de afirmar sobre o resultado.
+ * Waits for the hook's async effect to settle before asserting anything about the result.
  *
- * `renderHook` da RNTL 14 devolve uma Promise (assim como `rerender` e `unmount`) - sem o
- * `await` o retorno é a própria Promise e `result` vem `undefined`.
+ * RNTL 14's `renderHook` returns a Promise (as do `rerender` and `unmount`) - without the `await` the
+ * return value is the Promise itself and `result` comes back `undefined`.
  */
 async function renderStoryRole(storyId: string | null = STORY_ID) {
   const view = await renderHook(() => useStoryRole(storyId));
@@ -53,10 +53,10 @@ afterEach(() => {
 });
 
 /**
- * Este hook é a porta de edição de toda tela de história. O ponto que mais importa é ele
- * falhar fechado: uma história vinculada a servidor cujo papel ainda não resolveu não pode
- * ser editável. O padrão antigo, que tratava "desconhecido" como dono, deixava um leitor
- * editar enquanto a cópia local dele não tivesse completado um ciclo de sincronização.
+ * This hook is the editing gate of every story screen. What matters most is that it fails closed: a
+ * server-linked story whose role has not resolved yet must not be editable. The old default, which
+ * treated "unknown" as owner, let a reader edit while their local copy had not completed a
+ * synchronization cycle.
  */
 describe('useStoryRole', () => {
   it('treats a story that was never linked to a server as owned', async () => {
@@ -106,10 +106,9 @@ describe('useStoryRole', () => {
   });
 
   /**
-   * Uma história ausente cai no mesmo ramo de "nunca vinculada a servidor" e sai como dona.
-   * Não é o fail-closed que importa aqui: sem história não há nada para editar, e o caso que
-   * o hook precisa barrar é o da história *vinculada* com papel ainda não resolvido, logo
-   * abaixo.
+   * A missing story falls into the same "never linked to a server" branch and comes out as owner. It is
+   * not the fail-closed part that matters here: with no story there is nothing to edit, and the case the
+   * hook has to block is the *linked* story whose role has not resolved yet, just below.
    */
   it('treats a story that is not here as owned, since there is nothing to protect', async () => {
     const { result } = await renderStoryRole('nao-existe');
@@ -140,7 +139,7 @@ describe('useStoryRole', () => {
     });
   });
 
-  /** Um colaborador rebaixado no servidor precisa perder a edição sem reabrir a tela. */
+  /** A collaborator demoted on the server has to lose editing without reopening the screen. */
   it('picks up a role change announced by the sync engine', async () => {
     await seedStory({ serverId: 'server-1', myRole: 'writer' });
     const { result } = await renderStoryRole();

@@ -1,13 +1,13 @@
 # graphs
 
-Layout e desenho dos gráficos da história: `storyGraph`, `locationGraph`,
-`characterRelationGraph`, `storyTimeline`, `statRadar`, `presenceMatrix` e `plotCoverage`.
+Layout and drawing of the story graphs: `storyGraph`, `locationGraph`,
+`characterRelationGraph`, `storyTimeline`, `statRadar`, `presenceMatrix` and `plotCoverage`.
 
-Cada assunto tem um par: `*Layout.ts` calcula a geometria (puro, testável, sem cores) e
-`*Svg.ts` transforma esse layout num SVG completo. O app usa o primeiro para desenhar na tela
-com `react-native-svg` e o segundo no botão de exportar; o site usa os dois para gerar a vitrine
-estática. É o que garante que a imagem exportada e a imagem da página sejam o mesmo desenho.
+Each subject has a pair: `*Layout.ts` computes the geometry (pure, testable, colourless) and
+`*Svg.ts` turns that layout into a complete SVG. The app uses the first to draw on screen
+with `react-native-svg` and the second in the export button; the site uses both to generate the
+static showcase. It is what guarantees the exported image and the page's image are the same drawing.
 
-Importe cada módulo pelo caminho (`@keres/shared/graphs/presenceMatrixSvg`), sem barril: três
-destes módulos exportam constantes de mesmo nome (`NODE_WIDTH`, `GRAPH_PADDING`) para desenhos
-diferentes, e um barril tornaria essa colisão ambígua em vez de explícita.
+Import each module by its path (`@keres/shared/graphs/presenceMatrixSvg`), with no barrel: three
+of these modules export constants with the same name (`NODE_WIDTH`, `GRAPH_PADDING`) for
+different drawings, and a barrel would make that collision ambiguous instead of explicit.

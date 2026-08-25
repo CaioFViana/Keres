@@ -2,18 +2,18 @@ import { useCallback } from 'react';
 import { useGalleryMediaViewerStore } from '../state/galleryMediaViewerStore';
 
 /**
- * Abre uma mídia da galeria por cima da tela atual - sem navegar.
+ * Opens a gallery medium on top of the current screen - without navigating.
  *
- * Historicamente isto tentou duas formas de navegação de verdade (dentro da aba de
- * Galeria, depois na pilha raiz) e as duas quebravam o botão de voltar de um jeito
- * diferente: a primeira devolvia a lista de galeria em vez da tela de entidade; a segunda
- * corrigia isso mas fazia a PRÓPRIA tela de entidade perder o foco do Drawer, acionando o
- * reset de pilha daquela aba (ver `GalleryDetailContent.tsx`) e devolvendo a lista da
- * entidade em vez do detalhe. A causa raiz dos dois é a mesma: qualquer navegação real
- * para fora da aba atual mexe no foco de alguma coisa que não deveria mudar.
+ * Historically this tried two real forms of navigation (inside the Gallery tab,
+ * then on the root stack) and both broke the back button in a different
+ * way: the first gave back the gallery list instead of the entity screen; the second
+ * fixed that but made the entity screen ITSELF lose the Drawer's focus, triggering that
+ * tab's stack reset (see `GalleryDetailContent.tsx`) and giving back the entity's
+ * list instead of the detail. The root cause of both is the same: any real navigation
+ * out of the current tab moves the focus of something that should not change.
  *
- * Por isso a mídia agora é só um `Modal` (`GalleryMediaViewerOverlay`) controlado por
- * estado simples, fora do React Navigation - nada perde foco, nada reseta.
+ * That is why the medium is now just a `Modal` (`GalleryMediaViewerOverlay`) driven by
+ * simple state, outside React Navigation - nothing loses focus, nothing resets.
  */
 export function useOpenGalleryMediaViewer() {
   const open = useGalleryMediaViewerStore((state) => state.open);

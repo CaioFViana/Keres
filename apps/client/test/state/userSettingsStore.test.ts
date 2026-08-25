@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-// `__esModule` importa aqui pelo mesmo motivo do mock em `TokenVault.test.ts`: sem a marca, o
-// interop do Babel entrega o mock inteiro como `default` e os imports nomeados vêm undefined.
+// `__esModule` matters here for the same reason as the mock in `TokenVault.test.ts`: without the mark,
+// Babel's interop hands the whole mock over as `default` and the named imports come back undefined.
 jest.mock('../../src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
@@ -37,9 +37,9 @@ beforeEach(() => {
 });
 
 /**
- * O `userId` daqui é a identidade local do autor - é o que diferencia os favoritos de cada
- * pessoa numa história compartilhada e o que assina cada operação no log. Vir nulo faz o app
- * gravar favoritos sem dono.
+ * The `userId` here is the author's local identity - it is what tells each person's favourites apart in
+ * a shared story and what signs every operation in the log. Coming back null makes the app save
+ * favourites with no owner.
  */
 describe('initializeSettings', () => {
   it('loads the local identity, name and language from the database', async () => {

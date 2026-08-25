@@ -10,10 +10,10 @@ import GalleryDetailContent from './GalleryDetailContent';
 type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;
 
 /**
- * Adapta `GalleryDetailContent` à navegação de verdade: usada só quando a mídia é aberta
- * dentro da própria aba de Galeria (tocando uma miniatura na lista). O "espiar" vindo de
- * uma tela de entidade usa `GalleryMediaViewerOverlay`, que monta o mesmo conteúdo sem
- * navegação - ver o comentário em `GalleryDetailContent.tsx` para o porquê.
+ * Adapts `GalleryDetailContent` to real navigation: used only when the medium is opened
+ * inside the Gallery tab itself (by tapping a thumbnail in the list). The "peek" coming from
+ * an entity screen uses `GalleryMediaViewerOverlay`, which mounts the same content without
+ * navigation - see the comment in `GalleryDetailContent.tsx` for why.
  */
 const GalleryDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

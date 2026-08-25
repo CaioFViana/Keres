@@ -39,9 +39,7 @@ const reports: Record<string, [string, string][]> = {
 };
 
 if (selectedProject && !reports[selectedProject]) {
-  console.error(
-    `Unknown project: ${selectedProject}. Options: ${Object.keys(reports).join(', ')}`,
-  );
+  console.error(`Unknown project: ${selectedProject}. Options: ${Object.keys(reports).join(', ')}`);
   process.exit(1);
 }
 
@@ -54,9 +52,7 @@ for (const name of names) {
     parseLcov(repoRoot, projectPath, directory),
   );
   if (parsedReports.some((report) => report === null)) {
-    console.error(
-      `No coverage for ${name}. Run bun run test:report before updating the floors.`,
-    );
+    console.error(`No coverage for ${name}. Run bun run test:report before updating the floors.`);
     process.exitCode = 1;
     continue;
   }

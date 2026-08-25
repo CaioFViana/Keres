@@ -33,12 +33,12 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 /**
- * Grafo de estrutura de Locations: cada Location vira um nó, `contains`/`connected_to` viram
- * arestas. Espelha `CharacterRelationGraphScreen` na experiência (pan/zoom, painel de detalhe
- * ao tocar num nó), mas com layout em árvore (`locationGraphLayout`) em vez de radial, porque
- * `contains` tem hierarquia e `connected_to` não.
+ * The Locations structure graph: each Location becomes a node, `contains`/`connected_to` become
+ * edges. It mirrors `CharacterRelationGraphScreen` in experience (pan/zoom, a detail panel
+ * on tapping a node), but with a tree layout (`locationGraphLayout`) instead of a radial one, because
+ * `contains` is hierarchical and `connected_to` is not.
  *
- * Só visualização/navegação nesta etapa - sem edição visual (arrastar para reparentar etc.).
+ * Visualization/navigation only at this stage - no visual editing (dragging to reparent, etc.).
  */
 
 interface LocationNodeConnection {
@@ -87,7 +87,7 @@ const LocationGraphScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Recarrega ao focar: locations e relações podem ter mudado em outra tela.
+  // Reloads on focus: locations and relations may have changed on another screen.
   useFocusEffect(
     useCallback(() => {
       loadGraph();
@@ -236,8 +236,8 @@ const LocationGraphScreen = () => {
           'success',
         );
       } else {
-        // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
-        // ele está é mais útil do que alegar sucesso.
+        // With no share sheet the file exists, but the user has no way to reach it; saying where
+        // it is is more useful than claiming success.
         showNotification(
           t('location_graph_export_no_share_target', { path: result.uri || result.fileName }),
           'warning',

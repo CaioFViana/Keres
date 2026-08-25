@@ -134,10 +134,10 @@ describe('collectEntityRefs', () => {
   });
 
   /**
-   * Regressão: um conflito `deleted_on_server` não carrega `character1Id`/`character2Id` em
-   * nenhum dos lados (`serverValues` é só `{isDeleted, version}`, de propósito) - sem o
-   * snapshot da linha local, `collectEntityRefs` não teria como saber quais personagens
-   * resolver, e a tela caía no "unknown_entity" mesmo a linha local ainda existindo.
+   * Regression: a `deleted_on_server` conflict does not carry `character1Id`/`character2Id` on
+   * either side (`serverValues` is only `{isDeleted, version}`, on purpose) - without the
+   * local row's snapshot, `collectEntityRefs` would have no way of knowing which characters to
+   * resolve, and the screen fell into "unknown_entity" even with the local row still existing.
    */
   it('finds relation target fields only present in the snapshot of the local row', () => {
     const snapshots = new Map([
@@ -226,10 +226,10 @@ describe('buildConflictSummaries - relation conflicts', () => {
   });
 
   /**
-   * Regressão: personagem A excluído no dispositivo 1, relação editada (só `relationType`) no
-   * dispositivo 2 offline. `localValues`/`serverValues` não têm `character1Id`/`character2Id`
-   * - só o snapshot da linha local (resolvido por `EntitySnapshotResolver`) sabe quem são os
-   * dois personagens.
+   * Regression: character A deleted on device 1, the relation edited (only `relationType`) on
+   * device 2 offline. `localValues`/`serverValues` do not have `character1Id`/`character2Id`
+   * - only the local row's snapshot (resolved by `EntitySnapshotResolver`) knows who the
+   * two characters are.
    */
   it('resolves relation participants from the local snapshot when deleted_on_server leaves both sides sparse', () => {
     const snapshots = new Map([
@@ -294,8 +294,8 @@ describe('collectEntityRefs - content conflicts with id-type fields', () => {
 
 describe('buildConflictSummaries - entity display name fallbacks', () => {
   /**
-   * Regressão: `Choice` não tem `name` nem `title` - o campo que identifica é `text`. Sem um
-   * fallback pra ele, todo conflito de Choice mostrava o ULID cru como "nome" da entidade.
+   * Regression: `Choice` has neither `name` nor `title` - the identifying field is `text`. Without a
+   * fallback for it, every Choice conflict showed the raw ULID as the entity's "name".
    */
   it('uses text as the display name for a Choice, which has neither name nor title', () => {
     const [summary] = buildConflictSummaries(
@@ -316,7 +316,7 @@ describe('buildConflictSummaries - entity display name fallbacks', () => {
     expect(summary.title).not.toBe('choice-1');
   });
 
-  /** Regressão: Gallery.title é opcional - cai pro nome do arquivo, nunca pro ID cru. */
+  /** Regression: Gallery.title is optional - it falls back to the file name, never to the raw ID. */
   it('falls back to the file name for a Gallery with no title', () => {
     const [summary] = buildConflictSummaries(
       [
@@ -348,11 +348,11 @@ describe('buildConflictSummaries - entity display name fallbacks', () => {
   });
 
   /**
-   * Regressão real (personagem excluído no dispositivo 1, atributo diferente editado no
-   * dispositivo 2): `deleted_on_server` deixa `serverValues` só com `{isDeleted, version}`, e
-   * `localValues` só tem o atributo que o usuário mudou (não `name`) - nenhum dos dois lados
-   * carrega o nome. A linha local em si não foi apagada (a exclusão remota não é aplicada de
-   * propósito), então o snapshot ainda tem o nome de verdade.
+   * A real regression (a character deleted on device 1, a different attribute edited on
+   * device 2): `deleted_on_server` leaves `serverValues` with only `{isDeleted, version}`, and
+   * `localValues` has only the attribute the user changed (not `name`) - neither side
+   * carries the name. The local row itself was not deleted (the remote deletion is deliberately not
+   * applied), so the snapshot still has the real name.
    */
   it('uses the local snapshot name when deleted_on_server leaves both sides without one', () => {
     const snapshots = new Map([['Character:char-1', { name: 'Aria' }]]);
@@ -379,9 +379,9 @@ describe('buildConflictSummaries - entity display name fallbacks', () => {
 
 describe('buildConflictSummaries - diff field labels and id resolution', () => {
   /**
-   * Regressão: `t(field, {defaultValue: field})` só funcionava por coincidência pros poucos
-   * campos que também têm uma chave de tradução solta sem o prefixo `field_` - `isFavorite` só
-   * tem `field_isFavorite`, então aparecia cru ("isFavorite") no comparativo.
+   * Regression: `t(field, {defaultValue: field})` only worked by coincidence for the few
+   * fields that also have a loose translation key without the `field_` prefix - `isFavorite` only
+   * has `field_isFavorite`, so it appeared raw ("isFavorite") in the comparison.
    */
   it('resolves a field label through entityFieldMetadata instead of showing the raw key', () => {
     const [summary] = buildConflictSummaries(
@@ -402,8 +402,8 @@ describe('buildConflictSummaries - diff field labels and id resolution', () => {
   });
 
   /**
-   * Regressão: um campo de conteúdo que é ID de outra entidade (ex. `Scene.chapterId`) mostrava
-   * o ID cru no comparativo campo a campo - só as 8 relações tinham nomes resolvidos.
+   * Regression: a content field that is another entity's ID (e.g. `Scene.chapterId`) showed
+   * the raw ID in the field-by-field comparison - only the 8 relations had names resolved.
    */
   it('resolves an id-type content field to a name instead of showing the raw id', () => {
     const names = new Map([['Chapter:chapter-a', 'Capítulo 1']]);
@@ -488,8 +488,8 @@ describe('buildConflictSummaries - content conflicts', () => {
 });
 
 /**
- * O conflito que o usuário viu na prática: um valor de status recusado pelo servidor, exibido
- * como "relations - Stat value" seguido de um ULID cru e de um motivo que não explicava nada.
+ * The conflict the user actually saw: a stat value refused by the server, displayed
+ * as "relations - Stat value" followed by a raw ULID and by a reason that explained nothing.
  */
 describe('stat value conflicts', () => {
   const names = new Map<string, string>([

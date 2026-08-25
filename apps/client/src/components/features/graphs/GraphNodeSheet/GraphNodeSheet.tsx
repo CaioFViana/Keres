@@ -14,7 +14,7 @@ export interface GraphNodeSheetItem {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   detail?: string;
-  /** Linha extra compacta (checks/effects da Choice) - só ocupa espaço quando existe. */
+  /** An extra compact line (a Choice's checks/effects) - it only takes up space when it exists. */
   extra?: string;
   italicLabel?: boolean;
   onPress: () => void;
@@ -37,7 +37,7 @@ interface GraphNodeSheetProps {
   onClose: () => void;
 }
 
-/** Moldura compartilhada dos detalhes de nós exibidos nos grafos. */
+/** The shared frame for the node details shown in the graphs. */
 const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
   title,
   subtitle,
@@ -90,8 +90,8 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           flexDirection: 'row',
           flexWrap: 'wrap',
           marginTop: 10,
-          // Espaço entre selos no contêiner: em cada selo, a última linha ainda cobrava a
-          // margem de baixo e sobrava um vão morto sob a fileira.
+          // Spacing between badges belongs to the container: with it on each badge, the last row still charged
+          // its bottom margin and left dead space under the row.
           columnGap: 8,
           rowGap: 6,
         },

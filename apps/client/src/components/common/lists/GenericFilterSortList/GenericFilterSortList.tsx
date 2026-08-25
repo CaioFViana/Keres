@@ -59,8 +59,8 @@ interface GenericFilterSortListProps<T> {
   /** Contextual count supplied by composite lists, e.g. items nested under each result. */
   resultsMeta?: string;
   /**
-   * Colunas da lista. A galeria mostra miniaturas em grade; as demais telas são listas de
-   * uma coluna e não passam nada.
+   * The list's columns. The gallery shows thumbnails in a grid; the other screens are single-column
+   * lists and pass nothing.
    */
   numColumns?: number;
   columnWrapperStyle?: StyleProp<ViewStyle>;

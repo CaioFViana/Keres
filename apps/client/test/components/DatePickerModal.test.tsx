@@ -87,8 +87,8 @@ describe('DatePickerModal', () => {
   it('lets a two-digit hour be typed one digit at a time', async () => {
     const { screen, onSelect } = await renderModal('2024-01-15T00:00');
 
-    // Regressão: o campo espelhava `String(hour).padStart(2, '0')`, então o primeiro dígito
-    // virava "01" na hora e `maxLength={2}` recusava o segundo - "19" era impossível de digitar.
+    // Regression: the field mirrored `String(hour).padStart(2, '0')`, so the first digit
+    // became "01" straight away and `maxLength={2}` refused the second - "19" was impossible to type.
     await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '1');
     expect(screen.getByTestId('date-picker-hour').props.value).toBe('1');
 

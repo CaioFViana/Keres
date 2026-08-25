@@ -9,8 +9,10 @@ import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
-/** Para 'connected_to' (par não-ordenado): encontra uma relação ativa entre as duas Locations,
- *  em qualquer ordem de armazenamento. Para 'contains' (pai único), use `getExistingParentEdge`. */
+/**
+ * For 'connected_to' (an unordered pair): it finds an active relation between the two Locations, in
+ * either storage order. For 'contains' (single parent), use `getExistingParentEdge`.
+ */
 const getExistingConnection = async (
   db: AppDrizzleClient,
   storyId: string,
@@ -41,7 +43,7 @@ const getExistingConnection = async (
   return undefined;
 };
 
-/** Para 'contains': o filho (locationBId) só pode ter um pai vivo por vez. */
+/** For 'contains': the child (locationBId) can only have one live parent at a time. */
 const getExistingParentEdge = async (
   db: AppDrizzleClient,
   storyId: string,
@@ -77,9 +79,11 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     return this.dbInstance;
   }
 
-  /** Resolve conflito de duplicidade (par 'connected_to' ou pai único 'contains'): quem tem o
-   *  `updatedAt` mais novo vence, o outro é soft-deletado. Retorna `true` se a operação
-   *  recebida deve ser descartada (perdeu para uma linha local mais nova). */
+  /**
+   * It resolves a duplicate conflict (a 'connected_to' pair or a 'contains' single parent): whichever has
+   * the newer `updatedAt` wins, the other is soft-deleted. It returns `true` if the received operation
+   * should be discarded (it lost to a newer local row).
+   */
   private async resolveDuplicate(
     existing: LocationRelationSelect,
     incomingUpdatedAt: Date,

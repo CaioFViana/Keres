@@ -5,12 +5,12 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
 /**
- * As camadas do cliente, verificadas em vez de combinadas.
+ * The client's layers, checked rather than agreed.
  *
- * A direção é uma só: `db` → `services` → `hooks`/`state` → `screens`/`components`. Cada regra
- * aqui já passa hoje - o valor delas não é apontar dívida, é a primeira violação falhar num
- * teste em vez de virar o jeito normal de fazer. O teste de `importBoundaries` cuida da outra
- * metade: ciclos e busca de dados dentro da camada de desenho.
+ * The direction is only one: `db` → `services` → `hooks`/`state` → `screens`/`components`. Every rule
+ * here already passes today - their value is not to point at debt, it is that the first violation fails a
+ * test instead of becoming the normal way of doing things. The `importBoundaries` test takes care of the other
+ * half: cycles and data fetching inside the drawing layer.
  */
 
 const SOURCE_ROOT = resolve(__dirname, '../../src');
@@ -26,7 +26,7 @@ function listSourceFiles(directory: string): string[] {
 const sourceFiles = listSourceFiles(SOURCE_ROOT);
 const relativeOf = (path: string) => relative(SOURCE_ROOT, path).replace(/\\/g, '/');
 
-/** Todo especificador importado, seja tipo ou valor: aqui o que importa é a direção. */
+/** Every imported specifier, be it a type or a value: what matters here is the direction. */
 const IMPORT = /(?:from|import)\s+['"]([^'"]+)['"]/g;
 const importsOf = (path: string) =>
   Array.from(readFileSync(path, 'utf8').matchAll(IMPORT), (match) => match[1]);
@@ -55,12 +55,12 @@ function offendingImports(files: string[], forbidden: RegExp): string[] {
     .sort();
 }
 
-describe('camadas do cliente', () => {
+describe('client layers', () => {
   /**
-   * Um serviço que importa uma tela amarra regra de negócio a um layout: a partir daí não dá
-   * para testar a regra sem montar componente, nem reusá-la em outra tela.
+   * A service that imports a screen ties business rules to a layout: from then on there is no way
+   * to test the rule without mounting a component, nor to reuse it on another screen.
    */
-  it('mantém serviços e banco sem saber que existe interface', () => {
+  it('keeps services and database unaware that a UI exists', () => {
     expect(
       offendingImports(
         [...filesUnder('services'), ...filesUnder('db')],
@@ -69,16 +69,16 @@ describe('camadas do cliente', () => {
     ).toEqual([]);
   });
 
-  /** O store guarda estado, não desenha: quem desenha assina o store, nunca o contrário. */
-  it('mantém os stores sem saber que existe interface', () => {
+  /** The store holds state, it does not draw: whoever draws subscribes to the store, never the other way round. */
+  it('keeps the stores unaware that a UI exists', () => {
     expect(offendingImports(filesUnder('state'), /^(components|screens|navigation)\//)).toEqual([]);
   });
 
   /**
-   * Tela que importa tela é o caminho mais curto para um ciclo e para um `ParamList`
-   * duplicado. O que duas telas compartilham vira componente, hook ou serviço.
+   * A screen importing a screen is the shortest path to a cycle and to a duplicated
+   * `ParamList`. What two screens share becomes a component, a hook or a service.
    */
-  it('não deixa uma tela importar outra', () => {
+  it('does not let one screen import another', () => {
     const offenders = filesUnder('screens')
       .flatMap((path) => {
         const home = relativeOf(path).split('/').slice(0, 2).join('/');
@@ -97,12 +97,12 @@ describe('camadas do cliente', () => {
 });
 
 /**
- * Teto de tamanho por arquivo.
+ * A per-file size ceiling.
  *
- * Não é estética: passando de umas seiscentas linhas, ninguém mais lê o arquivo inteiro antes
- * de editar, e é aí que a mesma regra passa a existir em dois lugares. A lista abaixo é a
- * dívida de hoje e só pode encolher - `toEqual` recusa tanto um arquivo novo estourando o teto
- * quanto um nome que continua listado depois de ter sido quebrado.
+ * It is not aesthetics: past some six hundred lines, nobody reads the whole file before
+ * editing any more, and that is when the same rule starts existing in two places. The list below is
+ * today's debt and can only shrink - `toEqual` refuses both a new file blowing the ceiling
+ * and a name that stays listed after having been broken up.
  */
 const LINE_LIMIT = 600;
 const FILES_OVER_THE_LIMIT = [
@@ -128,8 +128,8 @@ const FILES_OVER_THE_LIMIT = [
   'utils/storyAnalysisChecks.ts',
 ];
 
-describe('tamanho dos arquivos', () => {
-  it('não deixa nascer arquivo novo acima do teto', () => {
+describe('file size', () => {
+  it('does not let a new file be born above the ceiling', () => {
     const oversized = sourceFiles
       .filter((path) => readFileSync(path, 'utf8').split('\n').length > LINE_LIMIT)
       .map(relativeOf)

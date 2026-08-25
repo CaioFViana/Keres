@@ -147,7 +147,7 @@ describe('buildLocationGraphLayout', () => {
   });
 
   it('stops descending on a corrupted contains cycle instead of recursing forever', () => {
-    // Ciclo alcançável a partir de uma raiz: 'a' contém 'b', e 'b'/'c' contêm um ao outro.
+    // A cycle reachable from a root: 'a' contains 'b', and 'b'/'c' contain each other.
     const layout = buildLocationGraphLayout(
       [location('a'), location('b'), location('c')],
       [rel('r1', 'a', 'b'), rel('r2', 'b', 'c'), rel('r3', 'c', 'b')],
@@ -161,9 +161,9 @@ describe('buildLocationGraphLayout', () => {
   });
 
   /**
-   * Num ciclo `contains` fechado toda location tem pai, então nenhuma é raiz pelo critério
-   * normal. Sem uma raiz eleita, o mapa inteiro sairia vazio - o pior resultado possível,
-   * porque esconderia tanto o problema quanto o resto da história.
+   * In a closed `contains` cycle every location has a parent, so none is a root by the normal
+   * criterion. Without an elected root, the whole map would come out empty - the worst possible result,
+   * because it would hide both the problem and the rest of the story.
    */
   it('still draws a group whose locations all sit inside a closed contains cycle', () => {
     const layout = buildLocationGraphLayout(

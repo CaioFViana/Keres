@@ -22,8 +22,8 @@ import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 /**
- * Quanto da história cada trama percorre. **Cobertura**, e não participação: uma cena pode
- * pertencer a várias tramas, então os percentuais não somam 100%.
+ * How much of the story each plot covers. **Coverage**, not participation: a scene may
+ * belong to several plots, so the percentages do not add up to 100%.
  */
 const PlotProgressScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -39,8 +39,8 @@ const PlotProgressScreen = () => {
     selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
   );
 
-  // Tramas vazias entram na média: elas fazem parte do plano da história tanto quanto as
-  // cheias, e escondê-las daria uma média otimista demais.
+  // Empty plots count towards the average: they are part of the story's plan just as much as the
+  // full ones, and hiding them would give an over-optimistic average.
   const average = plots.length ? relations.length / plots.length : 0;
 
   const chapterColors = useMemo(() => buildChapterColors(chapters), [chapters]);
@@ -62,7 +62,7 @@ const PlotProgressScreen = () => {
     [chapterColors, chapters, colors.primary, plots, relations, scenes],
   );
 
-  /** Só os capítulos que aparecem em alguma barra - uma legenda com capítulo ausente confunde. */
+  /** Only the chapters that appear in some bar - a legend with an absent chapter is confusing. */
   const legend = useMemo(() => {
     const used = new Set(entries.flatMap((entry) => entry.segments.map((s) => s.chapterId)));
     return chapters
@@ -98,8 +98,8 @@ const PlotProgressScreen = () => {
           overflow: 'hidden',
           marginTop: 10,
         },
-        // Os pedaços encostam uns nos outros dentro do trilho; só as pontas da barra são
-        // arredondadas, pelo próprio `overflow: hidden` do trilho.
+        // The pieces touch one another inside the track; only the bar's ends are
+        // rounded, by the track's own `overflow: hidden`.
         segments: { flexDirection: 'row', height: '100%' },
         segment: { height: '100%' },
         legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },

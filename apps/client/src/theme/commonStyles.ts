@@ -194,17 +194,17 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
   });
 
 /**
- * O esqueleto de um formulário: rolagem, título, rótulo de campo, seção, linha de interruptor
- * e os dois botões do rodapé.
+ * A form's skeleton: scrolling, title, field label, section, switch row
+ * and the two footer buttons.
  *
- * Objeto simples, e não `StyleSheet.create`, para ser espalhado dentro do `StyleSheet.create`
- * da própria tela - o mesmo arranjo de `relationSectionStyleDefs`. A tela declara o que é dela
- * depois do espalhamento e, se precisar, sobrescreve uma entrada sem ter que abrir mão do
- * resto.
+ * A plain object, and not `StyleSheet.create`, so it can be spread inside the screen's own
+ * `StyleSheet.create` - the same arrangement as `relationSectionStyleDefs`. The screen declares what is its
+ * own after the spread and, if it needs to, overrides one entry without having to give up the
+ * rest.
  *
- * Existe porque estas mesmas medidas estavam copiadas em dez a vinte telas cada uma, com
- * variações acidentais de uma vírgula ou de um `color` - e `deleteButton` chegava a fixar
- * `'red'` literal em cinco delas, ignorando a paleta.
+ * It exists because these same measurements were copied across ten to twenty screens each, with
+ * accidental variations of a comma or of a `color` - and `deleteButton` went as far as hard-coding
+ * a literal `'red'` in five of them, ignoring the palette.
  */
 export const commonFormStyleDefs = (colors: ThemeColors, scrollBottomPadding?: number) => ({
   scrollViewContent: {
@@ -255,8 +255,8 @@ export const commonFormStyleDefs = (colors: ThemeColors, scrollBottomPadding?: n
 });
 
 /**
- * O esqueleto de uma tela de detalhe: nome da entidade, títulos de seção, o botão de voltar do
- * rodapé e o estado vazio. Mesmo arranjo de `commonFormStyleDefs`.
+ * A detail screen's skeleton: the entity's name, section titles, the footer's back button
+ * and the empty state. The same arrangement as `commonFormStyleDefs`.
  */
 export const commonDetailStyleDefs = (colors: ThemeColors) => ({
   mainTitle: {
@@ -291,11 +291,11 @@ export const commonDetailStyleDefs = (colors: ThemeColors) => ({
 });
 
 /**
- * A moldura de uma tela que entrega o corpo a uma lista ou a um gráfico: ocupa a tela e usa o
- * fundo do tema, sem o respiro de `getCommonContainerStyles` (que é para telas com conteúdo
- * direto, não para listas que precisam sangrar até a borda).
+ * The frame of a screen that hands its body over to a list or a chart: it takes up the screen and uses the
+ * theme's background, without `getCommonContainerStyles`'s breathing room (which is for screens with direct
+ * content, not for lists that need to bleed to the edge).
  *
- * Era a duplicação mais comum da base - 22 telas declarando as mesmas duas linhas.
+ * It was the base's most common duplication - 22 screens declaring the same two lines.
  */
 export const commonScreenStyleDefs = (colors: ThemeColors) => ({
   container: {

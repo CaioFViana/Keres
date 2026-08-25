@@ -44,8 +44,8 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   // Determine status bar style based on background color lightness
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
 
-  // O fundo da janela nativa aparece por instantes em transições de stack e Modal. Mantê-lo
-  // sincronizado com a paleta evita revelar o branco padrão fora da árvore React.
+  // The native window's background shows for an instant during stack and Modal transitions. Keeping it
+  // in sync with the palette avoids revealing the default white outside the React tree.
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
   }, [colors.background]);
@@ -123,8 +123,8 @@ const DatabaseInitializer = () => {
       console.log('DatabaseInitializer: Starting database initialization...');
       try {
         if (Platform.OS === 'web') {
-          // Popula o cache síncrono de "o que já existe" do mediaFileService (ver
-          // webMediaStore.ts) antes de qualquer tela/sync que dependa de `exists()` rodar.
+          // It populates mediaFileService's synchronous "what already exists" cache (see webMediaStore.ts)
+          // before any screen/sync that depends on `exists()` runs.
           await hydrateWebMediaStore();
         }
         await migrate(db);

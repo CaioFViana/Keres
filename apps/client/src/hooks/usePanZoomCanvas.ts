@@ -3,23 +3,23 @@ import type { View } from 'react-native';
 import { Animated, PanResponder } from 'react-native';
 
 /**
- * Pan e zoom compartilhados pelos canvas de grafo (mapa de história, mapa de relações).
+ * Pan and zoom shared by the graph canvases (story map, relations map).
  *
- * Extraído depois que o segundo canvas surgiu duplicando ~150 linhas desta lógica quase
- * sem alteração. `PanResponder`, e não `react-native-gesture-handler`, porque o app não monta
- * `GestureHandlerRootView` na raiz - usar a biblioteca aqui exigiria mexer no provedor de
- * toda a aplicação por causa de duas telas.
+ * Extracted after the second canvas appeared duplicating ~150 lines of this logic almost
+ * unchanged. `PanResponder`, and not `react-native-gesture-handler`, because the app does not mount
+ * `GestureHandlerRootView` at the root - using the library here would mean touching the provider of
+ * the whole application for the sake of two screens.
  *
- * Recebe o `ref` encaminhado do componente e resolve o `useImperativeHandle` internamente -
- * assim `fitToScreen`/`zoomBy` continuam expostos ao componente pai sem cada canvas precisar
- * repetir esse encanamento.
+ * It takes the `ref` forwarded from the component and resolves the `useImperativeHandle` internally -
+ * that way `fitToScreen`/`zoomBy` stay exposed to the parent component without each canvas having to
+ * repeat that plumbing.
  */
 
 const DEFAULT_MIN_SCALE = 0.15;
 const DEFAULT_MAX_SCALE = 2.5;
 /** Movimento (em px) a partir do qual o gesto deixa de ser toque e passa a ser arraste. */
 const DRAG_THRESHOLD = 5;
-/** Sobra do "caber na tela" para o mapa não encostar nas bordas. */
+/** Slack for "fit on screen" so the map does not touch the edges. */
 const FIT_MARGIN = 0.94;
 
 export interface PanZoomCanvasHandle {
@@ -36,11 +36,11 @@ export interface PanZoomLayout {
 interface PanZoomCanvasOptions {
   minScale?: number;
   maxScale?: number;
-  /** Matrizes começam no topo; grafos permanecem centralizados. */
+  /** Matrices start at the top; graphs stay centred. */
   fitVerticalAlignment?: 'center' | 'top';
-  /** Mantém a posição atual quando os dados da visualização mudam. */
+  /** Keeps the current position when the visualization's data changes. */
   refitOnLayoutChange?: boolean;
-  /** Algumas visualizações, como uma timeline, devem preservar a escala vertical e rolar na horizontal. */
+  /** Some visualizations, such as a timeline, must preserve the vertical scale and scroll horizontally. */
   fitMode?: 'contain' | 'height';
 }
 
@@ -62,7 +62,7 @@ export function usePanZoomCanvas(
   const fitMode = options.fitMode ?? 'contain';
 
   const viewport = useRef({ width: 0, height: 0 });
-  /** Canto do canvas na janela, para converter o foco da pinça em coordenadas locais. */
+  /** The canvas's corner within the window, to convert the pinch's focus into local coordinates. */
   const viewportOrigin = useRef({ x: 0, y: 0 });
   const containerRef = useRef<View>(null);
 
@@ -73,7 +73,7 @@ export function usePanZoomCanvas(
 
   /** Estado do gesto em andamento; zerado a cada toque novo. */
   const gesture = useRef({ lastDx: 0, lastDy: 0, pinchDistance: 0, pinchScale: 1 });
-  /** Identidade do último layout que já foi enquadrado, para não reenquadrar a cada render. */
+  /** The identity of the last layout already framed, so as not to reframe on every render. */
   const fittedLayout = useRef<PanZoomLayout | null>(null);
 
   const publish = useCallback(() => {
@@ -83,8 +83,8 @@ export function usePanZoomCanvas(
   }, [animatedScale, animatedX, animatedY]);
 
   /**
-   * Mantém o mapa dentro da janela: quando ele é maior, não deixa arrastar até sair de
-   * vista; quando é menor, centraliza. Sem isso é fácil "perder" o grafo e não achar mais.
+   * Keeps the map inside the window: when it is bigger, it does not let you drag it out of
+   * sight; when it is smaller, it centres it. Without this it is easy to "lose" the graph and never find it again.
    */
   const clamp = useCallback(() => {
     const { width: viewportWidth, height: viewportHeight } = viewport.current;
@@ -106,7 +106,7 @@ export function usePanZoomCanvas(
         : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
   }, [fitVerticalAlignment, layout.height, layout.width]);
 
-  /** Aplica um zoom mantendo fixo o ponto do mapa que está sob `focus`. */
+  /** Applies a zoom keeping fixed the point of the map that lies under `focus`. */
   const zoomAround = useCallback(
     (nextScale: number, focus: { x: number; y: number }) => {
       const previous = transform.current.scale;
@@ -133,9 +133,9 @@ export function usePanZoomCanvas(
     const scaledWidth = layout.width * scale;
     transform.current = {
       scale,
-      // Centralizar só faz sentido quando o desenho cabe. Mais largo que a janela - uma linha
-      // do tempo, uma matriz - centralizar corta os dois lados, e o lado esquerdo é onde ficam
-      // os nomes das cenas e das linhas. Nesse caso o enquadramento começa no começo.
+      // Centring only makes sense when the drawing fits. Wider than the window - a timeline,
+      // a matrix - centring cuts both sides off, and the left-hand side is where
+      // the scene and thread names live. In that case the framing starts at the beginning.
       x: scaledWidth <= viewportWidth ? (viewportWidth - scaledWidth) / 2 : 0,
       y: fitVerticalAlignment === 'top' ? 0 : (viewportHeight - layout.height * scale) / 2,
     };
@@ -170,8 +170,8 @@ export function usePanZoomCanvas(
     containerRef.current?.measureInWindow((x, y, width, height) => {
       viewportOrigin.current = { x, y };
       viewport.current = { width, height };
-      // Primeiro enquadramento só é possível quando se conhece o tamanho da janela, o que
-      // acontece depois do primeiro render.
+      // The first framing is only possible once the window's size is known, which
+      // happens after the first render.
       if (!fittedLayout.current || (refitOnLayoutChange && fittedLayout.current !== layout)) {
         fittedLayout.current = layout;
         fitToScreen();
@@ -182,8 +182,8 @@ export function usePanZoomCanvas(
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        // Não captura o início do toque: assim um toque simples chega ao nó e abre os
-        // detalhes. O arraste é roubado do nó depois, na fase de captura do movimento.
+        // It does not capture the touch's start: that way a simple tap reaches the node and opens the
+        // details. The drag is stolen from the node later, in the move's capture phase.
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponderCapture: (event, gestureState) =>
           event.nativeEvent.touches.length > 1 ||
@@ -218,7 +218,7 @@ export function usePanZoomCanvas(
                 focus,
               );
             }
-            // Zera o arraste para o dedo que sai da pinça não dar um salto no mapa.
+            // Zeroes the drag so the finger leaving the pinch does not make the map jump.
             gesture.current.lastDx = gestureState.dx;
             gesture.current.lastDy = gestureState.dy;
             return;

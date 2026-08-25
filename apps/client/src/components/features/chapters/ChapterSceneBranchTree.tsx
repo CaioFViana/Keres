@@ -7,9 +7,9 @@ import { useTheme } from '@/src/theme';
 import SceneListItem from '@/src/components/features/list-items/SceneListItem';
 
 interface Props {
-  /** Cenas visíveis, que podem estar filtradas pela busca. */
+  /** Visible scenes, which may be filtered by the search. */
   scenes: SceneSelect[];
-  /** Estrutura integral do capítulo, usada para preservar números de camada ao filtrar. */
+  /** The chapter's full structure, used to preserve layer numbers when filtering. */
   allChapterScenes: SceneSelect[];
   choices: ChoiceSelect[];
   onOpenScene: (sceneId: string) => void;
@@ -20,8 +20,8 @@ interface Props {
 }
 
 /**
- * Árvore local de um capítulo. Só liga escolhas cujo alvo também pertence ao capítulo: uma
- * transição a outro capítulo não deve fingir que a árvore deste capítulo a contém.
+ * A chapter's local tree. It only links choices whose target also belongs to the chapter: a
+ * transition to another chapter must not pretend this chapter's tree contains it.
  */
 const ChapterSceneBranchTree: React.FC<Props> = ({
   scenes,
@@ -120,7 +120,7 @@ function buildLayers(scenes: SceneSelect[], choices: ChoiceSelect[]): SceneSelec
       }
     });
   }
-  // Ciclos e cenas isoladas ainda precisam aparecer de forma estável.
+  // Cycles and isolated scenes still need to appear in a stable way.
   let fallbackLayer = Math.max(-1, ...layerById.values()) + 1;
   ordered.forEach((scene) => {
     if (!layerById.has(scene.id)) layerById.set(scene.id, fallbackLayer++);

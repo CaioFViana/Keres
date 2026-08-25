@@ -8,12 +8,12 @@ import {
 import { resolveStatValue, type StatValueIndex } from './statValues';
 
 /**
- * A tier list: todo mundo da história ordenado por um status.
+ * The tier list: everybody in the story sorted by one stat.
  *
- * Cada personagem entra pelo modo normal, e cada modo entra como uma linha própria - foi o que
- * você pediu, e é o que permite comparar "Ilda" com "Ilda · Na tempestade" lado a lado. Na
- * notação de letras as linhas saem agrupadas por degrau, que é o que faz disso uma tier list e
- * não só uma lista ordenada.
+ * Each character enters through the normal mode, and each mode enters as a row of its own - that is what
+ * you asked for, and it is what allows comparing "Ilda" with "Ilda · In the storm" side by side. In
+ * letter notation the rows come out grouped by tier, which is what makes this a tier list and
+ * not just a sorted list.
  */
 
 export interface RankingCharacter {
@@ -28,24 +28,24 @@ export interface RankingMode {
 }
 
 export interface RankingEntry {
-  /** Identidade estável da linha, para `key` de lista. */
+  /** A stable identity for the row, for a list `key`. */
   key: string;
   characterId: string;
   modeId: string | null;
   label: string;
   value: number | null;
-  /** O valor veio do modo normal porque este modo não tem um próprio. */
+  /** The value came from the normal mode because this mode does not have one of its own. */
   inherited: boolean;
-  /** Tier e número juntos, para quando a linha aparece fora de um grupo de tier. */
+  /** The tier and the number together, for when the row appears outside a tier group. */
   display: string;
-  /** Só o número, para quando o cabeçalho do grupo já diz o tier. */
+  /** The number only, for when the group's header already gives the tier. */
   valueDisplay: string;
 }
 
 export interface RankingGroup {
-  /** Índice do degrau, ou `'none'` para o grupo de quem não tem valor. */
+  /** The tier's index, or `'none'` for the group of those with no value. */
   key: string;
-  /** Rótulo do degrau; `null` no modo numérico, que não agrupa. */
+  /** The tier's label; `null` in numeric mode, which does not group. */
   label: string | null;
   entries: RankingEntry[];
 }

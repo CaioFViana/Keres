@@ -29,9 +29,9 @@ it('navigates to the entity stack, screen and id param', async () => {
 });
 
 /**
- * A volta entre pilhas é o que faz o botão de voltar do destino trazer a tela de origem, e não
- * o ponto em que a pilha de destino tinha parado. Sem este repasse, quem chama pelo hook (as
- * telas de Tramas abrindo uma Cena, por exemplo) perderia a volta silenciosamente.
+ * The way back between stacks is what makes the destination's back button bring the origin screen, and not
+ * the point the destination stack had stopped at. Without passing that on, callers using the hook (the
+ * Plots screens opening a Scene, for instance) would lose the way back silently.
  */
 it('forwards the cross-stack return action to the header back store', async () => {
   const { result } = await renderHook(() => useNavigateToEntityDetail());

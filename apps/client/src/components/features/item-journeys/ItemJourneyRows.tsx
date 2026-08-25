@@ -71,7 +71,7 @@ const ItemJourneyRows: React.FC<ItemJourneyRowsProps> = ({
                 const scene = sceneById.get(journey.sceneId);
                 if (!scene) return t('unknown_scene');
                 const chapterName = chapterNameOf(scene.chapterId);
-                // O capítulo situa a parada: a lista mistura cenas de toda a história.
+                // The chapter situates the stop: the list mixes scenes from the whole story.
                 return chapterName ? `${scene.name} · ${chapterName}` : scene.name;
               })()}
             </Text>

@@ -25,7 +25,7 @@ import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
-/** As mesmas cores de série da matriz de presença: os dois gráficos são lidos lado a lado. */
+/** The same series colours as the presence matrix: the two charts are read side by side. */
 const SERIES_COLORS = [
   '#0B6E99',
   '#D64545',
@@ -49,8 +49,8 @@ const MATRIX_CONTROL_LABELS = {
 } as const;
 
 /**
- * Tramas × cenas, sobre a mesma infraestrutura da matriz de presença: lá a célula é um
- * checkmark (personagem) ou um estado (item), aqui é a nota da relação.
+ * Plots × scenes, on the same infrastructure as the presence matrix: there the cell is a checkmark (a
+ * character) or a state (an item), here it is the relation's note.
  */
 const PlotMatrixScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -61,8 +61,8 @@ const PlotMatrixScreen = () => {
   const notify = useNotificationStore((state) => state.showNotification);
   const { selectedStory } = useStoryStore();
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
-  // A célula e o cabeçalho abrem a Cena em outra pilha: a volta é registrada para o botão de
-  // voltar trazer de novo a matriz, e não a lista de Cenas.
+  // The cell and the header open the Scene in another stack: the way back is registered so the back
+  // button brings the matrix again, and not the Scenes list.
   const openScene = useCallback(
     (sceneId: string) =>
       navigateToDetail('Scene', sceneId, {
@@ -77,8 +77,8 @@ const PlotMatrixScreen = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // A primeira leva de tramas já entra selecionada: uma matriz vazia na primeira abertura
-  // parece a tela quebrada, não uma escolha a fazer.
+  // The first batch of plots comes selected: an empty matrix on the first opening looks like a broken
+  // screen, not a choice to make.
   useEffect(() => {
     setSelectedIds((current) =>
       current.length > 0 ? current : plots.slice(0, MAX_VISIBLE_SERIES).map((plot) => plot.id),

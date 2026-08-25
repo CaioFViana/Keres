@@ -175,9 +175,9 @@ const StorySettingsScreen = () => {
         if (err?.response?.status === 403) {
           setIsOwnerOnServer(false);
         } else {
-          // Erro de rede ou outro imprevisto - deixa como "não checado" em vez de assumir
-          // que não é dono; o botão de desvincular fica escondido de qualquer forma até
-          // conseguirmos confirmar.
+          // A network error or another mishap - it is left as "not checked" instead of assuming
+          // the person is not the owner; the unlink button stays hidden either way until
+          // we manage to confirm.
           console.error('Failed to check story ownership/collaborators on server:', err);
           setIsOwnerOnServer(null);
         }
@@ -237,9 +237,9 @@ const StorySettingsScreen = () => {
     setError(null);
 
     try {
-      // `type` não entra aqui - converter tipo tem efeitos colaterais (gerar/apagar Choices,
-      // reordenar cenas) que não fazem sentido como um campo de formulário comum; ver
-      // `handleTypeChange`, que já persiste a conversão por conta própria.
+      // `type` does not go in here - converting the type has side effects (generating/deleting Choices,
+      // reordering scenes) that make no sense as an ordinary form field; see
+      // `handleTypeChange`, which already persists the conversion on its own.
       const storyData: Partial<
         Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
       > = {
@@ -254,12 +254,12 @@ const StorySettingsScreen = () => {
         normalizeSceneTiming,
         statSystem,
         statNotation,
-        // `type` / `favoriteBehavior` / `allowReaderComments` são política de dono - um
-        // writer que os mandasse gravaria localmente e levaria `unauthorized` em todo push.
+        // `type` / `favoriteBehavior` / `allowReaderComments` are owner policy - a
+        // writer who sent them would write locally and take an `unauthorized` on every push.
         ...(canManageStoryPolicy ? { favoriteBehavior, allowReaderComments } : {}),
-        // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
-        // (enviar a história, avisar o servidor) que não fazem sentido como campo de
-        // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
+        // `serverId` does not go in here - linking/unlinking has network side effects
+        // (sending the story, telling the server) that make no sense as an ordinary form
+        // field; see handleSendToServer/handleUnlinkFromServer.
       };
 
       await storyService().updateStory(userId, storyId, storyData);
@@ -281,8 +281,8 @@ const StorySettingsScreen = () => {
     if (!storyId || !userId || !canManageStoryPolicy || newType === type) return;
 
     if (newType === 'branching') {
-      // Tramas só existem em histórias lineares: avisa antes de perguntar, como no sentido
-      // contrário, em vez de deixar a conversão falhar sem explicação.
+      // Plots only exist in linear stories: warn before asking, as in the opposite
+      // direction, instead of letting the conversion fail without explanation.
       (async () => {
         try {
           setLoading(true);
@@ -330,8 +330,8 @@ const StorySettingsScreen = () => {
       return;
     }
 
-    // branching -> linear: valida antes de perguntar qualquer coisa, pra mostrar exatamente
-    // o que está bloqueando em vez de deixar a conversão falhar sem explicação.
+    // branching -> linear: validate before asking anything, so as to show exactly
+    // what is blocking instead of letting the conversion fail without explanation.
     (async () => {
       try {
         setLoading(true);
@@ -397,9 +397,9 @@ const StorySettingsScreen = () => {
       if (result.success) {
         setServerId(targetServer.id);
         setUploadTargetServerId(null);
-        // `SyncInitializer` só (re)configura o motor de sync quando `selectedStory.serverId`
-        // muda de verdade - sem atualizar a store aqui, ele continua achando que a história
-        // é local e nunca liga a sincronização, mesmo com o vínculo já gravado no banco.
+        // `SyncInitializer` only (re)configures the sync engine when `selectedStory.serverId`
+        // genuinely changes - without updating the store here, it carries on believing the story
+        // is local and never turns synchronization on, even with the link already written to the database.
         if (selectedStory) {
           setSelectedStory({ ...selectedStory, serverId: targetServer.id });
         }
@@ -522,11 +522,11 @@ const StorySettingsScreen = () => {
               setServerId(null);
               setIsOwnerOnServer(null);
               setCollaborators(null);
-              // Mesma razão do handleSendToServer: sem isto o motor de sync continua rodando
-              // com a configuração antiga (mesmo storyId/servidor) até algo mais disparar o
-              // efeito do SyncInitializer de novo - e o próximo ciclo periódico encontraria a
-              // história marcada como excluída no servidor e tentaria aplicar isso localmente,
-              // exatamente o que "desvincular" deveria evitar.
+              // The same reason as handleSendToServer: without this the sync engine keeps running
+              // with the old configuration (the same storyId/server) until something else fires
+              // SyncInitializer's effect again - and the next periodic cycle would find the
+              // story marked as deleted on the server and would try to apply that locally,
+              // exactly what "unlink" is supposed to avoid.
               if (selectedStory) {
                 setSelectedStory({ ...selectedStory, serverId: null });
               }
@@ -613,9 +613,9 @@ const StorySettingsScreen = () => {
 
   const addableFriendOptions = addableFriends.map((f) => ({ label: f.username, value: f.id }));
 
-  // Servidores disponíveis pra enviar uma história totalmente local pela primeira vez -
-  // ver handleSendToServer. Diferente do antigo Select genérico, não tem opção "Nenhum
-  // servidor": desvincular é uma ação própria (handleUnlinkFromServer), não um valor de campo.
+  // Servers available for sending a fully local story for the first time -
+  // see handleSendToServer. Unlike the old generic Select, it has no "No
+  // server" option: unlinking is an action of its own (handleUnlinkFromServer), not a field value.
   const uploadServerOptions = availableServers.map((server) => ({
     label: server.name,
     value: server.id,

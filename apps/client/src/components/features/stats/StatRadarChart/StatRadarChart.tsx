@@ -5,13 +5,13 @@ import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
 import { useTheme } from '../../../../theme';
 
 /**
- * O radar dos status. Diferente dos canvas de grafo do app, não tem pan/zoom: o desenho cabe
- * inteiro na tela por construção, então `usePanZoomCanvas` não se aplica aqui.
+ * The stats radar. Unlike the app's graph canvases, it has no pan/zoom: the drawing fits entirely on
+ * screen by construction, so `usePanZoomCanvas` does not apply here.
  *
- * Toda a geometria vem pronta de `buildStatRadarLayout` - este componente só pinta.
+ * All the geometry arrives ready from `buildStatRadarLayout` - this component only paints.
  */
 interface StatRadarChartProps {
-  /** `null` quando não há eixos suficientes; nesse caso a mensagem toma o lugar do desenho. */
+  /** `null` when there are not enough axes; in that case the message takes the drawing's place. */
   layout: StatRadarLayout | null;
   emptyMessage: string;
 }
@@ -47,7 +47,7 @@ export function StatRadarChart({ layout, emptyMessage }: StatRadarChartProps) {
             fillOpacity={ring.isOverflow ? 0 : 0.35}
             stroke={colors.border}
             strokeWidth={1}
-            // Tracejado marca a faixa de transbordo: o que passa dali está acima da escala.
+            // A dashed stroke marks the overshoot band: whatever goes past it is above the scale.
             strokeDasharray={ring.isOverflow ? '4 4' : undefined}
           />
         ))}

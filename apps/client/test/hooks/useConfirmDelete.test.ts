@@ -20,7 +20,7 @@ const OPTIONS = {
   failureKey: 'failed_to_delete_tag',
 };
 
-/** Abre o diálogo e devolve os botões que ele ofereceu. */
+/** It opens the dialog and returns the buttons it offered. */
 async function openDialog(overrides: Record<string, unknown> = {}) {
   const { result } = await renderHook(() => useConfirmDelete());
   const onConfirm = jest.fn(async () => undefined);
@@ -132,7 +132,7 @@ describe('the loading signal', () => {
     expect(onLoadingChange.mock.calls).toEqual([[true], [false]]);
   });
 
-  /** Um spinner preso é o que o usuário vê se o `finally` sumir daqui. */
+  /** A stuck spinner is what the user sees if the `finally` disappears from here. */
   it('lowers even when the delete fails', async () => {
     const onLoadingChange = jest.fn();
     const { buttons } = await openDialog({

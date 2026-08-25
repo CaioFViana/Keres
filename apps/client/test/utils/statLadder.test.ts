@@ -78,7 +78,7 @@ describe('tierOf', () => {
   });
 
   it('measures how far into the tier the value sits', () => {
-    // 100 está em C, a um terço do caminho até A: (100-50)/(400-50).
+    // 100 is in C, a third of the way to A: (100-50)/(400-50).
     const position = tierOf(100, LETTER_LADDER);
 
     expect(position?.label).toBe('C');
@@ -90,7 +90,7 @@ describe('tierOf', () => {
   });
 
   it('measures overflow in widths of the last closed interval', () => {
-    // O último intervalo tem 350 de largura; 175 acima do topo é meia largura.
+    // The last interval is 350 wide; 175 above the top is half a width.
     expect(tierOf(575, LETTER_LADDER)?.fraction).toBeCloseTo(0.5, 5);
   });
 
@@ -109,12 +109,12 @@ describe('normalizeValue', () => {
   });
 
   it('puts a middle floor on its own ring', () => {
-    // Dois intervalos: o anel de C é o primeiro de dois, ou seja, metade do raio.
+    // Two intervals: C's ring is the first of two, that is, half the radius.
     expect(normalizeValue(50, LETTER_LADDER)).toBeCloseTo(0.5, 5);
   });
 
   it('renders the example from the spec one third of the way between the rings', () => {
-    // 100 está a 1/7 dentro de C, e C ocupa a metade externa do raio.
+    // 100 is 1/7 of the way into C, and C occupies the outer half of the radius.
     expect(normalizeValue(100, LETTER_LADDER)).toBeCloseTo(0.5 + 1 / 7 / 2, 5);
   });
 

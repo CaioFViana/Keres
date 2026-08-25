@@ -16,15 +16,15 @@ interface PlotSceneModalProps {
   onClose: () => void;
   onSave: (plotId: string, note: string, relationId?: string) => void;
   initialRelation: PlotScene | null;
-  /** Tramas que ainda podem ser escolhidas; a da relação em edição entra à parte. */
+  /** Plots that can still be chosen; the one of the relation being edited enters separately. */
   availablePlots: Plot[];
   allPlots: Plot[];
 }
 
 /**
- * Escolher a trama e escrever a nota de uma linha. Editar troca a trama ou reescreve a nota -
- * a unicidade (uma relação por par trama/cena) é garantida pela lista de tramas disponíveis
- * e, em último caso, pelo serviço.
+ * Choosing the plot and writing the one-line note. Editing swaps the plot or rewrites the note -
+ * uniqueness (one relation per plot/scene pair) is guaranteed by the list of available plots
+ * and, as a last resort, by the service.
  */
 const PlotSceneModal: React.FC<PlotSceneModalProps> = ({
   isVisible,

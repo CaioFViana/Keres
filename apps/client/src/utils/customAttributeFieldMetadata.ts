@@ -20,10 +20,10 @@ function mapAttributeTypeToFieldType(type: string): FieldType {
 }
 
 /**
- * Converte os campos customizados de um Story Schema em `EntityFieldMetadata` sintéticos, pro
- * `AdvancedSearchModal`/per-service query loops tratarem exatamente como um campo nativo -
- * `entityFieldMetadata` (o registro estático) nunca é mutado, isto só é concatenado a ele no
- * ponto de uso. `name` usa o `fieldId` (não a `key` legível) pra sobreviver a uma renomeação.
+ * Turns a Story Schema's custom fields into synthetic `EntityFieldMetadata`, so
+ * `AdvancedSearchModal`/the per-service query loops treat them exactly like a native field -
+ * `entityFieldMetadata` (the static registry) is never mutated, this is only concatenated onto it at
+ * the point of use. `name` uses the `fieldId` (not the readable `key`) so it survives a rename.
  */
 export function buildCustomAttributeFieldMetadata(
   fields: StorySchemaFieldSelect[],
@@ -42,9 +42,11 @@ export function buildCustomAttributeFieldMetadata(
   }));
 }
 
-/** Prefixo usado por `buildCustomAttributeFieldMetadata` - usado pelos serviços pra distinguir
- *  uma chave de critério de busca "campo customizado" (precisa de subquery em AttributeValue)
- *  de uma chave "campo nativo" (coluna direta na própria tabela). */
+/**
+ * The prefix used by `buildCustomAttributeFieldMetadata` - used by the services to tell a "custom
+ * field" search criterion key (which needs a subquery on AttributeValue) from a "native field" key (a
+ * direct column on the table itself).
+ */
 export const CUSTOM_FIELD_METADATA_PREFIX = 'custom:';
 
 export function extractCustomFieldId(metadataName: string): string | null {

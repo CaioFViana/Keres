@@ -107,9 +107,9 @@ const CharacterFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
-  // Modos e valores de status só existem depois que o personagem tem id, então os dois blocos
-  // abaixo aparecem apenas em edição - criar já com modos exigiria uma fila de pendentes como a
-  // de relações, sem ganho: o autor acabou de nomear o personagem.
+  // Modes and stat values only exist once the character has an id, so the two blocks below appear only
+  // when editing - creating with modes already in place would require a pending queue like the relations'
+  // one, with no gain: the author has only just named the character.
   const statData = useStoryStats(selectedStory?.id);
   const characterModes = useMemo(
     () => statData.modes.filter((mode) => mode.characterId === currentCharacterId),
@@ -118,8 +118,8 @@ const CharacterFormScreen = () => {
   const modeService = useCallback(() => createModeService(drizzleDb), [drizzleDb]);
   const statRelationService = useCallback(() => createStatRelationService(drizzleDb), [drizzleDb]);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
-  // Enquanto `currentCharacterId` é undefined (criando), guarda aqui - sem id real ainda pra
-  // gravar a relação. Replay em `persistPendingCharacterRelations` depois do save principal.
+  // While `currentCharacterId` is undefined (creating), it is held here - there is no real id yet to save
+  // the relation against. Replayed in `persistPendingCharacterRelations` after the main save.
   const [pendingCharacterRelations, setPendingCharacterRelations] = useState<CharacterRelation[]>(
     [],
   );
@@ -436,9 +436,9 @@ const CharacterFormScreen = () => {
   };
 
   /**
-   * Grava de verdade as relações acumuladas enquanto o personagem ainda não existia -
-   * `character1Id`/`character2Id` guardaram '' no lugar do id (placeholder do form, ver
-   * `CharacterRelationManager`); troca pelo id de verdade aqui.
+   * Actually saves the relations accumulated while the character did not exist yet -
+   * `character1Id`/`character2Id` held '' in place of the id (the form's placeholder, see
+   * `CharacterRelationManager`); it swaps in the real id here.
    */
   const persistPendingCharacterRelations = async (targetCharacterId: string) => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !userId) return;
@@ -651,8 +651,8 @@ const CharacterFormScreen = () => {
                 storyId: selectedStory.id,
                 characterId: currentCharacterId,
                 ...mode,
-                // Maior + 1: a contagem repetiria o número de um modo existente depois de
-                // uma exclusão no meio da lista.
+                // The highest + 1: counting would repeat an existing mode's number after a deletion in the middle of
+                // the list.
                 order: Math.max(0, ...characterModes.map((existing) => existing.order + 1)),
               });
             }}

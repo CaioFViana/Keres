@@ -147,8 +147,8 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
                 return (
                   <RelationRow
                     key={item.id}
-                    // Em `editable` (form) a linha não navega - sair da tela perderia
-                    // alterações não salvas do formulário.
+                    // In `editable` (a form) the row does not navigate - leaving the screen would lose the form's
+                    // unsaved changes.
                     onPress={editable ? undefined : () => handleCharacterPress(relatedChar)}
                     extraActions={
                       editable && (

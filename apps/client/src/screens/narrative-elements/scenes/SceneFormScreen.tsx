@@ -209,8 +209,8 @@ const SceneFormScreen = () => {
 
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
   const [sceneEffects, setSceneEffects] = useState<Effect[]>([]);
-  // Enquanto a cena ainda não existe, personagens presentes ficam aqui em vez de gravar no banco -
-  // `sceneId: ''` até o replay em `persistPendingCharacterSceneRelations` depois do save principal.
+  // While the scene does not exist yet, present characters stay here instead of being written to the database -
+  // `sceneId: ''` until the replay in `persistPendingCharacterSceneRelations` after the main save.
   const [pendingCharacterSceneRelations, setPendingCharacterSceneRelations] = useState<
     CharacterScene[]
   >([]);
@@ -513,8 +513,8 @@ const SceneFormScreen = () => {
           throw new Error(t('scene_not_found'));
         }
 
-        // Trocar de capítulo (posição na nova fila e fechamento do buraco na antiga) é
-        // responsabilidade do serviço: aqui a tela só diz para qual capítulo a cena vai.
+        // Changing chapter (the position in the new queue and closing the hole in the old one) is the
+        // service's responsibility: here the screen only says which chapter the scene is going to.
         const savedScene = await sceneServiceRef.current!.updateScene(
           userId,
           currentSceneId,
@@ -527,8 +527,8 @@ const SceneFormScreen = () => {
         const allScenesInChapter = (
           await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
         ).filter((scn) => scn.chapterId === chapterId);
-        // Primeira cena do capítulo é 1, e não 0: mesma convenção dos capítulos e a única que
-        // a API aceita quando essas cenas forem reordenadas depois.
+        // A chapter's first scene is 1, and not 0: the same convention as the chapters and the only one
+        // the API accepts when those scenes are reordered later.
         const nextIndex =
           allScenesInChapter.length > 0
             ? Math.max(...allScenesInChapter.map((scn) => scn.index || 0)) + 1
@@ -668,9 +668,9 @@ const SceneFormScreen = () => {
   };
 
   /**
-   * Grava de verdade as relações acumuladas enquanto a cena ainda não existia - `sceneId` guardou
-   * '' no lugar do id (placeholder do form, ver `SceneCharacterManager`); troca pelo id de verdade
-   * aqui.
+   * Actually writes the relations accumulated while the scene did not exist yet - `sceneId` held
+   * '' in place of the id (the form's placeholder, see `SceneCharacterManager`); it swaps in the real id
+   * here.
    */
   const persistPendingCharacterSceneRelations = async (targetSceneId: string) => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) return;

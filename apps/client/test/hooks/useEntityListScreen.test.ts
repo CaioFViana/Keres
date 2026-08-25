@@ -124,8 +124,8 @@ describe('bootstrapping', () => {
 });
 
 /**
- * A busca é de dois níveis de propósito: o campo responde a cada tecla, e a consulta só sai
- * quando a digitação para. Sem isso cada letra dispararia uma query.
+ * The search is two-tiered on purpose: the field responds to every keystroke, and the query only goes
+ * out when the typing stops. Without that every letter would fire a query.
  */
 describe('search', () => {
   it('updates the input on every keystroke without querying', async () => {

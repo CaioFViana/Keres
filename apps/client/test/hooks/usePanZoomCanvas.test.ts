@@ -20,8 +20,8 @@ function transformOf(current: ReturnType<typeof usePanZoomCanvas>) {
 }
 
 /**
- * Monta o hook e simula o `onLayout`, que é o momento em que a janela passa a ter tamanho -
- * antes disso o hook não tem como enquadrar nada.
+ * Mounts the hook and simulates the `onLayout`, which is the moment the window gains a size -
+ * before that the hook has no way to frame anything.
  */
 async function renderCanvas(layout = LAYOUT, viewport = VIEWPORT, options = {}) {
   const ref = createRef<PanZoomCanvasHandle>();
@@ -53,9 +53,9 @@ describe('fitting on layout', () => {
   });
 
   /**
-   * A linha do tempo enquadra pela altura e continua mais larga que a janela. Centralizar
-   * cortava os dois lados - e à esquerda ficam os nomes das cenas, que é a única coisa que diz
-   * de que cena é cada barra.
+   * The timeline frames by height and remains wider than the window. Centring
+   * cut both sides off - and on the left are the scene names, which are the only thing that says
+   * which scene each bar belongs to.
    */
   it('starts at the beginning of a drawing wider than the viewport', async () => {
     const { result } = await renderCanvas({ width: 4000, height: 300 }, VIEWPORT, {
@@ -152,8 +152,8 @@ describe('the handle exposed to the screen', () => {
 });
 
 /**
- * A regra que impede o usuário de "perder" o grafo: enquanto o desenho couber na janela ele
- * fica centralizado, e quando for maior não pode ser arrastado até sair de vista.
+ * The rule that stops the user from "losing" the graph: while the drawing fits in the window it
+ * stays centred, and when it is bigger it cannot be dragged out of sight.
  */
 describe('keeping the drawing reachable', () => {
   it('centres a drawing smaller than the viewport, whatever the zoom', async () => {
@@ -190,10 +190,10 @@ describe('keeping the drawing reachable', () => {
 });
 
 /**
- * As decisões de gesto são afirmadas sobre a config entregue ao `PanResponder`, e não sobre
- * os `panHandlers` prontos: aqueles são embrulhados pelo React Native, que faz a própria
- * contabilidade de toques antes de delegar, e alimentá-los exigiria forjar um evento nativo
- * completo sem ganhar nada em confiança.
+ * The gesture decisions are asserted on the config handed to `PanResponder`, and not on
+ * the ready-made `panHandlers`: those are wrapped by React Native, which does its own
+ * touch bookkeeping before delegating, and feeding them would mean forging a complete native
+ * event without gaining anything in confidence.
  */
 describe('gesture decisions', () => {
   const configOf = async () => {
@@ -243,7 +243,7 @@ describe('gesture decisions', () => {
     ).toBe(true);
   });
 
-  /** Soltar o canvas no meio do arraste faria o mapa saltar na próxima interação. */
+  /** Releasing the canvas mid-drag would make the map jump on the next interaction. */
   it('does not hand the gesture over once it has taken it', async () => {
     const config = await configOf();
 
@@ -252,8 +252,8 @@ describe('gesture decisions', () => {
 });
 
 /**
- * O arraste só tem efeito com o desenho maior que a janela - enquanto ele couber inteiro, o
- * `clamp` o mantém centralizado de propósito. Por isso cada caso dá zoom antes.
+ * The drag only has an effect with the drawing bigger than the window - while it fits entirely, the
+ * `clamp` deliberately keeps it centred. That is why each case zooms in first.
  */
 describe('panning', () => {
   const moveWith = async (steps: { dx: number; dy: number }[], zoom = 4) => {

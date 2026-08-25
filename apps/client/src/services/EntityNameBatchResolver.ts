@@ -10,21 +10,21 @@ export interface EntityRef {
 
 export interface EntityNameBatchResolver {
   /**
-   * Resolve todas as referências de uma vez: agrupa por tipo, faz uma query `inArray` por
-   * tabela (não uma por referência), e devolve um mapa `"Tipo:id" -> nome de exibição`.
+   * Resolves every reference at once: it groups by type, does one `inArray` query per
+   * table (not one per reference), and returns a map `"Type:id" -> display name`.
    *
-   * Existe porque `EntityService.getEntityIdentifier`/`_resolveRelationEntityName` são
-   * estritamente um-id-por-vez - correto para uma tela de detalhe com poucos campos, mas uma
-   * lista de conflitos de sync pode referenciar dezenas de entidades (várias vezes a mesma).
-   * Resolver um a um viraria dezenas de round-trips sequenciais ao SQLite; isto faz no máximo
-   * uma consulta por tipo de entidade distinto tocado pelo lote inteiro.
+   * It exists because `EntityService.getEntityIdentifier`/`_resolveRelationEntityName` are
+   * strictly one-id-at-a-time - correct for a detail screen with few fields, but a
+   * sync conflict list can reference dozens of entities (the same one several times).
+   * Resolving them one by one would become dozens of sequential round-trips to SQLite; this does at most
+   * one query per distinct entity type touched by the whole batch.
    */
   resolveMany(refs: EntityRef[]): Promise<Map<string, string>>;
 }
 
 const nameKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
 
-/** Coluna que carrega o nome de exibição de cada tipo simples que uma relação pode apontar. */
+/** The column that carries the display name of each simple type a relation can point at. */
 const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
   Character: 'name',
   Location: 'name',
@@ -59,8 +59,8 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
         if (!table) continue;
         const idList = Array.from(ids);
 
-        // Gallery não tem uma única coluna de nome - `title` é opcional e cai para o nome do
-        // arquivo, igual ao resto do app já faz em `EntityService.getEntityName`.
+        // Gallery has no single name column - `title` is optional and falls back to the file's
+        // name, just as the rest of the app already does in `EntityService.getEntityName`.
         if (entityType === 'Gallery') {
           const rows = await db
             .select({
@@ -95,12 +95,12 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
 
 export interface EntitySnapshotResolver {
   /**
-   * Resolve a linha local inteira de cada referência, não só um nome - usado para preencher
-   * campos que faltam tanto em `localValues` quanto em `serverValues` de um `PendingConflict`
-   * (ex.: um conflito `deleted_on_server` carrega só `{isDeleted, version}` do lado do
-   * servidor, de propósito - a linha local em si não foi apagada, e ainda tem o `name`/os IDs
-   * de relação originais). Mesmo agrupamento por tipo e uma query `inArray` por tabela que
-   * `resolveMany` já usa.
+   * Resolves each reference's whole local row, not just a name - used to fill in
+   * fields missing from both `localValues` and `serverValues` of a `PendingConflict`
+   * (e.g. a `deleted_on_server` conflict deliberately carries only `{isDeleted, version}` from the
+   * server's side - the local row itself was not erased, and still has the original `name`/relation
+   * IDs). The same grouping by type and one `inArray` query per table that
+   * `resolveMany` already uses.
    */
   resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, any>>>;
 }

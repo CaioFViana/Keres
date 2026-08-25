@@ -52,16 +52,16 @@ import { entityEventEmitter } from '../../../utils/EventEmitter';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 /**
- * Mapa da história: as cenas e as escolhas que ligam uma à outra.
+ * The story map: the scenes and the choices that link one to another.
  *
- * Substitui a tentativa anterior em WebView + Cytoscape, que carregava a biblioteca de uma CDN
- * (ou seja, não funcionava offline, num app cujo ponto é funcionar offline) e usava um layout
- * de força que empilhava os nós um sobre o outro. Aqui o posicionamento é calculado em
- * `storyGraphLayout` e desenhado nativamente, então o mapa é o mesmo em toda abertura, sai
- * legível e pode ser exportado inteiro como imagem.
+ * It replaces the earlier attempt in WebView + Cytoscape, which loaded the library from a CDN (that is,
+ * it did not work offline, in an app whose whole point is working offline) and used a force-directed
+ * layout that piled the nodes on top of one another. Here the positioning is computed in
+ * `storyGraphLayout` and drawn natively, so the map is the same on every opening, comes out readable
+ * and can be exported whole as an image.
  */
 
-/** Acima disso o texto das escolhas polui mais do que informa; o usuário pode reativar. */
+/** Above that the choices' text pollutes more than it informs; the user can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
 interface SceneNodeConnection {
@@ -69,7 +69,7 @@ interface SceneNodeConnection {
   text: string;
   sceneId: string;
   sceneName: string;
-  /** Resumo compacto dos checks/effects da Choice - undefined quando ela não tem nenhum. */
+  /** A compact summary of the Choice's checks/effects - undefined when it has none. */
   extra?: string;
 }
 
@@ -185,8 +185,8 @@ const ChoiceViewScreen = () => {
     [scenes],
   );
 
-  // Checks/effects agrupados por Choice (via ChoiceCheckGroup) e effects por Scene - só usados
-  // quando existem, pra não pesar a maioria das Choices/Scenes que não tem nenhum.
+  // Checks/effects grouped by Choice (through ChoiceCheckGroup) and effects by Scene - only used when
+  // they exist, so the majority of Choices/Scenes that have none are not weighed down.
   const checksByChoiceId = useMemo(() => {
     const groupIdToChoiceId = new Map(checkGroups.map((group) => [group.id, group.choiceId]));
     const map = new Map<string, ChoiceCheck[]>();
@@ -271,8 +271,8 @@ const ChoiceViewScreen = () => {
     [navigation],
   );
 
-  // Mesma linha de contexto na tela e no arquivo exportado: o mapa impresso e o mapa aberto
-  // no app precisam dizer a mesma coisa sobre o que está sendo mostrado.
+  // The same context line on screen and in the exported file: the printed map and the map open in the app
+  // have to say the same thing about what is being shown.
   const mapSubtitle = useMemo(
     () =>
       t('story_map_subtitle', {
@@ -313,8 +313,8 @@ const ChoiceViewScreen = () => {
       if (result.delivered) {
         showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
       } else {
-        // Sem share sheet o arquivo existe mas o usuário não tem como alcançá-lo; dizer onde
-        // ele está é mais útil do que alegar sucesso.
+        // With no share sheet the file exists but the user has no way to reach it; saying where it is is more
+        // useful than claiming success.
         showNotification(
           t('story_map_export_no_share_target', { path: result.uri || result.fileName }),
           'warning',
@@ -353,8 +353,8 @@ const ChoiceViewScreen = () => {
           marginTop: 1,
         },
         legendBar: {
-          // Sem isto o ScrollView horizontal estica na vertical e come metade da tela: dentro de
-          // um container em coluna ele cresce no eixo cruzado por padrão.
+          // Without this the horizontal ScrollView stretches vertically and eats half the screen: inside a column
+          // container it grows along the cross axis by default.
           flexGrow: 0,
           flexShrink: 0,
         },

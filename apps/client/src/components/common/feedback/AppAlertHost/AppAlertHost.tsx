@@ -5,10 +5,10 @@ import { useAppAlertStore } from '../../../../state/appAlertStore';
 import { useTheme } from '../../../../theme';
 
 /**
- * Renderiza o que `AppAlert.alert()` pediu (ver utils/AppAlert.ts). Montado uma vez perto da
- * raiz do app (`App.tsx`), do mesmo jeito que `NotificationPopup` - um `Modal` só, isolado do
- * resto da árvore de telas, para qualquer tela poder disparar um alerta sem precisar montar
- * nada localmente.
+ * Renders what `AppAlert.alert()` asked for (see utils/AppAlert.ts). Mounted once near the
+ * app's root (`App.tsx`), the same way as `NotificationPopup` - a single `Modal`, isolated from
+ * the rest of the screen tree, so any screen can fire an alert without having to mount
+ * anything locally.
  */
 const AppAlertHost: React.FC = () => {
   const { colors } = useTheme();
@@ -17,8 +17,8 @@ const AppAlertHost: React.FC = () => {
 
   const handlePress = useCallback(
     (button: AppAlertButton) => {
-      // Fecha antes de acionar o botão: o próprio `onPress` costuma abrir outro alerta (erro
-      // de exclusão, por exemplo), que precisa substituir este, não empilhar sobre ele.
+      // It closes before triggering the button: the `onPress` itself often opens another alert (a deletion
+      // error, for instance), which needs to replace this one, not stack on top of it.
       dismiss();
       button.onPress?.();
     },

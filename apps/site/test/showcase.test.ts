@@ -26,8 +26,8 @@ function pngSize(file: string): { width: number; height: number } {
   return { width: header.readUInt32BE(16), height: header.readUInt32BE(20) };
 }
 
-describe('vitrine', () => {
-  it('tem cada tela nos dois idiomas e nos dois temas', () => {
+describe('showcase', () => {
+  it('has every screen in both languages and both themes', () => {
     const missing = SHOWCASE_SCREENS.flatMap((screen) =>
       LANGUAGES.flatMap((language) =>
         THEMES.map((theme) => fileOf(screen.id, language, theme)).filter(
@@ -40,7 +40,7 @@ describe('vitrine', () => {
   });
 
   /** The capture has already failed by producing a blank PNG; size and header catch that. */
-  it('grava PNG de verdade, no tamanho que a página anuncia', () => {
+  it('writes real PNGs, at the size the page announces', () => {
     for (const screen of SHOWCASE_SCREENS) {
       for (const language of LANGUAGES) {
         for (const theme of THEMES) {
@@ -54,7 +54,7 @@ describe('vitrine', () => {
   });
 
   /** Light and dark have to be different photos; identical ones mean the theme was not applied. */
-  it('diferencia a tela clara da escura', () => {
+  it('tells the light screen apart from the dark one', () => {
     for (const screen of SHOWCASE_SCREENS) {
       const light = readFileSync(fileOf(screen.id, 'en', 'light'));
       const dark = readFileSync(fileOf(screen.id, 'en', 'dark'));
@@ -63,7 +63,7 @@ describe('vitrine', () => {
   });
 
   /** The whole app is translated, example stories included: the photo changes with the language. */
-  it('fotografa em português e em inglês', () => {
+  it('captures in Portuguese and in English', () => {
     for (const screen of SHOWCASE_SCREENS) {
       const english = readFileSync(fileOf(screen.id, 'en', 'light'));
       const portuguese = readFileSync(fileOf(screen.id, 'pt', 'light'));
@@ -71,7 +71,7 @@ describe('vitrine', () => {
     }
   });
 
-  it('tem título e descrição nos dois idiomas', () => {
+  it('has a title and a description in both languages', () => {
     for (const locale of [en, pt]) {
       const items = (locale as { showcase: { items: Record<string, unknown> } }).showcase.items;
       for (const screen of SHOWCASE_SCREENS) {
@@ -83,7 +83,7 @@ describe('vitrine', () => {
     }
   });
 
-  it('tem os textos da foto ampliada nos dois idiomas', () => {
+  it('has the lightbox texts in both languages', () => {
     for (const locale of [en, pt]) {
       expect((locale as { showcase: { lightbox: unknown } }).showcase.lightbox).toMatchObject({
         close: expect.any(String),
@@ -93,7 +93,7 @@ describe('vitrine', () => {
     }
   });
 
-  it('não deixa texto de tela que saiu da vitrine para trás', () => {
+  it('leaves no text behind for a screen that left the showcase', () => {
     const ids = SHOWCASE_SCREENS.map((screen) => screen.id).sort();
     for (const locale of [en, pt]) {
       const items = (locale as { showcase: { items: Record<string, unknown> } }).showcase.items;

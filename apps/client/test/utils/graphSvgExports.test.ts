@@ -76,9 +76,9 @@ const locationLayout = () =>
   );
 
 /**
- * Os dois mapas são exportados como arquivo SVG, aberto fora do app. Um `&` no nome de uma
- * cena inviabiliza o documento inteiro, e o erro só aparece quando a pessoa tenta abrir o
- * arquivo - longe do momento em que exportou.
+ * Both maps are exported as an SVG file, opened outside the app. An `&` in a scene's name makes the
+ * whole document unusable, and the error only shows up when the person tries to open the file - far
+ * from the moment they exported it.
  */
 const RENDERERS = [
   {

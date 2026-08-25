@@ -40,12 +40,12 @@ function offenders(forbidden: RegExp, files = sourceFiles): string[] {
     .sort();
 }
 
-describe('fronteiras do pacote compartilhado', () => {
+describe('shared package boundaries', () => {
   /**
    * An upward dependency: the shared package knowing about an app stops it from being shared - and
    * drags the whole client into the API's build along with it.
    */
-  it('não importa de nenhum app', () => {
+  it('imports from no app', () => {
     expect(offenders(/(^|\/)apps\//)).toEqual([]);
   });
 
@@ -54,7 +54,7 @@ describe('fronteiras do pacote compartilhado', () => {
    * the app's screen, in the image export and in a Node script. A React or React Native import in
    * there would tie all of that to a component tree.
    */
-  it('mantém os módulos de gráfico livres de React e React Native', () => {
+  it('keeps the graph modules free of React and React Native', () => {
     const graphFiles = sourceFiles.filter((path) => relativeOf(path).startsWith('graphs/'));
 
     expect(graphFiles.length).toBeGreaterThan(10);

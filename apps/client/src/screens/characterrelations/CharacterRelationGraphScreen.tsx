@@ -30,15 +30,15 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 
 /**
- * Mapa de relações: os personagens de uma história e quem conhece quem.
+ * The relations map: a story's characters and who knows whom.
  *
- * Espelha o mapa de história (`ChoiceViewScreen`) na experiência - painel de detalhe ao
- * tocar num nó, pan/zoom, rótulos que se escondem sozinhos quando o grafo cresce - mas o
- * layout de fundo é outro (`characterRelationGraphLayout`), porque relação entre personagens
- * não tem direção nem "início": ver `characterRelationGraphLayout.ts` para o porquê.
+ * It mirrors the story map (`ChoiceViewScreen`) in experience - a detail panel on
+ * tapping a node, pan/zoom, labels that hide themselves when the graph grows - but the
+ * underlying layout is another one (`characterRelationGraphLayout`), because a relation between characters
+ * has neither direction nor a "start": see `characterRelationGraphLayout.ts` for why.
  */
 
-/** Acima disso o tipo de relação em cada aresta polui mais do que informa; a pessoa pode reativar. */
+/** Above that the relation type on each edge pollutes more than it informs; the person can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
 interface CharacterRelationNodeConnection {
@@ -89,7 +89,7 @@ const CharacterRelationGraphScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Recarrega ao focar: personagens e relações podem ter mudado em outra tela.
+  // Reloads on focus: characters and relations may have changed on another screen.
   useFocusEffect(
     useCallback(() => {
       loadGraph();
@@ -206,8 +206,8 @@ const CharacterRelationGraphScreen = () => {
           'success',
         );
       } else {
-        // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
-        // ele está é mais útil do que alegar sucesso.
+        // With no share sheet the file exists, but the user has no way to reach it; saying where
+        // it is is more useful than claiming success.
         showNotification(
           t('character_relation_map_export_no_share_target', {
             path: result.uri || result.fileName,

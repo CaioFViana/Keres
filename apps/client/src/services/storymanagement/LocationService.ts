@@ -383,11 +383,11 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       );
       entityEventEmitter.emit('location_changed', updatedLocation.storyId, updatedLocation.id);
 
-      // Cascata: uma LocationRelation apontando pra uma Location apagada não tem pra onde
-      // navegar - diferente das outras relações reversas deste arquivo (LocationCharacterManager
-      // etc.), que ficam órfãs inertemente sem problema. Cada relação precisa da sua PRÓPRIA
-      // operação registrada (não uma mutação SQL direta) pra que o pull de outros dispositivos
-      // saiba da exclusão - mesmo motivo do cascade de AttributeValue em StorySchemaFieldService.
+      // A cascade: a LocationRelation pointing at a deleted Location has nowhere to
+      // navigate - unlike the other reverse relations in this file (LocationCharacterManager
+      // etc.), which are left orphaned inertly without a problem. Each relation needs its OWN
+      // operation recorded (not a direct SQL mutation) so that other devices' pull
+      // learns of the deletion - the same reason as the AttributeValue cascade in StorySchemaFieldService.
       const liveRelations = await db
         .select({ id: locationRelations.id, version: locationRelations.version })
         .from(locationRelations)

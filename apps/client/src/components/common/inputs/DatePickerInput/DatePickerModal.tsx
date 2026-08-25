@@ -41,12 +41,12 @@ function pad2(value: number): string {
 }
 
 /**
- * Calendário de data (com hora opcional) para `AttributeType.DATE`. Espelha a estrutura de
- * `ColorPickerModal`: mantém a escolha em estado local e só a devolve no "Selecionar", para
- * que sair pelo "Cancelar" não altere nada.
+ * A date calendar (with optional time) for `AttributeType.DATE`. It mirrors `ColorPickerModal`'s
+ * structure: it keeps the choice in local state and only returns it on "Select", so leaving through
+ * "Cancel" changes nothing.
  *
- * Nenhuma conta de fuso horário acontece aqui - os componentes de data são manipulados como
- * números e serializados por `formatAttributeDate`. Ver `attributeDateValue.ts` para o porquê.
+ * No time zone arithmetic happens here - the date components are handled as numbers and serialised by
+ * `formatAttributeDate`. See `attributeDateValue.ts` for why.
  */
 const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onClose, title }) => {
   const { colors } = useTheme();
@@ -55,8 +55,8 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
   const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
 
   const parsed = useMemo(() => parseAttributeDate(value), [value]);
-  // Sem valor legível, abre no mês de hoje - e "hoje" é o do fuso de quem está escrevendo,
-  // o único ponto em que o relógio do sistema legitimamente participa.
+  // With no readable value, it opens on today's month - and "today" is the writer's own time zone, the
+  // one point at which the system clock legitimately takes part.
   const today = useMemo(() => new Date(), []);
 
   const [year, setYear] = useState(parsed?.year ?? today.getFullYear());
@@ -66,9 +66,9 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
   const [hour, setHour] = useState(parsed?.hour ?? 0);
   const [minute, setMinute] = useState(parsed?.minute ?? 0);
   const [yearText, setYearText] = useState(String(parsed?.year ?? today.getFullYear()));
-  // Hora e minuto guardam o TEXTO em edição, separado do número. Espelhar `String(hour)
-  // .padStart(2, '0')` de volta no campo fazia o primeiro dígito virar "01" na hora, e aí
-  // `maxLength={2}` recusava o segundo - digitar "10" era impossível.
+  // Hour and minute hold the TEXT being edited, separate from the number. Mirroring
+  // `String(hour).padStart(2, '0')` back into the field turned the first digit into "01" immediately, and
+  // then `maxLength={2}` refused the second - typing "10" was impossible.
   const [hourText, setHourText] = useState(
     pad2(toClockHour(parsed?.hour ?? 0, use24HourTime).hour),
   );
@@ -95,7 +95,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
   const weekdayLabels = useMemo(() => attributeDateWeekdayLabels(language), [language]);
   const monthLabel = formatAttributeDateMonthLabel(year, month, language);
 
-  // Quantas células vazias antes do dia 1, para que ele caia sob o dia da semana certo.
+  // How many empty cells before day 1, so it falls under the right day of the week.
   const leadingBlanks = attributeDateWeekday({
     year,
     month,
@@ -119,18 +119,18 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
     }
     applyYear(nextYear);
     setMonth(nextMonth);
-    // Um dia 31 selecionado não pode sobreviver a um mês de 30 - encurta em vez de sumir.
+    // A selected 31st cannot survive a 30-day month - it shortens instead of disappearing.
     setSelectedDay((current) =>
       current === null ? null : Math.min(current, daysInMonth(nextYear, nextMonth)),
     );
   };
 
-  // Em AM/PM o campo trabalha de 1 a 12 e o período fica no botão ao lado; a hora GUARDADA
-  // continua de 0 a 23 sempre - só a leitura/escrita do campo muda de forma.
+  // In AM/PM the field works from 1 to 12 and the period sits in the button beside it; the STORED hour
+  // is always 0 to 23 - only the field's reading/writing changes shape.
   const minHourInput = use24HourTime ? 0 : 1;
   const maxHourInput = use24HourTime ? 23 : 12;
 
-  /** Deixa o texto ser digitado livre; só o número derivado é clampado. */
+  /** It lets the text be typed freely; only the derived number is clamped. */
   const handleTimeChange = (
     text: string,
     min: number,

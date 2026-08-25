@@ -6,18 +6,18 @@ import { attributeValues, storySchemaFields } from '../db/schema';
 import { extractCustomFieldId } from './customAttributeFieldMetadata';
 
 /**
- * Constrói a condição WHERE para uma chave de critério de busca avançada que referencia um
- * atributo customizado (`custom:<fieldId>`) - mesma forma da subquery já usada para filtro por
- * tag em cada serviço (`inArray(entity.id, db.select(...).from(...))`), só que contra a tabela
- * EAV `attributeValues` em vez de uma relação fixa.
+ * Builds the WHERE condition for an advanced search criterion key that references a custom attribute
+ * (`custom:<fieldId>`) - the same shape as the subquery already used for tag filtering in each service
+ * (`inArray(entity.id, db.select(...).from(...))`), only against the EAV table `attributeValues`
+ * instead of a fixed relation.
  *
- * Retorna `null` se `key` não for um critério de atributo customizado, ou se o campo referenciado
- * não existir mais - o chamador simplesmente ignora a condição nesses casos, mesmo tratamento
- * que um `fieldMetadata` não encontrado já recebe hoje.
+ * It returns `null` if `key` is not a custom attribute criterion, or if the referenced field no longer
+ * exists - the caller simply ignores the condition in those cases, the same treatment a missing
+ * `fieldMetadata` already gets today.
  *
- * Number/boolean nunca comparam o texto cru de `attributeValues.value` contra o valor tipado
- * recebido do formulário de busca - sempre pela mesma codificação de `encodeAttributeValue`
- * (implícita aqui via `String(Number(...))`/`'true'|'false'`), a razão está documentada em
+ * Number/boolean never compare `attributeValues.value`'s raw text against the typed value received from
+ * the search form - always through the same encoding as `encodeAttributeValue` (implicit here through
+ * `String(Number(...))`/`'true'|'false'`); the reason is documented in
  * `packages/shared/utils/attributeValueCodec.ts`.
  */
 export async function buildCustomAttributeSearchCondition(

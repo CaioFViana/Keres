@@ -15,7 +15,7 @@ interface ThemedSwitchProps {
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-/** Switch acessível com cores controladas pelo tema, sem recorrer ao thumb nativo do Android. */
+/** An accessible switch with theme-controlled colours, without resorting to Android's native thumb. */
 const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
   value,
   onValueChange,

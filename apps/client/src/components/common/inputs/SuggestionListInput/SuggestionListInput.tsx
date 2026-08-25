@@ -150,8 +150,8 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       flexWrap: 'wrap',
       alignItems: 'center',
       marginBottom: 6,
-      // Espaço entre pílulas no contêiner: em cada pílula, a última linha ainda cobrava a
-      // margem de baixo e sobrava um vão morto sob a fileira.
+      // Spacing between pills belongs to the container: with it on each pill, the last row still charged its
+      // bottom margin and left dead space under the row.
       gap: 8,
     },
     pill: {
@@ -219,8 +219,8 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       alignItems: 'center',
       marginLeft: 8,
     },
-    // Mesmo motivo do campo de opções: o visto reservado impede a linha de crescer ao ser
-    // marcada.
+    // The same reason as the options field: the reserved checkmark stops the row from growing when it is
+    // ticked.
     suggestionCheck: {
       width: 20,
       height: 20,

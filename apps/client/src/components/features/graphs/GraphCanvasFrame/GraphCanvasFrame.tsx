@@ -12,11 +12,11 @@ interface GraphCanvasFrameProps extends PanZoomCanvasResult {
 }
 
 /**
- * `StoryGraphCanvas`, `CharacterRelationGraphCanvas` e `LocationGraphCanvas` repetiam, byte a
- * byte, o mesmo encaixe do `usePanZoomCanvas` (`View`/`Animated.View` com `transformOrigin` e
- * `transform`) - pura estrutura, sem nenhuma lógica de domínio. Só essa parte sai daqui; a
- * renderização de dentro (arestas em SVG, estilo/cor/badge dos nós) continua em cada canvas,
- * que já é genuinamente diferente entre os três.
+ * `StoryGraphCanvas`, `CharacterRelationGraphCanvas` and `LocationGraphCanvas` repeated, byte for
+ * byte, the same `usePanZoomCanvas` scaffolding (`View`/`Animated.View` with `transformOrigin` and
+ * `transform`) - pure structure, with no domain logic at all. Only that part comes out here; the
+ * rendering inside (SVG edges, node style/colour/badge) stays in each canvas,
+ * which is already genuinely different between the three.
  */
 const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   width,

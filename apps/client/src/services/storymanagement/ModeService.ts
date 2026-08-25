@@ -111,8 +111,8 @@ export const createModeService = (db: AppDrizzleClient): ModeService => {
         currentUserId,
       );
 
-      // Os valores daquele modo não sobrevivem a ele: sem o modo, uma StatRelation com esse
-      // modeId ficaria órfã e o servidor recusaria qualquer edição posterior nela.
+      // That mode's values do not survive it: without the mode, a StatRelation with that modeId would be
+      // orphaned and the server would refuse any later edit to it.
       const orphanValues = await db
         .select({ id: statRelations.id })
         .from(statRelations)

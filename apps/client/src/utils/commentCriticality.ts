@@ -1,7 +1,9 @@
 import type { Ionicons } from '@expo/vector-icons';
 
-/** 1 = informacional, 2 = relevante, 3 = atenção, 4 = grave, 5 = imediato. Só o ícone muda
- *  entre níveis - sem cor/escala própria (ver plano de implementação). */
+/**
+ * 1 = informational, 2 = relevant, 3 = attention, 4 = serious, 5 = immediate. Only the icon changes
+ * between levels - no colour/scale of its own (see the implementation plan).
+ */
 export const CRITICALITY_LEVELS = [1, 2, 3, 4, 5] as const;
 export type CommentCriticality = (typeof CRITICALITY_LEVELS)[number];
 

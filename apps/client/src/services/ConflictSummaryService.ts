@@ -11,10 +11,10 @@ function humanizeFieldName(key: string): string {
 }
 
 /**
- * Rótulo de um campo de conteúdo disputado. `t(field, {defaultValue: field})` (o que a modal
- * antiga fazia) só funciona por coincidência para os poucos campos que também têm uma chave de
- * tradução solta sem o prefixo `field_` (ex. `motivation`) - `isFavorite` não tem, e aparecia
- * cru na tela. `entityFieldMetadata` é a fonte de verdade real do rótulo de cada campo.
+ * The label of a disputed content field. `t(field, {defaultValue: field})` (what the old
+ * modal did) only works by coincidence for the few fields that also have a loose translation
+ * key without the `field_` prefix (e.g. `motivation`) - `isFavorite` has none, and appeared
+ * raw on screen. `entityFieldMetadata` is the real source of truth for each field's label.
  */
 function fieldLabel(entityType: string, field: string, t: TFunction): string {
   const meta = entityFieldMetadata[entityType]?.find((f) => f.name === field);
@@ -22,10 +22,10 @@ function fieldLabel(entityType: string, field: string, t: TFunction): string {
 }
 
 /**
- * Campos de conteúdo (não os das 8 relações acima) que são IDs de outra entidade - mesmo
- * mapeamento que `OperationLogDetailScreen.tsx`'s `REFERENCE_FIELD_ENTITY_TYPES` usa pra
- * resolver `EntityService.getEntityIdentifier`. Sem isto, um conflito genuíno em `Scene.chapterId`
- * ou `Choice.nextSceneId` mostrava o ID cru no comparativo campo a campo em vez do nome.
+ * Content fields (not those of the 8 relations above) that are IDs of another entity - the same
+ * mapping `OperationLogDetailScreen.tsx`'s `REFERENCE_FIELD_ENTITY_TYPES` uses to
+ * resolve `EntityService.getEntityIdentifier`. Without this, a genuine conflict on `Scene.chapterId`
+ * or `Choice.nextSceneId` showed the raw ID in the field-by-field comparison instead of the name.
  */
 const CONTENT_REFERENCE_FIELDS: Record<string, string> = {
   characterId: 'Character',
@@ -46,9 +46,9 @@ const CONTENT_REFERENCE_FIELDS: Record<string, string> = {
 };
 
 /**
- * Nome da entidade no protocolo de sincronização para a chave de tradução já existente.
- * Movido de `SyncConflictModal.tsx` - tanto a lista de conflitos quanto o drill-in de diff
- * precisam do mesmo rótulo.
+ * The entity's name in the synchronization protocol mapped to the already existing translation key.
+ * Moved from `SyncConflictModal.tsx` - both the conflict list and the diff drill-in
+ * need the same label.
  */
 export const ENTITY_LABEL_KEYS: Record<string, string> = {
   Chapter: 'chapter',
@@ -73,18 +73,20 @@ export const ENTITY_LABEL_KEYS: Record<string, string> = {
 };
 
 type RelationFieldTarget =
-  /** Aponta sempre para o mesmo tipo de entidade (ex: `CharacterScene.characterId` é sempre um Character). */
+  /** It always points at the same entity type (e.g. `CharacterScene.characterId` is always a Character). */
   | { kind: 'fixed'; field: string; entityType: string }
-  /** Par polimórfico: o tipo do alvo vem do valor de outro campo em tempo de execução
-   *  (ex: `GalleryRelation.ownerId` + `ownerType`). */
+  /**
+   * A polymorphic pair: the target's type comes from another field's value at runtime
+   * (e.g. `GalleryRelation.ownerId` + `ownerType`).
+   */
   | { kind: 'dynamic'; idField: string; typeField: string };
 
 /**
- * Quais campos de cada relação são IDs, e para que tipo de entidade cada um aponta - usado
- * tanto para montar o lote de referências a resolver (`collectEntityRefs`) quanto para montar
- * a frase legível de cada conflito (`buildRelationSummary`). Nomes de campo aqui são os do
- * payload de sincronização (localValues/serverValues de um `PendingConflict`), que também são
- * os nomes de coluna da tabela local para todas as relações.
+ * Which fields of each relation are IDs, and which entity type each one points at - used
+ * both to assemble the batch of references to resolve (`collectEntityRefs`) and to assemble
+ * each conflict's readable sentence (`buildRelationSummary`). Field names here are those of the
+ * synchronization payload (localValues/serverValues of a `PendingConflict`), which are also
+ * the local table's column names for every relation.
  */
 const RELATION_FIELD_TARGETS: Record<string, RelationFieldTarget[]> = {
   CharacterRelation: [
@@ -127,8 +129,10 @@ const RELATION_FIELD_TARGETS: Record<string, RelationFieldTarget[]> = {
   ],
 };
 
-/** Os 8 tipos de entidade que são relações/junções: sempre resolvidos em uma linha legível,
- *  nunca numa tabela de diff campo a campo (o problema original que motivou esta mudança). */
+/**
+ * The 8 entity types that are relations/joins: always resolved into a readable line,
+ * never into a field-by-field diff table (the original problem that motivated this change).
+ */
 export const RELATION_ENTITY_TYPES = new Set(Object.keys(RELATION_FIELD_TARGETS));
 
 export interface ConflictDiffField {
@@ -142,22 +146,24 @@ export interface ConflictSummary {
   id: string;
   entityType: string;
   kind: 'relation' | 'content';
-  /** Rótulo traduzido do tipo de entidade (ex: "Personagem"). */
+  /** The entity type's translated label (e.g. "Character"). */
   entityLabel: string;
-  /** Título curto da linha - o tipo da relação, ou o rótulo da entidade para conflitos de conteúdo. */
+  /** The row's short title - the relation's type, or the entity's label for content conflicts. */
   title: string;
-  /** Frase legível descrevendo o conflito, com nomes já resolvidos - nunca um ID cru. */
+  /** A readable sentence describing the conflict, with names already resolved - never a raw ID. */
   detail: string;
   reason: PendingConflict['reason'];
-  /** Quando true, a linha pode ser resolvida com um botão (manter meu/manter servidor) sem
-   *  abrir o drill-in de diff - ou porque é uma relação, ou porque não há campos genuinamente
-   *  disputados para comparar. */
+  /**
+   * When true, the row can be resolved with a button (keep mine/keep the server's) without
+   * opening the diff drill-in - either because it is a relation, or because there are no genuinely
+   * disputed fields to compare.
+   */
   canQuickResolve: boolean;
-  /** Só populado para `kind === 'content'` com `canQuickResolve === false`. */
+  /** Only populated for `kind === 'content'` with `canQuickResolve === false`. */
   diffFields: ConflictDiffField[];
 }
 
-/** Texto legível para qualquer valor vindo de um payload de sincronização. */
+/** Readable text for any value coming from a synchronization payload. */
 function formatValue(value: unknown, emptyLabel: string): string {
   if (value === null || value === undefined || value === '') {
     return emptyLabel;
@@ -173,9 +179,9 @@ function formatValue(value: unknown, emptyLabel: string): string {
 
 /** Chave de um snapshot no mapa devolvido por `EntitySnapshotResolver.resolveMany`. */
 /**
- * Motivos cujo texto pronto não explica nada: `validation` e `unknown` só dizem que o servidor
- * recusou, e a razão de verdade ("já existe um valor para este stat neste modo") vem na
- * mensagem que ele mandou junto. Sem ela a tela de conflito é um beco sem saída.
+ * Reasons whose ready-made text explains nothing: `validation` and `unknown` only say that the server
+ * refused, and the real reason ("a value already exists for this stat in this mode") comes in the
+ * message it sent along. Without it the conflict screen is a dead end.
  */
 const REASONS_NEEDING_THE_SERVER_MESSAGE = new Set(['validation', 'unknown']);
 const SERVER_MESSAGE_MAX_LENGTH = 200;
@@ -193,11 +199,11 @@ function withServerMessage(text: string, conflict: PendingConflict): string {
 const snapshotKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
 
 /**
- * Uma referência por conflito - a própria entidade dele - para pedir de uma vez a
- * `EntitySnapshotResolver.resolveMany` antes de montar os resumos. Precisa rodar primeiro e
- * separado de `collectEntityRefs`: só depois de ter o snapshot é que dá pra saber, por
- * exemplo, quem são os dois personagens de uma `CharacterRelation` cujo conflito não carrega
- * `character1Id`/`character2Id` em nenhum dos lados (caso `deleted_on_server`).
+ * One reference per conflict - its own entity - so as to ask
+ * `EntitySnapshotResolver.resolveMany` all at once before assembling the summaries. It has to run first and
+ * separately from `collectEntityRefs`: only after having the snapshot is it possible to know, for
+ * example, who the two characters of a `CharacterRelation` are whose conflict carries
+ * `character1Id`/`character2Id` on neither side (the `deleted_on_server` case).
  */
 export function collectConflictEntityRefs(conflicts: PendingConflict[]): EntityRef[] {
   return conflicts.map((conflict) => ({
@@ -207,14 +213,14 @@ export function collectConflictEntityRefs(conflicts: PendingConflict[]): EntityR
 }
 
 /**
- * Junta os três níveis de um conflito num único objeto para montar a frase: prefere o valor
- * local (o que o usuário fez), cai para o do servidor nos campos que a operação local não
- * tocou, e só por último cai pro snapshot da linha local atual - necessário porque um
- * conflito `deleted_on_server` carrega só `{isDeleted, version}` do lado do servidor, de
- * propósito (ver `reconcileRemoteUpdate`), então nem o nome de uma entidade de conteúdo nem
- * os IDs de uma relação estão em `localValues`/`serverValues` quando o campo em questão não é
- * o que o usuário editou offline - só o snapshot da linha local (que a exclusão remota nunca
- * chegou a apagar) ainda tem essa informação.
+ * It joins a conflict's three levels into a single object in order to assemble the sentence: it prefers the
+ * local value (what the user did), falls back to the server's on the fields the local operation did not
+ * touch, and only last falls back to the current local row's snapshot - necessary because a
+ * `deleted_on_server` conflict deliberately carries only `{isDeleted, version}` from the server's
+ * side (see `reconcileRemoteUpdate`), so neither a content entity's name nor
+ * a relation's IDs are in `localValues`/`serverValues` when the field in question is not
+ * the one the user edited offline - only the local row's snapshot (which the remote deletion never
+ * got round to erasing) still has that information.
  */
 function mergedValuesOf(
   conflict: PendingConflict,
@@ -224,10 +230,12 @@ function mergedValuesOf(
   return { ...snapshot, ...(conflict.serverValues ?? {}), ...conflict.localValues };
 }
 
-/** Todas as referências de entidade que os conflitos de relação, mais quaisquer campos de
- *  conteúdo que sejam IDs de outra entidade, vão precisar resolver - para passar de uma vez a
- *  `EntityNameBatchResolver.resolveMany`. Precisa dos snapshots já resolvidos (ver
- *  `collectConflictEntityRefs`) para enxergar campos de relação que só existem lá. */
+/**
+ * Every entity reference the relation conflicts, plus any content fields
+ * that are IDs of another entity, will need to resolve - to be passed all at once to
+ * `EntityNameBatchResolver.resolveMany`. It needs the snapshots already resolved (see
+ * `collectConflictEntityRefs`) in order to see relation fields that only exist there.
+ */
 export function collectEntityRefs(
   conflicts: PendingConflict[],
   snapshots: Map<string, Record<string, any>>,
@@ -356,8 +364,8 @@ function buildRelationSummary(
 }
 
 /**
- * Mesmo predicado que `SyncConflictModal.tsx` usava para decidir entre o seletor de campos e
- * o texto de fallback binário - reaproveitado aqui para decidir `canQuickResolve`.
+ * The same predicate `SyncConflictModal.tsx` used to decide between the field picker and
+ * the binary fallback text - reused here to decide `canQuickResolve`.
  */
 function isBinaryContentConflict(conflict: PendingConflict): boolean {
   return (
@@ -396,12 +404,12 @@ export function buildConflictSummaries(
 
     const canQuickResolve = isBinaryContentConflict(conflict);
     const emptyLabel = t('conflict_empty_value');
-    // `name`/`title` cobre a maioria das entidades, mas não todas: Choice não tem nenhum dos
-    // dois (o campo que identifica é `text`), e Gallery tem `title` opcional, caindo pro nome
-    // do arquivo (mesma regra que `EntityNameBatchResolver.ts` já usa). E nenhum dos dois pode
-    // vir só de `localValues`/`serverValues`: um conflito `deleted_on_server` não carrega o
-    // nome em nenhum dos dois lados (ver `mergedValuesOf`) - por isso o snapshot da linha
-    // local entra como terceiro nível, antes de cair pro ID cru.
+    // `name`/`title` covers most entities, but not all: Choice has neither of the
+    // two (the identifying field is `text`), and Gallery has an optional `title`, falling back to the file
+    // name (the same rule `EntityNameBatchResolver.ts` already uses). And neither of the two can
+    // come from `localValues`/`serverValues` alone: a `deleted_on_server` conflict does not carry the
+    // name on either side (see `mergedValuesOf`) - that is why the local row's snapshot
+    // enters as a third level, before falling back to the raw ID.
     const mergedContent = mergedValuesOf(conflict, snapshots);
     const entityName = formatValue(
       mergedContent.name ?? mergedContent.title ?? mergedContent.text ?? mergedContent.fileName,
@@ -425,8 +433,8 @@ export function buildConflictSummaries(
           serverDisplay: displayValue(field, conflict.serverValues?.[field]),
         }));
 
-    // No caso binário (nada a comparar campo a campo) o motivo explica melhor a decisão do
-    // que só o nome da entidade - mesma frase que `SyncConflictModal.tsx` já montava.
+    // In the binary case (nothing to compare field by field) the reason explains the decision better
+    // than the entity's name alone - the same sentence `SyncConflictModal.tsx` already assembled.
     const detail = canQuickResolve
       ? withServerMessage(
           t(`conflict_reason_${conflict.reason}`, {

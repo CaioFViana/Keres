@@ -68,10 +68,10 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       fieldData: Create<StorySchemaFieldInsert>,
     ): Promise<StorySchemaFieldSelect> {
       await assertStoryIsWritable(db, fieldData.storyId);
-      // Checagem local antes de gravar: sem isto, uma chave duplicada só falharia lá na frente,
-      // como um erro de sync opaco em vez de um erro de formulário imediato - Tag/Suggestion não
-      // fazem essa checagem hoje, mas aqui uma colisão de chave (frequentemente auto-derivada do
-      // nome de exibição) é um caminho de usuário bem mais provável.
+      // A local check before writing: without this, a duplicate key would only fail later on,
+      // as an opaque sync error instead of an immediate form error - Tag/Suggestion do not
+      // make that check today, but here a key collision (frequently auto-derived from the
+      // display name) is a far more likely user path.
       const existing = await db.query.storySchemaFields.findFirst({
         where: and(
           eq(storySchemaFields.storyId, fieldData.storyId),
@@ -225,7 +225,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         return;
       }
       if (field.isDeleted) {
-        // Já apagado (reenvio idempotente) - a mutação de key e a cascata já rodaram.
+        // Already deleted (an idempotent resend) - the key mutation and the cascade have already run.
         return;
       }
       await assertStoryIsWritable(db, field.storyId);
@@ -238,11 +238,11 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       );
       const now = new Date();
 
-      // Muta a key no soft-delete pra liberar o slot de unique(storyId, entityType, key) - a
-      // constraint local (e a do servidor) não é filtrada por isDeleted, então recriar um campo
-      // com a mesma chave depois de apagar o antigo esbarraria na linha tombstone. Só precisa
-      // valer localmente (o servidor faz sua própria mutação independente ao processar o mesmo
-      // delete, ver StorySchemaFieldSyncHandler) - ninguém nunca lê essa key mutada de volta.
+      // It mutates the key on the soft-delete to free the unique(storyId, entityType, key) slot - the
+      // local constraint (and the server's) is not filtered by isDeleted, so recreating a field
+      // with the same key after deleting the old one would run into the tombstone row. It only needs to
+      // hold locally (the server does its own independent mutation when processing the same
+      // delete, see StorySchemaFieldSyncHandler) - nobody ever reads that mutated key back.
       const mangledKey = `${field.key}__deleted_${createULID()}`;
       const [updatedField] = await db
         .update(storySchemaFields)
@@ -274,13 +274,13 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         },
       );
 
-      // Cascata: um AttributeValue órfão (fieldId apontando pra um campo que não existe mais)
-      // não tem type/label pra se renderizar - diferente de outras relações no app, que ficam
-      // órfãs inertemente sem problema quando a entidade dona é excluída. Cada valor precisa da
-      // sua PRÓPRIA operação registrada (não uma mutação SQL direta) pra que o pull de outros
-      // dispositivos realmente saiba da exclusão - ver o comentário em
-      // StorySchemaFieldSyncHandler.delete() sobre por que a cascata não pode viver só no
-      // servidor.
+      // A cascade: an orphaned AttributeValue (a fieldId pointing at a field that no longer exists)
+      // has no type/label to render itself - unlike other relations in the app, which are left
+      // orphaned inertly without a problem when the owning entity is deleted. Each value needs its
+      // OWN operation recorded (not a direct SQL mutation) so that other devices' pull
+      // genuinely learns of the deletion - see the comment in
+      // StorySchemaFieldSyncHandler.delete() about why the cascade cannot live on the
+      // server alone.
       const liveValues = await db
         .select({ id: attributeValues.id, version: attributeValues.version })
         .from(attributeValues)

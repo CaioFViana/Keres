@@ -37,9 +37,9 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
     }
   }, [expanded, opacity]);
 
-  // Efeito, e não `useAnimatedReaction`: na web a reação não reagia à troca de `expanded`
-  // (que é estado de React, não valor compartilhado), e o cartão abria com o conteúdo em
-  // altura zero - cabeçalho virado, nada embaixo. A medição continua vindo do `onLayout`.
+  // An effect, not `useAnimatedReaction`: on the web the reaction did not react to `expanded` changing
+  // (it is React state, not a shared value), and the card opened with its content at zero height - the
+  // header flipped, nothing underneath. The measurement still comes from `onLayout`.
   React.useEffect(() => {
     animatedHeight.value = withTiming(expanded ? contentHeight.value : 0, { duration: 300 });
   }, [expanded, animatedHeight, contentHeight]);

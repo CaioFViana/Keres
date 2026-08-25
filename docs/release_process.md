@@ -5,15 +5,15 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 
 ## 1. Pre-flight
 
-- [ ] `bun run release:check` passa. Ele audita primeiro as traduções do client, admin,
-      showcase e site para falhar cedo; depois executa `typecheck` e `lint`, aplica a
-      formatação, confere que todas as versões controladas por `scripts/lib/version.ts`
-      coincidem com a versão do `package.json` raiz, exige worktree limpo e termina no
-      `test:report` (com integração e cobertura).
-- [ ] O job `verify` do release roda o mesmo comando com `--ci`: ali a formatação é só
-      conferida, o worktree não precisa estar limpo (o próprio workflow escreve a versão vinda
-      da tag) e as suítes são as unitárias com cobertura - as de integração têm job próprio em
-      `ci.yml`. Nenhum artefato começa a ser compilado antes disso passar.
+- [ ] `bun run release:check` passes. It first audits the client, admin, showcase and site
+      translations so as to fail early; then it runs `typecheck` and `lint`, applies the
+      formatting, checks that every version controlled by `scripts/lib/version.ts` matches
+      the root `package.json`'s version, requires a clean worktree and finishes on
+      `test:report` (with integration and coverage).
+- [ ] The release's `verify` job runs the same command with `--ci`: there the formatting is only
+      checked, the worktree does not have to be clean (the workflow itself writes the version coming
+      from the tag) and the suites are the unit ones with coverage - the integration ones have their own job in
+      `ci.yml`. No artifact starts being compiled before that passes.
 
 ## 2. Version and release name
 

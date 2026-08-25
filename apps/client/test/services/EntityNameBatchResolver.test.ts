@@ -121,9 +121,9 @@ describe('EntityNameBatchResolver', () => {
 });
 
 /**
- * Diferente de `createEntityNameBatchResolver` (só uma coluna de nome), este resolve a linha
- * local inteira - usado para preencher o que `localValues`/`serverValues` de um conflito
- * `deleted_on_server` deixam faltando (ver `ConflictSummaryService.ts`'s `mergedValuesOf`).
+ * Unlike `createEntityNameBatchResolver` (a name column only), this resolves the whole local
+ * row - used to fill in what a `deleted_on_server` conflict's `localValues`/`serverValues`
+ * leave missing (see `ConflictSummaryService.ts`'s `mergedValuesOf`).
  */
 describe('createEntitySnapshotResolver', () => {
   it('resolves the full local row of an entity, not just its name column', async () => {
@@ -171,10 +171,10 @@ describe('createEntitySnapshotResolver', () => {
   });
 
   /**
-   * O ponto inteiro do snapshot: uma entidade excluída no servidor mas não localmente (a
-   * exclusão remota não é aplicada de propósito, ver `reconcileRemoteUpdate`) continua com
-   * `isDeleted: false` na tabela local - o resolvedor não filtra por isso, então ainda acha a
-   * linha com o nome real.
+   * The snapshot's whole point: an entity deleted on the server but not locally (the
+   * remote deletion is deliberately not applied, see `reconcileRemoteUpdate`) still has
+   * `isDeleted: false` in the local table - the resolver does not filter by that, so it still finds the
+   * row with the real name.
    */
   it('finds an entity regardless of its isDeleted flag', async () => {
     await database.db.insert(schema.characters).values({

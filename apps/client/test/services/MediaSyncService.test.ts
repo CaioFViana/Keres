@@ -2,13 +2,13 @@
  * @jest-environment node
  */
 /**
- * Os factories abaixo constroem tudo por dentro, sem referenciar variáveis do arquivo.
+ * The factories below build everything internally, without referencing the file's variables.
  *
- * `jest.mock` é içado acima das declarações `const`, e um factory que *lê* a variável na hora
- * (`mediaFileService: mockMediaFileService`) captura `undefined`, porque o módulo é requerido
- * pelo import do arquivo sob teste antes de a linha do `const` rodar. Só um factory que adia a
- * leitura para dentro de uma função escapa disso. As referências aos `jest.fn` são pegas
- * depois dos imports, através do próprio módulo mockado.
+ * `jest.mock` is hoisted above the `const` declarations, and a factory that *reads* the variable at that
+ * moment (`mediaFileService: mockMediaFileService`) captures `undefined`, because the module is required
+ * by the import of the file under test before the `const` line runs. Only a factory that defers the
+ * read into a function escapes that. The references to the `jest.fn`s are picked up
+ * after the imports, through the mocked module itself.
  */
 jest.mock('../../src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
@@ -64,7 +64,7 @@ const media = (id: string, overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-/** Cliente axios falso: só precisa de `post`, `get` e a baseURL. */
+/** A fake axios client: it only needs `post`, `get` and the baseURL. */
 function fakeClient(overrides: Record<string, any> = {}) {
   return {
     defaults: { baseURL: 'http://servidor/api' },
@@ -114,9 +114,9 @@ afterEach(() => {
 });
 
 /**
- * A reconciliação de mídia nunca pode lançar: um vídeo grande falhando não pode derrubar a
- * sincronização de texto da história inteira. Mídia que não subiu continua pendente e é
- * tentada no ciclo seguinte.
+ * Media reconciliation can never throw: one large video failing must not bring down the
+ * text synchronization of a whole story. Media that did not upload stays pending and is
+ * retried on the following cycle.
  */
 describe('nothing to do', () => {
   it('reports an empty summary when there is no pending media', async () => {
@@ -150,7 +150,7 @@ describe('uploading', () => {
     });
   });
 
-  /** Deduplicação global: o mesmo arquivo subido por outra pessoa já basta. */
+  /** Global deduplication: the same file uploaded by somebody else is already enough. */
   it('marks as uploaded, without sending, what the server already has', async () => {
     mockGalleryService.getPendingUploads.mockResolvedValue([media('a')]);
     const client = fakeClient({
@@ -183,7 +183,7 @@ describe('uploading', () => {
     });
   });
 
-  /** Registro sem arquivo (limpeza do sistema, reinstalação) vira caso de download. */
+  /** A record with no file (a system cleanup, a reinstall) becomes a download case. */
   it('turns a missing local file into a download instead of a failure', async () => {
     mockGalleryService.getPendingUploads.mockResolvedValue([media('a')]);
     mockMediaFileService.exists.mockReturnValue(false);
@@ -217,7 +217,7 @@ describe('uploading', () => {
     expect(summary).toMatchObject({ failed: 1, uploaded: 0, offline: false });
   });
 
-  /** Servidor inalcançável não é falha da mídia: nada é marcado como `failed`. */
+  /** An unreachable server is not the medium's fault: nothing is marked as `failed`. */
   it('reports offline without giving up on the media', async () => {
     mockGalleryService.getPendingUploads.mockResolvedValue([media('a')]);
     const post = jest

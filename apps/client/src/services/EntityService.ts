@@ -46,8 +46,10 @@ import {
   worldRules,
 } from '../db/schemas';
 
-/** Chave de tradução singular já usada neste arquivo para cada tipo de entidade que pode
- *  receber Story Schema - reaproveitada em vez de uma segunda lista de rótulos. */
+/**
+ * The singular translation key already used in this file for each entity type that can receive a Story
+ * Schema - reused instead of a second list of labels.
+ */
 const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'character',
   Location: 'location',
@@ -93,8 +95,10 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   mode: OperationLogEntityType.Mode,
 };
 
-/** Chaves de tradução do rótulo de cada tipo de Effect - usadas para montar o nome legível
- *  de um Effect a partir do seu effectType (entidade sem nome próprio). */
+/**
+ * The translation keys for each Effect type's label - used to build an Effect's readable name from its
+ * effectType (an entity with no name of its own).
+ */
 const EFFECT_TYPE_LABEL_KEYS: Record<string, string> = {
   itemGrant: 'effect_item_grant',
   itemTake: 'effect_item_take',
@@ -694,7 +698,7 @@ export class EntityService {
           columns: { statId: true, label: true, minValue: true },
         });
         if (statStrength) {
-          // `statId` nulo é a escada padrão da história, que não pertence a status nenhum.
+          // A null `statId` is the story's default ladder, which belongs to no stat.
           const ladderStat = statStrength.statId
             ? await db.query.stats.findFirst({
                 where: and(eq(stats.id, statStrength.statId), eq(stats.isDeleted, false)),

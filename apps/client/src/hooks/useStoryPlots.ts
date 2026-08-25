@@ -9,26 +9,26 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import { sortScenesNarratively } from '../utils/narrativeSceneOrder';
 
 /**
- * Tudo que uma tela de Plot precisa, numa consulta só e atualizada por evento - o mesmo
- * arranjo de `useStoryStats`.
+ * Everything a Plot screen needs, in a single query and refreshed by event - the same
+ * arrangement as `useStoryStats`.
  *
- * Lista, detalhe, matriz, cobertura e leitor leem os mesmos quatro conjuntos e dependem de
- * concordarem sobre a ordem narrativa; buscar cada um por conta própria multiplicava as
- * consultas e deixava cada tela ordenar as cenas do seu jeito.
+ * The list, the detail, the matrix, the coverage and the reader read the same four sets and depend on
+ * them agreeing about the narrative order; fetching each one on its own multiplied the
+ * queries and left each screen sorting the scenes its own way.
  */
 export interface StoryPlotsData {
   plots: PlotSelect[];
   relations: PlotSceneSelect[];
-  /** Cenas ativas da história, já em ordem narrativa (capítulo, depois cena). */
+  /** The story's active scenes, already in narrative order (chapter, then scene). */
   scenes: SceneSelect[];
   chapters: ChapterSelect[];
-  /** Relações de um Plot, na mesma ordem narrativa das cenas. */
+  /** A Plot's relations, in the same narrative order as the scenes. */
   relationsOf: (plotId: string) => PlotSceneSelect[];
   sceneById: (sceneId: string) => SceneSelect | undefined;
-  /** Nome do capítulo de uma cena: é ele que situa a cena fora da lista do próprio capítulo. */
+  /** A scene's chapter name: it is what situates the scene outside its own chapter's list. */
   chapterNameOf: (chapterId: string) => string | undefined;
   plotById: (plotId: string) => PlotSelect | undefined;
-  /** Cenas cobertas / cenas ativas da história, com o percentual arredondado. */
+  /** Covered scenes / the story's active scenes, with the percentage rounded. */
   coverageOf: (plotId: string) => { covered: number; total: number; percentage: number };
   loading: boolean;
   reload: () => Promise<void>;
@@ -82,8 +82,8 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
     const scenesById = new Map(data.scenes.map((scene) => [scene.id, scene]));
     const plotsById = new Map(data.plots.map((plot) => [plot.id, plot]));
     const chapterNames = new Map(data.chapters.map((chapter) => [chapter.id, chapter.name]));
-    // Relações apontando para uma cena removida não entram: o Plot passaria a "cobrir" uma
-    // cena que não existe mais, e o leitor tentaria abrir um detalhe vazio.
+    // Relations pointing at a removed scene do not enter: the Plot would start "covering" a
+    // scene that no longer exists, and the reader would try to open an empty detail.
     const relations = data.relations.filter((relation) => scenesById.has(relation.sceneId));
     const byPlot = new Map<string, PlotSceneSelect[]>();
     for (const relation of relations) {

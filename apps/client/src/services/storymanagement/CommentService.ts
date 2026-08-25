@@ -54,11 +54,11 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
   const serverService = createServerService(db);
 
   /**
-   * Mesma checagem "falha rápido antes do reload de sync" de `assertStoryIsWritable`, mas com
-   * a exceção de `allowReaderComments`: um leitor pode escrever Comments se a história (só
-   * relevante quando vinculada a servidor) permitir. `assertStoryIsWritable` não serve aqui
-   * porque é fixo em owner/writer, sem essa exceção por entidade (mesmo motivo por que
-   * FavoriteService também não a usa).
+   * The same "fail fast before the sync reload" check as `assertStoryIsWritable`, but with
+   * the `allowReaderComments` exception: a reader may write Comments if the story (only
+   * relevant when linked to a server) allows it. `assertStoryIsWritable` is no good here
+   * because it is fixed on owner/writer, without that per-entity exception (the same reason
+   * FavoriteService does not use it either).
    */
   const assertCanWriteComment = async (storyId: string): Promise<void> => {
     const story = await db.query.stories.findFirst({
@@ -197,8 +197,8 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
         existing.storyId,
         currentUserId,
       );
-      // Dono da história pode excluir qualquer comentário (moderação); escritor/leitor só o
-      // próprio - mesma regra aplicada no servidor (ver SyncService.ts/processAndRecordUpdates).
+      // The story's owner may delete any comment (moderation); a writer/reader only their
+      // own - the same rule applied on the server (see SyncService.ts/processAndRecordUpdates).
       if (!isStoryOwner && existing.authorUserId !== userIdToLog) {
         throw new Error('Only the comment author or the story owner can delete this comment.');
       }

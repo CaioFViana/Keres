@@ -2,18 +2,18 @@ import type { GraphChapter, GraphChoice, GraphScene } from '@keres/shared/graphs
 import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 
 /**
- * Ordena Item Journeys pela posição narrativa da cena de cada uma, não por `createdAt` (que é
- * só o instante em que o registro foi inserido, sem relação com a ordem da história).
+ * Sorts Item Journeys by the narrative position of each one's scene, not by `createdAt` (which is
+ * only the instant the record was inserted, unrelated to the story's order).
  *
- * - Linear: `(chapter.index, scene.index)` - a mesma dupla que o resto do app já trata como
- *   ordem canônica (ver `compareByStoryOrder` em `storyGraphLayout.ts`).
- * - Branching: a `layer` que `buildStoryGraphLayout` já calcula pra a tela do Mapa da História
- *   (distância em camadas até o começo, maior caminho - não BFS/menor caminho, de propósito:
- *   isso garante que uma cena nunca apareça antes de um pré-requisito dela quando dois
- *   caminhos convergem, o que menor-caminho não garante). Zero mudança em `storyGraphLayout.ts`
- *   além de consumir o que ele já expõe publicamente.
+ * - Linear: `(chapter.index, scene.index)` - the same pair the rest of the app already treats as the
+ *   canonical order (see `compareByStoryOrder` in `storyGraphLayout.ts`).
+ * - Branching: the `layer` that `buildStoryGraphLayout` already computes for the Story Map screen
+ *   (the distance in layers to the start, the longest path - not BFS/shortest path, on purpose:
+ *   that guarantees a scene never appears before one of its prerequisites when two
+ *   paths converge, which shortest-path does not guarantee). Zero change to `storyGraphLayout.ts`
+ *   beyond consuming what it already exposes publicly.
  *
- * `createdAt` só entra como desempate final (mesma cena, ou mesma camada).
+ * `createdAt` only comes in as the final tie-break (the same scene, or the same layer).
  */
 
 interface OrderableItemJourney {
@@ -45,7 +45,7 @@ export function orderItemJourneysByNarrative<T extends OrderableItemJourney>(
       ? (chapterIndexById.get(scene.chapterId) ?? Number.MAX_SAFE_INTEGER)
       : Number.MAX_SAFE_INTEGER;
     const sceneIndex = scene?.index ?? Number.MAX_SAFE_INTEGER;
-    // Cena desconhecida (referência solta) cai por último, junto do resto do que não resolveu.
+    // An unknown scene (a loose reference) falls to the end, along with the rest of what did not resolve.
     const layer =
       storyType === 'branching'
         ? (layerBySceneId.get(journey.sceneId) ?? Number.MAX_SAFE_INTEGER)

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 
 /**
- * Controla o "espiar" uma mídia da galeria a partir de uma tela de entidade.
+ * It controls "peeking" at a gallery media file from an entity's screen.
  *
- * Estado global e simples de propósito - nada de React Navigation aqui. `GalleryMediaViewerOverlay`
- * lê `galleryId` e mostra o conteúdo dentro de um `Modal`; um `Modal` não participa do foco
- * do React Navigation, então abrir/fechar por aqui nunca aciona os listeners de `blur` que
- * cada aba do Drawer usa para resetar sua própria pilha para a lista (ver
- * `GalleryDetailContent.tsx` para o histórico completo do porquê disso importa).
+ * Global and simple state on purpose - no React Navigation here. `GalleryMediaViewerOverlay` reads
+ * `galleryId` and shows the content inside a `Modal`; a `Modal` does not take part in React
+ * Navigation's focus, so opening/closing through here never triggers the `blur` listeners each Drawer
+ * tab uses to reset its own stack to the list (see `GalleryDetailContent.tsx` for the full history of
+ * why that matters).
  */
 interface GalleryMediaViewerState {
   galleryId: string | null;

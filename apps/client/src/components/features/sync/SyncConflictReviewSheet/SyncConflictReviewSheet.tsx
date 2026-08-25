@@ -24,11 +24,11 @@ interface SyncConflictReviewSheetProps {
 }
 
 /**
- * Superfície de revisão dos conflitos pendentes - aberta pelo `SyncConflictBanner`, nunca
- * sozinha. Relações (personagens, tags, notas, localizações, galerias, cenas, itens, "veja
- * também") vão pra uma seção resolvível em um toque, sempre com nomes já resolvidos, nunca
- * IDs crus. Conflitos de conteúdo real (Character, Chapter, Scene...) só abrem o comparativo
- * campo a campo quando há mesmo múltiplos campos genuinamente disputados.
+ * The review surface for the pending conflicts - opened by `SyncConflictBanner`, never
+ * on its own. Relations (characters, tags, notes, locations, galleries, scenes, items, "see
+ * also") go to a section resolvable in one tap, always with names already resolved, never
+ * raw IDs. Real content conflicts (Character, Chapter, Scene...) only open the field-by-field
+ * comparison when there really are multiple genuinely disputed fields.
  */
 const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visible, onClose }) => {
   const { colors } = useTheme();
@@ -46,10 +46,10 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
   const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
   const [names, setNames] = useState<Map<string, string>>(new Map());
 
-  // Duas fases: primeiro a linha local de cada conflito em si (preenche o que
-  // `deleted_on_server` deixa faltando em `localValues`/`serverValues` - nome de uma entidade
-  // de conteúdo, ou os IDs de uma relação), só então dá pra saber quais outras entidades
-  // (personagens de uma `CharacterRelation`, por exemplo) precisam ter o nome resolvido.
+  // Two phases: first each conflict's own local row (it fills in what
+  // `deleted_on_server` leaves missing in `localValues`/`serverValues` - the name of a content
+  // entity, or a relation's IDs), and only then is it possible to know which other entities
+  // (the characters of a `CharacterRelation`, for instance) need their name resolved.
   useEffect(() => {
     let cancelled = false;
     const snapshotRefs = collectConflictEntityRefs(conflicts);

@@ -287,9 +287,9 @@ const SceneDetailScreen = () => {
       return;
     }
     try {
-      // `sceneId` é o critério que o serviço entende e filtra pelas escolhas que *saem* desta
-      // cena, que é o que os botões de navegação abaixo oferecem. `fromSceneId` não existia:
-      // caía na varredura de critérios genéricos e derrubava a consulta.
+      // `sceneId` is the criterion the service understands, and it filters by the choices that *leave* this
+      // scene, which is what the navigation buttons below offer. `fromSceneId` did not exist: it fell into
+      // the generic criteria sweep and took the query down.
       const choices = await choiceServiceRef.current.getChoicesByStoryId(
         selectedStory.id,
         undefined,

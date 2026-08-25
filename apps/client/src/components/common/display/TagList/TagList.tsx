@@ -14,13 +14,13 @@ interface Tag {
 interface TagListProps {
   tags: Tag[];
   /**
-   * `compact` (padrão): pill pequena, só leitura - usada nas linhas de lista. `chip`: chip
-   * maior e em negrito, com botão de remover opcional - usada nas telas de detalhe.
+   * `compact` (the default): a small pill, read-only - used in list rows. `chip`: a bigger
+   * bold chip, with an optional remove button - used on the detail screens.
    */
   variant?: 'compact' | 'chip';
-  /** Só faz sentido com `variant="chip"`. */
+  /** It only makes sense with `variant="chip"`. */
   onRemoveTag?: (tagId: string) => void;
-  /** Se ausente, a lista vazia não renderiza nada (comportamento do `compact`). */
+  /** If absent, an empty list renders nothing (the `compact` behaviour). */
   emptyMessage?: string;
 }
 
@@ -40,8 +40,8 @@ const TagList: React.FC<TagListProps> = ({
       flexWrap: 'wrap',
       marginTop: isChip ? 10 : 8,
       marginBottom: isChip ? 10 : 0,
-      // Espaço entre etiquetas no contêiner: em cada etiqueta, a última linha ainda cobrava a
-      // margem de baixo e sobrava um vão morto sob a lista.
+      // Spacing between tags belongs to the container: with it on each tag, the last row still charged its
+      // bottom margin and left dead space under the list.
       gap: isChip ? 8 : 5,
     },
     chip: {

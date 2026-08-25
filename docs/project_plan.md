@@ -1,38 +1,38 @@
 # Keres - Story Organizer Project Plan
 
-Um organizador offline-first de histórias (solo ou colaborativas), com sincronização inteligente entre dispositivos locais e servidor remoto. O Keres oferece aos escritores uma forma de organizar personagens, locais, cenas, regras do mundo e a estrutura narrativa, com foco em acesso rápido e organização eficiente.
+An offline-first organizer for stories (solo or collaborative), with intelligent synchronization between local devices and a remote server. Keres offers writers a way of organizing characters, locations, scenes, world rules and the narrative structure, focused on quick access and efficient organization.
 
-Backend com **Elysia (Bun)** + **Zod** para rotas/validação, **Drizzle ORM** para persistência (**PostgreSQL** no servidor), **ULID** como identificadores. Frontend em **React Native + Expo** (mobile nativo e web via React Native Web) com suporte a SQLite local (Drizzle + expo-sqlite) em um modelo offline-first com engine de sincronização própria. A build web do frontend é o que o app desktop (**Electron**) empacota para Windows/Mac/Linux. Um painel administrativo separado (React + Vite) é servido pela própria API.
+The backend uses **Elysia (Bun)** + **Zod** for routes/validation, **Drizzle ORM** for persistence (**PostgreSQL** on the server), **ULID** as identifiers. The frontend is **React Native + Expo** (native mobile and web through React Native Web) with support for a local SQLite (Drizzle + expo-sqlite) in an offline-first model with a synchronization engine of its own. The frontend's web build is what the desktop app (**Electron**) packages for Windows/Mac/Linux. A separate administration panel (React + Vite) is served by the API itself.
 
-> Ver `docs/file_structure.md` para o mapeamento completo e atualizado de diretórios - a estrutura abaixo é um resumo de alto nível.
+> See `docs/file_structure.md` for the complete, up-to-date directory mapping - the structure below is a high-level summary.
 
 ---
 
-## 📂 Estrutura de Repositório
+## 📂 Repository structure
 
 ```
 Keres/
 ├── apps/
-│ ├── api/      # API Elysia (Bun) + Drizzle/Postgres
+│ ├── api/      # Elysia API (Bun) + Drizzle/Postgres
 │ │ ├── docker-compose.yml
 │ │ ├── src/
-│ │ │ ├── index.ts    # bootstrap Elysia app
-│ │ │ ├── modules/    # rotas + handlers por recurso (auth, sync, story, friend, admin, ...)
-│ │ │ ├── services/   # lógica de negócio + entity-sync-handlers/
-│ │ │ └── db/         # schema Drizzle (Postgres) e migrations
-│ ├── admin/    # painel administrativo interno (React + Vite), servido pela API em /admin
-│ ├── site/     # landing pública (GitHub Pages)
-│ ├── client/   # frontend (React Native + Expo, mobile e web)
+│ │ │ ├── index.ts    # Elysia app bootstrap
+│ │ │ ├── modules/    # routes + handlers per resource (auth, sync, story, friend, admin, ...)
+│ │ │ ├── services/   # business logic + entity-sync-handlers/
+│ │ │ └── db/         # Drizzle schema (Postgres) and migrations
+│ ├── admin/    # internal administration panel (React + Vite), served by the API at /admin
+│ ├── site/     # public landing page (GitHub Pages)
+│ ├── client/   # frontend (React Native + Expo, mobile and web)
 │ │ └── src/
-│ │   ├── db/        # schema Drizzle (SQLite local) e migrations
-│ │   ├── screens/    # uma pasta por entidade/feature
-│ │   ├── state/      # stores Zustand (createEntityStore.ts)
-│ │   ├── services/   # CRUD por entidade + sync engine
+│ │   ├── db/        # Drizzle schema (local SQLite) and migrations
+│ │   ├── screens/    # one folder per entity/feature
+│ │   ├── state/      # Zustand stores (createEntityStore.ts)
+│ │   ├── services/   # per-entity CRUD + the sync engine
 │ │   └── navigation/
-│ └── desktop/  # wrapper Electron do build web do client
+│ └── desktop/  # Electron wrapper around the client's web build
 │
 ├── packages/
-│ └── shared/   # entities (TS), schemas Zod, metadata e utils compartilhados
+│ └── shared/   # shared entities (TS), Zod schemas, metadata and utils
 │
 ├── package.json
 └── README.md
@@ -40,129 +40,129 @@ Keres/
 
 ---
 
-## 🗄️ Estrutura de Dados
+## 🗄️ Data structure
 
-### Usuários
-O aplicativo é de login único. Este usuário pode ter quantas histórias desejar, sem que as tabelas de outras histórias interfiram (Ex: "locais" de uma história não devem aparecer em outra).
+### Users
+The application has a single login. This user may have as many stories as they wish, without one story's tables interfering with another's (e.g. one story's "locations" must not appear in another).
 
-**Nota sobre a Tabela `User` Local (Cliente):**
-A tabela `User` no banco de dados local do cliente funcionará primariamente como um **cache de dados de referência**. Ela armazenará informações mínimas de usuários remotos (como `id`, `username`, `displayName`, `avatarUrl`, `version`) que são referenciados por histórias ou outras entidades que o usuário local possui ou com as quais interage. Esta tabela **não** se destina a ser uma cópia completa de todos os usuários do servidor remoto, nem uma "lista de amigos" social. O motor de sincronização será responsável por popular e manter este cache, garantindo que os dados de usuários relevantes estejam disponíveis offline para manter a integridade referencial das histórias.
+**A note on the local (client) `User` table:**
+The `User` table in the client's local database works primarily as a **cache of reference data**. It stores minimal information about remote users (such as `id`, `username`, `displayName`, `avatarUrl`, `version`) that is referenced by stories or other entities the local user owns or interacts with. This table is **not** meant to be a complete copy of every user on the remote server, nor a social "friend list". The synchronization engine is responsible for populating and maintaining this cache, guaranteeing that relevant users' data is available offline so as to keep the stories' referential integrity.
 
-**Nota Importante sobre Sincronização:** Para suportar a engine de sincronização offline-first, todas as entidades persistentes (como `Story`, `Character`, `Chapter`, etc.) incluirão um campo `version: number;`. Este campo é crucial para a detecção e resolução de conflitos durante o processo de sincronização entre clientes e o servidor, garantindo a consistência dos dados.
+**An important note on synchronization:** to support the offline-first synchronization engine, every persistent entity (such as `Story`, `Character`, `Chapter`, etc.) includes a `version: number;` field. This field is crucial for detecting and resolving conflicts during the synchronization process between clients and the server, guaranteeing data consistency.
 
 ### Story
-A tabela principal. Armazena os dados gerais da história (`title`, `type: 'linear' | 'branching'`, `description`, `genre`, `language`, `author`, ...). `userId` referencia o dono; `serverId` (só no cliente) referencia a que servidor remoto, se algum, a história está vinculada - `null` significa história estritamente local/offline.
+The main table. It stores the story's general data (`title`, `type: 'linear' | 'branching'`, `description`, `genre`, `language`, `author`, ...). `userId` references the owner; `serverId` (on the client only) references which remote server, if any, the story is linked to - `null` means a strictly local/offline story.
 
 ### Characters
-Nenhuma história existe sem personagens.
+No story exists without characters.
 
 ### Chapters
-Uma coleção de cenas. Não significa ordem cronológica, mas sim "ordem de exibição".
+A collection of scenes. It does not mean chronological order, but "display order".
 
 ### Scenes
-Unidades narrativas fundamentais.
+The fundamental narrative units.
 
-### Plots / Plot Scenes (Tramas)
-`Plot` representa uma linha narrativa dentro de uma história **linear**. Possui `name` e
-`details`, pertence a uma única `Story` e pode agrupar qualquer quantidade de cenas — inclusive
-nenhuma, enquanto ainda está sendo planejado. Uma cena pode participar de vários Plots, portanto
-a relação é N:N e não uma coluna em `Scene`.
+### Plots / Plot Scenes
+`Plot` represents a narrative thread within a **linear** story. It has a `name` and
+`details`, belongs to a single `Story` and may group any number of scenes — including
+none, while it is still being planned. A scene may take part in several Plots, so
+the relation is N:N and not a column on `Scene`.
 
-`PlotScene` materializa essa relação (`plotId` + `sceneId`) e guarda uma `note` obrigatória, de
-uma única linha e com no máximo 160 caracteres, explicando o papel daquela cena naquela trama. O
-par `(plotId, sceneId)` é único e as duas entidades precisam pertencer à mesma história. A relação
-é editada na seção de Plots do formulário da cena; não existe um formulário separado de
-`PlotScene`.
+`PlotScene` materialises that relation (`plotId` + `sceneId`) and holds a required `note`, of
+a single line and at most 160 characters, explaining that scene's role in that plot. The
+`(plotId, sceneId)` pair is unique and both entities must belong to the same story. The relation
+is edited in the Plots section of the scene's form; there is no separate
+`PlotScene` form.
 
-Plots não são permitidos em histórias `branching` nesta fase. Uma história linear com Plots
-ativos também não pode ser convertida para branching antes que eles sejam removidos. `Plot` e
-`PlotScene` participam de exportação/importação, sincronização, tombstones e log de operações.
-`Plot` aparece na Busca Global por nome e detalhes; `PlotScene`, por ser uma junção, não é um
-destino navegável independente. Deliberadamente, Plots não recebem tags, favoritos, comentários,
-sugestões nem atributos customizados.
+Plots are not allowed in `branching` stories at this stage. A linear story with active Plots
+also cannot be converted to branching before they are removed. `Plot` and
+`PlotScene` take part in export/import, synchronization, tombstones and the operation log.
+`Plot` appears in the Global Search by name and details; `PlotScene`, being a join, is not an
+independently navigable destination. Deliberately, Plots do not get tags, favourites, comments,
+suggestions or custom attributes.
 
-O histórico das decisões e os critérios de aceite da implementação estão preservados em
+The history of the decisions and the implementation's acceptance criteria are preserved in
 [`finished_planning/PLOT_IMPLEMENTATION_PLAN.md`](finished_planning/PLOT_IMPLEMENTATION_PLAN.md).
 
 ### Locations
-Informações gerais sobre um local.
+General information about a place.
 
 ### Gallery / Gallery Relations
-`Gallery` é um asset de mídia (imagem/vídeo/áudio) da história, identificado por hash de conteúdo. `GalleryRelation` é a tabela N:N que liga uma `Gallery` a qualquer entidade "dona" (`ownerId` + `ownerType`) - é assim que uma mesma imagem pode ilustrar um Personagem, um Local, uma Nota, etc., sem a Gallery precisar saber de antemão a quem pertence.
+`Gallery` is a media asset (image/video/audio) of the story, identified by a content hash. `GalleryRelation` is the N:N table that links a `Gallery` to any "owning" entity (`ownerId` + `ownerType`) - that is how the same image can illustrate a Character, a Location, a Note, etc., without the Gallery having to know in advance whom it belongs to.
 
-### Relational Tables
+### Relational tables
 
 #### Character X Scene (`CharacterScene`)
-Lista quem estava onde e quando.
+Lists who was where and when.
 
 #### Character X Character (`CharacterRelation`)
-Relações fixas. Como "irmãos", "Mestre/Escravo", "Mãe/Filha"...
+Fixed relations. Such as "siblings", "Master/Slave", "Mother/Daughter"...
 
 #### Location X Location (`LocationRelation`)
-Relação entre dois locais, com `relationType`: `contains` (direcional - `locationAId` é o local "pai" que contém `locationBId`) ou `connected_to` (par não-ordenado, ex: duas cidades ligadas por estrada).
+A relation between two locations, with a `relationType`: `contains` (directional - `locationAId` is the "parent" location containing `locationBId`) or `connected_to` (an unordered pair, e.g. two cities linked by a road).
 
 #### Plot X Scene (`PlotScene`)
-Relação N:N exclusiva de histórias lineares. Uma cena pode desenvolver várias tramas e uma trama
-pode atravessar cenas de capítulos diferentes. A nota curta da junção descreve o papel específico
-da cena naquela trama; a ordem de exibição continua sendo derivada do índice do capítulo e, em
-seguida, do índice da cena.
+An N:N relation exclusive to linear stories. A scene may develop several plots and a plot
+may cross scenes from different chapters. The join's short note describes the scene's specific
+role in that plot; the display order is still derived from the chapter's index and, next,
+the scene's index.
 
-#### Tag X <entidade> (`TagRelation`) / Note X <entidade> (`NoteRelation`)
-Mesmo padrão polimórfico de `GalleryRelation`: uma tabela de junção genérica ligando uma `Tag`/`Note` a qualquer entidade da história, em vez de uma coluna de FK fixa por tipo.
+#### Tag X <entity> (`TagRelation`) / Note X <entity> (`NoteRelation`)
+The same polymorphic pattern as `GalleryRelation`: a generic join table linking a `Tag`/`Note` to any entity of the story, instead of a fixed FK column per type.
 
-#### Status, modos e valores (`Stat`, `StatStrength`, `StatRelation`, `Mode`)
-Quando `Story.statSystem` está ligado, `Stat` define um eixo mensurável (por exemplo, Força); apenas os eixos primários entram no radar. `StatStrength` define a escala padrão da história ou uma escala exclusiva de um stat. `StatRelation` guarda o valor de um personagem em um stat e, opcionalmente, em um `Mode`; sem valor próprio no modo, vale o valor normal do personagem. `Mode` existe independentemente do sistema de status e descreve uma forma/estado alternativo do personagem.
+#### Stats, modes and values (`Stat`, `StatStrength`, `StatRelation`, `Mode`)
+When `Story.statSystem` is on, `Stat` defines a measurable axis (for example, Strength); only the primary axes enter the radar. `StatStrength` defines the story's default scale or a scale exclusive to one stat. `StatRelation` holds a character's value on a stat and, optionally, in a `Mode`; with no value of its own in the mode, the character's normal value applies. `Mode` exists independently of the stat system and describes an alternative form/state of the character.
 
-#### Comentários e "Veja também" (`Comment`, `SeeAlsoRelation`)
-`Comment` é uma conversa anexada a um campo de uma entidade navegável, não apenas uma observação solta da entidade. Ele aponta para um campo nativo (`fieldKey`) ou personalizado (`fieldId`), preserva o conteúdo/excerto vistos no momento e registra autor e criticidade. `SeeAlsoRelation` é um vínculo recíproco livre entre duas entidades compatíveis.
+#### Comments and "See also" (`Comment`, `SeeAlsoRelation`)
+`Comment` is a conversation attached to a field of a navigable entity, not merely a loose remark about the entity. It points at a native (`fieldKey`) or custom (`fieldId`) field, preserves the content/excerpt seen at the time and records the author and criticality. `SeeAlsoRelation` is a free reciprocal link between two compatible entities.
 
 ### Choices
-Representa as transições entre cenas em histórias ramificadas (CYOA) - `sceneId` (origem) → `nextSceneId` (destino) + `text`. Ver `docs/choice_mechanics.md` e `docs/dynamic_story_structure.md` para o detalhamento completo (histórias lineares nunca têm `Choice`s explícitas; a navegação segue o `index` das cenas).
+Represents the transitions between scenes in branching stories (CYOA) - `sceneId` (source) → `nextSceneId` (target) + `text`. See `docs/choice_mechanics.md` and `docs/dynamic_story_structure.md` for the full detail (linear stories never have explicit `Choice`s; navigation follows the scenes' `index`).
 
 ### Items / Item Journeys
-`Item` é um objeto da história (arma, artefato, ...). `ItemJourney` registra a "trajetória" de um item ao longo da narrativa: em que `sceneId` ele muda, para que `newState`, e opcionalmente muda de dono (`newCharacterOwnerId`) - é o histórico de posse/estado de um item contado cena a cena.
+`Item` is an object in the story (a weapon, an artefact, ...). `ItemJourney` records an item's "journey" through the narrative: in which `sceneId` it changes, to what `newState`, and optionally changes owner (`newCharacterOwnerId`) - it is an item's possession/state history told scene by scene.
 
 ### World Rules
-Por exemplo, quem pode fazer o quê? Qual é a relação de poder?
+For example, who can do what? What is the balance of power?
 
-Ex: Mana é necessária para lançar feitiços.
-Ex: Com cristais elementais, podemos carregar máquinas para lançar os mesmos feitiços daquele elemento.
-Ex: Ninguém pode usar o elemento luz. Exceto nosso protagonista. É o que o torna especial.
+E.g. Mana is required to cast spells.
+E.g. With elemental crystals, we can power machines to cast the same spells of that element.
+E.g. Nobody can use the light element. Except our protagonist. That is what makes them special.
 
 ### Notes
-Qualquer autor deve ser capaz de escrever livremente, sem muita organização ou vinculação a algo. O sistema permitirá ancorar a algo, mas não o forçará. Ancoragem implementada via `NoteRelation` (ver acima) - uma nota pode estar ligada a zero ou mais entidades.
+Any author must be able to write freely, without much organization or being tied to something. The system will allow anchoring to something, but will not force it. Anchoring is implemented through `NoteRelation` (see above) - a note may be linked to zero or more entities.
 
 ### Tags
-Implementadas como uma entidade própria (`Tag`, com `name`/`color`) mais uma tabela de junção polimórfica (`TagRelation`) que permite aplicar qualquer tag a qualquer entidade da história, em vez de um enum fixo por campo.
+Implemented as an entity of their own (`Tag`, with `name`/`color`) plus a polymorphic join table (`TagRelation`) that allows applying any tag to any entity of the story, instead of a fixed enum per field.
 
-### Story Schema Fields / Attribute Values (Atributos Customizados)
-Além dos campos nativos de cada entidade, o usuário pode definir **campos customizados** por história para as entidades de `StorySchemaEntityType` (`Character`, `Location`, `Item`, `Scene`, `Chapter`, `Note`, `WorldRule`). `StorySchemaField` define o campo (nome, chave, tipo - `AttributeType`: texto, texto longo, número, booleano, data ou sugestão). `AttributeValue` é o valor desse campo para uma entidade específica (`entityType` + `entityId` + `fieldId` + `value`, sempre armazenado como texto e codificado/decodificado por `attributeValueCodec.ts` conforme o tipo). É esse par de tabelas que dá a cada história a flexibilidade de "adicionar qualquer atributo a qualquer personagem/local/etc" sem alterar o schema físico.
+### Story Schema Fields / Attribute Values (Custom Attributes)
+Besides each entity's native fields, the user may define **custom fields** per story for the entities in `StorySchemaEntityType` (`Character`, `Location`, `Item`, `Scene`, `Chapter`, `Note`, `WorldRule`). `StorySchemaField` defines the field (name, key, type - `AttributeType`: text, long text, number, boolean, date or suggestion). `AttributeValue` is that field's value for a specific entity (`entityType` + `entityId` + `fieldId` + `value`, always stored as text and encoded/decoded by `attributeValueCodec.ts` according to the type). It is that pair of tables that gives each story the flexibility of "adding any attribute to any character/location/etc" without altering the physical schema.
 
 ### Operation Log
-Toda operação sincronizável (create/update/delete em qualquer entidade coberta por `OperationLogEntityType`) gera uma entrada no log de operações, tanto no cliente quanto no servidor - é a trilha de auditoria e a fonte de verdade para o mecanismo de pull/push de sincronização (ver seção de sincronização abaixo).
+Every synchronizable operation (create/update/delete on any entity covered by `OperationLogEntityType`) generates an entry in the operation log, both on the client and on the server - it is the audit trail and the source of truth for the pull/push synchronization mechanism (see the synchronization section below).
 
-### Publicações (`StoryPublication`)
-Uma publicação é um pacote imutável de uma versão da história para o Showcase. Ela referencia a história e o dono, mas fica deliberadamente fora da sincronização incremental e do log de operações; seus metadados descrevem o pacote e o snapshot público daquela versão.
+### Publications (`StoryPublication`)
+A publication is an immutable package of one version of the story for the Showcase. It references the story and the owner, but deliberately stays outside the incremental synchronization and the operation log; its metadata describes the package and that version's public snapshot.
 
 ### Suggestions
-`Suggestion` é uma entidade sincronizável por história (`storyId`, `type`, `value`) que sustenta o sistema reutilizável de sugestões. O `type` identifica a fonte/catálogo usada por campos nativos e customizados; assim, valores inseridos numa fonte podem ser reaproveitados onde aquela fonte é oferecida. Além de texto simples, o sistema suporta listas nomeadas e campos customizados de sugestão ou lista de sugestões.
+`Suggestion` is a per-story synchronizable entity (`storyId`, `type`, `value`) that underpins the reusable suggestion system. The `type` identifies the source/catalogue used by native and custom fields; that way, values entered in one source can be reused wherever that source is offered. Besides plain text, the system supports named lists and custom suggestion or suggestion-list fields.
 
-## Ajuda integrada
+## Integrated help
 
-O cliente inclui um catálogo de ajuda em português e inglês, com busca local, páginas por tarefa, tabelas de campos visíveis e acesso contextual pelos cabeçalhos das telas.
+The client includes a help catalogue in Portuguese and English, with local search, task-based pages, tables of visible fields and contextual access from the screens' headers.
 
-## Recursos transversais da história
+## Cross-cutting story features
 
-- **Favoritos:** uma história ou elemento pode ser destacado para filtros e listas. Em histórias compartilhadas, o comportamento do favorito é definido nas configurações da história.
-- **Comentários:** colaboradores e leitores autorizados podem comentar um campo nativo ou personalizado de uma entidade navegável; cada comentário preserva o contexto do campo e a lista de comentários reúne essas conversas.
-- **Veja também:** cria uma ligação livre e recíproca entre elementos relacionados, sem substituir etiquetas ou notas.
-- **Histórias ramificadas:** escolhas podem ter condições (visitas, itens ou marcadores) e efeitos (dar/tirar item ou ligar/desligar marcador). Esses recursos formam o estado do leitor e são analisados junto ao mapa da história.
-- **Tramas em histórias lineares:** Plots agrupam cenas sobrepostas sem alterar sua ordem. O stack de Tramas oferece matriz Plot × Cena, gráfico de cobertura, média de cenas por trama e um leitor textual de resumos; uma cena pode contar para mais de uma trama, então percentuais de cobertura não precisam somar 100%.
-- **Colaboração:** uma história ligada a servidor pode ter colaboradores; permissões e comentários de leitores são configurados na própria história.
+- **Favourites:** a story or element may be highlighted for filters and lists. In shared stories, the favourite's behaviour is defined in the story's settings.
+- **Comments:** collaborators and authorized readers may comment on a native or custom field of a navigable entity; each comment preserves the field's context and the comment list brings those conversations together.
+- **See also:** creates a free, reciprocal link between related elements, without replacing tags or notes.
+- **Branching stories:** choices may have checks (visits, items or flags) and effects (grant/take an item or turn a flag on/off). These features form the reader's state and are analysed alongside the story map.
+- **Plots in linear stories:** Plots group overlapping scenes without altering their order. The Plots stack offers a Plot × Scene matrix, a coverage chart, an average of scenes per plot and a textual reader of summaries; a scene may count towards more than one plot, so coverage percentages need not add up to 100%.
+- **Collaboration:** a story linked to a server may have collaborators; permissions and reader comments are configured in the story itself.
 
-### Gráfico de Relações entre Entidades
+### Entity relationship chart
 
-> Diagrama da estrutura de conteúdo da história. Entidades administrativas e de infraestrutura ficam no diagrama separado abaixo. `Suggestion` é o catálogo reutilizável de sugestões da história. A publicação aparece pontilhada porque é um pacote derivado, fora da sincronização incremental.
+> A diagram of the story's content structure. Administrative and infrastructure entities are in the separate diagram below. `Suggestion` is the story's reusable suggestion catalogue. The publication appears dotted because it is a derived package, outside the incremental synchronization.
 
 ```mermaid
 graph LR
@@ -240,122 +240,122 @@ graph LR
     attribute_values -- value for entityType+entityId --> characters/locations/items/scenes/chapters/notes/world_rules
 ```
 
-### Diagrama de Entidades Administrativas e do Servidor
+### Administrative and server entity diagram
 
-> Este diagrama separa administração, configuração do servidor, auditoria e publicação do grafo narrativo. Onde uma relação alcança conteúdo da história, ela aponta para o nó **Diagrama de história** sem repetir suas entidades internas.
+> This diagram separates administration, server configuration, auditing and publication from the narrative graph. Where a relation reaches story content, it points at the **Story diagram** node without repeating its internal entities.
 
 ```mermaid
 graph LR
-    users[Usuário]
+    users[User]
     tiers[Tier]
-    registration_settings[Configuração de cadastro]
-    recovery_codes[Códigos de recuperação]
-    api_logs[Logs da API]
-    showcase_settings[Configuração do Showcase]
-    media_storage_settings[Configuração de mídia]
-    showcase_entry[Publicação da história no Showcase]
-    publication[Versão publicada]
-    story_diagram[Diagrama de história]
+    registration_settings[Registration settings]
+    recovery_codes[Recovery codes]
+    api_logs[API logs]
+    showcase_settings[Showcase settings]
+    media_storage_settings[Media settings]
+    showcase_entry[Story publication in the Showcase]
+    publication[Published version]
+    story_diagram[Story diagram]
 
-    users -- pertence a / recebe limites --> tiers
-    registration_settings -- tier padrão --> tiers
-    users -- possui --> recovery_codes
+    users -- belongs to / receives limits --> tiers
+    registration_settings -- default tier --> tiers
+    users -- owns --> recovery_codes
 
-    api_logs -- pode referenciar --> users
-    api_logs -- pode referenciar --> story_diagram
+    api_logs -- may reference --> users
+    api_logs -- may reference --> story_diagram
 
-    showcase_settings -- habilita --> showcase_entry
-    media_storage_settings -- define destino de blobs para --> story_diagram
+    showcase_settings -- enables --> showcase_entry
+    media_storage_settings -- defines the blob destination for --> story_diagram
 
-    story_diagram -- pode ter --> showcase_entry
-    showcase_entry -- proprietário --> users
-    showcase_entry -- reúne versões --> publication
-    publication -- proprietário no momento da publicação --> users
-    publication -- snapshot de --> story_diagram
+    story_diagram -- may have --> showcase_entry
+    showcase_entry -- owner --> users
+    showcase_entry -- gathers versions --> publication
+    publication -- owner at publication time --> users
+    publication -- snapshot of --> story_diagram
 ```
 
-## 🔗 Fluxo de Arquitetura
+## 🔗 Architecture flow
 
 - **API** (`apps/api`)
-  - Elysia (Bun) expõe rotas REST/JSON.
-  - Zod valida inputs/outputs.
-  - Drizzle manipula DB.
-  - ULID gera IDs.
-  - Engine de Sincronização (op-based replication)
+  - Elysia (Bun) exposes REST/JSON routes.
+  - Zod validates inputs/outputs.
+  - Drizzle handles the DB.
+  - ULID generates the ids.
+  - The synchronization engine (op-based replication)
 
-### Estratégia de Resolução de Conflitos
+### Conflict resolution strategy
 
-O comportamento vigente está em `docs/conflict_resolution_client_strategy.md`. Resumo:
+The current behaviour is in `docs/conflict_resolution_client_strategy.md`. In summary:
 
-*   **OCC por `version` da entidade.** Update exige `changes.version` (a base lida pelo cliente). Comparação é de igualdade, não `<`. Omitir a base **não** é last-write-wins: o push 422.
-*   **Campos diferentes da mesma entidade** são mesclados automaticamente. O mesmo campo, com valores diferentes, vira um conflito para o usuário (`SyncConflictService`).
-*   **Exclusão vs. edição** não se resolve sozinha: a tela oferece restaurar, aceitar o tombstone ou reenviar o delete local. Tombstones usam `isDeleted` / `deletedAt`.
-*   **Writer ≠ owner.** Só o dono apaga a história ou muda `userId` / `type` / `favoriteBehavior` / `allowReaderComments`. O cliente recusa as mesmas mutações localmente (`assertStoryIsOwned` / campos de política em `StoryService.updateStory`) para não enfileirar um push que o servidor recusaria para sempre.
-*   O log de operações retransmite o payload sanitizado (o que o servidor gravou), não o JSON cru do cliente.
+*   **OCC by the entity's `version`.** An update requires `changes.version` (the base the client read). The comparison is for equality, not `<`. Omitting the base is **not** last-write-wins: the push 422s.
+*   **Different fields of the same entity** are merged automatically. The same field, with different values, becomes a conflict for the user (`SyncConflictService`).
+*   **Deletion vs. edit** does not resolve itself: the screen offers restoring, accepting the tombstone or resending the local delete. Tombstones use `isDeleted` / `deletedAt`.
+*   **Writer ≠ owner.** Only the owner deletes the story or changes `userId` / `type` / `favoriteBehavior` / `allowReaderComments`. The client refuses the same mutations locally (`assertStoryIsOwned` / the policy fields in `StoryService.updateStory`) so as not to queue a push the server would refuse forever.
+*   The operation log retransmits the sanitized payload (what the server wrote), not the client's raw JSON.
 
-### Estratégias de Armazenamento de Atualizações para Sincronização
+### Update storage strategies for synchronization
 
-*   **Histórias ligadas a um servidor:** o log local guarda as operações ainda não aceitas (`isSynced = false`) e as já sincronizadas (auditoria / eco do pull). Não há poda automática das aceitas.
-*   **Histórias só locais:** o mesmo log existe para a tela de operações; não há teto de 500 entradas implementado.
+*   **Stories linked to a server:** the local log holds the operations not yet accepted (`isSynced = false`) and the already synchronized ones (auditing / the pull's echo). There is no automatic pruning of the accepted ones.
+*   **Local-only stories:** the same log exists for the operations screen; there is no 500-entry ceiling implemented.
 
-### Mecanismo Detalhado de Sincronização
+### The synchronization mechanism in detail
 
-1.  **Formato (`StoryUpdate`):** união Zod em `packages/shared/schemas/SyncSchemas.ts`. Create leva `id` (ULID do cliente) + `data`. Update leva `id` + `changes` com `changes.version` obrigatório. Delete leva `id` e, para entidades filhas, `version`. Reorder leva `reorderItems`.
-2.  **Rastreamento:** cada mutação nos services de `storymanagement/` chama `recordLocalOperation` *depois* da escrita local. O payload de update/delete/reorder inclui a versão *resultante*; o motor deriva a base como `version - 1`.
-3.  **Protocolo:** REST `POST /sync/:storyId` (push, até 200 ops) e `GET /sync/:storyId/pull` (páginas de até 500). WebSocket (`/events`) só notifica que há trabalho novo; o ciclo em si continua sendo pull/push HTTP. JWT + refresh.
-4.  **Autorização:** `owner` / `writer` / `reader`. Reader só escreve Favorite próprio e, se permitido, Comment próprio.
-5.  **Bootstrap:** história local sobe por `POST /stories/import`. História remota desce por `GET /stories/:id/export` + import local. O sync incremental começa depois do vínculo.
-6.  **Mescla:** campos disjuntos no pull e na resposta de `version_conflict` (`changedFields`). Mesmo campo → folha de revisão no painel. Reorder disputa a ordem inteira.
-7.  **Lote:** não é tudo-ou-nada. Cada operação é aplicada e registrada sozinha; a resposta lista `applied` e `conflicts`. O cliente só marca `isSynced` o que veio em `applied`.
-8.  **Cursor:** `lastServerSyncedLog` avança só até a última operação remota realmente aplicada. Uma falha no meio da página não pula aquela operação.
-9.  **Mídia:** bytes sobem/descem por `/media` depois dos metadados. Um hash já existente no storage só pode ser ligado a uma história que já o referencia.
+1.  **Format (`StoryUpdate`):** a Zod union in `packages/shared/schemas/SyncSchemas.ts`. A create carries `id` (the client's ULID) + `data`. An update carries `id` + `changes` with `changes.version` required. A delete carries `id` and, for child entities, `version`. A reorder carries `reorderItems`.
+2.  **Tracking:** every mutation in the `storymanagement/` services calls `recordLocalOperation` *after* the local write. The update/delete/reorder payload includes the *resulting* version; the engine derives the base as `version - 1`.
+3.  **Protocol:** REST `POST /sync/:storyId` (push, up to 200 ops) and `GET /sync/:storyId/pull` (pages of up to 500). The WebSocket (`/events`) only notifies that there is new work; the cycle itself is still HTTP pull/push. JWT + refresh.
+4.  **Authorization:** `owner` / `writer` / `reader`. A reader only writes their own Favorite and, if allowed, their own Comment.
+5.  **Bootstrap:** a local story goes up through `POST /stories/import`. A remote story comes down through `GET /stories/:id/export` + a local import. The incremental sync starts after the link.
+6.  **Merge:** disjoint fields on the pull and in the `version_conflict` response (`changedFields`). The same field → the review sheet on the dashboard. A reorder disputes the whole order.
+7.  **Batch:** it is not all-or-nothing. Each operation is applied and recorded on its own; the response lists `applied` and `conflicts`. The client only marks `isSynced` what came in `applied`.
+8.  **Cursor:** `lastServerSyncedLog` only advances to the last remote operation actually applied. A failure in the middle of a page does not skip that operation.
+9.  **Media:** bytes go up/down through `/media` after the metadata. A hash already existing in storage can only be linked to a story that already references it.
 
 - **Frontend** (`apps/client`)
-  - Desenvolvido com React Native, Expo e React Native Web para uma base de código unificada (mobile nativo e web/desktop a partir do mesmo código).
-  - Opera de forma offline-first utilizando **Drizzle ORM sobre expo-sqlite** como banco local (SQLite nativo em mobile/desktop; wa-sqlite/WASM + OPFS no navegador).
-  - Sincroniza automaticamente com a API remota via o engine de sincronização.
+  - Developed with React Native, Expo and React Native Web for a unified codebase (native mobile and web/desktop from the same code).
+  - Operates offline-first using **Drizzle ORM over expo-sqlite** as the local database (native SQLite on mobile/desktop; wa-sqlite/WASM + OPFS in the browser).
+  - Synchronizes automatically with the remote API through the synchronization engine.
 
-### Configuração de Ambiente
+### Environment configuration
 
-O Keres adota uma abordagem offline-first, onde a configuração de ambiente para o banco de dados é adaptada para suportar tanto o uso local (SQLite) quanto a conexão com um servidor remoto (PostgreSQL).
+Keres takes an offline-first approach, where the environment configuration for the database is adapted to support both local use (SQLite) and the connection to a remote server (PostgreSQL).
 
-#### Variável `DATABASE_URL`
+#### The `DATABASE_URL` variable
 
-A string de conexão para o banco de dados é a principal forma de configurar a persistência.
+The database connection string is the main way of configuring persistence.
 
-*   **Para uso local (offline-first):** O cliente usará um banco de dados SQLite local.
-*   **Para conexão ao servidor:** O servidor se conectará a um banco de dados PostgreSQL (ex: `postgres://user:password@localhost:5432/keres_db`).
+*   **For local use (offline-first):** the client will use a local SQLite database.
+*   **For connecting to the server:** the server will connect to a PostgreSQL database (e.g. `postgres://user:password@localhost:5432/keres_db`).
 
-#### Variável `JWT_SECRET`
+#### The `JWT_SECRET` variable
 
-O segredo usado para assinar e verificar JSON Web Tokens (JWTs) é configurável:
+The secret used to sign and verify JSON Web Tokens (JWTs) is configurable:
 
-*   **Para o servidor:** Recomenda-se um segredo forte e aleatório, gerenciado com segurança.
-*   **Para o cliente (offline-first):** Pode ser um segredo fixo ou gerado na primeira execução, usado para verificações de tokens locais.
+*   **For the server:** a strong, random secret, securely managed, is recommended.
+*   **For the client (offline-first):** it may be a fixed secret or one generated on the first run, used for local token checks.
 
-#### Exemplo de Arquivos `.env`
+#### Example `.env` files
 
-Você pode usar arquivos `.env` para gerenciar essas variáveis de ambiente.
+You can use `.env` files to manage these environment variables.
 
-**`.env` para o Servidor:**
+**`.env` for the server:**
 
 ```dotenv
-DATABASE_URL=postgres://seu_usuario:sua_senha@seu_host_db:5432/seu_db_nome
-JWT_SECRET=seu_segredo_jwt_forte_para_online
-JWT_SECRET_REFRESH="seu_segredo_jwt_forte_para_online_refresh"
+DATABASE_URL=postgres://your_user:your_password@your_db_host:5432/your_db_name
+JWT_SECRET=your_strong_jwt_secret_for_online
+JWT_SECRET_REFRESH="your_strong_jwt_secret_for_online_refresh"
 ROOT_ADMIN_USERNAME="root"
 ROOT_ADMIN_PASSWORD="password"
 ```
 ---
 
-## 🏗️ Marcos Já Concluídos
+## 🏗️ Milestones already completed
 
-Esta seção era originalmente uma lista de próximos passos, escrita antes de qualquer implementação. Todos os itens abaixo já foram concluídos - mantidos aqui só como referência histórica de escopo, não como trabalho pendente:
+This section was originally a list of next steps, written before any implementation. Every item below has already been completed - kept here only as a historical record of scope, not as pending work:
 
-- ~~Definir migrations no `packages/db` (Drizzle).~~ Migrations vivem em `apps/api/src/db/` (Postgres) e `apps/client/src/db/` (SQLite local) - não existe `packages/db`.
-- ~~Criar contratos Zod no `packages/shared`.~~
-- ~~Implementar rotas CRUD base (users, stories, characters).~~ CRUD completo para todas as entidades listadas na seção "Estrutura de Dados", não só as três originais.
-- ~~Desenvolver o engine de sincronização.~~ Ver `apps/api/src/services/entity-sync-handlers/` e `apps/client/src/services/SyncEngineService.ts`/`entity-sync-handlers/`.
-- ~~Criar app desktop com SQLite integrado (Tauri/Electron).~~ Electron, empacotando o build web do client (SQLite via expo-sqlite/OPFS, não um binding nativo separado) - ver `docs/file_structure.md`.
+- ~~Define migrations in `packages/db` (Drizzle).~~ Migrations live in `apps/api/src/db/` (Postgres) and `apps/client/src/db/` (local SQLite) - there is no `packages/db`.
+- ~~Create Zod contracts in `packages/shared`.~~
+- ~~Implement the base CRUD routes (users, stories, characters).~~ Full CRUD for every entity listed in the "Data structure" section, not just the original three.
+- ~~Develop the synchronization engine.~~ See `apps/api/src/services/entity-sync-handlers/` and `apps/client/src/services/SyncEngineService.ts`/`entity-sync-handlers/`.
+- ~~Create a desktop app with integrated SQLite (Tauri/Electron).~~ Electron, packaging the client's web build (SQLite through expo-sqlite/OPFS, not a separate native binding) - see `docs/file_structure.md`.
 
-Para o estado atual e trabalho em andamento, não há um roadmap mantido nesta pasta no momento - consultar o histórico de commits/branches do repositório.
+For the current state and work in progress, there is no roadmap maintained in this folder at the moment - consult the repository's commit/branch history.

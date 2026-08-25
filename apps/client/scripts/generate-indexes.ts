@@ -5,14 +5,14 @@ import { generateExampleStoriesIndex } from './lib/exampleStoriesIndex';
 import { generateMigrationsIndex } from './lib/migrationsIndex';
 
 /**
- * Os quatro índices que o app precisa ter escritos antes de compilar.
+ * The four indexes the app needs written before it compiles.
  *
- * Migrações, histórias de exemplo, páginas de ajuda e recursos literários moram em pastas de
- * conteúdo, e o Metro só empacota o que está importado estaticamente - não existe pasta para
- * varrer no dispositivo. Cada um destes geradores varre a pasta aqui, na máquina de build, e
- * escreve um arquivo com um `import` por item encontrado.
+ * Migrations, example stories, help pages and literary devices live in content folders, and Metro only
+ * bundles what is statically imported - there is no folder to scan on the device. Each of these
+ * generators scans the folder here, on the build machine, and writes a file with one `import` per item
+ * found.
  *
- * Roda sozinho: é o `prestart`/`prebuild` do cliente.
+ * It runs on its own: it is the client's `prestart`/`prebuild`.
  */
 const clientRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 

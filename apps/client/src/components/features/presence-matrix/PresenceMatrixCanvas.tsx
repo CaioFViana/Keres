@@ -74,9 +74,8 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
       });
       return groups;
     }, [layout.scenes]);
-    // Uma lista achatada de linhas, e não um Fragment por faixa: o react-native-svg nativo
-    // percorre os filhos diretos do Svg, e agrupar é o tipo de coisa que funciona na web e
-    // falha no aparelho.
+    // A flat list of rows, rather than a Fragment per band: native react-native-svg walks the Svg's direct
+    // children, and grouping is the kind of thing that works on the web and fails on the device.
     const threads = useMemo(
       () =>
         layout.rows.flatMap((row, rowIndex) =>

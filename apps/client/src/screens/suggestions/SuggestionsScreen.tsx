@@ -326,13 +326,13 @@ const SuggestionsScreen = () => {
   const styles = StyleSheet.create({
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
     description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
-    // Compacto: tira de chips com rolagem horizontal (cabe bem em telas estreitas). Largo:
-    // coluna fixa à esquerda com a lista completa de grupos, sem depender de rolagem
-    // horizontal para alcançar grupos "fora da tela" - o problema original nesta tela.
+    // Compact: a strip of chips with horizontal scrolling (it fits well on narrow screens). Wide: a fixed
+    // left-hand column with the complete list of groups, without depending on horizontal scrolling to reach
+    // groups "off screen" - the original problem on this screen.
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    // Rolagem vertical com quebra de linha, não rolagem horizontal - numa lista com muitos
-    // grupos, um chip "fora da tela" para o lado não tinha nenhuma pista visual de que
-    // existia mais coisa para rolar; quebrando linha, tudo fica alcançável só descendo.
+    // Vertical scrolling with line wrapping, not horizontal scrolling - in a list with many groups, a chip
+    // "off screen" to the side gave no visual clue that there was more to scroll to; with wrapping,
+    // everything is reachable just by going down.
     groups: { maxHeight: 160, marginBottom: 16 },
     groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
     chip: {

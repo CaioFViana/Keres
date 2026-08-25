@@ -14,7 +14,7 @@ import * as webMediaStore from './webMediaStore';
 
 const isWeb = Platform.OS === 'web';
 
-/** Path em disco (sem o prefixo `desktop-media:`) onde esta mídia mora, na convenção do webMediaStore. */
+/** The on-disk path (without the `desktop-media:` prefix) where this medium lives, in webMediaStore's convention. */
 function webMediaRelativePath(storyId: string, hash: string, mimeType: string): string {
   return `media/${storyId}/${hash}.${extensionForMimeType(mimeType)}`;
 }
@@ -24,18 +24,18 @@ function webThumbnailRelativePath(storyId: string, hash: string): string {
 }
 
 /**
- * Arquivos de mídia no aparelho.
+ * Media files on the device.
  *
- * Os arquivos ficam em `<documentos>/media/<storyId>/<hash>.<ext>`. O nome vem do conteúdo
- * e não do nome original por dois motivos: dois arquivos idênticos ocupam um espaço só, e
- * o mesmo endereço vale aqui e no servidor, o que dispensa guardar qualquer mapeamento
- * entre caminho local e caminho remoto.
+ * The files live in `<documents>/media/<storyId>/<hash>.<ext>`. The name comes from the content
+ * and not from the original name for two reasons: two identical files take up a single space, and
+ * the same address holds here and on the server, which does away with keeping any mapping
+ * between the local path and the remote one.
  *
- * `documents` e não `cache`: o sistema pode esvaziar o cache a qualquer momento, e mídia
- * ainda não sincronizada não teria como ser recuperada.
+ * `documents` and not `cache`: the system may empty the cache at any moment, and media
+ * not yet synchronized would have no way of being recovered.
  */
 
-/** Uma mídia escolhida pela pessoa, já copiada para o armazenamento do aplicativo. */
+/** A medium chosen by the person, already copied into the application's storage. */
 export interface ImportedMedia {
   mediaType: MediaType;
   mimeType: string;
@@ -43,7 +43,7 @@ export interface ImportedMedia {
   hash: string;
   sizeBytes: number;
   localPath: string;
-  /** Só para vídeo; ver `mediaFileService.thumbnailPathFor`. */
+  /** Video only; see `mediaFileService.thumbnailPathFor`. */
   thumbnailPath?: string;
 }
 
@@ -69,8 +69,8 @@ function ensureDirectory(directory: Directory): Directory {
 }
 
 /**
- * Nem todo seletor devolve o mime type (alguns só dão o nome do arquivo), então a extensão
- * serve de segunda tentativa antes de desistir do arquivo.
+ * Not every picker returns the mime type (some only give the file name), so the extension
+ * serves as a second attempt before giving up on the file.
  */
 function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | undefined {
   if (asset.mimeType && isSupportedMediaMimeType(asset.mimeType)) {
@@ -108,12 +108,12 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
 }
 
 /**
- * Extrai um quadro do vídeo e o grava junto da mídia, com o mesmo endereço por hash.
+ * Extracts a frame from the video and writes it beside the medium, with the same hash address.
  *
- * Gerado uma vez e persistido (em vez de recalculado a cada exibição) porque extrair um
- * quadro é caro o bastante para travar a rolagem se acontecesse por célula de grade a cada
- * render. Falha aqui não impede a mídia de existir - vídeo sem miniatura ainda toca, só
- * mostra o ícone genérico na lista.
+ * Generated once and persisted (instead of recomputed on every display) because extracting a
+ * frame is expensive enough to stall the scrolling if it happened per grid cell on every
+ * render. A failure here does not stop the medium existing - a video with no thumbnail still plays, it just
+ * shows the generic icon in the list.
  */
 async function generateVideoThumbnail(
   storyId: string,
@@ -136,7 +136,7 @@ async function generateVideoThumbnail(
 }
 
 export const mediaFileService = {
-  /** Caminho onde o arquivo desta mídia mora (ou moraria) neste aparelho. */
+  /** The path where this medium's file lives (or would live) on this device. */
   localPathFor(storyId: string, hash: string, mimeType: string): string {
     if (isWeb) {
       return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + webMediaRelativePath(storyId, hash, mimeType);
@@ -144,7 +144,7 @@ export const mediaFileService = {
     return new File(storyMediaDirectory(storyId), `${hash}.${extensionForMimeType(mimeType)}`).uri;
   },
 
-  /** Caminho onde a miniatura deste vídeo moraria neste aparelho. */
+  /** The path where this video's thumbnail would live on this device. */
   thumbnailPathFor(storyId: string, hash: string): string {
     if (isWeb) {
       return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + webThumbnailRelativePath(storyId, hash);
@@ -153,10 +153,10 @@ export const mediaFileService = {
   },
 
   /**
-   * Gera (ou regenera) a miniatura de um vídeo já presente no aparelho.
+   * Generates (or regenerates) the thumbnail of a video already present on the device.
    *
-   * Usada tanto ao importar quanto depois de um download vindo do servidor - nos dois
-   * casos o arquivo de vídeo já está local, só falta o quadro extraído.
+   * Used both when importing and after a download from the server - in both
+   * cases the video file is already local, only the extracted frame is missing.
    */
   async generateVideoThumbnail(
     storyId: string,
@@ -179,8 +179,8 @@ export const mediaFileService = {
     try {
       return new File(localPath).exists;
     } catch {
-      // Um caminho gravado por uma instalação anterior pode nem ser válido hoje; tratar
-      // como ausente faz o download acontecer, que é a recuperação correta.
+      // A path written by an earlier installation may not even be valid today; treating it
+      // as absent makes the download happen, which is the correct recovery.
       return false;
     }
   },
@@ -204,12 +204,12 @@ export const mediaFileService = {
   },
 
   /**
-   * Copia o arquivo escolhido para o armazenamento do aplicativo e calcula o hash.
+   * Copies the chosen file into the application's storage and computes the hash.
    *
-   * O hash é o MD5 nativo do `expo-file-system` - é o único digest que ele calcula, e
-   * fazer SHA-256 em JS sobre um vídeo travaria a interface. Serve como endereço e
-   * detecção de mudança; o servidor recalcula o hash dos bytes que recebe, então isto não
-   * é uma garantia de segurança que dependa do cliente.
+   * The hash is `expo-file-system`'s native MD5 - it is the only digest it computes, and
+   * doing SHA-256 in JS over a video would freeze the interface. It serves as an address and for
+   * change detection; the server recomputes the hash of the bytes it receives, so this is not
+   * a security guarantee that depends on the client.
    */
   async importAsset(
     storyId: string,
@@ -223,8 +223,8 @@ export const mediaFileService = {
     }
 
     if (isWeb) {
-      // O seletor web (expo-document-picker) entrega o próprio Blob escolhido em
-      // `asset.file` - não há um caminho de sistema de arquivos nativo para copiar de.
+      // The web picker (expo-document-picker) hands over the chosen Blob itself in
+      // `asset.file` - there is no native file system path to copy from.
       if (!asset.file) {
         throw new Error(`No file data available for "${asset.name}".`);
       }
@@ -232,8 +232,8 @@ export const mediaFileService = {
       const hash = webMediaStore.md5Hex(bytes);
       const relativePath = webMediaRelativePath(storyId, hash, mimeType);
 
-      // Se já existe, os bytes são os mesmos por definição do endereçamento: regravar só
-      // gastaria tempo e I/O.
+      // If it already exists, the bytes are the same by definition of the addressing: rewriting would only
+      // waste time and I/O.
       if (!webMediaStore.existsSync(relativePath)) {
         await webMediaStore.writeBytes(relativePath, bytes);
       }
@@ -262,8 +262,8 @@ export const mediaFileService = {
     const directory = ensureDirectory(storyMediaDirectory(storyId));
     const destination = new File(directory, `${hash}.${extensionForMimeType(mimeType)}`);
 
-    // Se já existe, os bytes são os mesmos por definição do endereçamento: recopiar só
-    // gastaria tempo e I/O.
+    // If it already exists, the bytes are the same by definition of the addressing: re-copying would only
+    // waste time and I/O.
     if (!destination.exists) {
       source.copy(destination);
     }
@@ -284,7 +284,7 @@ export const mediaFileService = {
     };
   },
 
-  /** Grava bytes vindos do servidor no endereço local correspondente ao hash. */
+  /** Writes bytes coming from the server to the local address corresponding to the hash. */
   async writeDownloaded(
     storyId: string,
     hash: string,
@@ -309,7 +309,7 @@ export const mediaFileService = {
     return destination.uri;
   },
 
-  /** Lê de volta os bytes de um arquivo já local (usado ao subir para o servidor). */
+  /** Reads back the bytes of an already local file (used when uploading to the server). */
   async readBytes(localPath: string): Promise<Uint8Array> {
     if (isWeb) {
       if (!localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
@@ -322,7 +322,7 @@ export const mediaFileService = {
     return new File(localPath).bytes();
   },
 
-  /** Destino a passar para um download direto (`File.downloadFileAsync`) - só nativo, ver MediaSyncService. */
+  /** The destination to pass to a direct download (`File.downloadFileAsync`) - native only, see MediaSyncService. */
   destinationFor(storyId: string, hash: string, mimeType: string): File {
     const directory = ensureDirectory(storyMediaDirectory(storyId));
     return new File(directory, `${hash}.${extensionForMimeType(mimeType)}`);
@@ -346,13 +346,13 @@ export const mediaFileService = {
         file.delete();
       }
     } catch (error) {
-      // Falhar em apagar um arquivo local não deve derrubar a exclusão da mídia em si: o
-      // registro é a fonte da verdade, o arquivo órfão é desperdício de espaço, não um bug.
+      // Failing to delete a local file must not bring down the deletion of the medium itself: the
+      // record is the source of truth, the orphaned file is wasted space, not a bug.
       console.warn('Could not delete local media file:', localPath, error);
     }
   },
 
-  /** Remove todos os arquivos de mídia de uma história (usado ao excluir a história). */
+  /** Removes all of a story's media files (used when deleting the story). */
   deleteStoryMedia(storyId: string): void {
     if (isWeb) {
       webMediaStore

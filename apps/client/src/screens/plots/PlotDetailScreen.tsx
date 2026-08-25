@@ -29,9 +29,9 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;
 
 /**
- * Leitura, não edição: nome, detalhes e as cenas da trama em ordem narrativa. A relação em si
- * (qual cena, com que nota) continua sendo editada no formulário da Cena, para não existirem
- * dois editores concorrentes da mesma relação.
+ * Reading, not editing: name, details and the plot's scenes in narrative order. The relation itself
+ * (which scene, with what note) carries on being edited on the Scene's form, so that there are not
+ * two competing editors of the same relation.
  */
 const PlotDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -42,8 +42,8 @@ const PlotDetailScreen = () => {
   const { plotId } = route.params;
   const { selectedStory } = useStoryStore();
   const navigateToDetail = useNavigateToEntityDetail();
-  // Abrir a Cena sai de `PlotsStack` para `NarrativeElementsStack`; sem registrar a volta, o
-  // botão de voltar entregaria a pilha de Cenas onde ela estava, e não esta Trama.
+  // Opening the Scene leaves `PlotsStack` for `NarrativeElementsStack`; without registering the way back, the
+  // back button would hand over the Scenes stack where it was, and not this Plot.
   const openScene = useCallback(
     (sceneId: string) =>
       navigateToDetail('Scene', sceneId, {

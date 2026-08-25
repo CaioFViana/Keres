@@ -55,10 +55,10 @@ const ChangePasswordScreen = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
-  /** Mostrados só uma vez - depois disto só o hash de cada um existe no servidor. */
+  /** Shown only once - after this only each one's hash exists on the server. */
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
-  // 'recover' troca a senha com um recovery code em vez da senha atual - mesmo caminho de
-  // ServerRegistrationScreen, mas sem pedir usuário/endereço de novo: o servidor já é conhecido.
+  // 'recover' changes the password with a recovery code instead of the current password - the same path as
+  // ServerRegistrationScreen, but without asking for the username/address again: the server is already known.
   const [mode, setMode] = useState<'change' | 'recover'>('change');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [recovering, setRecovering] = useState(false);

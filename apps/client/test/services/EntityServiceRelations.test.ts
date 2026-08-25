@@ -295,11 +295,11 @@ describe('EntityService relationship labels', () => {
 });
 
 /**
- * `getEntityIdentifier` (o resolvedor público usado por `OperationLogDetailScreen` e, depois
- * desta mudança, pela camada de resumo de conflitos de sync) delega para
- * `_resolveRelationEntityName` - um switch separado do que `getEntityName` usa, que até aqui
- * só cobria uma parte das relações. Sem cobertura para os outros 6 tipos, ele voltava
- * `undefined` mesmo com a linha existindo no banco.
+ * `getEntityIdentifier` (the public resolver used by `OperationLogDetailScreen` and, after
+ * this change, by the sync conflict summary layer) delegates to
+ * `_resolveRelationEntityName` - a switch separate from the one `getEntityName` uses, which until now
+ * covered only part of the relations. With no coverage for the other 6 types, it returned
+ * `undefined` even with the row existing in the database.
  */
 describe('EntityService.getEntityIdentifier', () => {
   const identifierOf = (entityTypeString: string, entityId: string) =>

@@ -95,10 +95,9 @@ import StoryDevicesStackNavigator from './StoryDevicesStack';
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
   GlobalSearch: undefined;
-  // Todas as pilhas abaixo aceitam `{ screen, params }` opcional pela mesma razão: cada
-  // `Drawer.Screen` tem seu próprio `drawerItemPress` (ver mais abaixo) que navega
-  // explicitamente para a tela de lista da pilha ao ser tocado no menu, em vez de deixar o
-  // Drawer restaurar o estado aninhado como estava.
+  // Every stack below accepts an optional `{ screen, params }` for the same reason: each `Drawer.Screen`
+  // has its own `drawerItemPress` (see further below) that navigates explicitly to the stack's list screen
+  // when tapped in the menu, instead of letting the Drawer restore the nested state as it was.
   CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
   LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   NarrativeElementsStack: NavigatorScreenParams<NarrativeElementsStackParamList> | undefined;
@@ -138,8 +137,8 @@ const mainSystemStackRootScreens = new Set([
   'CommentsList',
   'StorySchemaList',
   'Suggestions',
-  // As raízes dos stacks que o drawer abre direto: sem elas o header desenha uma seta de
-  // voltar em cima da própria lista, que é justamente o lugar de onde não se volta.
+  // The roots of the stacks the drawer opens directly: without them the header draws a back arrow on top
+  // of the list itself, which is precisely the place there is no going back from.
   'StatList',
   'HelpIndex',
   'DeviceIndex',
@@ -483,7 +482,7 @@ const MainSystemNavigator = () => {
   return (
     <>
       <Drawer.Navigator
-        // A vitrine abre direto no item pedido; fora dela, o painel da história, como sempre.
+        // The showcase opens straight into the requested item; outside it, the story's dashboard, as always.
         initialRouteName={readShowcaseRequest()?.stack as keyof MainSystemDrawerParamList}
         defaultStatus={isWide ? 'open' : 'closed'}
         backBehavior="history"
@@ -537,9 +536,9 @@ const MainSystemNavigator = () => {
               !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
                 ? { marginLeft: 15 }
                 : undefined,
-            // As telas aninhadas usam headerRight para ações como criar e editar. O atalho de
-            // ajuda fica no lado esquerdo para continuar visível quando essas ações substituem
-            // o lado direito do header do drawer.
+            // The nested screens use headerRight for actions such as create and edit. The help shortcut stays on
+            // the left so it remains visible when those actions take over the right-hand side of the drawer's
+            // header.
             headerLeft: isHelpPage
               ? () => (
                   <NavigationBackButton
@@ -594,9 +593,9 @@ const MainSystemNavigator = () => {
           component={MainDashboardScreen}
           options={{
             title: selectedStory?.title || t('dashboard_title'),
-            // A história atual precisa se destacar das demais entradas do drawer, que são só
-            // navegação - sem isto, o nome da história some no meio da lista como se fosse mais
-            // um item igual a "Personagens" ou "Locais".
+            // The current story has to stand out from the drawer's other entries, which are only navigation -
+            // without this, the story's name gets lost in the list as if it were just another item like
+            // "Characters" or "Locations".
             drawerLabel: ({ focused }) => (
               <Text
                 style={{
@@ -627,13 +626,12 @@ const MainSystemNavigator = () => {
             drawerLabel: t('characters_title'),
           }}
           listeners={({ navigation }) => ({
-            // O comportamento padrão do Drawer, ao tocar num item, restaura o estado
-            // aninhado exatamente como ele estava (é assim que abas preservam navegação -
-            // é intencional na maioria dos apps). Aqui a gente quer o oposto: tocar "Personagens"
-            // sempre deve levar à lista, não a onde a pilha ficou. `preventDefault` bloqueia essa
-            // restauração, e navegar direto para a rota "Characters" (a raiz da pilha) faz o
-            // stack navigator descartar tudo acima dela - sem depender de um evento global
-            // separado torcendo para a ListScreen estar montada a tempo de escutá-lo.
+            // The Drawer's default behaviour, when an item is tapped, restores the nested state exactly as it was
+            // (that is how tabs preserve navigation - it is intentional in most apps). Here we want the opposite:
+            // tapping "Characters" should always lead to the list, not to wherever the stack was left.
+            // `preventDefault` blocks that restoration, and navigating straight to the "Characters" route (the
+            // stack's root) makes the stack navigator discard everything above it - without depending on a separate
+            // global event and hoping the ListScreen is mounted in time to hear it.
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('CharactersStack', { screen: 'Characters' });
@@ -785,7 +783,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('stats_title'),
             drawerLabel: t('stats_title'),
-            // O stack continua registrado; só o item do menu some quando o sistema está desligado.
+            // The stack stays registered; only the menu item disappears when the system is turned off.
             drawerItemStyle: {
               height: selectedStory?.statSystem ? undefined : 0,
               overflow: 'hidden',
@@ -842,8 +840,8 @@ const MainSystemNavigator = () => {
           options={{
             title: t('story_devices_title'),
             drawerLabel: t('story_devices_title'),
-            // A tela continua registrada quando o ajuste está desligado para que uma navegação
-            // direta ou um link de ajuda não quebre; só o item do menu some.
+            // The screen stays registered when the setting is off so a direct navigation or a help link does not
+            // break; only the menu item disappears.
             drawerItemStyle: {
               height: suggestLiteraryDevices ? undefined : 0,
               overflow: 'hidden',

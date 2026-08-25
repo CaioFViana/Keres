@@ -44,10 +44,10 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
 
     const checkColdInstall = async () => {
       try {
-        // A vitrine cria as próprias configurações; a tela de boas-vindas não entra no caminho.
+        // The showcase creates its own settings; the welcome screen does not get in the way.
         if (showcase) {
-          // Import tardio: a vitrine arrasta os serviços de história inteiros, e nada disso
-          // precisa existir quando o app abre normal (que é sempre, fora a captura de telas).
+          // A late import: the showcase drags the whole story services along, and none of that
+          // needs to exist when the app opens normally (which is always, apart from the screen capture).
           const { prepareShowcase } = await import('../showcase/prepareShowcase');
           const ready = await prepareShowcase(drizzleDb, showcase);
           setShowcaseReady(ready);
@@ -86,8 +86,8 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const initialRouteName: keyof RootStackParamList = isColdInstallNeeded
     ? 'ColdInstall'
     : showcaseReady
-      ? // A vitrine já escolheu a história; passar pela seleção só mostraria uma tela que a
-        // captura não quer.
+      ? // The showcase has already chosen the story; going through the selection would only show a screen the
+        // capture does not want.
         'MainSystem'
       : 'StorySelection';
 

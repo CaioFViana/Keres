@@ -5,7 +5,7 @@ import { createSyncConflictService } from '../services/SyncConflictService';
 
 interface SyncConflictState {
   conflicts: PendingConflict[];
-  /** Conflito aberto no drill-in de diff de campos. `null` quando nenhum está aberto. */
+  /** The conflict opened in the field-diff drill-in. `null` when none is open. */
   selectedConflictId: string | null;
   isVisible: boolean;
   isResolving: boolean;
@@ -39,9 +39,9 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
     }),
 
   /**
-   * Só recarrega a lista - nunca abre a tela sozinha. Um conflito trava a sincronização
-   * daquela entidade, mas isso não justifica interromper o que o usuário está fazendo agora;
-   * o ponto de entrada (banner no Dashboard) é quem decide quando mostrar isto.
+   * It only reloads the list - it never opens the screen by itself. A conflict stalls that entity's
+   * synchronization, but that does not justify interrupting what the user is doing right now; the entry
+   * point (the banner on the Dashboard) is what decides when to show this.
    */
   refresh: async (db, storyId) => {
     try {

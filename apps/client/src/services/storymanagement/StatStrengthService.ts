@@ -13,9 +13,9 @@ import {
 import { createServerService } from '../ServerService';
 
 export interface StatStrengthService {
-  /** Todos os degraus da história, escada padrão e overrides juntos, em ordem crescente. */
+  /** Every tier in the story, the default ladder and the overrides together, in ascending order. */
   getStrengthsByStoryId(storyId: string): Promise<StatStrengthSelect[]>;
-  /** Só a escada de um stat (`statId` nulo = a escada padrão da história). */
+  /** Only one stat's ladder (a null `statId` = the story's default ladder). */
   getLadder(storyId: string, statId: string | null): Promise<StatStrengthSelect[]>;
   createStrength(
     currentUserId: string,
@@ -28,8 +28,8 @@ export interface StatStrengthService {
   ): Promise<void>;
   deleteStrength(currentUserId: string, strengthId: string): Promise<void>;
   /**
-   * Substitui a escada inteira de uma vez. É como a tela de edição salva: comparar o conjunto
-   * final com o atual é mais previsível do que espalhar create/update/delete a cada tecla.
+   * Replaces the whole ladder at once. It is how the editing screen saves: comparing the final
+   * set with the current one is more predictable than scattering create/update/delete on every keystroke.
    */
   replaceLadder(
     currentUserId: string,
@@ -61,9 +61,9 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
     }
   };
 
-  // Escritas cruas, sem o guarda de piso repetido. `replaceLadder` valida o conjunto final de
-  // uma vez e precisa delas: checar linha a linha recusaria uma troca legítima de pisos entre
-  // dois degraus só porque o estado intermediário colide.
+  // Raw writes, without the repeated floor guard. `replaceLadder` validates the final set in
+  // one go and needs them: checking row by row would refuse a legitimate swap of floors between
+  // two tiers just because the intermediate state collides.
   const writeCreate = async (currentUserId: string, data: Create<StatStrengthInsert>) => {
     const row = prepareNewEntityData<StatStrengthInsert>(data);
     const result = await db.insert(statStrengths).values(row).returning().get();

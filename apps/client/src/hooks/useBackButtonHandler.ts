@@ -10,12 +10,12 @@ interface BackButtonHandlerOptions {
    */
   showWebBackButton?: boolean;
   /**
-   * Para onde voltar quando o padrão está errado.
+   * Where to go back to when the default is wrong.
    *
-   * `goBack` volta dentro do stack em foco, o que é certo quase sempre. Não é quando a tela foi
-   * aberta a partir de *outro* stack do drawer: a comparação de status aberta do detalhe de um
-   * personagem cairia na lista de status, e não de volta no personagem, porque a pilha de
-   * status começa na lista dela. Quem sabe de onde veio passa a volta correta aqui.
+   * `goBack` goes back within the focused stack, which is right almost always. It is not when the screen was
+   * opened from *another* drawer stack: the stat comparison opened from a character's
+   * detail would land on the stats list, and not back on the character, because the stats
+   * stack starts at its own list. Whoever knows where it came from passes the correct way back here.
    */
   onBack?: () => void;
 }
@@ -36,9 +36,9 @@ export const useBackButtonHandler = ({
   const consumeCrossStackReturnAction = useHeaderBackActionStore(
     (state) => state.consumeCrossStackReturnAction,
   );
-  // Um ref mantém a volta customizada fora das dependências dos efeitos: o chamador quase
-  // sempre passa uma função nova a cada render, e sem isto o handler se registraria de novo
-  // a cada tecla digitada na tela.
+  // A ref keeps the custom way back out of the effects' dependencies: the caller almost
+  // always passes a new function on every render, and without this the handler would register itself again
+  // on every key typed on the screen.
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
 

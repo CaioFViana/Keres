@@ -10,8 +10,8 @@ export interface DocRegistryOptions {
 }
 
 /**
- * Gera o registry de uma biblioteca de documentação (Ajuda ou Recursos Literários) a partir das
- * pastas de conteúdo: uma pasta por página, um arquivo por idioma.
+ * Generates the registry of a documentation library (Help or Literary Devices) from the
+ * content folders: one folder per page, one file per language.
  */
 export function generateDocRegistry({
   contentDir,

@@ -12,27 +12,27 @@ import { StoryImportError } from './StoryImportError';
 export { StoryImportError };
 
 /**
- * Entrega e leitura do pacote de uma história como *arquivo*.
+ * Delivering and reading a story's package as a *file*.
  *
- * A parte de plataforma fica isolada aqui de propósito: exportar é "escrever num arquivo e
- * passar para o sistema operacional decidir o destino" (share sheet no celular, download no
- * navegador), e nenhuma dessas duas coisas tem a ver com a camada de dados. O empacotamento
- * de mídia em `.zip` (que precisa saber sobre bytes, hash, mimeType) fica em
- * `storyMediaBundle.ts`; este arquivo só escreve/lê o arquivo resultante.
+ * The platform part is deliberately isolated here: exporting is "writing to a file and
+ * letting the operating system decide the destination" (a share sheet on the phone, a download in the
+ * browser), and neither of those two things has anything to do with the data layer. Packaging
+ * media into a `.zip` (which needs to know about bytes, hash, mimeType) lives in
+ * `storyMediaBundle.ts`; this file only writes/reads the resulting file.
  */
 
 /**
- * Marcas combinantes que o `normalize('NFD')` separa das letras.
+ * Combining marks that `normalize('NFD')` separates from the letters.
  *
- * Montado com escapes em vez de escrito direto no literal para o arquivo-fonte não carregar
- * caracteres invisíveis que qualquer edição futura pode quebrar sem ninguém notar.
+ * Assembled with escapes rather than written straight into the literal so the source file does not carry
+ * invisible characters that any future edit could break without anybody noticing.
  */
 const COMBINING_MARKS = new RegExp(
   '[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']',
   'g',
 );
 
-/** Título reduzido a algo que qualquer sistema de arquivos aceita. */
+/** The title reduced to something any file system accepts. */
 function slugify(storyTitle: string): string {
   const slug = storyTitle
     .normalize('NFD')
@@ -46,26 +46,26 @@ function slugify(storyTitle: string): string {
 }
 
 /**
- * Nome de arquivo derivado do título, seguro para qualquer sistema de arquivos.
+ * A file name derived from the title, safe for any file system.
  *
- * A data entra no nome porque exportar a mesma história duas vezes é o caso comum (backup),
- * e dois arquivos com o mesmo nome na pasta de downloads viram uma adivinhação.
+ * The date goes into the name because exporting the same story twice is the common case (a backup),
+ * and two files with the same name in the downloads folder become a guessing game.
  */
 export function buildExportFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-${now.toISOString().slice(0, 10)}.json`;
 }
 
-/** Nome do pacote com mídia, no mesmo padrão da exportação de dados. */
+/** The name of the package with media, in the same pattern as the data export. */
 export function buildExportZipFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-${now.toISOString().slice(0, 10)}.zip`;
 }
 
-/** Nome do arquivo de imagem do mapa da história, no mesmo padrão da exportação de dados. */
+/** The name of the story map's image file, in the same pattern as the data export. */
 export function buildStoryMapFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
 }
 
-/** Nome do arquivo de imagem do mapa de relações, no mesmo padrão da exportação de dados. */
+/** The name of the relations map's image file, in the same pattern as the data export. */
 export function buildCharacterRelationMapFileName(
   storyTitle: string,
   now: Date = new Date(),
@@ -73,7 +73,7 @@ export function buildCharacterRelationMapFileName(
   return `${slugify(storyTitle)}-relacoes-${now.toISOString().slice(0, 10)}.svg`;
 }
 
-/** Nome do arquivo de imagem do grafo de estrutura de Locations, no mesmo padrão da exportação de dados. */
+/** The name of the Locations structure graph's image file, in the same pattern as the data export. */
 export function buildLocationGraphMapFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-locations-${now.toISOString().slice(0, 10)}.svg`;
 }
@@ -83,9 +83,9 @@ export function buildStoryTimelineFileName(storyTitle: string, now: Date = new D
   return `${slugify(storyTitle)}-linha-do-tempo-${now.toISOString().slice(0, 10)}.svg`;
 }
 
-/** Resultado da tentativa de entregar o arquivo ao usuário. */
+/** The result of trying to deliver the file to the user. */
 export interface ExportDeliveryResult {
-  /** `false` quando a plataforma não oferece nenhuma forma de compartilhar arquivo. */
+  /** `false` when the platform offers no way at all of sharing a file. */
   delivered: boolean;
   /** Caminho local do arquivo escrito, quando houver. */
   uri?: string;
@@ -93,14 +93,14 @@ export interface ExportDeliveryResult {
 }
 
 /**
- * Escreve conteúdo em arquivo e entrega ao usuário.
+ * Writes content to a file and delivers it to the user.
  *
- * No celular, o arquivo vai para o cache e o share sheet do sistema decide o destino (Drive,
- * Arquivos, e-mail...). Gravar direto em alguma pasta pública exigiria permissão de
- * armazenamento e daria menos escolha ao usuário, não mais.
+ * On the phone, the file goes to the cache and the system's share sheet decides the destination (Drive,
+ * Files, email...). Writing straight to some public folder would require storage
+ * permission and would give the user less choice, not more.
  *
- * Aceita texto ou bytes porque o `.json` da exportação simples e o `.zip` com mídia
- * compartilham exatamente este mecanismo - só o tipo de conteúdo muda.
+ * It accepts text or bytes because the simple export's `.json` and the `.zip` with media
+ * share exactly this mechanism - only the content type changes.
  */
 async function deliverFile(
   contents: string | Uint8Array,
@@ -114,8 +114,8 @@ async function deliverFile(
   }
 
   const file = new File(Paths.cache, fileName);
-  // `overwrite` porque exportar a mesma história duas vezes no mesmo dia produz o mesmo
-  // nome, e falhar nisso seria um erro sem sentido para o usuário.
+  // `overwrite` because exporting the same story twice on the same day produces the same
+  // name, and failing on that would be a senseless error for the user.
   file.create({ overwrite: true, intermediates: true });
   file.write(contents);
 
@@ -128,7 +128,7 @@ async function deliverFile(
   return { delivered: true, uri: file.uri, fileName };
 }
 
-/** Entrega o pacote de dados da história como `.json` (metadados só, sem os bytes da mídia). */
+/** Delivers the story's data package as a `.json` (metadata only, without the media's bytes). */
 export function deliverStoryExport(
   storyExport: FullStoryExportType,
   fileName: string,
@@ -141,7 +141,7 @@ export function deliverStoryExport(
   );
 }
 
-/** Entrega o pacote `.zip` (dados + mídia) já montado por `buildStoryZipBytes`. */
+/** Delivers the `.zip` package (data + media) already assembled by `buildStoryZipBytes`. */
 export function deliverStoryZipExport(
   zipBytes: Uint8Array,
   fileName: string,
@@ -149,25 +149,25 @@ export function deliverStoryZipExport(
   return deliverFile(zipBytes, fileName, 'application/zip', 'public.zip-archive');
 }
 
-/** Entrega a imagem de um mapa (história ou relações) como `.svg`. */
+/** Delivers a map's image (story or relations) as an `.svg`. */
 export function deliverSvgMap(svg: string, fileName: string): Promise<ExportDeliveryResult> {
   return deliverFile(svg, fileName, 'image/svg+xml', 'public.svg-image');
 }
 
-/** Download no navegador via link temporário — não existe share sheet na web. */
+/** A browser download through a temporary link — there is no share sheet on the web. */
 function triggerBrowserDownload(
   contents: string | Uint8Array,
   fileName: string,
   mimeType: string,
 ): void {
-  // `Uint8Array`'s tipo genérico aceita `ArrayBufferLike` (inclui `SharedArrayBuffer`), mas
-  // `Blob` só aceita partes apoiadas em `ArrayBuffer`; nunca é de fato um `SharedArrayBuffer`
-  // aqui (só web usa este caminho, com bytes vindos de `File.bytes()`/JSZip).
+  // `Uint8Array`'s generic type accepts `ArrayBufferLike` (which includes `SharedArrayBuffer`), but
+  // `Blob` only accepts parts backed by an `ArrayBuffer`; it is never actually a `SharedArrayBuffer`
+  // here (only the web uses this path, with bytes coming from `File.bytes()`/JSZip).
   //
-  // O `charset=utf-8` só entra para conteúdo textual (JSON/SVG): é o que faz o navegador abrir
-  // o arquivo como UTF-8 se a pessoa arrastar/abrir em vez de salvar, e não se aplica a um
-  // `.zip` binário. Só aqui, na web - o mesmo `mimeType` também vai para `Sharing.shareAsync`
-  // no app nativo, cujo seletor de apps espera um tipo MIME sem parâmetros.
+  // The `charset=utf-8` only goes in for textual content (JSON/SVG): it is what makes the browser open
+  // the file as UTF-8 if the person drags/opens it instead of saving it, and it does not apply to a
+  // binary `.zip`. Only here, on the web - the same `mimeType` also goes to `Sharing.shareAsync`
+  // in the native app, whose app picker expects a MIME type without parameters.
   const blobType = typeof contents === 'string' ? `${mimeType};charset=utf-8` : mimeType;
   const blob = new Blob([contents as BlobPart], { type: blobType });
   const url = URL.createObjectURL(blob);
@@ -180,23 +180,23 @@ function triggerBrowserDownload(
   URL.revokeObjectURL(url);
 }
 
-/** O que `pickStoryExportFile` devolve: os dados validados, e a mídia extraída (se veio de um `.zip`). */
+/** What `pickStoryExportFile` returns: the validated data, and the extracted media (if it came from a `.zip`). */
 export interface StoryImportPayload {
   story: FullStoryExportType;
-  /** Vazio para um arquivo `.json` puro - não há bytes de mídia para extrair dele. */
+  /** Empty for a plain `.json` file - there are no media bytes to extract from it. */
   media: ExtractedZipMedia[];
 }
 
 /**
- * Abre o seletor de arquivos e devolve o pacote validado, aceitando tanto `.json` (só
- * metadados) quanto `.zip` (metadados + mídia).
+ * Opens the file picker and returns the validated package, accepting both `.json` (metadata
+ * only) and `.zip` (metadata + media).
  *
- * `null` significa que o usuário cancelou - não é erro e não deve virar aviso na tela.
+ * `null` means the user cancelled - it is not an error and must not become an on-screen warning.
  *
- * O filtro de tipo é aberto de propósito: em vários aparelhos Android um `.json` vindo de
- * outro app é reportado como `application/octet-stream`, e filtrar por tipo MIME deixaria o
- * arquivo invisível no seletor sem nenhuma explicação. O conteúdo é validado abaixo de
- * qualquer forma, então um arquivo errado dá uma mensagem clara em vez de sumir.
+ * The type filter is deliberately open: on several Android devices a `.json` coming from
+ * another app is reported as `application/octet-stream`, and filtering by MIME type would leave the
+ * file invisible in the picker with no explanation whatsoever. The content is validated below
+ * either way, so a wrong file gives a clear message instead of vanishing.
  */
 export async function pickStoryExportFile(): Promise<StoryImportPayload | null> {
   const result = await DocumentPicker.getDocumentAsync({
@@ -243,9 +243,9 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
 
   let parsedJson: unknown;
   try {
-    // `JSON.parse` nunca revive `Date` (`FullStoryExportSchema` usa `z.date()`, que rejeita
-    // string) - sem isto, reimportar um `.json` que este mesmo app acabou de exportar falharia
-    // na validação.
+    // `JSON.parse` never revives a `Date` (`FullStoryExportSchema` uses `z.date()`, which rejects a
+    // string) - without this, re-importing a `.json` this very app has just exported would fail
+    // validation.
     parsedJson = reviveDates(JSON.parse(stripUtf8Bom(rawContents)));
   } catch {
     throw new StoryImportError('invalid_format', `${asset.name} is not valid JSON.`);

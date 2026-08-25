@@ -1,9 +1,9 @@
 /**
- * Erro de importação de história com causa que o usuário consegue entender e agir.
+ * A story import error with a cause the user can understand and act on.
  *
- * Em arquivo próprio porque tanto `storyTransfer.ts` (leitura de `.json`) quanto
- * `storyMediaBundle.ts` (leitura de `.zip`) precisam lançá-lo, e nenhum dos dois deveria
- * depender do outro só por causa deste tipo.
+ * In its own file because both `storyTransfer.ts` (reading a `.json`) and
+ * `storyMediaBundle.ts` (reading a `.zip`) need to throw it, and neither of the two should
+ * depend on the other just because of this type.
  */
 export class StoryImportError extends Error {
   readonly reason: 'unreadable' | 'invalid_format' | 'future_format_version';

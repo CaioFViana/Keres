@@ -165,7 +165,7 @@ const StatFormScreen = () => {
           <Text style={styles.ladderLinkHint}>{t('stat_ladder_own_hint')}</Text>
         </TouchableOpacity>
       ) : (
-        // Sem id ainda não há a que prender a escada; ela é editada depois de salvar.
+        // With no id yet there is nothing to attach the ladder to; it is edited after saving.
         <Text style={styles.hint}>{t('stat_ladder_after_save')}</Text>
       )}
 

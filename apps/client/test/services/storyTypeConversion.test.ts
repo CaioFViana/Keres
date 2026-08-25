@@ -12,9 +12,9 @@ const scene = (id: string, chapterId: string, index: number) => ({ id, chapterId
 const edge = (sceneId: string, nextSceneId: string): Edge => ({ sceneId, nextSceneId });
 
 /**
- * Estas três funções decidem se uma história Branching pode virar Linear. Um falso positivo
- * converte uma história ramificada e perde caminhos; um falso negativo bloqueia uma conversão
- * legítima sem explicação útil.
+ * These three functions decide whether a Branching story can become Linear. A false positive converts a
+ * branching story and loses paths; a false negative blocks a legitimate conversion with no useful
+ * explanation.
  */
 describe('groupScenesByChapter', () => {
   it('orders the scenes of each chapter by index, not by insertion', () => {
@@ -59,7 +59,7 @@ describe('groupScenesByChapter', () => {
 });
 
 describe('classifyEdges', () => {
-  /** Duas cenas por capítulo, dois capítulos - o mínimo para exercitar as arestas cruzadas. */
+  /** Two scenes per chapter, two chapters - the minimum for exercising the crossing edges. */
   const twoChapters = (): ChapterWithScenes[] =>
     groupScenesByChapter(
       [chapter('c1', 1), chapter('c2', 2)],
@@ -184,9 +184,9 @@ describe('computeChapterChainOrder', () => {
   });
 
   /**
-   * A ordem só cobre a cadeia que sai da cena inicial; uma cena desligada fica de fora. É por
-   * isso que `checkLinearCompatibility` rejeita o capítulo com `orphan` antes: chamar esta
-   * função sem aquela checagem perderia a cena solta na conversão.
+   * The ordering only covers the chain leaving the starting scene; a disconnected scene is left out. That
+   * is why `checkLinearCompatibility` rejects the chapter with `orphan` first: calling this function
+   * without that check would lose the loose scene in the conversion.
    */
   it('leaves out a scene that is not on the chain', () => {
     const scenes = [scene('s1', 'c1', 1), scene('s2', 'c1', 2), scene('solta', 'c1', 3)];

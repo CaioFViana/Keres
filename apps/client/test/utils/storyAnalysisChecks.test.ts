@@ -397,8 +397,8 @@ describe('buildStoryAnalysisReport', () => {
 });
 
 /**
- * A numeração fora de 1..N não é preciosismo: a API recusa uma reordenação cujos índices não
- * formem 1..N contíguo, então a checagem é o aviso antes do conflito de sincronização.
+ * Numbering outside 1..N is not fussiness: the API refuses a reorder whose indices do not form a
+ * contiguous 1..N, so the check is the warning before the synchronization conflict.
  */
 describe('narrative index checks', () => {
   const linearInput = (): StoryAnalysisInput => {

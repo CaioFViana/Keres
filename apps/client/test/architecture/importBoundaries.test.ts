@@ -5,19 +5,19 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
 /**
- * A fronteira entre desenhar e buscar dados, verificada em vez de combinada.
+ * The border between drawing and fetching data, checked rather than agreed.
  *
- * Um tipo importado como valor mantém o módulo inteiro no grafo em tempo de execução: até
- * pouco tempo atrás, dez componentes de apresentação arrastavam 92 módulos - drizzle,
- * expo-sqlite, axios e os quatro stores - para desenhar um cartão, e as telas fechavam ciclo
- * com o navegador ao importar o `ParamList` de volta como valor. A regra
- * `@typescript-eslint/consistent-type-imports` impede a reincidência linha a linha; estes
- * testes impedem a reincidência estrutural.
+ * A type imported as a value keeps the whole module in the runtime graph: until
+ * recently, ten presentation components dragged 92 modules - drizzle,
+ * expo-sqlite, axios and the four stores - along to draw a card, and the screens closed a cycle
+ * with the navigator by importing the `ParamList` back as a value. The
+ * `@typescript-eslint/consistent-type-imports` rule stops the relapse line by line; these
+ * tests stop the structural relapse.
  */
 
 const SOURCE_ROOT = resolve(__dirname, '../../src');
 
-/** Blocos `import type` somem na compilação e não contam para o grafo de execução. */
+/** `import type` blocks vanish at compile time and do not count towards the runtime graph. */
 const TYPE_BLOCK = /^import\s+type\s*\{[^}]*\}\s*from\s*['"][^'"]+['"];?/gm;
 const TYPE_DEFAULT = /^import\s+type\s+\w+\s+from\s*['"][^'"]+['"];?/gm;
 const IMPORT = /(?:from|import)\s+['"]([^'"]+)['"]/g;
@@ -41,13 +41,13 @@ function resolveImport(specifier: string, origin: string): string | null {
     try {
       if (statSync(candidate).isFile()) return candidate;
     } catch {
-      // Caminho inexistente: o próximo candidato decide.
+      // A non-existent path: the next candidate decides.
     }
   }
   return null;
 }
 
-/** Só as arestas que sobrevivem à compilação. */
+/** Only the edges that survive compilation. */
 function valueImportsOf(path: string): string[] {
   const source = readFileSync(path, 'utf8').replace(TYPE_BLOCK, '').replace(TYPE_DEFAULT, '');
   return Array.from(source.matchAll(IMPORT), (match) => match[1])
@@ -60,9 +60,9 @@ const relativeOf = (path: string) => relative(SOURCE_ROOT, path).replace(/\\/g, 
 const graph = new Map(sourceFiles.map((path) => [path, valueImportsOf(path)]));
 
 /**
- * Componentes que ainda buscam os próprios dados. É dívida conhecida, não licença: a lista só
- * pode encolher. Um componente novo aqui significa que a busca de dados desceu de novo para a
- * camada de desenho - o lugar dela é numa tela ou num hook, com os dados chegando por prop.
+ * Components that still fetch their own data. It is known debt, not a licence: the list can only
+ * shrink. A new component here means data fetching has dropped back down into the
+ * drawing layer - its place is in a screen or a hook, with the data arriving by prop.
  */
 const COMPONENTS_THAT_STILL_FETCH = [
   'components/common/forms/CustomAttributeFields/AttributeValueInput.tsx',
@@ -82,7 +82,7 @@ const COMPONENTS_THAT_STILL_FETCH = [
   'components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet.tsx',
 ];
 
-/** Componentes que desenham conteúdo de história - a base da vitrine estática do site. */
+/** Components that draw story content - the basis of the site's static showcase. */
 const PRESENTATIONAL_SEEDS = [
   'components/features/list-items/CharacterListItem.tsx',
   'components/features/list-items/ItemListItem.tsx',
@@ -96,8 +96,8 @@ const PRESENTATIONAL_SEEDS = [
   'components/features/relations/RelationManager/RelationRow.tsx',
 ];
 
-describe('fronteiras de import', () => {
-  it('não tem ciclos de import', () => {
+describe('import boundaries', () => {
+  it('has no import cycles', () => {
     const state = new Map<string, 'visiting' | 'done'>();
     const cycles: string[] = [];
 
@@ -116,7 +116,7 @@ describe('fronteiras de import', () => {
     expect(cycles).toEqual([]);
   });
 
-  it('mantém a busca de dados fora da camada de desenho', () => {
+  it('keeps data fetching out of the drawing layer', () => {
     const offenders = sourceFiles
       .filter((path) => relativeOf(path).startsWith('components/'))
       .filter((path) =>
@@ -125,12 +125,12 @@ describe('fronteiras de import', () => {
       .map(relativeOf)
       .sort();
 
-    // `toEqual` e não `arrayContaining`: a lista tem que encolher, e um item resolvido que
-    // continue listado também é um erro - senão a dívida quitada vira permissão esquecida.
+    // `toEqual` and not `arrayContaining`: the list has to shrink, and a resolved item that
+    // stays listed is an error too - otherwise settled debt becomes a forgotten permission.
     expect(offenders).toEqual([...COMPONENTS_THAT_STILL_FETCH].sort());
   });
 
-  it('deixa os componentes de apresentação fora do banco e dos serviços', () => {
+  it('keeps presentation components away from the database and the services', () => {
     const seen = new Set<string>();
     const queue = PRESENTATIONAL_SEEDS.map((seed) => join(SOURCE_ROOT, seed));
     while (queue.length > 0) {

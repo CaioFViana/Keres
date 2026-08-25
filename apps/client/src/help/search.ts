@@ -65,7 +65,7 @@ export function flattenHelpPage(page: HelpPage): string {
   return [page.title, page.summary, ...page.keywords, ...blockText].join(' ');
 }
 
-/** Prepara o conteúdo uma vez para que a busca não re-achete as 53 páginas a cada tecla. */
+/** It prepares the content once so the search does not re-flatten the 53 pages on every keystroke. */
 export function createHelpSearchIndex(pages: HelpPage[]): HelpSearchIndex {
   return {
     entries: pages.map((page, order) => {
@@ -83,7 +83,7 @@ export function createHelpSearchIndex(pages: HelpPage[]): HelpSearchIndex {
   };
 }
 
-/** Busca um índice já preparado; o chamador deve preservá-lo enquanto o idioma não mudar. */
+/** It searches an already-prepared index; the caller has to keep it while the language does not change. */
 export function searchHelp(index: HelpSearchIndex, query: string) {
   const needle = normalize(query.trim());
   if (!needle) return [];

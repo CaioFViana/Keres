@@ -26,7 +26,7 @@ import { StatLadderBar } from '../../components/features/stats/StatLadderBar/Sta
 type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;
 
 interface DraftTier {
-  /** Chave só do rascunho; degraus já salvos carregam também o id do banco. */
+  /** A draft-only key; already-saved tiers also carry the database id. */
   key: string;
   id?: string;
   label: string;
@@ -37,12 +37,12 @@ let draftCounter = 0;
 const newDraftKey = () => `draft-${(draftCounter += 1)}`;
 
 /**
- * Editor da escada de tiers. `statId` ausente edita a escada padrão da história; presente,
- * edita (ou cria) a escada exclusiva daquele status.
+ * The tier ladder editor. An absent `statId` edits the story's default ladder; present, it
+ * edits (or creates) that stat's exclusive ladder.
  *
- * A tela salva o conjunto inteiro de uma vez (`replaceLadder`) em vez de gravar cada tecla:
- * uma escada é um todo coerente, e trocar dois pisos de lugar passaria por um estado inválido
- * se cada linha fosse salva sozinha.
+ * The screen saves the whole set at once (`replaceLadder`) instead of writing on every keystroke:
+ * a ladder is a coherent whole, and swapping two tiers around would pass through an invalid state
+ * if each row were saved on its own.
  */
 const StatLadderScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -90,8 +90,8 @@ const StatLadderScreen = () => {
         .sort((a, b) => a.minValue - b.minValue)
         .map((row) => ({
           key: newDraftKey(),
-          // Ao herdar a escada padrão como ponto de partida, os degraus entram sem id: eles
-          // serão criados como linhas novas deste status, não movidos da escada padrão.
+          // When inheriting the default ladder as a starting point, the tiers come in without an id: they
+          // will be created as new rows of this stat, not moved from the default ladder.
           id: statId && ownRows.length === 0 ? undefined : (row as { id?: string }).id,
           label: row.label,
           minValue: String(row.minValue),
@@ -138,8 +138,8 @@ const StatLadderScreen = () => {
     [colors],
   );
 
-  // Só os degraus já preenchidos entram na prévia: uma linha em branco recém-adicionada não
-  // pode fazer a barra sumir enquanto o autor digita o valor dela.
+  // Only the already-filled tiers enter the preview: a freshly added blank row must not
+  // make the bar disappear while the author is typing its value.
   const previewLadder: StatTier[] = useMemo(() => {
     const parsed = tiers
       .map((tier) => ({ label: tier.label.trim(), minValue: Number(tier.minValue) }))

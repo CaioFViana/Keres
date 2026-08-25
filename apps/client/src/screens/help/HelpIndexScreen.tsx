@@ -26,7 +26,7 @@ type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefine
 type HelpIndexScreenProps = {
   openSections?: Record<string, boolean>;
   onOpenSectionsChange?: Dispatch<SetStateAction<Record<string, boolean>>>;
-  /** Qual biblioteca renderizar. O padrão mantém esta tela como o índice da Ajuda. */
+  /** Which library to render. The default keeps this screen as the Help index. */
   library?: DocLibrary;
 };
 

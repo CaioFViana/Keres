@@ -7,9 +7,9 @@ import {
 import { ENTITY_TYPE_ICONS } from '../../src/utils/entityTypeIcons';
 
 /**
- * As duas tabelas abaixo são pequenas, mas cada uma tem um invariante que só quebra em tela:
- * um tipo de entidade sem ícone aparece vazio na busca global, e um nível de criticidade sem
- * ícone deixa o comentário sem o sinal que distingue "ideia solta" de "corrigir agora".
+ * The two tables below are small, but each one carries an invariant that only breaks on screen: an
+ * entity type with no icon shows up empty in global search, and a criticality level with no icon leaves
+ * the comment without the signal that separates "a loose idea" from "fix this now".
  */
 describe('ENTITY_TYPE_ICONS', () => {
   it('covers every entity type the global search can return', () => {

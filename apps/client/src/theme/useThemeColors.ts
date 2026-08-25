@@ -3,12 +3,12 @@ import { themes } from '@keres/shared';
 import type { ThemeColors } from '@keres/shared';
 
 /**
- * As cores de uma paleta **arbitrária**, respeitando o claro/escuro atual - para mostrar a cara
- * de uma história sem entrar nela (a lista de histórias pinta cada cartão com o tema da sua).
+ * The colours of an **arbitrary** palette, respecting the current light/dark - to show a story's
+ * face without entering it (the story list paints each card with its own story's theme).
  *
- * Fica fora de `commonStyles` porque lê o store de tema, que puxa serviço e banco: um arquivo
- * de fábricas de estilo não pode arrastar isso para todo componente que importa uma margem.
- * Para as cores da história **atual**, use `useTheme` - ele não custa nada disso.
+ * It stays out of `commonStyles` because it reads the theme store, which pulls in the service and the database: a file
+ * of style factories cannot drag that into every component that imports a margin.
+ * For the **current** story's colours, use `useTheme` - it costs none of that.
  */
 export const useThemeColors = (themeName: string | null | undefined): ThemeColors => {
   const { darkMode } = useThemeStore();

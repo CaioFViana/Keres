@@ -243,8 +243,8 @@ describe('downloadAndImportStory', () => {
 });
 
 /**
- * O envio de uma história criada offline. O id local precisa sobreviver: a partir daqui o
- * cliente segue referenciando cada entidade dela pelo id que já tinha.
+ * Sending a story created offline. The local id has to survive: from here on the
+ * client carries on referencing each of its entities by the id it already had.
  */
 describe('uploadNewStoryToServer', () => {
   it('checks on the server before sending, then imports preserving the id', async () => {
@@ -258,8 +258,8 @@ describe('uploadNewStoryToServer', () => {
   });
 
   /**
-   * A checagem é feita direto no servidor, e não por `fetchServerStoryPreviews`, que engole
-   * erro de rede e devolveria `[]` - o que pareceria "não existe" mesmo estando offline.
+   * The check is made straight on the server, and not by `fetchServerStoryPreviews`, which swallows
+   * a network error and would return `[]` - which would look like "it does not exist" even while offline.
    */
   it('refuses to send a story the server already has', async () => {
     await seedLocalStory();
@@ -328,8 +328,8 @@ describe('uploadNewStoryToServer', () => {
   });
 
   /**
-   * Favoritos e comentários já vão dentro do pacote importado. Reenviá-los carregaria a
-   * identidade local, que não existe no servidor, e duplicaria o comentário.
+   * Favourites and comments already travel inside the imported package. Resending them would carry the
+   * local identity, which does not exist on the server, and would duplicate the comment.
    */
   it('marks the favourite and comment operations as already sent', async () => {
     await seedLocalStory({ lastOperationLog: 4 });

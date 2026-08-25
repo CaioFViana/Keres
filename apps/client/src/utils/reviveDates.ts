@@ -1,14 +1,14 @@
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 
 /**
- * Volta datas que viraram string (`JSON.parse`, ou o import estático de um `.json` empacotado)
- * para `Date`.
+ * Turns dates that became strings (`JSON.parse`, or the static import of a packaged `.json`)
+ * back into `Date`.
  *
- * Os schemas de exportação de história (`FullStoryExportSchema` e afins) usam `z.date()`, que
- * rejeita string - sem isto, reimportar um `.json`/`.zip` exportado por este mesmo app, ou
- * instalar uma história de exemplo empacotada, falharia na validação antes mesmo de tentar
- * gravar qualquer coisa no banco, porque `JSON.stringify` sempre serializa `Date` como string
- * ISO e nada volta a converter de propósito.
+ * The story export schemas (`FullStoryExportSchema` and friends) use `z.date()`, which
+ * rejects a string - without this, re-importing a `.json`/`.zip` exported by this very app, or
+ * installing a packaged example story, would fail validation before even trying to
+ * write anything to the database, because `JSON.stringify` always serializes a `Date` as an ISO
+ * string and nothing deliberately converts it back.
  */
 export function reviveDates<T>(value: T): T {
   if (Array.isArray(value)) {

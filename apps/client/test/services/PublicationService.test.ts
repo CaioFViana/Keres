@@ -11,8 +11,8 @@ jest.mock('../../src/services/PublicationApiService', () => ({
 jest.mock('../../src/utils/i18n', () => ({
   __esModule: true,
   default: {
-    // Formato previsível para o teste conseguir afirmar o conteúdo do aviso sem depender
-    // da tradução em si.
+    // A predictable format so the test can assert the notice's content without depending
+    // on the translation itself.
     t: (key: string, options?: Record<string, unknown>) =>
       options ? `${key}:${JSON.stringify(options)}` : key,
   },
@@ -83,7 +83,7 @@ async function seedStory(myRole: StoryRole = 'reader') {
   } as typeof stories.$inferInsert);
 }
 
-/** Troca o papel desta pessoa na história, sem recriar o resto do cenário. */
+/** Changes this person's role in the story, without recreating the rest of the scenario. */
 async function setMyRole(myRole: StoryRole) {
   await database.db.update(stories).set({ myRole }).where(eq(stories.id, STORY_ID)).run();
 }
@@ -119,7 +119,7 @@ describe('syncPublicationsWithServer', () => {
     expect(rows[0]).toMatchObject({ id: 'pub-1', label: 'v7-2026-08-19', byteSize: 2048 });
   });
 
-  // Instalar o app não pode disparar um aviso para cada versão que já existia antes dele.
+  // Installing the app must not fire a notice for every version that already existed before it.
   it('stays quiet on the very first sync', async () => {
     listVisible.mockResolvedValue([
       publication('pub-1', 'v7-2026-08-19'),
@@ -191,8 +191,8 @@ describe('syncPublicationsWithServer', () => {
     await expect(service.syncPublicationsWithServer(server() as never)).rejects.toThrow('boom');
   });
 
-  // Duas chamadas quase simultâneas (reconexão + evento) não podem abrir duas transações de
-  // escrita ao mesmo tempo no SQLite.
+  // Two almost simultaneous calls (reconnection + event) must not open two write
+  // transactions at the same time in SQLite.
   it('shares one in-flight sync between concurrent callers', async () => {
     listVisible.mockResolvedValue([publication('pub-1', 'v7-2026-08-19')]);
 
@@ -214,8 +214,8 @@ describe('syncPublicationsWithServer', () => {
       publication('pub-1', 'v7-2026-08-19'),
       publication('pub-2', 'v8-2026-08-20'),
     ]);
-    // Sem linha local, o primeiro sync desta rodada volta a ser "primeiro" e não avisa;
-    // o que importa aqui é que a busca de título não quebra sem a história.
+    // With no local row, this round's first sync becomes "the first" again and gives no notice;
+    // what matters here is that the title lookup does not break without the story.
     await expect(service.syncPublicationsWithServer(server() as never)).resolves.toBeUndefined();
   });
 });
@@ -231,8 +231,8 @@ describe('who gets notified', () => {
     await service.syncPublicationsWithServer(server() as never);
   }
 
-  // Quem publica é o dono: avisá-lo do que ele mesmo acabou de fazer é ruído. O evento continua
-  // chegando (é o que mantém a lista dos outros aparelhos dele em dia), só o aviso é silenciado.
+  // The publisher is the owner: telling them about what they have just done themselves is noise. The event still
+  // arrives (it is what keeps the list on their other devices up to date), only the notice is silenced.
   it('says nothing to the owner of the story', async () => {
     await setMyRole('owner');
     await publishOneMore();

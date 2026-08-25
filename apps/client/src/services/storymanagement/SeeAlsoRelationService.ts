@@ -13,10 +13,10 @@ export interface SeeAlsoEntityRef {
   entityId: string;
 }
 
-/** Ordenação canônica (A/B), mesma usada pelo servidor - ver SeeAlsoRelationSyncHandler.ts (API). */
+/** Canonical ordering (A/B), the same one the server uses - see SeeAlsoRelationSyncHandler.ts (API). */
 /**
- * Ordenação canônica do par, delegada a `@keres/shared`: é a mesma que o servidor usa ao
- * receber a sincronização. Aqui só traduz os nomes dos campos desta camada.
+ * The pair's canonical ordering, delegated to `@keres/shared`: it is the same one the server uses on
+ * receiving the synchronization. Here it only translates this layer's field names.
  */
 function sortEntityRefs(
   a: SeeAlsoEntityRef,
@@ -42,7 +42,7 @@ export interface SeeAlsoRelationService {
     b: SeeAlsoEntityRef,
   ): Promise<SeeAlsoRelationSelect>;
   removeSeeAlsoLink(currentUserId: string, relationId: string): Promise<boolean>;
-  /** Reconcilia o conjunto atual de vínculos de `entity` para exatamente `targets` (diff add/remove). */
+  /** Reconciles `entity`'s current set of links to exactly `targets` (an add/remove diff). */
   setSeeAlsoTargets(
     currentUserId: string,
     storyId: string,

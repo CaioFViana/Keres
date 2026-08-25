@@ -1,9 +1,9 @@
 /**
- * A regra de herança dos modos, num lugar só.
+ * The modes' inheritance rule, in a single place.
  *
- * Um modo que não tem valor próprio para um status lê o valor do modo normal. Painel do
- * personagem, comparação e ranking precisam concordar sobre isso, então todos passam por aqui
- * em vez de cada um reimplementar o `??`.
+ * A mode with no value of its own for a stat reads the normal mode's value. The character's panel, the
+ * comparison and the ranking all have to agree about that, so they all go through here instead of each
+ * one reimplementing the `??`.
  */
 
 export interface StatValueRow {
@@ -15,7 +15,7 @@ export interface StatValueRow {
 
 export interface ResolvedStatValue {
   value: number | null;
-  /** O valor veio do modo normal porque este modo não tem um próprio. */
+  /** The value came from the normal mode because this mode has none of its own. */
   inherited: boolean;
 }
 
@@ -24,7 +24,7 @@ export type StatValueIndex = Map<string, number>;
 const keyOf = (characterId: string, modeId: string | null, statId: string) =>
   `${characterId}:${modeId ?? ''}:${statId}`;
 
-/** Indexa as linhas uma vez; buscar num Map é o que mantém ranking e radar baratos. */
+/** It indexes the rows once; looking up in a Map is what keeps the ranking and the radar cheap. */
 export function indexStatValues(rows: readonly StatValueRow[]): StatValueIndex {
   const index: StatValueIndex = new Map();
   for (const row of rows) index.set(keyOf(row.characterId, row.modeId, row.statId), row.value);
@@ -45,7 +45,7 @@ export function resolveStatValue(
   return base === undefined ? { value: null, inherited: false } : { value: base, inherited: true };
 }
 
-/** Todos os valores de um personagem num modo, por statId, já com a herança aplicada. */
+/** Every value of a character in a mode, by statId, with inheritance already applied. */
 export function resolveCharacterStats(
   index: StatValueIndex,
   characterId: string,

@@ -6,13 +6,13 @@ import { createChapterService } from './ChapterService';
 import { createSceneService } from './SceneService';
 
 /**
- * A numeração de capítulos e cenas: capítulos 1..N na história, cenas 1..M dentro do capítulo,
- * sem buracos e sem repetição.
+ * The numbering of chapters and scenes: chapters 1..N in the story, scenes 1..M within the chapter,
+ * with no holes and no repeats.
  *
- * A convenção não é estética: a API recusa uma reordenação cujos índices não formem 1..N
- * contíguo, então uma numeração torta local vira conflito de sincronização na primeira vez que
- * a pessoa arrasta uma cena. Exclusões antigas, importações e histórias que nasceram antes da
- * convenção deixam exatamente essa numeração torta para trás.
+ * The convention is not aesthetic: the API refuses a reorder whose indices do not form a contiguous
+ * 1..N, so a crooked local numbering becomes a synchronization conflict the first time the person drags
+ * a scene. Old deletions, imports and stories born before the convention leave exactly that crooked
+ * numbering behind.
  */
 
 export type StoryIndexProblemKind = 'gap' | 'duplicate' | 'start';
@@ -20,17 +20,17 @@ export type StoryIndexProblemKind = 'gap' | 'duplicate' | 'start';
 export interface StoryIndexProblem {
   scope: 'chapters' | 'scenes';
   kind: StoryIndexProblemKind;
-  /** Capítulo afetado; ausente quando o problema é na numeração dos próprios capítulos. */
+  /** The affected chapter; absent when the problem is in the chapters' own numbering. */
   chapterId?: string;
   chapterName?: string;
 }
 
 export interface StoryIndexService {
-  /** O que está fora da convenção, sem tocar em nada. */
+  /** What is out of convention, without touching anything. */
   findIndexProblems(storyId: string): Promise<StoryIndexProblem[]>;
   /**
-   * Renumera o que estiver torto, preservando a ordem atual. Devolve quantos capítulos e
-   * quantas cenas mudaram de número.
+   * Renumbers whatever is crooked, preserving the current order. It returns how many chapters and how
+   * many scenes changed number.
    */
   normalizeIndexes(
     currentUserId: string,
@@ -38,11 +38,11 @@ export interface StoryIndexService {
   ): Promise<{ chapters: number; scenes: number }>;
 }
 
-/** Ordem atual, com desempates estáveis para dois registros que hoje disputam o mesmo número. */
+/** The current order, with stable tie-breaks for two records currently fighting over the same number. */
 const byCurrentOrder = <T extends { index: number; createdAt: Date; id: string }>(a: T, b: T) =>
   a.index - b.index || a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id);
 
-/** `null` quando a lista já é 1..N; caso contrário, o primeiro problema encontrado. */
+/** `null` when the list is already 1..N; otherwise, the first problem found. */
 export function inspectIndexSequence(indexes: number[]): StoryIndexProblemKind | null {
   if (indexes.length === 0) return null;
   const sorted = [...indexes].sort((a, b) => a - b);
@@ -100,9 +100,9 @@ export const createStoryIndexService = (db: AppDrizzleClient): StoryIndexService
         livingScenes(storyId),
       ]);
 
-      // Reaproveita as reordenações já existentes em vez de escrever índice por índice: elas
-      // gravam a operação `reorder` que o servidor entende, então normalizar também empurra a
-      // ordem correta para lá - que é como uma história já divergente se cura.
+      // It reuses the existing reorder paths instead of writing index by index: they record the `reorder`
+      // operation the server understands, so normalising also pushes the correct order over there - which is
+      // how an already-divergent story heals.
       const orderedChapters = [...storyChapters].sort(byCurrentOrder);
       const chapterOrder = orderedChapters.map((chapter, position) => ({
         id: chapter.id,

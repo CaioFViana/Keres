@@ -42,10 +42,10 @@ const StoryFormScreen = () => {
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore(); // Get userId from store
   const scrollBottomPadding = useFormScrollBottomPadding();
-  // Criar é sempre permitido (não existe papel antes de a história existir); editar respeita
-  // o papel real - o botão de editar em StorySelectionScreen não é filtrado por papel, então
-  // um colaborador leitor pode abrir esta tela pra uma história de terceiro. Política
-  // (tipo / favoritos / exclusão) é só do dono; um writer ainda edita título e conteúdo.
+  // Creating is always allowed (there is no role before the story exists); editing respects
+  // the real role - the edit button in StorySelectionScreen is not filtered by role, so
+  // a reader collaborator can open this screen for somebody else's story. Policy
+  // (type / favourites / deletion) belongs to the owner alone; a writer still edits title and content.
   const { canEdit: canEditExisting, canManageStoryPolicy: canManageExistingPolicy } =
     useStoryRole(storyId);
   const canEdit = !storyId || canEditExisting;
@@ -152,8 +152,8 @@ const StoryFormScreen = () => {
           theme,
           normalizeSceneTiming: false,
           allowReaderComments: false,
-          // O sistema de status é ligado depois, em Configurações da História: uma história
-          // nova nunca nasce com ele.
+          // The stats system is turned on later, in Story Settings: a new story
+          // never comes into the world with it.
           statSystem: false,
           statNotation: 'letter',
           lastOperationLog: 0,

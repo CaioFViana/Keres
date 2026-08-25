@@ -1,42 +1,42 @@
-# Mecânicas de Escolha (Choices) no Keres
+# Choice mechanics in Keres
 
-Este documento detalha como as escolhas (Choices) são implementadas e gerenciadas no sistema Keres, diferenciando entre histórias lineares e ramificadas.
+This document details how Choices are implemented and managed in the Keres system, distinguishing between linear and branching stories.
 
-## 1. A Entidade `Choice`
+## 1. The `Choice` entity
 
-A entidade `Choice` é fundamental para definir as transições entre cenas em uma história. Seus campos principais são:
+The `Choice` entity is fundamental for defining transitions between scenes in a story. Its main fields are:
 
-*   **`id`**: Identificador único da escolha.
-*   **`sceneId`**: O ID da cena de origem, ou seja, a cena onde a escolha é apresentada ao leitor.
-*   **`nextSceneId`**: O ID da cena de destino, para onde o leitor é levado após fazer esta escolha.
-*   **`text`**: O texto que descreve a escolha (ex: "Vire à esquerda na floresta").
-*   **`createdAt`, `updatedAt`**: Timestamps de criação e última atualização.
+*   **`id`**: The choice's unique identifier.
+*   **`sceneId`**: The id of the source scene, that is, the scene where the choice is presented to the reader.
+*   **`nextSceneId`**: The id of the target scene, where the reader is taken after making this choice.
+*   **`text`**: The text describing the choice (e.g. "Turn left into the forest").
+*   **`createdAt`, `updatedAt`**: Creation and last-update timestamps.
 
-Na implementação atual, escolhas sempre conectam **cenas** entre si. Não há uma entidade de "momento" menor dentro de uma cena que possa ser origem ou destino de escolha.
+In the current implementation, choices always connect **scenes** to one another. There is no smaller "moment" entity inside a scene that could be the source or target of a choice.
 
-## 2. Tipos de História e Gerenciamento de Escolhas
+## 2. Story types and choice management
 
-O campo `type` na entidade `Story` (`'linear'` ou `'branching'`) determina como as escolhas são tratadas pelo sistema.
+The `type` field on the `Story` entity (`'linear'` or `'branching'`) determines how choices are handled by the system.
 
-### 2.1. Histórias Lineares (`Story.type = 'linear'`)
+### 2.1. Linear stories (`Story.type = 'linear'`)
 
-Em histórias lineares, o fluxo narrativo é sequencial e nunca existe nenhuma linha de `Choice`. A navegação é ditada inteiramente pelo `index` das cenas dentro de cada capítulo (`SceneService.getPreviousNextScenes`), sem nenhuma aresta explícita conectando-as.
+In linear stories the narrative flow is sequential and no `Choice` row ever exists. Navigation is dictated entirely by the scenes' `index` within each chapter (`SceneService.getPreviousNextScenes`), with no explicit edge connecting them.
 
-### 2.2. Histórias Ramificadas (`Story.type = 'branching'`)
+### 2.2. Branching stories (`Story.type = 'branching'`)
 
-Em histórias ramificadas (Interactive Fiction/CYOA), o autor tem controle total sobre as escolhas, permitindo múltiplos caminhos narrativos.
+In branching stories (Interactive Fiction/CYOA), the author has full control over the choices, allowing multiple narrative paths.
 
-*   Os usuários criam, atualizam e excluem escolhas explicitamente através da API e da interface do usuário.
-*   Cada escolha define um texto e uma cena de destino, permitindo que uma cena tenha múltiplas saídas.
-*   A navegação não é ditada pelo `index` das cenas, mas sim pelas escolhas definidas pelo autor.
+*   Users create, update and delete choices explicitly through the API and the user interface.
+*   Each choice defines a text and a target scene, allowing one scene to have multiple exits.
+*   Navigation is not dictated by the scenes' `index`, but by the choices the author defined.
 
-### 2.3. Conversão entre os dois tipos
+### 2.3. Conversion between the two types
 
-O tipo de uma história pode ser convertido pelo próprio usuário (tela de Configurações da História), implementado em `StoryService.convertStoryType`/`checkLinearCompatibility` (`apps/client/src/services/storymanagement/storyTypeConversion.ts`):
+A story's type can be converted by the user themselves (the Story Settings screen), implemented in `StoryService.convertStoryType`/`checkLinearCompatibility` (`apps/client/src/services/storymanagement/storyTypeConversion.ts`):
 
-*   **Linear -> Branching**: sempre permitido. Uma escolha explícita é gerada para cada par de cenas consecutivas (por `index`, dentro de cada capítulo), incluindo uma escolha "ponte" entre a última cena de um capítulo e a primeira do próximo - é o que preserva a sequência entre capítulos como dado explícito e editável.
-*   **Branching -> Linear**: só quando o grafo de escolhas é compatível com uma sequência simples - sem bifurcações (mais de uma escolha saindo da mesma cena), sem convergências (mais de uma escolha chegando na mesma cena), sem ciclos, sem cenas desconectadas do resto do capítulo, e sem escolhas cruzando capítulos fora do padrão "última cena do capítulo M -> primeira cena do capítulo M+1". Quando compatível, as cenas são reindexadas seguindo a cadeia encontrada e todas as escolhas da história são apagadas.
+*   **Linear -> Branching**: always allowed. An explicit choice is generated for each pair of consecutive scenes (by `index`, within each chapter), including a "bridge" choice between a chapter's last scene and the next chapter's first - it is what preserves the sequence between chapters as explicit, editable data.
+*   **Branching -> Linear**: only when the choice graph is compatible with a simple sequence - no forks (more than one choice leaving the same scene), no convergences (more than one choice arriving at the same scene), no cycles, no scenes disconnected from the rest of the chapter, and no chapter-crossing choices outside the "last scene of chapter M -> first scene of chapter M+1" pattern. When compatible, the scenes are reindexed following the chain found and every choice in the story is deleted.
 
-## 3. Conexão entre Cenas e Implicações
+## 3. Connection between scenes and implications
 
-Atualmente, todas as escolhas (implícitas ou explícitas) conectam uma `sceneId` a uma `nextSceneId`. Isso significa que a granularidade da ramificação ocorre no nível da cena.
+At present, every choice (implicit or explicit) connects a `sceneId` to a `nextSceneId`. That means the branching granularity happens at the scene level.

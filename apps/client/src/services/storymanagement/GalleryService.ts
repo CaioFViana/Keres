@@ -23,16 +23,15 @@ import type { FavoriteFilterState } from '../../types/entityFilters';
 
 export type { FavoriteFilterState };
 
-/** Campos que descrevem só o estado deste aparelho e não pertencem ao log de operações. */
+/** Fields that describe only this device's state and do not belong in the operation log. */
 const LOCAL_ONLY_FIELDS = ['localPath', 'uploadState', 'downloadState', 'thumbnailPath'] as const;
 
 /**
- * Remove do payload as colunas locais antes de gravá-lo no log de operações.
+ * Removes the local columns from the payload before writing it into the operation log.
  *
- * O servidor já as descartaria (o zod dele ignora chaves desconhecidas), mas deixá-las
- * sair daqui encheria o log com caminhos de arquivo de um aparelho que não significam nada
- * em nenhum outro, e faria a resolução de conflitos enxergar "mudanças" onde só houve um
- * download terminando.
+ * The server would discard them anyway (its zod ignores unknown keys), but letting them out of here
+ * would fill the log with one device's file paths, which mean nothing on any other, and would make
+ * conflict resolution see "changes" where only a download finished.
  */
 function syncablePayload(row: Record<string, any>): Record<string, any> {
   const payload = { ...row };
@@ -50,7 +49,7 @@ export interface GalleryFilters {
   sortDirection?: 'asc' | 'desc';
 }
 
-/** Dados de uma mídia recém-importada, já com o arquivo gravado localmente. */
+/** The data of a freshly imported media file, with the file already written locally. */
 export interface NewGalleryMedia {
   storyId: string;
   mediaType: MediaType;
@@ -59,7 +58,7 @@ export interface NewGalleryMedia {
   hash: string;
   sizeBytes: number;
   localPath: string;
-  /** Só para vídeo. */
+  /** Video only. */
   thumbnailPath?: string;
   title?: string | null;
   extraNotes?: string | null;
@@ -69,7 +68,7 @@ export interface NewGalleryMedia {
 export interface GalleryService {
   getGalleriesByStoryId(storyId: string, filters?: GalleryFilters): Promise<GallerySelect[]>;
   getById(galleryId: string): Promise<GallerySelect | undefined>;
-  /** A mídia desta história com estes bytes, se já existir. Base do dedupe na importação. */
+  /** This story's media with these bytes, if it already exists. The basis of dedupe on import. */
   getByHash(storyId: string, hash: string): Promise<GallerySelect | undefined>;
   getGalleriesForOwner(
     storyId: string,
@@ -89,8 +88,8 @@ export interface GalleryService {
   ): Promise<void>;
   deleteGallery(currentUserId: string, galleryId: string): Promise<void>;
   /**
-   * Atualiza apenas o estado de transferência/arquivo local. Deliberadamente não gera
-   * operação nem incrementa `version`: nada disto existe fora deste aparelho.
+   * Updates only the transfer/local-file state. It deliberately generates no operation and does not
+   * increment `version`: none of this exists outside this device.
    */
   setLocalFileState(
     galleryId: string,
@@ -101,9 +100,9 @@ export interface GalleryService {
       thumbnailPath?: string | null;
     },
   ): Promise<void>;
-  /** Mídias cujos bytes ainda não subiram. */
+  /** Media whose bytes have not been uploaded yet. */
   getPendingUploads(storyId: string): Promise<GallerySelect[]>;
-  /** Mídias que existem como metadado mas cujo arquivo ainda não está no aparelho. */
+  /** Media that exists as metadata but whose file is not on the device yet. */
   getPendingDownloads(storyId: string): Promise<GallerySelect[]>;
 }
 
@@ -120,8 +119,8 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       ];
 
       if (searchTerm) {
-        // Busca no título e no nome do arquivo: o título costuma estar vazio logo depois
-        // de importar, e nesse momento o nome do arquivo é a única coisa pesquisável.
+        // It searches the title and the file name: the title tends to be empty right after importing, and at
+        // that moment the file name is the only searchable thing.
         conditions.push(
           sql`(${galleries.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE OR ${galleries.fileName} LIKE ${`%${searchTerm}%`} COLLATE NOCASE)` as SQL<boolean>,
         );
@@ -161,8 +160,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
           query = query.orderBy(orderBy(galleries.createdAt));
           break;
         default:
-          // Mais recente primeiro: numa galeria, o que acabou de ser adicionado é o que a
-          // pessoa quer ver.
+          // Most recent first: in a gallery, what was just added is what the person wants to see.
           query = query.orderBy(desc(galleries.createdAt));
           break;
       }
@@ -228,7 +226,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         isFavorite: media.isFavorite ?? false,
         localPath: media.localPath,
         thumbnailPath: media.thumbnailPath ?? null,
-        // O arquivo nasce aqui: já está no aparelho e ainda não foi para o servidor.
+        // The file is born here: it is already on the device and has not gone to the server yet.
         uploadState: 'pending',
         downloadState: 'downloaded',
       } as Create<GalleryInsert>);
@@ -346,9 +344,9 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         throw new Error(`Failed to delete gallery ${galleryId} or gallery not found.`);
       }
 
-      // Os vínculos com as entidades vão junto: um vínculo apontando para uma mídia
-      // excluída não é exibível, e deixá-lo ativo faria o servidor recusar futuras
-      // operações sobre ele por a mídia não existir mais.
+      // The links to the entities go along with it: a link pointing at a deleted media file is not
+      // displayable, and leaving it active would make the server refuse future operations on it because the
+      // media no longer exists.
       const orphanLinks = await db.query.galleryRelations.findMany({
         where: and(
           eq(galleryRelations.galleryId, galleryId),

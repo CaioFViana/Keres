@@ -10,7 +10,7 @@ describe('buildStoryPublicUrl', () => {
     );
   });
 
-  // Servidores são cadastrados à mão; uma barra sobrando no fim é comum e não pode virar `//`.
+  // Servers are registered by hand; a trailing slash is common and must not become a `//`.
   it('tolerates a trailing slash in the server address', () => {
     expect(buildStoryPublicUrl('https://keres.example/', 'story-1')).toBe(
       'https://keres.example/story/story-1',

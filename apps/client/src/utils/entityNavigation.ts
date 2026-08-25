@@ -41,8 +41,8 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Chapter: { stack: 'NarrativeElementsStack', screen: 'ChapterDetail', paramKey: 'chapterId' },
   Note: { stack: 'NotesStack', screen: 'NoteDetail', paramKey: 'noteId' },
   WorldRule: { stack: 'WorldRulesStack', screen: 'WorldRuleDetail', paramKey: 'worldRuleId' },
-  // Modo não tem tela própria: a busca global devolve o id do personagem dono no lugar do id
-  // do modo, e abrir um resultado leva ao detalhe dele, onde os modos são listados.
+  // Mode has no screen of its own: the global search returns the owning character's id in place of the
+  // mode's id, and opening a result leads to that character's detail, where the modes are listed.
   Mode: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
   Plot: { stack: 'PlotsStack', screen: 'PlotDetail', paramKey: 'plotId' },
 };

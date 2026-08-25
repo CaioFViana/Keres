@@ -115,8 +115,8 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
 
         for (const row of rows as Record<string, any>[]) {
           const match = findMatchingField(row, searchFields, trimmedTerm);
-          // Modo não tem tela própria: o resultado carrega o id do personagem dono, que é para
-          // onde `navigateToEntityDetail` leva (ver ENTITY_ROUTES.Mode em entityNavigation).
+          // A Mode has no screen of its own: the result carries the owning character's id, which is where
+          // `navigateToEntityDetail` goes (see ENTITY_ROUTES.Mode in entityNavigation).
           const resultId = entityType === 'Mode' ? row.characterId : row.id;
           const key = `${entityType}:${row.id}`;
           results.set(key, {
@@ -312,8 +312,8 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
 
       await Promise.all([...nativeQueries, attributeQuery, entityAttributeQuery]);
 
-      // Scene não é mais um destino de drawer próprio: preservar o capítulo aqui evita que um
-      // resultado de busca pareça uma cena solta e dá ao autor sua posição narrativa.
+      // Scene is no longer a drawer destination of its own: keeping the chapter here stops a search result
+      // from looking like a loose scene and gives the author its narrative position.
       const sceneResults = Array.from(results.values()).filter(
         (result) => result.entityType === 'Scene',
       );

@@ -61,7 +61,7 @@ describe('story devices catalog', () => {
       pt: ['O que é', 'Quando usar', 'Armadilhas'],
       en: ['What it is', 'When to use it', 'Pitfalls'],
     };
-    // A página de abertura explica a lista em si e usa a forma da Ajuda, não a dos verbetes.
+    // The opening page explains the list itself and uses the Help's shape, not the entries'.
     const devicePageIds = storyDevicePageIds.filter((id) => id !== 'how-to-use-devices');
 
     for (const id of devicePageIds) {

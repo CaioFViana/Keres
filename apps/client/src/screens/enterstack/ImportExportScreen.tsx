@@ -43,7 +43,7 @@ const ImportExportScreen = () => {
   const [stories, setStories] = useState<StorySelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  /** Id da história sendo exportada, para desabilitar só a linha dela. */
+  /** The id of the story being exported, to disable only its own row. */
   const [exportingStoryId, setExportingStoryId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
 
@@ -61,14 +61,14 @@ const ImportExportScreen = () => {
     }
   }, [drizzleDb, t]);
 
-  // A lista precisa refletir importações e exclusões feitas em outras telas.
+  // The list has to reflect imports and deletions made on other screens.
   useFocusEffect(
     useCallback(() => {
       loadStories();
     }, [loadStories]),
   );
 
-  /** Só os metadados - título, notas, vínculos de galeria... - sem os bytes da mídia. */
+  /** The metadata only - title, notes, gallery links... - without the media bytes. */
   const handleExportJson = useCallback(
     async (story: StorySelect) => {
       setExportingStoryId(story.id);
@@ -81,8 +81,8 @@ const ImportExportScreen = () => {
         if (result.delivered) {
           showNotification(t('export_story_success', { fileName: result.fileName }), 'success');
         } else {
-          // Sem share sheet disponível o arquivo existe, mas o usuário não tem como alcançá-lo.
-          // Dizer onde ele está é mais útil do que alegar sucesso.
+          // With no share sheet available the file exists, but the user has no way to reach it. Saying where it
+          // is is more useful than claiming success.
           showNotification(
             t('export_story_no_share_target', { path: result.uri || result.fileName }),
             'warning',
@@ -98,7 +98,7 @@ const ImportExportScreen = () => {
     [drizzleDb, showNotification, t],
   );
 
-  /** Um `.zip` com os metadados e os arquivos de mídia que já estão baixados neste aparelho. */
+  /** A `.zip` with the metadata and the media files already downloaded on this device. */
   const handleExportZip = useCallback(
     async (story: StorySelect) => {
       setExportingStoryId(story.id);
@@ -118,8 +118,8 @@ const ImportExportScreen = () => {
             'warning',
           );
         } else if (totalCount > 0 && includedCount < totalCount) {
-          // Mídia que este aparelho ainda não baixou não pode entrar no pacote; a pessoa
-          // precisa saber que o .zip está incompleto, não achar que está tudo lá.
+          // Media this device has not downloaded cannot go into the package; the person needs to know the .zip
+          // is incomplete, not think everything is in there.
           showNotification(
             t('export_story_zip_success_partial', {
               fileName: result.fileName,
@@ -171,9 +171,9 @@ const ImportExportScreen = () => {
       // O importador insere com ids refeitos. Portanto pode ser usado para restaurar um backup paralelo.
       const importedStoryId = createULID();
 
-      // Grava os arquivos de mídia do .zip no armazenamento do aparelho antes de criar os
-      // registros - a galeria já nasce com o arquivo local, sem depender de sincronizar com
-      // um servidor depois. Vazio para uma importação só de `.json`.
+      // It writes the .zip's media files into the device's storage before creating the records - the gallery
+      // is born with the local file, without depending on synchronizing with a server later. Empty for a
+      // `.json`-only import.
       const localMediaPaths = new Map<string, string>();
       for (const item of media) {
         const localPath = await mediaFileService.writeDownloaded(
@@ -185,8 +185,8 @@ const ImportExportScreen = () => {
         localMediaPaths.set(item.hash, localPath);
       }
 
-      // `serverId` nulo: o arquivo é uma cópia local. Vincular a um servidor é uma decisão
-      // separada, feita na tela de seleção de histórias.
+      // A null `serverId`: the file is a local copy. Linking it to a server is a separate decision, made on
+      // the story selection screen.
       await storyService.importFullStory(
         userId,
         storyExport,

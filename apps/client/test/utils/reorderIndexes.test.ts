@@ -1,10 +1,9 @@
 import { buildReorderItems } from '@keres/shared';
 
 /**
- * A regra que o servidor aplica em `StorySyncHandler`/`ChapterSyncHandler` antes de aceitar uma
- * reordenação. Reproduzida aqui porque foi exatamente a divergência entre os dois lados - o
- * cliente mandava 0-based - que fazia toda reordenação de cenas virar conflito de sincronização
- * em vez de erro visível.
+ * The rule the server applies in `StorySyncHandler`/`ChapterSyncHandler` before accepting a reorder.
+ * Reproduced here because it was exactly the divergence between the two sides - the client sending
+ * 0-based - that made every scene reorder become a synchronization conflict instead of a visible error.
  */
 const serverAccepts = (items: { newIndex: number }[]) => {
   const indexes = items.map((item) => item.newIndex);

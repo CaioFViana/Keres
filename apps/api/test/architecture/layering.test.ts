@@ -32,12 +32,12 @@ const relativeOf = (path: string) => relative(MODULES_ROOT, path).split('\\').jo
  */
 const ROUTES_THAT_STILL_QUERY = ['auth/auth.route.ts', 'media/media.route.ts'];
 
-describe('camadas da API', () => {
-  it('encontra as rotas dos módulos', () => {
+describe('API layers', () => {
+  it('finds the modules routes', () => {
     expect(routeFiles.length).toBeGreaterThan(10);
   });
 
-  it('mantém a consulta ao banco dentro dos serviços', () => {
+  it('keeps database queries inside the services', () => {
     const offenders = routeFiles
       .filter((path) =>
         // The signal is the query builder. Importing the schema alone is a different thing and remains

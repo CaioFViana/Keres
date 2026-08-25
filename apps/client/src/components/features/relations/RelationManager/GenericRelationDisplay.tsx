@@ -25,8 +25,8 @@ interface GenericRelationDisplayProps<TItem extends BaseItem, TRelation extends 
    */
   onItemPress?: (item: TItem) => void;
   /**
-   * Fechado por padrão, como toda seção de relação. Aberto só onde as relações são o conteúdo
-   * principal da tela (o detalhe de um Plot é a lista das cenas dele), e não um apêndice.
+   * Closed by default, like every relation section. Open only where the relations are the screen's
+   * main content (a Plot's detail is the list of its scenes), and not an appendix.
    */
   initialExpanded?: boolean;
 }

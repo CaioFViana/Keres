@@ -19,7 +19,7 @@ describe('show', () => {
     });
   });
 
-  /** Mesmo padrão do `Alert.alert` nativo: sem botões declarados, um "OK" que só fecha. */
+  /** The same behaviour as the native `Alert.alert`: with no buttons declared, an "OK" that only closes. */
   it('falls back to a single OK button when none were given', () => {
     store().show('Pronto');
 

@@ -5,11 +5,12 @@ import { createChapterService } from '../services/storymanagement/ChapterService
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 /**
- * O nome do capítulo de uma cena, para as listas que mostram cenas fora do capítulo delas.
+ * A scene's chapter name, for the lists that show scenes outside their own chapter.
  *
- * "Cena 3" no meio das cenas de um personagem, de um local ou de uma trama não diz de onde a
- * cena veio; o capítulo é o que situa. A história sai das próprias cenas em vez de virar mais
- * uma prop atravessando cada tela: todas essas listas mostram cenas de uma história só.
+ * "Scene 3" in the middle of a character's, a location's or a plot's scenes does not say where the
+ * scene came from; the chapter is what situates it. The story comes from the scenes themselves rather
+ * than becoming yet another prop crossing every screen: all these lists show scenes from a single
+ * story.
  */
 export function useChapterNames(
   scenes: Pick<SceneSelect, 'storyId'>[],

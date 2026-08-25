@@ -13,9 +13,9 @@ jest.mock('../../src/services/MediaFileService', () => ({
 const DATE = new Date('2026-08-11T18:00:00.000Z');
 
 /**
- * O nome do arquivo é o que a pessoa vê na pasta de downloads e o que ela usa para achar o
- * backup certo meses depois. Precisa ser aceito por qualquer sistema de arquivos e não pode
- * colidir entre exportações de dias diferentes.
+ * The file name is what the person sees in the downloads folder and what they use to find the
+ * right backup months later. It has to be accepted by any file system and must not
+ * collide between exports on different days.
  */
 describe('export file names', () => {
   it('slugifies the title and stamps the export date', () => {

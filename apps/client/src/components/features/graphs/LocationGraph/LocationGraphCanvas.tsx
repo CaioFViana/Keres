@@ -11,13 +11,13 @@ import type {
 } from '@keres/shared/graphs/locationGraphLayout';
 
 /**
- * Desenho interativo do grafo de estrutura de Locations. Mesma arquitetura dos outros dois
- * canvas de grafo do app (mapa de história, mapa de relações): pan/zoom via `usePanZoomCanvas`,
- * nós como Views nativas posicionadas absolutamente, arestas como `Path` do react-native-svg.
+ * The interactive drawing of the Location structure graph. The same architecture as the app's other
+ * two graph canvases (story map, relation map): pan/zoom through `usePanZoomCanvas`, nodes as
+ * absolutely positioned native Views, edges as react-native-svg `Path`s.
  *
- * As duas arestas têm estilo diferente para dar pra distinguir visualmente sem precisar de
- * rótulo em cada uma: `contains` é uma linha sólida (relação de hierarquia, pai->filho),
- * `connected_to` é tracejada (relação espacial solta, sem direção).
+ * The two edges have different styles so they can be told apart visually without a label on each one:
+ * `contains` is a solid line (a hierarchy relation, parent->child), `connected_to` is dashed (a loose
+ * spatial relation, with no direction).
  */
 
 export type LocationGraphCanvasHandle = PanZoomCanvasHandle;

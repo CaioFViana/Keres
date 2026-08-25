@@ -27,7 +27,7 @@ const options = {
 };
 
 describe('buildPlotCoverage', () => {
-  it('divide a cobertura por capítulo, na ordem narrativa', () => {
+  it('splits the coverage by chapter, in narrative order', () => {
     const [entry] = buildPlotCoverage({
       plots,
       chapters,
@@ -62,7 +62,7 @@ describe('buildPlotCoverage', () => {
    * É o que a barra dividida veio responder: duas tramas com a mesma cobertura, uma concentrada
    * e outra espalhada, deixam de parecer a mesma coisa.
    */
-  it('distingue uma trama concentrada num ato de outra que atravessa a história', () => {
+  it('tells a plot concentrated in one act apart from one that crosses the whole story', () => {
     const [concentrada, espalhada] = buildPlotCoverage({
       plots: [
         { id: 'p1', name: 'Concentrada' },
@@ -83,13 +83,13 @@ describe('buildPlotCoverage', () => {
     expect(espalhada.segments).toHaveLength(2);
   });
 
-  it('mantém a trama vazia na lista, com a barra sem pedaços', () => {
+  it('keeps an empty plot on the list, with a bar with no pieces', () => {
     const [entry] = buildPlotCoverage({ plots, chapters, scenes, relations: [] });
 
     expect(entry).toMatchObject({ covered: 0, percentage: 0, segments: [] });
   });
 
-  it('ignora relação apontando para cena que não está na história', () => {
+  it('ignores a relation pointing at a scene that is not in the story', () => {
     const [entry] = buildPlotCoverage({
       plots,
       chapters,
@@ -103,7 +103,7 @@ describe('buildPlotCoverage', () => {
     expect(entry.covered).toBe(1);
   });
 
-  it('não divide por zero numa história sem cenas', () => {
+  it('does not divide by zero in a story with no scenes', () => {
     const [entry] = buildPlotCoverage({ plots, chapters, scenes: [], relations: [] });
 
     expect(entry).toMatchObject({ covered: 0, total: 0, percentage: 0 });
@@ -121,21 +121,21 @@ describe('renderPlotCoverageSvg', () => {
     ],
   });
 
-  it('desenha um pedaço por capítulo, com a cor do capítulo', () => {
+  it('draws one piece per chapter, with the chapter colour', () => {
     const svg = renderPlotCoverageSvg(entries, options);
 
     expect(svg).toContain('#8D6B13');
     expect(svg).toContain('#16803C');
   });
 
-  it('inclui a legenda dos capítulos que aparecem nas barras', () => {
+  it('includes the legend of the chapters that appear in the bars', () => {
     const svg = renderPlotCoverageSvg(entries, options);
 
     expect(svg).toContain('Ato I');
     expect(svg).toContain('Ato II');
   });
 
-  it('não desenha legenda quando nenhuma trama tem cena', () => {
+  it('draws no legend when no plot has a scene', () => {
     const empty = buildPlotCoverage({ plots, chapters, scenes, relations: [] });
 
     expect(renderPlotCoverageSvg(empty, options)).not.toContain('Ato I');

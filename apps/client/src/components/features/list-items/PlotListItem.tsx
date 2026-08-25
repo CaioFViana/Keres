@@ -10,7 +10,7 @@ import { truncate } from '../../../utils/stringUtils';
 
 interface PlotListItemProps {
   plot: PlotSelect;
-  /** Cenas ligadas a este Plot; um Plot sem nenhuma é válido e mostra "0 cenas". */
+  /** Scenes linked to this Plot; a Plot with none is valid and shows "0 scenes". */
   sceneCount: number;
   onViewDetails: (plotId: string) => void;
 }

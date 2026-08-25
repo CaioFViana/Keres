@@ -21,7 +21,7 @@ const relation = (
   relationType,
 });
 
-/** Nós desenhados como retângulos: qualquer sobreposição é texto ilegível na tela. */
+/** Nodes drawn as rectangles: any overlap is illegible text on the screen. */
 function overlappingPairs(
   nodes: { id: string; x: number; y: number; width: number; height: number }[],
 ) {

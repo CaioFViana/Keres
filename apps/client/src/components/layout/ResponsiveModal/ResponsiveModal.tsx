@@ -11,7 +11,7 @@ interface ResponsiveModalProps {
   children: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   maxHeight?: number | `${number}%`;
-  /** Desative quando o conteúdo já usa KeyboardAwareScreen para evitar ajuste duplicado. */
+  /** Turn it off when the content already uses KeyboardAwareScreen, to avoid a double adjustment. */
   keyboardAvoiding?: boolean;
   /** `adaptive` uses the bottom sheet on compact screens and a left panel on wide screens. */
   placement?: 'center' | 'bottom' | 'side' | 'adaptive';

@@ -13,10 +13,10 @@ import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
- * As quatro entidades do sistema de status (e os modos) só carregam colunas próprias, sem
- * chave derivada nem cascata como StorySchemaField - então a aplicação de create/update/delete
- * é a mesma para todas, e o que muda é só a tabela. Uma classe base evita quatro cópias do
- * mesmo corpo.
+ * The four entities of the stats system (and the modes) only carry columns of their own, with no
+ * derived key nor cascade like StorySchemaField - so applying create/update/delete
+ * is the same for all of them, and all that changes is the table. A base class avoids four copies of the
+ * same body.
  */
 abstract class SimpleTableClientSyncHandler<TTable extends { id: any; isDeleted: any }>
   implements ClientSyncEntityHandler

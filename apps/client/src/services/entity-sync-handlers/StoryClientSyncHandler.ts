@@ -101,8 +101,8 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     const story = await this.db.query.stories.findFirst({
       where: eq(schema.stories.id, id),
     });
-    // `stat_notation` é uma coluna de texto no SQLite local (o dialeto não tem ENUM), então o
-    // tipo inferido é `string`; a união vem da entidade compartilhada.
+    // `stat_notation` is a text column in the local SQLite (the dialect has no ENUM), so the
+    // inferred type is `string`; the union comes from the shared entity.
     return story as Story | undefined;
   }
 }

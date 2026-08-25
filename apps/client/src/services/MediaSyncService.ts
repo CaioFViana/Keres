@@ -10,26 +10,26 @@ import type { GalleryService } from './storymanagement/GalleryService';
 import { createGalleryService } from './storymanagement/GalleryService';
 
 /**
- * O canal binário da galeria.
+ * The gallery's binary channel.
  *
- * Os metadados de uma mídia viajam pelo log de operações como qualquer outra entidade;
- * mandar os bytes de um vídeo pelo mesmo caminho não é viável, então eles sobem e descem
- * por rotas próprias, endereçados pelo hash do conteúdo.
+ * A medium's metadata travels through the operation log like any other entity;
+ * sending a video's bytes down the same path is not viable, so they go up and down
+ * through routes of their own, addressed by the content's hash.
  *
- * O hash é o que torna isso barato: antes de subir qualquer coisa perguntamos ao servidor
- * quais hashes ele já tem, e o que ele já tem não sobe de novo - inclusive quando outra
- * pessoa já subiu exatamente o mesmo arquivo. É também o que responde "mudou?": conteúdo
- * diferente é hash diferente, e hash diferente é registro diferente.
+ * The hash is what makes this cheap: before uploading anything we ask the server
+ * which hashes it already has, and what it already has does not go up again - including when somebody
+ * else has already uploaded exactly the same file. It is also what answers "has it changed?": different
+ * content is a different hash, and a different hash is a different record.
  */
 
-/** Quantos blobs transferir por ciclo, para um ciclo de sync não virar um upload longo. */
+/** How many blobs to transfer per cycle, so a sync cycle does not become a long upload. */
 const MAX_TRANSFERS_PER_CYCLE = 5;
 
 export interface MediaSyncSummary {
   uploaded: number;
   downloaded: number;
   failed: number;
-  /** Verdadeiro quando o servidor não respondeu; o ciclo deve tratar como offline. */
+  /** True when the server did not answer; the cycle should treat it as offline. */
   offline: boolean;
 }
 
@@ -41,11 +41,11 @@ export class MediaSyncService {
   }
 
   /**
-   * Reconcilia os arquivos de uma história com o servidor.
+   * Reconciles a story's files with the server.
    *
-   * Nunca lança por falha de transferência: mídia que não subiu continua marcada como
-   * pendente e é tentada no ciclo seguinte. Um vídeo grande falhando não pode derrubar a
-   * sincronização de texto da história inteira.
+   * It never throws on a transfer failure: a medium that did not upload stays marked as
+   * pending and is retried on the following cycle. One large video failing must not bring down the
+   * text synchronization of a whole story.
    */
   async syncStoryMedia(
     client: KeresAxiosInstance,
@@ -78,8 +78,8 @@ export class MediaSyncService {
       return;
     }
 
-    // Um blob que o servidor já tem não precisa subir - seja porque um envio anterior
-    // chegou e a resposta se perdeu, seja porque outra pessoa subiu o mesmo arquivo.
+    // A blob the server already has does not need uploading - either because an earlier send
+    // arrived and the response was lost, or because somebody else uploaded the same file.
     const status = await this.fetchBlobStatus(
       client,
       storyId,
@@ -98,8 +98,8 @@ export class MediaSyncService {
 
     for (const media of toUpload.slice(0, MAX_TRANSFERS_PER_CYCLE)) {
       if (!mediaFileService.exists(media.localPath)) {
-        // O registro existe mas o arquivo sumiu deste aparelho (limpeza do sistema,
-        // reinstalação). Não há o que subir; vira um caso de download.
+        // The record exists but the file has vanished from this device (a system cleanup,
+        // a reinstall). There is nothing to upload; it becomes a download case.
         console.warn(
           `MediaSyncService: local file missing for gallery ${media.id}; will try to download instead.`,
         );
@@ -114,8 +114,8 @@ export class MediaSyncService {
       try {
         const form = new FormData();
         if (Platform.OS === 'web') {
-          // Sem equivalente web para o "arquivo" `{uri, name, type}` do React Native -
-          // FormData na web só aceita um Blob de verdade.
+          // There is no web equivalent for React Native's `{uri, name, type}` "file" -
+          // FormData on the web only accepts a genuine Blob.
           const bytes = await mediaFileService.readBytes(media.localPath as string);
           form.append(
             'file',
@@ -123,8 +123,8 @@ export class MediaSyncService {
             media.fileName,
           );
         } else {
-          // O React Native aceita este formato de "arquivo" em FormData; é como ele expõe
-          // um arquivo local para multipart sem carregar tudo em memória.
+          // React Native accepts this "file" format in FormData; it is how it exposes
+          // a local file for multipart without loading everything into memory.
           form.append('file', {
             uri: media.localPath as string,
             name: media.fileName,
@@ -162,8 +162,8 @@ export class MediaSyncService {
     }
 
     for (const media of pending.slice(0, MAX_TRANSFERS_PER_CYCLE)) {
-      // Pode já estar aqui de uma outra mídia com o mesmo conteúdo, ou de um download que
-      // terminou e não chegou a ser marcado.
+      // It may already be here from another medium with the same content, or from a download that
+      // finished and never got marked.
       const existingPath = mediaFileService.localPathFor(storyId, media.hash, media.mimeType);
       if (mediaFileService.exists(existingPath)) {
         await this.galleryService.setLocalFileState(media.id, {
@@ -183,9 +183,9 @@ export class MediaSyncService {
 
         let downloadedUri: string;
         if (Platform.OS === 'web') {
-          // Sem `File.downloadFileAsync` na web (só nativo) - passa pelo axios e grava no
-          // OPFS via mediaFileService. Um vídeo inteiro passa pela memória do JS aqui, mas
-          // não há alternativa de streaming-para-disco disponível no navegador.
+          // There is no `File.downloadFileAsync` on the web (native only) - it goes through axios and writes to
+          // OPFS via mediaFileService. A whole video passes through the JS memory here, but
+          // there is no streaming-to-disk alternative available in the browser.
           const response = await client.get(`/media/${storyId}/blobs/${media.hash}`, {
             headers: this.authHeaders(server),
             responseType: 'arraybuffer',
@@ -197,8 +197,8 @@ export class MediaSyncService {
             new Uint8Array(response.data),
           );
         } else {
-          // Download direto para disco em vez de passar pelo axios: trazer um vídeo para a
-          // memória do JS como base64 estoura o heap em aparelhos modestos.
+          // A direct download to disk instead of going through axios: bringing a video into the
+          // JS memory as base64 blows the heap on modest devices.
           const destination = mediaFileService.destinationFor(storyId, media.hash, media.mimeType);
           const downloaded = await File.downloadFileAsync(
             `${baseUrl}/media/${storyId}/blobs/${media.hash}`,
@@ -226,11 +226,11 @@ export class MediaSyncService {
   }
 
   /**
-   * Gera a miniatura de um vídeo que acabou de chegar por sincronização.
+   * Generates the thumbnail of a video that has just arrived through synchronization.
    *
-   * Só se aplica a `mediaType: 'video'`, e só quando ainda não existe uma - o mesmo
-   * conteúdo baixado de novo (outra entidade vinculada, um retry) reaproveita o arquivo já
-   * extraído em vez de gerar de novo.
+   * It only applies to `mediaType: 'video'`, and only when one does not exist yet - the same
+   * content downloaded again (another linked entity, a retry) reuses the file already
+   * extracted instead of generating it again.
    */
   private async ensureThumbnail(
     storyId: string,
@@ -255,7 +255,7 @@ export class MediaSyncService {
     if (hashes.length === 0) {
       return { present: [], missing: [] };
     }
-    // A rota aceita no máximo 500 hashes por chamada.
+    // The route accepts at most 500 hashes per call.
     const unique = Array.from(new Set(hashes)).slice(0, 500);
     const response = await client.post<MediaBlobStatusResponseType>(
       `/media/${storyId}/blobs/status`,
@@ -265,9 +265,9 @@ export class MediaSyncService {
   }
 
   /**
-   * O download não passa pelo Axios, então o `Authorization` que o interceptor colocaria
-   * precisa ser montado à mão - a partir do mesmo cache de tokens, para que uma renovação
-   * feita por qualquer outra instância já valha aqui.
+   * The download does not go through Axios, so the `Authorization` the interceptor would put in
+   * has to be assembled by hand - from the same token cache, so that a refresh
+   * done by any other instance already counts here.
    */
   private authHeaders(server: ServerSelect): Record<string, string> {
     const token = getServerAccessToken(server.id);
@@ -275,7 +275,7 @@ export class MediaSyncService {
   }
 }
 
-/** Cria o serviço já ligado ao banco da história corrente. */
+/** Creates the service already tied to the current story's database. */
 export function createMediaSyncService(db: AppDrizzleClient): MediaSyncService {
   return new MediaSyncService(db);
 }

@@ -117,8 +117,8 @@ const ItemJourneyFormScreen = () => {
   const [currentItemJourneyId, setCurrentItemJourneyId] = useState<string | undefined>(
     initialItemJourneyId,
   );
-  // Pré-preenchido quando a criação parte da tela de um Item (ver ItemJourneyTimeline) - sem
-  // isso o usuário teria que selecionar de novo, na mão, o item de onde ele acabou de vir.
+  // Pre-filled when the creation starts from an Item's screen (see ItemJourneyTimeline) - without
+  // this the user would have to select by hand, again, the item they have just come from.
   const [itemId, setItemId] = useState<string | null>(prefilledItemId ?? null);
   const [sceneId, setSceneId] = useState<string | null>(null);
   const [newCharacterOwnerId, setNewCharacterOwnerId] = useState<string | null>(null);

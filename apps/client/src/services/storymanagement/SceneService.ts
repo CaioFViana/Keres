@@ -70,9 +70,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
   const serverService = createServerService(db);
 
   /**
-   * O índice de uma cena é 1..N **dentro do capítulo**, sem buracos - a mesma convenção dos
-   * capítulos, e a única que a API aceita ao reordenar (ela recusa uma reordenação cujo menor
-   * índice não seja 1 ou que não termine em N).
+   * A scene's index is 1..N **within the chapter**, with no holes - the same convention as the chapters,
+   * and the only one the API accepts when reordering (it refuses a reorder whose lowest index is not 1 or
+   * which does not end at N).
    */
   const nextIndexInChapter = async (storyId: string, chapterId: string): Promise<number> => {
     const siblings = await db
@@ -90,12 +90,12 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
   };
 
   /**
-   * Renumera as cenas vivas de um capítulo para 1..N preservando a ordem atual.
+   * Renumbers a chapter's live scenes to 1..N, preserving the current order.
    *
-   * Chamado quando uma cena sai do capítulo (excluída ou movida): sem isto sobra um buraco na
-   * numeração, e um buraco basta para a próxima reordenação virar conflito de validação no
-   * servidor. Fica no serviço, e não na tela que move a cena, porque importação e correção
-   * automática passam por aqui também.
+   * Called when a scene leaves the chapter (deleted or moved): without it a hole is left in the
+   * numbering, and one hole is enough to make the next reorder a validation conflict on the server. It
+   * lives in the service, and not in the screen that moves the scene, because import and automatic
+   * correction come through here too.
    */
   const renumberChapterScenes = async (
     storyId: string,
@@ -129,9 +129,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         .set({ index: newIndex, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
         .where(eq(scenes.id, scene.id))
         .returning({ version: scenes.version });
-      // Um `update` por cena, e não um `reorder` do capítulo: a operação precisa valer sozinha,
-      // sem depender de o servidor já ter aplicado a exclusão ou a mudança de capítulo que a
-      // provocou.
+      // One `update` per scene, rather than a chapter `reorder`: the operation has to stand on its own,
+      // without depending on the server having already applied the deletion or the chapter change that
+      // prompted it.
       await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Scene', scene.id, {
         index: newIndex,
         version: updated?.version,
@@ -166,8 +166,8 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       }
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Scene não está descrita em `entityFieldMetadata`; sem o `?? []` um critério
-        // desconhecido derruba a consulta em vez de ser ignorado.
+        // Scene is not described in `entityFieldMetadata`; without the `?? []` an unknown criterion takes the
+        // query down instead of being ignored.
         const sceneMetadata = entityFieldMetadata['Scene'] ?? [];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
@@ -301,9 +301,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         sceneData,
       );
 
-      // Trocar de capítulo é mudar de fila: a cena entra no fim da nova e o buraco que ela
-      // deixa na antiga é fechado logo abaixo. Aqui, e não na tela do formulário, para que
-      // qualquer caminho que mova uma cena mantenha as duas numerações íntegras.
+      // Changing chapter means changing queue: the scene enters at the end of the new one and the hole it
+      // leaves in the old one is closed just below. Here, and not on the form screen, so that any path that
+      // moves a scene keeps both numberings intact.
       const movedFromChapterId =
         sceneData.chapterId && sceneData.chapterId !== originalScene.chapterId
           ? originalScene.chapterId

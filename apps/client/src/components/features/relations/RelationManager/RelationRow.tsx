@@ -5,22 +5,22 @@ import { useTheme } from '../../../../theme';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 
 interface RelationRowProps {
-  /** Conteúdo do lado esquerdo da linha (nome + eventual subtítulo, ex.: tipo de relação). */
+  /** The content on the row's left-hand side (name + an optional subtitle, e.g. the relation type). */
   children: React.ReactNode;
-  /** Mostra o chevron e torna o conteúdo tocável quando presente. */
+  /** It shows the chevron and makes the content tappable when present. */
   onPress?: () => void;
-  /** Slot entre o chevron e o botão de excluir, ex.: o ícone de editar do CharacterRelationManager. */
+  /** A slot between the chevron and the delete button, e.g. CharacterRelationManager's edit icon. */
   extraActions?: React.ReactNode;
-  /** Mostra o botão de lixeira quando presente. */
+  /** It shows the bin button when present. */
   onRemove?: () => void;
 }
 
 /**
- * `CharacterRelationManager` e `LocationRelationManager` (parent/child/connection, 3x)
- * reimplementavam cada um a mesma linha "conteúdo tocável + chevron + ações" na mão. Extraído
- * aqui, e não em `RelationManager`/`GenericRelationDisplay` (que já resolvem esse mesmo
- * problema para seus próprios 5+ call-sites) - aqueles têm uma regra de interação diferente
- * (chevron escondido quando `editable`) que não faz sentido forçar aqui.
+ * `CharacterRelationManager` and `LocationRelationManager` (parent/child/connection, 3x) each
+ * reimplemented the same "tappable content + chevron + actions" row by hand. Extracted here, and not
+ * into `RelationManager`/`GenericRelationDisplay` (which already solve that same problem for their own
+ * 5+ call sites) - those have a different interaction rule (the chevron hidden when `editable`) that
+ * makes no sense to force here.
  */
 const RelationRow: React.FC<RelationRowProps> = ({ children, onPress, extraActions, onRemove }) => {
   const { colors } = useTheme();

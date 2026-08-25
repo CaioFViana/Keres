@@ -158,8 +158,8 @@ export class SyncEngineService {
   private syncGeneration: number = 0;
   private storyId: string | null = null;
   /**
-   * Guardado porque a transferência de mídia não passa pelo Axios (ver `MediaSyncService`)
-   * e precisa do servidor para montar a autenticação por conta própria.
+   * Held because media transfer does not go through Axios (see `MediaSyncService`) and needs the server
+   * to build its authentication on its own.
    */
   private activeServer: ServerSelect | null = null;
   private client: KeresAxiosInstance;
@@ -316,9 +316,9 @@ export class SyncEngineService {
   }
 
   /**
-   * Um único executante por vez para o ciclo de pull/push. O timer e o `requestSync`
-   * (websocket / escrita local) compartilham este cadeado - sem ele os dois corriam
-   * `performSync` em paralelo e podiam empurrar o mesmo lote duas vezes.
+   * A single runner at a time for the pull/push cycle. The timer and `requestSync` (websocket / local
+   * write) share this lock - without it the two ran `performSync` in parallel and could push the same
+   * batch twice.
    */
   private async runExclusiveSync(): Promise<boolean> {
     if (this.syncInFlight) {
@@ -457,7 +457,7 @@ export class SyncEngineService {
     tempClient.setTokenProvider(authTokenManager);
     tempClient.setActiveServer(server);
 
-    // Título só existe depois do download; até lá a notificação de erro cai no id mesmo.
+    // The title only exists after the download; until then the error notification falls back to the id.
     let storyTitle = storyId;
     try {
       const exportUrl = `/stories/${storyId}/export`;
@@ -477,13 +477,13 @@ export class SyncEngineService {
   }
 
   /**
-   * Envia uma história totalmente local (`serverId` nulo) para um servidor pela primeira vez.
+   * Sends a fully local story (a null `serverId`) to a server for the first time.
    *
-   * Checa a existência direto no servidor (não via `fetchServerStoryPreviews`, que engole
-   * erros de rede e devolveria `[]` - o que pareceria "não existe" mesmo quando a checagem só
-   * falhou por estar offline) antes de exportar e enviar via `POST /stories/import?storyId=`,
-   * preservando o ID local. A checagem do lado da API (`StoryExportImportService.importStory`,
-   * escopada por id+usuário) é o backstop caso duas chamadas corram ao mesmo tempo.
+   * It checks existence directly against the server (not through `fetchServerStoryPreviews`, which
+   * swallows network errors and would return `[]` - which would look like "does not exist" even when the
+   * check merely failed for being offline) before exporting and sending it through `POST
+   * /stories/import?storyId=`, preserving the local ID. The API-side check
+   * (`StoryExportImportService.importStory`, scoped by id+user) is the backstop should two calls race.
    */
   public async uploadNewStoryToServer(
     storyId: string,
@@ -530,13 +530,13 @@ export class SyncEngineService {
       return { success: false, reason: 'error', message: (error as Error)?.message };
     }
 
-    // O servidor agora tem exatamente o que o op-log local tinha no momento do export - é essa
-    // a base correta pro próximo ciclo de sync, não o `serverLastOperationVersion` do pacote
-    // exportado (que reflete um vínculo anterior, sempre 0 pra uma história nunca vinculada).
+    // The server now has exactly what the local op-log had at the moment of the export - that is the right
+    // base for the next sync cycle, not the exported package's `serverLastOperationVersion` (which reflects
+    // an earlier link, always 0 for a story that was never linked).
     await createFavoriteService(this._db).migrateUserIdentity(storyId, userId, server.idUser);
     await createCommentService(this._db).migrateAuthorIdentity(storyId, userId, server.idUser);
-    // Essas operações já estão representadas pelo snapshot importado. Reenviá-las carregaria
-    // a antiga identidade local, que não existe no servidor, e duplicaria o comentário.
+    // Those operations are already represented by the imported snapshot. Resending them would carry the old
+    // local identity, which does not exist on the server, and would duplicate the comment.
     await this._db
       .update(schema.operationLogs)
       .set({ isSynced: true })
@@ -572,12 +572,12 @@ export class SyncEngineService {
   }
 
   /**
-   * Versão em que o usuário se apoiou ao fazer a edição.
+   * The version the user based their edit on.
    *
-   * Todos os services locais incrementam `version` em exatamente 1 e gravam no payload da
-   * operação a versão *resultante*. O servidor precisa da base, não do resultado: é
-   * comparando a base com a versão que ele tem agora que se descobre se alguém escreveu no
-   * meio. Mandar o resultado (como era feito antes) fazia a checagem passar sempre.
+   * Every local service increments `version` by exactly 1 and writes the *resulting* version into the
+   * operation's payload. The server needs the base, not the result: it is by comparing the base with the
+   * version it holds now that it discovers whether somebody wrote in between. Sending the result (as used
+   * to happen) made the check always pass.
    */
   private deriveBaseVersion(payload: Record<string, any>): number | undefined {
     const resultingVersion = payload?.version;
@@ -587,7 +587,7 @@ export class SyncEngineService {
     return resultingVersion - 1;
   }
 
-  /** Chave de agrupamento de operações e conflitos por entidade. */
+  /** The key for grouping operations and conflicts by entity. */
   private entityKey(entityType: string, entityId: string): string {
     return `${entityType}:${entityId}`;
   }
@@ -652,8 +652,8 @@ export class SyncEngineService {
       const lastPublicFavoriteLog = localStory.lastPublicFavoriteLog || 0;
 
       // 2. Pull remote updates first (since the latest known server version).
-      // O servidor devolve no máximo MAX_SYNC_PULL_BATCH ops; repetimos até a página
-      // vir incompleta para não deixar um backlog grande para o ciclo seguinte.
+      // The server returns at most MAX_SYNC_PULL_BATCH ops; we repeat until a page comes back incomplete, so
+      // as not to leave a large backlog for the next cycle.
       console.log(
         `Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`,
       );
@@ -683,10 +683,10 @@ export class SyncEngineService {
       }
 
       /**
-       * Avançamos o marcador apenas até a operação mais alta que realmente chegou, e não
-       * até o `serverMaxOperationVersion` da resposta. Os dois são lidos em consultas
-       * separadas no servidor: uma operação gravada entre elas entra no máximo mas não na
-       * lista, e confiar no máximo a puliria para sempre.
+       * We move the marker only up to the highest operation that actually arrived, and not up to the
+       * response's `serverMaxOperationVersion`. The two are read in separate queries on the server: an
+       * operation written between them makes it into the maximum but not into the list, and trusting the
+       * maximum would skip it forever.
        */
       let highestAppliedRemoteVersion = lastSyncedLog;
       let highestAppliedPublicFavoriteVersion = lastPublicFavoriteLog;
@@ -723,9 +723,8 @@ export class SyncEngineService {
 
         console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
 
-        // Operações locais ainda não aceitas pelo servidor, indexadas por entidade. É com
-        // elas que as atualizações remotas podem colidir: aplicar a versão remota em cima
-        // apagaria em silêncio o que o usuário escreveu offline.
+        // Local operations not yet accepted by the server, indexed by entity. They are what remote updates can
+        // collide with: applying the remote version on top would silently erase what the user wrote offline.
         const pendingByEntity = await this.getPendingOperationsByEntity();
         let conflictsDetected = 0;
         let pullBlocked = false;
@@ -748,8 +747,8 @@ export class SyncEngineService {
             continue;
           }
 
-          // Operação que este próprio cliente enviou e o servidor está devolvendo. Já está
-          // aplicada aqui; reaplicá-la só duplicaria a linha no log local.
+          // An operation this very client sent and the server is handing back. It is already applied here;
+          // reapplying it would only duplicate the row in the local log.
           if (await this.isOwnEchoedOperation(rawUpdate)) {
             markRemoteOperationApplied(rawUpdate);
             continue;
@@ -885,11 +884,10 @@ export class SyncEngineService {
         );
       }
 
-      // O snapshot público é a fonte autoritativa para favoritos dos colaboradores.
-      // Ele fecha lacunas deixadas por histórias importadas sem logs antigos e por cursores
-      // de clientes que já tinham avançado antes de a visibilidade pública ser ativada.
-      // O servidor exclui as linhas do usuário atual para não sobrescrever uma alteração
-      // local dele que ainda será enviada na etapa seguinte deste mesmo ciclo.
+      // The public snapshot is the authoritative source for collaborators' favourites. It closes gaps left by
+      // stories imported without old logs and by cursors of clients that had already moved on before public
+      // visibility was enabled. The server excludes the current user's rows so as not to overwrite a local
+      // change of theirs that is still to be sent in the next step of this same cycle.
       if (publicFavorites.length > 0) {
         const favoriteHandler = this.entityHandlers.get('Favorite');
         if (!favoriteHandler) {
@@ -972,9 +970,9 @@ export class SyncEngineService {
         await serverService.updateServer(this.activeServer.id, { lastSyncDate: new Date() });
       }
 
-      // 6. Reconcile media files. Roda depois dos metadados de propósito: uma mídia só
-      // pode ser baixada depois que a linha que a descreve chegou, e só pode ser enviada
-      // depois que o servidor aceitou essa mesma linha.
+      // 6. Reconcile media files. It runs after the metadata on purpose: a media file can only be downloaded
+      // after the row describing it has arrived, and can only be uploaded after the server has accepted that
+      // same row.
       return await this.syncMedia();
     } catch (error: any) {
       if (isOfflineError(error)) {
@@ -990,12 +988,11 @@ export class SyncEngineService {
   }
 
   /**
-   * Sobe e baixa os arquivos da galeria. Resolve para `true` se o servidor estiver
-   * inacessível, para o ciclo tratar como offline.
+   * Uploads and downloads the gallery's files. It resolves to `true` if the server is unreachable, so the
+   * cycle treats it as offline.
    *
-   * Uma falha aqui nunca derruba a sincronização: mídia que não transferiu continua
-   * marcada como pendente e é tentada de novo no ciclo seguinte, enquanto o texto da
-   * história segue sincronizando normalmente.
+   * A failure here never takes synchronization down: media that did not transfer stays marked as pending
+   * and is tried again in the next cycle, while the story's text keeps synchronizing normally.
    */
   private async syncMedia(): Promise<boolean> {
     if (!this._db || !this.storyId || !this.activeServer) {
@@ -1026,8 +1023,8 @@ export class SyncEngineService {
   }
 
   /**
-   * Empurra a fila local em fatias de `MAX_SYNC_BATCH_SIZE`. Sem isto um backlog de 201+
-   * ops (edição longa offline) toma 422 no schema do servidor e nunca sincroniza.
+   * Pushes the local queue in slices of `MAX_SYNC_BATCH_SIZE`. Without it a backlog of 201+ ops (a long
+   * offline session) takes a 422 from the server's schema and never synchronizes.
    */
   private async pushPendingOperations(): Promise<{ offline: boolean }> {
     const { showNotification } = useNotificationStore.getState();
@@ -1159,9 +1156,9 @@ export class SyncEngineService {
   }
 
   /**
-   * Operações locais que podem ir para o servidor: ainda não sincronizadas e sem conflito
-   * pendente. Excluir as conflitadas é o que impede o ciclo de reenviar para sempre uma
-   * operação que o servidor já recusou.
+   * Local operations that can go to the server: not yet synchronized and with no pending conflict.
+   * Excluding the conflicted ones is what stops the cycle from resending forever an operation the server
+   * has already refused.
    */
   private async getPushableOperations(): Promise<OperationLogSelect[]> {
     return this._db!.query.operationLogs.findMany({
@@ -1178,7 +1175,7 @@ export class SyncEngineService {
     });
   }
 
-  /** Operações locais pendentes agrupadas por entidade, para cruzar com o que vem do pull. */
+  /** Pending local operations grouped by entity, to cross-reference with what comes from the pull. */
   private async getPendingOperationsByEntity(): Promise<Map<string, OperationLogSelect[]>> {
     const pending = await this.getPushableOperations();
     const byEntity = new Map<string, OperationLogSelect[]>();
@@ -1195,11 +1192,11 @@ export class SyncEngineService {
   }
 
   /**
-   * A operação que veio do pull já está registrada localmente?
+   * Is the operation that came from the pull already recorded locally?
    *
-   * Cobre dois casos: operações que este cliente empurrou e o servidor está devolvendo, e
-   * operações remotas que um pull anterior já aplicou. Nos dois, reaplicar é desnecessário
-   * e duplicaria a linha no log local.
+   * It covers two cases: operations this client pushed and the server is handing back, and remote
+   * operations an earlier pull already applied. In both, reapplying is unnecessary and would duplicate the
+   * row in the local log.
    */
   private async isOwnEchoedOperation(update: StoryUpdate): Promise<boolean> {
     if (!update.operationVersion) {
@@ -1217,12 +1214,11 @@ export class SyncEngineService {
   }
 
   /**
-   * Aplica uma criação remota tolerando que a entidade já exista.
+   * Applies a remote create tolerating that the entity may already exist.
    *
-   * Um `insert` cru falharia ao repetir a operação (por exemplo se a resposta de um push
-   * anterior se perdeu e o servidor devolveu a criação no pull seguinte), e a falha era
-   * contabilizada como "erro ao aplicar atualização remota" sem nada de errado ter
-   * acontecido de fato.
+   * A raw `insert` would fail when repeating the operation (for instance if an earlier push's response
+   * was lost and the server returned the create in the next pull), and the failure was counted as "error
+   * applying a remote update" without anything actually having gone wrong.
    */
   private async applyRemoteCreate(
     update: StoryUpdate,
@@ -1251,11 +1247,11 @@ export class SyncEngineService {
   }
 
   /**
-   * Registra no log local uma operação vinda do servidor.
+   * Records an operation coming from the server in the local log.
    *
-   * O id usado é o da operação *no servidor*. Antes usava-se o id da entidade, o que fazia
-   * a segunda operação sobre a mesma entidade colidir na chave primária - a falha era
-   * engolida e reportada ao usuário como "falha ao aplicar atualizações remotas".
+   * The id used is the operation's id *on the server*. It used to be the entity's id, which made the
+   * second operation on the same entity collide on the primary key - the failure was swallowed and
+   * reported to the user as "failed to apply remote updates".
    */
   private async recordRemoteOperationLocally(update: StoryUpdate): Promise<void> {
     const payloadToStore =
@@ -1285,12 +1281,11 @@ export class SyncEngineService {
   }
 
   /**
-   * Reconcilia uma atualização remota com edições locais ainda não aceitas na mesma entidade.
+   * Reconciles a remote update with local edits on the same entity that have not been accepted yet.
    *
-   * A regra é preservar o que a pessoa fez: campos que só o servidor mudou são aplicados,
-   * campos que a pessoa também mudou ficam com o valor dela e viram um conflito para ela
-   * decidir. Antes, a atualização remota era escrita por cima e a edição offline
-   * desaparecia sem aviso.
+   * The rule is to preserve what the person did: fields only the server changed are applied, fields the
+   * person also changed keep their value and become a conflict for them to decide. Before, the remote
+   * update was written on top and the offline edit disappeared with no warning.
    */
   private async reconcileRemoteUpdate(
     update: StoryUpdate,
@@ -1299,9 +1294,9 @@ export class SyncEngineService {
   ): Promise<{ conflicted: boolean }> {
     const entityId = update.id!;
 
-    // Reorder não cabe no resto desta função: o valor em disputa é a ordem inteira
-    // (`reorderItems`), não campos escalares de uma entidade - `mergeLocalOperationPayloads`/
-    // `findContestedFields` não fazem sentido pra ele.
+    // Reorder does not fit the rest of this function: the disputed value is the whole order
+    // (`reorderItems`), not an entity's scalar fields - `mergeLocalOperationPayloads`/`findContestedFields`
+    // make no sense for it.
     if (update.type === 'reorder') {
       return this.reconcileRemoteReorder(
         update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
@@ -1342,12 +1337,12 @@ export class SyncEngineService {
 
     if (update.type === 'delete') {
       if (localWantsDelete) {
-        // Os dois lados excluíram: mesma intenção, nada a decidir.
+        // Both sides deleted: the same intent, nothing to decide.
         await handler.applyDelete(this.storyId!, update as DeleteStoryUpdate);
         return { conflicted: false };
       }
-      // A exclusão remota não é aplicada de propósito: descartar aqui o que a pessoa
-      // escreveu tiraria dela a chance de recuperar a entidade.
+      // The remote deletion is deliberately not applied: discarding what the person wrote here would take
+      // away their chance to recover the entity.
       await recordConflict('deleted_on_server', { isDeleted: true, version: update.version });
       return { conflicted: true };
     }
@@ -1379,8 +1374,8 @@ export class SyncEngineService {
     }
 
     if (contestedFields.length === 0) {
-      // As duas edições cabem juntas. A local só precisa ser reapoiada na versão nova,
-      // e assim ela passa no próximo push sem incomodar o usuário com uma decisão.
+      // The two edits fit together. The local one only has to be rebased onto the new version, and then it
+      // goes through on the next push without bothering the user with a decision.
       await this.rebasePendingOperations(pendingLocalOps, update.version);
       return { conflicted: false };
     }
@@ -1390,9 +1385,9 @@ export class SyncEngineService {
   }
 
   /**
-   * Contraparte de `reconcileRemoteUpdate` só para reorder - extraída à parte porque o
-   * valor em disputa (`reorderItems`) não é um conjunto de campos de uma entidade, é a
-   * ordem inteira de N outras linhas (Scenes de um Chapter, ou Chapters de uma Story).
+   * The counterpart of `reconcileRemoteUpdate` for reorder alone - extracted separately because the
+   * disputed value (`reorderItems`) is not a set of one entity's fields, it is the whole order of N other
+   * rows (a Chapter's Scenes, or a Story's Chapters).
    */
   private async reconcileRemoteReorder(
     update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
@@ -1402,8 +1397,8 @@ export class SyncEngineService {
     const localReorderOp = pendingLocalOps.find((op) => op.operationType === 'reorder');
 
     if (!localReorderOp) {
-      // O que está pendente nesta entidade é de outro tipo (ex.: renomear um capítulo) - não
-      // conflita com a ordem vinda do servidor, que pode ser aplicada direto.
+      // What is pending on this entity is of another kind (renaming a chapter, say) - it does not conflict
+      // with the order coming from the server, which can be applied directly.
       await applyReorderToLocalDb(this._db!, update, new Date(update.operationTime!));
       return { conflicted: false };
     }
@@ -1429,9 +1424,9 @@ export class SyncEngineService {
   }
 
   /**
-   * Reescreve a base das operações locais pendentes para a versão que a entidade tem
-   * agora, encadeando-as (a primeira apoia na versão nova, a segunda na seguinte, e assim
-   * por diante) para que o servidor as aceite em sequência.
+   * Rewrites the base of the pending local operations to the version the entity holds now, chaining them
+   * (the first rests on the new version, the second on the following one, and so on) so the server accepts
+   * them in sequence.
    */
   private async rebasePendingOperations(
     pendingLocalOps: OperationLogSelect[],
@@ -1444,7 +1439,7 @@ export class SyncEngineService {
     let base = newEntityVersion;
     for (const op of pendingLocalOps) {
       const payload = JSON.parse(op.payload);
-      // O motor deriva a base como `payload.version - 1`, então gravamos base + 1.
+      // The engine derives the base as `payload.version - 1`, so we write base + 1.
       payload.version = base + 1;
       await this._db!.update(schema.operationLogs)
         .set({ payload: JSON.stringify(payload) })
@@ -1454,12 +1449,11 @@ export class SyncEngineService {
   }
 
   /**
-   * Processa a resposta do push: marca como sincronizadas só as operações que o servidor
-   * aceitou e transforma as recusadas em conflitos pendentes.
+   * Processes the push's response: it marks as synchronized only the operations the server accepted and
+   * turns the refused ones into pending conflicts.
    *
-   * Antes, qualquer resposta 2xx marcava *todas* as operações como sincronizadas, então uma
-   * operação recusada era descartada em silêncio - a edição do usuário simplesmente
-   * desaparecia.
+   * Before, any 2xx response marked *every* operation as synchronized, so a refused operation was silently
+   * discarded - the user's edit simply disappeared.
    */
   private async applyPushResult(
     result: SyncPushResult,
@@ -1469,8 +1463,8 @@ export class SyncEngineService {
     const { showNotification } = useNotificationStore.getState();
 
     if (!Array.isArray(result?.applied) && !Array.isArray(result?.conflicts)) {
-      // Servidor anterior a esta mudança: não há resultado por operação para inspecionar.
-      // Mantemos o comportamento antigo em vez de deixar de sincronizar com ele.
+      // A server predating this change: there is no per-operation result to inspect. We keep the old
+      // behaviour rather than stop synchronizing with it.
       console.log(
         'SyncEngineService: server did not report per-operation results, assuming the whole batch was applied.',
       );
@@ -1492,8 +1486,8 @@ export class SyncEngineService {
         .where(eq(schema.operationLogs.id, entry.clientOperationId));
     }
 
-    // Conflitos vêm por operação, mas a decisão é por entidade: cinco edições recusadas no
-    // mesmo capítulo são uma escolha do usuário, não cinco.
+    // Conflicts come per operation, but the decision is per entity: five refused edits on the same chapter
+    // are one choice for the user, not five.
     const conflictsByEntity = new Map<string, SharedSyncConflict[]>();
     for (const conflict of result.conflicts || []) {
       const key = this.entityKey(conflict.entity, conflict.entityId);
@@ -1508,8 +1502,8 @@ export class SyncEngineService {
     let autoMergedCount = 0;
     for (const [key, group] of conflictsByEntity) {
       const first = group[0];
-      // Todas as operações locais daquela entidade entram no conflito, e não só a que o
-      // servidor citou: as seguintes se apoiavam na base recusada.
+      // Every local operation for that entity goes into the conflict, not only the one the server cited: the
+      // following ones rested on the refused base.
       const relatedOps = pushedOperations.filter(
         (op) => this.entityKey(op.entityType, op.entityId) === key,
       );
@@ -1523,39 +1517,36 @@ export class SyncEngineService {
           ? mergeLocalOperationPayloads(relatedOps)
           : first.attemptedChanges || {};
 
-      // `version_conflict` só diz que a base lida ficou velha, não que os dois lados
-      // mudaram os mesmos campos - `checkVersionConflict` no servidor compara só o número
-      // da versão (ver `BaseSyncEntityHandler.ts`). Se nenhum campo realmente disputa,
-      // mesclar em silêncio e reapoiar a operação pendente é o mesmo que `reconcileRemoteUpdate`
-      // já faz no caminho de pull; sem isto, editar campos diferentes do mesmo personagem em
-      // dois lugares sempre virava uma decisão do usuário, mesmo sem nada pra decidir. Restrito
-      // a `update` com a entidade ainda viva no servidor - uma entidade excluída chega com
-      // `reason: 'deleted_on_server'`, nunca `'version_conflict'` (checado antes, na própria
-      // `BaseSyncEntityHandler.update()`), então isto nunca mescla por cima de uma exclusão.
+      // `version_conflict` only says the base that was read went stale, not that both sides changed the same
+      // fields - `checkVersionConflict` on the server compares only the version number (see
+      // `BaseSyncEntityHandler.ts`). If no field is genuinely disputed, merging silently and rebasing the
+      // pending operation is the same thing `reconcileRemoteUpdate` already does on the pull path; without
+      // this, editing different fields of the same character in two places always became a decision for the
+      // user, with nothing to decide. Restricted to an `update` with the entity still alive on the server - a
+      // deleted entity arrives with `reason: 'deleted_on_server'`, never `'version_conflict'` (checked
+      // earlier, in `BaseSyncEntityHandler.update()` itself), so this never merges over a deletion.
       //
-      // Importante: `contestedFields` aqui NÃO pode vir de `findContestedFields(localValues,
-      // first.serverEntity)` como no caminho de pull. Lá `remoteValues` é só o delta de UMA
-      // operação remota específica, então comparar contra `localValues` responde "o servidor
-      // mudou este campo também?" corretamente. Aqui `first.serverEntity` é a linha inteira
-      // atual - o valor de um campo que o próprio cliente está editando sempre "parece"
-      // diferente do valor novo, tenha o servidor mexido nele ou não, o que faria todo campo
-      // editado parecer disputado. `first.changedFields` (populado pelo servidor a partir do
-      // seu próprio histórico de operações - ver `SyncService.getChangedFieldsSinceVersion`)
-      // é o delta de verdade: os campos que mudaram *desde a versão que o cliente leu*. Sem
-      // ele (servidor antigo, resposta sem esse campo), não há como provar que não há
-      // disputa real - o seguro é não mesclar, e deixar como conflito de sempre.
+      // Important: `contestedFields` here must NOT come from `findContestedFields(localValues,
+      // first.serverEntity)` as on the pull path. There, `remoteValues` is only the delta of ONE specific
+      // remote operation, so comparing against `localValues` correctly answers "did the server change this
+      // field too?". Here `first.serverEntity` is the whole current row - the value of a field the client
+      // itself is editing always "looks" different from the new value, whether the server touched it or not,
+      // which would make every edited field look disputed. `first.changedFields` (populated by the server
+      // from its own operation history - see `SyncService.getChangedFieldsSinceVersion`) is the real delta:
+      // the fields that changed *since the version the client read*. Without it (an old server, a response
+      // without that field), there is no way to prove there is no real dispute - the safe move is not to
+      // merge, and to leave it as a conflict as usual.
       if (
         first.reason === 'version_conflict' &&
         localOperationType === 'update' &&
         first.serverEntity &&
         first.changedFields
       ) {
-        // Um campo só é genuinamente disputado se (a) alguém mais mexeu nele desde a base do
-        // cliente E (b) o valor que o cliente quer escrever realmente diverge do que está lá
-        // agora - a segunda parte é o que faltava: pegar "changedFields" sozinho reconflita
-        // sempre que o valor final coincide por acaso (ex.: os dois lados renomearam pra o
-        // mesmo texto), mesmo não havendo nada de fato pra decidir. `findContestedFields` já
-        // faz a comparação de valor tolerante que o resto do sistema usa.
+        // A field is only genuinely disputed if (a) somebody else touched it since the client's base AND (b)
+        // the value the client wants to write really does differ from what is there now - the second part is
+        // what was missing: taking "changedFields" alone reconflicts whenever the final value coincides by
+        // chance (both sides renaming to the same text, say), even with nothing actually to decide.
+        // `findContestedFields` already does the tolerant value comparison the rest of the system uses.
         const contestedFields = findContestedFields(localValues, first.serverEntity).filter(
           (field) => first.changedFields!.includes(field),
         );

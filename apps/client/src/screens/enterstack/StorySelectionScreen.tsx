@@ -226,8 +226,8 @@ const StorySelectionScreen = () => {
     navigation.replace('MainSystem', { storyId: story.id });
   };
 
-  // `useCallback` para poder entrar nas dependências do efeito do cabeçalho abaixo: como
-  // função solta, ela nasce de novo a cada render e faria o efeito rodar sempre.
+  // `useCallback` so it can go into the header effect's dependencies below: as a loose function it is
+  // born anew on every render and would make the effect run every time.
   const handleCreateNewStory = useCallback(() => {
     navigation.navigate('StoryForm', {});
   }, [navigation]);

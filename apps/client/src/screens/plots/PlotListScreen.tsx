@@ -31,11 +31,11 @@ export type PlotsScreenNavigationProp = CompositeNavigationProp<
 >;
 
 /**
- * A raiz do menu "Tramas": as linhas narrativas da história, e os atalhos para matriz,
- * cobertura e leitor.
+ * The root of the "Plots" menu: the story's narrative threads, and the shortcuts to the matrix,
+ * the coverage and the reader.
  *
- * Sem Busca Avançada, tags ou favoritos de propósito - um Plot tem só nome e detalhes, e a
- * barra completa daria a impressão de filtros que não existem.
+ * Deliberately without Advanced Search, tags or favourites - a Plot has only a name and details, and the
+ * full bar would give the impression of filters that do not exist.
  */
 const PlotListScreen = () => {
   useBackButtonHandler();

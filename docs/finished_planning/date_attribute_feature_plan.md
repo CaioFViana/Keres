@@ -1,147 +1,147 @@
-# Plano: Date Picker para atributos customizados (`AttributeType.DATE`)
+# Plan: a Date Picker for custom attributes (`AttributeType.DATE`)
 
-Branch base: `ouroboros`. Feature seguinte à de `AttributeType.ENTITY`, já implementada.
+Base branch: `ouroboros`. The feature following `AttributeType.ENTITY`, already implemented.
 
-## 1. Problema
+## 1. The problem
 
-`AttributeType.DATE` hoje é um `TextInput` livre com placeholder `YYYY-MM-DD`
-(`AttributeValueInput.tsx`). Não há date picker em lugar nenhum do app. Consequências:
+`AttributeType.DATE` is today a free `TextInput` with the placeholder `YYYY-MM-DD`
+(`AttributeValueInput.tsx`). There is no date picker anywhere in the app. The consequences:
 
-- nada garante formato, então a Detail screen mostra o que o usuário digitou, cru;
-- a checagem da Análise da História usa `Date.parse`, que aceita coisas demais;
-- não há como registrar hora.
+- nothing guarantees the format, so the Detail screen shows what the user typed, raw;
+- the Story Analysis check uses `Date.parse`, which accepts far too much;
+- there is no way to record a time.
 
-## 2. Invariante central: a data **não tem fuso horário**
+## 2. The central invariant: the date has **no time zone**
 
-A preocupação levantada — "diferença de fuso horário mexer em horas internas da história" — se
-resolve **não guardando fuso nenhum**. O valor é uma data civil *flutuante*: `15/01/2024 10:30`
-é 15/01/2024 10:30 em Brasília, em Tóquio e em Londres, porque é uma hora **interna da
-história**, não um instante no tempo real.
+The concern raised — "a time zone difference messing with times internal to the story" — is
+solved by **storing no time zone at all**. The value is a *floating* civil date: `15/01/2024 10:30`
+is 15/01/2024 10:30 in Brasília, in Tokyo and in London, because it is a time **internal to the
+story**, not an instant in real time.
 
-Por isso **não** é adicionado um campo de fuso na Story. Seria contraproducente: qualquer
-conversão entre fuso da história e fuso do sistema reintroduz exatamente o deslocamento que se
-quer evitar. O fuso do sistema é levado em conta de uma única forma — sendo mantido fora do
-caminho:
+That is why **no** time zone field is added to the Story. It would be counterproductive: any
+conversion between the story's time zone and the system's reintroduces exactly the shift we
+want to avoid. The system's time zone is taken into account in a single way — by being kept out of
+the way:
 
-| Armadilha | Como é evitada |
+| Trap | How it is avoided |
 |---|---|
-| `new Date('2024-01-15')` é interpretado como UTC e renderiza **14/01** em UTC-3 | O valor nunca é parseado por `new Date(string)`. O parser é uma regex que extrai os componentes. |
-| `new Date(y, m, d)` usa fuso local e pode deslizar em bordas de horário de verão | Datas são construídas com `Date.UTC(...)` e lidas com `getUTC*`. |
-| `Date.UTC(15, 0, 1)` vira **1915** (armadilha do ano de 2 dígitos) | `setUTCFullYear(year)` explícito depois da construção. |
-| `toLocaleDateString()` sem `timeZone` usa o fuso do dispositivo | Toda formatação passa `timeZone: 'UTC'`. |
-| Formatação seguir o locale do **sistema** e não o do app | O idioma vem de `i18n.language`, nunca do dispositivo. |
+| `new Date('2024-01-15')` is interpreted as UTC and renders **14/01** at UTC-3 | The value is never parsed by `new Date(string)`. The parser is a regex that extracts the components. |
+| `new Date(y, m, d)` uses the local time zone and can slip at daylight-saving boundaries | Dates are built with `Date.UTC(...)` and read with `getUTC*`. |
+| `Date.UTC(15, 0, 1)` becomes **1915** (the two-digit year trap) | An explicit `setUTCFullYear(year)` after construction. |
+| `toLocaleDateString()` without `timeZone` uses the device's time zone | Every formatting call passes `timeZone: 'UTC'`. |
+| Formatting following the **system**'s locale and not the app's | The language comes from `i18n.language`, never from the device. |
 
-O único ponto em que o fuso do sistema legitimamente entra é o botão "Hoje" do picker e o mês
-inicial ao abrir sem valor — "hoje" para quem está escrevendo é a data local dele.
+The only point where the system's time zone legitimately enters is the picker's "Today" button and the
+initial month when opening with no value — "today" for the person writing is their own local date.
 
-## 3. Formato canônico
+## 3. The canonical format
 
-Armazenamento continua texto puro em `AttributeValue.value` (§`attributeValueCodec.ts`),
-como pedido. Duas formas, e o formato **se auto-descreve**:
+Storage remains plain text in `AttributeValue.value` (§`attributeValueCodec.ts`),
+as requested. Two forms, and the format is **self-describing**:
 
-- só data: `YYYY-MM-DD`
-- data + hora: `YYYY-MM-DDTHH:mm`
+- date only: `YYYY-MM-DD`
+- date + time: `YYYY-MM-DDTHH:mm`
 
-Sem sufixo `Z`, sem offset, sem segundos. Ter ou não hora é decidido **por valor**, não por
-campo: um switch "incluir hora" dentro do picker, e a renderização infere pelo formato da
-string. Isso evita uma coluna nova em `StorySchemaField` (que custaria migração SQLite +
-Postgres + sync handler + export/import) e mantém compatibilidade total com valores de texto
-livre já gravados.
+No `Z` suffix, no offset, no seconds. Whether there is a time is decided **per value**, not per
+field: an "include time" switch inside the picker, and the rendering infers it from the string's
+format. That avoids a new column on `StorySchemaField` (which would cost a SQLite +
+Postgres migration + a sync handler + export/import) and keeps full compatibility with free-text
+values already written.
 
-> Alternativa não escolhida: uma coluna `dateIncludesTime` no campo, forçando todos os valores
-> daquele atributo à mesma forma. É mais previsível para um sistema de schema, mas custa toda a
-> cadeia de migração online. Se for preferível, é aditivo — o formato canônico não muda.
+> The alternative not chosen: a `dateIncludesTime` column on the field, forcing every value
+> of that attribute into the same form. It is more predictable for a schema system, but it costs the whole
+> online migration chain. If it turns out to be preferable, it is additive — the canonical format does not change.
 
-Ano vai de 1 a 9999, zero-padded. Datas impossíveis (30/02) são rejeitadas por round-trip.
+The year goes from 1 to 9999, zero-padded. Impossible dates (30/02) are rejected by a round trip.
 
-## 4. Camadas
+## 4. Layers
 
-### 4.1 `packages/shared/utils/attributeDateValue.ts` (novo)
+### 4.1 `packages/shared/utils/attributeDateValue.ts` (new)
 
-Funções puras, sem React, testáveis no vitest do shared:
+Pure functions, no React, testable in shared's vitest:
 
-| Função | Papel |
+| Function | Role |
 |---|---|
-| `parseAttributeDate(raw)` | regex estrita + validação de calendário → `{year, month, day, hour, minute}` ou `null`. `hour/minute` `null` = só data |
-| `formatAttributeDate(parts)` | componentes → string canônica |
+| `parseAttributeDate(raw)` | A strict regex + calendar validation → `{year, month, day, hour, minute}` or `null`. `hour/minute` `null` = date only |
+| `formatAttributeDate(parts)` | components → the canonical string |
 | `isValidAttributeDate(raw)` | `parseAttributeDate(raw) !== null` |
-| `attributeDateWeekday(parts)` | 0–6, via `Date.UTC` + `getUTCDay()` — imune a fuso |
-| `toUtcDate(parts)` | `Date` em UTC, para alimentar o `Intl` |
-| `formatAttributeDateForDisplay(raw, language)` | string localizada com dia da semana (e hora, se houver), ou `null` se não parseia |
+| `attributeDateWeekday(parts)` | 0–6, through `Date.UTC` + `getUTCDay()` — immune to time zones |
+| `toUtcDate(parts)` | A `Date` in UTC, to feed `Intl` |
+| `formatAttributeDateForDisplay(raw, language)` | A localized string with the day of the week (and the time, if there is one), or `null` if it does not parse |
 
-`formatAttributeDateForDisplay` usa `Intl.DateTimeFormat(language, { weekday: 'long', year,
-month: 'long', day, [hour, minute], timeZone: 'UTC', hourCycle })` sobre a data UTC. Com
-`timeZone: 'UTC'` + data construída em UTC, a saída é idêntica em qualquer fuso. `Intl` já é
-usado no app (`EntityMetadata`, `OperationLogListItem`), mas há `try/catch` caindo na string
-canônica se o runtime não tiver ICU.
+`formatAttributeDateForDisplay` uses `Intl.DateTimeFormat(language, { weekday: 'long', year,
+month: 'long', day, [hour, minute], timeZone: 'UTC', hourCycle })` over the UTC date. With
+`timeZone: 'UTC'` + a date built in UTC, the output is identical in any time zone. `Intl` is already
+used in the app (`EntityMetadata`, `OperationLogListItem`), but there is a `try/catch` falling back to the
+canonical string if the runtime has no ICU.
 
-### 4.2 Picker (client)
+### 4.2 The picker (client)
 
-`components/common/inputs/DatePickerInput/` — mesma dupla do ColorPicker:
+`components/common/inputs/DatePickerInput/` — the same pair as the ColorPicker:
 
-- **`DatePickerInput.tsx`**: ícone de calendário + `TextInput` read-only mostrando o valor **já
-  formatado** (não o canônico), abrindo um `ResponsiveModal`. Estrutura copiada de
-  `ColorPickerInput`, inclusive `commonInputStyles.customComponentInput`.
-- **`DatePickerModal.tsx`**: conteúdo do modal, com estado próprio, confirmando em "Selecionar"
-  (o valor só sai no confirm, como no ColorPicker).
+- **`DatePickerInput.tsx`**: a calendar icon + a read-only `TextInput` showing the **already
+  formatted** value (not the canonical one), opening a `ResponsiveModal`. The structure is copied from
+  `ColorPickerInput`, including `commonInputStyles.customComponentInput`.
+- **`DatePickerModal.tsx`**: the modal's content, with state of its own, confirming on "Select"
+  (the value only comes out on confirm, as in the ColorPicker).
 
-Layout do modal, de cima para baixo:
+The modal's layout, from the top down:
 
-1. **Cabeçalho com o dia da semana** — "quarta-feira, 15 de janeiro de 2024 10:30", no idioma do
-   app. É o requisito "mostrar dia da semana no topo" e serve de preview do que a Detail vai
-   mostrar.
-2. Navegação `‹ mês ›` + campo de ano digitável (histórias em ano 1342 ou 7000 são normais).
-3. Cabeçalho de dias da semana, abreviados no idioma do app (derivados do `Intl`, não escritos
-   à mão).
-4. Grade do mês. Dia selecionado destacado; células vazias antes do dia 1.
-5. Switch **"incluir hora"** (`ThemedSwitch`). Ligado, revela dois campos numéricos `HH:mm`,
-   clampados.
-6. "Hoje" e "Limpar".
-7. "Cancelar" / "Selecionar".
+1. **A header with the day of the week** — "Wednesday, 15 January 2024 10:30", in the app's
+   language. It is the "show the day of the week at the top" requirement and serves as a preview of what the Detail will
+   show.
+2. `‹ month ›` navigation + a typable year field (stories set in the year 1342 or 7000 are normal).
+3. A weekday header, abbreviated in the app's language (derived from `Intl`, not written
+   by hand).
+4. The month's grid. The selected day highlighted; empty cells before the 1st.
+5. An **"include time"** switch (`ThemedSwitch`). On, it reveals two numeric `HH:mm` fields,
+   clamped.
+6. "Today" and "Clear".
+7. "Cancel" / "Select".
 
-Valor inicial inválido ou legado (texto livre antigo) não é destruído ao abrir: o modal começa
-no mês de hoje sem seleção, e o valor antigo só é substituído se a pessoa confirmar.
+An invalid or legacy initial value (old free text) is not destroyed on opening: the modal starts
+in today's month with no selection, and the old value is only replaced if the person confirms.
 
-### 4.3 Como aparece na história
+### 4.3 How it appears in the story
 
-`CustomAttributeDetailFields.formatValueForDisplay` ganha o ramo DATE, chamando
+`CustomAttributeDetailFields.formatValueForDisplay` gains the DATE branch, calling
 `formatAttributeDateForDisplay(raw, i18n.language)`:
 
 - `2024-01-15` → **"segunda-feira, 15 de janeiro de 2024"** (pt) / "Monday, January 15, 2024" (en)
 - `2024-01-15T10:30` → **"segunda-feira, 15 de janeiro de 2024 10:30"**
-- valor legado não parseável → a string crua, sem quebrar nada
+- an unparseable legacy value → the raw string, breaking nothing
 
-Idioma = idioma da aplicação (`i18n.language`), nunca o do dispositivo. Como consequência de
-graça, o `contentSnapshot` dos comentários passa a guardar a data formatada, e não o ISO cru.
+The language = the application's language (`i18n.language`), never the device's. As a free
+consequence, the comments' `contentSnapshot` comes to hold the formatted date, not the raw ISO.
 
-### 4.4 Demais pontos
+### 4.4 Other points
 
-| Arquivo | Mudança |
+| File | Change |
 |---|---|
-| `AttributeValueInput.tsx` | `case DATE` → `DatePickerInput` (vale também para o "valor padrão" em `StorySchemaFieldFormScreen`, que passa por aqui) |
-| `AdvancedSearchModal.tsx` | `case 'date'` → `DatePickerInput` em vez de `TextInput`. Seguro: nenhum campo **nativo** é `type: 'date'` em `entityFields.ts`, esse case só é alcançado por atributo customizado |
-| `utils/storyAnalysisChecks.ts` | inválido = `!isValidAttributeDate(raw) && Number.isNaN(Date.parse(raw))`. O `Date.parse` fica como segunda chance **de propósito**: sem ele, todo valor de texto livre gravado antes desta feature viraria warning novo de uma vez |
-| `utils/attributeSearchPredicate.ts` | **sem mudança** — `LIKE %valor%` sobre o formato canônico casa prefixo (`2024-01` acha janeiro inteiro), que é o comportamento útil |
-| `locales/{en,pt}.json` | chaves novas do picker |
+| `AttributeValueInput.tsx` | `case DATE` → `DatePickerInput` (it also applies to the "default value" in `StorySchemaFieldFormScreen`, which goes through here) |
+| `AdvancedSearchModal.tsx` | `case 'date'` → `DatePickerInput` instead of `TextInput`. Safe: no **native** field is `type: 'date'` in `entityFields.ts`, so that case is only reached through a custom attribute |
+| `utils/storyAnalysisChecks.ts` | invalid = `!isValidAttributeDate(raw) && Number.isNaN(Date.parse(raw))`. The `Date.parse` stays as a second chance **on purpose**: without it, every free-text value written before this feature would become a new warning all at once |
+| `utils/attributeSearchPredicate.ts` | **no change** — `LIKE %value%` over the canonical format matches a prefix (`2024-01` finds the whole of January), which is the useful behaviour |
+| `locales/{en,pt}.json` | the picker's new keys |
 
-Deliberadamente **fora**: `EntityService` (log de operações) e `GlobalSearchService` (snippet)
-continuam mostrando o valor canônico. `2024-01-15T10:30` é legível, e formatar ali exigiria
-carregar idioma dentro de camada de serviço.
+Deliberately **out**: `EntityService` (the operation log) and `GlobalSearchService` (the snippet)
+carry on showing the canonical value. `2024-01-15T10:30` is readable, and formatting it there would require
+loading a language inside the service layer.
 
-## 5. Testes
+## 5. Tests
 
-- `packages/shared/test/utils/attributeDateValue.test.ts`: parse estrito (aceita/rejeita),
-  30/02 rejeitado, round-trip, ano de 2 dígitos não vira 19xx, dia da semana correto,
-  **e o teste que importa: formatar o mesmo valor com `TZ=UTC`, `TZ=America/Sao_Paulo` e
-  `TZ=Asia/Tokyo` dá exatamente a mesma string**.
-- `apps/client/test/components/DatePickerModal.test.tsx`: abre no mês certo, seleciona dia,
-  liga hora e emite `T10:30`, "Limpar" emite `null`, valor legado não some ao abrir.
+- `packages/shared/test/utils/attributeDateValue.test.ts`: strict parsing (accepts/rejects),
+  30/02 rejected, round trip, a two-digit year not becoming 19xx, the correct day of the week,
+  **and the test that matters: formatting the same value with `TZ=UTC`, `TZ=America/Sao_Paulo` and
+  `TZ=Asia/Tokyo` gives exactly the same string**.
+- `apps/client/test/components/DatePickerModal.test.tsx`: it opens on the right month, selects a day,
+  turns the time on and emits `T10:30`, "Clear" emits `null`, a legacy value does not disappear on opening.
 
-## 6. Riscos
+## 6. Risks
 
-1. **`Intl` sem ICU completo** em algum runtime → nomes de mês/dia em inglês ou erro. Coberto
-   por `try/catch` com fallback para a string canônica.
-2. **Ano > 9999** não é representável no formato canônico. Se histórias de longuíssimo prazo
-   forem um caso real, o formato precisa mudar antes de haver dados gravados.
-3. **Valores legados de texto livre** continuam existindo e são exibidos crus. Não há migração
-   automática: adivinhar se "01/02/2024" é 1º de fevereiro ou 2 de janeiro é impossível.
+1. **`Intl` without full ICU** in some runtime → month/day names in English or an error. Covered
+   by a `try/catch` with a fallback to the canonical string.
+2. **Years > 9999** are not representable in the canonical format. If very long-term stories
+   turn out to be a real case, the format has to change before there is written data.
+3. **Legacy free-text values** carry on existing and are displayed raw. There is no automatic
+   migration: guessing whether "01/02/2024" is the 1st of February or the 2nd of January is impossible.

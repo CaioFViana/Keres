@@ -85,9 +85,9 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
           conditions.push(eq(choices.nextSceneId, nextSceneId) as SQL<boolean>);
         }
 
-        // `entityFieldMetadata` não descreve Choice (só as entidades com busca avançada na
-        // tela). Sem o `?? []` qualquer critério não reconhecido derrubava a consulta inteira
-        // com "cannot read property 'find' of undefined", em vez de ser simplesmente ignorado.
+        // `entityFieldMetadata` does not describe Choice (only the entities with advanced search on screen).
+        // Without the `?? []` any unrecognised criterion took the whole query down with "cannot read property
+        // 'find' of undefined", instead of simply being ignored.
         const choiceMetadata = entityFieldMetadata['Choice'] ?? [];
         for (const key in otherCriteria) {
           if (Object.prototype.hasOwnProperty.call(otherCriteria, key)) {

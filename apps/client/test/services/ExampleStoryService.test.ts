@@ -44,8 +44,8 @@ it('ships every public-domain example as a complete showcase of applicable featu
       expect(parsed.success).toBe(true);
       if (!parsed.success) continue;
 
-      // O schema mantém coleções introduzidas em versões antigas como opcionais no tipo,
-      // embora o formato atual e estes guardas exijam todas elas no pacote.
+      // The schema keeps collections introduced in old versions optional in the type, even though the current
+      // format and these guards require all of them in the package.
       const story = parsed.data as any;
       expect(story.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
       expect(story.chapters.length).toBeGreaterThanOrEqual(3);
@@ -223,8 +223,8 @@ it('keeps example ids valid, unique, referentially sound, bilingual, and bundle-
 });
 
 /**
- * Um exemplo que chegasse 0-based instalaria uma história que a própria Análise acusa - e cuja
- * primeira reordenação viraria conflito de sincronização.
+ * An example arriving 0-based would install a story the Analysis itself flags - and whose first reorder
+ * would become a synchronization conflict.
  */
 it('numbers every bundled example the way the app does: chapters 1..N, scenes 1..M per chapter', () => {
   for (const entry of exampleStoryRegistry) {
@@ -301,7 +301,7 @@ it('installs the plots of a linear example bound to the copy, not to the package
 
   expect(plots.length).toBe(packaged.plots.length);
   expect(plots.every((plot) => plot.storyId === installed.storyId)).toBe(true);
-  // Os ids do pacote não podem sobreviver à cópia, senão instalar duas vezes colide.
+  // The package's ids must not survive the copy, otherwise installing twice collides.
   expect(plots.some((plot) => packaged.plots.some((source) => source.id === plot.id))).toBe(false);
 
   expect(relations.length).toBeGreaterThan(0);

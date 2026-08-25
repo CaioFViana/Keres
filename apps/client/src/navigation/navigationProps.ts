@@ -4,11 +4,11 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CharacterStackParamList, MainSystemDrawerParamList } from './MainSystemStack';
 
 /**
- * Tipos de navegação compartilhados entre telas.
+ * Navigation types shared between screens.
  *
- * Moram aqui, e não na tela que primeiro precisou deles: uma tela importando outra só para
- * pegar um tipo cria uma dependência entre pastas de funcionalidades diferentes - e era assim
- * que a tela do mapa de relações dependia da lista de personagens.
+ * They live here, rather than in the screen that needed them first: one screen importing another just
+ * to get a type creates a dependency between folders of different features - and that is how the
+ * relation map screen depended on the character list.
  */
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,

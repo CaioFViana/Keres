@@ -103,9 +103,9 @@ it('subscribes after connecting and requests a sync for a changed story notifica
 });
 
 it('requests a catch-up sync on every (re)connect, so events missed while offline are not lost', async () => {
-  // O eventManager do servidor é em memória, não uma fila durável - qualquer evento emitido
-  // enquanto este cliente estava desconectado nunca é reentregue. Sem isto, a história só
-  // sincronizava de novo na próxima edição local.
+  // The server's eventManager is in memory, not a durable queue - any event emitted while this client was
+  // disconnected is never redelivered. Without this, the story only synchronized again on the next local
+  // edit.
   const service = new ServerRealtimeService({} as any, server, 'me');
   service.start('story');
   await flush();
@@ -130,9 +130,9 @@ it('does not request a sync on connect when not subscribed to any story yet', as
 });
 
 /**
- * Regressão: uma história nova (ex.: alguém te adicionou como colaborador) chegava por este
- * evento, era baixada e salva no banco local, mas `StorySelectionScreen` continuava mostrando a
- * lista antiga - nada avisava `useStoryListStore` que havia algo novo pra buscar.
+ * Regression: a new story (somebody adding you as a collaborator, say) arrived through this event, was
+ * downloaded and saved in the local database, but `StorySelectionScreen` carried on showing the old
+ * list - nothing told `useStoryListStore` there was something new to fetch.
  */
 describe('stories.catalog-changed', () => {
   it('downloads only the stories missing locally, then refreshes the story list store', async () => {

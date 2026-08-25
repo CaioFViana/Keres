@@ -21,9 +21,9 @@ import { MEDIA_TYPE_ICONS } from '@/src/components/features/list-items/GalleryGr
 interface EntityGalleryManagerProps {
   ownerId: string | undefined;
   ownerType: GalleryOwnerEntity;
-  /** Geralmente abre a mídia na tela de detalhe da galeria. */
+  /** It usually opens the media on the gallery's detail screen. */
   onPressMedia: (galleryId: string) => void;
-  /** false esconde o tile de adicionar e o badge de remover (ex: leitor sem permissão de escrita). */
+  /** false hides the add tile and the remove badge (a reader with no write permission, say). */
   editable?: boolean;
 }
 
@@ -46,8 +46,8 @@ interface GalleryThumbnailProps {
 }
 
 /**
- * Extraído do `.map()` de `renderThumb` porque resolver a URI (`useResolvedMediaUri`) é um
- * hook - precisa de um componente próprio por item, não pode ser chamado dentro de um loop.
+ * Extracted from `renderThumb`'s `.map()` because resolving the URI (`useResolvedMediaUri`) is a hook -
+ * it needs a component of its own per item, it cannot be called inside a loop.
  */
 const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
   item,
@@ -104,13 +104,12 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
 };
 
 /**
- * Tira de mídias vinculadas a uma entidade, com um botão de adicionar.
+ * A strip of media linked to an entity, with an add button.
  *
- * Some para "adicionar uma foto ao personagem" ser uma ação de um toque a partir da
- * própria tela de detalhe, sem passar por um formulário: a mídia é a única relação da
- * história para a qual anexar já é a ação principal (diferente de tags/notas, que fazem
- * mais sentido escolher de uma lista já existente). Remover aqui só desfaz o vínculo - a
- * mídia continua na galeria e pode ser vinculada de novo a qualquer momento por lá.
+ * It exists so "add a photo to the character" is a one-tap action from the detail screen itself,
+ * without going through a form: media is the story's only relation for which attaching is already the
+ * main action (unlike tags/notes, which make more sense to pick from an existing list). Removing here
+ * only undoes the link - the media stays in the gallery and can be linked again at any time from there.
  */
 const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
   ownerId,

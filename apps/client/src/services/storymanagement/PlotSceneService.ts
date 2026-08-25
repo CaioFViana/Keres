@@ -41,8 +41,8 @@ const assertRelationIsValid = async (db: AppDrizzleClient, relation: SavePlotSce
 };
 
 /**
- * A nota é o conteúdo da relação, então ela é validada aqui e não só no formulário: import,
- * sync e clonagem de exemplo chegam pelo mesmo caminho e não passam pela tela.
+ * The note is the relation's content, so it is validated here and not only in the form: import, sync
+ * and example cloning arrive through the same path and never go through the screen.
  */
 const normalizeNote = (note: string) => {
   const normalized = note.trim();
@@ -83,9 +83,9 @@ export const createPlotSceneService = (db: AppDrizzleClient) => {
       await assertStoryIsWritable(db, relation.storyId);
       await assertRelationIsValid(db, relation);
       const note = normalizeNote(relation.note);
-      // Os gerenciadores de relação do app já criam a linha com um ULID próprio, como fazem
-      // com as relações de personagem - o que decide entre criar e atualizar é a linha existir,
-      // não o objeto ter `id`.
+      // The app's relation managers already create the row with a ULID of their own, as they do with
+      // character relations - what decides between creating and updating is the row existing, not the object
+      // having an `id`.
       const original = relation.id
         ? await db.query.plotScenes.findFirst({ where: eq(plotScenes.id, relation.id) })
         : undefined;

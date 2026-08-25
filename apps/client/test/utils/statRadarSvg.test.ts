@@ -54,7 +54,7 @@ describe('renderStatRadarSvg', () => {
   it('draws one polygon per ring, per series, and the axis labels', () => {
     const svg = renderStatRadarSvg(layoutWith({ força: 400 }), options());
 
-    // Dois anéis da escada + o de transbordo + o polígono da série.
+    // Two rings of the ladder + the overflow one + the series' polygon.
     expect(svg.match(/<polygon /g)).toHaveLength(4);
     for (const stat of STATS) expect(svg).toContain(`>${stat.name}<`);
   });

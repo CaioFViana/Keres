@@ -30,39 +30,41 @@ export interface MultiSelectGroup {
 }
 
 interface MultiSelectPillProps {
-  /** Lista achatada num modal só - bom para um punhado de opções (ex.: tags). */
+  /** A flat list in a single modal - good for a handful of options (tags, say). */
   options?: MultiSelectOption[];
-  /** Seleção em dois passos: tipo primeiro, depois a entidade - bom quando há centenas de
-   * opções de tipos diferentes (ex.: o `EntityPickerInput`). Exatamente um dos dois (`options`
-   * ou `groups`) deve ser passado. */
+  /**
+   * Selection in two steps: the type first, then the entity - good when there are hundreds of options of
+   * different types (the `EntityPickerInput`, say). Exactly one of the two (`options` or `groups`) has to
+   * be passed.
+   */
   groups?: MultiSelectGroup[];
   selectedValues: string[];
   onSelectionChange: (selected: string[]) => void;
   placeholder?: string;
   label?: string;
   noOptionsText?: string;
-  /** Só aparece dentro de um grupo (achatado conta como um grupo só). */
+  /** It only appears inside a group (a flat list counts as a single group). */
   searchPlaceholder?: string;
-  /** Limita a seleção a um valor e fecha o modal após a escolha. */
+  /** Limits the selection to one value and closes the modal after the choice. */
   singleSelect?: boolean;
-  /** Número máximo de opções simultâneas. Opções ainda não escolhidas ficam indisponíveis. */
+  /** Maximum number of simultaneous options. Options not yet chosen become unavailable. */
   maxSelections?: number;
   /** Ajustes de layout para contextos compactos, como barras de filtro. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
   pillStyle?: StyleProp<ViewStyle>;
-  /** Texto compacto para seleções extensas, sem perder a seleção real no modal. */
+  /** Compact text for large selections, without losing the real selection inside the modal. */
   selectionSummary?: string;
 }
 
 const FLAT_GROUP_KEY = '__flat__';
 
 /**
- * Um único componente pra dois modos que antes eram dois componentes quase idênticos
- * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 linhas de estilo/animação duplicadas):
- * `options` acha a lista direto num modal só; `groups` pede o tipo primeiro. Quando só há um
- * grupo (`options` achatado, ou `groups` com um item só), a etapa de escolher tipo é pulada -
- * é o mesmo caminho que o `EntityPickerInput` já usava em modo `singleSelect`.
+ * A single component for two modes that used to be two nearly identical components
+ * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 duplicated lines of style/animation): `options`
+ * flattens the list straight into one modal; `groups` asks for the type first. When there is only one
+ * group (a flat `options`, or `groups` with a single item), the type-picking step is skipped - the same
+ * path `EntityPickerInput` already used in `singleSelect` mode.
  */
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   options,
@@ -130,8 +132,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
 
   const closeModal = useCallback(() => {
     setModalVisible(false);
-    // Reseta para a lista de tipos na próxima abertura, em vez de reabrir dentro do
-    // último grupo visitado.
+    // It resets to the type list on the next opening, instead of reopening inside the last visited group.
     setActiveGroupKey(null);
     setSearch('');
   }, []);
@@ -193,9 +194,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       alignItems: 'center',
       borderColor: colors.border,
       borderWidth: 1,
-      // O espaçamento entre pílulas é do contêiner, não de cada pílula. Com margem em cada
-      // uma, a última ainda cobrava a margem de baixo: o campo crescia ao escolher a primeira
-      // opção e a pílula ficava acima do centro, com uma sobra de 8px embaixo dela.
+      // The spacing between pills belongs to the container, not to each pill. With a margin on each one, the
+      // last still charged its bottom margin: the field grew when the first option was chosen and the pill
+      // sat above the centre, with 8px of slack underneath it.
       gap: 8,
     },
     pill: {
@@ -319,8 +320,8 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       fontSize: 16,
       color: colors.text,
     },
-    // Espaço do visto sempre reservado: aparecendo só quando marcado, ele empurrava a linha
-    // uns pixels para baixo, e a lista inteira dançava a cada escolha.
+    // The check's space is always reserved: appearing only when ticked, it pushed the row a few pixels
+    // down, and the whole list danced with every choice.
     optionCheck: {
       width: 24,
       height: 24,

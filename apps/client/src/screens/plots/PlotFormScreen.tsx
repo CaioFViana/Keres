@@ -27,8 +27,8 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 type PlotFormScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotForm'>;
 
 /**
- * Cria e edita apenas nome e detalhes. As cenas da trama são gerenciadas no formulário da
- * Cena - dois editores para a mesma relação sempre acabam discordando sobre o que foi salvo.
+ * It creates and edits only the name and the details. A plot's scenes are managed in the Scene's form -
+ * two editors for the same relation always end up disagreeing about what was saved.
  */
 const PlotFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

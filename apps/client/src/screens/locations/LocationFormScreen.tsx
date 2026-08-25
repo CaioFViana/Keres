@@ -125,9 +125,9 @@ const LocationFormScreen = () => {
   const [loading, setLoading] = useState(true);
   const [allLocations, setAllLocations] = useState<LocationSelect[]>([]);
   const [allLocationRelations, setAllLocationRelations] = useState<LocationRelationSelect[]>([]);
-  // Enquanto o location ainda não existe, cada operação vira uma relação sintética aqui em vez de
-  // gravar no banco - '' no lugar do lado ainda-não-criado. Replay em
-  // `persistPendingLocationRelations` depois do save principal.
+  // While the location does not exist yet, each operation becomes a synthetic relation here instead of
+  // writing to the database - '' in place of the not-yet-created side. Replayed in
+  // `persistPendingLocationRelations` after the main save.
   const [pendingLocationRelations, setPendingLocationRelations] = useState<
     LocationRelationSelect[]
   >([]);
@@ -440,8 +440,8 @@ const LocationFormScreen = () => {
   };
 
   /**
-   * Grava de verdade as relações acumuladas enquanto o location ainda não existia - '' no lugar do
-   * lado ainda-não-criado (ver `makePendingLocationRelation`); troca pelo id de verdade aqui.
+   * Actually saves the relations accumulated while the location did not exist yet - '' in place of the
+   * not-yet-created side (see `makePendingLocationRelation`); it swaps in the real id here.
    */
   const persistPendingLocationRelations = async (targetLocationId: string) => {
     if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;

@@ -16,8 +16,8 @@ interface CommentListProps {
 }
 
 /**
- * Lista paginada, cross-entidade, de todos os comentários da história - modelada em
- * `OperationLogList` mas sem a lógica de "lacunas privadas" (não se aplica a comentários).
+ * A paginated, cross-entity list of every comment in the story - modelled on `OperationLogList` but
+ * without the "private gaps" logic (which does not apply to comments).
  */
 const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPressItem }) => {
   const { colors } = useTheme();

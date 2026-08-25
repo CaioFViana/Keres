@@ -1,15 +1,15 @@
 import SparkMD5 from 'spark-md5';
 
 /**
- * Armazenamento de mídia na plataforma web.
+ * Media storage on the web platform.
  *
- * Duas costas, mesma interface:
- *   - Electron (`window.keresMedia`): ficheiros reais via IPC, visíveis no Explorer.
- *   - Browser hospedado: Origin Private File System, o mesmo sandbox em que o SQLite web
- *     já vive. Sem ponte IPC. Não precisa de SharedArrayBuffer (a API do OPFS é async).
+ * Two backs, one interface:
+ *   - Electron (`window.keresMedia`): real files through IPC, visible in Explorer.
+ *   - Hosted browser: the Origin Private File System, the same sandbox the web SQLite already lives in.
+ *     No IPC bridge. It needs no SharedArrayBuffer (the OPFS API is async).
  *
- * Convenção de path: sempre relativo à raiz (ex: `media/<storyId>/<hash>.<ext>`).
- * `mediaFileService` prefixa com `desktop-media:` no valor guardado no banco.
+ * Path convention: always relative to the root (e.g. `media/<storyId>/<hash>.<ext>`).
+ * `mediaFileService` prefixes it with `desktop-media:` in the value stored in the database.
  */
 
 export const DESKTOP_MEDIA_URI_PREFIX = 'desktop-media:';
@@ -131,15 +131,14 @@ function backendKind(): 'electron' | 'opfs' {
 }
 
 /**
- * Todos os paths conhecidos como existentes, mantido em memória porque `mediaFileService`
- * expõe `exists()` de forma síncrona (contrato compartilhado com a checagem nativa,
- * `File.exists`, que também é síncrona).
+ * Every path known to exist, kept in memory because `mediaFileService` exposes `exists()`
+ * synchronously (a contract shared with the native check, `File.exists`, which is synchronous too).
  */
 const knownPaths = new Set<string>();
 let hydrated = false;
 let hydratedBackend: 'electron' | 'opfs' | null = null;
 
-/** Popula `knownPaths` listando o que já está gravado. Chamar uma vez no boot. */
+/** It populates `knownPaths` by listing what is already written. Call it once at boot. */
 export async function hydrate(): Promise<void> {
   const kind = backendKind();
   if (hydrated && hydratedBackend === kind) {
@@ -204,11 +203,11 @@ export function md5Hex(bytes: Uint8Array): string {
 const blobUrlCache = new Map<string, string>();
 
 /**
- * Resolve um path de mídia para um `blob:` URL renderizável por `<Image>`/`<video>`/`<audio>`.
+ * Resolves a media path into a `blob:` URL renderable by `<Image>`/`<video>`/`<audio>`.
  *
- * Nunca persistido (um `blob:` URL só vale para a sessão que o criou) - por isso o banco
- * guarda o path estável (`desktop-media:media/...`), e cada tela resolve o blob URL na hora
- * de exibir (ver `useResolvedMediaUri`).
+ * Never persisted (a `blob:` URL is only valid for the session that created it) - which is why the
+ * database stores the stable path (`desktop-media:media/...`), and each screen resolves the blob URL at
+ * display time (see `useResolvedMediaUri`).
  */
 export async function resolveBlobUri(mediaUri: string): Promise<string> {
   const relativePath = mediaUri.slice(DESKTOP_MEDIA_URI_PREFIX.length);

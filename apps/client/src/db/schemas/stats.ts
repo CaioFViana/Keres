@@ -1,7 +1,7 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-/** Um eixo mensurável da história. Só os primários viram eixo do radar. */
+/** A measurable axis of the story. Only the primary ones become a radar axis. */
 export const stats = sqliteTable('stats', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
@@ -16,9 +16,9 @@ export const stats = sqliteTable('stats', {
 });
 
 /**
- * Um degrau da escada de valores; o intervalo é `[minValue, minValue do próximo[`.
- * `statId` nulo é a escada padrão da história. Sem único em (storyId, statId, minValue) de
- * propósito - ver o comentário da tabela equivalente na API.
+ * A tier of the value ladder; the interval is `[minValue, the next one's minValue[`.
+ * A null `statId` is the story's default ladder. Deliberately without a unique on (storyId, statId, minValue) -
+ * see the comment on the equivalent table in the API.
  */
 export const statStrengths = sqliteTable(
   'stat_strengths',
@@ -37,7 +37,7 @@ export const statStrengths = sqliteTable(
   (table) => [index('stat_strength_ladder_idx').on(table.storyId, table.statId)],
 );
 
-/** O valor de um stat para um personagem. `modeId` nulo é o modo normal. */
+/** A stat's value for a character. A null `modeId` is the normal mode. */
 export const statRelations = sqliteTable(
   'stat_relations',
   {

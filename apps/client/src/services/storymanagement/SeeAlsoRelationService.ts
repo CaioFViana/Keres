@@ -1,6 +1,6 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
 import { and, eq, or, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, SeeAlsoRelationSelect} from '../../db';
+import type { AppDrizzleClient, SeeAlsoRelationSelect } from '../../db';
 import { seeAlsoRelations } from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';

@@ -3,14 +3,8 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { ItemJourney } from '@keres/shared/entities/Item';
-import type {
-  RouteProp} from '@react-navigation/native';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,9 +12,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import type {
-  SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -36,7 +28,11 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
 

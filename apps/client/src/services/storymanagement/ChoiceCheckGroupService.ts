@@ -1,6 +1,6 @@
 import type { ChoiceCheckGroup } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient} from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import { choiceCheckGroups } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
 import {

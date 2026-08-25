@@ -1,5 +1,4 @@
-import type {
-  StoryTimelineLayout} from './storyTimelineLayout';
+import type { StoryTimelineLayout } from './storyTimelineLayout';
 import {
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
@@ -70,8 +69,7 @@ export function renderStoryTimelineSvg(
       ...(() => {
         const chapterLabel = truncate(row.chapterName, 14);
         const chapterWidth = chapterLabel.length * 5;
-        const available =
-          TIMELINE_LABEL_WIDTH - TIMELINE_LABEL_PADDING - chapterWidth - 18;
+        const available = TIMELINE_LABEL_WIDTH - TIMELINE_LABEL_PADDING - chapterWidth - 18;
         const sceneLabel = truncate(
           `${row.sequence}. ${row.name}`,
           Math.max(8, Math.floor(available / 6.2)),

@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
 import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
-import type { DocLibrary} from '../../help/library';
+import type { DocLibrary } from '../../help/library';
 import { helpLibrary } from '../../help/library';
 import { createHelpSearchIndex, searchHelp } from '../../help/search';
 import { useTheme } from '../../theme';

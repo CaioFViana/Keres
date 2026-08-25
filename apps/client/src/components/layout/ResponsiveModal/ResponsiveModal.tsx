@@ -1,15 +1,6 @@
 import React from 'react';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';

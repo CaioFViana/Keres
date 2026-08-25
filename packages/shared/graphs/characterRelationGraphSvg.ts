@@ -1,10 +1,9 @@
 import type {
   CharacterRelationGraphLayout,
   RelationGraphEdge,
-  RelationGraphNode} from './characterRelationGraphLayout';
-import {
-  GRAPH_PADDING
+  RelationGraphNode,
 } from './characterRelationGraphLayout';
+import { GRAPH_PADDING } from './characterRelationGraphLayout';
 
 /**
  * Serializa o mapa de relações como um arquivo SVG completo - mesmo raciocínio do mapa de

@@ -27,11 +27,8 @@ import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { mediaFileService } from '../../services/MediaFileService';
-import type {
-  GalleryOwnerRef} from '../../services/storymanagement/GalleryRelationService';
-import {
-  createGalleryRelationService
-} from '../../services/storymanagement/GalleryRelationService';
+import type { GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
+import { createGalleryRelationService } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';

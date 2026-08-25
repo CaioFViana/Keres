@@ -1,4 +1,4 @@
-import type { GraphPoint} from './storyGraphLayout';
+import type { GraphPoint } from './storyGraphLayout';
 import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
 

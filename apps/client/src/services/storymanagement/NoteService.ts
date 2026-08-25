@@ -7,7 +7,7 @@ import { notes } from '../../db/schemas/notes';
 import { tagRelations } from '../../db/schemas/tagRelations';
 import type { TagSelect } from '../../db/schemas/tags';
 import { tags } from '../../db/schemas/tags'; // Import tags schema
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

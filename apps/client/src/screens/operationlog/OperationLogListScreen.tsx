@@ -2,7 +2,7 @@ import OperationLogList from '@/src/components/features/operation-log/OperationL
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
-import type { CompositeNavigationProp} from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState

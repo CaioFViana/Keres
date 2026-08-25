@@ -3,7 +3,7 @@ import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';

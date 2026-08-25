@@ -5,7 +5,7 @@ import type { AppDrizzleClient } from '../../db';
 import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
 import { choices } from '../../db/schemas/choices';
 import { scenes } from '../../db/schemas/scenes';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

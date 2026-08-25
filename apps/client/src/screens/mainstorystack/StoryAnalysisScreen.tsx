@@ -13,11 +13,8 @@ import {
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type {
-  StoryAnalysisReport} from '../../services/storymanagement/StoryAnalysisService';
-import {
-  createStoryAnalysisService
-} from '../../services/storymanagement/StoryAnalysisService';
+import type { StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
+import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -26,12 +23,8 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/com
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import type {
-  StoryAnalysisCategory,
-  StoryAnalysisFinding} from '../../utils/storyAnalysisChecks';
-import {
-  StoryAnalysisCancelledError
-} from '../../utils/storyAnalysisChecks';
+import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
+import { StoryAnalysisCancelledError } from '../../utils/storyAnalysisChecks';
 
 /**
  * Relatório de análise estrutural: não é busca, é achar o que o escritor dificilmente notaria
@@ -142,9 +135,10 @@ const StoryAnalysisScreen = () => {
 
   const hasIndexFindings = useMemo(
     () =>
-      (report?.findings ?? []).some((finding) =>
-        finding.messageKey.startsWith('analysis_chapter_index_') ||
-        finding.messageKey.startsWith('analysis_scene_index_'),
+      (report?.findings ?? []).some(
+        (finding) =>
+          finding.messageKey.startsWith('analysis_chapter_index_') ||
+          finding.messageKey.startsWith('analysis_scene_index_'),
       ),
     [report],
   );

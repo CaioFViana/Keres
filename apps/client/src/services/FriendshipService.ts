@@ -2,7 +2,7 @@ import type { FriendshipInsert, FriendshipSelect } from '@/src/db/schemas/friend
 import { friendships } from '@/src/db/schemas/friendships'; // Import friendships here
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { servers } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
-import type { UserInsert} from '@/src/db/schemas/users';
+import type { UserInsert } from '@/src/db/schemas/users';
 import { users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
 import type { EnrichedFriendship, UserPublicInfo } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';

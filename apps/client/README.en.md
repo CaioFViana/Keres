@@ -41,10 +41,9 @@ bun run start
 Useful shortcuts:
 
 ```bash
-bun run start-clear  # clear the Metro cache
-bun run web          # open the web version
 bun run android      # build and run the native Android project
 bun run ios          # build and run the native iOS project (macOS only)
+bunx expo start --clear   # clear the Metro cache
 ```
 
 `android` and `ios` use native development builds (`expo run:*`), not only the Expo Go sandbox.
@@ -75,10 +74,10 @@ The corresponding manual commands are:
 
 ```bash
 bun run db:generate
-bun run example-stories:generate
+bun run --cwd apps/client prestart
 ```
 
-After changing the local schema, generate the migration, review the resulting SQL, and restart Expo. Do not use `reset-project`: this script belongs to the original Expo scaffold and is not part of the regular Keres development workflow.
+After changing the local schema, generate the migration, review the resulting SQL, and restart Expo. `prestart` rewrites the four generated indexes (migrations, example stories, help, literary devices) and runs on its own before `start` and `build`.
 
 ## Quality checks
 
@@ -96,7 +95,7 @@ The translation auditor checks parity between the `en` and `pt` catalogs. The `b
 ### Web export
 
 ```bash
-bun run export:web
+bun run client:build
 ```
 
 The output is written to `apps/client/dist`. It is static, but SQLite/OPFS support requires cross-origin isolation headers (`Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`) from the web server. The Electron wrapper already configures this environment.
@@ -120,7 +119,7 @@ There is currently no automated iOS release build: it requires a final bundle id
 
 ## Troubleshooting
 
-- **Schema changes do not appear:** run `bun run start-clear` and confirm that the migration index was regenerated.
+- **Schema changes do not appear:** run `bunx expo start --clear` and confirm that the migration index was regenerated.
 - **Android cannot reach `localhost`:** use `10.0.2.2` in the emulator or the machine IP on a physical device.
 - **Web SQLite fails to start:** confirm OPFS support and COOP/COEP headers on the host; also test outside private browsing.
 - **Dependencies or patches are inconsistent:** remove only the necessary generated artifacts and run `bun install --frozen-lockfile` again from the root. Do not regenerate the lockfile unintentionally.

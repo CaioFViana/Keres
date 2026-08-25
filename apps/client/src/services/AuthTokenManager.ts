@@ -1,10 +1,9 @@
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
-import type { ServerSelect} from '../db/schema';
+import type { ServerSelect } from '../db/schema';
 import { servers } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import type {
-  TokenProvider} from './apiClient';
+import type { TokenProvider } from './apiClient';
 import apiClient, {
   clearAllServerAuthState,
   clearServerTokenCache,
@@ -13,7 +12,7 @@ import apiClient, {
   updateServerTokenCache,
 } from './apiClient';
 import { canRefreshSessionWithCookie, usesHttpOnlyCookieSession } from './browserCookieSession';
-import type { AuthTokens} from './TokenVault';
+import type { AuthTokens } from './TokenVault';
 import { tokenVault } from './TokenVault';
 
 let drizzleDb: AppDrizzleClient | null = null;

@@ -2,11 +2,9 @@ import type {
   CreateChoiceDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateChoiceDataSchema,
-  PartialChoiceSchema
-} from '@keres/shared'; // Added DeleteStoryUpdate
+  UpdateStoryUpdate,
+} from '@keres/shared';
+import { CreateChoiceDataSchema, PartialChoiceSchema } from '@keres/shared'; // Added DeleteStoryUpdate
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choices, scenes, stories } from '../../db/schema'; // Import stories

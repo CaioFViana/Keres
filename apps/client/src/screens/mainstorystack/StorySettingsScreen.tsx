@@ -19,7 +19,7 @@ import { isOfflineError } from '../../services/apiClient';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
-import type { StoryCollaborator} from '../../services/StoryPermissionService';
+import type { StoryCollaborator } from '../../services/StoryPermissionService';
 import { storyPermissionApi } from '../../services/StoryPermissionService';
 import { SyncEngineService } from '../../services/SyncEngineService';
 import { useStoryStore } from '../../state/storyStore';

@@ -47,7 +47,7 @@ Backend em **Elysia** (framework HTTP para **Bun**), **Drizzle ORM** sobre **Pos
 - **`src/modules/`** - um subdiretório por recurso, cada um com seu `*.route.ts`: `auth`, `sync`, `story`, `storyPermission`, `friend`, `user`, `media`, `websocket`, `admin` (que por sua vez agrupa `adminUser`, `adminTier`, `adminRegistration`, `adminRecovery`).
 - **`src/services/`** - lógica de negócio (`SyncService`, `StoryPermissionService`, `FriendshipService`, `TierService`/`TierEnforcementService`, `MediaStorageService`, `StoryExportImportService`, etc.) e **`entity-sync-handlers/`** - um handler por entidade sincronizável (estende `BaseSyncEntityHandler`). OCC por `version`, lote não-atômico e mescla/conflito descritos em `conflict_resolution_client_strategy.md`.
 - A API também serve o SPA compilado de `apps/admin` sob `/admin/*`, o export web do cliente na raiz (COOP/COEP para o SQLite WASM; sessão por cookie HttpOnly), a vitrine de histórias em `/showcase`, e o Swagger em `/swagger`.
-- **`src/launcher/`** - assistente CLI do **Keres Server** (binário/zip sem Docker). `src/launcher.ts` é o entry; `src/server.ts` continua a ser o boot do Compose (`bun run start:api`). `--backup` copia a pasta de dados para `…-backups/<data>_<hora>/`. `src/config/resourceRoot.ts` acha migrações e o dist do admin no checkout ou ao lado do executável. `packaging/README.md` (pt+en) entra no zip. `bun run package:server` gera `apps/api/dist-server/keres-server/` e o zip `Keres-Server-<os>-<arch>-<versão>.zip` que o job `keres-server` de `.github/workflows/release.yml` anexa à GitHub Release.
+- **`src/launcher/`** - assistente CLI do **Keres Server** (binário/zip sem Docker). `src/launcher.ts` é o entry; `src/server.ts` continua a ser o boot do Compose (`bun run api:start`). `--backup` copia a pasta de dados para `…-backups/<data>_<hora>/`. `src/config/resourceRoot.ts` acha migrações e o dist do admin no checkout ou ao lado do executável. `packaging/README.md` (pt+en) entra no zip. `bun run api:build` gera `apps/api/dist-server/keres-server/` e o zip `Keres-Server-<os>-<arch>-<versão>.zip` que o job `keres-server` de `.github/workflows/release.yml` anexa à GitHub Release.
 
 
 ---
@@ -87,6 +87,6 @@ SPA em **React + Vite + react-router-dom**, servido pela própria API sob `/admi
 
 Landing pública do Keres, um SPA **React + Vite** estático, em português e inglês, com o mesmo visual (claro/escuro) do Showcase. Não fala com a API: descreve o produto e aponta para o repositório, as GitHub Releases e a imagem Docker.
 
-O workflow `.github/workflows/pages.yml` constrói `apps/site/dist` e publica no GitHub Pages. A URL do site de projeto é `https://<dono>.github.io/<repositório>/` — o `base` do Vite vem de `VITE_BASE` no CI, porque o nome do repositório preserva maiúsculas (`Keres`). Localmente: `bun run dev:site` (porta 5175) e `bun run build:site`.
+O workflow `.github/workflows/pages.yml` constrói `apps/site/dist` e publica no GitHub Pages. A URL do site de projeto é `https://<dono>.github.io/<repositório>/` — o `base` do Vite vem de `VITE_BASE` no CI, porque o nome do repositório preserva maiúsculas (`Keres`). Localmente: `bun run site:start` (porta 5175) e `bun run site:build`.
 
 Na primeira publicação, em Settings → Pages do repositório, a origem precisa ser **GitHub Actions**.

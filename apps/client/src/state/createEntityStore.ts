@@ -3,7 +3,11 @@ import type { StateCreator } from 'zustand';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { AppDrizzleClient } from '../db';
-import type { AdvancedSearchCriteria, FavoriteFilterState, SortDirection } from '../types/entityFilters';
+import type {
+  AdvancedSearchCriteria,
+  FavoriteFilterState,
+  SortDirection,
+} from '../types/entityFilters';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
 import type { FavoriteEntityType } from '@keres/shared';

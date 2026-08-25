@@ -5,7 +5,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { SceneInsert, SceneSelect } from '../../db/schema';
 import { chapters, scenes } from '../../db/schema';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
@@ -116,7 +116,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
 
     const ordered = [...living].sort(
       (a, b) =>
-        a.index - b.index || a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id),
+        a.index - b.index ||
+        a.createdAt.getTime() - b.createdAt.getTime() ||
+        a.id.localeCompare(b.id),
     );
 
     for (const [position, scene] of ordered.entries()) {

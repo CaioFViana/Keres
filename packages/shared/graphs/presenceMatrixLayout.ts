@@ -103,5 +103,7 @@ export function buildMatrixThreadSegments(
 
 /** Centro vertical de uma faixa, onde o fio corre. */
 export function matrixRowCenterY(rowIndex: number): number {
-  return MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT + MATRIX_ROW_HEIGHT / 2;
+  return (
+    MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT + MATRIX_ROW_HEIGHT / 2
+  );
 }

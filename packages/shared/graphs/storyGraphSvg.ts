@@ -2,10 +2,9 @@ import type {
   GraphChapterLegendEntry,
   GraphEdge,
   GraphNode,
-  StoryGraphLayout} from './storyGraphLayout';
-import {
-  GRAPH_PADDING
+  StoryGraphLayout,
 } from './storyGraphLayout';
+import { GRAPH_PADDING } from './storyGraphLayout';
 
 /**
  * Serializa o mapa da história como um arquivo SVG completo.

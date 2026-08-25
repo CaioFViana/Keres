@@ -9,9 +9,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import type {
-  LocationGraphCanvasHandle,
-} from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
+import type { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import LocationGraphCanvas from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
@@ -26,10 +24,9 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import type {
   GraphLocationRelation,
   LocationGraphNode,
-  LocationRelationKind} from '../../utils/locationGraphLayout';
-import {
-  buildLocationGraphLayout
+  LocationRelationKind,
 } from '../../utils/locationGraphLayout';
+import { buildLocationGraphLayout } from '../../utils/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -257,8 +254,8 @@ const LocationGraphScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
+        ...commonScreenStyleDefs(colors),
+        ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,

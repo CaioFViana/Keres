@@ -1,16 +1,30 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { COVERAGE_KINDS, coveragePercentage, mergeCoverage, parseLcov } from './coverage-utils.mjs';
+import { COVERAGE_KINDS, coveragePercentage, mergeCoverage, parseLcov } from './lib/coverage';
+import { repoRoot } from './lib/packages';
 
-const root = resolve(import.meta.dirname, '..');
-const thresholdsFile = resolve(import.meta.dirname, 'coverage-thresholds.json');
-const thresholds = JSON.parse(readFileSync(thresholdsFile, 'utf8'));
+/**
+ * Sobe os pisos de cobertura até o que a última medição alcançou.
+ *
+ *   bun run coverage:update                     sobe o que dá para subir
+ *   bun run coverage:update --rebaseline        aceita também baixar um piso que já não passa
+ *   bun run coverage:update --project client    só um projeto
+ *
+ * Lê os `lcov.info` que `bun run test:report` deixou; rode aquele antes.
+ */
+const thresholdsFile = resolve(repoRoot, 'scripts/coverage-thresholds.json');
+type Thresholds = Record<string, Record<string, number>> & {
+  _meta: { safetyMarginPercentagePoints: number };
+};
+const thresholds = JSON.parse(readFileSync(thresholdsFile, 'utf8')) as Thresholds;
+
 const rebaseline = process.argv.includes('--rebaseline');
 const projectArgumentIndex = process.argv.indexOf('--project');
 const selectedProject =
   projectArgumentIndex === -1 ? null : process.argv[projectArgumentIndex + 1]?.trim();
 
-const reports = {
+/** Onde mora o lcov de cada piso. A API tem três: unitário, integração e a união dos dois. */
+const reports: Record<string, [string, string][]> = {
   shared: [['packages/shared', 'coverage']],
   client: [['apps/client', 'coverage']],
   apiUnit: [['apps/api', 'coverage']],
@@ -37,7 +51,7 @@ let changed = false;
 
 for (const name of names) {
   const parsedReports = reports[name].map(([projectPath, directory]) =>
-    parseLcov(root, projectPath, directory),
+    parseLcov(repoRoot, projectPath, directory),
   );
   if (parsedReports.some((report) => report === null)) {
     console.error(
@@ -49,7 +63,7 @@ for (const name of names) {
 
   const coverage = mergeCoverage(parsedReports);
   const next = { ...thresholds[name] };
-  const details = [];
+  const details: string[] = [];
   for (const kind of COVERAGE_KINDS) {
     const measured = coveragePercentage(coverage, kind);
     if (measured === null) {

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

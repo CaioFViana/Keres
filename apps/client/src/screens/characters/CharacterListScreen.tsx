@@ -19,11 +19,8 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type {
-  CharacterWithTags} from '../../services/storymanagement/CharacterService';
-import {
-  createCharacterService,
-} from '../../services/storymanagement/CharacterService';
+import type { CharacterWithTags } from '../../services/storymanagement/CharacterService';
+import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterStore } from '../../state/characterStore';

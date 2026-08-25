@@ -3,11 +3,9 @@ import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   SeeAlsoEntityType,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateSeeAlsoRelationDataSchema,
-  PartialSeeAlsoRelationSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateSeeAlsoRelationDataSchema, PartialSeeAlsoRelationSchema } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
 import { db } from '../../db';
 import {

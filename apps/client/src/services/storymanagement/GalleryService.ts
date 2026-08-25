@@ -2,15 +2,9 @@ import type { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
-import type {
-  GalleryInsert,
-  GallerySelect,
-  MediaTransferState} from '../../db/schema';
-import {
-  galleries,
-  galleryRelations
-} from '../../db/schema';
-import type { Create} from '../../utils/entityUtils';
+import type { GalleryInsert, GallerySelect, MediaTransferState } from '../../db/schema';
+import { galleries, galleryRelations } from '../../db/schema';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

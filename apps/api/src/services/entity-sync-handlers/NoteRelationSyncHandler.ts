@@ -3,11 +3,9 @@ import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   NoteRelationEntities,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateNoteRelationDataSchema,
-  PartialNoteRelationSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateNoteRelationDataSchema, PartialNoteRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import {

@@ -1,7 +1,16 @@
-const fs = require('fs');
-const path = require('path');
+import { readdirSync, readFileSync } from 'node:fs';
+import { extname, join, resolve } from 'node:path';
+import { repoRoot } from './lib/packages';
 
-const applications = [
+/**
+ * Conta linhas de código (sem comentários nem linhas vazias) por aplicação.
+ *
+ *   bun run code:lines
+ *
+ * Ferramenta de leitura, não de check: nada na CI depende dela.
+ */
+
+const applications: [name: string, path: string, excluded?: string[]][] = [
   ['API', 'apps/api'],
   ['ADM', 'apps/admin'],
   ['Client', 'apps/client', ['apps/client/src/help', 'apps/client/src/storyDevices']],
@@ -26,10 +35,10 @@ const ignoredDirectories = new Set([
 ]);
 const codeExtensions = new Set(['.ts', '.tsx', '.js', '.jsx']);
 
-function countLines(filePath) {
-  const content = fs.readFileSync(filePath, 'utf8');
+function countLines(filePath: string): number {
+  const content = readFileSync(filePath, 'utf8');
   let inBlockComment = false;
-  let inString = null;
+  let inString: string | null = null;
   let lines = 0;
 
   for (const line of content.split(/\r?\n/)) {
@@ -74,28 +83,26 @@ function countLines(filePath) {
   return lines;
 }
 
-function countApplication(rootPath, excludedPaths = []) {
+function countApplication(rootPath: string, excludedPaths: string[] = []) {
   const code = { files: 0, lines: 0 };
   const tests = { files: 0, lines: 0 };
-  const excludedDirectories = new Set(
-    excludedPaths.map((excludedPath) => path.resolve(excludedPath)),
-  );
+  const excludedDirectories = new Set(excludedPaths.map((excludedPath) => resolve(excludedPath)));
 
-  const visit = (directory, isTestDirectory = false) => {
-    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+  const visit = (directory: string, isTestDirectory = false): void => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        const childDirectory = path.join(directory, entry.name);
+        const childDirectory = join(directory, entry.name);
         if (
           !ignoredDirectories.has(entry.name) &&
-          !excludedDirectories.has(path.resolve(childDirectory))
+          !excludedDirectories.has(resolve(childDirectory))
         )
           visit(childDirectory, isTestDirectory || entry.name === 'test');
         continue;
       }
-      if (!entry.isFile() || !codeExtensions.has(path.extname(entry.name))) continue;
+      if (!entry.isFile() || !codeExtensions.has(extname(entry.name))) continue;
       const category = isTestDirectory ? tests : code;
       category.files += 1;
-      category.lines += countLines(path.join(directory, entry.name));
+      category.lines += countLines(join(directory, entry.name));
     }
   };
 
@@ -106,8 +113,8 @@ function countApplication(rootPath, excludedPaths = []) {
 const applicationsResults = applications.map(([name, relativePath, excludedPaths]) => ({
   name,
   ...countApplication(
-    path.join(__dirname, '..', relativePath),
-    (excludedPaths ?? []).map((excludedPath) => path.join(__dirname, '..', excludedPath)),
+    join(repoRoot, relativePath),
+    (excludedPaths ?? []).map((excludedPath) => join(repoRoot, excludedPath)),
   ),
 }));
 const results = applicationsResults.map(({ name, code }) => ({ name, ...code }));

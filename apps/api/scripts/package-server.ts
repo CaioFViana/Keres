@@ -120,14 +120,9 @@ async function applyWindowsIcon(exePath: string): Promise<void> {
 rmSync(outRoot, { recursive: true, force: true });
 mkdirSync(bundleDir, { recursive: true });
 
-run('bun', ['run', 'build'], path.join(repoRoot, 'apps', 'admin'));
-run('bun', ['run', 'build:showcase'], path.join(repoRoot, 'apps', 'admin'));
-// O export web do cliente é build daqui, não pré-requisito: no checkout limpo do runner
-// `apps/client/dist` não existe, e a cópia condicional que havia aqui simplesmente pulava a
-// pasta - o zip do release saía sem `client-dist` e a raiz do servidor respondia 404. Mesmo
-// artefato que o Electron empacota (`apps/desktop`, `build:client`) e que o Dockerfile
-// constrói no estágio `client-web-build`.
-run('bun', ['run', 'export:web'], path.join(repoRoot, 'apps', 'client'));
+// Os bundles web (painel, vitrine, cliente) vêm do `prebuild` da API - ver o `package.json`
+// daqui. Este script empacota, não constrói; se algum bundle faltar, `copyWebBundle` diz qual
+// e como gerá-lo, em vez de o zip sair pela metade e o servidor responder 404.
 
 const exePath = path.join(bundleDir, exeName);
 run('bun', [
@@ -147,13 +142,13 @@ cpSync(path.join(apiRoot, 'drizzle'), path.join(bundleDir, 'drizzle'), { recursi
 cpSync(path.join(apiRoot, 'drizzle-sqlite'), path.join(bundleDir, 'drizzle-sqlite'), {
   recursive: true,
 });
-copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'admin-dist', 'build');
+copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'admin-dist', 'admin:build');
 copyWebBundle(
   path.join(repoRoot, 'apps', 'admin', 'dist-showcase'),
   'dist-showcase',
-  'build:showcase',
+  'admin:build',
 );
-copyWebBundle(path.join(repoRoot, 'apps', 'client', 'dist'), 'client-dist', 'export:web');
+copyWebBundle(path.join(repoRoot, 'apps', 'client', 'dist'), 'client-dist', 'client:build');
 cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),

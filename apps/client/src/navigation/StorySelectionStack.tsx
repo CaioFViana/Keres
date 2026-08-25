@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import type {
-  NavigationState,
-  NavigatorScreenParams} from '@react-navigation/native';
+import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 import {
   DrawerActions,
   getFocusedRouteNameFromRoute,

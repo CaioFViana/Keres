@@ -3,23 +3,15 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import type {
-  SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Choice } from '@keres/shared/entities/Choice';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import type { Effect } from '@keres/shared/entities/Effect';
-import type {
-  RouteProp} from '@react-navigation/native';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +31,11 @@ import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';

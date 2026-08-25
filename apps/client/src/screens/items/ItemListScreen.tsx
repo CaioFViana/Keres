@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp} from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -27,7 +27,10 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  ItemStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';

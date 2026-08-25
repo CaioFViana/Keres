@@ -22,7 +22,7 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,29 +37,17 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type {
-  CharacterRelationServiceInterface} from '../../services/storymanagement/CharacterRelationService';
-import {
-  createCharacterRelationService,
-} from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
-import type {
-  CharacterSceneServiceInterface} from '../../services/storymanagement/CharacterSceneService';
-import {
-  createCharacterSceneService,
-} from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
+import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import type {
-  ItemJourneyService} from '../../services/storymanagement/ItemJourneyService';
-import {
-  createItemJourneyService
-} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import type { ItemService } from '../../services/storymanagement/ItemService';
 import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import type {
-  LocationService} from '../../services/storymanagement/LocationService';
-import {
-  createLocationService
-} from '../../services/storymanagement/LocationService'; // Import LocationService
+import type { LocationService } from '../../services/storymanagement/LocationService';
+import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';

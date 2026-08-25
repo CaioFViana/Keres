@@ -1,5 +1,4 @@
-import type {
-  FullStoryExportType} from '@keres/shared';
+import type { FullStoryExportType } from '@keres/shared';
 import {
   buildStoryZipBytes as buildSharedStoryZipBytes,
   FullStoryExportSchema,

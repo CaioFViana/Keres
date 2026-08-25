@@ -1,6 +1,6 @@
 import { and, asc, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
-import type { ChapterSelect, SceneSelect} from '../../db/schema';
+import type { ChapterSelect, SceneSelect } from '../../db/schema';
 import { chapters, scenes } from '../../db/schema';
 import { createChapterService } from './ChapterService';
 import { createSceneService } from './SceneService';

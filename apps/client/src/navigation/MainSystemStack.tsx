@@ -2,9 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import type {
-  NavigationState,
-  NavigatorScreenParams} from '@react-navigation/native';
+import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 import {
   CommonActions,
   DrawerActions,
@@ -26,16 +24,12 @@ import ResizableDrawerContent, {
 import { screenHelpPage } from '../help/contextualHelp';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import type {
-  ChapterDetailScreenParamList,
-} from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import type { ChapterDetailScreenParamList } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
 import ChapterDetailScreen from '../screens/narrative-elements/chapters/ChapterDetailScreen';
 import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
 import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
-import type {
-  CharacterDetailScreenParamList,
-} from '../screens/characters/CharacterDetailScreen';
+import type { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
@@ -51,9 +45,7 @@ import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen
 import ItemDetailScreen from '../screens/items/ItemDetailScreen';
 import ItemFormScreen from '../screens/items/ItemFormScreen';
 import ItemListScreen from '../screens/items/ItemListScreen';
-import type {
-  LocationDetailScreenParamList,
-} from '../screens/locations/LocationDetailsScreen';
+import type { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
 import LocationDetailsScreen from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
@@ -78,9 +70,7 @@ import type { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagDetailScreen from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
-import type {
-  WorldRuleDetailScreenParamList,
-} from '../screens/worldrules/WorldRuleDetailScreen';
+import type { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';

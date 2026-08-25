@@ -9,17 +9,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import type { CommentSelect} from '../../../../db/schema';
+import type { CommentSelect } from '../../../../db/schema';
 import { servers, stories } from '../../../../db/schema';
-import type {
-  ResolvedUserProfile} from '../../../../hooks/useUserProfileResolver';
-import {
-  useUserProfileResolver,
-} from '../../../../hooks/useUserProfileResolver';
+import type { ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
+import { useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../../theme';
 import { AppAlert } from '../../../../utils/AppAlert';
-import type {
-  CommentCriticality} from '../../../../utils/commentCriticality';
+import type { CommentCriticality } from '../../../../utils/commentCriticality';
 import {
   CRITICALITY_ICONS,
   CRITICALITY_LEVELS,

@@ -1,8 +1,9 @@
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import type {
-  PresenceMatrixCanvasHandle,
-} from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -94,8 +95,7 @@ const PlotMatrixScreen = () => {
     [selectedIds],
   );
 
-  const isCompleteView =
-    plots.length > MAX_VISIBLE_SERIES && selectedIds.length === plots.length;
+  const isCompleteView = plots.length > MAX_VISIBLE_SERIES && selectedIds.length === plots.length;
 
   const layout = useMemo(() => {
     const chapterColors = buildChapterColors(chapters);
@@ -228,9 +228,7 @@ const PlotMatrixScreen = () => {
         searchPlaceholder={t('search')}
         noOptionsText={t('no_plots')}
         selectionSummary={
-          isCompleteView
-            ? t('plot_matrix_selected_all', { count: selectedIds.length })
-            : undefined
+          isCompleteView ? t('plot_matrix_selected_all', { count: selectedIds.length }) : undefined
         }
         triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
       />

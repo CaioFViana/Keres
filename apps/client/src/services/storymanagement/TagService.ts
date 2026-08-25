@@ -5,7 +5,7 @@ import type { AppDrizzleClient } from '../../db';
 import type { TagInsert, TagSelect } from '../../db/schema';
 import { tags } from '../../db/schema'; // Import TagInsert and stories
 import type { FavoriteFilterState } from '../../types/entityFilters';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation

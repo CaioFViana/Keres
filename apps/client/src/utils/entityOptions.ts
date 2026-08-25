@@ -1,8 +1,5 @@
-import type {
-  GlobalSearchEntityType} from '@keres/shared/metadata/globalSearchFields';
-import {
-  globalSearchFieldConfig,
-} from '@keres/shared/metadata/globalSearchFields';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import { getEntityTable } from '../services/entityTableRegistry';

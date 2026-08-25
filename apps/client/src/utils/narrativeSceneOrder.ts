@@ -12,7 +12,10 @@ import type { ChapterSelect, SceneSelect } from '../db/schema';
  */
 export function compareNarrativeScenes(
   chapters: Pick<ChapterSelect, 'id' | 'index'>[],
-): (a: Pick<SceneSelect, 'chapterId' | 'index'>, b: Pick<SceneSelect, 'chapterId' | 'index'>) => number {
+): (
+  a: Pick<SceneSelect, 'chapterId' | 'index'>,
+  b: Pick<SceneSelect, 'chapterId' | 'index'>,
+) => number {
   const chapterIndex = new Map(chapters.map((chapter) => [chapter.id, chapter.index]));
   const indexOf = (chapterId: string) => chapterIndex.get(chapterId) ?? Number.MAX_SAFE_INTEGER;
   return (a, b) => indexOf(a.chapterId) - indexOf(b.chapterId) || a.index - b.index;

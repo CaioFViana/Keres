@@ -13,10 +13,9 @@ import {
 import { useDrizzle } from '../../../../db';
 import type {
   SuggestionServiceInterface,
-  SuggestionType} from '../../../../services/storymanagement/SuggestionService';
-import {
-  createSuggestionService
+  SuggestionType,
 } from '../../../../services/storymanagement/SuggestionService';
+import { createSuggestionService } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import Button from '@/src/components/common/controls/Button/Button'; // Reusing existing Button

@@ -23,9 +23,7 @@ import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTran
 import type { StoryTimelineScaleMode } from '@/src/utils/storyTimelineLayout';
 import { buildStoryTimelineLayout } from '@/src/utils/storyTimelineLayout';
 import { renderStoryTimelineSvg } from '@/src/utils/storyTimelineSvg';
-import type {
-  StoryTimelineCanvasHandle,
-} from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';

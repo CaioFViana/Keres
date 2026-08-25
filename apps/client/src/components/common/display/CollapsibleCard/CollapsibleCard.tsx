@@ -2,11 +2,7 @@ import React from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../../../../theme';
 
 interface CollapsibleCardProps {

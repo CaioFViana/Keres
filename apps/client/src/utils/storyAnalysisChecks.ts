@@ -413,9 +413,16 @@ function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[
     const sceneProblem = inspectIndexes(chapterScenes.map((scene) => scene.index));
     if (!sceneProblem) continue;
     findings.push(
-      buildFinding('scenes', 'warning', 'Chapter', chapter, `analysis_scene_index_${sceneProblem}`, {
-        chapterName: chapter.name,
-      }),
+      buildFinding(
+        'scenes',
+        'warning',
+        'Chapter',
+        chapter,
+        `analysis_scene_index_${sceneProblem}`,
+        {
+          chapterName: chapter.name,
+        },
+      ),
     );
   }
 

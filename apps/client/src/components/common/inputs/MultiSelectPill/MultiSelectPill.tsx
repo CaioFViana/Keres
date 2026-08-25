@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   ScrollView,
   StyleSheet,

@@ -2,17 +2,9 @@ import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Ad
 import type { SQL } from 'drizzle-orm';
 import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
-import type {
-  CharacterInsert,
-  CharacterSelect,
-  TagSelect} from '../../db/schema';
-import {
-  characters,
-  characterRelations,
-  tagRelations,
-  tags
-} from '../../db/schema'; // Import CharacterInsert and stories
-import type { Create} from '../../utils/entityUtils';
+import type { CharacterInsert, CharacterSelect, TagSelect } from '../../db/schema';
+import { characters, characterRelations, tagRelations, tags } from '../../db/schema'; // Import CharacterInsert and stories
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import characterEventEmitter
 import {

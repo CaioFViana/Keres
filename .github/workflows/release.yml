@@ -22,7 +22,7 @@ env:
 
 jobs:
   # Turns the pushed tag (e.g. "v1.2.3") into the plain version string every other job needs
-  # (both for `node scripts/ci/set-version.mjs` and for tagging the Docker image) - computed
+  # (both for `bun scripts/ci/set-version.ts` and for tagging the Docker image) - computed
   # once here instead of repeating the same `${GITHUB_REF_NAME#v}` strip in every job.
   version:
     runs-on: ubuntu-latest
@@ -41,13 +41,15 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun run lint
-      # Só as suítes unitárias: as de integração precisam de um Postgres de pé e rodam no
-      # workflow de CI (ci.yml), que é onde uma regressão deve aparecer - antes do release,
-      # não durante ele. Com cobertura para os limiares valerem também numa tag que não
-      # passou por PR.
-      - run: bun run test:coverage
+      # Um comando só, o mesmo que se roda na máquina antes de criar a tag: traduções,
+      # typecheck, lint, formatação, alinhamento das versões e as suítes unitárias com
+      # cobertura. O alinhamento das versões é o que faltava aqui - uma tag cujo
+      # `AppRelease.ts` ficou para trás falha agora, antes de qualquer artefato ser compilado,
+      # em vez de sair uma release inteira reportando a versão errada.
+      # As suítes de integração ficam de fora de propósito: precisam de Postgres e SeaweedFS de
+      # pé e têm job próprio em ci.yml, que é onde uma regressão deve aparecer - antes do
+      # release, não durante ele.
+      - run: bun run release:check --ci
 
   # ---- Server: build + publish the API's Docker image to GHCR ----
   docker:
@@ -73,7 +75,7 @@ jobs:
           # `packages: write` via the `permissions:` block above.
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
 
       - uses: docker/build-push-action@v6
         env:
@@ -100,10 +102,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      # Root install, not just apps/desktop: packaging first runs `build:client`
-      # (cd ../client && bun run export:web), so the client's own dependency tree is needed too.
+      # Root install, not just apps/desktop: packaging first builds the client's web export
+      # (`prebuild` → `bun run --cwd ../client build`), so the client's own dependency tree is
+      # needed too.
       - run: bun install --frozen-lockfile
-      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       - name: Build Windows installer + portable exe
         working-directory: apps/desktop
         run: bun run package:win
@@ -137,7 +140,7 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       - name: Build macOS dmg
         working-directory: apps/desktop
         run: bun run package:mac
@@ -162,7 +165,7 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       # electron-builder's flatpak target shells out to `flatpak-builder`, which needs the
       # Freedesktop Platform/SDK runtime already installed on the runner - it does not fetch
       # this itself. Version pinned here must match `flatpak.runtimeVersion` in
@@ -208,7 +211,7 @@ jobs:
       # pin/verify it explicitly rather than relying on whatever happens to be preinstalled.
       - uses: android-actions/setup-android@v4
       - run: bun install --frozen-lockfile
-      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       # `android/` is gitignored (generated, not source) - this recreates it fresh from
       # apps/client/app.json on every release build.
       - name: Generate native Android project
@@ -216,10 +219,10 @@ jobs:
         run: bunx expo prebuild --platform android --non-interactive
       - name: Set Android versionCode/versionName
         working-directory: apps/client
-        run: node scripts/ci/set-android-version.mjs ${{ needs.version.outputs.version }}
+        run: bun scripts/ci/set-android-version.ts ${{ needs.version.outputs.version }}
       - name: Wire up release signing
         working-directory: apps/client
-        run: node scripts/ci/patch-android-release-signing.mjs
+        run: bun scripts/ci/patch-android-release-signing.ts
       - name: Decode release keystore
         working-directory: apps/client/android/app
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore.jks
@@ -266,12 +269,12 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       - name: Install zip (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y zip
       - name: Package Keres Server
-        run: bun run package:server
+        run: bun run api:build
       - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact }}

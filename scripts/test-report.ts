@@ -1,13 +1,26 @@
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { coveragePercentage, mergeCoverage, parseLcov } from './coverage-utils.mjs';
+import {
+  type CoverageKind,
+  type CoverageTotals,
+  coveragePercentage,
+  mergeCoverage,
+  parseLcov,
+} from './lib/coverage';
+import { repoRoot } from './lib/packages';
 
-const root = resolve(import.meta.dirname, '..');
+/**
+ * Roda todas as suítes do monorepo e imprime uma tabela: suítes, testes e cobertura contra o
+ * piso de cada projeto.
+ *
+ * Precisa da infraestrutura de teste de pé (Postgres e SeaweedFS), porque a cobertura da API
+ * só faz sentido somando as suítes unitária e de integração.
+ */
 const TEST_COMPOSE = 'apps/api/docker-compose.test.yml';
 
-/** API is one project: unit and integration coverage are merged by source location. */
-const projects = [
+type ProjectRun = [script: string, coverageDirectory: string];
+const projects: [name: string, path: string, runs: ProjectRun[]][] = [
   ['shared', 'packages/shared', [['test:coverage', 'coverage']]],
   ['client', 'apps/client', [['test:coverage', 'coverage']]],
   [
@@ -23,13 +36,13 @@ const projects = [
   ['site', 'apps/site', [['test:coverage', 'coverage']]],
 ];
 
-// The API ratchet applies to the union of unit and integration coverage, not either report in
-// isolation. The other values mirror their workspace coverage configs, so the report shows the
-// same thresholds that CI enforces.
+// O ratchet da API vale para a união das suítes unitária e de integração, não para cada
+// relatório isolado. Os demais espelham a configuração de cobertura do próprio workspace, para
+// o relatório mostrar os mesmos pisos que a CI cobra.
 const configuredThresholds = JSON.parse(
-  readFileSync(resolve(root, 'scripts/coverage-thresholds.json'), 'utf8'),
-);
-const ratchets = {
+  readFileSync(resolve(repoRoot, 'scripts/coverage-thresholds.json'), 'utf8'),
+) as Record<string, Record<CoverageKind, number>>;
+const ratchets: Record<string, Record<CoverageKind, number> | undefined> = {
   shared: configuredThresholds.shared,
   client: configuredThresholds.client,
   api: configuredThresholds.apiCombined,
@@ -38,9 +51,14 @@ const ratchets = {
   site: configuredThresholds.site,
 };
 
-function run(command, args) {
+interface RunResult {
+  code: number;
+  output: string;
+}
+
+function run(command: string, args: string[]): Promise<RunResult> {
   return new Promise((resolveRun) => {
-    const child = spawn(command, args, { cwd: root });
+    const child = spawn(command, args, { cwd: repoRoot });
     let output = '';
     child.stdout.on('data', (chunk) => {
       output += chunk;
@@ -52,12 +70,13 @@ function run(command, args) {
   });
 }
 
-async function requireTestInfrastructure() {
+async function requireTestInfrastructure(): Promise<boolean> {
   const result = await run('docker', ['compose', '-f', TEST_COMPOSE, 'ps', '--format', 'json']);
   if (result.code !== 0) return false;
   const text = result.output.trim();
   if (!text) return false;
-  let services;
+
+  let services: { Service?: string; State?: string; Health?: string }[];
   try {
     services = text.startsWith('[')
       ? JSON.parse(text)
@@ -72,29 +91,34 @@ async function requireTestInfrastructure() {
   );
 }
 
-function parseTests(output) {
+function parseTests(output: string): { suites: number; tests: number } {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: sequências ANSI da saída dos runners
   const normalized = output.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
-  const values = [...normalized.matchAll(/(?:Test Files|Test Suites):?\s*(\d+)\s+passed/gi)].map(
+  const suites = [...normalized.matchAll(/(?:Test Files|Test Suites):?\s*(\d+)\s+passed/gi)].map(
     (match) => Number(match[1]),
   );
   const tests = [...normalized.matchAll(/^\s*Tests:?\s*(\d+)\s+passed/gim)].map((match) =>
     Number(match[1]),
   );
   return {
-    suites: values.reduce((total, value) => total + value, 0),
+    suites: suites.reduce((total, value) => total + value, 0),
     tests: tests.reduce((total, value) => total + value, 0),
   };
 }
 
-function percent([found, hit]) {
+function percent([found, hit]: [number, number]): string {
   return found === 0 ? '—' : `${((hit / found) * 100).toFixed(1)}%`;
 }
 
-function coverageWithRatchet(coverage, kind, ratchet) {
+function coverageWithRatchet(
+  coverage: CoverageTotals | null,
+  kind: CoverageKind,
+  ratchet: Record<CoverageKind, number> | undefined,
+): string {
   if (!coverage) return '—';
-  const [found, hit] = coverage[kind];
+  const [found] = coverage[kind];
   if (found === 0) return '—';
-  const value = coveragePercentage(coverage, kind);
+  const value = coveragePercentage(coverage, kind) ?? 0;
   const minimum = ratchet?.[kind];
   if (minimum === undefined) return `${value.toFixed(1)}%`;
   const difference = value - minimum;
@@ -102,24 +126,29 @@ function coverageWithRatchet(coverage, kind, ratchet) {
   return `${percent(coverage[kind])} / ${minimum}% (${sign}${difference.toFixed(1)} pp)`;
 }
 
-function meetsRatchet(coverage, ratchet) {
+function meetsRatchet(
+  coverage: CoverageTotals,
+  ratchet: Record<CoverageKind, number> | undefined,
+): boolean {
   return (
     !ratchet ||
     Object.entries(ratchet).every(([kind, minimum]) => {
-      const value = coveragePercentage(coverage, kind);
+      const value = coveragePercentage(coverage, kind as CoverageKind);
       return value !== null && value >= minimum;
     })
   );
 }
 
-function printTable(rows) {
+function printTable(rows: string[][]): void {
   const headers = ['Projeto', 'Status', 'Suites', 'Testes', 'Linhas', 'Funções', 'Branches'];
   const widths = headers.map((header, index) =>
     Math.max(header.length, ...rows.map((row) => row[index].length)),
   );
   const border = `+-${widths.map((width) => '-'.repeat(width)).join('-+-')}-+`;
-  const format = (row) =>
-    `| ${row.map((cell, index) => (index < 2 ? cell.padEnd(widths[index]) : cell.padStart(widths[index]))).join(' | ')} |`;
+  const format = (row: string[]) =>
+    `| ${row
+      .map((cell, index) => (index < 2 ? cell.padEnd(widths[index]) : cell.padStart(widths[index])))
+      .join(' | ')} |`;
   console.log(`\n${border}`);
   console.log(format(headers));
   console.log(border);
@@ -134,23 +163,36 @@ if (!(await requireTestInfrastructure())) {
   process.exit(1);
 }
 
-const results = [];
-for (const [name, path, commands] of projects) {
+interface ProjectResult {
+  name: string;
+  code: number;
+  output: string;
+  tests: { suites: number; tests: number };
+  coverage: CoverageTotals | null;
+  ratchetFailure: boolean;
+}
+
+const results: ProjectResult[] = [];
+for (const [name, path, runs] of projects) {
   process.stdout.write(`Executando ${name}... `);
-  const executions = [];
-  for (const [script, coverageDirectory] of commands) {
+  const executions: (RunResult & { coverageDirectory: string })[] = [];
+  for (const [script, coverageDirectory] of runs) {
     const result = await run('bun', ['run', '--cwd', path, script]);
     executions.push({ ...result, coverageDirectory });
     if (result.code !== 0) break;
   }
+
   const output = executions.map((result) => result.output).join('\n');
   const code = executions.some((result) => result.code !== 0) ? 1 : 0;
   const coverage =
     code === 0
-      ? mergeCoverage(executions.map((result) => parseLcov(root, path, result.coverageDirectory)))
+      ? mergeCoverage(
+          executions.map((result) => parseLcov(repoRoot, path, result.coverageDirectory)),
+        )
       : null;
-  const ratchetFailure = coverage && !meetsRatchet(coverage, ratchets[name]);
+  const ratchetFailure = Boolean(coverage && !meetsRatchet(coverage, ratchets[name]));
   const finalCode = code || ratchetFailure ? 1 : 0;
+
   results.push({
     name,
     code: finalCode,

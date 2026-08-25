@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';

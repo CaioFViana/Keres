@@ -2,11 +2,9 @@ import type {
   CreateLocationRelationDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateLocationRelationDataSchema,
-  PartialLocationRelationSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateLocationRelationDataSchema, PartialLocationRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { locationRelations, locations } from '../../db/schema';

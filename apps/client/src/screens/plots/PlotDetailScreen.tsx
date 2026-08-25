@@ -8,7 +8,7 @@ import GenericRelationDisplay from '@/src/components/features/relations/Relation
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import { Ionicons } from '@expo/vector-icons';
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +67,7 @@ const PlotDetailScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
+        ...commonDetailStyleDefs(colors),
         ...relationSectionStyleDefs(colors),
         coverage: {
           fontSize: 14,
@@ -109,7 +109,9 @@ const PlotDetailScreen = () => {
   }
 
   if (!plot) {
-    return <ScreenError padded message={t('plot_not_found')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('plot_not_found')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (

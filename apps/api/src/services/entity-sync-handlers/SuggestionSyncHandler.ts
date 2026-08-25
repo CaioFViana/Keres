@@ -2,11 +2,9 @@ import type {
   CreateStoryUpdate,
   CreateSuggestionDataType,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateSuggestionDataSchema,
-  PartialSuggestionSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateSuggestionDataSchema, PartialSuggestionSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { suggestions } from '../../db/schema';

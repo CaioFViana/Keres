@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 import { HelpBlockRenderer } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
-import type { DocLibrary} from '../../help/library';
+import type { DocLibrary } from '../../help/library';
 import { helpLibrary } from '../../help/library';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useTheme } from '../../theme';
@@ -33,8 +33,7 @@ export function HelpPageScreen({ library = helpLibrary }: HelpPageScreenProps) {
     const drawerNavigation = navigation.getParent();
     if (drawerNavigation && route.params.returnDrawerRoute) {
       drawerNavigation.navigate(route.params.returnDrawerRoute as never);
-    }
-    else navigation.goBack();
+    } else navigation.goBack();
   }, [navigation, route.params.returnDrawerRoute]);
   useBackButtonHandler({
     showWebBackButton: true,

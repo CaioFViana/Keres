@@ -17,10 +17,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  getCommonCardStyles,
-  getCommonContainerStyles,
-} from '../../theme/commonStyles';
+import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 

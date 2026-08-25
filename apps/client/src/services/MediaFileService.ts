@@ -1,5 +1,4 @@
-import type {
-  MediaType} from '@keres/shared';
+import type { MediaType } from '@keres/shared';
 import {
   extensionForMimeType,
   MEDIA_PICKER_MIME_FILTERS,

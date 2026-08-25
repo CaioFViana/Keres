@@ -9,29 +9,21 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import type {
-  CharacterRelationGraphCanvasHandle,
-} from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import type { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import { useDrizzle } from '../../db';
 import type { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import type {
-  CharacterRelationWithNames} from '../../services/storymanagement/CharacterRelationService';
-import {
-  createCharacterRelationService
-} from '../../services/storymanagement/CharacterRelationService';
+import type { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import type {
-  RelationGraphNode} from '../../utils/characterRelationGraphLayout';
-import {
-  buildCharacterRelationGraphLayout
-} from '../../utils/characterRelationGraphLayout';
+import type { RelationGraphNode } from '../../utils/characterRelationGraphLayout';
+import { buildCharacterRelationGraphLayout } from '../../utils/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -234,8 +226,8 @@ const CharacterRelationGraphScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
+        ...commonScreenStyleDefs(colors),
+        ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,

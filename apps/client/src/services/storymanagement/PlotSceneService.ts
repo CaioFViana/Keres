@@ -49,9 +49,7 @@ const normalizeNote = (note: string) => {
   if (!normalized) throw new Error('Plot-scene note cannot be empty.');
   if (/[\r\n]/.test(normalized)) throw new Error('Plot-scene note must be a single line.');
   if (normalized.length > PLOT_SCENE_NOTE_MAX_LENGTH)
-    throw new Error(
-      `Plot-scene note must be ${PLOT_SCENE_NOTE_MAX_LENGTH} characters or fewer.`,
-    );
+    throw new Error(`Plot-scene note must be ${PLOT_SCENE_NOTE_MAX_LENGTH} characters or fewer.`);
   return normalized;
 };
 

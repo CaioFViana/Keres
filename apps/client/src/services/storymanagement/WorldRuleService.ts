@@ -6,7 +6,7 @@ import { worldRules } from '../../db';
 import { tagRelations } from '../../db/schemas/tagRelations';
 import { tags } from '../../db/schemas/tags'; // Import tags schema
 import type { WorldRuleWithTags } from '../../db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

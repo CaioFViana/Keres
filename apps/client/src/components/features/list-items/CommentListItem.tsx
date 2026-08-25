@@ -5,14 +5,14 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { useDrizzle } from '../../../db';
-import type { CommentSelect} from '../../../db/schema';
+import type { CommentSelect } from '../../../db/schema';
 import { servers, stories } from '../../../db/schema';
 import { useCommentFieldLabel } from '../../../hooks/useCommentFieldLabel';
 import { useEntityName } from '../../../hooks/useEntityName';
-import type { ResolvedUserProfile} from '../../../hooks/useUserProfileResolver';
+import type { ResolvedUserProfile } from '../../../hooks/useUserProfileResolver';
 import { useUserProfileResolver } from '../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../theme';
-import type { CommentCriticality} from '../../../utils/commentCriticality';
+import type { CommentCriticality } from '../../../utils/commentCriticality';
 import { CRITICALITY_ICONS } from '../../../utils/commentCriticality';
 
 interface CommentListItemProps {

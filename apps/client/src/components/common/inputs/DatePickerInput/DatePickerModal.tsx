@@ -1,5 +1,4 @@
-import type {
-  AttributeDateParts} from '@keres/shared';
+import type { AttributeDateParts } from '@keres/shared';
 import {
   attributeDateWeekday,
   attributeDateWeekdayLabels,

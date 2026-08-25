@@ -5,6 +5,6 @@
  * consumido tanto pelo cliente quanto pela API, portanto não há uma versão separada do servidor.
  */
 export const APP_RELEASE = {
-  name: "Galatea",
-  version: "1.5.0",
+  name: 'Galatea',
+  version: '1.5.0',
 } as const;

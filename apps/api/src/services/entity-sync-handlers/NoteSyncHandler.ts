@@ -1,10 +1,5 @@
-import type {
-  CreateNoteDataType,
-  CreateStoryUpdate} from '@keres/shared';
-import {
-  CreateNoteDataSchema,
-  PartialNoteSchema,
-} from '@keres/shared';
+import type { CreateNoteDataType, CreateStoryUpdate } from '@keres/shared';
+import { CreateNoteDataSchema, PartialNoteSchema } from '@keres/shared';
 import { db } from '../../db';
 import { notes } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';

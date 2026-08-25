@@ -2,11 +2,9 @@ import type {
   CreateCharacterRelationDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateCharacterRelationDataSchema,
-  PartialCharacterRelationSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateCharacterRelationDataSchema, PartialCharacterRelationSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characterRelations, characters } from '../../db/schema';

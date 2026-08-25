@@ -1,8 +1,8 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
-import type { StatRelationInsert, StatRelationSelect} from '../../db/schema';
+import type { StatRelationInsert, StatRelationSelect } from '../../db/schema';
 import { statRelations } from '../../db/schema';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

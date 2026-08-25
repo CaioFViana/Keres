@@ -1,0 +1,7 @@
+{
+  "name": "x",
+  "scripts": {
+    "prebuild": "echo PRE",
+    "build": "echo BUILD"
+  }
+}

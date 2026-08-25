@@ -19,7 +19,7 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,28 +34,16 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import type {
-  CharacterSceneServiceInterface} from '../../services/storymanagement/CharacterSceneService';
-import {
-  createCharacterSceneService,
-} from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import type {
-  CharacterService} from '../../services/storymanagement/CharacterService';
-import {
-  createCharacterService,
-} from '../../services/storymanagement/CharacterService'; // Import CharacterService
-import type {
-  ItemJourneyService} from '../../services/storymanagement/ItemJourneyService';
-import {
-  createItemJourneyService
-} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import type { CharacterService } from '../../services/storymanagement/CharacterService';
+import { createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
+import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import type { ItemService } from '../../services/storymanagement/ItemService';
 import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import type {
-  LocationRelationService} from '../../services/storymanagement/LocationRelationService';
-import {
-  createLocationRelationService
-} from '../../services/storymanagement/LocationRelationService';
+import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
+import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';

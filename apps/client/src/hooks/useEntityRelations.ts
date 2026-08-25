@@ -4,11 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import type { TagSelect } from '../db/schema';
-import type {
-  SaveNoteRelation} from '../services/storymanagement/NoteRelationService';
-import {
-  createNoteRelationService
-} from '../services/storymanagement/NoteRelationService';
+import type { SaveNoteRelation } from '../services/storymanagement/NoteRelationService';
+import { createNoteRelationService } from '../services/storymanagement/NoteRelationService';
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';
 import { createTagService } from '../services/storymanagement/TagService';

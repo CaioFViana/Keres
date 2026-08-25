@@ -22,7 +22,11 @@ module.exports = defineConfig([
         // `disallowTypeAnnotations` desligado: `typeof import('...')` dentro de uma anotação
         // não carrega módulo nenhum, e é o que permite tipar um módulo carregado tarde de
         // propósito (ver o teste do S3BlobStorage, que só importa depois de montar o ambiente).
-        { prefer: 'type-imports', fixStyle: 'separate-type-imports', disallowTypeAnnotations: false },
+        {
+          prefer: 'type-imports',
+          fixStyle: 'separate-type-imports',
+          disallowTypeAnnotations: false,
+        },
       ],
     },
   },

@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { AppDrizzleClient} from './db';
+import type { AppDrizzleClient } from './db';
 import { DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';

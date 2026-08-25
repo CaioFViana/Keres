@@ -1,5 +1,5 @@
 import type { ChapterSelect } from '../db/schema';
-import type { ChapterService} from '../services/storymanagement/ChapterService';
+import type { ChapterService } from '../services/storymanagement/ChapterService';
 import { createChapterService } from '../services/storymanagement/ChapterService';
 import { createEntityStore } from './createEntityStore';
 import { useUserSettingsStore } from './userSettingsStore';

@@ -1,7 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import type {
-  CustomAttributeValues} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
@@ -10,20 +9,12 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
-import type {
-  SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Location } from '@keres/shared/entities/Location';
-import type {
-  RouteProp} from '@react-navigation/native';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,16 +28,17 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import type {
-  LocationRelationService} from '../../services/storymanagement/LocationRelationService';
-import {
-  createLocationRelationService
-} from '../../services/storymanagement/LocationRelationService';
+import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
+import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { createULID } from '../../utils/entityUtils';

@@ -2,7 +2,7 @@ import { useWorldRuleStore } from '@/src/state/worldRuleStore';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp} from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

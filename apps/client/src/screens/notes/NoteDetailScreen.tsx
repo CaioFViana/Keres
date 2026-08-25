@@ -5,9 +5,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import type {
-  RelatedEntityItem,
-} from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
@@ -15,7 +13,7 @@ import EntityGalleryManager from '@/src/components/features/gallery/GalleryManag
 import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
 import { Ionicons } from '@expo/vector-icons';
 import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
-import type { ServerInsert, ServerSelect} from '../db/schema';
+import type { ServerInsert, ServerSelect } from '../db/schema';
 import { friendships, servers, stories } from '../db/schema';
 import { useConnectivityStore } from '../state/connectivityStore';
 import { useNotificationStore } from '../state/notificationStore';
-import type { Create} from '../utils/entityUtils';
+import type { Create } from '../utils/entityUtils';
 import { prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added

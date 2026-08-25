@@ -1,7 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import type {
-  CustomAttributeValues} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
@@ -13,21 +12,13 @@ import NoteManager from '@/src/components/features/notes/NoteManager'; // Import
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
-import type {
-  SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import type {
-  RouteProp} from '@react-navigation/native';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native'; // Import StackActions
+import type { RouteProp } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,11 +32,8 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import type {
-  CharacterRelationServiceInterface} from '../../services/storymanagement/CharacterRelationService';
-import {
-  createCharacterRelationService,
-} from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { createModeService } from '../../services/storymanagement/ModeService';
@@ -53,7 +41,11 @@ import { createStatRelationService } from '../../services/storymanagement/StatRe
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter

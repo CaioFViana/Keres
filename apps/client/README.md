@@ -41,10 +41,9 @@ bun run start
 Atalhos úteis:
 
 ```bash
-bun run start-clear  # limpa o cache do Metro
-bun run web          # abre a versão web
 bun run android      # compila e executa o projeto Android nativo
 bun run ios          # compila e executa o projeto iOS nativo (somente macOS)
+bunx expo start --clear   # limpa o cache do Metro
 ```
 
 `android` e `ios` usam development builds nativos (`expo run:*`), não apenas o sandbox do Expo Go.
@@ -75,10 +74,10 @@ Comandos manuais disponíveis:
 
 ```bash
 bun run db:generate
-bun run example-stories:generate
+bun run --cwd apps/client prestart
 ```
 
-Depois de alterar o schema local, gere a migration, revise o SQL produzido e reinicie o Expo. Não use `reset-project`: esse script pertence ao scaffold original do Expo e não faz parte do fluxo normal de desenvolvimento do Keres.
+Depois de alterar o schema local, gere a migration, revise o SQL produzido e reinicie o Expo. O `prestart` reescreve os quatro índices gerados (migrations, histórias de exemplo, ajuda e recursos literários) e roda sozinho antes de `start` e de `build`.
 
 ## Qualidade
 
@@ -96,7 +95,7 @@ O auditor de traduções verifica a paridade entre os catálogos `en` e `pt`. A 
 ### Export web
 
 ```bash
-bun run export:web
+bun run client:build
 ```
 
 O resultado é gravado em `apps/client/dist`. Ele é estático, mas o suporte SQLite/OPFS requer cabeçalhos de isolamento entre origens (`Cross-Origin-Opener-Policy` e `Cross-Origin-Embedder-Policy`) no servidor web. O wrapper Electron já configura esse ambiente.
@@ -120,7 +119,7 @@ Não há build iOS de release automatizado no momento: ele exige identificador d
 
 ## Solução de problemas
 
-- **Alterações de schema não aparecem:** execute `bun run start-clear` e confirme que o índice de migrations foi regenerado.
+- **Alterações de schema não aparecem:** execute `bunx expo start --clear` e confirme que o índice de migrations foi regenerado.
 - **Android não alcança `localhost`:** use `10.0.2.2` no emulador ou o IP da máquina em um aparelho real.
 - **SQLite web falha ao iniciar:** confirme suporte a OPFS e os cabeçalhos COOP/COEP no host; teste também sem modo privado.
 - **Dependências ou patches inconsistentes:** remova apenas artefatos gerados necessários e execute novamente `bun install --frozen-lockfile` na raiz. Não regenere o lockfile sem intenção.

@@ -4,7 +4,10 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';

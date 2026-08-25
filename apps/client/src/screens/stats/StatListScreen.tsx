@@ -126,9 +126,9 @@ const StatListScreen = () => {
         headerRight: canEdit
           ? () => (
               <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-              <TouchableOpacity onPress={handleCreate} accessibilityLabel={t('add')}>
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
+                <TouchableOpacity onPress={handleCreate} accessibilityLabel={t('add')}>
+                  <Ionicons name="add" size={30} color={colors.text} />
+                </TouchableOpacity>
               </View>
             )
           : undefined,

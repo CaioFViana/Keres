@@ -8,11 +8,9 @@ import type {
   StoryUpdate,
   SyncConflict as SharedSyncConflict,
   SyncPushResult,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  MAX_SYNC_BATCH_SIZE,
-  MAX_SYNC_PULL_BATCH
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { and, asc, eq, isNull, lte, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
@@ -66,13 +64,12 @@ import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
 import { createFavoriteService } from './storymanagement/FavoriteService';
 import { createCommentService } from './storymanagement/CommentService';
-import type {
-  SyncConflictService} from './SyncConflictService';
+import type { SyncConflictService } from './SyncConflictService';
 import {
   applyReorderToLocalDb,
   createSyncConflictService,
   findContestedFields,
-  mergeLocalOperationPayloads
+  mergeLocalOperationPayloads,
 } from './SyncConflictService';
 
 export interface ServerStoryPreview {

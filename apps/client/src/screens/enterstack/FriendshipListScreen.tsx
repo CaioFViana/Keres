@@ -102,7 +102,10 @@ const FriendshipListScreen = () => {
         title: t('manage_friendships'),
         headerRight: () => (
           <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-            <TouchableOpacity onPress={handleAddFriendship} accessibilityLabel={t('add_new_friendship')}>
+            <TouchableOpacity
+              onPress={handleAddFriendship}
+              accessibilityLabel={t('add_new_friendship')}
+            >
               <Ionicons name="add" size={30} color={colors.text} />
             </TouchableOpacity>
           </View>

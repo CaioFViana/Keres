@@ -1,10 +1,9 @@
 import type {
   LocationGraphEdge,
   LocationGraphLayout,
-  LocationGraphNode} from './locationGraphLayout';
-import {
-  GRAPH_PADDING
+  LocationGraphNode,
 } from './locationGraphLayout';
+import { GRAPH_PADDING } from './locationGraphLayout';
 
 /**
  * Serializa o grafo de estrutura de Locations como um arquivo SVG completo - mesmo raciocínio

@@ -13,10 +13,9 @@ import {
 import { useDrizzle } from '../../../../db';
 import type {
   SuggestionServiceInterface,
-  SuggestionType} from '../../../../services/storymanagement/SuggestionService';
-import {
-  createSuggestionService
+  SuggestionType,
 } from '../../../../services/storymanagement/SuggestionService';
+import { createSuggestionService } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { getContrastTextColor } from '../../../../utils/colorUtils';

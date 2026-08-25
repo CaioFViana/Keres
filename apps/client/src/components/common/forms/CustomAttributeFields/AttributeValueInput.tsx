@@ -1,10 +1,5 @@
-import type {
-  StorySchemaEntityType} from '@keres/shared';
-import {
-  AttributeType,
-  decodeAttributeValue,
-  encodeAttributeValue
-} from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, encodeAttributeValue } from '@keres/shared';
 import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';

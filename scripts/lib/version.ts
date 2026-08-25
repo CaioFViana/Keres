@@ -1,9 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+import { join } from 'node:path';
+import { repoRoot } from './packages';
 
-export const repoRoot = path.join(fileURLToPath(import.meta.url), '..', '..', '..');
-
+/**
+ * A versão distribuída do Keres mora em vários arquivos, e todos têm que dizer a mesma coisa:
+ * o `package.json` de cada pacote, o `app.json` do Expo e o `AppRelease.ts` que cliente e API
+ * exibem. Este módulo é o único lugar que escreve nesses arquivos.
+ */
 export const VERSIONED_JSON_FILES = [
   'package.json',
   'apps/api/package.json',
@@ -16,49 +19,58 @@ export const VERSIONED_JSON_FILES = [
 export const APP_JSON_FILE = 'apps/client/app.json';
 export const APP_RELEASE_FILE = 'packages/shared/metadata/AppRelease.ts';
 
-export function assertSemver(version) {
+export function assertSemver(version: string | undefined): asserts version is string {
   if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
     throw new Error(`Version must use MAJOR.MINOR.PATCH, got ${JSON.stringify(version)}.`);
   }
 }
 
-function writeJson(filePath, json) {
+function writeJson(filePath: string, json: unknown): void {
   writeFileSync(filePath, `${JSON.stringify(json, null, 2)}\n`);
 }
 
-export function setPackageVersions(version) {
+export function readJson<T>(relativePath: string): T {
+  return JSON.parse(readFileSync(join(repoRoot, relativePath), 'utf8')) as T;
+}
+
+export function setPackageVersions(version: string): void {
   assertSemver(version);
   for (const relativePath of VERSIONED_JSON_FILES) {
-    const filePath = path.join(repoRoot, relativePath);
-    const json = JSON.parse(readFileSync(filePath, 'utf8'));
+    const filePath = join(repoRoot, relativePath);
+    const json = JSON.parse(readFileSync(filePath, 'utf8')) as { version?: string };
     json.version = version;
     writeJson(filePath, json);
     console.log(`Set version ${version} in ${relativePath}`);
   }
 
-  const appJsonPath = path.join(repoRoot, APP_JSON_FILE);
-  const appJson = JSON.parse(readFileSync(appJsonPath, 'utf8'));
+  const appJsonPath = join(repoRoot, APP_JSON_FILE);
+  const appJson = JSON.parse(readFileSync(appJsonPath, 'utf8')) as { expo: { version: string } };
   appJson.expo.version = version;
   writeJson(appJsonPath, appJson);
   console.log(`Set version ${version} in ${APP_JSON_FILE}`);
 }
 
-export function readReleaseName() {
-  const source = readFileSync(path.join(repoRoot, APP_RELEASE_FILE), 'utf8');
-  const match = source.match(/name:\s*(['\"])(.*?)\1/);
+export function readReleaseName(): string {
+  const source = readFileSync(join(repoRoot, APP_RELEASE_FILE), 'utf8');
+  const match = source.match(/name:\s*(['"])(.*?)\1/);
   if (!match?.[2]) {
     throw new Error(`Could not read release name from ${APP_RELEASE_FILE}.`);
   }
   return match[2];
 }
 
-export function setAppRelease(version, name) {
+export function readReleaseVersion(): string | undefined {
+  const source = readFileSync(join(repoRoot, APP_RELEASE_FILE), 'utf8');
+  return source.match(/version:\s*(['"])(.*?)\1/)?.[2];
+}
+
+export function setAppRelease(version: string, name: string): void {
   assertSemver(version);
   if (!name?.trim()) {
     throw new Error('Release name cannot be empty.');
   }
 
   const source = `/**\n * Identidade da versão distribuída do Keres.\n *\n * Atualize com \`bun run version:set <versão> <nome>\` na raiz do repositório. Este módulo é\n * consumido tanto pelo cliente quanto pela API, portanto não há uma versão separada do servidor.\n */\nexport const APP_RELEASE = {\n  name: ${JSON.stringify(name.trim())},\n  version: ${JSON.stringify(version)},\n} as const;\n`;
-  writeFileSync(path.join(repoRoot, APP_RELEASE_FILE), source);
+  writeFileSync(join(repoRoot, APP_RELEASE_FILE), source);
   console.log(`Set release ${version} ${name.trim()} in ${APP_RELEASE_FILE}`);
 }

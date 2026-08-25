@@ -1,11 +1,5 @@
-import type {
-  CreateCommentDataType,
-  CreateStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateCommentDataSchema,
-  PartialCommentSchema
-} from '@keres/shared';
+import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
 import { db } from '../../db';
 import { comments } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';

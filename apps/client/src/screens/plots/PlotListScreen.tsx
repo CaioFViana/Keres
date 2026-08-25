@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp} from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -17,7 +17,10 @@ import type { PlotSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList, PlotsStackParamList } from '../../navigation/MainSystemStack';
+import type {
+  MainSystemDrawerParamList,
+  PlotsStackParamList,
+} from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
@@ -107,14 +110,14 @@ const PlotListScreen = () => {
   const visiblePlots = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
     const filtered = term
-      ? plots.filter((plot) =>
-          `${plot.name} ${plot.details ?? ''}`.toLowerCase().includes(term),
-        )
+      ? plots.filter((plot) => `${plot.name} ${plot.details ?? ''}`.toLowerCase().includes(term))
       : plots;
     const direction = sortDirection === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      if (activeSort === 'createdAt') return direction * (a.createdAt.getTime() - b.createdAt.getTime());
-      if (activeSort === 'updatedAt') return direction * (a.updatedAt.getTime() - b.updatedAt.getTime());
+      if (activeSort === 'createdAt')
+        return direction * (a.createdAt.getTime() - b.createdAt.getTime());
+      if (activeSort === 'updatedAt')
+        return direction * (a.updatedAt.getTime() - b.updatedAt.getTime());
       if (activeSort === 'sceneCount')
         return direction * (relationsOf(a.id).length - relationsOf(b.id).length);
       return direction * a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });

@@ -120,9 +120,7 @@ describe('fronteiras de import', () => {
     const offenders = sourceFiles
       .filter((path) => relativeOf(path).startsWith('components/'))
       .filter((path) =>
-        (graph.get(path) ?? []).some((target) =>
-          /^(db|services)\//.test(relativeOf(target)),
-        ),
+        (graph.get(path) ?? []).some((target) => /^(db|services)\//.test(relativeOf(target))),
       )
       .map(relativeOf)
       .sort();

@@ -1,5 +1,4 @@
-import type {
-  PresenceMatrixLayout} from './presenceMatrixLayout';
+import type { PresenceMatrixLayout } from './presenceMatrixLayout';
 import {
   buildMatrixThreadSegments,
   MATRIX_CELL_INSET,
@@ -10,7 +9,7 @@ import {
   MATRIX_THREAD_GAP_DASH,
   MATRIX_THREAD_OPACITY,
   MATRIX_THREAD_WIDTH,
-  matrixRowCenterY
+  matrixRowCenterY,
 } from './presenceMatrixLayout';
 
 export function renderPresenceMatrixSvg(

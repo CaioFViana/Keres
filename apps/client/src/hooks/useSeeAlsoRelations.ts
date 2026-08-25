@@ -1,11 +1,8 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import type {
-  SeeAlsoEntityRef} from '../services/storymanagement/SeeAlsoRelationService';
-import {
-  createSeeAlsoRelationService
-} from '../services/storymanagement/SeeAlsoRelationService';
+import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
+import { createSeeAlsoRelationService } from '../services/storymanagement/SeeAlsoRelationService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 

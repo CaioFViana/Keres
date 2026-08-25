@@ -2,11 +2,9 @@ import type {
   CreateGalleryRelationDataType,
   CreateStoryUpdate,
   GalleryOwnerEntity,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateGalleryRelationDataSchema,
-  PartialGalleryRelationSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateGalleryRelationDataSchema, PartialGalleryRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import {

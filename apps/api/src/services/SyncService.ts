@@ -7,10 +7,9 @@ import type {
   StoryUpdate,
   SyncAppliedOperation,
   SyncConflict,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  MAX_SYNC_PULL_BATCH
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';

@@ -1,4 +1,4 @@
-import type { AppAlertButton, AppAlertOptions} from '../state/appAlertStore';
+import type { AppAlertButton, AppAlertOptions } from '../state/appAlertStore';
 import { useAppAlertStore } from '../state/appAlertStore';
 
 /**

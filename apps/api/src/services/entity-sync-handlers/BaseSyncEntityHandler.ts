@@ -3,13 +3,14 @@ import type {
   DeleteStoryUpdate,
   StoryUpdate,
   SyncConflictReason,
-  UpdateStoryUpdate} from '@keres/shared';
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import {
   getSimpleDisplayName,
   omitSyncImmutableFields,
-  SYNC_CLIENT_IMMUTABLE_FIELD_SET
+  SYNC_CLIENT_IMMUTABLE_FIELD_SET,
 } from '@keres/shared';
-import type { SQL} from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import type { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import type { z } from 'zod'; // Import Zod

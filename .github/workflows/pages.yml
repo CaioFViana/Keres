@@ -30,7 +30,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
       - name: Build landing
-        run: bun run --cwd apps/site build
+        run: bun run site:build
         env:
           # GitHub Pages de projeto vive em /<repo>/. O nome do repositório
           # preserva maiúsculas (`Keres`), e o Vite precisa do mesmo prefixo

@@ -6,9 +6,7 @@ import type { SceneSelect } from '../../../../db/schema'; // SceneSelect type
 import type { CharacterSelect } from '../../../../db/schemas/characters'; // CharacterSelect type
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
-import type {
-  BaseRelation,
-} from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
+import type { BaseRelation } from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 

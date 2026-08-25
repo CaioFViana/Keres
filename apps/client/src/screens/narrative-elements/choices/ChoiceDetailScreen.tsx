@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import type { Effect } from '@keres/shared/entities/Effect';
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';

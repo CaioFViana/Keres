@@ -2,11 +2,9 @@ import type {
   CreatePlotDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreatePlotDataSchema,
-  PartialPlotSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreatePlotDataSchema, PartialPlotSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { plots, stories } from '../../db/schema';
@@ -36,19 +34,17 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
     await this.assertLinear(storyId);
     if (await this.findById(update.id!))
       throw new Error(`Conflict: Plot with ID ${update.id} already exists.`);
-    await db
-      .insert(plots)
-      .values({
-        id: update.id!,
-        storyId,
-        name: data.name,
-        details: data.details,
-        version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isDeleted: false,
-        deletedAt: null,
-      });
+    await db.insert(plots).values({
+      id: update.id!,
+      storyId,
+      name: data.name,
+      details: data.details,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    });
   }
   async update(
     userId: string,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp} from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
@@ -16,7 +16,10 @@ import TagListItem from '@/src/components/features/list-items/TagListItem';
 import type { TagSelect } from '../../db/schemas/tags';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import type { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack';
+import type {
+  MainSystemDrawerParamList,
+  TagsStackParamList,
+} from '../../navigation/MainSystemStack';
 import { useTagStore } from '../../state/tagStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';

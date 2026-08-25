@@ -20,7 +20,7 @@ COPY patches patches
 RUN bun install
 
 # ---- admin-build: painel (`dist/`) e vitrine pública (`dist-showcase/`) ----
-# `build:all` = `build` (Vite do /admin) + `build:showcase` (Vite do site público). Sem o
+# O `build` do admin faz os dois Vite: o painel (`dist/`) e a vitrine pública. Sem o
 # segundo, a API sobe com o warn "Showcase UI not built" e `/showcase` fica fora do ar.
 # Os dois usam o mesmo ícone do desktop (vite.keresIcon.ts); sem o PNG no contexto,
 # png-to-ico relata "not a valid PNG" no lugar de ENOENT.
@@ -28,7 +28,7 @@ FROM deps AS admin-build
 COPY packages/shared packages/shared
 COPY apps/admin apps/admin
 COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
-RUN cd apps/admin && bun run build:all
+RUN cd apps/admin && bun run build
 
 # ---- client-web-build: Expo web export served by the API at / ----
 # Só client + shared. Copiar o workspace inteiro (desktop/site/api/admin) faz o `bun install`
@@ -58,10 +58,7 @@ ENV CI=1
 ENV EXPO_NO_TELEMETRY=1
 ENV NODE_OPTIONS=--max-old-space-size=3072
 WORKDIR /app/apps/client
-RUN node scripts/generate-migrations-index.js \
- && node scripts/generate-example-stories-index.js \
- && node scripts/generate-help-index.js \
- && node scripts/generate-story-devices-index.js \
+RUN bun scripts/generate-indexes.ts \
  && node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web
 
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----

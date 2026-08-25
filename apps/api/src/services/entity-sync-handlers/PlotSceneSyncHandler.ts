@@ -2,11 +2,9 @@ import type {
   CreatePlotSceneDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreatePlotSceneDataSchema,
-  PartialPlotSceneSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreatePlotSceneDataSchema, PartialPlotSceneSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { plots, plotScenes, scenes, stories } from '../../db/schema';
@@ -61,20 +59,18 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
     });
     if (duplicate || (await this.findById(update.id!)))
       throw new Error('Conflict: this scene is already part of the plot.');
-    await db
-      .insert(plotScenes)
-      .values({
-        id: update.id!,
-        storyId,
-        plotId: data.plotId,
-        sceneId: data.sceneId,
-        note: data.note,
-        version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isDeleted: false,
-        deletedAt: null,
-      });
+    await db.insert(plotScenes).values({
+      id: update.id!,
+      storyId,
+      plotId: data.plotId,
+      sceneId: data.sceneId,
+      note: data.note,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    });
   }
   async update(
     userId: string,

@@ -2,11 +2,9 @@ import type {
   CreateAttributeValueDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateAttributeValueDataSchema,
-  PartialAttributeValueSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateAttributeValueDataSchema, PartialAttributeValueSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { attributeValues } from '../../db/schema';

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp} from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -17,7 +17,10 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import type { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  GalleryStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';

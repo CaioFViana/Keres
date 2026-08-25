@@ -7,7 +7,7 @@ import { createFriendshipService } from '../../../services/FriendshipService';
 import { createServerService } from '../../../services/ServerService';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
-import type { ServerStoryPreview} from '../../../services/SyncEngineService';
+import type { ServerStoryPreview } from '../../../services/SyncEngineService';
 import { SyncEngineService } from '../../../services/SyncEngineService';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryListStore } from '../../../state/storyListStore';

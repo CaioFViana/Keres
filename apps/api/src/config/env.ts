@@ -33,7 +33,7 @@ const envSchema = z.object({
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),
   /**
-   * Interface HTTP. Ausente deixa o Bun escutar em todas (Compose / `bun run start:api`).
+   * Interface HTTP. Ausente deixa o Bun escutar em todas (Compose / `bun run api:start`).
    * O launcher caseiro preenche `127.0.0.1` ou `0.0.0.0`.
    */
   HOST: optionalEnvironmentString,

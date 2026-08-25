@@ -43,8 +43,7 @@ const row = (sceneIds: string[]): PresenceMatrixRow => ({
   color: '#0B6E99',
   cells: new Map(sceneIds.map((id) => [id, 'nota'])),
 });
-const scenes = (count: number) =>
-  Array.from({ length: count }, (_, index) => scene(`${index}`));
+const scenes = (count: number) => Array.from({ length: count }, (_, index) => scene(`${index}`));
 const columnOf = (index: number, width = MATRIX_SCENE_WIDTH) =>
   MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * width;
 /** Borda esquerda e direita da célula: o fio começa e termina nelas, não no centro. */
@@ -61,11 +60,7 @@ describe('matrix thread', () => {
   });
 
   it('marks the stretch over scenes the series skips as a gap', () => {
-    const segments = buildMatrixThreadSegments(
-      row(['0', '3', '4']),
-      scenes(5),
-      MATRIX_SCENE_WIDTH,
-    );
+    const segments = buildMatrixThreadSegments(row(['0', '3', '4']), scenes(5), MATRIX_SCENE_WIDTH);
 
     expect(segments).toEqual([
       { x1: cellEnd(0), x2: cellStart(3), isGap: true },

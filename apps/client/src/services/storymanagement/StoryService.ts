@@ -1,10 +1,5 @@
-import type {
-  EffectiveStoryRole,
-  FullStoryExportType} from '@keres/shared';
-import {
-  CURRENT_STORY_FORMAT_VERSION,
-  FullStoryExportSchema
-} from '@keres/shared';
+import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
+import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import type {
@@ -47,7 +42,8 @@ import type {
   TagInsert,
   TagRelationInsert,
   WorldRuleInsert,
-  WorldRuleSelect} from '../../db/schema';
+  WorldRuleSelect,
+} from '../../db/schema';
 import {
   attributeValues,
   chapters,
@@ -85,9 +81,9 @@ import {
   syncConflicts,
   tagRelations,
   tags,
-  worldRules
+  worldRules,
 } from '../../db/schema';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n from '../../utils/i18n';
@@ -106,8 +102,7 @@ import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import { createFavoriteService } from './FavoriteService';
 import { cloneStoryForLocalImport } from './cloneStoryForLocalImport';
-import type {
-  LinearCompatibilityResult} from './storyTypeConversion';
+import type { LinearCompatibilityResult } from './storyTypeConversion';
 import {
   checkLinearCompatibility as checkLinearCompatibilityGraph,
   classifyEdges,

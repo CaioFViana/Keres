@@ -1,5 +1,4 @@
-import type {
-  StorySchemaEntityType} from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import {
   AttributeType,
   decodeAttributeValue,

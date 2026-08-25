@@ -17,11 +17,8 @@ import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalS
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type {
-  GlobalSearchResult} from '../../services/storymanagement/GlobalSearchService';
-import {
-  createGlobalSearchService
-} from '../../services/storymanagement/GlobalSearchService';
+import type { GlobalSearchResult } from '../../services/storymanagement/GlobalSearchService';
+import { createGlobalSearchService } from '../../services/storymanagement/GlobalSearchService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import type { FavoriteFilterState } from '../../types/entityFilters';

@@ -1,4 +1,9 @@
-import type { Comment, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type {
+  Comment,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import { comments } from '../../db/schema';

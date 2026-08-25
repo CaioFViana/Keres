@@ -63,7 +63,7 @@ const PlotReaderScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
+        ...commonScreenStyleDefs(colors),
         header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10, gap: 10 },
         scope: { color: colors.textSecondary, fontSize: 13 },
         content: { paddingHorizontal: 20, paddingBottom: scrollBottomPadding },
@@ -122,7 +122,9 @@ const PlotReaderScreen = () => {
 
       <ScrollView contentContainerStyle={styles.content}>
         {readerScenes.length === 0 ? (
-          <Text style={styles.empty}>{isAllScenes ? t('plot_reader_no_scenes') : t('no_plot_scenes')}</Text>
+          <Text style={styles.empty}>
+            {isAllScenes ? t('plot_reader_no_scenes') : t('no_plot_scenes')}
+          </Text>
         ) : (
           readerScenes.map((scene, index) => (
             <View key={scene.id}>

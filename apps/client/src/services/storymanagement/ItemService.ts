@@ -4,7 +4,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ItemInsert, ItemSelect } from '../../db/schemas/items';
 import { items } from '../../db/schemas/items';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

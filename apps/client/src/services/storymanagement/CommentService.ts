@@ -1,6 +1,6 @@
 import type { CommentEntityType } from '@keres/shared';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, CommentSelect} from '../../db';
+import type { AppDrizzleClient, CommentSelect } from '../../db';
 import { comments } from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';

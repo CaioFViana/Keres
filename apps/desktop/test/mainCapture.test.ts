@@ -10,22 +10,21 @@ const captureEnvironment = vi.hoisted(() => {
 
 const fileMocks = vi.hoisted(() => ({
   mkdir: vi.fn(async () => undefined),
-  readFile: vi.fn(
-    async () =>
-      JSON.stringify({
-        outputDirectory: 'C:/captures',
-        shots: [
-          {
-            name: 'characters',
-            query: 'showcase=characters',
-            width: 1440,
-            height: 900,
-            settleMs: 10,
-            press: 'Fit to screen',
-            pressWaitMs: 5,
-          },
-        ],
-      }),
+  readFile: vi.fn(async () =>
+    JSON.stringify({
+      outputDirectory: 'C:/captures',
+      shots: [
+        {
+          name: 'characters',
+          query: 'showcase=characters',
+          width: 1440,
+          height: 900,
+          settleMs: 10,
+          press: 'Fit to screen',
+          pressWaitMs: 5,
+        },
+      ],
+    }),
   ),
   writeFile: vi.fn(async () => undefined),
 }));
@@ -146,10 +145,12 @@ describe('screen capture lifecycle', () => {
 
   it('forwards renderer diagnostics while capture debugging is active', () => {
     const registrations = electronMocks.windows[0].webContents.on.mock.calls;
-    const consoleListener = registrations.find(([event]: any[]) => event === 'console-message')?.[1];
-    const goneListener = [...registrations].reverse().find(
-      ([event]: any[]) => event === 'render-process-gone',
+    const consoleListener = registrations.find(
+      ([event]: any[]) => event === 'console-message',
     )?.[1];
+    const goneListener = [...registrations]
+      .reverse()
+      .find(([event]: any[]) => event === 'render-process-gone')?.[1];
 
     consoleListener({ message: 'renderer ready' });
     goneListener({}, { reason: 'crashed' });

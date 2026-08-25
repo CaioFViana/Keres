@@ -19,11 +19,8 @@ import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import type {
-  LocationService} from '@/src/services/storymanagement/LocationService';
-import {
-  createLocationService
-} from '@/src/services/storymanagement/LocationService'; // Import LocationService
+import type { LocationService } from '@/src/services/storymanagement/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
@@ -38,7 +35,7 @@ import {
 } from '@/src/utils/sceneTiming';
 import { Ionicons } from '@expo/vector-icons';
 import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

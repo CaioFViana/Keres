@@ -5,15 +5,14 @@ import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFi
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import type {
-  StorySchemaEntityType} from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import {
   AttributeKeyRegex,
   AttributeType,
   deriveAttributeKey,
-  STORY_SCHEMA_ENTITY_TYPES
+  STORY_SCHEMA_ENTITY_TYPES,
 } from '@keres/shared';
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -28,7 +27,11 @@ import { createStorySchemaFieldService } from '../../services/storymanagement/St
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 

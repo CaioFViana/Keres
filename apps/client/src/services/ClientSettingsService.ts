@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, ClientSettingsInsert, ClientSettingsSelect} from '../db';
+import type { AppDrizzleClient, ClientSettingsInsert, ClientSettingsSelect } from '../db';
 import { schema } from '../db';
 import { createULID } from '../utils/entityUtils';
 

@@ -72,9 +72,7 @@ const SQLITE_WEB_SMOKE_TEST = process.argv.includes('--sqlite-web-smoke-test');
  * `--capture-screens=<arquivo.json>` recebe a lista de imagens a tirar; cada item vira uma URL
  * `app://app/?showcase=...` que o modo vitrine do app entende (ver `showcaseRequest.ts`).
  */
-const CAPTURE_ARGUMENT = process.argv.find((argument) =>
-  argument.startsWith('--capture-screens='),
-);
+const CAPTURE_ARGUMENT = process.argv.find((argument) => argument.startsWith('--capture-screens='));
 const CAPTURE_PLAN_PATH = CAPTURE_ARGUMENT?.split('=').slice(1).join('=');
 const HEADLESS = SQLITE_WEB_SMOKE_TEST || !!CAPTURE_PLAN_PATH;
 
@@ -143,7 +141,7 @@ async function handleAppRequest(request: Request): Promise<Response> {
 async function createWindow() {
   if (!existsSync(path.join(CLIENT_DIST, 'index.html'))) {
     throw new Error(
-      `Client web export not found at ${CLIENT_DIST}. Run 'bun run build:client' (apps/desktop) first.`,
+      `Client web export not found at ${CLIENT_DIST}. Run 'bun run client:build' first.`,
     );
   }
 
@@ -349,9 +347,7 @@ export async function pressControl(
  * tamanho ou de conteúdo (`UnknownVizError`), e o erro é transitório: tentar de novo um instante
  * depois resolve. Sem isto, uma execução inteira morre por causa de uma foto.
  */
-export async function capturePageWithRetry(
-  win: BrowserWindow,
-): Promise<Electron.NativeImage> {
+export async function capturePageWithRetry(win: BrowserWindow): Promise<Electron.NativeImage> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     try {

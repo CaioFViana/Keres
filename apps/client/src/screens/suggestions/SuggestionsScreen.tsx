@@ -2,12 +2,8 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
-import type {
-  StorySchemaEntityType} from '@keres/shared';
-import {
-  isSuggestionAttributeType,
-  STORY_SCHEMA_ENTITY_TYPES
-} from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

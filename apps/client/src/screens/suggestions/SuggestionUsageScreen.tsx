@@ -22,11 +22,10 @@ import type {
   MainSystemDrawerParamList,
   SuggestionsStackParamList,
 } from '../../navigation/MainSystemStack';
-import type {
-  SuggestionUsage} from '../../services/storymanagement/SuggestionService';
+import type { SuggestionUsage } from '../../services/storymanagement/SuggestionService';
 import {
   createSuggestionService,
-  isNamedListType
+  isNamedListType,
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';

@@ -4,16 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:showcase": "vite --config vite.showcase.config.ts",
+    "start": "vite",
+    "start:showcase": "vite --config vite.showcase.config.ts",
+    "build": "tsc -b && vite build && vite build --config vite.showcase.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts --ext .ts,.tsx",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "build": "tsc -b && vite build",
-    "build:showcase": "vite build --config vite.showcase.config.ts",
-    "build:all": "bun run build && bun run build:showcase",
-    "preview": "vite preview"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@keres/shared": "workspace:*",

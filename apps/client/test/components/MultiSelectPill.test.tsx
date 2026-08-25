@@ -147,7 +147,9 @@ describe('MultiSelectPill, espaçamento das pílulas', () => {
   ];
 
   /** Estilo do campo, já achatado - é onde moram altura mínima e espaçamento. */
-  const triggerStyleOf = (screen: { getByTestId: (id: string) => { props: { style?: unknown } } }) =>
+  const triggerStyleOf = (screen: {
+    getByTestId: (id: string) => { props: { style?: unknown } };
+  }) =>
     StyleSheet.flatten(screen.getByTestId('multiselect-trigger').props.style as never) as {
       gap?: number;
       minHeight?: number;
@@ -155,7 +157,11 @@ describe('MultiSelectPill, espaçamento das pílulas', () => {
 
   it('separa as pílulas pelo contêiner, sem margem em cada uma', async () => {
     const screen = await render(
-      <MultiSelectPill options={options} selectedValues={['atena']} onSelectionChange={jest.fn()} />,
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
     );
 
     expect(triggerStyleOf(screen).gap).toBe(8);
@@ -170,7 +176,11 @@ describe('MultiSelectPill, espaçamento das pílulas', () => {
       <MultiSelectPill options={options} selectedValues={[]} onSelectionChange={jest.fn()} />,
     );
     const filled = await render(
-      <MultiSelectPill options={options} selectedValues={['atena']} onSelectionChange={jest.fn()} />,
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
     );
 
     expect(triggerStyleOf(filled).minHeight).toBe(triggerStyleOf(empty).minHeight);
@@ -202,7 +212,11 @@ describe('MultiSelectPill, altura das opções no modal', () => {
 
   it('reserva o espaço do visto na opção marcada e na não marcada', async () => {
     const screen = await render(
-      <MultiSelectPill options={options} selectedValues={['atena']} onSelectionChange={jest.fn()} />,
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
     );
     fireEvent.press(screen.getByTestId('multiselect-trigger'));
     await waitFor(() => screen.getByTestId('multiselect-option-atena'));

@@ -142,8 +142,24 @@ describe('buildStoryAnalysisReport', () => {
     it('flags a scene-count check requiring more than one visit when there is no cycle to revisit it', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
-        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
+        {
+          id: 'target',
+          name: 'Target',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
+        {
+          id: 'end',
+          name: 'End',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
       );
       input.choices.push(
         { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
@@ -171,8 +187,24 @@ describe('buildStoryAnalysisReport', () => {
     it('does not flag a scene-count check requiring more than one visit when the scene is revisitable via a cycle', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
-        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
+        {
+          id: 'target',
+          name: 'Target',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
+        {
+          id: 'end',
+          name: 'End',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
       );
       input.choices.push(
         { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
@@ -286,8 +318,24 @@ describe('buildStoryAnalysisReport', () => {
     it('cascades through two levels: a choice gated on a scene that is itself only reachable via a never-satisfiable choice', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'sceneX', name: 'Scene X', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
-        { id: 'sceneY', name: 'Scene Y', locationId: 'location', isStart: false, isFinish: false, chapterId: 'chapter', index: 1 },
+        {
+          id: 'sceneX',
+          name: 'Scene X',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
+        {
+          id: 'sceneY',
+          name: 'Scene Y',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
       );
       // Branch 1: start -> sceneX, gated on an item that is never granted anywhere - sceneX can
       // never actually be reached, even though it's structurally connected to the graph.

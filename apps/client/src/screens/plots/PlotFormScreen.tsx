@@ -1,7 +1,7 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,11 @@ import { createPlotService } from '../../services/storymanagement/PlotService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
@@ -50,7 +54,7 @@ const PlotFormScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
+        ...commonFormStyleDefs(colors, scrollBottomPadding),
         description: {
           color: colors.textSecondary,
           marginBottom: 20,

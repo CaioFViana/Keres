@@ -1,16 +1,11 @@
 import type {
   ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  ChapterReorderingStoryUpdateSchema
-} from '@keres/shared'; // Corrected import
-import type {
-  CreateChapterDataType} from '@keres/shared/';
-import {
-  CreateChapterDataSchema,
-  PartialChapterSchema,
-} from '@keres/shared/';
+  UpdateStoryUpdate,
+} from '@keres/shared';
+import { ChapterReorderingStoryUpdateSchema } from '@keres/shared'; // Corrected import
+import type { CreateChapterDataType } from '@keres/shared/';
+import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
 import { db } from '../../db';
 import { chapters, scenes } from '../../db/schema'; // Import scenes table

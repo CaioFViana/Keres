@@ -1,8 +1,8 @@
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
-import type { ModeInsert, ModeSelect} from '../../db/schema';
+import type { ModeInsert, ModeSelect } from '../../db/schema';
 import { modes, statRelations } from '../../db/schema';
-import type { Create} from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {

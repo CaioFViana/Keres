@@ -1,10 +1,9 @@
 import { stories } from '@/src/db/schemas/stories';
 import type {
   StoryPublicationInsert,
-  StoryPublicationSelect} from '@/src/db/schemas/storyPublications';
-import {
-  storyPublications
+  StoryPublicationSelect,
 } from '@/src/db/schemas/storyPublications';
+import { storyPublications } from '@/src/db/schemas/storyPublications';
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';

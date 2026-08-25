@@ -1,10 +1,5 @@
-import type {
-  CreateStoryUpdate,
-  CreateWorldRuleDataType} from '@keres/shared';
-import {
-  CreateWorldRuleDataSchema,
-  PartialWorldRuleSchema,
-} from '@keres/shared';
+import type { CreateStoryUpdate, CreateWorldRuleDataType } from '@keres/shared';
+import { CreateWorldRuleDataSchema, PartialWorldRuleSchema } from '@keres/shared';
 import { db } from '../../db';
 import { worldRules } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';

@@ -2,7 +2,7 @@ import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
-import type { PanZoomCanvasHandle} from '../../../../hooks/usePanZoomCanvas';
+import type { PanZoomCanvasHandle } from '../../../../hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
 import type { LocationGraphLayout, LocationGraphNode } from '../../../../utils/locationGraphLayout';

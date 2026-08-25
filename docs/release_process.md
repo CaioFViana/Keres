@@ -6,12 +6,14 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 ## 1. Pre-flight
 
 - [ ] `bun run release:check` passa. Ele audita primeiro as traduções do client, admin,
-      showcase e site para falhar cedo; depois executa `typecheck`, aplica a formatação,
-      roda `test:report`, confere que todas as versões controladas por
-      `scripts/version/set-release.mjs` coincidem com a versão do `package.json` raiz e exige
-      worktree limpo ao final.
-- [ ] O job de release ainda reexecuta typecheck, lint e cobertura; para diagnosticar uma etapa
-      isoladamente, use os scripts correspondentes.
+      showcase e site para falhar cedo; depois executa `typecheck` e `lint`, aplica a
+      formatação, confere que todas as versões controladas por `scripts/lib/version.ts`
+      coincidem com a versão do `package.json` raiz, exige worktree limpo e termina no
+      `test:report` (com integração e cobertura).
+- [ ] O job `verify` do release roda o mesmo comando com `--ci`: ali a formatação é só
+      conferida, o worktree não precisa estar limpo (o próprio workflow escreve a versão vinda
+      da tag) e as suítes são as unitárias com cobertura - as de integração têm job próprio em
+      `ci.yml`. Nenhum artefato começa a ser compilado antes disso passar.
 
 ## 2. Version and release name
 
@@ -58,7 +60,7 @@ Pushing the tag runs `.github/workflows/release.yml`, which:
 6. Collects every artifact into a single GitHub Release on the tag, with
    auto-generated release notes.
 
-Local packaging of **Keres Server** is `bun run package:server` (same
+Local packaging of **Keres Server** is `bun run api:build` (same
 script the release job runs). It writes `apps/api/dist-server/keres-server/`
 and a versioned zip next to it.
 

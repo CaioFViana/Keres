@@ -1,4 +1,9 @@
-import type { Choice, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type {
+  Choice,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';

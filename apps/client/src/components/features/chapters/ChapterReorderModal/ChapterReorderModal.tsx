@@ -23,9 +23,7 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
 
   const handleConfirm = useCallback(
     async (reordered: ChapterSelect[]) => {
-      await onReorderConfirm(
-        buildReorderItems(reordered, (chapter) => chapter.id),
-      );
+      await onReorderConfirm(buildReorderItems(reordered, (chapter) => chapter.id));
     },
     [onReorderConfirm],
   );

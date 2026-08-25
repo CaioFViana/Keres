@@ -1,4 +1,9 @@
-import type { Favorite, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type {
+  Favorite,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import { favorites } from '../../db/schema';

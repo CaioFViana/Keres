@@ -11,9 +11,9 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  * cena veio; o capítulo é o que situa. A história sai das próprias cenas em vez de virar mais
  * uma prop atravessando cada tela: todas essas listas mostram cenas de uma história só.
  */
-export function useChapterNames(scenes: Pick<SceneSelect, 'storyId'>[]): (
-  chapterId: string,
-) => string | undefined {
+export function useChapterNames(
+  scenes: Pick<SceneSelect, 'storyId'>[],
+): (chapterId: string) => string | undefined {
   const drizzleDb = useDrizzle();
   const storyId = scenes[0]?.storyId;
   const [names, setNames] = useState<Map<string, string>>(new Map());

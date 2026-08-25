@@ -20,9 +20,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import type {
-  StoryGraphCanvasHandle,
-} from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
+import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../../db';
 import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../db/schema';
@@ -333,8 +331,8 @@ const ChoiceViewScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
+        ...commonScreenStyleDefs(colors),
+        ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,

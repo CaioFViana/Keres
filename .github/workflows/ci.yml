@@ -26,6 +26,8 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
+      # Os três agregam todos os pacotes (ver scripts/run-all.ts); `typecheck` cobre também
+      # os scripts do próprio repositório.
       - run: bun run typecheck
       - run: bun run lint
       # Com cobertura, e não `bun run test`: é o que aplica os limiares definidos em cada

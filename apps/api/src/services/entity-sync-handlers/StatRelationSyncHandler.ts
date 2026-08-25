@@ -1,11 +1,9 @@
 import type {
   CreateStatRelationDataType,
   CreateStoryUpdate,
-  UpdateStoryUpdate} from '@keres/shared';
-import {
-  CreateStatRelationDataSchema,
-  PartialStatRelationSchema
+  UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateStatRelationDataSchema, PartialStatRelationSchema } from '@keres/shared';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, modes, statRelations, stats } from '../../db/schema';

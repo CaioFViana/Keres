@@ -1,9 +1,5 @@
-import type {
-  DrawerContentComponentProps} from '@react-navigation/drawer';
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-} from '@react-navigation/drawer';
+import type { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../../../theme';

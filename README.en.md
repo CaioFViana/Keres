@@ -83,8 +83,8 @@ bun install --frozen-lockfile
 3. In one terminal, build the admin panel and start the API:
 
    ```bash
-   bun run build:admin
-   bun run start:api
+   bun run admin:build
+   bun run api:start
    ```
 
    PostgreSQL migrations are applied automatically before the API accepts connections.
@@ -92,8 +92,7 @@ bun install --frozen-lockfile
 4. In another terminal, start the client:
 
    ```bash
-   cd apps/client
-   bun run start
+   bun run client:start
    ```
 
 After startup, choose a target in the Expo terminal. In Keres, register the appropriate server URL for your device:
@@ -111,9 +110,9 @@ Available services:
 - API and Swagger: `http://localhost:3000/api/swagger`
 - Health check: `http://localhost:3000/api/kerescheck`
 - Built administration panel: `http://localhost:3000/admin`
-- Hosted web client (same origin, COOP/COEP): `http://localhost:3000/` — requires `bun run --cwd apps/client export:web`
+- Hosted web client (same origin, COOP/COEP): `http://localhost:3000/` — requires `bun run client:build`
 - Published-story showcase: `http://localhost:3000/showcase`
-- Administration panel with hot reload: run `bun run dev` in `apps/admin` and open `http://localhost:5173/admin/`
+- Administration panel with hot reload: `bun run admin:start`, then open `http://localhost:5173/admin/`
 
 ### Local Docker stack
 
@@ -136,10 +135,10 @@ Do not add `--volumes` to the shutdown command if you intend to preserve the dat
 
 ```bash
 # Web client
-cd apps/client && bun run web
+bun run client:start  # e escolha a plataforma
 
 # Static web export
-cd apps/client && bun run export:web
+bun run client:build
 
 # Electron in local mode
 bun run desktop:start
@@ -148,8 +147,8 @@ bun run desktop:start
 bun run desktop:package
 
 # Client checks
-cd apps/client && bun run lint
-cd apps/client && bun run locales:audit
+bun run --cwd apps/client lint
+bun run locales:audit
 ```
 
 See the [client-specific guide](apps/client/README.en.md) for native builds, the local database, and Expo troubleshooting.
@@ -190,10 +189,10 @@ If the worst happens: stop the server, empty the data folder, and copy the dated
 
 ```bash
 bun run start:launcher
-bun run package:server
+bun run api:build
 ```
 
-`package:server` builds the same folder and zip the release job publishes. `start:api` and Compose **do not** go through the wizard: they still read `.env`.
+`api:build` builds the same folder and zip the release job publishes. `api:start` and Compose **do not** go through the wizard: they still read `.env`.
 
 ## API deployment
 
@@ -279,6 +278,40 @@ docker compose exec -T db pg_dump -U keres -d keres -Fc > keres.dump
 
 Adjust the user and database if you changed their defaults. Keep a consistent copy of the `media_storage` volume as well, and periodically test the restoration process.
 
+## Scripts
+
+Every package uses the same vocabulary: `start`, `build`, `test`, `test:coverage`, `typecheck`,
+`lint`, and, where it applies, `db:generate`/`db:migrate`. Each package declares its own
+prerequisites as a `prestart`/`prebuild` hook, which `bun run` executes on its own - the client
+rewrites its generated indexes before starting, the desktop app builds the client's web export
+before opening Electron, and the API builds the admin panel and the client before packaging the
+server. Nobody has to remember the order.
+
+At the root, each project is called as `<project>:<verb>`:
+
+```bash
+bun run client:start      # Expo
+bun run api:start         # API on Postgres
+bun run admin:start       # admin panel with hot reload
+bun run site:start        # landing page
+bun run desktop:start     # Electron
+bun run api:build         # Keres Server zip (builds panel and client first)
+```
+
+And the checks cover the whole repository:
+
+```bash
+bun run typecheck         # every package, plus the repository's own scripts
+bun run lint
+bun run test              # or test:coverage, which enforces the coverage floors
+bun run test:report       # full report, including integration (needs Docker)
+bun run release:check     # all of the above, plus aligned versions and a clean worktree
+```
+
+`typecheck`, `lint`, `test` and `test:coverage` are the same script run in each package, in
+dependency order (see `scripts/run-all.ts`). Every repository script is TypeScript, run by
+`bun`.
+
 ## Releases
 
 The `.github/workflows/release.yml` workflow runs only for semantic tags matching `v*.*.*`:
@@ -302,21 +335,21 @@ A release publishes:
 The public project page lives in `apps/site` and is published at [caiofviana.github.io/Keres](https://caiofviana.github.io/Keres/). It is not a server's story showcase (that is the Showcase, served by the API): it is the product landing page, in Portuguese and English.
 
 ```bash
-bun run dev:site      # http://localhost:5175
-bun run build:site
+bun run site:start      # http://localhost:5175
+bun run site:build
 ```
 
 The screenshots in the landing's showcase are photos of the app itself, taken by opening the
 real web build inside Electron with an example story installed:
 
 ```bash
-bun run --cwd apps/desktop capture:screens
+bun run desktop:capture
 ```
 
 That writes `apps/site/public/showcase/screens/<screen>.<lang>.<theme>.png`, which is committed
 to the repository - the landing build does not run the capture. Re-run it when a screen in the
 showcase changes shape. The screens, stories and viewports live in
-`apps/desktop/scripts/capture-screens.cjs`; the URL mode that puts the app straight into a
+`apps/desktop/scripts/capture-screens.ts`; the URL mode that puts the app straight into a
 given screen lives in `apps/client/src/showcase/`.
 
 The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` (the default branch). The `github-pages` environment rejects other branches. The first time, under Settings → Pages, set the source to **GitHub Actions**.

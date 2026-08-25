@@ -1,15 +1,7 @@
-import type {
-  FavoriteEntityType} from '@keres/shared';
-import {
-  AttributeType,
-  decodeAttributeValue,
-  joinSuggestionListForDisplay,
-} from '@keres/shared';
-import type {
-  GlobalSearchEntityType} from '@keres/shared/metadata/globalSearchFields';
-import {
-  globalSearchFieldConfig
-} from '@keres/shared/metadata/globalSearchFields';
+import type { FavoriteEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, joinSuggestionListForDisplay } from '@keres/shared';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import type { SQL } from 'drizzle-orm';
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';

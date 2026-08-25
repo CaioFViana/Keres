@@ -21,7 +21,7 @@ import type { Choice } from '@keres/shared/entities/Choice'; // Import Choice
 import type { Effect } from '@keres/shared/entities/Effect';
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
-import type { RouteProp} from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -36,38 +36,20 @@ import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPa
 import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
 import { useOpenGalleryMediaViewer } from '../../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../../hooks/useStoryRole';
-import type {
-  ChapterService} from '../../../services/storymanagement/ChapterService';
-import {
-  createChapterService,
-} from '../../../services/storymanagement/ChapterService'; // Import ChapterService
-import type {
-  CharacterSceneServiceInterface} from '../../../services/storymanagement/CharacterSceneService';
-import {
-  createCharacterSceneService,
-} from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import type {
-  ChoiceService} from '../../../services/storymanagement/ChoiceService';
-import {
-  createChoiceService,
-} from '../../../services/storymanagement/ChoiceService'; // Import ChoiceService
-import type {
-  EffectService} from '../../../services/storymanagement/EffectService';
-import {
-  createEffectService
-} from '../../../services/storymanagement/EffectService';
-import type {
-  ItemJourneyService} from '../../../services/storymanagement/ItemJourneyService';
-import {
-  createItemJourneyService
-} from '../../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { ChapterService } from '../../../services/storymanagement/ChapterService';
+import { createChapterService } from '../../../services/storymanagement/ChapterService'; // Import ChapterService
+import type { CharacterSceneServiceInterface } from '../../../services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import type { ChoiceService } from '../../../services/storymanagement/ChoiceService';
+import { createChoiceService } from '../../../services/storymanagement/ChoiceService'; // Import ChoiceService
+import type { EffectService } from '../../../services/storymanagement/EffectService';
+import { createEffectService } from '../../../services/storymanagement/EffectService';
+import type { ItemJourneyService } from '../../../services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '../../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import type { ItemService } from '../../../services/storymanagement/ItemService';
 import { createItemService } from '../../../services/storymanagement/ItemService'; // Import ItemService
-import type {
-  LocationService} from '../../../services/storymanagement/LocationService';
-import {
-  createLocationService
-} from '../../../services/storymanagement/LocationService';
+import type { LocationService } from '../../../services/storymanagement/LocationService';
+import { createLocationService } from '../../../services/storymanagement/LocationService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';

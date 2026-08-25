@@ -4,10 +4,11 @@ import * as schema from '../../db/schema';
 import type {
   RunStoryAnalysisOptions,
   StoryAnalysisFinding,
-  StoryAnalysisInput} from '../../utils/storyAnalysisChecks';
+  StoryAnalysisInput,
+} from '../../utils/storyAnalysisChecks';
 import {
   buildCheapStoryAnalysisFindings,
-  buildStoryAnalysisReport
+  buildStoryAnalysisReport,
 } from '../../utils/storyAnalysisChecks';
 
 export interface StoryAnalysisReport {
@@ -158,7 +159,11 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         .from(schema.tagRelations)
         .where(belongsToStory(schema.tagRelations)),
       db
-        .select({ id: schema.chapters.id, name: schema.chapters.name, index: schema.chapters.index })
+        .select({
+          id: schema.chapters.id,
+          name: schema.chapters.name,
+          index: schema.chapters.index,
+        })
         .from(schema.chapters)
         .where(belongsToStory(schema.chapters)),
       db

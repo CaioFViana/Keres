@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Patches the release build's signing config in the Expo-prebuild-generated
 // android/app/build.gradle. Expo's own template ships `release { signingConfig
 // signingConfigs.debug }` by default (see the "Caution!" comment the template itself leaves in
@@ -12,9 +11,9 @@
 // before that) and BEFORE `./gradlew bundleRelease`/`assembleRelease`.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
+import { join } from 'node:path';
 
-const gradlePath = path.join(process.cwd(), 'android', 'app', 'build.gradle');
+const gradlePath = join(process.cwd(), 'android', 'app', 'build.gradle');
 let contents = readFileSync(gradlePath, 'utf8');
 
 const debugSigningConfigBlock = `    signingConfigs {

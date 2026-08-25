@@ -134,7 +134,7 @@ function serveClientRootAsset(
 
 if (!showcaseUiAvailable) {
   logger.warn(
-    `Showcase UI not built - the public site will be unavailable. Run 'bun run build:showcase' in apps/admin to enable it.`,
+    `Showcase UI not built - the public site will be unavailable. Run 'bun run admin:build' to enable it.`,
   );
 }
 
@@ -146,7 +146,7 @@ if (!adminUiAvailable) {
 
 if (!clientUiAvailable) {
   logger.warn(
-    `Hosted client not built - / will not serve the web app. Run 'bun run export:web' in apps/client to enable it.`,
+    `Hosted client not built - / will not serve the web app. Run 'bun run client:build' to enable it.`,
   );
 }
 

@@ -333,7 +333,6 @@ describe('buildStoryAnalysisReport', () => {
       });
 
       const findings = await buildStoryAnalysisReport(input);
-      const keys = findings.map((f) => f.messageKey);
       const neverSatisfiableChoiceIds = findings
         .filter((f) => f.messageKey === 'analysis_choice_never_satisfiable')
         .map((f) => f.entityId);

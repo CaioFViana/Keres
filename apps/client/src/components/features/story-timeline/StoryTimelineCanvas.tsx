@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle} from '@/src/hooks/usePanZoomCanvas';

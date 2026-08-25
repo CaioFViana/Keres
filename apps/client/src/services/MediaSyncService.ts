@@ -36,7 +36,7 @@ export interface MediaSyncSummary {
 export class MediaSyncService {
   private galleryService: GalleryService;
 
-  constructor(private db: AppDrizzleClient) {
+  constructor(db: AppDrizzleClient) {
     this.galleryService = createGalleryService(db);
   }
 

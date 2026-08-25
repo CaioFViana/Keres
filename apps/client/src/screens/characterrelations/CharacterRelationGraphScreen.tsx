@@ -35,7 +35,7 @@ import {
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import type { CharactersScreenNavigationProp } from '../characters/CharacterListScreen';
+import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 
 /**
  * Mapa de relações: os personagens de uma história e quem conhece quem.

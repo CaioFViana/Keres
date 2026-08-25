@@ -1,9 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp} from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -23,10 +20,6 @@ import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type {
-  CharacterStackParamList,
-  MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import type {
   CharacterWithTags} from '../../services/storymanagement/CharacterService';
 import {
   createCharacterService,
@@ -36,13 +29,9 @@ import { createCharacterRelationService } from '../../services/storymanagement/C
 import { useCharacterStore } from '../../state/characterStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-
-export type CharactersScreenNavigationProp = CompositeNavigationProp<
-  DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
-  NativeStackNavigationProp<CharacterStackParamList, 'CharacterDetail'>
->;
 
 const CharactersScreen = () => {
   useBackButtonHandler();

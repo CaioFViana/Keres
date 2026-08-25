@@ -6,6 +6,9 @@
     "module": "esnext",
     "lib": ["es2022", "dom"],
     "strict": true,
+    // `noImplicitOverride` fica de fora por enquanto: 52 métodos herdados pedem o modificador.
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

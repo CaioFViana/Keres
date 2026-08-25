@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import { operationLogs, stories } from '../../src/db/schema';
+import { stories } from '../../src/db/schema';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import {
   assertStoryIsOwned,

@@ -4,6 +4,12 @@
     // `@keres/shared` guarda a lista de ícones de avatar num .json (ver metadata/avatar.ts).
     "resolveJsonModule": true,
     "strict": true,
+    // Travas de compilador ligadas porque hoje custam zero erro (medido) e barram classes
+    // inteiras de descuido: variável/import esquecido, `case` que vaza para o seguinte, e
+    // método que sobrescreve o da classe base sem dizer.
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
     "types": ["jest"],
     "paths": {
       "@/*": ["./*"]

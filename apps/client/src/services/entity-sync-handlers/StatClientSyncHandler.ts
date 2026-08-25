@@ -104,7 +104,7 @@ export class StatClientSyncHandler extends SimpleTableClientSyncHandler<typeof s
   protected get table() {
     return schema.stats;
   }
-  async getById(id: string): Promise<Stat | undefined> {
+  override async getById(id: string): Promise<Stat | undefined> {
     return (await super.getById(id)) as Stat | undefined;
   }
 }
@@ -116,7 +116,7 @@ export class StatStrengthClientSyncHandler extends SimpleTableClientSyncHandler<
   protected get table() {
     return schema.statStrengths;
   }
-  async getById(id: string): Promise<StatStrength | undefined> {
+  override async getById(id: string): Promise<StatStrength | undefined> {
     return (await super.getById(id)) as StatStrength | undefined;
   }
 }
@@ -128,7 +128,7 @@ export class StatRelationClientSyncHandler extends SimpleTableClientSyncHandler<
   protected get table() {
     return schema.statRelations;
   }
-  async getById(id: string): Promise<StatRelation | undefined> {
+  override async getById(id: string): Promise<StatRelation | undefined> {
     return (await super.getById(id)) as StatRelation | undefined;
   }
 }
@@ -138,7 +138,7 @@ export class ModeClientSyncHandler extends SimpleTableClientSyncHandler<typeof s
   protected get table() {
     return schema.modes;
   }
-  async getById(id: string): Promise<Mode | undefined> {
+  override async getById(id: string): Promise<Mode | undefined> {
     return (await super.getById(id)) as Mode | undefined;
   }
 }

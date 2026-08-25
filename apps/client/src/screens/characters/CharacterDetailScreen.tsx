@@ -67,7 +67,7 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/com
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { type CharactersScreenNavigationProp } from './CharacterListScreen';
+import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { CharacterStatPanel } from '../../components/features/stats/CharacterStatPanel/CharacterStatPanel';
 import { ModeManager } from '../../components/features/stats/ModeManager/ModeManager';
 import { useStoryStats } from '../../hooks/useStoryStats';

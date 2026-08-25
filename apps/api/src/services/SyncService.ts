@@ -1,14 +1,15 @@
-import {
+import type {
   ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   DeleteStoryUpdate,
   EffectiveStoryRole,
-  MAX_SYNC_PULL_BATCH,
   StoryReorderingStoryUpdate,
   StoryUpdate,
   SyncAppliedOperation,
   SyncConflict,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  MAX_SYNC_PULL_BATCH
 } from '@keres/shared';
 import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -24,7 +25,8 @@ import {
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/errors';
-import { SyncConflictError, SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
+import type { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
+import { SyncConflictError } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { AttributeValueSyncHandler } from './entity-sync-handlers/AttributeValueSyncHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';

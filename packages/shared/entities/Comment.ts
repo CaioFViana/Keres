@@ -1,4 +1,4 @@
-import { CommentEntityType } from '../metadata/CommentEntityType';
+import type { CommentEntityType } from '../metadata/CommentEntityType';
 
 /**
  * Comentário anexado a um campo específico (nativo ou atributo customizado) de uma entidade.

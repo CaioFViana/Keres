@@ -1,9 +1,10 @@
-import {
-  CreateCommentDataSchema,
+import type {
   CreateCommentDataType,
   CreateStoryUpdate,
-  PartialCommentSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateCommentDataSchema,
+  PartialCommentSchema
 } from '@keres/shared';
 import { db } from '../../db';
 import { comments } from '../../db/schema';

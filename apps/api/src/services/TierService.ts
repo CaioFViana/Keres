@@ -1,4 +1,4 @@
-import { PartialTier, TierCreateInput } from '@keres/shared';
+import type { PartialTier, TierCreateInput } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';

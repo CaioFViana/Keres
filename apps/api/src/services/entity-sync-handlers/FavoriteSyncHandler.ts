@@ -1,9 +1,10 @@
-import {
-  CreateFavoriteDataSchema,
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialFavoriteSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateFavoriteDataSchema,
+  PartialFavoriteSchema
 } from '@keres/shared';
 import { db } from '../../db';
 import { favorites } from '../../db/schema';

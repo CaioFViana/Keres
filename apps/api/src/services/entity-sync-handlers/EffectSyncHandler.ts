@@ -1,9 +1,10 @@
-import {
-  CreateEffectDataSchema,
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialEffectSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateEffectDataSchema,
+  PartialEffectSchema
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';

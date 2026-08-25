@@ -4,6 +4,10 @@
     // `@keres/shared` guarda a lista de ícones de avatar num .json (ver metadata/avatar.ts).
     "resolveJsonModule": true,
     "strict": true,
+    // `verbatimModuleSyntax` fica de fora: o código daqui já passa limpo, mas o
+    // `expo-file-system` publica o próprio fonte .ts e é ele que não passa (21 erros dentro de
+    // `node_modules`, fora do nosso alcance). A disciplina continua valendo pelo ESLint, em
+    // `@typescript-eslint/consistent-type-imports`.
     // Travas de compilador ligadas porque hoje custam zero erro (medido) e barram classes
     // inteiras de descuido: variável/import esquecido, `case` que vaza para o seguinte, e
     // método que sobrescreve o da classe base sem dizer.

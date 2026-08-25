@@ -1,7 +1,8 @@
-import {
+import type {
   CreateStoryUpdate,
+  CreateWorldRuleDataType} from '@keres/shared';
+import {
   CreateWorldRuleDataSchema,
-  CreateWorldRuleDataType,
   PartialWorldRuleSchema,
 } from '@keres/shared';
 import { db } from '../../db';

@@ -1,4 +1,4 @@
-import { UpdateRegistrationSettings } from '@keres/shared';
+import type { UpdateRegistrationSettings } from '@keres/shared';
 import { count, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, users } from '../db/schema';

@@ -1,4 +1,5 @@
-import { EnrichedFriendship, Friendship, FriendStatus } from '@keres/shared';
+import type { EnrichedFriendship, Friendship} from '@keres/shared';
+import { FriendStatus } from '@keres/shared';
 import { and, eq, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { ulid } from 'ulid';

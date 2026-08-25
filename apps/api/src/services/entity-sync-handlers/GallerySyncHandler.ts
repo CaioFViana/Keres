@@ -1,12 +1,13 @@
-import {
-  CreateGalleryDataSchema,
+import type {
   CreateGalleryDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateGalleryDataSchema,
   isSupportedMediaMimeType,
   mediaTypeForMimeType,
-  PartialGallerySchema,
-  UpdateStoryUpdate,
+  PartialGallerySchema
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';

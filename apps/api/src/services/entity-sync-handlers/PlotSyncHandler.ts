@@ -1,10 +1,11 @@
-import {
-  CreatePlotDataSchema,
+import type {
   CreatePlotDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialPlotSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreatePlotDataSchema,
+  PartialPlotSchema
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';

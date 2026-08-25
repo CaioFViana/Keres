@@ -3,7 +3,7 @@ import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { db } from '../../db';
 import { stories, storyTypeEnum } from '../../db/schema';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import {

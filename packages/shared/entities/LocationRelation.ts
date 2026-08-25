@@ -1,4 +1,4 @@
-import { LocationRelationType } from '../metadata/LocationRelationType';
+import type { LocationRelationType } from '../metadata/LocationRelationType';
 
 export interface LocationRelation {
   id: string;

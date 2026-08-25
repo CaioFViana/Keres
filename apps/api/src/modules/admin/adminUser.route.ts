@@ -4,7 +4,7 @@ import {
   AdminUserListQuerySchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import {
   AdminUserNotFoundError,
   adminUserService,

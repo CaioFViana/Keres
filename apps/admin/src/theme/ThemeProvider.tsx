@@ -1,12 +1,15 @@
+import type {
+  ReactNode} from 'react';
 import {
   createContext,
-  ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import type {
+  ThemePreference} from './theme';
 import {
   applyPalette,
   applyResolvedTheme,
@@ -14,7 +17,6 @@ import {
   readPaletteName,
   readThemePreference,
   resolveTheme,
-  ThemePreference,
   writePaletteName,
   writeThemePreference,
   type ResolvedTheme,

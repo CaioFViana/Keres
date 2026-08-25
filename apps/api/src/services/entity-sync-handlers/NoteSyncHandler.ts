@@ -1,7 +1,8 @@
+import type {
+  CreateNoteDataType,
+  CreateStoryUpdate} from '@keres/shared';
 import {
   CreateNoteDataSchema,
-  CreateNoteDataType,
-  CreateStoryUpdate,
   PartialNoteSchema,
 } from '@keres/shared';
 import { db } from '../../db';

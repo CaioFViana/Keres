@@ -1,10 +1,11 @@
-import {
-  CreateCharacterSceneDataSchema,
+import type {
   CreateCharacterSceneDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialCharacterSceneSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateCharacterSceneDataSchema,
+  PartialCharacterSceneSchema
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';

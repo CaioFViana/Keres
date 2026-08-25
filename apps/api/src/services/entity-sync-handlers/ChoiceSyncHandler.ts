@@ -1,10 +1,11 @@
-import {
-  CreateChoiceDataSchema,
+import type {
   CreateChoiceDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialChoiceSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateChoiceDataSchema,
+  PartialChoiceSchema
 } from '@keres/shared'; // Added DeleteStoryUpdate
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';

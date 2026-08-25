@@ -1,4 +1,4 @@
-import { SeeAlsoEntityType } from '../metadata/SeeAlsoEntityType';
+import type { SeeAlsoEntityType } from '../metadata/SeeAlsoEntityType';
 
 /**
  * Vínculo "Veja também" entre duas entidades quaisquer do sistema (dentro dos tipos

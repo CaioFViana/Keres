@@ -1,10 +1,11 @@
-import {
-  CreateStatDataSchema,
+import type {
   CreateStatDataType,
   CreateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateStatDataSchema,
   MAX_PRIMARY_STATS,
-  PartialStatSchema,
-  UpdateStoryUpdate,
+  PartialStatSchema
 } from '@keres/shared';
 import { and, count, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';

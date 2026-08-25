@@ -1,4 +1,4 @@
-import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
 import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'

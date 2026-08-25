@@ -1,4 +1,4 @@
-import { AdminDeletedItemsQuery, AdminOperationLogQuery, UpdateStoryUpdate } from '@keres/shared';
+import type { AdminDeletedItemsQuery, AdminOperationLogQuery, UpdateStoryUpdate } from '@keres/shared';
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
 import { db, withTransaction } from '../db';
 import { operationLog } from '../db/schema';

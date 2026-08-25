@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { eventManager } from '../../utils/EventManager'; // Import eventManager
 import { logger } from '../../utils/logger';

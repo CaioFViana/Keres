@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import type { PublicationLabelMode, ShowcaseVisibility } from '@keres/shared';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { storyPublicationService } from '../../services/StoryPublicationService';
 
 /** Uma linha de `story_publications` como o dono a vê. */

@@ -1,7 +1,8 @@
+import type {
+  CreateLocationDataType,
+  CreateStoryUpdate} from '@keres/shared';
 import {
   CreateLocationDataSchema,
-  CreateLocationDataType,
-  CreateStoryUpdate,
   PartialLocationSchema,
 } from '@keres/shared';
 import { db } from '../../db';

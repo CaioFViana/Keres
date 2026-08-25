@@ -1,9 +1,10 @@
+import type {
+  CreateStoryUpdate} from '@keres/shared';
 import {
   CreateCharacterDataSchema,
-  CreateStoryUpdate,
   PartialCharacterSchema,
 } from '@keres/shared';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { db } from '../../db';
 import { characters } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';

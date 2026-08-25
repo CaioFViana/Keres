@@ -1,4 +1,4 @@
-import { NoteRelationEntities } from '@keres/shared/entities/Note';
+import type { NoteRelationEntities } from '@keres/shared/entities/Note';
 import { z } from 'zod';
 
 export const NoteRelationSchema = z.object({

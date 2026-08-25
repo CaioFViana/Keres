@@ -1,4 +1,4 @@
-import { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
+import type { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
 import { and, asc, count, eq, or } from 'drizzle-orm';
 import { insensitiveLike } from '../db/sqlOperators';
 import { ulid } from 'ulid';

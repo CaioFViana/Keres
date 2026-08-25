@@ -1,6 +1,6 @@
 import { StoryUpdatesArraySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { syncService } from '../../services/SyncService';
 import { logger } from '../../utils/logger';
 import { createAttemptLimiter } from '../../utils/rateLimiter';

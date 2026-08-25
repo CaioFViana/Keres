@@ -4,7 +4,7 @@ import {
   StoryIdParam,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { JWTPayload } from '../../index'; // Import JWTPayload
+import type { JWTPayload } from '../../index'; // Import JWTPayload
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { AppError } from '../../utils/errors';
 

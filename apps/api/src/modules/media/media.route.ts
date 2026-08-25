@@ -4,7 +4,7 @@ import { Elysia, t } from 'elysia';
 import { env } from '../../config/env';
 import { db } from '../../db';
 import { galleries } from '../../db/schema';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { mediaStorageService } from '../../services/MediaStorageService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import {

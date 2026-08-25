@@ -1,9 +1,10 @@
-import {
-  CreateStatStrengthDataSchema,
+import type {
   CreateStatStrengthDataType,
   CreateStoryUpdate,
-  PartialStatStrengthSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  CreateStatStrengthDataSchema,
+  PartialStatStrengthSchema
 } from '@keres/shared';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '../../db';

@@ -1,11 +1,12 @@
-import {
-  AttributeType,
-  CreateStorySchemaFieldDataSchema,
+import type {
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialStorySchemaFieldSchema,
-  UpdateStoryUpdate,
+  UpdateStoryUpdate} from '@keres/shared';
+import {
+  AttributeType,
+  CreateStorySchemaFieldDataSchema,
+  PartialStorySchemaFieldSchema
 } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';

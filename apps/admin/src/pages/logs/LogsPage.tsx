@@ -1,6 +1,8 @@
-import { KeyboardEvent, useEffect, useState } from 'react';
+import type { KeyboardEvent} from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiLogEntry, ApiLogFilters, LogsApiService } from '../../api/LogsApiService';
+import type { ApiLogEntry, ApiLogFilters} from '../../api/LogsApiService';
+import { LogsApiService } from '../../api/LogsApiService';
 
 const LEVEL_CLASS: Record<ApiLogEntry['level'], string> = {
   info: 'level-info',

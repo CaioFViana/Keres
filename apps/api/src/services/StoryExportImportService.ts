@@ -1,8 +1,9 @@
+import type {
+  FullStoryExportType} from '@keres/shared';
 import {
   AttributeType,
   CURRENT_STORY_FORMAT_VERSION,
   FullStoryExportSchema,
-  FullStoryExportType,
   migrateStoryExport,
   StoryExportVersionError,
 } from '@keres/shared';

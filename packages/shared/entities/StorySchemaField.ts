@@ -1,5 +1,5 @@
-import { AttributeType } from '../metadata/AttributeType';
-import { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
+import type { AttributeType } from '../metadata/AttributeType';
+import type { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
 
 /**
  * Definição de um atributo customizado, compartilhada por toda entidade de `entityType` dentro

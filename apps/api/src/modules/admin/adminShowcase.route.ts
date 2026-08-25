@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { requireAdmin } from '../../utils/adminAuth';
 

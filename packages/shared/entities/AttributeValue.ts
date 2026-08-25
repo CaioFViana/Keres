@@ -1,4 +1,4 @@
-import { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
+import type { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
 
 /**
  * Valor de um atributo customizado numa entidade específica. `entityId` é uma FK polimórfica

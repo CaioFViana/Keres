@@ -16,7 +16,7 @@ describe('avatar icon options', () => {
     expect(AVATAR_ICON_OPTIONS).toContain(DEFAULT_AVATAR_ICON);
   });
 
-  // Os nomes viram tanto glifo da fonte (app) quanto nome de arquivo .svg (site).
+  // The names become both a font glyph (the app) and an .svg file name (the site).
   it('uses names that are safe as file names', () => {
     for (const icon of AVATAR_ICON_OPTIONS) {
       expect(icon).toMatch(/^[a-z][a-z-]*[a-z]$/);

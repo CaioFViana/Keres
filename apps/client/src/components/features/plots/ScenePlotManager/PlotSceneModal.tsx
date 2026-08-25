@@ -131,8 +131,8 @@ const PlotSceneModal: React.FC<PlotSceneModalProps> = ({
           <Text style={styles.label}>{t('plot_scene_note')}</Text>
           <TextInput
             value={note}
-            // Uma linha por regra do modelo: a nota diz o papel da cena na trama, e uma quebra
-            // de linha aqui chegaria à matriz e ao detalhe como texto cortado.
+            // One line by the model's rule: the note states the scene's role in the plot, and a line
+            // break here would reach the matrix and the detail as truncated text.
             onChangeText={(value) => setNote(value.replace(/[\r\n]+/g, ' '))}
             placeholder={t('plot_scene_note_placeholder')}
             style={commonInputStyles.input}

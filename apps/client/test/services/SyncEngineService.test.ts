@@ -55,7 +55,7 @@ let pullResponse: {
 };
 /** Resposta do push. */
 let pushResponse: any;
-/** Quando definido, o adapter falha como se o servidor estivesse fora do ar. */
+/** When set, the adapter fails as if the server were down. */
 let offlineOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
 let echoPushApplied: boolean;

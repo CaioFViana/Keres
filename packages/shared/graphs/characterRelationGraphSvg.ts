@@ -100,7 +100,7 @@ function renderEdgeLabel(edge: RelationGraphEdge, options: CharacterRelationMapS
   const y = edge.labelPosition.y - height / 2;
 
   return [
-    // Fundo opaco: sem ele o texto some sobre a linha que ele descreve.
+    // An opaque background: without it the text disappears over the line it describes.
     `<rect x="${round(x)}" y="${round(y)}" width="${round(width)}" height="${height}" rx="4" fill="${options.colors.background}" fill-opacity="0.92"/>`,
     `<text x="${round(edge.labelPosition.x)}" y="${round(edge.labelPosition.y + 4)}" font-size="10" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(label)}</text>`,
   ].join('');

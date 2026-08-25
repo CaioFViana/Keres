@@ -70,7 +70,7 @@ export function setAppRelease(version: string, name: string): void {
     throw new Error('Release name cannot be empty.');
   }
 
-  const source = `/**\n * Identidade da versão distribuída do Keres.\n *\n * Atualize com \`bun run version:set <versão> <nome>\` na raiz do repositório. Este módulo é\n * consumido tanto pelo cliente quanto pela API, portanto não há uma versão separada do servidor.\n */\nexport const APP_RELEASE = {\n  name: ${JSON.stringify(name.trim())},\n  version: ${JSON.stringify(version)},\n} as const;\n`;
+  const source = `/**\n * Identity of the released version of Keres.\n *\n * Update it with \`bun run version:set <version> <name>\` at the repository root. This module is\n * consumed by both the client and the API, so there is no separate server version.\n */\nexport const APP_RELEASE = {\n  name: ${JSON.stringify(name.trim())},\n  version: ${JSON.stringify(version)},\n} as const;\n`;
   writeFileSync(join(repoRoot, APP_RELEASE_FILE), source);
   console.log(`Set release ${version} ${name.trim()} in ${APP_RELEASE_FILE}`);
 }

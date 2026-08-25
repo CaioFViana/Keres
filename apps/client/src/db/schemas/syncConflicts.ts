@@ -24,7 +24,7 @@ export const syncConflicts = sqliteTable('sync_conflicts', {
   localOperationType: text('local_operation_type', {
     enum: ['create', 'update', 'delete', 'reorder'],
   }).notNull(),
-  /** JSON: ids das linhas de `operation_logs` agrupadas neste conflito. */
+  /** JSON: the ids of the `operation_logs` rows grouped in this conflict. */
   localOperationIds: text('local_operation_ids').notNull(),
   /** JSON: the values the user wants to keep. */
   localValues: text('local_values').notNull(),

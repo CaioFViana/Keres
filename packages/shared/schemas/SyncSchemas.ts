@@ -101,7 +101,7 @@ export const CreateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   // The client generates the ULID before sending - with no id the server has nothing to write.
   id: UlidSchema,
   // 'data' holds the complete object of the new entity
-  data: z.record(z.string(), z.any()), // Placeholder, pode ser mais específico depois
+  data: z.record(z.string(), z.any()), // A placeholder; it can be made more specific later
 });
 export type CreateStoryUpdate = z.infer<typeof CreateStoryUpdateSchema>;
 
@@ -109,7 +109,7 @@ export type CreateStoryUpdate = z.infer<typeof CreateStoryUpdateSchema>;
 export const UpdateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('update'),
   id: UlidSchema, // ID é obrigatório para atualizações
-  // Sem `version` o schema recusa o lote (422). O motor do cliente sempre envia a base
+  // Without `version` the schema refuses the batch (422). The client engine always sends the base
   // aqui; recusar o omitido fecha a porta para um cliente adulterado.
   changes: z.object({ version: z.number().int().min(0) }).passthrough(),
 });

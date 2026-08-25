@@ -377,7 +377,7 @@ export async function createApp() {
           applyAdminUiSecurityHeaders(set);
         }
       })
-      // Sem compatibilidade: antes de o fallback do painel poder devolver seu HTML, os antigos
+      // No compatibility shim: before the panel fallback could return its HTML, the old
       // endpoints administrativos recebem o mesmo 404 JSON de qualquer rota API removida.
       .all('/admin/api', ({ set }) => {
         set.status = 404;

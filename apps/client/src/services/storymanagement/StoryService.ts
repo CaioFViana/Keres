@@ -1769,7 +1769,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-        // Sistema de status: Stat e Mode antes de StatStrength/StatRelation, que os referenciam.
+        // The stats system: Stat and Mode before StatStrength/StatRelation, which reference them.
         if (fullStoryData.stats) {
           for (const stat of fullStoryData.stats) {
             const statToInsert: StatInsert = {

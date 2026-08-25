@@ -58,7 +58,7 @@ export interface StatRankingInput {
   ladder: readonly StatTier[];
   notation: StatNotation;
   direction: 'asc' | 'desc';
-  /** Esconde as linhas de modo que apenas repetem o valor do modo normal. */
+  /** It hides the mode rows that merely repeat the normal mode's value. */
   hideInherited?: boolean;
 }
 
@@ -85,7 +85,7 @@ export function buildStatRanking(input: StatRankingInput): RankingGroup[] {
   }
   for (const mode of modes) {
     const owner = characterById.get(mode.characterId);
-    if (!owner) continue; // Modo de um personagem que não está na lista (apagado, por exemplo).
+    if (!owner) continue; // A mode of a character that is not on the list (deleted, for instance).
     const resolved = resolveStatValue(values, mode.characterId, mode.id, statId);
     if (input.hideInherited && resolved.inherited) continue;
     entries.push({
@@ -111,7 +111,7 @@ export function buildStatRanking(input: StatRankingInput): RankingGroup[] {
 
   const groups: RankingGroup[] = [];
   if (notation === 'letter' && ladder.length > 0) {
-    // Um grupo por degrau, na mesma ordem da lista - do topo para a base quando decrescente.
+    // One group per tier, in the same order as the list - from the top down when descending.
     const byTier = new Map<number, RankingEntry[]>();
     for (const entry of rated) {
       const index = tierOf(entry.value as number, ladder)?.index ?? 0;

@@ -34,7 +34,7 @@ export interface StatStrength {
   statId: string | null;
   /** Free text shown in letter notation ("F", "SS"). Ignored in numeric notation. */
   label: string;
-  /** Piso do degrau, nunca negativo e nunca repetido dentro da mesma escada. */
+  /** The tier's floor, never negative and never repeated within the same ladder. */
   minValue: number;
   createdAt: Date;
   updatedAt: Date;

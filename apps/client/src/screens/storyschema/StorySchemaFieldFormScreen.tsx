@@ -96,7 +96,7 @@ const StorySchemaFieldFormScreen = () => {
         if (field) {
           setName(field.name);
           setKey(field.key);
-          setKeyManuallyEdited(true); // Chave já fixa em modo de edição, não precisa mais auto-derivar.
+          setKeyManuallyEdited(true); // The key is already fixed in editing mode; there is nothing left to auto-derive.
           setDescription(field.description);
           setType(field.type as AttributeType);
           setTargetEntityType(field.targetEntityType as StorySchemaEntityType | null);

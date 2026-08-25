@@ -162,7 +162,7 @@ const ImportExportScreen = () => {
     try {
       const picked = await pickStoryExportFile();
       if (!picked) {
-        return; // Usuário cancelou o seletor; não é erro.
+        return; // The user cancelled the picker; it is not an error.
       }
       const { story: storyExport, media } = picked;
 

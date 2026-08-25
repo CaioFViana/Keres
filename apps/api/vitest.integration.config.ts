@@ -11,7 +11,7 @@ export default defineConfig({
     // A single disposable database is shared by the whole suite and each file truncates the tables
     // between tests - running files in parallel would make one wipe the other's state.
     fileParallelism: false,
-    // bcryptjs no registro e o primeiro `createApp()` deixam o primeiro teste de cada arquivo
+    // bcryptjs on registration and the first `createApp()` leave the first test of each file
     // bem mais lento que os seguintes.
     testTimeout: 30_000,
     hookTimeout: 30_000,

@@ -15,7 +15,7 @@ import { servers } from './servers';
 export const storyPublications = sqliteTable(
   'story_publications',
   {
-    /** O mesmo id do servidor - estas linhas nunca nascem locais. */
+    /** The server's own id - these rows are never born local. */
     id: text('id').primaryKey(),
     serverId: text('server_id')
       .notNull()

@@ -78,7 +78,7 @@ export function buildLocationGraphMapFileName(storyTitle: string, now: Date = ne
   return `${slugify(storyTitle)}-locations-${now.toISOString().slice(0, 10)}.svg`;
 }
 
-/** Nome do SVG da linha do tempo narrativa. */
+/** The narrative timeline SVG's name. */
 export function buildStoryTimelineFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-linha-do-tempo-${now.toISOString().slice(0, 10)}.svg`;
 }
@@ -87,7 +87,7 @@ export function buildStoryTimelineFileName(storyTitle: string, now: Date = new D
 export interface ExportDeliveryResult {
   /** `false` when the platform offers no way at all of sharing a file. */
   delivered: boolean;
-  /** Caminho local do arquivo escrito, quando houver. */
+  /** The local path of the written file, when there is one. */
   uri?: string;
   fileName: string;
 }

@@ -27,7 +27,7 @@ export interface PanZoomCanvasHandle {
   zoomBy(factor: number): void;
 }
 
-/** O que o hook precisa saber do desenho: o tamanho total, e uma identidade que muda quando os dados mudam. */
+/** What the hook needs to know about the drawing: the total size, and an identity that changes when the data changes. */
 export interface PanZoomLayout {
   width: number;
   height: number;

@@ -568,7 +568,7 @@ async function checkChoiceSatisfiability(
       const groups = groupsByChoice.get(choice.id);
       if (!groups || groups.length === 0) continue;
       const choiceLevel = levelByScene.get(choice.sceneId);
-      if (choiceLevel === undefined) continue; // já reportado por checkSceneReachability/checkChoices
+      if (choiceLevel === undefined) continue; // already reported by checkSceneReachability/checkChoices
 
       const satisfiable = groups.every((group) => {
         const checks = checksByGroup.get(group.id) ?? [];

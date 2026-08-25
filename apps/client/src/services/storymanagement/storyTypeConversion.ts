@@ -117,7 +117,7 @@ export function classifyEdges(
     const sourceChapterId = chapterIdByScene.get(edge.sceneId);
     const targetChapterId = chapterIdByScene.get(edge.nextSceneId);
     if (!sourceChapterId || !targetChapterId) {
-      continue; // Escolha apontando para uma cena que não existe (mais) - fora do escopo desta checagem.
+      continue; // A choice pointing at a scene that no longer exists - outside this check's scope.
     }
 
     if (sourceChapterId === targetChapterId) {

@@ -31,7 +31,7 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
   }
 
   private async assertStatExists(storyId: string, statId: string | null): Promise<void> {
-    if (!statId) return; // Escada padrão da história: não referencia stat nenhum.
+    if (!statId) return; // The story's default ladder: it references no stat at all.
 
     const stat = await db.query.stats.findFirst({
       where: and(eq(stats.id, statId), eq(stats.storyId, storyId), eq(stats.isDeleted, false)),

@@ -220,7 +220,7 @@ export class SyncEngineService {
 
   public setDbInstance(dbInstance: AppDrizzleClient) {
     this._db = dbInstance;
-    this._conflictService = null; // Recriado sob demanda, já ligado ao novo banco.
+    this._conflictService = null; // Recreated on demand, already bound to the new database.
     // Propagate the db instance to all registered handlers
     this.entityHandlers.forEach((handler) => handler.setDb(dbInstance));
 
@@ -592,7 +592,7 @@ export class SyncEngineService {
     return `${entityType}:${entityId}`;
   }
 
-  /** Remove colunas de bookkeeping local de um update remoto antes de aplicar. */
+  /** Strips local bookkeeping columns from a remote update before applying it. */
   private protectRemoteUpdate(update: StoryUpdate): StoryUpdate {
     if (update.type === 'create') {
       return {

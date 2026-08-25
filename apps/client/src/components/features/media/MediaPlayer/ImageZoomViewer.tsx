@@ -26,7 +26,7 @@ interface ImageZoomViewerProps {
   onClose: () => void;
 }
 
-const MIN_SCALE = 1; // Não dá pra afastar além do "encaixado na tela".
+const MIN_SCALE = 1; // There is no zooming out past "fitted to the screen".
 const MAX_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.5;
 /** Acima disso o toque deixa de ser considerado toque e passa a ser arraste. */

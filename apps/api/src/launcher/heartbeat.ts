@@ -26,7 +26,7 @@ export function describeLanAddresses(
 export function startLanAddressHeartbeat(options: {
   port: string | number;
   host: string;
-  /** Linha humana no terminal — nunca o logger JSON / `api_logs`. */
+  /** A human line in the terminal — never the JSON logger / `api_logs`. */
   print: (message: string) => void;
   t: Translate;
   listAddresses?: () => string[];

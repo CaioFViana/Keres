@@ -85,7 +85,7 @@ export interface GraphPoint {
 export interface GraphNode {
   id: string;
   scene: GraphScene;
-  /** Nome quebrado em linhas - os dois renderers precisam da mesma quebra. */
+  /** The name broken into lines - both renderers need the same wrapping. */
   labelLines: string[];
   chapterId: string;
   chapterName: string;

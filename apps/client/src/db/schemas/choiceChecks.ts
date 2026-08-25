@@ -13,13 +13,13 @@ export const choiceChecks = sqliteTable('choice_checks', {
   mode: text('mode', { enum: ['block', 'enable'] }).notNull(),
   type: text('type', { enum: ['sceneCount', 'inventory', 'trigger'] }).notNull(),
   order: integer('order').notNull(),
-  // Usados apenas quando type = 'sceneCount'
+  // Used only when type = 'sceneCount'
   sceneId: text('scene_id').references(() => scenes.id),
   minVisits: integer('min_visits'),
-  // Usados apenas quando type = 'inventory'
+  // Used only when type = 'inventory'
   itemId: text('item_id').references(() => items.id),
   itemPresence: text('item_presence', { enum: ['has', 'lacks'] }),
-  // Usados apenas quando type = 'trigger'
+  // Used only when type = 'trigger'
   triggerName: text('trigger_name'),
   triggerState: text('trigger_state', { enum: ['set', 'unset'] }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

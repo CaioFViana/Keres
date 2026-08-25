@@ -1,12 +1,13 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { LocationRelationType } from '@keres/shared';
 
 export const locationRelations = sqliteTable('location_relations', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
   locationAId: text('location_a_id').notNull(),
   locationBId: text('location_b_id').notNull(),
-  relationType: text('relation_type').notNull(),
+  relationType: text('relation_type').$type<LocationRelationType>().notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

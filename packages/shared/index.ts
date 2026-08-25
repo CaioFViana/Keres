@@ -96,3 +96,11 @@ export * from './utils/colorUtils';
 export * from './utils/storyZip';
 export * from './theme/ThemeColors';
 export * from './theme/palettes';
+
+// Regras de domínio que valem nos dois lados da sincronização: o cliente aplica antes de
+// gravar no log de operações e o servidor aplica de novo ao receber. Cada uma delas já existiu
+// duplicada, e ao menos uma já tinha divergido.
+export * from './rules/entityPair';
+export * from './rules/linearStoryScenes';
+export * from './rules/reorderIndices';
+export * from './rules/storyOwnerFields';

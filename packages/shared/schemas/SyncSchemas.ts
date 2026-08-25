@@ -1,5 +1,6 @@
 // packages/shared/entities/sync/SyncSchemas.ts
 import { z } from 'zod';
+import { STORY_SCHEMA_ENTITY_TYPES } from '../metadata/StorySchemaEntityType';
 
 // Define a Zod schema for ULID strings
 export const UlidSchema = z.string().regex(/^[0-9A-Z]{26}$/, 'Invalid ULID format');
@@ -149,7 +150,9 @@ export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   id: UlidSchema, // ID of the Story whose chapters are being reordered
   reorderItems: z.array(ReorderItemSchema), // Array of chapter IDs and their new indices
   reorderTarget: z.literal('StorySchemaField').optional(),
-  schemaEntityType: z.string().min(1).optional(),
+  // O conjunto fechado, e não `z.string()`: a coluna guarda exatamente estes valores, e um
+  // tipo desconhecido só produziria uma consulta que não acha nada - em silêncio.
+  schemaEntityType: z.enum(STORY_SCHEMA_ENTITY_TYPES).optional(),
 });
 export type StoryReorderingStoryUpdate = z.infer<typeof StoryReorderingStoryUpdateSchema>;
 

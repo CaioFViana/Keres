@@ -38,6 +38,7 @@ import {
 import { StoryExportImportService } from '../../src/services/StoryExportImportService';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
+import { FullStoryExportSchema } from '@keres/shared';
 
 /**
  * O outro arquivo de export/import monta pacotes à mão, e por isso cobre sempre as mesmas
@@ -351,6 +352,11 @@ describe('export of a story with one row of every kind', () => {
     const pkg = await service.exportStory(id.story, OWNER);
 
     expect(pkg.story.id).toBe(id.story);
+    // Uma coleção esquecida não aparece no laço abaixo - ela simplesmente não existe no
+    // pacote. O cliente já exportou por anos sem as condições e os efeitos das escolhas
+    // justamente assim, porque no schema esses campos são opcionais.
+    const missing = Object.keys(FullStoryExportSchema.shape).filter((key) => !(key in pkg));
+    expect(missing).toEqual([]);
     for (const [collection, rows] of Object.entries(pkg)) {
       if (!Array.isArray(rows)) continue;
       expect({ collection, length: rows.length }).toEqual({ collection, length: rows.length });

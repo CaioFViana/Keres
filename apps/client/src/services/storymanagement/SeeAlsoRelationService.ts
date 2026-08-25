@@ -1,4 +1,5 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
+import { isSameEntity, SELF_LINK_ERROR, sortEntityPair } from '@keres/shared';
 import { and, eq, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, SeeAlsoRelationSelect } from '../../db';
 import { seeAlsoRelations } from '../../db';
@@ -13,11 +14,19 @@ export interface SeeAlsoEntityRef {
 }
 
 /** Ordenação canônica (A/B), mesma usada pelo servidor - ver SeeAlsoRelationSyncHandler.ts (API). */
+/**
+ * Ordenação canônica do par, delegada a `@keres/shared`: é a mesma que o servidor usa ao
+ * receber a sincronização. Aqui só traduz os nomes dos campos desta camada.
+ */
 function sortEntityRefs(
   a: SeeAlsoEntityRef,
   b: SeeAlsoEntityRef,
 ): [SeeAlsoEntityRef, SeeAlsoEntityRef] {
-  return `${a.entityType}:${a.entityId}` <= `${b.entityType}:${b.entityId}` ? [a, b] : [b, a];
+  const [first] = sortEntityPair(
+    { type: a.entityType, id: a.entityId },
+    { type: b.entityType, id: b.entityId },
+  );
+  return first.id === a.entityId && first.type === a.entityType ? [a, b] : [b, a];
 }
 
 export interface SeeAlsoRelationService {
@@ -103,8 +112,10 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
     },
 
     async addSeeAlsoLink(currentUserId, storyId, a, b) {
-      if (a.entityType === b.entityType && a.entityId === b.entityId) {
-        throw new Error('Validation Error: an entity cannot be See-Also-linked to itself.');
+      if (
+        isSameEntity({ type: a.entityType, id: a.entityId }, { type: b.entityType, id: b.entityId })
+      ) {
+        throw new Error(SELF_LINK_ERROR);
       }
 
       const [entityA, entityB] = sortEntityRefs(a, b);

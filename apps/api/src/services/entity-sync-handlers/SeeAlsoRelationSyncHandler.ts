@@ -5,7 +5,13 @@ import type {
   SeeAlsoEntityType,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { CreateSeeAlsoRelationDataSchema, PartialSeeAlsoRelationSchema } from '@keres/shared';
+import {
+  CreateSeeAlsoRelationDataSchema,
+  isSameEntity,
+  PartialSeeAlsoRelationSchema,
+  SELF_LINK_ERROR,
+  sortEntityPair,
+} from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
 import { db } from '../../db';
 import {
@@ -23,11 +29,9 @@ import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandle
 
 type EntityRef = { type: SeeAlsoEntityType; id: string };
 
-/** Ordenação canônica (A/B) usada tanto na criação quanto na checagem de duplicidade, para
- *  que o mesmo par não-ordenado nunca seja armazenado duas vezes em ordens diferentes. */
-function sortEntityRefs(a: EntityRef, b: EntityRef): [EntityRef, EntityRef] {
-  return `${a.type}:${a.id}` <= `${b.type}:${b.id}` ? [a, b] : [b, a];
-}
+/** Ordenação canônica (A/B) e recusa do auto-vínculo vêm de `@keres/shared`: são as mesmas
+ *  regras que o cliente aplica antes de gravar no log de operações. */
+const sortEntityRefs = sortEntityPair as (a: EntityRef, b: EntityRef) => [EntityRef, EntityRef];
 
 export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateSeeAlsoRelationDataSchema,
@@ -165,8 +169,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     const refA: EntityRef = { type: validatedData.entityAType, id: validatedData.entityAId };
     const refB: EntityRef = { type: validatedData.entityBType, id: validatedData.entityBId };
 
-    if (refA.type === refB.type && refA.id === refB.id) {
-      throw new Error('Validation Error: an entity cannot be See-Also-linked to itself.');
+    if (isSameEntity(refA, refB)) {
+      throw new Error(SELF_LINK_ERROR);
     }
 
     const [entityA, entityB] = sortEntityRefs(refA, refB);

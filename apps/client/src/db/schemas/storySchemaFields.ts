@@ -1,12 +1,13 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import type { StorySchemaEntityType } from '@keres/shared';
 
 export const storySchemaFields = sqliteTable(
   'story_schema_fields',
   {
     id: text('id').primaryKey(),
     storyId: text('story_id').notNull(),
-    entityType: text('entity_type').notNull(),
+    entityType: text('entity_type').$type<StorySchemaEntityType>().notNull(),
     name: text('name').notNull(),
     key: text('key').notNull(),
     description: text('description'),

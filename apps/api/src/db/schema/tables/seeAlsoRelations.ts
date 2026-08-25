@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
+import type { SeeAlsoEntityType } from '@keres/shared';
 
 export const seeAlsoRelations = table(
   'see_also_relations',
@@ -11,9 +12,9 @@ export const seeAlsoRelations = table(
       .references(() => stories.id),
     // Ambos os lados são polimórficos (Character/Location/Chapter/Scene/Item/ItemJourney/
     // WorldRule/Choice) - sem FK de banco, validado em SeeAlsoRelationSyncHandler.
-    entityAType: text('entity_a_type').notNull(),
+    entityAType: text('entity_a_type').$type<SeeAlsoEntityType>().notNull(),
     entityAId: text('entity_a_id').notNull(),
-    entityBType: text('entity_b_type').notNull(),
+    entityBType: text('entity_b_type').$type<SeeAlsoEntityType>().notNull(),
     entityBId: text('entity_b_id').notNull(),
     createdAt: timestampNow('created_at'),
     updatedAt: timestampNow('updated_at'),

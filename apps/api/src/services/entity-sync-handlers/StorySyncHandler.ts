@@ -7,6 +7,7 @@ import type {
 import {
   CreateStoryDataSchema,
   PartialStorySchema,
+  reorderIndicesProblem,
   StoryReorderingStoryUpdateSchema,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
@@ -174,20 +175,13 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           );
         }
 
-        // Ensure new indices are unique and sequential (optional, but good for data integrity)
-        const newIndices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
-        if (new Set(newIndices).size !== newIndices.length) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Duplicate newIndex values found in reorder items.',
-          );
-        }
-        // Assuming indices start from 1 and are sequential without gaps.
-        if (Math.min(...newIndices) !== 1 || Math.max(...newIndices) !== newIndices.length) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: New indices must be sequential starting from 1 without gaps.',
-          );
+        // A regra (1..N contíguo, sem repetição) mora em `@keres/shared`: o cliente monta a
+        // lista com `buildReorderItems` a partir dela, e este handler cobra a mesma coisa.
+        const problem = reorderIndicesProblem(
+          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        );
+        if (problem) {
+          throw new SyncConflictError('validation', problem);
         }
 
         // 2. Batch Update Chapter Indices

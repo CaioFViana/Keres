@@ -4,6 +4,7 @@ import {
   CURRENT_STORY_FORMAT_VERSION,
   FullStoryExportSchema,
   migrateStoryExport,
+  scenesToUnflag,
   StoryExportVersionError,
 } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm'; // Import sql for aggregate functions
@@ -403,30 +404,21 @@ export class StoryExportImportService {
           columns: { id: true, isStart: true, isFinish: true, version: true },
         });
 
-        let firstIsStartFound = false;
-        for (const scene of importedScenes) {
-          if (scene.isStart && !firstIsStartFound) {
-            firstIsStartFound = true;
-          } else if (scene.isStart && firstIsStartFound) {
-            // This is a duplicate isStart, unset it
-            await tx
-              .update(dbSchema.scenes)
-              .set({ isStart: false, updatedAt: now, version: scene.version + 1 })
-              .where(eq(dbSchema.scenes.id, scene.id));
-          }
+        // Quem perde a marca é decidido em `@keres/shared` - a mesma função que o cliente usa
+        // ao importar um `.keres` do disco.
+        const unflag = scenesToUnflag(importedScenes);
+        const versionOf = new Map(importedScenes.map((scene) => [scene.id, scene.version]));
+        for (const sceneId of unflag.start) {
+          await tx
+            .update(dbSchema.scenes)
+            .set({ isStart: false, updatedAt: now, version: (versionOf.get(sceneId) ?? 0) + 1 })
+            .where(eq(dbSchema.scenes.id, sceneId));
         }
-
-        let firstIsFinishFound = false;
-        for (const scene of importedScenes) {
-          if (scene.isFinish && !firstIsFinishFound) {
-            firstIsFinishFound = true;
-          } else if (scene.isFinish && firstIsFinishFound) {
-            // This is a duplicate isFinish, unset it
-            await tx
-              .update(dbSchema.scenes)
-              .set({ isFinish: false, updatedAt: now, version: scene.version + 1 })
-              .where(eq(dbSchema.scenes.id, scene.id));
-          }
+        for (const sceneId of unflag.finish) {
+          await tx
+            .update(dbSchema.scenes)
+            .set({ isFinish: false, updatedAt: now, version: (versionOf.get(sceneId) ?? 0) + 1 })
+            .where(eq(dbSchema.scenes.id, sceneId));
         }
       }
 

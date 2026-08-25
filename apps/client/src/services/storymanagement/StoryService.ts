@@ -1,5 +1,10 @@
 import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
-import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema } from '@keres/shared';
+import {
+  CURRENT_STORY_FORMAT_VERSION,
+  FullStoryExportSchema,
+  scenesToUnflag,
+  STORY_OWNER_ONLY_FIELDS,
+} from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import type {
@@ -326,20 +331,21 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await assertStoryIsWritable(db, storyId);
 
       const dataToPersist = { ...storyData };
-      // Same owner-only fields the server rejects on Story update (`SyncService`). A writer
-      // sending an unchanged value is stripped so it never lands in the op-log; a real
-      // change is refused so we don't persist a policy the push would bounce forever.
+      // A lista é a de `@keres/shared` - a mesma que o servidor cobra ao receber a
+      // sincronização (`SyncService`). Um colaborador que reenvia o valor atual tem o campo
+      // removido, para não virar operação no log; quem tenta mudar de verdade recebe erro, em
+      // vez de gravar uma política que o push devolveria para sempre.
       if (originalStory.serverId && originalStory.myRole !== 'owner') {
-        const ownerOnlyFields = ['type', 'favoriteBehavior', 'allowReaderComments'] as const;
-        const attempted = ownerOnlyFields.filter(
-          (field) =>
-            dataToPersist[field] !== undefined && dataToPersist[field] !== originalStory[field],
+        const editable = dataToPersist as Record<string, unknown>;
+        const original = originalStory as unknown as Record<string, unknown>;
+        const attempted = STORY_OWNER_ONLY_FIELDS.filter(
+          (field) => editable[field] !== undefined && editable[field] !== original[field],
         );
         if (attempted.length > 0) {
           throw new StoryOwnerOnlyError(i18n.t('story_owner_only_error'));
         }
-        for (const field of ownerOnlyFields) {
-          delete dataToPersist[field];
+        for (const field of STORY_OWNER_ONLY_FIELDS) {
+          delete editable[field];
         }
       }
 
@@ -1168,6 +1174,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyModes,
         storyPlots,
         storyPlotScenes,
+        storyChoiceCheckGroups,
+        storyChoiceChecks,
+        storyEffects,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -1198,6 +1207,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.modes.findMany({ where: belongsToStory(modes) }),
         db.query.plots.findMany({ where: belongsToStory(plots) }),
         db.query.plotScenes.findMany({ where: belongsToStory(plotScenes) }),
+        db.query.choiceCheckGroups.findMany({ where: belongsToStory(choiceCheckGroups) }),
+        db.query.choiceChecks.findMany({ where: belongsToStory(choiceChecks) }),
+        db.query.effects.findMany({ where: belongsToStory(effects) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -1231,6 +1243,13 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         modes: storyModes,
         plots: storyPlots,
         plotScenes: storyPlotScenes,
+        // Condições e efeitos das escolhas: são o que faz uma história ramificada funcionar.
+        // Ficaram de fora da exportação por anos - o importador daqui sempre soube lê-los, e a
+        // API sempre os exportou, então um pacote gerado no aparelho voltava sem a lógica das
+        // escolhas e ninguém via erro nenhum, porque no schema estes campos são opcionais.
+        choiceCheckGroups: storyChoiceCheckGroups,
+        choiceChecks: storyChoiceChecks,
+        effects: storyEffects,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -1320,30 +1339,21 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
           const now = new Date(); // Use a single timestamp for these cleanup updates
 
-          let firstIsStartFound = false;
-          for (const scene of importedScenes) {
-            if (scene.isStart && !firstIsStartFound) {
-              firstIsStartFound = true;
-            } else if (scene.isStart && firstIsStartFound) {
-              // This is a duplicate isStart, unset it
-              await tx
-                .update(scenes)
-                .set({ isStart: false, updatedAt: now, version: scene.version + 1 })
-                .where(eq(scenes.id, scene.id));
-            }
+          // Quem perde a marca é decidido em `@keres/shared` - a mesma função que o servidor
+          // usa ao importar uma história publicada.
+          const unflag = scenesToUnflag(importedScenes);
+          const versionOf = new Map(importedScenes.map((scene) => [scene.id, scene.version]));
+          for (const sceneId of unflag.start) {
+            await tx
+              .update(scenes)
+              .set({ isStart: false, updatedAt: now, version: (versionOf.get(sceneId) ?? 0) + 1 })
+              .where(eq(scenes.id, sceneId));
           }
-
-          let firstIsFinishFound = false;
-          for (const scene of importedScenes) {
-            if (scene.isFinish && !firstIsFinishFound) {
-              firstIsFinishFound = true;
-            } else if (scene.isFinish && firstIsFinishFound) {
-              // This is a duplicate isFinish, unset it
-              await tx
-                .update(scenes)
-                .set({ isFinish: false, updatedAt: now, version: scene.version + 1 })
-                .where(eq(scenes.id, scene.id));
-            }
+          for (const sceneId of unflag.finish) {
+            await tx
+              .update(scenes)
+              .set({ isFinish: false, updatedAt: now, version: (versionOf.get(sceneId) ?? 0) + 1 })
+              .where(eq(scenes.id, sceneId));
           }
         }
 

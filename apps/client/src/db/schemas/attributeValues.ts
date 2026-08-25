@@ -1,12 +1,13 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import type { StorySchemaEntityType } from '@keres/shared';
 
 export const attributeValues = sqliteTable(
   'attribute_values',
   {
     id: text('id').primaryKey(),
     storyId: text('story_id').notNull(),
-    entityType: text('entity_type').notNull(),
+    entityType: text('entity_type').$type<StorySchemaEntityType>().notNull(),
     // FK polimórfica (characters.id/locations.id/etc conforme entityType) - mesmo padrão de
     // NoteRelation.relationId/TagRelation.relationId, sem FK de banco de fato.
     entityId: text('entity_id').notNull(),

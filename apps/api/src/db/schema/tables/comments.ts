@@ -3,6 +3,7 @@ import { boolean, integer, table, text, timestamp, timestampNow } from '../colum
 import { stories } from './stories';
 import { storySchemaFields } from './storySchemaFields';
 import { users } from './users';
+import type { CommentEntityType } from '@keres/shared';
 
 export const comments = table('comments', {
   id: text('id').primaryKey(),
@@ -11,7 +12,7 @@ export const comments = table('comments', {
     .references(() => stories.id),
   // Polimórfico (Character/Location/Chapter/Scene/Item/ItemJourney/WorldRule/Choice/Note/Tag)
   // - sem FK de banco, mesmo padrão de AttributeValue.entityId/NoteRelation.relationId.
-  entityType: text('entity_type').notNull(),
+  entityType: text('entity_type').$type<CommentEntityType>().notNull(),
   entityId: text('entity_id').notNull(),
   // Exatamente um de fieldId/fieldKey é preenchido - ver packages/shared/entities/Comment.ts.
   fieldId: text('field_id').references(() => storySchemaFields.id),

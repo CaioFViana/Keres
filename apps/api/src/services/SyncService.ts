@@ -9,7 +9,7 @@ import type {
   SyncConflict,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { MAX_SYNC_PULL_BATCH, ownerOnlyFieldsIn } from '@keres/shared';
 import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
@@ -235,9 +235,10 @@ export class SyncService {
       }
 
       if (update.entity === 'Story' && update.type === 'update' && role !== 'owner') {
-        const ownerOnlyFields = ['allowReaderComments', 'favoriteBehavior', 'type', 'userId', 'id'];
-        const attempted = ownerOnlyFields.filter(
-          (field) => (update as UpdateStoryUpdate).changes?.[field] !== undefined,
+        // A lista vem de `@keres/shared`: é a mesma que o cliente usa para recusar a edição
+        // antes de gravar no log de operações.
+        const attempted = ownerOnlyFieldsIn(
+          (update as UpdateStoryUpdate).changes as Record<string, unknown> | undefined,
         );
         if (attempted.length > 0 || (update as UpdateStoryUpdate).changes?.isDeleted === false) {
           recordConflict(

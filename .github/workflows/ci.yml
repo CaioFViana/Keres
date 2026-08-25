@@ -47,7 +47,7 @@ jobs:
           POSTGRES_PASSWORD: keres_test
           POSTGRES_DB: keres_test
         ports:
-          - 55432:5432
+          - 45432:5432
         options: >-
           --health-cmd "pg_isready -U keres_test"
           --health-interval 5s

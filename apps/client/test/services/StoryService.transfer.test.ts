@@ -4,6 +4,7 @@ jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
 
+import { FullStoryExportSchema } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import { mediaFileService } from '../../src/services/MediaFileService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
@@ -168,4 +169,93 @@ it('round-trips portable story data after a permanent local purge and clears sta
   expect(await database.db.query.comments.findFirst()).toEqual(
     expect.objectContaining({ storyId: importedStoryId, authorUserId: LOCAL_USER_ID }),
   );
+});
+
+/**
+ * A exportação do aparelho não levava as condições e os efeitos das escolhas: o importador
+ * daqui sempre soube lê-los e a API sempre os exportou, mas quem gerava o pacote no app
+ * mandava a história sem a lógica das escolhas - e sem erro, porque os três campos são
+ * opcionais no schema.
+ */
+it('exporta condições, grupos de condição e efeitos das escolhas', async () => {
+  const SCENE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC0';
+  const CHAPTER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC1';
+  const LOCATION_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC2';
+  const CHOICE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC3';
+  const GROUP_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC4';
+  const CHECK_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC5';
+  const EFFECT_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC6';
+
+  await database.db
+    .insert(schema.chapters)
+    .values({ id: CHAPTER_ID, storyId: STORY_ID, name: 'Um', index: 1, ...entityBase });
+  await database.db
+    .insert(schema.locations)
+    .values({ id: LOCATION_ID, storyId: STORY_ID, name: 'Praça', ...entityBase });
+  await database.db.insert(schema.scenes).values({
+    id: SCENE_ID,
+    storyId: STORY_ID,
+    chapterId: CHAPTER_ID,
+    locationId: LOCATION_ID,
+    name: 'Encontro',
+    index: 1,
+    ...entityBase,
+  });
+  await database.db.insert(schema.choices).values({
+    id: CHOICE_ID,
+    storyId: STORY_ID,
+    sceneId: SCENE_ID,
+    nextSceneId: SCENE_ID,
+    text: 'Seguir',
+    ...entityBase,
+  });
+  await database.db.insert(schema.choiceCheckGroups).values({
+    id: GROUP_ID,
+    storyId: STORY_ID,
+    choiceId: CHOICE_ID,
+    combinator: 'AND',
+    order: 1,
+    ...entityBase,
+  });
+  await database.db.insert(schema.choiceChecks).values({
+    id: CHECK_ID,
+    storyId: STORY_ID,
+    groupId: GROUP_ID,
+    mode: 'block',
+    type: 'trigger',
+    order: 1,
+    triggerName: 'porta_aberta',
+    triggerState: 'set',
+    ...entityBase,
+  });
+  await database.db.insert(schema.effects).values({
+    id: EFFECT_ID,
+    storyId: STORY_ID,
+    entityType: 'Choice',
+    entityId: CHOICE_ID,
+    effectType: 'triggerSet',
+    triggerName: 'porta_aberta',
+    ...entityBase,
+  });
+
+  const exported = await createStoryService(database.db).exportFullStory(STORY_ID);
+
+  expect(exported.choiceCheckGroups?.map((group) => group.id)).toEqual([GROUP_ID]);
+  expect(exported.choiceChecks?.map((check) => check.id)).toEqual([CHECK_ID]);
+  expect(exported.effects?.map((effect) => effect.id)).toEqual([EFFECT_ID]);
+});
+
+/**
+ * Trava estrutural: toda entidade que o formato conhece tem que sair na exportação, nem que
+ * seja como lista vazia. Uma entidade nova esquecida aqui não quebra nada visível - o pacote só
+ * sai incompleto, e a perda aparece semanas depois, na importação de volta.
+ */
+it('exporta uma lista para cada entidade que o formato de exportação conhece', async () => {
+  const exported = await createStoryService(database.db).exportFullStory(STORY_ID);
+
+  const missing = Object.keys(FullStoryExportSchema.shape).filter(
+    (key) => !(key in (exported as Record<string, unknown>)),
+  );
+
+  expect(missing).toEqual([]);
 });

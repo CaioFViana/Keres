@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
+import type { StorySchemaEntityType } from '@keres/shared';
 
 export const storySchemaFields = table(
   'story_schema_fields',
@@ -9,7 +10,7 @@ export const storySchemaFields = table(
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
-    entityType: text('entity_type').notNull(),
+    entityType: text('entity_type').$type<StorySchemaEntityType>().notNull(),
     name: text('name').notNull(),
     key: text('key').notNull(),
     description: text('description'),

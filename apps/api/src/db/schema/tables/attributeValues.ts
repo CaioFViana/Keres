@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
 import { storySchemaFields } from './storySchemaFields';
+import type { StorySchemaEntityType } from '@keres/shared';
 
 export const attributeValues = table(
   'attribute_values',
@@ -11,7 +12,7 @@ export const attributeValues = table(
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
-    entityType: text('entity_type').notNull(),
+    entityType: text('entity_type').$type<StorySchemaEntityType>().notNull(),
     // FK polimórfica (characters.id/locations.id/etc conforme entityType) - mesmo padrão de
     // NoteRelation.relationId/TagRelation.relationId, sem FK de banco de dados de fato.
     entityId: text('entity_id').notNull(),

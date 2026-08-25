@@ -1,4 +1,5 @@
-import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
+import { describe, expect, it } from 'vitest';
+import { buildStoryTimelineLayout } from '../../graphs/storyTimelineLayout';
 
 const scene = (id: string, extra: Record<string, unknown> = {}) => ({
   id,

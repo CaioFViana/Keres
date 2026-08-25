@@ -15,6 +15,7 @@
     "api:build": "bun run --cwd apps/api build",
     "api:db:generate": "bun run --cwd apps/api db:generate",
     "api:db:migrate": "bun run --cwd apps/api db:migrate",
+    "api:coverage:merge": "bun scripts/merge-api-coverage.ts",
     "admin:start": "bun run --cwd apps/admin start",
     "admin:build": "bun run --cwd apps/admin build",
     "site:start": "bun run --cwd apps/site start",

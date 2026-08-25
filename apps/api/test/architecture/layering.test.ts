@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
  */
 
 const MODULES_ROOT = resolve(__dirname, '../../src/modules');
+const SOURCE_ROOT = resolve(__dirname, '../../src');
 
 function listFiles(directory: string, suffix: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -24,6 +25,7 @@ function listFiles(directory: string, suffix: string): string[] {
 const IMPORT = /(?:from|import)\s+['"]([^'"]+)['"]/g;
 const routeFiles = listFiles(MODULES_ROOT, '.route.ts');
 const relativeOf = (path: string) => relative(MODULES_ROOT, path).split('\\').join('/');
+const sourceRelativeOf = (path: string) => relative(SOURCE_ROOT, path).split('\\').join('/');
 
 /**
  * Routes that still build their own query. Known debt, not a licence: the list can only shrink, and
@@ -51,5 +53,19 @@ describe('API layers', () => {
       .sort();
 
     expect(offenders).toEqual([...ROUTES_THAT_STILL_QUERY].sort());
+  });
+});
+
+const LINE_LIMIT = 600;
+const FILES_OVER_THE_LIMIT = ['services/StoryExportImportService.ts', 'services/SyncService.ts'];
+
+describe('API file size', () => {
+  it('does not allow new source files above the line ceiling', () => {
+    const oversized = listFiles(SOURCE_ROOT, '.ts')
+      .filter((path) => readFileSync(path, 'utf8').split('\n').length > LINE_LIMIT)
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(oversized).toEqual([...FILES_OVER_THE_LIMIT].sort());
   });
 });

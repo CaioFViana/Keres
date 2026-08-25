@@ -10,7 +10,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['entities/**', 'metadata/**', 'schemas/**', 'utils/**', 'index.ts'],
+      include: [
+        'entities/**/*.ts',
+        'graphs/**/*.ts',
+        'metadata/**/*.ts',
+        'rules/**/*.ts',
+        'schemas/**/*.ts',
+        'utils/**/*.ts',
+        'index.ts',
+      ],
       // A floor, not a target: pinned slightly below the measured value to absorb fluctuation, and to rise
       // along with coverage. See the ratchet rule in TESTING_PLAN.md.
       thresholds: coverageThresholds.shared,

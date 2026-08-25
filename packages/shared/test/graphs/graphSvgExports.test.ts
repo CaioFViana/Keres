@@ -1,10 +1,11 @@
-import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
+import { describe, expect, it } from 'vitest';
+import { buildLocationGraphLayout } from '../../graphs/locationGraphLayout';
 import {
   renderLocationGraphMapSvg,
   type LocationGraphSvgOptions,
-} from '@keres/shared/graphs/locationGraphSvg';
-import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
-import { renderStoryMapSvg, type StoryMapSvgOptions } from '@keres/shared/graphs/storyGraphSvg';
+} from '../../graphs/locationGraphSvg';
+import { buildStoryGraphLayout } from '../../graphs/storyGraphLayout';
+import { renderStoryMapSvg, type StoryMapSvgOptions } from '../../graphs/storyGraphSvg';
 
 const COLORS = {
   background: '#ffffff',

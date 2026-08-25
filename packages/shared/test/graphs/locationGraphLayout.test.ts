@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
   buildLocationGraphLayout,
   GRAPH_PADDING,
@@ -6,7 +7,7 @@ import {
   type GraphLocation,
   type GraphLocationRelation,
   type LocationRelationKind,
-} from '@keres/shared/graphs/locationGraphLayout';
+} from '../../graphs/locationGraphLayout';
 
 const location = (id: string, name = `Local ${id}`): GraphLocation => ({ id, name });
 

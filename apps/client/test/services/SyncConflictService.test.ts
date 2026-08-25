@@ -330,6 +330,8 @@ describe('resolveKeepLocal', () => {
 
     expect(await readCharacter()).toMatchObject({ isDeleted: false, deletedAt: null });
     expect(JSON.parse((await pushableOperations())[0].payload).isDeleted).toBe(false);
+    const resolved = await database.db.query.syncConflicts.findFirst();
+    expect(resolved).toMatchObject({ status: 'resolved', resolution: 'restore' });
   });
 
   it('keeps a local deletion as a deletion', async () => {
@@ -401,6 +403,32 @@ describe('resolveKeepServer', () => {
     expect(character!.isDeleted).toBe(true);
     expect(character!.version).toBe(3);
     expect(await pushableOperations()).toEqual([]);
+  });
+
+  it('records accepting a server deletion as discarding the local edit', async () => {
+    await seedCharacter({ name: 'My offline edit' });
+    const operationId = await seedOperation('op-1');
+    await service.recordConflict(
+      baseConflict({
+        reason: 'deleted_on_server',
+        localOperationIds: [operationId],
+        serverValues: { isDeleted: true, version: 3 },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ isDeleted: true, version: 3 });
+    expect(await readOperation(operationId)).toMatchObject({
+      conflictState: 'abandoned',
+      isSynced: true,
+    });
+    expect(await pushableOperations()).toEqual([]);
+    const resolved = await database.db.query.syncConflicts.findFirst();
+    expect(resolved).toMatchObject({ status: 'resolved', resolution: 'discard' });
+    expect(await service.getPendingConflicts()).toEqual([]);
   });
 
   it('does nothing for a conflict that is not there', async () => {

@@ -1,9 +1,10 @@
+import { describe, expect, it } from 'vitest';
 import {
   buildPresenceMatrixLayout,
   MATRIX_THREAD_GAP_DASH,
   type PresenceMatrixRow,
-} from '@keres/shared/graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
+} from '../../graphs/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '../../graphs/presenceMatrixSvg';
 
 const scene = (id: string) => ({
   id,

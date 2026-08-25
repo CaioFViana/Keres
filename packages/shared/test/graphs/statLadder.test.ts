@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
   formatStatValue,
   formatTierLabel,
@@ -8,7 +9,7 @@ import {
   sortLadder,
   tierOf,
   type StatTier,
-} from '@keres/shared/graphs/statLadder';
+} from '../../graphs/statLadder';
 
 /** A escada do enunciado: F em 0, C em 50, A em 400. */
 const LETTER_LADDER: StatTier[] = [

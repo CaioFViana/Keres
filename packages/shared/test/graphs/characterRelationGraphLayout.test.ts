@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
   buildCharacterRelationGraphLayout,
   GRAPH_PADDING,
@@ -5,7 +6,7 @@ import {
   NODE_WIDTH,
   type GraphCharacter,
   type GraphRelation,
-} from '@keres/shared/graphs/characterRelationGraphLayout';
+} from '../../graphs/characterRelationGraphLayout';
 
 const character = (id: string, name = `Personagem ${id}`): GraphCharacter => ({ id, name });
 

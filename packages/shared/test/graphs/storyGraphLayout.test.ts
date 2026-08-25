@@ -1,4 +1,5 @@
-import { wrapLabel } from '@keres/shared/graphs/storyGraphLayout';
+import { describe, expect, it } from 'vitest';
+import { wrapLabel } from '../../graphs/storyGraphLayout';
 
 describe('wrapLabel', () => {
   it('normalizes whitespace and keeps short labels intact', () => {

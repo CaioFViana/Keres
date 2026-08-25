@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -6,7 +7,9 @@ import {
   type CoverageTotals,
   coveragePercentage,
   mergeCoverage,
+  mergeLcovReports,
   parseLcov,
+  serializeLcov,
 } from './lib/coverage';
 import { repoRoot } from './lib/packages';
 
@@ -217,6 +220,22 @@ printTable(
 );
 
 const failed = results.filter((result) => result.code !== 0);
+
+const apiResult = results.find((result) => result.name === 'api');
+if (apiResult?.code === 0) {
+  const apiReports = [
+    parseLcov(repoRoot, 'apps/api', 'coverage'),
+    parseLcov(repoRoot, 'apps/api', 'coverage-integration'),
+  ];
+  const outputDirectory = resolve(repoRoot, 'apps/api/coverage-combined');
+  mkdirSync(outputDirectory, { recursive: true });
+  writeFileSync(
+    resolve(outputDirectory, 'lcov.info'),
+    serializeLcov(mergeLcovReports(apiReports)),
+    'utf8',
+  );
+}
+
 if (failed.length) {
   console.error('\nFailures (last lines of each output):');
   for (const result of failed) {

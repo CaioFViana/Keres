@@ -33,6 +33,7 @@ jobs:
       # With coverage, not `bun run test`: that is what enforces the thresholds set in each
       # workspace. Without it the floors would sit in the file and never be checked.
       - run: bun run test:coverage
+      - run: bun scripts/coverage-check.ts client
 
   # Separate from `verify` so a database failure is not mistaken for a code failure, and so both
   # run in parallel. The local equivalent is
@@ -80,3 +81,8 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
       - run: bun run --cwd apps/api test:integration:coverage
+      # The critical API floors use the union of unit and integration coverage. Produce the small unit
+      # report here as well so the sync/export ratchets cannot be hidden by either suite in isolation.
+      - run: bun run --cwd apps/api test:coverage
+      - run: bun run api:coverage:merge
+      - run: bun scripts/coverage-check.ts api

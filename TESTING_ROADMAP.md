@@ -183,24 +183,24 @@ the concrete reason sync gets its own phase, a branch gate, and a target above e
 
 Nothing else in this roadmap is trustworthy until the denominator is.
 
-- [ ] **Add `graphs/**` and `rules/**` to `coverage.include` in `packages/shared/vitest.config.ts`.**
-- [ ] **Move the 12 graph test files** from `apps/client/test/utils/` to `packages/shared/test/graphs/`:
+- [x] **Add `graphs/**` and `rules/**` to `coverage.include` in `packages/shared/vitest.config.ts`.**
+- [x] **Move the 12 graph test files** from `apps/client/test/utils/` to `packages/shared/test/graphs/`:
       `characterRelationGraphLayout`, `characterRelationGraphSvg`, `graphSvgExports`,
       `locationGraphLayout`, `presenceMatrixLayout`, `presenceMatrixSvg`, `statLadder`,
       `statLadderBarLayout`, `statRadarLayout`, `statRadarSvg`, `storyGraphLayout`,
       `storyTimelineLayout`. All 12 import only from `@keres/shared/graphs/*` — verified, the move is
       a rename plus a Jest→Vitest import swap. `statRanking.test.ts` and `statValues.test.ts` stay in
       the client: they test `src/utils/`.
-- [ ] **Write the two missing graph suites**: `storyTimelineSvg.ts` (110 lines, 0%) and
+- [x] **Write the two missing graph suites**: `storyTimelineSvg.ts` (110 lines, 0%) and
       `graphLayoutDirection.ts` (6 lines, 0%).
-- [ ] **Re-baseline `scripts/coverage-thresholds.json`** with
+- [x] **Re-baseline `scripts/coverage-thresholds.json`** with
       `bun run coverage:update -- --rebaseline --project shared` once the move lands. The shared
       floor will move down in absolute terms and that is correct — it will finally be measuring
       3× more code.
-- [ ] **Make the API's combined figure a first-class command.** `test:report` already prints a
+- [x] **Make the API's combined figure a first-class command.** `test:report` already prints a
       combined row; add a documented way to produce the merged LCOV so this roadmap can be
       re-measured without the manual union step described in §1.
-- [ ] **Decide `apps/client/src/db/migrations/**`.** It is excluded from `collectCoverageFrom` today
+- [x] **Decide `apps/client/src/db/migrations/**`.** It is excluded from `collectCoverageFrom` today
       and the exclusion is right (generated), but `test/db/` already asserts the migrations run.
       Record the decision in §10 rather than leaving it implicit in a glob.
 
@@ -250,9 +250,10 @@ Do the same for `EntityService.ts` (1,219 lines, 39.4% branches): `getEntityIden
 `_resolveRelationEntityName` is a switch over every entity type and belongs in its own module beside
 `EntityNameBatchResolver`, which already solves the batch half of the same problem.
 
-- [ ] Extract the four sync modules; allowlist entries for `SyncEngineService.ts` removed.
-- [ ] Extract the entity-name resolution from `EntityService.ts`; allowlist entry removed.
-- [ ] **Add a line ceiling to `apps/api/test/architecture/layering.test.ts`.** The client has one; the
+- [x] Extract the sync scheduler, pull, push, media and story-transfer modules; allowlist entry for
+      `SyncEngineService.ts` removed.
+- [x] Extract the entity-name resolution from `EntityService.ts`; allowlist entry removed.
+- [x] **Add a line ceiling to `apps/api/test/architecture/layering.test.ts`.** The client has one; the
       API does not, and `StoryExportImportService.ts` (1,211 lines) and `SyncService.ts` (1,002) sit
       unguarded above it.
 
@@ -649,44 +650,20 @@ A single global floor per workspace cannot express "sync is held to a higher sta
 client's floor is 34% lines; the sync surface could fall from 81% to 40% and CI would stay green,
 because 19,000 other lines absorb it. Phase 1A's targets are unenforceable without this.
 
-Both runners already support scoped thresholds — no new tooling, no new dependency:
+Scoped floors are enforced by `scripts/coverage-check.ts` after the ordinary workspace reports
+are generated. This is intentionally repository-level rather than runner-level:
 
-**Jest 29** (`apps/client/jest.config.js`) takes path keys alongside `global`:
+- the client sync core is a composite scope (the `sync/**` modules plus three existing services),
+  which Jest path thresholds otherwise evaluate file by file rather than as one subsystem;
+- the API's authoritative number is the union of unit and integration LCOV. Neither Vitest process can
+  enforce a threshold over a report produced by the other process;
+- `scripts/coverage-update.ts` uses the same prefixes and merged reports, so the checker and ratchet
+  cannot disagree about the denominator.
 
-```js
-coverageThreshold: {
-  global: coverageThresholds.client,
-  './src/services/sync/': coverageThresholds.clientSyncCore,
-  './src/services/entity-sync-handlers/': coverageThresholds.clientSyncHandlers,
-  './src/services/SyncConflictService.ts': coverageThresholds.clientSyncCore,
-  './src/services/ConflictSummaryService.ts': coverageThresholds.clientSyncCore,
-  './src/services/storymanagement/': coverageThresholds.clientStoryServices,
-}
-```
-
-**Vitest 4** (`apps/api/vitest.integration.config.ts`) takes globs in `coverage.thresholds`:
-
-```ts
-thresholds: {
-  ...coverageThresholds.apiIntegration,
-  'src/services/entity-sync-handlers/**': coverageThresholds.apiSyncHandlers,
-  'src/services/SyncService.ts': coverageThresholds.apiSyncCore,
-}
-```
-
-Add the matching keys to `scripts/coverage-thresholds.json` and teach `scripts/coverage-update.ts`
-to ratchet them like the globals. Each scoped floor carries **lines, functions and branches** — the
-branch number is the one that matters here, and it is the only one that would have caught the
-conflict-matrix gap.
-
-| Scope | Lines | Functions | Branches |
-| --- | ---: | ---: | ---: |
-| `clientSyncCore` | 97 | 95 | **90** |
-| `clientSyncHandlers` | 97 | 95 | **90** |
-| `apiSyncCore` | 97 | 95 | **90** |
-| `apiSyncHandlers` | 97 | 95 | **90** |
-| `clientStoryServices` | 95 | 90 | **80** |
-| `apiExportImport` | 95 | 90 | **80** |
+CI runs `coverage-check.ts client` after workspace coverage and `coverage-check.ts api` after producing
+both API reports. `api:coverage:merge` also writes the ordinary combined LCOV to
+`apps/api/coverage-combined/lcov.info` for editors and external coverage services. No dependency was
+added.
 
 Set them at the measured value minus the usual 3-point margin as each area lands, not at the target
 from day one — a floor above the current value fails CI on the commit that introduces it.
@@ -737,12 +714,13 @@ The infrastructure is already in place; new suites should reuse it rather than i
 
 ## 14. Progress checklist
 
-- [ ] **Phase 0** — measurement: shared `graphs`/`rules` included, 13 test files moved, 2 missing
+- [x] **Phase 0** — measurement: shared `graphs`/`rules` included, 13 test files moved, 2 missing
       graph suites written, thresholds re-baselined, API merged LCOV scripted.
-- [ ] **Phase 1A.0** — split `SyncEngineService.ts` into scheduler / pull / push / transfer; split the
+- [x] **Phase 1A.0** — split `SyncEngineService.ts` into scheduler / pull / push / transfer; split the
       entity-name resolution out of `EntityService.ts`; both off the ceiling allowlist; API gains a
       line ceiling of its own.
-- [ ] **Phase 1A.0** — per-directory floors wired into Jest, Vitest and `coverage-update.ts`.
+- [x] **Phase 1A.0** — scoped floors wired into `coverage-check.ts`, CI and
+      `coverage-update.ts` (the API scopes use the unit/integration LCOV union).
 - [ ] **Phase 1A.1** — every reachable cell of the conflict matrix tested; `keep_local`,
       `keep_server`, `restore` and `discard` go from **0 test files** to full coverage.
 - [ ] **Phase 1A.2** — pull, push and scheduler at ≥97% lines / **≥90% branches**.

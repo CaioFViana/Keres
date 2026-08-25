@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
   buildMatrixThreadSegments,
   buildPresenceMatrixLayout,
@@ -6,7 +7,7 @@ import {
   MATRIX_PADDING,
   MATRIX_SCENE_WIDTH,
   type PresenceMatrixRow,
-} from '@keres/shared/graphs/presenceMatrixLayout';
+} from '../../graphs/presenceMatrixLayout';
 
 const scene = (id: string) => ({
   id,

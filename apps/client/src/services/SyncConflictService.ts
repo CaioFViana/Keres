@@ -530,7 +530,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         }
       }
 
-      await closeConflict(conflictId, chosenValues ? 'merge' : 'keep_local');
+      await closeConflict(
+        conflictId,
+        chosenValues ? 'merge' : conflict.isDeletedOnServer ? 'restore' : 'keep_local',
+      );
       entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
       entityEventEmitter.emit('operation_log_updated', conflict.storyId);
     },
@@ -580,7 +583,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         );
       }
 
-      await closeConflict(conflictId, 'keep_server');
+      await closeConflict(conflictId, conflict.isDeletedOnServer ? 'discard' : 'keep_server');
       entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
       entityEventEmitter.emit('operation_log_updated', conflict.storyId);
     },

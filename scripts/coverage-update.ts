@@ -1,6 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { COVERAGE_KINDS, coveragePercentage, mergeCoverage, parseLcov } from './lib/coverage';
+import {
+  COVERAGE_KINDS,
+  coveragePercentage,
+  filterLcov,
+  mergeCoverage,
+  parseLcov,
+} from './lib/coverage';
 import { repoRoot } from './lib/packages';
 
 /**
@@ -38,19 +44,62 @@ const reports: Record<string, [string, string][]> = {
   site: [['apps/site', 'coverage']],
 };
 
-if (selectedProject && !reports[selectedProject]) {
-  console.error(`Unknown project: ${selectedProject}. Options: ${Object.keys(reports).join(', ')}`);
+const scopedReports: Record<string, { reports: [string, string][]; prefixes: string[] }> = {
+  clientSyncCore: {
+    reports: reports.client,
+    prefixes: [
+      'src/services/sync/',
+      'src/services/SyncEngineService.ts',
+      'src/services/SyncConflictService.ts',
+      'src/services/ConflictSummaryService.ts',
+    ],
+  },
+  clientSyncHandlers: {
+    reports: reports.client,
+    prefixes: ['src/services/entity-sync-handlers/'],
+  },
+  clientStoryServices: {
+    reports: reports.client,
+    prefixes: ['src/services/storymanagement/'],
+  },
+  apiSyncCore: {
+    reports: reports.apiCombined,
+    prefixes: ['src/services/SyncService.ts'],
+  },
+  apiSyncHandlers: {
+    reports: reports.apiCombined,
+    prefixes: ['src/services/entity-sync-handlers/'],
+  },
+  apiExportImport: {
+    reports: reports.apiCombined,
+    prefixes: ['src/services/StoryExportImportService.ts'],
+  },
+};
+
+const allReports: Record<string, { reports: [string, string][]; prefixes?: string[] }> = {
+  ...Object.fromEntries(
+    Object.entries(reports).map(([name, sources]) => [name, { reports: sources }]),
+  ),
+  ...scopedReports,
+};
+
+if (selectedProject && !allReports[selectedProject]) {
+  console.error(
+    `Unknown project: ${selectedProject}. Options: ${Object.keys(allReports).join(', ')}`,
+  );
   process.exit(1);
 }
 
 const margin = thresholds._meta.safetyMarginPercentagePoints;
-const names = selectedProject ? [selectedProject] : Object.keys(reports);
+const names = selectedProject ? [selectedProject] : Object.keys(allReports);
 let changed = false;
 
 for (const name of names) {
-  const parsedReports = reports[name].map(([projectPath, directory]) =>
-    parseLcov(repoRoot, projectPath, directory),
-  );
+  const reportDefinition = allReports[name];
+  const parsedReports = reportDefinition.reports.map(([projectPath, directory]) => {
+    const report = parseLcov(repoRoot, projectPath, directory);
+    return reportDefinition.prefixes ? filterLcov(report, reportDefinition.prefixes) : report;
+  });
   if (parsedReports.some((report) => report === null)) {
     console.error(`No coverage for ${name}. Run bun run test:report before updating the floors.`);
     process.exitCode = 1;

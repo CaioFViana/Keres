@@ -1,7 +1,7 @@
-/** Direção de leitura dos grafos que têm fluxo/hierarquia. */
-export type GraphLayoutDirection = 'top-to-bottom' | 'left-to-right';
-
-export const GRAPH_LAYOUT_DIRECTIONS = {
-  compact: 'top-to-bottom',
-  expanded: 'left-to-right',
-} as const satisfies Record<string, GraphLayoutDirection>;
+/**
+ * O cálculo e o desenho dos gráficos vivem em `@keres/shared/graphs`: são funções puras, sem
+ * React Native, e o site (vitrine estática) precisa gerar os mesmos SVGs que o botão de
+ * exportar do app produz. Reexportado aqui para `utils/graphLayoutDirection` continuar sendo um caminho
+ * válido dentro do app - mesmo arranjo de `theme/palettes`.
+ */
+export * from '@keres/shared/graphs/graphLayoutDirection';

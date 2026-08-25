@@ -17,7 +17,8 @@
     "package": "bun run build && electron-builder",
     "package:win": "bun run build && electron-builder --win",
     "package:mac": "bun run build && electron-builder --mac",
-    "package:linux": "bun run build && electron-builder --linux"
+    "package:linux": "bun run build && electron-builder --linux",
+    "capture:screens": "node scripts/capture-screens.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

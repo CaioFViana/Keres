@@ -306,6 +306,19 @@ bun run dev:site      # http://localhost:5175
 bun run build:site
 ```
 
+The screenshots in the landing's showcase are photos of the app itself, taken by opening the
+real web build inside Electron with an example story installed:
+
+```bash
+bun run --cwd apps/desktop capture:screens
+```
+
+That writes `apps/site/public/showcase/screens/<screen>.<lang>.<theme>.png`, which is committed
+to the repository - the landing build does not run the capture. Re-run it when a screen in the
+showcase changes shape. The screens, stories and viewports live in
+`apps/desktop/scripts/capture-screens.cjs`; the URL mode that puts the app straight into a
+given screen lives in `apps/client/src/showcase/`.
+
 The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` (the default branch). The `github-pages` environment rejects other branches. The first time, under Settings → Pages, set the source to **GitHub Actions**.
 
 ## Technical documentation

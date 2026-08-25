@@ -8,6 +8,7 @@ import { getClientSettings } from '../services/ClientSettingsService';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
+import { readShowcaseRequest } from '../showcase/showcaseRequest';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import StorySelectionStack from './StorySelectionStack';
@@ -27,6 +28,8 @@ interface AppNavigatorProps {
 const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
+  const [showcaseReady, setShowcaseReady] = useState(false);
+  const showcase = readShowcaseRequest();
 
   const drizzleDb = useDrizzle();
   const { colors } = useTheme();
@@ -41,6 +44,18 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
 
     const checkColdInstall = async () => {
       try {
+        // A vitrine cria as próprias configurações; a tela de boas-vindas não entra no caminho.
+        if (showcase) {
+          // Import tardio: a vitrine arrasta os serviços de história inteiros, e nada disso
+          // precisa existir quando o app abre normal (que é sempre, fora a captura de telas).
+          const { prepareShowcase } = await import('../showcase/prepareShowcase');
+          const ready = await prepareShowcase(drizzleDb, showcase);
+          setShowcaseReady(ready);
+          setIsColdInstallNeeded(!ready);
+          await initializeThemeSettings(drizzleDb);
+          return;
+        }
+
         const settings = await getClientSettings(drizzleDb);
         if (!settings) {
           setIsColdInstallNeeded(true);
@@ -58,7 +73,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
     };
 
     checkColdInstall();
-  }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb]);
+  }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb, showcase]);
 
   if (isLoading) {
     return (
@@ -70,7 +85,11 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
 
   const initialRouteName: keyof RootStackParamList = isColdInstallNeeded
     ? 'ColdInstall'
-    : 'StorySelection';
+    : showcaseReady
+      ? // A vitrine já escolheu a história; passar pela seleção só mostraria uma tela que a
+        // captura não quer.
+        'MainSystem'
+      : 'StorySelection';
 
   return (
     <SyncInitializer>

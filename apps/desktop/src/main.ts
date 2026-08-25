@@ -62,6 +62,43 @@ const SCHEME = 'app';
 const APP_NAME = 'Keres';
 const SQLITE_WEB_SMOKE_TEST = process.argv.includes('--sqlite-web-smoke-test');
 
+/**
+ * Captura das telas para a vitrine do site.
+ *
+ * O Electron já é o host que o app web precisa (protocolo `app://` com COOP/COEP, ver
+ * `withIsolationHeaders`), então capturar aqui dispensa navegador de automação: é o mesmo
+ * runtime que o desktop entrega ao usuário, tirando foto de si mesmo.
+ *
+ * `--capture-screens=<arquivo.json>` recebe a lista de imagens a tirar; cada item vira uma URL
+ * `app://app/?showcase=...` que o modo vitrine do app entende (ver `showcaseRequest.ts`).
+ */
+const CAPTURE_ARGUMENT = process.argv.find((argument) =>
+  argument.startsWith('--capture-screens='),
+);
+const CAPTURE_PLAN_PATH = CAPTURE_ARGUMENT?.split('=').slice(1).join('=');
+const HEADLESS = SQLITE_WEB_SMOKE_TEST || !!CAPTURE_PLAN_PATH;
+
+interface CaptureShot {
+  name: string;
+  query: string;
+  width: number;
+  height: number;
+  /** Espera extra depois do carregamento, para gráficos que se desenham em duas passadas. */
+  settleMs?: number;
+  /**
+   * Rótulo de acessibilidade de um controle a acionar antes da foto - os gráficos abrem no
+   * canto superior esquerdo e só cabem inteiros depois do "ajustar à tela".
+   */
+  press?: string;
+  /** Espera depois do clique, para animações mais longas que o padrão. */
+  pressWaitMs?: number;
+}
+
+interface CapturePlan {
+  outputDirectory: string;
+  shots: CaptureShot[];
+}
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: SCHEME,
@@ -114,7 +151,7 @@ async function createWindow() {
     width: 1280,
     height: 800,
     title: APP_NAME,
-    show: !SQLITE_WEB_SMOKE_TEST,
+    show: !HEADLESS,
     icon: APP_ICON, // Windows/Linux taskbar + title bar. No-op on macOS - see app.dock.setIcon below.
     webPreferences: {
       contextIsolation: true,
@@ -167,6 +204,17 @@ async function createWindow() {
   // behavior - mirroring the window title to page-title-updated - is exactly what's wanted
   // here, so nothing needs to be done beyond the `title` option above, which only covers the
   // brief window before that first render.
+  if (process.env.KERES_CAPTURE_DEBUG) attachRendererLog(win);
+
+  if (CAPTURE_PLAN_PATH) {
+    // A janela precisa estar visível: escondida não compõe quadros e `capturePage()` devolve
+    // imagem em branco; jogada para fora da tela, o compositor do Windows recusa a captura
+    // (`UnknownVizError`). `showInactive` ao menos não rouba o foco de quem roda o script.
+    win.showInactive();
+    await captureScreens(win, CAPTURE_PLAN_PATH);
+    return;
+  }
+
   await win.loadURL(`${SCHEME}://app/`);
 
   if (SQLITE_WEB_SMOKE_TEST) {
@@ -192,6 +240,173 @@ async function createWindow() {
       app.exit(1);
     }
   }
+}
+
+/**
+ * Uma imagem por item do plano: redimensiona a janela, abre a URL da vitrine, espera a tela
+ * assentar e grava o PNG.
+ *
+ * Cada foto recarrega a página do zero em vez de navegar dentro do app: é mais lento e é de
+ * propósito - assim uma tela nunca aparece com resquício da anterior (gaveta aberta, rolagem
+ * no meio, modal fechando).
+ */
+async function captureScreens(win: BrowserWindow, planPath: string): Promise<void> {
+  try {
+    const plan: CapturePlan = JSON.parse(await fs.readFile(planPath, 'utf8'));
+    await fs.mkdir(plan.outputDirectory, { recursive: true });
+
+    for (const shot of plan.shots) {
+      win.setContentSize(shot.width, shot.height);
+      // Um instante para o compositor acompanhar o novo tamanho antes de carregar a página.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await win.loadURL(`${SCHEME}://app/?${shot.query}`);
+      await waitForShowcase(win);
+      // Assentamento: os dados já estão prontos, mas a tela ainda monta e os gráficos se
+      // desenham em duas passadas (medir, depois desenhar).
+      await new Promise((resolve) => setTimeout(resolve, shot.settleMs ?? 1800));
+      if (shot.press) await pressControl(win, shot.press, shot.pressWaitMs ?? 900);
+      const image = await capturePageWithRetry(win);
+      if (process.env.KERES_CAPTURE_DEBUG) {
+        const texto = await win.webContents.executeJavaScript(
+          '(document.body?.innerText ?? "").slice(0, 200)',
+        );
+        console.log(`[capture][debug] ${shot.name}: ${JSON.stringify(texto)}`);
+      }
+      const target = path.join(plan.outputDirectory, `${shot.name}.png`);
+      await fs.writeFile(target, image.toPNG());
+      console.log(`[capture] ${shot.name}.png  ${shot.width}x${shot.height}`);
+    }
+    app.exit(0);
+  } catch (error) {
+    console.error('[capture] falhou:', error);
+    app.exit(1);
+  }
+}
+
+/**
+ * Espelha o console do renderizador no terminal, com `KERES_CAPTURE_DEBUG=1`.
+ *
+ * A janela da captura não tem DevTools ao alcance, e uma tela que não sobe some em silêncio -
+ * foi assim que apareceu o `initialRouteName` apontando para uma rota inexistente.
+ */
+function attachRendererLog(win: BrowserWindow): void {
+  win.webContents.on('console-message', (event) => console.log('[renderer]', event.message));
+  win.webContents.on('render-process-gone', (_event, details) =>
+    console.log('[renderer] morreu:', JSON.stringify(details)),
+  );
+}
+
+/**
+ * Aciona um controle da tela pelo rótulo de acessibilidade.
+ *
+ * Usa `sendInputEvent`, que entrega um clique **confiável** ao renderizador - o React Native Web
+ * ignora eventos sintéticos disparados de dentro da página, então é isto ou nada. É também o
+ * único ponto da captura que simula gente usando o app.
+ */
+async function pressControl(win: BrowserWindow, label: string, waitMs: number): Promise<void> {
+  const point = await win.webContents.executeJavaScript(`
+    (() => {
+      const rotulo = ${JSON.stringify(label)};
+      // Rótulo de acessibilidade primeiro; depois texto visível, que é como se acha um item de
+      // lista (um personagem, uma cena) sem inventar identificadores só para a foto.
+      const alvo =
+        document.querySelector('[aria-label="' + rotulo + '"]') ??
+        Array.from(document.querySelectorAll('div,span,a,button')).find(
+          (no) => no.textContent?.trim() === rotulo && no.getBoundingClientRect().height > 0,
+        );
+      if (!alvo) return null;
+      const r = alvo.getBoundingClientRect();
+      return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) };
+    })()
+  `);
+  if (!point) {
+    console.warn(`[capture] controle "${label}" não encontrado; seguindo sem acionar.`);
+    return;
+  }
+  win.webContents.sendInputEvent({ type: 'mouseDown', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  win.webContents.sendInputEvent({ type: 'mouseUp', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  await new Promise((resolve) => setTimeout(resolve, waitMs));
+}
+
+/**
+ * O compositor do Windows recusa a captura de vez em quando logo depois de a janela mudar de
+ * tamanho ou de conteúdo (`UnknownVizError`), e o erro é transitório: tentar de novo um instante
+ * depois resolve. Sem isto, uma execução inteira morre por causa de uma foto.
+ */
+async function capturePageWithRetry(win: BrowserWindow): Promise<Electron.NativeImage> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await waitForFrame(win);
+      const image = await win.webContents.capturePage();
+      if (image.isEmpty()) {
+        lastError = new Error('imagem vazia');
+      } else if (!isFullyPainted(image)) {
+        // Acontece de o compositor entregar um quadro com camadas ainda não rasterizadas: a
+        // foto sai com a gaveta lateral preta, ou com as linhas do gráfico sem os rótulos.
+        // Nada disso é imagem "vazia", então só olhando o conteúdo dá para recusar.
+        lastError = new Error('quadro pintado pela metade');
+      } else {
+        return image;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  }
+  throw lastError;
+}
+
+/** Espera o renderizador entregar um quadro; dois `requestAnimationFrame` bastam. */
+async function waitForFrame(win: BrowserWindow): Promise<void> {
+  await win.webContents.executeJavaScript(
+    'new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))',
+  );
+}
+
+/**
+ * A faixa da esquerda é a gaveta do app: menu escrito, item selecionado em destaque, borda.
+ * Quando ela sai como um retângulo de uma cor só, o quadro veio antes da pintura - e é o
+ * mesmo quadro em que faltam os rótulos do gráfico ao lado.
+ */
+function isFullyPainted(image: Electron.NativeImage): boolean {
+  const { width, height } = image.getSize();
+  const drawer = image.crop({ x: 0, y: 0, width: Math.min(240, width), height });
+  const pixels = drawer.toBitmap();
+  const first = pixels.readUInt32LE(0);
+  for (let offset = 4; offset + 4 <= pixels.length; offset += 4 * 37) {
+    if (pixels.readUInt32LE(offset) !== first) return true;
+  }
+  return false;
+}
+
+/**
+ * Espera a tela pedida estar de pé.
+ *
+ * O app avisa por conta própria (`data-keres-showcase="ready"`, ver `prepareShowcase.ts`)
+ * quando o banco subiu, as migrações rodaram e a história de exemplo foi instalada. Adivinhar
+ * pelo texto da página, como esta função fazia antes, rendia fotos da tela de carregamento.
+ */
+async function waitForShowcase(win: BrowserWindow): Promise<void> {
+  await win.webContents.executeJavaScript(`
+    new Promise((resolve, reject) => {
+      const deadline = Date.now() + 90000;
+      const poll = () => {
+        // Duas condições: os dados prontos (bandeira do app) e a tela já pintada. A bandeira
+        // sozinha ainda pegava a tela de carregamento, porque montar a gaveta inteira leva
+        // seu tempo depois que os dados chegam.
+        const dadosProntos = document.documentElement.dataset.keresShowcase === 'ready';
+        const texto = (document.body?.innerText ?? '').trim();
+        const pintou = texto.length > 60 && !/^(Loading|Carregando)/i.test(texto);
+        if (dadosProntos && pintou) return resolve(true);
+        if (Date.now() >= deadline) {
+          return reject(new Error('Tempo esgotado esperando a vitrine: ' + texto.slice(0, 160)));
+        }
+        setTimeout(poll, 100);
+      };
+      poll();
+    });
+  `);
 }
 
 /**

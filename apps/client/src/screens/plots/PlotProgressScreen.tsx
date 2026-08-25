@@ -15,7 +15,9 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { buildPlotCoverage } from '../../utils/plotCoverageLayout';
 import { renderPlotCoverageSvg } from '../../utils/plotCoverageSvg';
+import { buildChapterColors } from '../../utils/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
@@ -33,7 +35,7 @@ const PlotProgressScreen = () => {
   const scrollBottomPadding = useFormScrollBottomPadding();
   const [saving, setSaving] = useState(false);
 
-  const { plots, relations, scenes, coverageOf, loading } = useStoryPlots(
+  const { plots, relations, scenes, chapters, loading } = useStoryPlots(
     selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
   );
 
@@ -41,13 +43,36 @@ const PlotProgressScreen = () => {
   // cheias, e escondê-las daria uma média otimista demais.
   const average = plots.length ? relations.length / plots.length : 0;
 
+  const chapterColors = useMemo(() => buildChapterColors(chapters), [chapters]);
+
   const entries = useMemo(
     () =>
-      [...plots]
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-        .map((plot) => ({ plot, ...coverageOf(plot.id) })),
-    [coverageOf, plots],
+      buildPlotCoverage({
+        plots: [...plots].sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        ),
+        chapters: chapters.map((chapter) => ({
+          id: chapter.id,
+          name: chapter.name,
+          color: chapterColors.get(chapter.id) ?? colors.primary,
+        })),
+        scenes,
+        relations,
+      }),
+    [chapterColors, chapters, colors.primary, plots, relations, scenes],
   );
+
+  /** Só os capítulos que aparecem em alguma barra - uma legenda com capítulo ausente confunde. */
+  const legend = useMemo(() => {
+    const used = new Set(entries.flatMap((entry) => entry.segments.map((s) => s.chapterId)));
+    return chapters
+      .filter((chapter) => used.has(chapter.id))
+      .map((chapter) => ({
+        id: chapter.id,
+        name: chapter.name,
+        color: chapterColors.get(chapter.id) ?? colors.primary,
+      }));
+  }, [chapterColors, chapters, colors.primary, entries]);
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = useMemo(
@@ -73,7 +98,14 @@ const PlotProgressScreen = () => {
           overflow: 'hidden',
           marginTop: 10,
         },
-        fill: { height: '100%', borderRadius: 4, backgroundColor: colors.primary },
+        // Os pedaços encostam uns nos outros dentro do trilho; só as pontas da barra são
+        // arredondadas, pelo próprio `overflow: hidden` do trilho.
+        segments: { flexDirection: 'row', height: '100%' },
+        segment: { height: '100%' },
+        legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
+        legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+        legendSwatch: { width: 10, height: 10, borderRadius: 3 },
+        legendLabel: { color: colors.textSecondary, fontSize: 12 },
         empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 30 },
       }),
     [colors, scrollBottomPadding],
@@ -83,24 +115,16 @@ const PlotProgressScreen = () => {
     if (!selectedStory || entries.length === 0) return;
     setSaving(true);
     try {
-      const svg = renderPlotCoverageSvg(
-        entries.map((entry) => ({
-          name: entry.plot.name,
-          covered: entry.covered,
-          total: entry.total,
-          percentage: entry.percentage,
-        })),
-        {
-          title: selectedStory.title,
-          subtitle: t('plot_progress_title'),
-          average: t('plot_average_scenes', { count: average.toFixed(1) }),
-          background: colors.background,
-          surface: colors.surface,
-          text: colors.text,
-          border: colors.border,
-          primary: colors.primary,
-        },
-      );
+      const svg = renderPlotCoverageSvg(entries, {
+        title: selectedStory.title,
+        subtitle: t('plot_progress_title'),
+        average: t('plot_average_scenes', { count: average.toFixed(1) }),
+        background: colors.background,
+        surface: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        primary: colors.primary,
+      });
       const result = await deliverSvgMap(svg, `${selectedStory.title}-cobertura.svg`);
       notify(
         result.delivered
@@ -162,18 +186,29 @@ const PlotProgressScreen = () => {
       <Text style={styles.summary}>{t('plot_coverage_denominator', { count: scenes.length })}</Text>
       <Text style={styles.hint}>{t('plot_coverage_overlap_hint')}</Text>
 
+      {legend.length > 0 && (
+        <View style={styles.legend}>
+          {legend.map((chapter) => (
+            <View key={chapter.id} style={styles.legendItem}>
+              <View style={[styles.legendSwatch, { backgroundColor: chapter.color }]} />
+              <Text style={styles.legendLabel}>{chapter.name}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {entries.length === 0 ? (
         <Text style={styles.empty}>{t('no_plots')}</Text>
       ) : (
         entries.map((entry) => (
           <TouchableOpacity
-            key={entry.plot.id}
+            key={entry.id}
             style={styles.row}
-            onPress={() => navigation.navigate('PlotDetail', { plotId: entry.plot.id })}
+            onPress={() => navigation.navigate('PlotDetail', { plotId: entry.id })}
           >
             <View style={styles.rowHeader}>
               <Text style={styles.name} numberOfLines={1}>
-                {entry.plot.name}
+                {entry.name}
               </Text>
               <Text style={styles.meta}>
                 {t('plot_coverage_value', {
@@ -184,7 +219,17 @@ const PlotProgressScreen = () => {
               </Text>
             </View>
             <View style={styles.track}>
-              <View style={[styles.fill, { width: `${entry.percentage}%` }]} />
+              <View style={styles.segments}>
+                {entry.segments.map((segment) => (
+                  <View
+                    key={segment.chapterId}
+                    style={[
+                      styles.segment,
+                      { width: `${segment.percentage}%`, backgroundColor: segment.color },
+                    ]}
+                  />
+                ))}
+              </View>
             </View>
           </TouchableOpacity>
         ))

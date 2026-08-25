@@ -31,6 +31,13 @@ import type { NarrativeElementsStackParamList } from '../../../navigation/MainSy
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 
+const TIMELINE_CONTROL_LABELS = {
+  add: 'zoom_in',
+  remove: 'zoom_out',
+  'scan-outline': 'fit_to_screen',
+  'image-outline': 'story_timeline_export_image',
+} as const;
+
 const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
@@ -333,7 +340,13 @@ const StoryTimelineScreen = () => {
             ['image-outline', exportTimeline],
           ] as const
         ).map(([name, onPress]) => (
-          <TouchableOpacity key={name} style={styles.control} onPress={onPress} disabled={saving}>
+          <TouchableOpacity
+            key={name}
+            style={styles.control}
+            onPress={onPress}
+            disabled={saving}
+            accessibilityLabel={t(TIMELINE_CONTROL_LABELS[name])}
+          >
             <Ionicons name={name} size={20} color={colors.text} />
           </TouchableOpacity>
         ))}

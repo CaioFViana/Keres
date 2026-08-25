@@ -52,6 +52,22 @@ describe('fitting on layout', () => {
     expect(y).toBeCloseTo((VIEWPORT.height - LAYOUT.height * scale) / 2, 3);
   });
 
+  /**
+   * A linha do tempo enquadra pela altura e continua mais larga que a janela. Centralizar
+   * cortava os dois lados - e à esquerda ficam os nomes das cenas, que é a única coisa que diz
+   * de que cena é cada barra.
+   */
+  it('starts at the beginning of a drawing wider than the viewport', async () => {
+    const { result } = await renderCanvas({ width: 4000, height: 300 }, VIEWPORT, {
+      fitMode: 'height',
+      fitVerticalAlignment: 'top',
+    });
+
+    const { x, y } = transformOf(result.current);
+    expect(x).toBe(0);
+    expect(y).toBe(0);
+  });
+
   it('does not zoom past the configured maximum for a tiny drawing', async () => {
     const { result } = await renderCanvas({ width: 10, height: 10 }, VIEWPORT, { maxScale: 2 });
 

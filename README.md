@@ -306,6 +306,19 @@ bun run dev:site      # http://localhost:5175
 bun run build:site
 ```
 
+As capturas da vitrine da landing são fotos do próprio app, tiradas abrindo o build web real
+dentro do Electron com uma história de exemplo instalada:
+
+```bash
+bun run --cwd apps/desktop capture:screens
+```
+
+Isso grava `apps/site/public/showcase/screens/<tela>.<idioma>.<tema>.png`, que fica versionado
+no repositório - o build da landing não roda a captura. Rode de novo quando uma tela da vitrine
+mudar de forma. As telas, histórias e tamanhos de janela ficam em
+`apps/desktop/scripts/capture-screens.cjs`; o modo de URL que leva o app direto a uma tela fica
+em `apps/client/src/showcase/`.
+
 O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` (a branch padrão). O environment `github-pages` recusa outras branches. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
 
 ## Documentação técnica

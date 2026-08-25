@@ -6,7 +6,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  useAnimatedReaction,
 } from 'react-native-reanimated';
 import { useTheme } from '../../../../theme';
 
@@ -42,17 +41,12 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
     }
   }, [expanded, opacity]);
 
-  useAnimatedReaction(
-    () => ({ expanded, contentHeight: contentHeight.value }),
-    (snapshot) => {
-      if (snapshot.expanded) {
-        animatedHeight.value = withTiming(snapshot.contentHeight, { duration: 300 });
-      } else {
-        animatedHeight.value = withTiming(0, { duration: 300 });
-      }
-    },
-    [expanded], // expanded is a state variable, not a shared value
-  );
+  // Efeito, e não `useAnimatedReaction`: na web a reação não reagia à troca de `expanded`
+  // (que é estado de React, não valor compartilhado), e o cartão abria com o conteúdo em
+  // altura zero - cabeçalho virado, nada embaixo. A medição continua vindo do `onLayout`.
+  React.useEffect(() => {
+    animatedHeight.value = withTiming(expanded ? contentHeight.value : 0, { duration: 300 });
+  }, [expanded, animatedHeight, contentHeight]);
 
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {

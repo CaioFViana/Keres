@@ -74,6 +74,34 @@ export const PLATFORMS = [
   'docker',
 ] as const;
 
+/**
+ * A vitrine: fotos do app rodando, não desenhos feitos para a página.
+ *
+ * Cada arquivo em `public/showcase/screens/<id>.<idioma>.<tema>.png` sai de
+ * `apps/desktop/scripts/capture-screens.cjs`, que abre o app de verdade dentro do Electron,
+ * com uma história de exemplo instalada, e fotografa a tela. Existe uma versão por idioma e
+ * por tema, e cada tela vem da história de exemplo que melhor a preenche - a vitrine inteira
+ * saindo do mesmo exemplo dava a impressão de um app de uma história só.
+ *
+ * A lista é curta de propósito: telas de conta, servidor e importação mostram encanamento, não
+ * a escrita - elas continuam sendo texto nos cartões de recurso.
+ */
+export const SHOWCASE_SCREENS = [
+  { id: 'narrative-elements', width: 1440, height: 900 },
+  { id: 'story-map', width: 1440, height: 900 },
+  { id: 'story-timeline', width: 1440, height: 900 },
+  { id: 'plot-matrix', width: 1440, height: 900 },
+  { id: 'plot-coverage', width: 1440, height: 620 },
+  { id: 'character-list', width: 1440, height: 900 },
+  { id: 'relation-map', width: 1440, height: 900 },
+  // O mapa de locais é uma faixa baixa: fotografado na janela cheia, sobrava meia página em
+  // branco embaixo do desenho.
+  { id: 'location-map', width: 1440, height: 560 },
+  { id: 'dashboard', width: 1440, height: 900 },
+] as const;
+
+export type ShowcaseScreenId = (typeof SHOWCASE_SCREENS)[number]['id'];
+
 export const DOWNLOADS = ['releases', 'server', 'docker', 'source'] as const;
 
 export const FAQ_ITEMS = [

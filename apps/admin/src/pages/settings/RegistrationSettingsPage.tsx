@@ -69,7 +69,7 @@ export function RegistrationSettingsPage() {
               checked={settings.autoManage}
               onChange={(e) => setSettings({ ...settings, autoManage: e.target.checked })}
             />
-            Auto-manage open/closed based on max users
+            {t('settings.autoManage')}
           </label>
 
           {!settings.autoManage && (
@@ -79,7 +79,7 @@ export function RegistrationSettingsPage() {
                 checked={settings.isRegistrationOpen}
                 onChange={(e) => setSettings({ ...settings, isRegistrationOpen: e.target.checked })}
               />
-              Registration open
+              {t('settings.registrationOpen')}
             </label>
           )}
 

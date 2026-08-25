@@ -38,8 +38,8 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
 
   const renderHeaderContent = (scn: SceneSelect) => (
     <ListItemTitle
-      // Cenas são armazenadas com índice zero-based para reordenação; autores veem a contagem
-      // humana, começando em 1, como já acontece na lista de capítulos.
+      // O índice da cena já é a contagem humana: 1..N dentro do capítulo, a mesma convenção
+      // dos capítulos (ver `StoryIndexService`).
       text={storyType === 'linear' ? `${scn.index}. ${scn.name}` : scn.name}
       headerLeftStyle={styles.headerLeft}
       nameStyle={styles.name}

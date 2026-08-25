@@ -8,3 +8,6 @@ declare module 'virtual:keres-logo' {
   const url: string;
   export default url;
 }
+
+/** `react-native-web` não publica tipos; a vitrine usa só View e Text dele. */
+declare module 'react-native-web';

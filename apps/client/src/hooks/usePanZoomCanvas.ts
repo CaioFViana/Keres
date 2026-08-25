@@ -130,9 +130,13 @@ export function usePanZoomCanvas(
     const containedScale = Math.min(viewportWidth / layout.width, viewportHeight / layout.height);
     const targetScale = fitMode === 'height' ? viewportHeight / layout.height : containedScale;
     const scale = Math.max(minScale, Math.min(maxScale, targetScale * FIT_MARGIN));
+    const scaledWidth = layout.width * scale;
     transform.current = {
       scale,
-      x: (viewportWidth - layout.width * scale) / 2,
+      // Centralizar só faz sentido quando o desenho cabe. Mais largo que a janela - uma linha
+      // do tempo, uma matriz - centralizar corta os dois lados, e o lado esquerdo é onde ficam
+      // os nomes das cenas e das linhas. Nesse caso o enquadramento começa no começo.
+      x: scaledWidth <= viewportWidth ? (viewportWidth - scaledWidth) / 2 : 0,
       y: fitVerticalAlignment === 'top' ? 0 : (viewportHeight - layout.height * scale) / 2,
     };
     clamp();

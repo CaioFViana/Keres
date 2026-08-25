@@ -90,6 +90,7 @@ import PlotFormScreen from '../screens/plots/PlotFormScreen';
 import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
 import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
 import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
+import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
@@ -185,7 +186,10 @@ export type PlotsStackParamList = {
 const PlotsStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <PlotsStack.Navigator screenOptions={{ headerShown: false }}>
+    <PlotsStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={showcaseInitialRoute('PlotsStack', 'Plots')}
+    >
       <PlotsStack.Screen name="Plots" component={PlotListScreen} />
       <PlotsStack.Screen name="PlotDetail" component={PlotDetailScreen} />
       <PlotsStack.Screen name="PlotForm" component={PlotFormScreen} />
@@ -211,7 +215,10 @@ export type CharacterStackParamList = {
 const CharacterStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <CharacterStack.Navigator screenOptions={{ headerShown: false }}>
+    <CharacterStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={showcaseInitialRoute('CharactersStack', 'Characters')}
+    >
       <CharacterStack.Screen name="Characters" component={CharactersScreen} />
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
       <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
@@ -242,7 +249,10 @@ export type NarrativeElementsStackParamList = {
 const NarrativeElementsStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <NarrativeElementsStack.Navigator screenOptions={{ headerShown: false }}>
+    <NarrativeElementsStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={showcaseInitialRoute('NarrativeElementsStack', 'NarrativeElements')}
+    >
       <NarrativeElementsStack.Screen
         name="NarrativeElements"
         component={NarrativeElementsListScreen}
@@ -278,7 +288,10 @@ export type ItemStackParamList = {
 const ItemStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <ItemStack.Navigator screenOptions={{ headerShown: false }}>
+    <ItemStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={showcaseInitialRoute('ItemsStack', 'Items')}
+    >
       <ItemStack.Screen name="Items" component={ItemListScreen} />
       <ItemStack.Screen name="ItemDetail" component={ItemDetailScreen} />
       <ItemStack.Screen name="ItemForm" component={ItemFormScreen} />
@@ -302,7 +315,10 @@ export type LocationStackParamList = {
 const LocationStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <LocationStack.Navigator screenOptions={{ headerShown: false }}>
+    <LocationStack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={showcaseInitialRoute('LocationsStack', 'Locations')}
+    >
       <LocationStack.Screen name="Locations" component={LocationListScreen} />
       <LocationStack.Screen name="LocationDetail" component={LocationDetailsScreen} />
       <LocationStack.Screen name="LocationForm" component={LocationFormScreen} />
@@ -477,6 +493,8 @@ const MainSystemNavigator = () => {
   return (
     <>
       <Drawer.Navigator
+        // A vitrine abre direto no item pedido; fora dela, o painel da história, como sempre.
+        initialRouteName={readShowcaseRequest()?.stack as keyof MainSystemDrawerParamList}
         defaultStatus={isWide ? 'open' : 'closed'}
         backBehavior="history"
         drawerContent={(props) => (

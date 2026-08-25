@@ -1356,6 +1356,7 @@
   "story_timeline_compressed": "spacing is compacted",
   "story_timeline_duration": "Duration",
   "story_timeline_export_failed": "Could not export the timeline.",
+  "story_timeline_export_image": "Export timeline as image",
   "story_timeline_export_no_share_target": "Timeline saved to {{path}}.",
   "story_timeline_export_success": "Timeline saved as {{fileName}}.",
   "story_timeline_gap": "Gap",

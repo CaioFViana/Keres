@@ -315,6 +315,16 @@ const PackListScreen = () => {
                 {t('packs_browse_title')}
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.createButton, styles.browseButton]}
+              onPress={() => navigation.navigate('ShippedPacks')}
+              testID="shipped-packs"
+            >
+              <Ionicons name="gift-outline" size={20} color={colors.text} />
+              <Text style={[styles.createButtonText, { color: colors.text }]}>
+                {t('shipped_packs_title')}
+              </Text>
+            </TouchableOpacity>
           </>
         }
         ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}

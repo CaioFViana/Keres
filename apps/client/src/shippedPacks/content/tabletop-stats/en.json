@@ -1,0 +1,165 @@
+{
+  "id": "KRSPKTBLENP000000000000000",
+  "name": "Tabletop stats",
+  "description": "Six ability scores and a ladder to read them by. The only shipped pack that turns the stat system on.",
+  "authorName": "Keres",
+  "version": 1,
+  "content": {
+    "formatVersion": 1,
+    "storySchemaFields": [],
+    "suggestions": [],
+    "tags": [],
+    "stats": [
+      {
+        "id": "KRSPKTBLENT000000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "name": "Strength",
+        "isPrimary": true,
+        "order": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENT001000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "name": "Dexterity",
+        "isPrimary": true,
+        "order": 1,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENT002000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "name": "Constitution",
+        "isPrimary": true,
+        "order": 2,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENT003000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "name": "Intelligence",
+        "isPrimary": true,
+        "order": 3,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENT004000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "name": "Wisdom",
+        "isPrimary": true,
+        "order": 4,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENT005000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "name": "Charisma",
+        "isPrimary": true,
+        "order": 5,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "statStrengths": [
+      {
+        "id": "KRSPKTBLENL000000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "statId": null,
+        "label": "Feeble",
+        "minValue": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENL001000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "statId": null,
+        "label": "Poor",
+        "minValue": 20,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENL002000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "statId": null,
+        "label": "Average",
+        "minValue": 40,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENL003000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "statId": null,
+        "label": "Good",
+        "minValue": 60,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENL004000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "statId": null,
+        "label": "Great",
+        "minValue": 80,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLENL005000000000000",
+        "storyId": "KRSPKTBLENP000000000000000",
+        "statId": null,
+        "label": "Legendary",
+        "minValue": 95,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "settings": {
+      "statSystem": true,
+      "statNotation": "number"
+    }
+  }
+}

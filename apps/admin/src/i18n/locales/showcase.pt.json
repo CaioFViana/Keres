@@ -37,42 +37,6 @@
     "about": "Sobre",
     "packs": "Pacotes"
   },
-  "story": {
-    "back": "← Todas as histórias",
-    "publishedThis": "publicou esta história",
-    "publishedThisShort": "publicou esta",
-    "publishedBy": "publicado por {{username}}#{{tag}}",
-    "author": "Autoria",
-    "genre": "Gênero",
-    "language": "Idioma",
-    "structure": "Estrutura",
-    "linear": "Linear",
-    "branching": "Ramificada",
-    "theme": "Tema",
-    "loading": "Carregando…",
-    "loadFailed": "Não foi possível carregar esta história.",
-    "downloadTitle": "Baixar",
-    "downloadIntro": "Cada versão é um pacote Keres completo - a história e as mídias dela - que importa direto de volta no aplicativo.",
-    "downloadLatest": "Baixar a mais recente",
-    "download": "Baixar",
-    "preparing": "Preparando…",
-    "downloadFailed": "Não foi possível iniciar o download.",
-    "mediaCount": "{{included}}/{{total}} mídias"
-  },
-  "theme": {
-    "system": "Tema: Sistema",
-    "light": "Tema: Claro",
-    "dark": "Tema: Escuro"
-  },
-  "packs": {
-    "eyebrow": "Estrutura compartilhada",
-    "title": "Pacotes neste servidor",
-    "intro": "Um pacote é a forma reutilizável de uma história - campos personalizados, eixos de status, conjuntos de etiquetas, listas de sugestões - oferecida para qualquer pessoa começar uma história nova. Não carrega personagens, cenas nem texto: a história de ninguém viaja dentro de um.",
-    "sharedPacks": "Pacotes compartilhados",
-    "loading": "Carregando pacotes...",
-    "loadFailed": "Não foi possível carregar os pacotes.",
-    "empty": "Ninguém compartilhou um pacote aqui ainda."
-  },
   "pack": {
     "back": "← Todos os pacotes",
     "version": "v{{version}}",
@@ -129,5 +93,41 @@
       "suggestion_list": "Lista de sugestões",
       "entity": "Ligação com uma entidade"
     }
+  },
+  "packs": {
+    "eyebrow": "Estrutura compartilhada",
+    "title": "Pacotes neste servidor",
+    "intro": "Um pacote é a forma reutilizável de uma história - campos personalizados, eixos de status, conjuntos de etiquetas, listas de sugestões - oferecida para qualquer pessoa começar uma história nova. Não carrega personagens, cenas nem texto: a história de ninguém viaja dentro de um.",
+    "sharedPacks": "Pacotes compartilhados",
+    "loading": "Carregando pacotes...",
+    "loadFailed": "Não foi possível carregar os pacotes.",
+    "empty": "Ninguém compartilhou um pacote aqui ainda."
+  },
+  "story": {
+    "back": "← Todas as histórias",
+    "publishedThis": "publicou esta história",
+    "publishedThisShort": "publicou esta",
+    "publishedBy": "publicado por {{username}}#{{tag}}",
+    "author": "Autoria",
+    "genre": "Gênero",
+    "language": "Idioma",
+    "structure": "Estrutura",
+    "linear": "Linear",
+    "branching": "Ramificada",
+    "theme": "Tema",
+    "loading": "Carregando…",
+    "loadFailed": "Não foi possível carregar esta história.",
+    "downloadTitle": "Baixar",
+    "downloadIntro": "Cada versão é um pacote Keres completo - a história e as mídias dela - que importa direto de volta no aplicativo.",
+    "downloadLatest": "Baixar a mais recente",
+    "download": "Baixar",
+    "preparing": "Preparando…",
+    "downloadFailed": "Não foi possível iniciar o download.",
+    "mediaCount": "{{included}}/{{total}} mídias"
+  },
+  "theme": {
+    "system": "Tema: Sistema",
+    "light": "Tema: Claro",
+    "dark": "Tema: Escuro"
   }
 }

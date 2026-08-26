@@ -1,0 +1,165 @@
+{
+  "id": "KRSPKTBLPTP000000000000000",
+  "name": "Status de mesa",
+  "description": "Seis atributos e uma escala para lê-los. O único pacote de fábrica que liga o sistema de status.",
+  "authorName": "Keres",
+  "version": 1,
+  "content": {
+    "formatVersion": 1,
+    "storySchemaFields": [],
+    "suggestions": [],
+    "tags": [],
+    "stats": [
+      {
+        "id": "KRSPKTBLPTT000000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "name": "Força",
+        "isPrimary": true,
+        "order": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTT001000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "name": "Destreza",
+        "isPrimary": true,
+        "order": 1,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTT002000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "name": "Constituição",
+        "isPrimary": true,
+        "order": 2,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTT003000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "name": "Inteligência",
+        "isPrimary": true,
+        "order": 3,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTT004000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "name": "Sabedoria",
+        "isPrimary": true,
+        "order": 4,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTT005000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "name": "Carisma",
+        "isPrimary": true,
+        "order": 5,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "statStrengths": [
+      {
+        "id": "KRSPKTBLPTL000000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "statId": null,
+        "label": "Frágil",
+        "minValue": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTL001000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "statId": null,
+        "label": "Fraco",
+        "minValue": 20,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTL002000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "statId": null,
+        "label": "Médio",
+        "minValue": 40,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTL003000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "statId": null,
+        "label": "Bom",
+        "minValue": 60,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTL004000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "statId": null,
+        "label": "Ótimo",
+        "minValue": 80,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKTBLPTL005000000000000",
+        "storyId": "KRSPKTBLPTP000000000000000",
+        "statId": null,
+        "label": "Lendário",
+        "minValue": 95,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "settings": {
+      "statSystem": true,
+      "statNotation": "number"
+    }
+  }
+}

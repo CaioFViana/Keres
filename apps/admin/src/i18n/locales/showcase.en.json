@@ -37,42 +37,6 @@
     "about": "About",
     "packs": "Packs"
   },
-  "story": {
-    "back": "← All stories",
-    "publishedThis": "published this story",
-    "publishedThisShort": "published this",
-    "publishedBy": "published by {{username}}#{{tag}}",
-    "author": "Author",
-    "genre": "Genre",
-    "language": "Language",
-    "structure": "Structure",
-    "linear": "Linear",
-    "branching": "Branching",
-    "theme": "Theme",
-    "loading": "Loading…",
-    "loadFailed": "Could not load this story.",
-    "downloadTitle": "Download",
-    "downloadIntro": "Each version is a complete Keres package - the story and its media - that imports straight back into the app.",
-    "downloadLatest": "Download latest",
-    "download": "Download",
-    "preparing": "Preparing…",
-    "downloadFailed": "Could not start the download.",
-    "mediaCount": "{{included}}/{{total}} media"
-  },
-  "theme": {
-    "system": "Theme: System",
-    "light": "Theme: Light",
-    "dark": "Theme: Dark"
-  },
-  "packs": {
-    "eyebrow": "Shared structure",
-    "title": "Packs on this server",
-    "intro": "A pack is the reusable shape of a story - custom fields, stat axes, tag sets, suggestion lists - offered for anyone to start a new story with. It carries no characters, no scenes and no prose: nobody's story travels in one.",
-    "sharedPacks": "Shared packs",
-    "loading": "Loading packs...",
-    "loadFailed": "Could not load the packs.",
-    "empty": "Nobody has shared a pack here yet."
-  },
   "pack": {
     "back": "← All packs",
     "version": "v{{version}}",
@@ -129,5 +93,41 @@
       "suggestion_list": "Suggestion list",
       "entity": "Link to an entity"
     }
+  },
+  "packs": {
+    "eyebrow": "Shared structure",
+    "title": "Packs on this server",
+    "intro": "A pack is the reusable shape of a story - custom fields, stat axes, tag sets, suggestion lists - offered for anyone to start a new story with. It carries no characters, no scenes and no prose: nobody's story travels in one.",
+    "sharedPacks": "Shared packs",
+    "loading": "Loading packs...",
+    "loadFailed": "Could not load the packs.",
+    "empty": "Nobody has shared a pack here yet."
+  },
+  "story": {
+    "back": "← All stories",
+    "publishedThis": "published this story",
+    "publishedThisShort": "published this",
+    "publishedBy": "published by {{username}}#{{tag}}",
+    "author": "Author",
+    "genre": "Genre",
+    "language": "Language",
+    "structure": "Structure",
+    "linear": "Linear",
+    "branching": "Branching",
+    "theme": "Theme",
+    "loading": "Loading…",
+    "loadFailed": "Could not load this story.",
+    "downloadTitle": "Download",
+    "downloadIntro": "Each version is a complete Keres package - the story and its media - that imports straight back into the app.",
+    "downloadLatest": "Download latest",
+    "download": "Download",
+    "preparing": "Preparing…",
+    "downloadFailed": "Could not start the download.",
+    "mediaCount": "{{included}}/{{total}} media"
+  },
+  "theme": {
+    "system": "Theme: System",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark"
   }
 }

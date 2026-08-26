@@ -230,12 +230,19 @@ language selector, the natural resolution is **one pack row per language**, each
 | Phase | Scope | Ends with |
 | --- | --- | --- |
 | **0** | Fix §2.1 (**done**) and §2.2 | Example stories stop shipping orphaned catalogues |
-| **1** | `packs` table (client), extraction screen, pack picker at creation, apply through `importFullStory` | A pack can be made, applied, and produces zero operations |
-| **2** | The three shipped packs, in both languages | The feature has a reason to exist out of the box |
-| **3** | Server `packs` table, routes, Showcase pack mode, versioning | Packs can be shared |
+| **1** (**done**) | `packs` table (client), extraction screen, pack picker at creation, apply through `importFullStory` | A pack can be made, applied, and produces zero operations |
+| **2** (**done**) | The three shipped packs, in both languages | The feature has a reason to exist out of the box |
+| **3** (**done**) | Server `packs` table, routes, Showcase pack mode, versioning | Packs can be shared |
 
 Phase 0 is not optional and does not depend on the rest: it is a live bug in installed example
 stories today.
+
+Phase 3 was built before Phase 2: sharing is what the shipped packs are seeded *through*, so the
+import path had to exist first. Shipped packs are generated from
+`apps/client/scripts/lib/shippedPackDefinitions.ts` into `src/shippedPacks/content/<slug>/<lang>.json`
+by `bun scripts/build-shipped-packs.ts`, and install through `PackService.importRemotePack` - the
+same path a downloaded pack takes, keyed on an id fixed in the file so installing twice updates in
+place. A test rebuilds them in memory and refuses a definition edited without regenerating.
 
 ## 11. Risks
 

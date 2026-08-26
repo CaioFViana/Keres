@@ -55,17 +55,23 @@ export function packContentLines(
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string[] {
   const lines: string[] = [];
+  // The suffix is chosen here rather than left to i18next, the convention the rest of the
+  // repository follows: the translation audit reads literal keys out of the source, and a key it
+  // cannot see is a key it cannot check.
+  const plural = (base: string, count: number) =>
+    t(count === 1 ? `${base}_one` : `${base}_other`, { count });
+
   if (summary.fieldCount > 0) {
-    lines.push(t('pack.fieldCount', { count: summary.fieldCount }));
+    lines.push(plural('pack.fieldCount', summary.fieldCount));
   }
   if (summary.statCount > 0) {
-    lines.push(t('pack.statCount', { count: summary.statCount }));
+    lines.push(plural('pack.statCount', summary.statCount));
   }
   if (summary.tagCount > 0) {
-    lines.push(t('pack.tagCount', { count: summary.tagCount }));
+    lines.push(plural('pack.tagCount', summary.tagCount));
   }
   if (summary.suggestionCount > 0) {
-    lines.push(t('pack.suggestionCount', { count: summary.suggestionCount }));
+    lines.push(plural('pack.suggestionCount', summary.suggestionCount));
   }
   if (summary.statSystem) {
     lines.push(t(`pack.notation.${summary.statNotation}`));

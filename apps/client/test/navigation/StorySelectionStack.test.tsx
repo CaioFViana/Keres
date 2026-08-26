@@ -91,6 +91,10 @@ jest.mock('../../src/screens/packs/PackFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/packs/ShippedPacksScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/packs/PackBrowseScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -163,7 +167,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(12);
+  expect(mockDrawerScreens).toHaveLength(13);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -182,6 +186,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'Packs',
     'PackForm',
     'PackBrowse',
+    'ShippedPacks',
     'ExampleStories',
     'StoryDevicesDrawer',
     'HelpDrawer',

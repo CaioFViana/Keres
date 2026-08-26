@@ -230,7 +230,9 @@ export function PackPage() {
               {catalogues.map(([label, count]) => (
                 <li key={label}>
                   <span className="pack-field-name">{label}</span>
-                  <span className="pack-field-type">{t('pack.entryCount', { count })}</span>
+                  <span className="pack-field-type">
+                    {t(count === 1 ? 'pack.entryCount_one' : 'pack.entryCount_other', { count })}
+                  </span>
                 </li>
               ))}
             </ul>

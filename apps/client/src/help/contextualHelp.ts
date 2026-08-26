@@ -13,6 +13,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   Packs: 'packs',
   PackForm: 'packs',
   PackBrowse: 'packs',
+  ShippedPacks: 'packs',
   ImportExport: 'import-export',
   PublishStory: 'publish-story',
   Settings: 'app-settings',

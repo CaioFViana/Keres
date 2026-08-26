@@ -28,6 +28,7 @@ import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
 import PackBrowseScreen from '../screens/packs/PackBrowseScreen';
 import PackFormScreen from '../screens/packs/PackFormScreen';
 import PackListScreen from '../screens/packs/PackListScreen';
+import ShippedPacksScreen from '../screens/packs/ShippedPacksScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
@@ -71,6 +72,7 @@ export type StorySelectionDrawerParamList = {
   Packs: undefined;
   PackForm: { packId?: string } | undefined;
   PackBrowse: undefined;
+  ShippedPacks: undefined;
   Settings: undefined;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
@@ -407,6 +409,15 @@ const StorySelectionNavigator = () => {
         component={PackBrowseScreen}
         options={{
           title: t('packs_browse_title'),
+          // Reached from the pack list, never from the menu itself.
+          drawerItemStyle: { height: 0, overflow: 'hidden' },
+        }}
+      />
+      <Drawer.Screen
+        name="ShippedPacks"
+        component={ShippedPacksScreen}
+        options={{
+          title: t('shipped_packs_title'),
           // Reached from the pack list, never from the menu itself.
           drawerItemStyle: { height: 0, overflow: 'hidden' },
         }}

@@ -62,6 +62,22 @@ export type FriendshipStackParamList = {
   FriendDetail: { friendshipId: string };
 };
 
+/**
+ * The packs stack.
+ *
+ * A stack rather than four flat drawer entries, for the same reason servers and friendships are
+ * one: the form and the two catalogues are reached *from* the list and belong behind it. Registered
+ * flat they had no back arrow - the drawer only draws one for a nested destination - and `goBack`
+ * walked the drawer's own history, landing wherever the user happened to be before rather than on
+ * the list.
+ */
+export type PacksStackParamList = {
+  PackList: undefined;
+  PackForm: { packId?: string } | undefined;
+  PackBrowse: undefined;
+  ShippedPacks: undefined;
+};
+
 export type StorySelectionDrawerParamList = {
   StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
@@ -69,10 +85,7 @@ export type StorySelectionDrawerParamList = {
   ImportExport: undefined;
   PublishStory: undefined;
   ExampleStories: undefined;
-  Packs: undefined;
-  PackForm: { packId?: string } | undefined;
-  PackBrowse: undefined;
-  ShippedPacks: undefined;
+  PacksDrawer: NavigatorScreenParams<PacksStackParamList>;
   Settings: undefined;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
@@ -82,11 +95,13 @@ const Drawer = createDrawerNavigator<StorySelectionDrawerParamList>();
 const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainStackParamList>();
 const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
 const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
+const PacksStack = createNativeStackNavigator<PacksStackParamList>();
 
 const storySelectionStackRootScreens = new Set([
   'StorySelectionScreen',
   'ServerManagement',
   'FriendshipList',
+  'PackList',
   // The same reason as the story's drawer: the root of a stack opened from the menu shows no arrow.
   'HelpIndex',
   'DeviceIndex',
@@ -191,6 +206,41 @@ const FriendshipStackNavigator = () => {
         options={{ headerTitle: t('friend_detail_title') }}
       />
     </FriendshipStack.Navigator>
+  );
+};
+
+const PacksStackNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <PacksStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
+      <PacksStack.Screen
+        name="PackList"
+        component={PackListScreen}
+        options={{ headerTitle: t('packs_title') }}
+      />
+      <PacksStack.Screen
+        name="PackForm"
+        component={PackFormScreen}
+        options={({ route }) => ({
+          headerTitle: route.params?.packId ? t('packs_reextract') : t('packs_create'),
+        })}
+      />
+      <PacksStack.Screen
+        name="PackBrowse"
+        component={PackBrowseScreen}
+        options={{ headerTitle: t('packs_browse_title') }}
+      />
+      <PacksStack.Screen
+        name="ShippedPacks"
+        component={ShippedPacksScreen}
+        options={{ headerTitle: t('shipped_packs_title') }}
+      />
+    </PacksStack.Navigator>
   );
 };
 
@@ -388,39 +438,19 @@ const StorySelectionNavigator = () => {
         story's.
       */}
       <Drawer.Screen
-        name="Packs"
-        component={PackListScreen}
+        name="PacksDrawer"
+        component={PacksStackNavigator}
         options={{
           title: t('packs_title'),
           drawerLabel: t('packs_title'),
         }}
-      />
-      <Drawer.Screen
-        name="PackForm"
-        component={PackFormScreen}
-        options={{
-          title: t('packs_create'),
-          // Reached from the pack list, never from the menu itself.
-          drawerItemStyle: { height: 0, overflow: 'hidden' },
-        }}
-      />
-      <Drawer.Screen
-        name="PackBrowse"
-        component={PackBrowseScreen}
-        options={{
-          title: t('packs_browse_title'),
-          // Reached from the pack list, never from the menu itself.
-          drawerItemStyle: { height: 0, overflow: 'hidden' },
-        }}
-      />
-      <Drawer.Screen
-        name="ShippedPacks"
-        component={ShippedPacksScreen}
-        options={{
-          title: t('shipped_packs_title'),
-          // Reached from the pack list, never from the menu itself.
-          drawerItemStyle: { height: 0, overflow: 'hidden' },
-        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            // The menu entry means the list, not wherever the stack was last left.
+            e.preventDefault();
+            navigation.navigate('PacksDrawer', { screen: 'PackList' });
+          },
+        })}
       />
       <Drawer.Screen
         name="ExampleStories"

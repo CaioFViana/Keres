@@ -78,7 +78,12 @@ jest.mock(
 );
 jest.mock(
   '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
-  () => ({ __esModule: true, default: () => null }),
+  () => {
+    const { View } = jest.requireActual('react-native');
+    // Identifiable rather than `null`: whether the header offers a way back is the thing under
+    // test, and two components rendering nothing are indistinguishable.
+    return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
+  },
 );
 jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
@@ -167,7 +172,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(13);
+  expect(mockDrawerScreens).toHaveLength(10);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -183,10 +188,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'FriendshipDrawer',
     'ImportExport',
     'PublishStory',
-    'Packs',
-    'PackForm',
-    'PackBrowse',
-    'ShippedPacks',
+    'PacksDrawer',
     'ExampleStories',
     'StoryDevicesDrawer',
     'HelpDrawer',
@@ -198,6 +200,7 @@ it.each([
   ['StorySelectionMain', 'StorySelectionScreen'],
   ['ServerManagementDrawer', 'ServerManagement'],
   ['FriendshipDrawer', 'FriendshipList'],
+  ['PacksDrawer', 'PackList'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {
@@ -245,5 +248,69 @@ describe('the publish entry', () => {
       height: 0,
       overflow: 'hidden',
     });
+  });
+});
+
+/**
+ * The packs entry is a nested stack, not four flat drawer destinations.
+ *
+ * Flat, the form had no way back: the drawer only draws an arrow for a nested destination, so the
+ * screen showed a hamburger, and `goBack` walked the drawer's own history to wherever the user had
+ * been before rather than to the list behind it.
+ */
+describe('the packs stack', () => {
+  const packsRoute = (index: number, ...routes: string[]) => ({
+    key: 'packs-key',
+    name: 'PacksDrawer',
+    state: {
+      type: 'stack',
+      key: 'packs-stack',
+      index,
+      routes: routes.map((name) => ({ name })),
+    },
+  });
+
+  async function headerOf(route: ReturnType<typeof packsRoute>) {
+    await renderDrawer();
+    const navigator = mockDrawerNavigatorProps.at(-1);
+    const options = navigator?.screenOptions({
+      navigation: { getState: () => ({ routes: [] }) },
+      route,
+    });
+    return render(<>{options.headerLeft()}</>);
+  }
+
+  it('shows no arrow on the list, which is the stack root', async () => {
+    const { queryByTestId } = await headerOf(packsRoute(0, 'PackList'));
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it.each(['PackForm', 'PackBrowse', 'ShippedPacks'])('shows an arrow on %s', async (screen) => {
+    const { queryByTestId } = await headerOf(packsRoute(1, 'PackList', screen));
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
+  });
+
+  /**
+   * The other route the drawer reads: the focused nested name. `PackList` has to be listed as a
+   * stack root, or the list itself would carry an arrow pointing at nothing.
+   */
+  const focusOn = (screen: string | undefined) => {
+    (
+      jest.requireMock('@react-navigation/native').getFocusedRouteNameFromRoute as jest.Mock
+    ).mockReturnValue(screen);
+  };
+
+  afterEach(() => focusOn(undefined));
+
+  it('shows no arrow when the focused nested route is the list', async () => {
+    focusOn('PackList');
+    const { queryByTestId } = await headerOf(packsRoute(0, 'PackList'));
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it('shows an arrow when the focused nested route is the form', async () => {
+    focusOn('PackForm');
+    const { queryByTestId } = await headerOf(packsRoute(0, 'PackForm'));
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
   });
 });

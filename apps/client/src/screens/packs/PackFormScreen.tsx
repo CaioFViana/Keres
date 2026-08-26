@@ -2,7 +2,7 @@ import type { PackSelectionType } from '@keres/shared';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import Select from '../../components/common/inputs/Select/Select';
@@ -11,12 +11,17 @@ import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/Key
 import { useDrizzle } from '../../db';
 import type { StorySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { createPackService } from '../../services/storymanagement/PackService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
@@ -49,6 +54,9 @@ const PackFormScreen = () => {
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
   const { userId } = useUserSettingsStore();
+  const commonContainerStyles = getCommonContainerStyles(colors);
+  const commonInputStyles = getCommonInputStyles(colors);
+  const scrollBottomPadding = useFormScrollBottomPadding();
   useDocumentTitle(packId ? t('packs_reextract') : t('packs_create'));
 
   const [stories, setStories] = useState<StorySelect[]>([]);
@@ -180,8 +188,7 @@ const PackFormScreen = () => {
   ]);
 
   const styles = StyleSheet.create({
-    ...getCommonContainerStyles(colors),
-    ...commonFormStyleDefs(colors),
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -197,7 +204,7 @@ const PackFormScreen = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
+      <View style={[commonContainerStyles.container, { justifyContent: 'center' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -225,8 +232,13 @@ const PackFormScreen = () => {
   );
 
   return (
-    <KeyboardAwareScreen>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+    // `KeyboardAwareScreen` is itself the scroll view; a second one nested inside it took the
+    // scrolling away from the one that knows where the keyboard is.
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <>
         <Text style={styles.label}>{t('packs_source_story')}</Text>
         <Select
           value={sourceStoryId}
@@ -257,12 +269,18 @@ const PackFormScreen = () => {
 
         <Text style={styles.sectionTitle}>{t('packs_details')}</Text>
         <Text style={styles.label}>{t('name')}</Text>
-        <TextInput value={name} onChangeText={setName} placeholder={t('name')} />
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder={t('name')}
+          style={commonInputStyles.input}
+        />
         <Text style={styles.label}>{t('description')}</Text>
         <TextInput
           value={description}
           onChangeText={setDescription}
           placeholder={t('description')}
+          style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
           multiline
         />
         <Text style={styles.label}>{t('language')}</Text>
@@ -270,9 +288,15 @@ const PackFormScreen = () => {
           value={language}
           onChangeText={setLanguage}
           placeholder={t('packs_language_placeholder')}
+          style={commonInputStyles.input}
         />
         <Text style={styles.label}>{t('author')}</Text>
-        <TextInput value={authorName} onChangeText={setAuthorName} placeholder={t('author')} />
+        <TextInput
+          value={authorName}
+          onChangeText={setAuthorName}
+          placeholder={t('author')}
+          style={commonInputStyles.input}
+        />
 
         <View style={styles.actions}>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">
@@ -282,7 +306,7 @@ const PackFormScreen = () => {
             {t('cancel')}
           </Button>
         </View>
-      </ScrollView>
+      </>
     </KeyboardAwareScreen>
   );
 };

@@ -155,7 +155,7 @@ Ranked by how well they add capability without imposing an ontology.
 | 6 | **Research and reference items** — URLs, PDFs, clippings | Scrivener (Research), Milanote | **Good** — a dictionary that cannot hold a reference is odd. | `MEDIA_TYPES` is exactly `['image', 'video', 'audio']`. No link entity, no document entity. |
 | 7 | **Family trees / genealogy** | Kanka, World Anvil, Family Echo | **Good** — descriptive; optional per story. | `CharacterRelation` is a typed unordered pair drawn radially; no generation or descent semantics. |
 | 8 | **Series above Story** | LivingWriter, Campfire, World Anvil | **Good** — a shared dictionary across works is the premise scaled up. | `Story` is the top container. Sharing a character across two works means export/import, which clones with new ids. |
-| 9 | **Generators** — names, tables, dice | Kanka, World Anvil | **Neutral** — a toy, entirely opt-in. | Absent. |
+| 9 | ~~**Generators** — names, tables, dice~~ | Kanka, World Anvil | **Cut** — ships one list shared by every user; see §5.4. | Absent. |
 | 10 | **Prebuilt entity-sheet templates** | Campfire, World Anvil | **Neutral if opt-in** — see §5.2. | `StorySchemaField` is a better mechanism than most competitors ship; no ready-made sets exist. |
 | 11 | **Guided questionnaires** — character interviews, thesauri | Bibisco, One Stop for Writers | **Careful** — helpful as prompts, prescriptive if they become required fields. | Mechanism exists (Suggestions, custom attributes); content does not. |
 | 12 | **Structure templates** (Save the Cat, 3-act, Story Circle) | Plottr | **Only as seeds** — see §5.2. | 55 device pages exist as *reading material* only. |
@@ -231,15 +231,12 @@ within each tier, cheapest and most aligned first.
 | 12 | Image maps with pinned locations | §4 #5 | High |
 | 13 | Series above `Story` | §4 #8 | High — touches every story-scoped query |
 
-**Tier C — opt-in content, no imposition** (all cheap; they use mechanisms that already exist)
+**Tier C — opt-in content, no imposition** — all of it is one feature; see §5.4
 
 | # | Item | Ref | Cost |
 | ---: | --- | --- | --- |
-| 14 | Custom-attribute packs — including the withdrawn craft fields, as a pack | §5.2 | Low |
-| 15 | Structure templates, as seeds only | §5.2 | Low |
-| 16 | Prebuilt entity-sheet templates per genre/medium | §4 #10 | Low |
-| 17 | Guided questionnaires and prompts | §4 #11 | Low |
-| 18 | Generators — names, tables, dice | §4 #9 | Low |
+| 14 | **Story packs**, chosen at story creation — carries schema fields, suggestion catalogues, tags, structure skeletons, stat systems and story settings | §5.4 | Low mechanism, content is the cost |
+| — | ~~Generators — names, tables, dice~~ | §5.4 | **Cut** — see the shipped-content rule |
 
 **Tier D — does not follow from the premise**
 
@@ -251,6 +248,65 @@ within each tier, cheapest and most aligned first.
 
 **Suggested first batch:** 1, 2, 3 and 6. Three are constraint removals, the fourth is the least
 prescriptive feature available, and none of them creates an entity.
+
+### 5.4 Story packs
+
+Items 14–17 of the earlier draft were four names for one mechanism, and item 18 was cut. What
+follows is the agreed shape.
+
+**Chosen at story creation, never applied later.** Applying a pack to an existing story would flood
+the operation log with dozens of synthetic operations interleaved with real history, and would risk
+colliding with fields the writer already filled in. At creation there is no history to pollute and
+nothing at stake: a new story uploads to a server whole, through the bootstrap path
+(`uploadNewStoryToServer` / `POST /stories/import`), not as incremental operations.
+
+**Collisions are deliberate.** Because the writer picks several packs in one moment, two packs
+claiming the same `StorySchemaField` key is a decision the picker presents — conflict or merge — not
+an accident against existing work.
+
+**Payload.** Any subset of, all of them existing entities:
+
+| Content | Serves |
+| --- | --- |
+| `storySchemaFields` | custom fields; `description` doubles as the interview question for questionnaire packs (already rendered under the field) |
+| `suggestions` | value catalogues |
+| `tags` | a starter tag set |
+| `chapters` + `scenes` | a structure skeleton — a beat sheet is 15 named scenes with empty summaries |
+| `stats` + `statStrengths` | a stat system with its tier ladder — "D&D stats" is six `Stat` rows plus a ladder |
+| story settings | `type`, `statSystem`, `statNotation`, `normalizeSceneTiming` — safe to set **only** at creation |
+| `worldRules` / `notes` | reference or prompts |
+
+Examples worth shipping: a novel-craft field pack (the withdrawn native scene fields, as opt-in
+fields), a Save the Cat / three-act / Story Circle skeleton, "D&D stats", "film skeleton", and
+medium packs that pair with the vocabulary layer (§2.5) — a "Comic" pack installing the vocabulary
+map *and* the fields *and* the catalogues is the concrete delivery of "any medium".
+
+**It cannot become a rail.** Nothing records that a pack was applied — no `packId` column anywhere.
+Creation-time-only makes this structural rather than merely a rule: a pack that exists only before
+the story does cannot validate the story afterwards. Everything it creates is an ordinary entity the
+writer owns, edits and deletes from the first second.
+
+**Risks.** Creation-time-only removes most of them:
+
+| Risk | Status |
+| --- | --- |
+| Key collisions with existing work | Gone — becomes a deliberate choice between packs in the picker |
+| Uninstall losing `AttributeValue` data | Gone — there is no data yet |
+| Operation-log flood on a synced story | Gone — a new story bootstraps whole |
+| Seed becoming a rail | Structurally prevented |
+| **Translation and bundle maintenance** | **Remains** — every pack is content in two languages, the problem already documented in the risks of `EXAMPLE_STORIES_PLAN.md` |
+
+**Why generators were cut.** A generator would ship one list shared by every Keres user. The app
+today contains no strings that limit it — everything is either translated UI chrome or entered by
+the writer. That yields a general rule worth keeping:
+
+> Shipped content is acceptable when installing it **transfers ownership** — the writer gets an
+> ordinary copy they can edit and delete. It is not acceptable when it stays an external shared list
+> the writer draws from but never owns.
+
+Packs and example stories pass that test; a name generator does not. The cheap version that does
+pass is a "pick at random" button over the story's own `Suggestion` catalogue, which is the writer's
+own list.
 
 ---
 

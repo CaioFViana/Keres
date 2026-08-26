@@ -10,7 +10,14 @@
 if (process.env.DATABASE_DRIVER === 'sqlite') {
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
-  process.env.DATABASE_URL ??= `file:${join(tmpdir(), 'keres-test.db')}`;
+  // `??=` is not enough here, unlike everywhere else in this file: the SQLite suite runs in the same
+  // CI job as the Postgres one, which exports a `postgres://` URL for the whole job. Defaulting would
+  // leave that URL in place and libsql refuses it outright (URL_SCHEME_NOT_SUPPORTED). An inherited
+  // URL this client cannot open is replaced; a deliberate `file:`/`libsql:` one is respected.
+  const libsqlUrl = /^(file|libsql|wss?|https?):/.test(process.env.DATABASE_URL ?? '');
+  if (!libsqlUrl) {
+    process.env.DATABASE_URL = `file:${join(tmpdir(), 'keres-test.db')}`;
+  }
 } else {
   // The port is the same as `docker-compose.test.yml`'s, and comes from the same place:
   // `KERES_TEST_DB_PORT`. The 45432 default exists because the 55389-55488 range is reserved by Windows

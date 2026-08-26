@@ -1,3 +1,5 @@
+import type { PackContentSummary } from '@keres/shared';
+
 /** Formatting shared by the listing and the story page. */
 
 export function formatBytes(bytes: number): string {
@@ -39,4 +41,34 @@ export function genreList(genre: string | null): string[] {
     .split(/[,;/]/)
     .map((part) => part.trim())
     .filter(Boolean);
+}
+
+/**
+ * What a pack contains, as short phrases.
+ *
+ * Only the non-empty parts: a pack of nothing but tags should say "6 tags" and stop, not carry four
+ * zeroes across the card. The stat notation rides along with the axes because a ladder of letters
+ * and a ladder of numbers are different offers.
+ */
+export function packContentLines(
+  summary: PackContentSummary,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string[] {
+  const lines: string[] = [];
+  if (summary.fieldCount > 0) {
+    lines.push(t('pack.fieldCount', { count: summary.fieldCount }));
+  }
+  if (summary.statCount > 0) {
+    lines.push(t('pack.statCount', { count: summary.statCount }));
+  }
+  if (summary.tagCount > 0) {
+    lines.push(t('pack.tagCount', { count: summary.tagCount }));
+  }
+  if (summary.suggestionCount > 0) {
+    lines.push(t('pack.suggestionCount', { count: summary.suggestionCount }));
+  }
+  if (summary.statSystem) {
+    lines.push(t(`pack.notation.${summary.statNotation}`));
+  }
+  return lines;
 }

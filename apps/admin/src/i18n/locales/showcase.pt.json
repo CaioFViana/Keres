@@ -34,7 +34,8 @@
   },
   "nav": {
     "stories": "Histórias",
-    "about": "Sobre"
+    "about": "Sobre",
+    "packs": "Pacotes"
   },
   "story": {
     "back": "← Todas as histórias",
@@ -62,5 +63,71 @@
     "system": "Tema: Sistema",
     "light": "Tema: Claro",
     "dark": "Tema: Escuro"
+  },
+  "packs": {
+    "eyebrow": "Estrutura compartilhada",
+    "title": "Pacotes neste servidor",
+    "intro": "Um pacote é a forma reutilizável de uma história - campos personalizados, eixos de status, conjuntos de etiquetas, listas de sugestões - oferecida para qualquer pessoa começar uma história nova. Não carrega personagens, cenas nem texto: a história de ninguém viaja dentro de um.",
+    "sharedPacks": "Pacotes compartilhados",
+    "loading": "Carregando pacotes...",
+    "loadFailed": "Não foi possível carregar os pacotes.",
+    "empty": "Ninguém compartilhou um pacote aqui ainda."
+  },
+  "pack": {
+    "back": "← Todos os pacotes",
+    "version": "v{{version}}",
+    "sharedBy": "compartilhado por {{username}}#{{tag}}",
+    "sharedThis": "compartilhou este pacote",
+    "sharedThisShort": "compartilhou este",
+    "loading": "Carregando pacote...",
+    "loadFailed": "Não foi possível carregar este pacote.",
+    "author": "Autor",
+    "language": "Idioma",
+    "statSystem": "Sistema de status",
+    "statSystemOff": "Não usado",
+    "contentsTitle": "O que tem dentro",
+    "contentsIntro": "Tudo que este pacote carrega está listado aqui. Não há mais nada a desbloquear.",
+    "fields": "Campos personalizados",
+    "stats": "Eixos de status",
+    "tags": "Etiquetas",
+    "suggestions": "Listas de sugestões",
+    "required": "obrigatório",
+    "secondaryStat": "secundário",
+    "defaultLadder": "Escala padrão",
+    "fieldCount_one": "{{count}} campo",
+    "fieldCount_other": "{{count}} campos",
+    "statCount_one": "{{count}} eixo de status",
+    "statCount_other": "{{count}} eixos de status",
+    "tagCount_one": "{{count}} etiqueta",
+    "tagCount_other": "{{count}} etiquetas",
+    "suggestionCount_one": "{{count}} sugestão",
+    "suggestionCount_other": "{{count}} sugestões",
+    "entryCount_one": "{{count}} entrada",
+    "entryCount_other": "{{count}} entradas",
+    "howtoTitle": "Usando este pacote",
+    "howtoBody": "No Keres, adicione este servidor na sua conta e escolha o pacote ao criar uma história. A estrutura dele é aplicada à história nova e a partir daí é sua para mudar.",
+    "notation": {
+      "letter": "Escala de letras",
+      "number": "Escala de números"
+    },
+    "entity": {
+      "Character": "Personagens",
+      "Location": "Locais",
+      "Item": "Itens",
+      "Scene": "Cenas",
+      "Chapter": "Capítulos",
+      "Note": "Notas",
+      "WorldRule": "Regras de mundo"
+    },
+    "attributeType": {
+      "text": "Texto",
+      "long_text": "Texto longo",
+      "number": "Número",
+      "boolean": "Sim ou não",
+      "date": "Data",
+      "suggestion": "Sugestão",
+      "suggestion_list": "Lista de sugestões",
+      "entity": "Ligação com uma entidade"
+    }
   }
 }

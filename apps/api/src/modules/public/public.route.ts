@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia';
 import { APP_RELEASE } from '@keres/shared';
 import { jwtShowcase } from '../../config/jwt';
 import { publicationStorageService } from '../../services/PublicationStorageService';
+import { packService } from '../../services/PackService';
 import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
@@ -114,6 +115,35 @@ export const publicRoutes = new Elysia()
             summary: 'List the public stories',
             description:
               'Password-protected stories are never included. Supports If-None-Match so the page can poll cheaply.',
+            tags: ['Showcase'],
+          },
+        },
+      )
+      .get('/packs', async () => packService.listPublic(), {
+        detail: {
+          summary: 'List the public packs',
+          description:
+            'Packs whose author flagged them public. One shared with the server but left private is never included, the same rule the story listing follows.',
+          tags: ['Showcase'],
+        },
+      })
+      .get(
+        '/packs/:packId',
+        async ({ params, set }) => {
+          const pack = await packService.getPublicById(params.packId);
+          if (!pack) {
+            // A private pack answers 404 rather than 403: it is not on offer here, and saying
+            // "forbidden" would confirm it exists.
+            set.status = 404;
+            throw new AppError(404, 'Not found.');
+          }
+          return pack;
+        },
+        {
+          params: t.Object({ packId: t.String() }),
+          detail: {
+            summary: 'Download a public pack',
+            description: 'Returns the pack whole. No account is needed.',
             tags: ['Showcase'],
           },
         },

@@ -19,6 +19,8 @@ import migration_15 from './0014_scene_index_one_based';
 import migration_16 from './0015_relation_uniqueness';
 import migration_17 from './0016_auto_link_mentions';
 import migration_18 from './0017_completeness_checks';
+import migration_19 from './0018_packs';
+import migration_20 from './0019_pack_visibility';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -39,6 +41,8 @@ const migrations = [
   { id: 16, name: '0015_relation_uniqueness', run: migration_16 },
   { id: 17, name: '0016_auto_link_mentions', run: migration_17 },
   { id: 18, name: '0017_completeness_checks', run: migration_18 },
+  { id: 19, name: '0018_packs', run: migration_19 },
+  { id: 20, name: '0019_pack_visibility', run: migration_20 },
 ];
 
 export default migrations;

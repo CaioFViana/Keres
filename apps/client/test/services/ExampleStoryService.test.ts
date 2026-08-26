@@ -361,3 +361,37 @@ it('installs the same bundled example as independent local copies', async () => 
     expect.arrayContaining([first.storyId, second.storyId]),
   );
 });
+
+/**
+ * A `Suggestion.type` of `custom:<fieldId>` is a text column that is secretly an id.
+ *
+ * Until this was fixed, the clone remapped the custom fields and left the catalogue rows pointing at
+ * the ids they had inside the package. The field kept working and its suggestions were simply never
+ * found - silent, and true of every installed example and every imported `.json`. The 96 packaged
+ * rows in that shape are the reason this is asserted over the whole catalogue rather than one case.
+ */
+it('keeps every custom field reachable from its own suggestion catalogue after installing', async () => {
+  const service = createExampleStoryService(database.db);
+
+  const installed = await service.installExampleStory(
+    '01ARZ3NDEKTSV4RRFFQ69G5FB0',
+    'cinderella',
+    'en',
+  );
+  expect(installed).toMatchObject({ status: 'installed' });
+  if (installed.status !== 'installed') return;
+
+  const fields = await database.db.query.storySchemaFields.findMany();
+  const stored = await database.db.query.suggestions.findMany();
+  const customTypes = stored
+    .map((suggestion) => suggestion.type)
+    .filter((type) => type.startsWith('custom:'));
+
+  // The example is only a useful witness if it actually ships catalogues for custom fields.
+  expect(customTypes.length).toBeGreaterThan(0);
+
+  const liveTypes = new Set(fields.map((field) => `custom:${field.id}`));
+  const orphaned = [...new Set(customTypes)].filter((type) => !liveTypes.has(type));
+
+  expect(orphaned).toEqual([]);
+});

@@ -83,6 +83,18 @@ jest.mock(
 jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
 
+jest.mock('../../src/screens/packs/PackListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/packs/PackFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/packs/PackBrowseScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/enterstack/AppSettingsScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -151,7 +163,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(9);
+  expect(mockDrawerScreens).toHaveLength(12);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -167,6 +179,9 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'FriendshipDrawer',
     'ImportExport',
     'PublishStory',
+    'Packs',
+    'PackForm',
+    'PackBrowse',
     'ExampleStories',
     'StoryDevicesDrawer',
     'HelpDrawer',

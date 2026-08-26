@@ -28,6 +28,7 @@ export const helpSections: HelpSection[] = [
       'story-analysis',
       'import-export',
       'publish-story',
+      'packs',
       'example-stories',
     ],
   },

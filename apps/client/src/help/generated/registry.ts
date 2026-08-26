@@ -71,6 +71,8 @@ import narrativeElements_en from '../content/narrative-elements/en';
 import narrativeElements_pt from '../content/narrative-elements/pt';
 import notes_en from '../content/notes/en';
 import notes_pt from '../content/notes/pt';
+import packs_en from '../content/packs/en';
+import packs_pt from '../content/packs/pt';
 import plots_en from '../content/plots/en';
 import plots_pt from '../content/plots/pt';
 import publishStory_en from '../content/publish-story/en';
@@ -156,6 +158,7 @@ export type GeneratedHelpPageId =
   | 'locations'
   | 'narrative-elements'
   | 'notes'
+  | 'packs'
   | 'plots'
   | 'publish-story'
   | 'scene-timing'
@@ -321,6 +324,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   notes: {
     en: notes_en,
     pt: notes_pt,
+  },
+  packs: {
+    en: packs_en,
+    pt: packs_pt,
   },
   plots: {
     en: plots_en,

@@ -25,6 +25,9 @@ import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
+import PackBrowseScreen from '../screens/packs/PackBrowseScreen';
+import PackFormScreen from '../screens/packs/PackFormScreen';
+import PackListScreen from '../screens/packs/PackListScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
@@ -65,6 +68,9 @@ export type StorySelectionDrawerParamList = {
   ImportExport: undefined;
   PublishStory: undefined;
   ExampleStories: undefined;
+  Packs: undefined;
+  PackForm: { packId?: string } | undefined;
+  PackBrowse: undefined;
   Settings: undefined;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
@@ -374,6 +380,37 @@ const StorySelectionNavigator = () => {
         Mesmo raciocínio do Import/Export logo acima: instalar um exemplo cria uma história
         nova, então não depende de (nem pertence ao menu de) uma história já aberta.
       */}
+      {/*
+        Same reasoning as Import/Export and the examples above: a pack is made from a story and
+        applied when a new one is created, so it belongs to the app's menu rather than to any single
+        story's.
+      */}
+      <Drawer.Screen
+        name="Packs"
+        component={PackListScreen}
+        options={{
+          title: t('packs_title'),
+          drawerLabel: t('packs_title'),
+        }}
+      />
+      <Drawer.Screen
+        name="PackForm"
+        component={PackFormScreen}
+        options={{
+          title: t('packs_create'),
+          // Reached from the pack list, never from the menu itself.
+          drawerItemStyle: { height: 0, overflow: 'hidden' },
+        }}
+      />
+      <Drawer.Screen
+        name="PackBrowse"
+        component={PackBrowseScreen}
+        options={{
+          title: t('packs_browse_title'),
+          // Reached from the pack list, never from the menu itself.
+          drawerItemStyle: { height: 0, overflow: 'hidden' },
+        }}
+      />
       <Drawer.Screen
         name="ExampleStories"
         component={ExampleStoriesScreen}

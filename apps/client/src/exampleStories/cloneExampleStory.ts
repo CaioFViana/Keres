@@ -56,6 +56,22 @@ export function cloneExampleStoryForInstall(
   registerAll(example.modes);
 
   const remapId = (id: string) => idMap.get(id) ?? id;
+  /**
+   * A `Suggestion.type` of `custom:<fieldId>` is a text column that is secretly an id: it is built
+   * from the live field id by `SuggestionService.customAttributeSuggestionType`. Remapping the
+   * fields without remapping this leaves every custom field's catalogue pointing at the id it had
+   * in the source - the field works, the suggestions are simply never found. Silent, and it applied
+   * to every installed example story and every imported `.json` until this was added.
+   *
+   * `list_<ulid>_<slug>` needs no such treatment: that ULID is minted by `namedListType` for the
+   * list itself, is not an entity id, and stays consistent with its catalogue entry precisely
+   * because neither side is remapped.
+   */
+  const CUSTOM_SUGGESTION_PREFIX = 'custom:';
+  const remapSuggestionType = (type: string) =>
+    type.startsWith(CUSTOM_SUGGESTION_PREFIX)
+      ? `${CUSTOM_SUGGESTION_PREFIX}${remapId(type.slice(CUSTOM_SUGGESTION_PREFIX.length))}`
+      : type;
   const remapNullableId = (id: string | null) => (id === null ? null : remapId(id));
   const cloneEntity = <T extends EntityWithId>(entity: T): T => ({
     ...entity,
@@ -127,7 +143,11 @@ export function cloneExampleStoryForInstall(
       tagId: remapId(relation.tagId),
       relationId: remapId(relation.relationId),
     })),
-    suggestions: example.suggestions.map((suggestion) => ({ ...cloneEntity(suggestion), storyId })),
+    suggestions: example.suggestions.map((suggestion) => ({
+      ...cloneEntity(suggestion),
+      storyId,
+      type: remapSuggestionType(suggestion.type),
+    })),
     characterRelations: example.characterRelations.map((relation) => ({
       ...cloneEntity(relation),
       storyId,

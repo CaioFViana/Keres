@@ -3,6 +3,7 @@ import { APP_RELEASE } from '@keres/shared';
 import { Elysia } from 'elysia';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
+import { packRoutes } from './modules/pack/pack.route';
 import { friendRoutes } from './modules/friend/friend.route';
 import { mediaRoutes } from './modules/media/media.route';
 import { publicRoutes } from './modules/public/public.route';
@@ -106,6 +107,7 @@ export function createApiRoutes() {
     .group('/media', (app) => app.use(mediaRoutes))
     .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
     .group('/friend', (app) => app.use(friendRoutes))
+    .group('/packs', (app) => app.use(packRoutes))
     .group('/user', (app) => app.use(userRoutes))
     .group('/ws', (app) => app.use(wsRoutes))
     .group('/public', (app) => app.use(publicRoutes));

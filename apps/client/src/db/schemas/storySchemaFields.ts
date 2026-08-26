@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
-import type { StorySchemaEntityType } from '@keres/shared';
+import type { AttributeType, StorySchemaEntityType } from '@keres/shared';
 
 export const storySchemaFields = sqliteTable(
   'story_schema_fields',
@@ -11,8 +11,10 @@ export const storySchemaFields = sqliteTable(
     name: text('name').notNull(),
     key: text('key').notNull(),
     description: text('description'),
-    type: text('type').notNull(),
-    targetEntityType: text('target_entity_type'),
+    // Typed from the shared union, like `entityType` above: SQLite has no ENUM, and without
+    // this the column reads back as a bare `string` and every consumer has to re-narrow it.
+    type: text('type').$type<AttributeType>().notNull(),
+    targetEntityType: text('target_entity_type').$type<StorySchemaEntityType>(),
     isRequired: integer('is_required', { mode: 'boolean' }).notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),

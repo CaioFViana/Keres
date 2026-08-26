@@ -47,8 +47,22 @@
     {
       "idx": 6,
       "version": "6",
-      "when": 1787759281625,
+      "when": 1787766775548,
       "tag": "0006_completeness_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1787770693914,
+      "tag": "0007_packs",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1787772218946,
+      "tag": "0008_pack_visibility",
       "breakpoints": true
     }
   ]

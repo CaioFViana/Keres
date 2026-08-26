@@ -179,6 +179,16 @@ function writeJsonFile(filePath: string, data: Record<string, any>) {
 
 // --- Source scanning ---------------------------------------------------------------
 
+/** A test directory, or a `.test.ts`/`.spec.ts` file, in any of the conventions used in this repo. */
+function isTestPath(entry: string): boolean {
+  return (
+    entry === 'test' ||
+    entry === 'tests' ||
+    entry === '__tests__' ||
+    /\.(test|spec)\.tsx?$/.test(entry)
+  );
+}
+
 function walkSourceFiles(rootDir: string, excludedPaths: string[]): string[] {
   const files: string[] = [];
   const walk = (dir: string) => {
@@ -194,6 +204,11 @@ function walkSourceFiles(rootDir: string, excludedPaths: string[]): string[] {
         entry === 'node_modules' ||
         entry === 'dist' ||
         entry === '.expo' ||
+        // Tests, never a source of keys. A key belongs to the code under test, which is scanned
+        // anyway; what a test file contributes is noise that looks exactly like a key. The `label:`
+        // rule below reads `{ label: 'F' }` inside a stat-ladder fixture, or a `label: 'mãe'` inside
+        // a `toMatchObject`, as a translation request - and reports a missing key nobody can add.
+        isTestPath(entry) ||
         excludedPaths.includes(entryPath)
       )
         continue;

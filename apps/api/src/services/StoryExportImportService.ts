@@ -2,9 +2,13 @@ import type { FullStoryExportType } from '@keres/shared';
 import {
   AttributeType,
   CURRENT_STORY_FORMAT_VERSION,
+  describeStoryIntegrityViolations,
+  findStoryExportIntegrityErrors,
   FullStoryExportSchema,
   migrateStoryExport,
+  pruneDanglingStoryExportRows,
   scenesToUnflag,
+  sortIdPair,
   StoryExportVersionError,
 } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm'; // Import sql for aggregate functions
@@ -169,43 +173,48 @@ export class StoryExportImportService {
 
     const serverLastOperationVersion = latestOperation?.version || 1; // Default to 1 if no operations found
 
-    const fullStory = FullStoryExportSchema.parse({
-      story,
-      chapters,
-      scenes,
-      choices,
-      choiceCheckGroups,
-      choiceChecks,
-      effects,
-      characters,
-      locations,
-      locationRelations,
-      worldRules,
-      notes,
-      tags,
-      suggestions,
-      characterRelations,
-      characterScenes,
-      plots,
-      plotScenes,
-      galleryItems,
-      galleryRelations,
-      items,
-      itemJourneys,
-      tagRelations,
-      noteRelations,
-      storySchemaFields,
-      attributeValues,
-      favorites,
-      comments,
-      seeAlsoRelations,
-      stats,
-      statStrengths,
-      statRelations,
-      modes,
-      serverLastOperationVersion: serverLastOperationVersion,
-      formatVersion: CURRENT_STORY_FORMAT_VERSION,
-    });
+    // Soft-deleted entities are filtered out above; the relations pointing at them would otherwise
+    // travel inside the package and re-import as links to nothing. The same pruning the client's
+    // export runs, from the same rule.
+    const fullStory = FullStoryExportSchema.parse(
+      pruneDanglingStoryExportRows({
+        story,
+        chapters,
+        scenes,
+        choices,
+        choiceCheckGroups,
+        choiceChecks,
+        effects,
+        characters,
+        locations,
+        locationRelations,
+        worldRules,
+        notes,
+        tags,
+        suggestions,
+        characterRelations,
+        characterScenes,
+        plots,
+        plotScenes,
+        galleryItems,
+        galleryRelations,
+        items,
+        itemJourneys,
+        tagRelations,
+        noteRelations,
+        storySchemaFields,
+        attributeValues,
+        favorites,
+        comments,
+        seeAlsoRelations,
+        stats,
+        statStrengths,
+        statRelations,
+        modes,
+        serverLastOperationVersion: serverLastOperationVersion,
+        formatVersion: CURRENT_STORY_FORMAT_VERSION,
+      }),
+    );
 
     return fullStory;
   }
@@ -221,6 +230,19 @@ export class StoryExportImportService {
       throw err;
     }
     const validatedFullStory = FullStoryExportSchema.parse(migrated);
+
+    // The schema validates each row on its own; this validates the file as a set. Some of it the
+    // database would catch anyway - but only halfway through the transaction, as a constraint
+    // violation with a column name in it and nothing the caller can act on. And some of it it would
+    // not catch at all: the loops below remap ids without sorting the two ends of a symmetric
+    // relation, so (A,B) and (B,A) both get past the unique constraint on the ordered pair.
+    const integrityErrors = findStoryExportIntegrityErrors(validatedFullStory);
+    if (integrityErrors.length) {
+      throw new AppError(
+        422,
+        `This story package contradicts itself and cannot be imported: ${describeStoryIntegrityViolations(integrityErrors)}`,
+      );
+    }
 
     // Fails fast before opening the transaction: importing a whole story and only then refusing it would
     // leave the user with no idea why nothing was saved, and would burn database work on an import that
@@ -600,12 +622,19 @@ export class StoryExportImportService {
             `Import Error: Character ID 2 ${original.character2Id} not found in ID map for character relation ${original.id}.`,
           );
         }
+        // Sorted, exactly as `CharacterRelationSyncHandler` does before every write. The unique
+        // constraint is on the ordered pair, so without this a package carrying (A,B) and (B,A)
+        // would install two rows for one relation.
+        const [sortedCharacter1Id, sortedCharacter2Id] = sortIdPair(
+          mappedCharacterId1,
+          mappedCharacterId2,
+        );
         return {
           ...original,
           id: newId,
           storyId: targetStoryId,
-          character1Id: mappedCharacterId1,
-          character2Id: mappedCharacterId2,
+          character1Id: sortedCharacter1Id,
+          character2Id: sortedCharacter2Id,
           version: 1,
           createdAt: now,
           updatedAt: now,

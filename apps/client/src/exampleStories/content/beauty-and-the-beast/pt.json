@@ -27,9 +27,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Promessa de Retorno",
+      "name": "Uma Promessa de Retorno",
       "index": 1,
-      "summary": "O conflito central e seus participantes são apresentados.",
+      "summary": "Um mercador arruinado colhe uma rosa que não lhe foi oferecida, e a dívida que contrai é paga pela filha que a pediu.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confronto",
+      "name": "A Mesma Pergunta Toda Noite",
       "index": 2,
-      "summary": "As consequências crescem e os personagens precisam decidir como reagir.",
+      "summary": "Bela recebe tudo no castelo, menos a única coisa que pede, e recusa a única coisa que lhe pedem, toda noite, por todo o tempo em que fica.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolução",
+      "name": "Dez Dias, e Um de Atraso",
       "index": 3,
-      "summary": "Os fios principais convergem e revelam suas consequências.",
+      "summary": "As irmãs a seguram além do prazo de propósito. O que ela faz com o espelho decide qual dos dois finais a Fada permite.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -72,10 +72,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
-      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
-      "name": "A rosa pedida",
+      "locationId": "4AF8S592M5N1CS6DF3DTN1ND4H",
+      "name": "Uma rosa, e mais nada",
       "index": 1,
-      "summary": "Perdido na floresta ao voltar de uma viagem, o Mercador se abriga no castelo da Fera e colhe uma rosa para Bela, o único presente que ela havia pedido - e a Fera exige sua vida em troca do roubo.",
+      "summary": "O mercador, partindo atrás do boato de um navio recuperado, pergunta às três filhas o que querem que ele traga. Duas pedem vestidos e joias. Bela pede uma rosa, achando que está pedindo nada.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -94,10 +94,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
-      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
-      "name": "A oferta de Bela",
+      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
+      "name": "Perdido na floresta",
       "index": 2,
-      "summary": "Ao saber do ocorrido, Bela corre até o castelo e se oferece para viver ali no lugar do pai.",
+      "summary": "O navio se foi, e com ele o último dinheiro. A neve fecha o caminho de volta, e o mercador segue uma luz entre as árvores até um castelo onde as portas se abrem, a lareira está acesa e não há uma alma a quem agradecer.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -117,9 +117,9 @@
       "deletedAt": null,
       "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
       "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
-      "name": "Uma gentileza estranha",
+      "name": "A rosa roubada e as condições",
       "index": 3,
-      "summary": "A Fera trata Bela com cortesia inesperada, dando-lhe todo conforto, e todas as noites pergunta se ela aceita se casar com ele; ela sempre recusa, embora comece a apreciar sua companhia.",
+      "summary": "Partindo ao amanhecer, ele corta uma rosa do jardim para Bela, e a Fera está ali antes que o caule desça. As condições são a vida dele, ou uma filha que venha em seu lugar e venha por vontade própria.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -138,10 +138,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
-      "locationId": "6V6DQ7VA05TVKS0Y5XYRP7T4GN",
-      "name": "Licença para partir",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "name": "Bela toma o lugar dele",
       "index": 4,
-      "summary": "Bela sente saudade da família, e a Fera lhe dá um anel mágico para visitá-los por uma semana - avisando que morrerá de tristeza se ela não voltar a tempo.",
+      "summary": "Bela ouve tudo e vai, contra a recusa do pai, porque a promessa tem o nome dela e ela não vai deixar que outro a pague. A Fera a recebe à porta e pergunta se ela veio por vontade própria.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -160,10 +160,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3RHY907SK09KVW2D3KBXBQGC6X",
-      "locationId": "4AF8S592M5N1CS6DF3DTN1ND4H",
-      "name": "A inveja das irmãs",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "name": "O jantar na mesa comprida",
       "index": 1,
-      "summary": "Vendo Bela feliz e bem tratada, suas irmãs a convencem a ficar além do prazo prometido, na esperança de que a Fera sofra por isso.",
+      "summary": "Ela janta sozinha e a Fera senta na outra ponta e conversa com ela, mal. Tudo o que ela diz que gostaria aparece antes que termine de dizer, o que torna muito visível a única coisa que ela não pode ter.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -182,10 +182,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3RHY907SK09KVW2D3KBXBQGC6X",
-      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
-      "name": "Um retorno antecipado",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "name": "A biblioteca que ele lhe abre",
       "index": 2,
-      "summary": "Bela percebe a inveja por trás da insistência das irmãs e decide voltar ao castelo antes mesmo que a semana termine.",
+      "summary": "A Fera lhe dá uma biblioteca que ela não leria numa vida inteira, e não a segue lá dentro. É a primeira coisa que ele oferece que ela já queria antes de ele oferecer.",
       "gap": 2,
       "gapType": "hours",
       "duration": 10,
@@ -205,9 +205,9 @@
       "deletedAt": null,
       "chapterId": "3RHY907SK09KVW2D3KBXBQGC6X",
       "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
-      "name": "Uma visão de tristeza",
+      "name": "A mesma pergunta toda noite",
       "index": 3,
-      "summary": "Seja pelo atraso, seja por saudade antecipada, Bela sonha (ou sente) que a Fera definha sozinha no jardim, e corre de volta ao seu encontro.",
+      "summary": "Toda noite, ao fim do jantar, ele pede que ela se case com ele; toda noite ela diz que não; e toda noite ele aceita e lhe deseja boa-noite. Nenhum dos dois finge, em momento algum, que a pergunta não voltará.",
       "gap": 1,
       "gapType": "days",
       "duration": 2,
@@ -227,9 +227,9 @@
       "deletedAt": null,
       "chapterId": "3RHY907SK09KVW2D3KBXBQGC6X",
       "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
-      "name": "A confissão de Bela",
+      "name": "Licença para partir",
       "index": 4,
-      "summary": "Ao encontrar a Fera junto à fonte, Bela compreende que não pode viver sem ele e finalmente lhe confessa seu amor.",
+      "summary": "Ela pede para ver o pai, e a Fera lhe dá um anel que a leva para casa e de volta, e um espelho que mostra o que ela quiser ver. Pede apenas que ela volte em dez dias, e avisa com todas as letras que não sobreviverá se ela não voltar.",
       "gap": -2,
       "gapType": "minutes",
       "duration": 1,
@@ -248,10 +248,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3B7MBBWTCYB5BXSZX3A70HR1FZ",
-      "locationId": "6V6DQ7VA05TVKS0Y5XYRP7T4GN",
-      "name": "Um final piedoso",
+      "locationId": "4AF8S592M5N1CS6DF3DTN1ND4H",
+      "name": "A inveja das irmãs",
       "index": 1,
-      "summary": "A maldição se quebra e a Fera volta a ser príncipe. Por bondade, Bela pede à Fada que poupe suas irmãs invejosas, que passam a viver arrependidas, mas livres.",
+      "summary": "As irmãs a encontram bem-vestida, bem-alimentada e bem-tratada, e não suportam. Choram, se agarram a ela e imploram que fique mais um dia, e depois mais outro, e contam cada um com cuidado.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 45,
@@ -270,10 +270,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3B7MBBWTCYB5BXSZX3A70HR1FZ",
-      "locationId": "4AF8S592M5N1CS6DF3DTN1ND4H",
-      "name": "Um final de justiça",
+      "locationId": "6V6DQ7VA05TVKS0Y5XYRP7T4GN",
+      "name": "Uma visão no espelho",
       "index": 2,
-      "summary": "A maldição se quebra e a Fera volta a ser príncipe. A Fada, porém, julga a inveja das irmãs sem piedade, e as transforma em estátuas de pedra no portão do castelo, até que aprendam a se arrepender de verdade.",
+      "summary": "No décimo primeiro dia Bela olha no espelho e vê a Fera caída junto à fonte do jardim, sem se mexer. Ela gira o anel naquele mesmo instante, sem terminar a frase que estava dizendo.",
       "gap": 2,
       "gapType": "hours",
       "duration": 1,
@@ -291,11 +291,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Uma nova consequência",
-      "summary": "Um relato conciso desta etapa de A Bela e a Fera, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Um final misericordioso",
+      "summary": "Bela diz que o ama e a maldição se rompe. Por bondade, pede à Fada que poupe as irmãs, e a Fada concede - e diz, diante de todos, que uma misericórdia que ninguém mereceu continua sendo uma misericórdia concedida.",
       "extraNotes": null,
       "chapterId": "3B7MBBWTCYB5BXSZX3A70HR1FZ",
-      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "index": 3,
       "gap": 1,
       "gapType": "days",
@@ -313,11 +313,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Um encontro inesperado",
-      "summary": "Um relato conciso desta etapa de A Bela e a Fera, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Um final justo",
+      "summary": "Bela diz que o ama e a maldição se rompe. A Fada julga as irmãs pelo que fizeram e as deixa como estátuas no portão do castelo, para assistirem a uma felicidade que tentaram impedir, até que admitam a própria parte nela.",
       "extraNotes": null,
       "chapterId": "3B7MBBWTCYB5BXSZX3A70HR1FZ",
-      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "index": 4,
       "gap": 30,
       "gapType": "minutes",
@@ -339,7 +339,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "nextSceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
-      "text": "Continuar em direção a A oferta de Bela"
+      "text": "Continuar em direção a Perdido na floresta"
     },
     {
       "id": "106SV9FT0TF1AKBN1ZA4H8AE6X",
@@ -351,7 +351,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
       "nextSceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
-      "text": "Continuar em direção a Uma gentileza estranha"
+      "text": "Continuar em direção a A rosa roubada e as condições"
     },
     {
       "id": "3BGJPNEADCH1TVHBSMVG5QVGFF",
@@ -363,7 +363,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continuar em direção a Licença para partir"
+      "text": "Continuar em direção a Bela toma o lugar dele"
     },
     {
       "id": "5703JX3H562JNXK0A7P04GDFH6",
@@ -375,7 +375,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "nextSceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
-      "text": "Continuar em direção a A inveja das irmãs"
+      "text": "Continuar em direção a O jantar na mesa comprida"
     },
     {
       "id": "7F9442FBXXVX9SA6AWTQ0R5D2G",
@@ -387,7 +387,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
       "nextSceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
-      "text": "Continuar em direção a Um retorno antecipado"
+      "text": "Continuar em direção a A biblioteca que ele lhe abre"
     },
     {
       "id": "3GF7KKCS78EPGJH1NZGYQW415Z",
@@ -399,7 +399,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
       "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "text": "Continuar em direção a Uma visão de tristeza"
+      "text": "Continuar em direção a A mesma pergunta toda noite"
     },
     {
       "id": "10F06VEVPJWN403K97FBTRZ3X9",
@@ -411,7 +411,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "nextSceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
-      "text": "Continuar em direção a A confissão de Bela"
+      "text": "Continuar em direção a Licença para partir"
     },
     {
       "id": "7FS8EV4XNH76NP62X1M6BA00E4",
@@ -423,7 +423,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "nextSceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
-      "text": "Continuar em direção a Um final piedoso"
+      "text": "Continuar em direção a A inveja das irmãs"
     },
     {
       "id": "6QDE3GPN70BZXXE4JMCVAPY5N7",
@@ -435,7 +435,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "nextSceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
-      "text": "Continuar em direção a Um final de justiça"
+      "text": "Continuar em direção a Uma visão no espelho"
     },
     {
       "id": "5S9R6XT25KB3T7THCFW5QD0FS0",
@@ -447,7 +447,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "nextSceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "text": "Continuar em direção a Uma nova consequência"
+      "text": "Continuar em direção a Um final misericordioso"
     },
     {
       "id": "713YFK31QPP7VN9FXWMZXZZDSQ",
@@ -459,7 +459,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "nextSceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9",
-      "text": "Continuar em direção a Um encontro inesperado"
+      "text": "Continuar em direção a Um final justo"
     },
     {
       "id": "1G1MJ8402Y0DHA5RASFX3799VG",
@@ -471,7 +471,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continuar em direção a Licença para partir"
+      "text": "Continuar em direção a Bela toma o lugar dele"
     },
     {
       "id": "4FCWFGZBZE5T91YNYZGF8H33YW",
@@ -483,7 +483,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "text": "Continuar em direção a Uma visão de tristeza"
+      "text": "Continuar em direção a A mesma pergunta toda noite"
     },
     {
       "id": "48N50K3MTEVQ3DEBEB3XVDCVNR",
@@ -495,7 +495,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continuar em direção a Licença para partir"
+      "text": "Continuar em direção a Bela toma o lugar dele"
     },
     {
       "id": "3AFKX1W39TYP44CSZ8HKXBDHTR",
@@ -507,7 +507,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "nextSceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9",
-      "text": "Continuar em direção a Um encontro inesperado"
+      "text": "Continuar em direção a Um final justo"
     },
     {
       "id": "77JD24S3XNTKJ7H3AAXABFFDSG",
@@ -519,7 +519,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "nextSceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "text": "Continuar em direção a Uma nova consequência"
+      "text": "Continuar em direção a Um final misericordioso"
     }
   ],
   "characters": [
@@ -531,7 +531,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "A mais nova e mais gentil das filhas de um mercador, leitora ávida e de coração generoso.",
+      "description": "A filha mais nova de um mercador, leitora voraz e de índole generosa, que pede a menor coisa que alguém pede e paga o maior preço por ela. Vai ao castelo porque a promessa tem o nome dela.",
       "personality": "Gentil, atenciosa e incapaz de ser cruel, mesmo com quem a maltrata.",
       "motivation": "Quer poupar a vida do pai e, mais tarde, ser honesta com o próprio coração sobre a Fera.",
       "qualities": "Leal, generosa e capaz de enxergar além das aparências.",
@@ -554,7 +554,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": "Fera encantada",
-      "description": "Um príncipe transformado em fera por uma fada, condenado a viver assim até ser amado por quem ele é de verdade.",
+      "description": "Um príncipe transformado em fera por uma fada, que só pode ser libertado sendo amado por livre vontade - e é por isso que faz a mesma pergunta toda noite e aceita a mesma resposta toda noite.",
       "personality": "Assustador na aparência, mas cortês e melancólico por dentro, ciente do medo que causa.",
       "motivation": "Tem esperança, sem muita confiança, de que Bela possa um dia amá-lo apesar de sua forma.",
       "qualities": "Paciente, generoso e sempre gentil com Bela apesar de sua aparência monstruosa.",
@@ -577,7 +577,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um mercador que perdeu sua fortuna no mar e se perde na floresta a caminho de casa.",
+      "description": "Um mercador que perdeu a fortuna no mar e o rumo na floresta na mesma viagem. Colhe uma rosa sem pedir e passa o resto da história tentando impedir que a filha pague por isso.",
       "personality": "Amoroso e honrado, rápido em se culpar pelo perigo que traz à filha.",
       "motivation": "Só quer sustentar os filhos e cumprir sua palavra, mesmo ao custo da própria vida.",
       "qualities": "Devotado e honesto, disposto a voltar ao castelo da Fera para enfrentar sozinho o castigo.",
@@ -600,7 +600,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "Irmã de Bela, invejosa da bondade e da boa sorte que a caçula desperta em todos.",
+      "description": "Irmã de Bela, incapaz de perdoá-la por se contentar com menos. É ela quem conta os dias em voz alta fingindo que não está contando.",
       "personality": "Orgulhosa e voltada para si mesma, rápida em ressentir a boa sorte de Bela.",
       "motivation": "Espera que o retorno de Bela ao castelo termine mal, por pura inveja.",
       "qualities": "Astuta o bastante para convencer Bela a ficar além da semana prometida.",
@@ -623,7 +623,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "A outra irmã de Bela, tão orgulhosa e ciumenta quanto a mais velha.",
+      "description": "A outra irmã, igualmente orgulhosa e igualmente invejosa, e mais pronta a dizer em voz alta o que a mais velha apenas arranja.",
       "personality": "Vaidosa e fácil de magoar em seu orgulho, sempre seguindo a irmã mais velha.",
       "motivation": "Compartilha a esperança da irmã de que atrasar Bela lhe traga desgraça.",
       "qualities": "Charmosa o bastante em sociedade para esconder sua inveja dos outros.",
@@ -646,7 +646,7 @@
       "gender": "Feminino",
       "race": "Fada",
       "subrace": null,
-      "description": "A fada que lançou a maldição sobre o príncipe, e que observa em segredo se Bela e a Fera aprenderão a se amar.",
+      "description": "A fada que lançou a maldição e desde então observa em silêncio para ver se ela funciona. Aparece uma única vez, no fim, e o que faz então depende inteiramente do que Bela lhe pedir.",
       "personality": "Justa mas implacável com a crueldade, testando o caráter antes de conceder perdão.",
       "motivation": "Quer que o príncipe aprenda a verdadeira bondade antes de permitir que a maldição se quebre.",
       "qualities": "Poderosa e paciente, disposta a esperar anos para ver se sua lição foi aprendida.",
@@ -666,8 +666,8 @@
     {
       "id": "01KYXBHD0FT43JJV1HABMERBPA",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "name": "A Casa do Mercador",
-      "description": "A casa modesta onde Bela vive com o pai e as irmãs desde que a fortuna da família se perdeu.",
+      "name": "A Floresta",
+      "description": "A mata entre a estrada do porto e o castelo, onde a neve se fecha e a única luz num dia de caminhada em qualquer direção é uma que não deveria estar ali.",
       "climate": "Rural e simples, bem longe da vida urbana que a família já conheceu.",
       "culture": "Uma casa humilde onde o trabalho duro substituiu os confortos da riqueza.",
       "politics": "Nenhuma autoridade além da liderança tranquila do próprio Mercador sobre sua casa.",
@@ -682,8 +682,8 @@
     {
       "id": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "name": "Castelo da Fera",
-      "description": "Um castelo encantado onde todo desejo de Bela é atendido, exceto o de ver seu rosto verdadeiro.",
+      "name": "O Castelo da Fera",
+      "description": "Um castelo encantado onde todo desejo é atendido antes de terminar de ser dito, e onde as duas coisas que Bela quer - ver o pai, e ver a Fera como era - são as duas únicas que ele não consegue fornecer.",
       "climate": "Grandioso e aquecido por dentro, cuidado por criados encantados que nunca se veem.",
       "culture": "Uma corte solitária de um só, onde todo conforto é oferecido e toda refeição é dividida apenas com a Fera.",
       "politics": "Governado inteiramente pela Fera, embora o próprio encantamento não responda a ninguém além da Fada.",
@@ -698,8 +698,8 @@
     {
       "id": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "name": "Jardim Encantado",
-      "description": "O jardim e a fonte onde a Fera busca consolo em sua solidão.",
+      "name": "O Jardim Encantado",
+      "description": "O roseiral e a fonte, aonde a Fera vai quando quer ficar sozinha e onde tudo o que importa nesta história é tomado, dado ou quase perdido.",
       "climate": "Florido e viçoso o ano todo, cuidado pela mesma magia invisível do castelo.",
       "culture": "Um refúgio silencioso, o único lugar onde a Fera se permite ser visto mais vulnerável.",
       "politics": null,
@@ -719,8 +719,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Estrada Exterior",
-      "description": "Um relato conciso desta etapa de A Bela e a Fera, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A Estrada de Casa",
+      "description": "A estrada que o mercador não conseguiu percorrer na neve, e que o anel torna desnecessária. Ela continua ali, e continua tendo dez dias de extensão, e é esse o sentido inteiro do prazo.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -735,8 +735,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Encruzilhada",
-      "description": "Um relato conciso desta etapa de A Bela e a Fera, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A Casa do Mercador",
+      "description": "A casa modesta para onde a família se mudou quando os navios se perderam, onde duas filhas nunca deixaram de se ressentir da mudança e a terceira nunca a mencionou.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -748,8 +748,8 @@
     {
       "id": "01KYXBHD0F4BB8WS98MC1Z1Y6P",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "title": "A Promessa de Retorno",
-      "description": "A Fera só se livra da maldição se for amada de livre vontade. Quando permite que Bela visite sua família, ele avisa: se ela não voltar no prazo prometido, ele morrerá de tristeza.",
+      "title": "Uma Promessa de Retorno",
+      "description": "A Fera só pode ser libertada sendo amada por livre vontade, o que torna a força inútil para ele. Quando deixa Bela partir não está sendo generoso - uma Bela que não pudesse ir embora não poderia escolher ficar, e uma permanência que não é escolhida não vale nada contra a maldição.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -762,7 +762,7 @@
       "id": "01KYXK9BMQARJ9BEMR2NXV5CRT",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "title": "Os Presentes Encantados da Fera",
-      "description": "Dois objetos encantados mantêm Bela ligada aos dois mundos: um anel que a transporta instantaneamente entre a casa de sua família e o castelo da Fera, e um espelho que mostra qualquer um dos dois lugares à distância sempre que ela desejar.",
+      "description": "Um anel que leva quem o usa entre as duas casas num instante, e um espelho que mostra qualquer lugar ou pessoa. Juntos, removem toda razão prática que Bela poderia ter para se atrasar, de modo que atrasar-se só possa ser uma escolha.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -779,8 +779,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Lugares recordam",
-      "description": "Locais importantes preservam sinais dos acontecimentos vividos neles.",
+      "title": "Nada É Tomado Sem Consentimento",
+      "description": "A Fera faz sua pergunta toda noite e aceita a resposta toda noite. Não segura Bela pela força; segura-a por uma promessa que o pai dela fez e que ela escolheu cumprir - o que é coisa diferente, e é o sentido inteiro da maldição.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -794,8 +794,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuidade",
-      "body": "Acompanhar o que cada participante sabe antes de cada ponto de virada.",
+      "title": "Continuidade: o prazo é de dez dias",
+      "body": "O anel torna a viagem instantânea, então os dez dias nunca são sobre deslocamento. Toda cena na casa do pai precisa deixar claro que ela poderia voltar num piscar de olhos e não está indo.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -807,8 +807,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Motivo visual",
-      "body": "Repetir uma imagem reconhecível quando o conflito central mudar de direção.",
+      "title": "Motivo visual: dado antes de ser pedido",
+      "body": "O castelo atende desejos antes de terminarem. Usar isso para que as duas coisas que ele não pode dar - o pai dela e o rosto antigo dele - pesem mais a cada vez.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -820,8 +820,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Meta de revisão",
-      "body": "Manter explícita a relação de causa e consequência entre cenas vizinhas.",
+      "title": "Meta de revisão: os finais diferem numa palavra",
+      "body": "Os dois finais rompem a maldição. O que os separa é se Bela pede misericórdia à Fada ou a deixa julgar. Manter tudo antes da bifurcação idêntico, para que a diferença seja inteiramente dela.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1172,7 +1172,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Objeto narrativo"
+      "value": "Objeto encantado"
     },
     {
       "id": "1HWJ4FWK2WFJGW95BWMRZBJVX8",
@@ -1183,7 +1183,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Apresentado"
+      "value": "Crescendo no jardim"
     }
   ],
   "characterRelations": [
@@ -1197,7 +1197,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
       "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "relationType": "Confiança"
+      "relationType": "Apaixonados, com o tempo"
     },
     {
       "id": "0ARYX3RNRZ4G20A1QKEETCXBGP",
@@ -1207,9 +1207,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "character2Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FTSMRJEM98HEJJXWA",
+      "relationType": "Pai e filha"
     },
     {
       "id": "75AAWVBRND25PF9B5AB8BYQ1EC",
@@ -1221,7 +1221,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0FTSMRJEM98HEJJXWA",
       "character2Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "relationType": "Rivalidade"
+      "relationType": "Pai e filha"
     },
     {
       "id": "3BSD9XYECH99TKDJVFA262VN7F",
@@ -1231,9 +1231,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "character2Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
-      "relationType": "Família"
+      "character1Id": "01KYXBHD0FTSMRJEM98HEJJXWA",
+      "character2Id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "relationType": "Pai e filha"
     },
     {
       "id": "74G5FWBXG3JGCXT747XPWT9HVF",
@@ -1243,9 +1243,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
-      "character2Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
-      "relationType": "Dívida"
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
+      "relationType": "Irmãs"
     },
     {
       "id": "3M1H6FAD86QR267CD7AR6F6F1J",
@@ -1255,9 +1255,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
-      "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "relationType": "Proteção"
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "relationType": "Irmãs"
     },
     {
       "id": "0Q7J3YKBZ6XF6X3AREMJG0K2MK",
@@ -1267,9 +1267,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
-      "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "relationType": "Confiança"
+      "character1Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
+      "character2Id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "relationType": "Irmãs e cúmplices"
     },
     {
       "id": "7Z3SE702TQH956KMW78CVEA4SE",
@@ -1280,8 +1280,20 @@
       "isDeleted": false,
       "deletedAt": null,
       "character1Id": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "character2Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "relationType": "Propósito comum"
+      "character2Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
+      "relationType": "Amaldiçoado por ela"
+    },
+    {
+      "id": "7G7185AA320R64JMM217FJAMW6",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
+      "relationType": "Observada em segredo"
     }
   ],
   "characterScenes": [
@@ -1295,17 +1307,6 @@
       "deletedAt": null,
       "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
-    },
-    {
-      "id": "69BE0SSZY6YX10N3QVCGFTQSG7",
-      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
-      "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT"
     },
     {
       "id": "429QC18Q9BTM44GXEP4ZBQS9EG",
@@ -1374,15 +1375,48 @@
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ"
     },
     {
-      "id": "4M0JG1AA3J4S95YS55H1SGFS06",
+      "id": "6S8Q8SB8ZG5DVDFJW4WBTT1EB7",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
+      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326"
+    },
+    {
+      "id": "4HYWZDD0GZQ7H3MYJT4PRTPS1Z",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW"
+    },
+    {
+      "id": "5FWZ2BQHNRNPTWY3GHYC825AKS",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "sceneId": "3M9NCH83JWWPKM939XW84PZ0YH"
+    },
+    {
+      "id": "5VJ1SRJAHH32T9Z8YA9QQ5FSMD",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "sceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9"
     },
     {
       "id": "2AZ81G17P3NAZ4N6AKY9Z8SKRZ",
@@ -1396,6 +1430,17 @@
       "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K"
     },
     {
+      "id": "2BE86B3C599W3S0XH5H6FGFVBG",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94"
+    },
+    {
       "id": "7608YPRZFWD5K6Z8517R9FW6BT",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1405,6 +1450,17 @@
       "deletedAt": null,
       "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
       "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3"
+    },
+    {
+      "id": "08ZBK8WCK9A0VTNVY352PK26FN",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY"
     },
     {
       "id": "0EBW9V0PBBF7H6C9SWD22S2R1X",
@@ -1418,7 +1474,7 @@
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG"
     },
     {
-      "id": "2FNNAMPX3FJ7KJQCFZND687BZV",
+      "id": "17BXT01WJ4ZF1CH4T2H0DRJSEE",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1426,7 +1482,18 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326"
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ"
+    },
+    {
+      "id": "2PDSFP8E2RG5J6FKT6TNPSECH1",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW"
     },
     {
       "id": "4YGKMYD3V1TTZ9DXYFNSGYAQCB",
@@ -1438,6 +1505,28 @@
       "deletedAt": null,
       "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
       "sceneId": "3M9NCH83JWWPKM939XW84PZ0YH"
+    },
+    {
+      "id": "0269T16STC0VJ814ZVJMQJ1WC4",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "sceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9"
+    },
+    {
+      "id": "1XB9XX767H0ZBHXKYYHBAGQR3S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FTSMRJEM98HEJJXWA",
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
     },
     {
       "id": "6B0FWP7XYFXNAH4RQMYW8S8ZGW",
@@ -1462,7 +1551,7 @@
       "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K"
     },
     {
-      "id": "6MHJ39FEQPA7M2S3X4BWB2KZK9",
+      "id": "7JY76A6RHPR82G60VYGJX5T8YJ",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1470,7 +1559,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0FTSMRJEM98HEJJXWA",
-      "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY"
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ"
     },
     {
       "id": "12P8PY4ZMRSCS9EBQP84QEKTQK",
@@ -1484,18 +1573,7 @@
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326"
     },
     {
-      "id": "34P04NFX32HWJXE421EX173Q0Z",
-      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0FTSMRJEM98HEJJXWA",
-      "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW"
-    },
-    {
-      "id": "4QDKST2DNGZDJ99KC00E6MT5PY",
+      "id": "3S00SHGQA1A5CJ6PJMM6RZB3TN",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1503,10 +1581,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94"
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
     },
     {
-      "id": "6K9VQ598P0W55R1M04CP2FZ2S0",
+      "id": "07CVVRGJ88MD5678D8H32EVW85",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1514,10 +1592,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG"
+      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326"
     },
     {
-      "id": "0P4Q1HDN3HBZXYMNCY9RNEXBQ0",
+      "id": "1TE7RVFQBPC8JPWGTN4NH1X2FX",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1525,7 +1603,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW"
+      "sceneId": "3M9NCH83JWWPKM939XW84PZ0YH"
     },
     {
       "id": "47JRKK2429XP3RERMRQ27GT38V",
@@ -1539,7 +1617,7 @@
       "sceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9"
     },
     {
-      "id": "3HN59YYJS58258K3DXTXS3B56C",
+      "id": "73D7P0WAMAJEX066VRQYE8PRWE",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1547,7 +1625,40 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0FPZMZ9C3EWEP05AZX",
-      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ"
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
+    },
+    {
+      "id": "28Z6FZG9XWK8FTWW0KZ3GP98RK",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326"
+    },
+    {
+      "id": "6KAP578ANCAX9X9RAGPAZKW75J",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "sceneId": "3M9NCH83JWWPKM939XW84PZ0YH"
+    },
+    {
+      "id": "762AW1DGWN4WTD0KDHWZPCKCRD",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "sceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9"
     },
     {
       "id": "26RNFAE125GFPX4SGYNVDGXW4N",
@@ -1577,11 +1688,11 @@
     {
       "id": "01KYXK9BMQN9V35XYM1X1C7J76",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "characterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "characterOwnerId": null,
       "name": "A Rosa Encantada",
-      "category": "Flor encantada",
-      "description": "O único presente que Bela pediu ao pai que trouxesse - uma rosa do próprio jardim da Fera.",
-      "initialState": "Novo",
+      "category": "Objeto encantado",
+      "description": "O único presente que Bela pediu ao pai, e a única coisa do jardim que a Fera ainda não tinha decidido dar. Tudo na história decorre de um caule cortado sem pedir.",
+      "initialState": "Crescendo no jardim",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1596,8 +1707,8 @@
       "characterOwnerId": "01KYXBHD0FE9MY6A6A9B1GT176",
       "name": "O Anel Mágico",
       "category": "Objeto encantado",
-      "description": "Um anel que transporta instantaneamente quem o usa entre o castelo da Fera e qualquer lugar que deseje.",
-      "initialState": "Novo",
+      "description": "Um anel que leva de imediato quem o gira entre o castelo e a casa. Remove todo obstáculo à saída de Bela, e é exatamente isso que faz de sua ausência uma decisão.",
+      "initialState": "Sob a guarda da Fera",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1609,11 +1720,11 @@
     {
       "id": "01KYXK9BMQ26HPVKCWMQTC4TMD",
       "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
-      "characterOwnerId": "01KYXBHD0FTSMRJEM98HEJJXWA",
+      "characterOwnerId": "01KYXBHD0FE9MY6A6A9B1GT176",
       "name": "O Espelho Mágico",
       "category": "Objeto encantado",
-      "description": "Um espelho que mostra a quem o segura qualquer lugar ou pessoa que deseje ver, por mais distante que esteja.",
-      "initialState": "Novo",
+      "description": "Um espelho que mostra a quem o segura qualquer lugar ou pessoa que deseje ver. A Fera dá a Bela como conferi-lo a qualquer momento, e nem uma vez lhe pede que o use.",
+      "initialState": "Sob a guarda da Fera",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1634,8 +1745,8 @@
       "deletedAt": null,
       "itemId": "01KYXK9BMQN9V35XYM1X1C7J76",
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
-      "newCharacterOwnerId": "01KYXBHD0FE9MY6A6A9B1GT176",
-      "newState": "Apresentado",
+      "newCharacterOwnerId": null,
+      "newState": "Pedida, como a menor das coisas",
       "extraNotes": null
     },
     {
@@ -1647,9 +1758,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQN9V35XYM1X1C7J76",
-      "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
+      "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
       "newCharacterOwnerId": "01KYXBHD0FTSMRJEM98HEJJXWA",
-      "newState": "Mudou de mãos",
+      "newState": "Cortada sem permissão",
       "extraNotes": null
     },
     {
@@ -1661,9 +1772,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQN9V35XYM1X1C7J76",
-      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Levada para dentro do castelo",
       "extraNotes": null
     },
     {
@@ -1675,9 +1786,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
-      "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
-      "newCharacterOwnerId": "01KYXBHD0FTSMRJEM98HEJJXWA",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Dado, com prazo de dez dias",
       "extraNotes": null
     },
     {
@@ -1689,9 +1800,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
-      "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
-      "newCharacterOwnerId": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Usado na casa do pai",
       "extraNotes": null
     },
     {
@@ -1704,8 +1815,8 @@
       "deletedAt": null,
       "itemId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Girado no meio de uma frase",
       "extraNotes": null
     },
     {
@@ -1717,9 +1828,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQ26HPVKCWMQTC4TMD",
-      "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
-      "newCharacterOwnerId": "01KYXBHD0FJ3X4WT2JMHTHE360",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Dado junto com o anel",
       "extraNotes": null
     },
     {
@@ -1731,9 +1842,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQ26HPVKCWMQTC4TMD",
-      "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "newCharacterOwnerId": "01KYXBHD0FPZMZ9C3EWEP05AZX",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Deixado sem uso no quarto dela",
       "extraNotes": null
     },
     {
@@ -1745,9 +1856,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK9BMQ26HPVKCWMQTC4TMD",
-      "sceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
+      "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "newState": "Mostra a Fera junto à fonte",
       "extraNotes": null
     }
   ],
@@ -2171,7 +2282,7 @@
       "entityId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A mais nova e mais gentil das filhas de um mercador, leitora ávida e de coração generoso.",
+      "contentSnapshot": "A filha mais nova de um mercador, leitora voraz e de índole generosa, que pede a menor coisa que alguém pede e paga o maior preço por ela. Vai ao castelo porque a promessa tem o nome dela.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Base útil; preserve este fato durante a revisão.",
@@ -2189,7 +2300,7 @@
       "entityId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "Vendo Bela feliz e bem tratada, suas irmãs a convencem a ficar além do prazo prometido, na esperança de que a Fera sofra por isso.",
+      "contentSnapshot": "Ela janta sozinha e a Fera senta na outra ponta e conversa com ela, mal. Tudo o que ela diz que gostaria aparece antes que termine de dizer, o que torna muito visível a única coisa que ela não pode ter.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Verifique se a transição está suficientemente clara.",
@@ -2207,7 +2318,7 @@
       "entityId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Um anel que transporta instantaneamente quem o usa entre o castelo da Fera e qualquer lugar que deseje.",
+      "contentSnapshot": "Um anel que leva de imediato quem o gira entre o castelo e a casa. Remove todo obstáculo à saída de Bela, e é exatamente isso que faz de sua ausência uma decisão.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolva este risco de continuidade antes da publicação.",
@@ -2225,7 +2336,7 @@
       "entityId": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "O jardim e a fonte onde a Fera busca consolo em sua solidão.",
+      "contentSnapshot": "O roseiral e a fonte, aonde a Fera vai quando quer ficar sozinha e onde tudo o que importa nesta história é tomado, dado ou quase perdido.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Este detalhe deveria repercutir em uma cena posterior.",
@@ -2429,7 +2540,7 @@
       "minVisits": null,
       "itemId": null,
       "itemPresence": null,
-      "triggerName": "secret_closed",
+      "triggerName": "promessa_ainda_intacta",
       "triggerState": "set"
     },
     {
@@ -2486,7 +2597,7 @@
       "minVisits": null,
       "itemId": null,
       "itemPresence": null,
-      "triggerName": "path_revealed",
+      "triggerName": "a_fera_perguntou_de_novo",
       "triggerState": "set"
     }
   ],
@@ -2514,7 +2625,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
+      "entityId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "effectType": "itemTake",
       "itemId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
       "triggerName": null
@@ -2528,10 +2639,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
+      "entityId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "a_fera_perguntou_de_novo"
     },
     {
       "id": "62T7MAMEZY919W1KWG7JEPBVS2",
@@ -2542,10 +2653,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
+      "entityId": "01KYXBHD0F6JAR48EF3W034H4S",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "promessa_ainda_intacta"
     }
   ],
   "exampleCatalogEnriched": true,

@@ -120,7 +120,7 @@ export interface StoryAnalysisInput {
   characterScenes: { characterId: string }[];
   characterRelations: { character1Id: string; character2Id: string }[];
   locations: AnalysisEntityRef[];
-  locationRelations: { locationAId: string; locationBId: string }[];
+  locationRelations: { locationAId: string; locationBId: string; relationType: string }[];
   scenes: AnalysisScene[];
   choices: AnalysisChoice[];
   choiceCheckGroups: AnalysisChoiceCheckGroup[];
@@ -175,6 +175,7 @@ export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): Stor
   return [
     ...checkCharacters(input),
     ...checkLocations(input),
+    ...checkDuplicateRelations(input),
     ...checkItems(input),
     ...checkTags(input),
     ...checkSceneFinishWithChoices(input),
@@ -275,6 +276,73 @@ function checkLocations(input: StoryAnalysisInput): StoryAnalysisFinding[] {
         ),
       );
     }
+  }
+
+  return findings;
+}
+
+/**
+ * Two rows describing the same link.
+ *
+ * A relation between two characters exists once, in whichever order the two ids happen to be stored;
+ * two places are "contained in"/"connected to" one another once per type. `CharacterRelationService`
+ * has always refused a duplicate, and since migration 0015 the database refuses one too - but a story
+ * imported before that, or a package built elsewhere, can still be carrying them. They are reported
+ * as errors, not warnings: the server's PostgreSQL rejects them, so a story holding one cannot
+ * synchronize.
+ */
+function checkDuplicateRelations(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const findings: StoryAnalysisFinding[] = [];
+  const unorderedPair = (a: string, b: string) => (a <= b ? `${a} ${b}` : `${b} ${a}`);
+
+  const characterName = new Map(
+    input.characters.map((character) => [character.id, character.name]),
+  );
+  const seenCharacterPairs = new Set<string>();
+  for (const relation of input.characterRelations) {
+    const key = unorderedPair(relation.character1Id, relation.character2Id);
+    if (!seenCharacterPairs.has(key)) {
+      seenCharacterPairs.add(key);
+      continue;
+    }
+    const character = input.characters.find((candidate) => candidate.id === relation.character1Id);
+    if (!character) continue;
+    findings.push(
+      buildFinding(
+        'characters',
+        'error',
+        'Character',
+        character,
+        'analysis_duplicate_character_relation',
+        {
+          otherName: characterName.get(relation.character2Id) ?? relation.character2Id,
+        },
+      ),
+    );
+  }
+
+  const locationName = new Map(input.locations.map((location) => [location.id, location.name]));
+  const seenLocationPairs = new Set<string>();
+  for (const relation of input.locationRelations) {
+    const key = `${unorderedPair(relation.locationAId, relation.locationBId)}${relation.relationType}`;
+    if (!seenLocationPairs.has(key)) {
+      seenLocationPairs.add(key);
+      continue;
+    }
+    const location = input.locations.find((candidate) => candidate.id === relation.locationAId);
+    if (!location) continue;
+    findings.push(
+      buildFinding(
+        'locations',
+        'error',
+        'Location',
+        location,
+        'analysis_duplicate_location_relation',
+        {
+          otherName: locationName.get(relation.locationBId) ?? relation.locationBId,
+        },
+      ),
+    );
   }
 
   return findings;

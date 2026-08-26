@@ -36,6 +36,79 @@ const baseInput = (): StoryAnalysisInput => ({
   attributeValues: [],
 });
 
+describe('duplicate relations', () => {
+  const twoCharacters = () => {
+    const input = baseInput();
+    input.characters.push({ id: 'other', name: 'Other' });
+    input.characterScenes.push({ characterId: 'character' }, { characterId: 'other' });
+    return input;
+  };
+
+  /**
+   * The analysis reported a clean bill of health on the bundled examples while they carried the same
+   * pair of characters related twice - there simply was no check for it.
+   */
+  it('reports the same pair of characters related twice, whichever way round', async () => {
+    const input = twoCharacters();
+    input.characterRelations.push(
+      { character1Id: 'character', character2Id: 'other' },
+      { character1Id: 'other', character2Id: 'character' },
+    );
+
+    const findings = await buildStoryAnalysisReport(input);
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_duplicate_character_relation',
+          severity: 'error',
+          entityId: 'other',
+          messageParams: { otherName: 'Character' },
+        }),
+      ]),
+    );
+  });
+
+  it('says nothing about a single relation per pair', async () => {
+    const input = twoCharacters();
+    input.characterRelations.push({ character1Id: 'character', character2Id: 'other' });
+
+    expect(await buildStoryAnalysisReport(input)).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_duplicate_character_relation' }),
+      ]),
+    );
+  });
+
+  /** Two places can be both "contains" and "connected_to"; they cannot contain each other twice. */
+  it('reports duplicate location connections only within the same type', async () => {
+    const input = baseInput();
+    input.locations.push({ id: 'other-location', name: 'Other Location' });
+    input.locationRelations.push(
+      { locationAId: 'location', locationBId: 'other-location', relationType: 'contains' },
+      { locationAId: 'location', locationBId: 'other-location', relationType: 'connected_to' },
+    );
+    expect(await buildStoryAnalysisReport(input)).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_duplicate_location_relation' }),
+      ]),
+    );
+
+    input.locationRelations.push({
+      locationAId: 'other-location',
+      locationBId: 'location',
+      relationType: 'contains',
+    });
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_duplicate_location_relation',
+          severity: 'error',
+        }),
+      ]),
+    );
+  });
+});
+
 describe('buildStoryAnalysisReport', () => {
   it('warns when an entity attribute points to a deleted target', async () => {
     const input = baseInput();

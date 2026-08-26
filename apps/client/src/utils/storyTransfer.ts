@@ -1,5 +1,11 @@
 import type { FullStoryExportType } from '@keres/shared';
-import { FullStoryExportSchema, migrateStoryExport, StoryExportVersionError } from '@keres/shared';
+import {
+  describeStoryIntegrityViolations,
+  findStoryExportIntegrityErrors,
+  FullStoryExportSchema,
+  migrateStoryExport,
+  StoryExportVersionError,
+} from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -266,6 +272,18 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
     throw new StoryImportError(
       'invalid_format',
       `${asset.name} is not a Keres story export: ${validation.error.message}`,
+    );
+  }
+
+  // The schema approves each row on its own and stops there. A package can be perfectly typed and
+  // still contradict itself - the same relation twice, a scene pointing at a chapter that is not in
+  // the file - and the import inserts row by row without looking. Rejecting here means the user
+  // learns about it while choosing the file, not through a synchronization that fails days later.
+  const integrityErrors = findStoryExportIntegrityErrors(validation.data);
+  if (integrityErrors.length) {
+    throw new StoryImportError(
+      'corrupt_content',
+      `${asset.name} contradicts itself: ${describeStoryIntegrityViolations(integrityErrors)}`,
     );
   }
 

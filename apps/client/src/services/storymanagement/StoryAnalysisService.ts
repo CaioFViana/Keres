@@ -89,6 +89,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         .select({
           locationAId: schema.locationRelations.locationAId,
           locationBId: schema.locationRelations.locationBId,
+          relationType: schema.locationRelations.relationType,
         })
         .from(schema.locationRelations)
         .where(belongsToStory(schema.locationRelations)),

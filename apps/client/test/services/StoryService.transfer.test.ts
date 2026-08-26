@@ -103,9 +103,10 @@ it('round-trips portable story data after a permanent local purge and clears sta
   const service = createStoryService(database.db);
   const exported = await service.exportFullStory(STORY_ID);
   expect(exported.characters.map((character) => character.id)).toEqual([CHARACTER_ID]);
-  expect(exported.characterRelations).toEqual([
-    expect.objectContaining({ character1Id: CHARACTER_ID, character2Id: DELETED_CHARACTER_ID }),
-  ]);
+  // The relation's other end is a soft-deleted character, which the export leaves out - so the
+  // relation goes with it. It used to travel inside the package and re-import as a link to nothing,
+  // which is why the relation graph learned to skip edges whose ends it cannot find.
+  expect(exported.characterRelations).toEqual([]);
   expect(exported.attributeValues).toEqual([expect.objectContaining({ fieldId: FIELD_ID })]);
 
   await service.deleteStory(STORY_ID);
@@ -258,4 +259,53 @@ it('exports one list for every entity the export format knows about', async () =
   );
 
   expect(missing).toEqual([]);
+});
+
+/**
+ * The importer inserts row by row, with no checks, and local SQLite has always been more permissive
+ * than the server's PostgreSQL. A package carrying the same character relation twice used to install
+ * cleanly and only fail much later, on a synchronization - after the writer had already seen the pair
+ * drawn twice on the relation graph.
+ */
+it('refuses a package whose rows contradict one another', async () => {
+  await database.db.insert(schema.characters).values([
+    { id: CHARACTER_ID, storyId: STORY_ID, name: 'Ariane', ...entityBase },
+    { id: DELETED_CHARACTER_ID, storyId: STORY_ID, name: 'Belmiro', ...entityBase },
+  ]);
+  (
+    database.db as unknown as {
+      transaction: <T>(callback: (tx: typeof database.db) => Promise<T>) => Promise<T>;
+    }
+  ).transaction = async (callback) => callback(database.db);
+
+  const service = createStoryService(database.db);
+  const exported = await service.exportFullStory(STORY_ID);
+  const relation = {
+    storyId: STORY_ID,
+    character1Id: CHARACTER_ID,
+    character2Id: DELETED_CHARACTER_ID,
+    relationType: 'mentor',
+    ...entityBase,
+  };
+  const corrupt = {
+    ...exported,
+    // Reversed, not repeated: this is the pair the server's unique constraint on the ordered pair
+    // does not see either.
+    characterRelations: [
+      { ...relation, id: RELATION_ID },
+      {
+        ...relation,
+        id: `${RELATION_ID.slice(0, -1)}2`,
+        character1Id: DELETED_CHARACTER_ID,
+        character2Id: CHARACTER_ID,
+      },
+    ],
+  } as typeof exported;
+
+  await expect(service.importFullStory(LOCAL_USER_ID, corrupt, null)).rejects.toThrow(
+    /characterRelations/,
+  );
+  expect(
+    (await database.db.query.stories.findMany()).filter((story) => story.id !== STORY_ID),
+  ).toEqual([]);
 });

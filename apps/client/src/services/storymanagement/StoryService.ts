@@ -1,6 +1,8 @@
 import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
 import {
+  assertStoryExportIntegrity,
   CURRENT_STORY_FORMAT_VERSION,
+  pruneDanglingStoryExportRows,
   FullStoryExportSchema,
   scenesToUnflag,
   STORY_OWNER_ONLY_FIELDS,
@@ -1212,49 +1214,54 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.effects.findMany({ where: belongsToStory(effects) }),
       ]);
 
-      return FullStoryExportSchema.parse({
-        story,
-        chapters: storyChapters,
-        scenes: storyScenes,
-        choices: storyChoices,
-        characters: storyCharacters,
-        locations: storyLocations,
-        locationRelations: storyLocationRelations,
-        worldRules: storyWorldRules,
-        notes: storyNotes,
-        noteRelations: storyNoteRelations,
-        tags: storyTags,
-        tagRelations: storyTagRelations,
-        suggestions: storySuggestions,
-        characterRelations: storyCharacterRelations,
-        characterScenes: storyCharacterScenes,
-        galleryItems: storyGalleryItems,
-        galleryRelations: storyGalleryRelations,
-        items: storyItems,
-        itemJourneys: storyItemJourneys,
-        storySchemaFields: storySchemaFieldRows,
-        attributeValues: storyAttributeValues,
-        favorites: storyFavorites,
-        comments: storyComments,
-        seeAlsoRelations: storySeeAlsoRelations,
-        stats: storyStats,
-        statStrengths: storyStatStrengths,
-        statRelations: storyStatRelations,
-        modes: storyModes,
-        plots: storyPlots,
-        plotScenes: storyPlotScenes,
-        // The choices' conditions and effects: they are what makes a branching story work.
-        // They were left out of the export for years - the importer here always knew how to read them, and the
-        // API always exported them, so a package generated on the device came back without the choices'
-        // logic and nobody saw any error, because in the schema these fields are optional.
-        choiceCheckGroups: storyChoiceCheckGroups,
-        choiceChecks: storyChoiceChecks,
-        effects: storyEffects,
-        // The importer uses this number as the synchronization's starting point. Preserving the
-        // local marker keeps the package useful for a story already linked to a server.
-        serverLastOperationVersion: story.lastServerSyncedLog || 0,
-        formatVersion: CURRENT_STORY_FORMAT_VERSION,
-      });
+      // Soft-deleted entities are left out above, and until this pruning the relations pointing at
+      // them travelled anyway: a package carrying a relation to a character deleted last week, which
+      // re-import turned into a link to nothing. The graph screens had to learn to ignore those.
+      return FullStoryExportSchema.parse(
+        pruneDanglingStoryExportRows({
+          story,
+          chapters: storyChapters,
+          scenes: storyScenes,
+          choices: storyChoices,
+          characters: storyCharacters,
+          locations: storyLocations,
+          locationRelations: storyLocationRelations,
+          worldRules: storyWorldRules,
+          notes: storyNotes,
+          noteRelations: storyNoteRelations,
+          tags: storyTags,
+          tagRelations: storyTagRelations,
+          suggestions: storySuggestions,
+          characterRelations: storyCharacterRelations,
+          characterScenes: storyCharacterScenes,
+          galleryItems: storyGalleryItems,
+          galleryRelations: storyGalleryRelations,
+          items: storyItems,
+          itemJourneys: storyItemJourneys,
+          storySchemaFields: storySchemaFieldRows,
+          attributeValues: storyAttributeValues,
+          favorites: storyFavorites,
+          comments: storyComments,
+          seeAlsoRelations: storySeeAlsoRelations,
+          stats: storyStats,
+          statStrengths: storyStatStrengths,
+          statRelations: storyStatRelations,
+          modes: storyModes,
+          plots: storyPlots,
+          plotScenes: storyPlotScenes,
+          // The choices' conditions and effects: they are what makes a branching story work.
+          // They were left out of the export for years - the importer here always knew how to read them, and the
+          // API always exported them, so a package generated on the device came back without the choices'
+          // logic and nobody saw any error, because in the schema these fields are optional.
+          choiceCheckGroups: storyChoiceCheckGroups,
+          choiceChecks: storyChoiceChecks,
+          effects: storyEffects,
+          // The importer uses this number as the synchronization's starting point. Preserving the
+          // local marker keeps the package useful for a story already linked to a server.
+          serverLastOperationVersion: story.lastServerSyncedLog || 0,
+          formatVersion: CURRENT_STORY_FORMAT_VERSION,
+        }),
+      );
     },
 
     async importFullStory(
@@ -1271,6 +1278,13 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         ? fullStoryData
         : cloneStoryForLocalImport(fullStoryData, userId, localImportStoryId);
       fullStoryData = importedStoryData;
+      // `FullStoryExportSchema` has already approved every row on its own; what it cannot see is
+      // the file as a set - two relations describing the same pair of characters, a sceneId with
+      // no scene behind it. The inserts below are blind (`tx.insert` in a loop, no checks), and
+      // local SQLite is more permissive than the server's PostgreSQL, so without this the corrupt
+      // rows land in the database and only surface much later, as a rejected sync.
+      // Run after the clone: it is the remapped ids that are actually inserted.
+      assertStoryExportIntegrity(importedStoryData);
       return db.transaction(async (tx) => {
         // Defensive: the caller already confirmed there's no `stories` row for this id (the
         // "already imported" check in ImportExportScreen/ExampleStoryService), but that alone

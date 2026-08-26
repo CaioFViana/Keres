@@ -27,9 +27,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The House in the Woods",
+      "name": "Lost in the Woods",
       "index": 1,
-      "summary": "The central conflict and its participants are introduced.",
+      "summary": "Goldilocks is told where not to go, goes there, and finds a house whose owners have never had a reason to lock anything.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confrontation",
+      "name": "Three of Everything",
       "index": 2,
-      "summary": "The consequences grow and the characters must choose how to respond.",
+      "summary": "Every object in the house belongs to exactly one of the bears. Goldilocks works through all three sizes of each, and breaks the smallest of them.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolution",
+      "name": "The Bears Come Home",
       "index": 3,
-      "summary": "The main threads converge and reveal their consequences.",
+      "summary": "The bears find the evidence in the order Goldilocks left it, room by room, until the last thing they find is her.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -73,9 +73,9 @@
       "deletedAt": null,
       "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
       "locationId": "01KYXBHD0KRN12R25N2S4HBCS6",
-      "name": "A house in the woods",
+      "name": "Told not to wander",
       "index": 1,
-      "summary": "Lost in the forest, Goldilocks finds a small, empty house and walks in uninvited.",
+      "summary": "Her mother sends Goldilocks on an errand and names the one path she is to keep to. The warning is specific, which is how the reader knows it will be ignored.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -94,10 +94,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
-      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
-      "name": "The three bowls of soup",
+      "locationId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "name": "The path that was wrong",
       "index": 2,
-      "summary": "Hungry, she tries the three bowls of soup on the table and eats all of Baby Bear's, the only one at just the right temperature.",
+      "summary": "A woodcutter gives her directions that would have been right yesterday. By the time the trees close in behind her, Goldilocks can no longer say which way she came.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -116,10 +116,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
-      "locationId": "0T1MYV408A4X71FS5AQVVKVJ63",
-      "name": "The three chairs",
+      "locationId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "name": "A house among the trees",
       "index": 3,
-      "summary": "She tries the three chairs in the living room and ends up breaking the smallest one, Baby Bear's.",
+      "summary": "A small house stands in a clearing with its door pushed to and nobody in sight. There is smoke in the chimney and something cooling on the table, which means whoever lives here has only just stepped out.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -138,10 +138,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
-      "locationId": "5MQKTF0HY3TT8GKBKPS3XDJY8H",
-      "name": "The three beds",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "name": "Nobody answers",
       "index": 4,
-      "summary": "Tired, she goes upstairs and tries the three beds, falling fast asleep in Baby Bear's bed.",
+      "summary": "Goldilocks knocks twice, waits, and lets herself in. Nothing in the house resists her, and she takes the absence of a lock for the absence of an owner.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -160,10 +160,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "0TBWYBX1BWPRKDWFFYAVZQ4BMK",
-      "locationId": "2FVVE2PP4GJGTZHT1VSRKESBCX",
-      "name": "The fright and the flight",
+      "locationId": "0T1MYV408A4X71FS5AQVVKVJ63",
+      "name": "Three bowls of porridge",
       "index": 1,
-      "summary": "The three bears come home, find the mess and the girl asleep in his bed; startled, Goldilocks jumps out the window and runs off into the forest, never to return.",
+      "summary": "Three bowls sit cooling on the kitchen table in three sizes. The largest is too hot and the middle one too cold; the smallest is exactly right, so she finishes it.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -181,11 +181,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A new consequence",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "Three chairs",
+      "summary": "Three chairs stand by the fire. The big one is too hard and the middle one too soft, and Goldilocks keeps testing rather than stopping at the first that would have done.",
       "extraNotes": null,
       "chapterId": "0TBWYBX1BWPRKDWFFYAVZQ4BMK",
-      "locationId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "locationId": "5MQKTF0HY3TT8GKBKPS3XDJY8H",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -203,11 +203,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "An unexpected encounter",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "The smallest chair breaks",
+      "summary": "The third chair fits her exactly and gives way under her. It is the first thing she cannot put back the way she found it, and she leaves the pieces where they fall.",
       "extraNotes": null,
       "chapterId": "0TBWYBX1BWPRKDWFFYAVZQ4BMK",
-      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "locationId": "5MQKTF0HY3TT8GKBKPS3XDJY8H",
       "index": 3,
       "gap": 1,
       "gapType": "days",
@@ -225,11 +225,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The difficult decision",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "Three beds",
+      "summary": "Upstairs there are three beds, and the same test runs a third time. She falls asleep in the smallest of them, in a stranger's house, with the door still unlatched behind her.",
       "extraNotes": null,
       "chapterId": "0TBWYBX1BWPRKDWFFYAVZQ4BMK",
-      "locationId": "0T1MYV408A4X71FS5AQVVKVJ63",
+      "locationId": "2FVVE2PP4GJGTZHT1VSRKESBCX",
       "index": 4,
       "gap": -2,
       "gapType": "minutes",
@@ -247,11 +247,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Paths converge",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "Someone has been at my porridge",
+      "summary": "The three bears come home to a kitchen that has been used. Two bowls have been stirred and set down again; the third has been emptied, and Baby Bear is the one who says so.",
       "extraNotes": null,
       "chapterId": "23Y64W775R0BMJPE0M41S6H0AJ",
-      "locationId": "5MQKTF0HY3TT8GKBKPS3XDJY8H",
+      "locationId": "0T1MYV408A4X71FS5AQVVKVJ63",
       "index": 1,
       "gap": 15,
       "gapType": "minutes",
@@ -269,11 +269,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The price of change",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "Someone has been sitting in my chair",
+      "summary": "Two chairs have been moved. The third is in pieces on the floor, and the discovery stops being an annoyance and becomes a loss the moment its owner sees it.",
       "extraNotes": null,
       "chapterId": "23Y64W775R0BMJPE0M41S6H0AJ",
-      "locationId": "2FVVE2PP4GJGTZHT1VSRKESBCX",
+      "locationId": "5MQKTF0HY3TT8GKBKPS3XDJY8H",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -291,11 +291,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A final revelation",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "Someone is sleeping in my bed",
+      "summary": "Two beds are rumpled. In the third there is a girl, still asleep, and the three bears stand looking at her with no idea at all what they are supposed to do next.",
       "extraNotes": null,
       "chapterId": "23Y64W775R0BMJPE0M41S6H0AJ",
-      "locationId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "locationId": "2FVVE2PP4GJGTZHT1VSRKESBCX",
       "index": 3,
       "gap": 1,
       "gapType": "days",
@@ -313,11 +313,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "After the turning point",
-      "summary": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "Out through the window",
+      "summary": "Goldilocks wakes to three bears at the foot of the bed and is out of the window before anyone speaks. Nobody chases her; the bears are as frightened as she is, and they are the ones left with the mess.",
       "extraNotes": null,
       "chapterId": "23Y64W775R0BMJPE0M41S6H0AJ",
-      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "locationId": "01KYXBHD0KRN12R25N2S4HBCS6",
       "index": 4,
       "gap": 30,
       "gapType": "minutes",
@@ -338,7 +338,7 @@
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "A curious girl who loses her way in the forest on the way home.",
+      "description": "A curious girl who loses her way on an errand and treats an empty house as an invitation. She is not malicious; she simply never once asks whether she is allowed.",
       "personality": "Curious and impulsive, quick to help herself to whatever catches her eye.",
       "motivation": "Just wants to rest and eat after getting lost - and can't resist trying everything in an empty house.",
       "qualities": "Adventurous and unbothered by walking into a stranger's home uninvited.",
@@ -361,7 +361,7 @@
       "gender": "Male",
       "race": "Bear",
       "subrace": null,
-      "description": "The largest of the three bears, owner of the big chair and bed.",
+      "description": "The largest of the three bears, owner of the big bowl, the hard chair and the long bed. He speaks first at every discovery, and loudest.",
       "personality": "Gruff but even-tempered, the first to notice something is wrong in the house.",
       "motivation": "Wants only to come home to a peaceful meal after a walk in the woods.",
       "qualities": "Observant - the first to notice his porridge and chair have been disturbed.",
@@ -384,7 +384,7 @@
       "gender": "Female",
       "race": "Bear",
       "subrace": null,
-      "description": "The middle bear, owner of the medium chair and bed.",
+      "description": "The middle bear, owner of the middle bowl, the soft chair and the middle bed. She notices the state of a room before she notices what is missing from it.",
       "personality": "Practical and quick to keep the household in order.",
       "motivation": "Wants the family's home and belongings kept just the way they should be.",
       "qualities": "Even-keeled - the calmest of the three when the mess is discovered.",
@@ -407,7 +407,7 @@
       "gender": null,
       "race": "Bear",
       "subrace": null,
-      "description": "The smallest of the three bears, owner of the small chair, soup, and bed.",
+      "description": "The smallest of the three bears, and the only one who actually loses anything: his porridge, his chair, and finally the sight of a stranger in his bed.",
       "personality": "High-pitched and easily upset - the one who suffers the most from Goldilocks's visit.",
       "motivation": "Just wants his breakfast, his chair, and his bed left exactly as he left them.",
       "qualities": "The most sympathetic of the three - everything sized just for him is the one thing Goldilocks likes best, and ruins.",
@@ -430,12 +430,12 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Messenger",
+      "name": "The Woodcutter",
       "title": null,
       "gender": null,
       "race": null,
       "subrace": null,
-      "description": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "description": "A woodcutter working the far side of the forest, who gives Goldilocks directions in good faith and never learns what they cost her.",
       "personality": null,
       "motivation": null,
       "qualities": null,
@@ -453,12 +453,12 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Chronicler",
+      "name": "Goldilocks's Mother",
       "title": null,
       "gender": null,
       "race": null,
       "subrace": null,
-      "description": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "description": "The one person in the story who states a rule out loud, right at the beginning, and is not present for a single moment of what follows.",
       "personality": null,
       "motivation": null,
       "qualities": null,
@@ -474,7 +474,7 @@
       "id": "01KYXBHD0KRN12R25N2S4HBCS6",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "The Forest",
-      "description": "Dense woods where Goldilocks loses her way.",
+      "description": "Dense woods with one path through them and a great many ways off it. Everyone who lives here knows the way; Goldilocks is the only person in the story who does not.",
       "climate": "Thick with trees and easy to get lost in, with no clear paths to follow.",
       "culture": null,
       "politics": null,
@@ -490,7 +490,7 @@
       "id": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "The Three Bears' House",
-      "description": "A cozy little house in the middle of the forest, with everything in three sizes.",
+      "description": "A small house in a clearing, furnished throughout in three sizes. The door has no lock, because in all the years the bears have lived here nobody has ever come to it.",
       "climate": "Warm and homely, freshly emptied while the porridge cools from breakfast.",
       "culture": "A small, orderly bear family household where everything - bowls, chairs, beds - comes in a big, medium, and small size.",
       "politics": null,
@@ -510,8 +510,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Quiet Refuge",
-      "description": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "The Kitchen",
+      "description": "Where the porridge is made and set out to cool in three bowls, during the half-hour the bears spend walking so that it will be cool enough to eat.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -526,8 +526,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Outer Road",
-      "description": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "The Sitting Room",
+      "description": "The room by the fire with the three chairs - the only room in the house where something ends up broken.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -542,8 +542,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Crossroads",
-      "description": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "name": "The Upstairs Bedroom",
+      "description": "The room under the roof with three beds side by side, where the smallest is short enough for a child and long enough for Goldilocks.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -556,7 +556,7 @@
       "id": "01KYXBHD0KRSQSBEM4JC7WRX3Y",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "title": "Curiosity Without Permission",
-      "description": "Walking in uninvited and touching what isn't yours almost always comes with a price.",
+      "description": "Walking in uninvited and trying what is not yours is never punished in this story, and never excused either. Goldilocks loses nothing at all; the bears are left with an empty bowl and a broken chair, and that asymmetry is the whole of the lesson.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -573,8 +573,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Promises have weight",
-      "description": "A freely given promise changes what its speaker may safely do.",
+      "title": "Three of Everything",
+      "description": "The house is furnished in three sizes and every object in it belongs to exactly one bear. Nothing here is communal or anonymous, which is why each discovery has a specific owner to be wronged by it.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -586,8 +586,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Places remember",
-      "description": "Important locations retain signs of the events that happened there.",
+      "title": "The House Was Never Locked",
+      "description": "Nobody in the forest locks a door, because nobody in the forest has ever needed to. What Goldilocks does is only possible because the bears live somewhere that has never required the precaution, and that is why their reaction is fright rather than anger.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -601,8 +601,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuity",
-      "body": "Track what each participant knows before every turning point.",
+      "title": "Continuity: the half-hour of porridge",
+      "body": "The bears are only out walking because the porridge is too hot. The whole story fits inside the time it takes to cool, and no scene should imply they were gone longer than that.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -614,8 +614,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Visual motif",
-      "body": "Repeat a recognizable image when the central conflict changes direction.",
+      "title": "Visual motif: three, then one",
+      "body": "Every discovery is staged the same way - big, middle, small - and lands on the smallest. Keep the rhythm identical across porridge, chairs and beds so that the last one carries the weight.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -627,8 +627,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Revision goal",
-      "body": "Keep cause and consequence explicit between neighboring scenes.",
+      "title": "Revision goal: nobody is a villain",
+      "body": "Goldilocks is not a thief and the bears are not monsters. Every scene should be readable as an accident between people who never expected to meet.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -979,7 +979,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Narrative object"
+      "value": "Household object"
     },
     {
       "id": "5RJAZVW25TPXD8C4J3BBJQAER2",
@@ -990,7 +990,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Introduced"
+      "value": "Cooling on the table"
     }
   ],
   "characterRelations": [
@@ -1002,9 +1002,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0KCR9PRYN7MHHCZF51",
-      "character2Id": "01KYXBHD0KADEQ76V5K52QR225",
-      "relationType": "Trust"
+      "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
+      "character2Id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "relationType": "Married"
     },
     {
       "id": "05ME5G3M7CPTNH29F7C570J6HN",
@@ -1016,7 +1016,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
       "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "relationType": "Shared purpose"
+      "relationType": "Father and son"
     },
     {
       "id": "18QVEAPF4VP4X2ZA53T8ZHTQ41",
@@ -1028,7 +1028,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
       "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "relationType": "Rivalry"
+      "relationType": "Mother and son"
     },
     {
       "id": "5EJ9J49BSQTN9M7Q74DE1C4R04",
@@ -1038,9 +1038,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "character1Id": "01KYXBHD0KCR9PRYN7MHHCZF51",
       "character2Id": "188TX324NBNZMDNV4P9GGC5561",
-      "relationType": "Family"
+      "relationType": "Mother and daughter"
     },
     {
       "id": "4QZ5E2FP43RF0SEARFH1AVNT59",
@@ -1050,9 +1050,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "47VTFVMEPJBS81RW0F5A0ZB8DB",
-      "character2Id": "188TX324NBNZMDNV4P9GGC5561",
-      "relationType": "Debt"
+      "character1Id": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "character2Id": "47VTFVMEPJBS81RW0F5A0ZB8DB",
+      "relationType": "Gave her directions"
     },
     {
       "id": "42VEHNRG4V9X04TPS1D651M13A",
@@ -1062,9 +1062,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "188TX324NBNZMDNV4P9GGC5561",
-      "character2Id": "01KYXBHD0KADEQ76V5K52QR225",
-      "relationType": "Protection"
+      "character1Id": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "relationType": "Took what was his"
     },
     {
       "id": "5VSMA0NCCW1SGDBR7AFXF2NM01",
@@ -1076,19 +1076,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0KCR9PRYN7MHHCZF51",
       "character2Id": "01KYXBHD0KADEQ76V5K52QR225",
-      "relationType": "Trust"
-    },
-    {
-      "id": "2NYF5XS56MM0QH5SK7W8P6MNMN",
-      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
-      "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "relationType": "Shared purpose"
+      "relationType": "Woke to find her"
     }
   ],
   "characterScenes": [
@@ -1181,48 +1169,26 @@
       "sceneId": "2T489CDWD94GR5832RBVXKTV7J"
     },
     {
-      "id": "0GD63EXKF669G39K3X1BS42NEZ",
+      "id": "656EQ7B013HPTH5DN520QEF77R",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
-      "sceneId": "01KYXBHD0KQNJ4T7GWC4W6VD18"
+      "characterId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "sceneId": "6NVH7FB859SPBAWMA4298EVR4S"
     },
     {
-      "id": "0A6Y25RQF63EXTNQFHMSWSEX27",
+      "id": "1CWAHQ6K4BQMG2YJB3FSHNRZ82",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
-      "sceneId": "01KYXBHD0K17NGGSSYC2SN0K46"
-    },
-    {
-      "id": "1TBDXYN7Z493H1G4DC4M1XJDE3",
-      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
-      "sceneId": "01KYXBHD0KZS1Q3QSR04EYYCMT"
-    },
-    {
-      "id": "0NWS02V5868J4MJEVQ3BSRMNVK",
-      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
-      "sceneId": "6C9EMHEMX4F5NN55EBDDDK845V"
+      "characterId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "sceneId": "223W50B6X5GS9XR33406C528BB"
     },
     {
       "id": "1VGRVS598Y7KPR2XT39HGX7N0W",
@@ -1236,6 +1202,17 @@
       "sceneId": "615X0GMKE8DS25M86F8PDNFQ3G"
     },
     {
+      "id": "1CARVT2KEZV6FQMH0BDBC62NH5",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
+      "sceneId": "5QNYH8GSVVNM1FD1CNTJQTHF86"
+    },
+    {
       "id": "07D15G8D2X43RE7S2GBKJ9EP5S",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1247,37 +1224,15 @@
       "sceneId": "6NVH7FB859SPBAWMA4298EVR4S"
     },
     {
-      "id": "3KRK5ZJED6PXGCQYFTPZT6DTZ9",
+      "id": "6X01MBPXQV58VB1YA12M1JCNSD",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
-      "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R"
-    },
-    {
-      "id": "31T11799DNBWYY910ANM78BKWJ",
-      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
-      "sceneId": "01KYXBHD0K17NGGSSYC2SN0K46"
-    },
-    {
-      "id": "000PZP156Q1S2PHXJT0CBQD967",
-      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
-      "sceneId": "37FX3WSMT4Q8GFJ18B0M6XNBS1"
+      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
+      "sceneId": "223W50B6X5GS9XR33406C528BB"
     },
     {
       "id": "5F97J9GGN7TWBWB8J830XYFG0D",
@@ -1302,18 +1257,29 @@
       "sceneId": "5QNYH8GSVVNM1FD1CNTJQTHF86"
     },
     {
-      "id": "1B58Y0GEWZHQDD3F3C0Q39T0S5",
+      "id": "5Y4J3XR6ASBR6V7T0NAS5H1TT0",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "sceneId": "01KYXBHD0KHP8ZRVERF5SSG2C4"
+      "characterId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "sceneId": "6NVH7FB859SPBAWMA4298EVR4S"
     },
     {
-      "id": "1CQHAT1SAJXBT1VS86A8NAHQXD",
+      "id": "7RT2Z852FD4GAB3H486Z6A0GDN",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "sceneId": "223W50B6X5GS9XR33406C528BB"
+    },
+    {
+      "id": "3GXMJN5HFB1VHA38W9HYWSZRRF",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1321,7 +1287,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "sceneId": "6C9EMHEMX4F5NN55EBDDDK845V"
+      "sceneId": "615X0GMKE8DS25M86F8PDNFQ3G"
     },
     {
       "id": "5MZVZ4P18NAFM4FFD3XM57B1TT",
@@ -1335,6 +1301,17 @@
       "sceneId": "5QNYH8GSVVNM1FD1CNTJQTHF86"
     },
     {
+      "id": "39V9TFT6Z7FMBNRMQ68VWK580R",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "sceneId": "6NVH7FB859SPBAWMA4298EVR4S"
+    },
+    {
       "id": "3EWHQ5JSNBY8FWEH39Z469TCTR",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1346,7 +1323,7 @@
       "sceneId": "223W50B6X5GS9XR33406C528BB"
     },
     {
-      "id": "2TD8G0VNYGRJEH4ZY83P33PWJR",
+      "id": "4P11DM40QZBYEQFM1XTHC70G6H",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1354,10 +1331,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "47VTFVMEPJBS81RW0F5A0ZB8DB",
-      "sceneId": "2T489CDWD94GR5832RBVXKTV7J"
+      "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R"
     },
     {
-      "id": "6D1JPR7RT040T6YP10A4BHSKVN",
+      "id": "56EX6FD4YEPJ562TQ39SRA0E0Z",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1365,18 +1342,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "188TX324NBNZMDNV4P9GGC5561",
-      "sceneId": "6NVH7FB859SPBAWMA4298EVR4S"
-    },
-    {
-      "id": "3QGC04K23QDT9HRTBDMFHSGJRE",
-      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "188TX324NBNZMDNV4P9GGC5561",
-      "sceneId": "223W50B6X5GS9XR33406C528BB"
+      "sceneId": "01KYXBHD0KQNJ4T7GWC4W6VD18"
     }
   ],
   "galleryItems": [],
@@ -1384,11 +1350,11 @@
     {
       "id": "01KYXKRGJQC429TKTH2KSHG6ZV",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "characterOwnerId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "characterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
       "name": "Baby Bear's Bowl of Porridge",
-      "category": "Food",
-      "description": "The smallest of the three bowls of porridge left cooling on the table, just the right temperature.",
-      "initialState": "New",
+      "category": "Household object",
+      "description": "The smallest of the three bowls left cooling on the table, made to a size nobody else in the house would want. It is the only one that is exactly right, and the only one that ends up empty.",
+      "initialState": "Cooling on the table",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1400,11 +1366,11 @@
     {
       "id": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
       "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
-      "characterOwnerId": "01KYXBHD0KADEQ76V5K52QR225",
+      "characterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
       "name": "Baby Bear's Chair",
-      "category": "Furniture",
-      "description": "The smallest of the three chairs in the living room, sized just for Baby Bear.",
-      "initialState": "New",
+      "category": "Household object",
+      "description": "The smallest of the three chairs by the fire, built for someone the size of its owner. It is the one thing in the house Goldilocks cannot put back as she found it.",
+      "initialState": "By the fire, whole",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1421,11 +1387,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterOwnerId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
-      "name": "A Keepsake",
-      "category": "Narrative object",
-      "description": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
-      "initialState": "Introduced",
+      "characterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "name": "Baby Bear's Bed",
+      "category": "Household object",
+      "description": "The smallest of the three beds under the roof, short enough for its owner and, as it turns out, exactly long enough for a lost girl.",
+      "initialState": "Made, and empty",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1440,9 +1406,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKRGJQC429TKTH2KSHG6ZV",
-      "sceneId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
-      "newCharacterOwnerId": "01KYXBHD0KADEQ76V5K52QR225",
-      "newState": "Introduced",
+      "sceneId": "01KYXBHD0KZS1Q3QSR04EYYCMT",
+      "newCharacterOwnerId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "newState": "Eaten to the bottom",
       "extraNotes": null
     },
     {
@@ -1454,9 +1420,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKRGJQC429TKTH2KSHG6ZV",
-      "sceneId": "01KYXBHD0KZS1Q3QSR04EYYCMT",
-      "newCharacterOwnerId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
-      "newState": "Changed hands",
+      "sceneId": "615X0GMKE8DS25M86F8PDNFQ3G",
+      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "newState": "Found empty",
       "extraNotes": null
     },
     {
@@ -1468,9 +1434,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKRGJQC429TKTH2KSHG6ZV",
-      "sceneId": "615X0GMKE8DS25M86F8PDNFQ3G",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "sceneId": "223W50B6X5GS9XR33406C528BB",
+      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "newState": "Still empty when she goes",
       "extraNotes": null
     },
     {
@@ -1482,9 +1448,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
-      "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R",
-      "newCharacterOwnerId": "01KYXBHD0KQYHTPN4R67PZQ1K3",
-      "newState": "Introduced",
+      "sceneId": "37FX3WSMT4Q8GFJ18B0M6XNBS1",
+      "newCharacterOwnerId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "newState": "Sat in",
       "extraNotes": null
     },
     {
@@ -1496,9 +1462,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
-      "sceneId": "37FX3WSMT4Q8GFJ18B0M6XNBS1",
-      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "newState": "Changed hands",
+      "sceneId": "6C9EMHEMX4F5NN55EBDDDK845V",
+      "newCharacterOwnerId": null,
+      "newState": "Broken through the seat",
       "extraNotes": null
     },
     {
@@ -1511,8 +1477,8 @@
       "deletedAt": null,
       "itemId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
       "sceneId": "5QNYH8GSVVNM1FD1CNTJQTHF86",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "newState": "Found in pieces",
       "extraNotes": null
     },
     {
@@ -1524,9 +1490,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "44CT03PXTZCJ67HCDXPAVR9VES",
-      "sceneId": "01KYXBHD0K17NGGSSYC2SN0K46",
-      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
-      "newState": "Introduced",
+      "sceneId": "2T489CDWD94GR5832RBVXKTV7J",
+      "newCharacterOwnerId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "newState": "Slept in",
       "extraNotes": null
     },
     {
@@ -1538,9 +1504,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "44CT03PXTZCJ67HCDXPAVR9VES",
-      "sceneId": "6C9EMHEMX4F5NN55EBDDDK845V",
-      "newCharacterOwnerId": "47VTFVMEPJBS81RW0F5A0ZB8DB",
-      "newState": "Changed hands",
+      "sceneId": "6NVH7FB859SPBAWMA4298EVR4S",
+      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "newState": "Found occupied",
       "extraNotes": null
     },
     {
@@ -1552,9 +1518,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "44CT03PXTZCJ67HCDXPAVR9VES",
-      "sceneId": "6NVH7FB859SPBAWMA4298EVR4S",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "sceneId": "223W50B6X5GS9XR33406C528BB",
+      "newCharacterOwnerId": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "newState": "Empty again, and unmade",
       "extraNotes": null
     }
   ],
@@ -1978,7 +1944,7 @@
       "entityId": "01KYXBHD0KCR9PRYN7MHHCZF51",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A curious girl who loses her way in the forest on the way home.",
+      "contentSnapshot": "A curious girl who loses her way on an errand and treats an empty house as an invitation. She is not malicious; she simply never once asks whether she is allowed.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Useful foundation; preserve this fact during revision.",
@@ -1996,7 +1962,7 @@
       "entityId": "01KYXBHD0KZS1Q3QSR04EYYCMT",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "The three bears come home, find the mess and the girl asleep in his bed; startled, Goldilocks jumps out the window and runs off into the forest, never to return.",
+      "contentSnapshot": "Three bowls sit cooling on the kitchen table in three sizes. The largest is too hot and the middle one too cold; the smallest is exactly right, so she finishes it.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Check whether the transition is sufficiently clear.",
@@ -2014,7 +1980,7 @@
       "entityId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "The smallest of the three chairs in the living room, sized just for Baby Bear.",
+      "contentSnapshot": "The smallest of the three chairs by the fire, built for someone the size of its owner. It is the one thing in the house Goldilocks cannot put back as she found it.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolve this continuity risk before publication.",
@@ -2032,7 +1998,7 @@
       "entityId": "0T1MYV408A4X71FS5AQVVKVJ63",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A concise account of this stage of Goldilocks and the Three Bears, its conflict, and its effect on what follows.",
+      "contentSnapshot": "Where the porridge is made and set out to cool in three bowls, during the half-hour the bears spend walking so that it will be cool enough to eat.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "This detail should echo in a later scene.",
@@ -2143,7 +2109,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "entityId": "01KYXBHD0KZS1Q3QSR04EYYCMT",
       "effectType": "itemGrant",
       "itemId": "01KYXKRGJQC429TKTH2KSHG6ZV",
       "triggerName": null
@@ -2157,7 +2123,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0K17NGGSSYC2SN0K46",
+      "entityId": "6C9EMHEMX4F5NN55EBDDDK845V",
       "effectType": "itemTake",
       "itemId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
       "triggerName": null
@@ -2171,10 +2137,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0KZS1Q3QSR04EYYCMT",
+      "entityId": "01KYXBHD0KHP8ZRVERF5SSG2C4",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "entered_uninvited"
     },
     {
       "id": "4TF09MH162V8JN9FKMC71A3D0P",
@@ -2185,10 +2151,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "6C9EMHEMX4F5NN55EBDDDK845V",
+      "entityId": "01KYXBHD0K044SNWCNX8SZ2C3R",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "still_on_the_path"
     }
   ],
   "exampleCatalogEnriched": true,

@@ -27,9 +27,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Nada é o Que Parece",
+      "name": "Nada É o Que Parece",
       "index": 1,
-      "summary": "O conflito central e seus participantes são apresentados.",
+      "summary": "Alice segue algo impossível por tédio e vai parar num lugar com regras próprias, nenhuma das quais alguém se dispõe a explicar.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confronto",
+      "name": "Regras Sem Razão",
       "index": 2,
-      "summary": "As consequências crescem e os personagens precisam decidir como reagir.",
+      "summary": "O País das Maravilhas não é sem lei. Suas leis são perfeitamente coerentes e completamente arbitrárias, e Alice é a única presente que acha isso digno de objeção.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolução",
+      "name": "A Corte da Rainha",
       "index": 3,
-      "summary": "Os fios principais convergem e revelam suas consequências.",
+      "summary": "A Rainha sentencia primeiro e julga depois. Alice pode sair da corte em silêncio ou dizer em voz alta que aquilo tudo é um absurdo, e os dois caminhos terminam de formas diferentes.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -75,7 +75,7 @@
       "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "name": "A toca do coelho",
       "index": 1,
-      "summary": "Alice segue o apressado Coelho Branco e cai por um buraco que a leva ao estranho País das Maravilhas.",
+      "summary": "Um coelho branco de colete tira um relógio do bolso e diz que está atrasado. Alice o segue por um campo e por uma toca abaixo sem cogitar uma única vez como voltará à superfície.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -94,10 +94,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
-      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
-      "name": "Pequena demais, grande demais",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "name": "O salão das portinhas",
       "index": 2,
-      "summary": "Alice experimenta poções e bolos que mudam seu tamanho sem aviso, tentando alcançar uma portinha minúscula.",
+      "summary": "Ela cai num longo salão de portas trancadas e, atrás de uma cortina, encontra uma de quarenta centímetros que dá para o jardim mais bonito que já viu. A chave está numa mesa de vidro que ela não alcança sem ficar menor, e a porta é pequena demais para atravessar enquanto alcança a chave.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -116,10 +116,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
-      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
-      "name": "O chá maluco",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "name": "Beba-me, coma-me",
       "index": 3,
-      "summary": "Seguindo por um caminho na floresta, Alice encontra o Chapeleiro Maluco numa festa de chá sem fim, onde nada faz muito sentido.",
+      "summary": "Uma garrafa marcada BEBA-ME a encolhe para além da chave; um bolo marcado COMA-ME a manda até o teto. Ela chora um lago de lágrimas com quase três metros de altura e quase se afoga nele com sete centímetros.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -141,7 +141,7 @@
       "locationId": "6S4G42C7CKG7M3F3784V5925Z0",
       "name": "O gato que sorri",
       "index": 4,
-      "summary": "Seguindo o rio de lágrimas, Alice encontra o Gato de Cheshire, que lhe dá pistas enigmáticas sobre para onde ir.",
+      "summary": "O Gato de Cheshire aparece numa árvore, primeiro pelo rabo, e responde a toda pergunta de Alice com algo verdadeiro e inútil. Diz-lhe que ali todos são loucos, ela inclusive, e se oferece para prová-lo com indicações.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -161,9 +161,9 @@
       "deletedAt": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
       "locationId": "6E28262T30VM4RZDT12M72CBHR",
-      "name": "O campo de croqué",
+      "name": "O chá maluco",
       "index": 1,
-      "summary": "Alice é arrastada para um jogo de croqué absurdo, jogado com flamingos e ouriços, sob o olhar impaciente da Rainha de Copas.",
+      "summary": "O Chapeleiro e a Lebre de Março estão presos nas seis horas porque o Chapeleiro brigou com o Tempo, e o Tempo se recusa a andar para ele desde então. Fazem a Alice um enigma sem resposta e se ofendem quando ela pede uma.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -182,10 +182,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
-      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
-      "name": "Julgamento silencioso",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "name": "Pintando as rosas de vermelho",
       "index": 2,
-      "summary": "Alice discorda educadamente da Rainha; irritada mas sem provas de crime algum, a Rainha manda-a embora do castelo sem mais alarde - e Alice acorda à sombra de uma árvore, como se tudo não passasse de um sonho vívido.",
+      "summary": "Três cartas de baralho pintam de vermelho uma roseira branca antes que a Rainha a veja. Plantaram a árvore errada, e o castigo pelo erro é pior que o castigo pela fraude, então estão cometendo a fraude.",
       "gap": 2,
       "gapType": "hours",
       "duration": 10,
@@ -204,10 +204,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
-      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
-      "name": "Ordem de execução",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "name": "O jogo de croqué",
       "index": 3,
-      "summary": "Alice ousa contrariar a Rainha abertamente; furiosa, a Rainha grita \"Cortem-lhe a cabeça!\" e todo o baralho avança sobre Alice - que acorda sobressaltada à beira do rio, e o País das Maravilhas se desfaz como fumaça.",
+      "summary": "A Rainha joga croqué com flamingos vivos por tacos e ouriços por bolas, num gramado que não fica parado. Ninguém marca ponto, porque todos estão ocupados demais sendo sentenciados para terminar uma jogada.",
       "gap": 1,
       "gapType": "days",
       "duration": 2,
@@ -225,11 +225,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Uma nova consequência",
-      "summary": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Uma dispensa discreta",
+      "summary": "Alice discorda da Rainha com cuidado, nas palavras mais brandas que consegue encontrar. A Rainha se irrita, não tem nada de específico de que acusá-la, e deixa o assunto morrer diante da corte inteira.",
       "extraNotes": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
-      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "index": 4,
       "gap": -2,
       "gapType": "minutes",
@@ -247,11 +247,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Um encontro inesperado",
-      "summary": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Cortem-lhe a cabeça",
+      "summary": "Alice diz com todas as letras que a Rainha não passa de uma carta de baralho. A Rainha grita pela execução dela, e a corte se escandaliza muito mais com a observação do que com a sentença.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
-      "locationId": "6S4G42C7CKG7M3F3784V5925Z0",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "index": 1,
       "gap": 15,
       "gapType": "minutes",
@@ -269,11 +269,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A decisão difícil",
-      "summary": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O julgamento do Valete",
+      "summary": "O Valete de Copas é julgado por roubar tortas, com o veredicto já escrito. Alice, crescendo a cada minuto, aponta que a prova não prova nada, e o Rei decide que ela está fora de ordem.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
-      "locationId": "6E28262T30VM4RZDT12M72CBHR",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -291,8 +291,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Caminhos convergem",
-      "summary": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Acordando na margem",
+      "summary": "Alice está na margem do rio com a cabeça no colo da irmã e folhas caindo no rosto. Conta tudo como um sonho, e não consegue decidir, ao contar, se isso torna aquilo menor.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
       "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
@@ -313,8 +313,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "O preço da mudança",
-      "summary": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Ficando para a sentença",
+      "summary": "Alice se recusa a ser dispensada e chama a corte pelo que ela é: um monte de cartas. Elas se levantam no ar e caem sobre ela, e ela as enfrenta em sua altura inteira, acordada, e sem medo.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
       "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
@@ -339,7 +339,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "nextSceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
-      "text": "Continuar em direção a Pequena demais, grande demais"
+      "text": "Continuar em direção a O salão das portinhas"
     },
     {
       "id": "1G34W0BT0QAC168PTBTEW0DV7F",
@@ -351,7 +351,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "nextSceneId": "01KYXBHD0BV57YSDKQAR1T1764",
-      "text": "Continuar em direção a O chá maluco"
+      "text": "Continuar em direção a Beba-me, coma-me"
     },
     {
       "id": "045AY9DJPDF5WTP4D05Y4NPZA5",
@@ -375,7 +375,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
-      "text": "Continuar em direção a O campo de croqué"
+      "text": "Continuar em direção a O chá maluco"
     },
     {
       "id": "7E9M3H9Q54Q1T9Z4B48XTAWX63",
@@ -387,7 +387,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "nextSceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
-      "text": "Continuar em direção a Julgamento silencioso"
+      "text": "Continuar em direção a Pintando as rosas de vermelho"
     },
     {
       "id": "4902C6M5PA0488NWNV94ZM7B9G",
@@ -399,7 +399,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continuar em direção a Ordem de execução"
+      "text": "Continuar em direção a O jogo de croqué"
     },
     {
       "id": "1FVDHK39ZG3WPD639GAVZ0W2GJ",
@@ -411,7 +411,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "nextSceneId": "21DVEKTZND27TY3158T9SNQ6JF",
-      "text": "Continuar em direção a Uma nova consequência"
+      "text": "Continuar em direção a Uma dispensa discreta"
     },
     {
       "id": "79DBZVNSNFZX1JSNHYTY73YNZA",
@@ -423,7 +423,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "06CG24WTEHTCV3267J4180G8SZ",
-      "text": "Continuar em direção a Um encontro inesperado"
+      "text": "Continuar em direção a Cortem-lhe a cabeça"
     },
     {
       "id": "70QJFBB5B7PP1R1NP4DPEN9R4F",
@@ -435,7 +435,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
-      "text": "Continuar em direção a A decisão difícil"
+      "text": "Continuar em direção a O julgamento do Valete"
     },
     {
       "id": "7SG5ZW3H8V87ZBRVGFET1WJNJG",
@@ -447,7 +447,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continuar em direção a Caminhos convergem"
+      "text": "Continuar em direção a Acordando na margem"
     },
     {
       "id": "4Y0XXGC50ZGY3YGEP7H51B08TJ",
@@ -459,7 +459,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continuar em direção a O preço da mudança"
+      "text": "Continuar em direção a Ficando para a sentença"
     },
     {
       "id": "2X40DPXMFG71JX8Q4M0965PEFH",
@@ -483,7 +483,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continuar em direção a Ordem de execução"
+      "text": "Continuar em direção a O jogo de croqué"
     },
     {
       "id": "1SAM1CBJ91VA2TJWY15TGSJY35",
@@ -507,7 +507,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continuar em direção a O preço da mudança"
+      "text": "Continuar em direção a Ficando para a sentença"
     },
     {
       "id": "6Z89JKQ2G508YG5HAJZJM4XHCF",
@@ -519,7 +519,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continuar em direção a Caminhos convergem"
+      "text": "Continuar em direção a Acordando na margem"
     }
   ],
   "characters": [
@@ -531,7 +531,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "Uma jovem curiosa que prefere aventuras estranhas a tédio comum.",
+      "description": "Uma menina curiosa que prefere uma aventura estranha a uma tarde comum. É a única pessoa do País das Maravilhas que insiste em esperar que as coisas façam sentido, e a única a quem alguma coisa é explicada.",
       "personality": "Extremamente curiosa e direta, raramente fica assustada por muito tempo com o que vê.",
       "motivation": "Quer entender as regras estranhas do País das Maravilhas e encontrar o caminho de volta à superfície.",
       "qualities": "Educada, lógica e notavelmente serena diante do absurdo.",
@@ -549,12 +549,12 @@
     {
       "id": "01KYXBHD0BF8DTMDDG223S8DYY",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Coelho Branco",
+      "name": "O Coelho Branco",
       "title": null,
       "gender": "Masculino",
       "race": "Coelho",
       "subrace": null,
-      "description": "Sempre atrasado, sempre olhando para o relógio de bolso.",
+      "description": "Sempre atrasado, sempre conferindo o relógio de bolso, e apavorado com a Rainha. É a primeira coisa impossível que Alice vê e a razão de ela estar ali.",
       "personality": "Ansioso e cheio de manias, obcecado por pontualidade.",
       "motivation": "Desesperado para não se atrasar para a Duquesa e temendo o gênio da Rainha.",
       "qualities": "Bem-vestido, meticuloso, fácil de perturbar.",
@@ -572,12 +572,12 @@
     {
       "id": "01KYXBHD0BR4KWKGX998QM9YHK",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Chapeleiro Maluco",
+      "name": "O Chapeleiro Maluco",
       "title": null,
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Anfitrião de uma festa de chá que nunca parece terminar.",
+      "description": "Anfitrião de um chá que nunca termina, tendo sido certa vez sentenciado pela Rainha por assassinar o tempo. Desde então o Tempo parou de andar para ele, o que ele trata como um problema de agenda.",
       "personality": "Excêntrico e rápido para discutir sobre a hora, adora enigmas sem resposta de verdade.",
       "motivation": "Mantém a festa de chá em andamento, aparentemente presa às seis horas para sempre.",
       "qualities": "Espirituoso, teatral, imprevisível.",
@@ -595,12 +595,12 @@
     {
       "id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Gato de Cheshire",
+      "name": "O Gato de Cheshire",
       "title": null,
       "gender": null,
       "race": "Gato",
       "subrace": null,
-      "description": "Um gato enigmático que aparece e desaparece à vontade, sempre sorrindo.",
+      "description": "Um gato que aparece e some quando quer, na ordem que quiser, sempre sorrindo. É a única criatura do País das Maravilhas que diz a verdade a Alice, e não é útil uma única vez.",
       "personality": "Calmo e ardiloso, divertido com a confusão alheia - inclusive a confusão que seus próprios enigmas causam.",
       "motivation": "Gosta de deixar os visitantes intrigados com sua capacidade de aparecer e sumir à vontade.",
       "qualities": "Sábio à sua própria maneira estranha, indiferente a tudo.",
@@ -618,12 +618,12 @@
     {
       "id": "01KYXBHD0BBZN1R7TSRF3M00GN",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Rainha de Copas",
+      "name": "A Rainha de Copas",
       "title": "Governante do reino de cartas",
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "Governante de temperamento explosivo, rápida em ordenar execuções que nunca acontecem de verdade.",
+      "description": "Uma soberana de temperamento explosivo que manda executar alguém quase a cada cena. Nenhuma das ordens é jamais cumprida, o que ninguém conta a Alice.",
       "personality": "Tirânica e de pavio curto, sempre pronta a gritar \"Cortem-lhe a cabeça!\" pela menor ofensa.",
       "motivation": "Exige obediência absoluta e controle total sobre sua corte de cartas de baralho.",
       "qualities": "Presença imponente, jamais questionada abertamente por seus súditos.",
@@ -646,12 +646,12 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "O Cronista",
+      "name": "O Valete de Copas",
       "title": null,
       "gender": null,
       "race": null,
       "subrace": null,
-      "description": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "description": "Acusado de roubar as tortas da Rainha e julgado com uma prova que não diz absolutamente nada. Nunca fala em sua própria defesa, tendo entendido antes de Alice como aquela corte funciona.",
       "personality": null,
       "motivation": null,
       "qualities": null,
@@ -666,8 +666,8 @@
     {
       "id": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "País das Maravilhas",
-      "description": "O mundo estranho do outro lado da toca do coelho.",
+      "name": "O País das Maravilhas",
+      "description": "O mundo do outro lado da toca do coelho. Suas regras são perfeitamente coerentes entre si e com mais nada, e é isso que torna tão difícil argumentar contra elas.",
       "climate": "Sempre mudando, do calor de um jardim a mudanças bruscas de tempo sem padrão algum.",
       "culture": "Uma colcha de retalhos de costumes sem sentido, onde cartas de baralho, animais e objetos falam e mantêm corte como pessoas.",
       "politics": "Nominalmente governado pela Rainha de Copas, cuja palavra é lei mesmo quando não faz sentido algum.",
@@ -682,8 +682,8 @@
     {
       "id": "01KYXBHD0B6RME43YC69PZR0W2",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Casa do Chapeleiro Maluco",
-      "description": "Onde uma festa de chá acontece sem parar, sempre às seis horas.",
+      "name": "O Castelo da Rainha de Copas",
+      "description": "Um castelo de rosas pintadas e criados de baralho, onde a palavra da Rainha é lei exatamente enquanto ela está na sala, e o Rei a revoga discretamente depois que ela sai.",
       "climate": "Sempre ao ar livre, numa mesa comprida permanentemente posta para o chá.",
       "culture": "Uma festa de chá sem fim, onde os lugares são trocados o tempo todo e enigmas substituem a conversa.",
       "politics": "Nenhuma regra além dos caprichos do próprio Chapeleiro - e sua briga contínua com o Tempo.",
@@ -698,8 +698,8 @@
     {
       "id": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Castelo da Rainha de Copas",
-      "description": "Onde a Rainha governa seu campo de croqué e seus súditos-cartas.",
+      "name": "O Campo de Croqué",
+      "description": "O gramado da Rainha, jogado com flamingos vivos e ouriços num terreno que se mexe. Perder com educação é tão perigoso quanto ganhar, e ninguém jamais terminou uma partida.",
       "climate": "Um jardim arrumado cercado de roseiras, algumas famosamente pintadas de vermelho para esconder um erro.",
       "culture": "Uma corte rígida do reino de cartas, construída em torno de partidas de croqué e cortejos reais.",
       "politics": "Monarquia absoluta - o temperamento da Rainha decide quem está em boas graças e quem é condenado, ainda que só de nome.",
@@ -719,8 +719,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Estrada Exterior",
-      "description": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O Bosque da Duquesa",
+      "description": "O bosque entre o castelo e a mesa de chá, onde o Gato de Cheshire aparece em pedaços e dá indicações inteiramente exatas e de nenhuma utilidade.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -735,8 +735,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Encruzilhada",
-      "description": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A Casa do Chapeleiro Maluco",
+      "description": "Onde um chá acontece sem fim, sempre às seis horas, porque o Chapeleiro brigou com o Tempo e o Tempo não anda para ele desde então.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -749,7 +749,7 @@
       "id": "01KYXBHD0B3KDBE4FC0Z8YWDH8",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "title": "A Lógica do País das Maravilhas",
-      "description": "No País das Maravilhas, nada é o que parece - e seguir as regras de perto raramente leva a lugar algum.",
+      "description": "O País das Maravilhas não é sem lei. Toda regra dali é aplicada com coerência completa e não se apoia em absolutamente nada, e é por isso que argumentar contra uma delas sempre soa como a objeção de quem não entendeu.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -762,7 +762,7 @@
       "id": "01KYXK1XAWFBNDS75MTNHHGW48",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "title": "Coma-me, Beba-me",
-      "description": "O País das Maravilhas está cheio de comidas e bebidas com instruções - um bolo marcado \"COMA-ME\" ou uma garrafa marcada \"BEBA-ME\" - e experimentá-los muda o tamanho de quem o fizer, geralmente de forma drástica e sem aviso.",
+      "description": "O País das Maravilhas é cheio de comida e bebida com instruções, e as instruções são sempre honestas sobre o que fazem e caladas sobre o quanto. Tamanho, ali, é algo que acontece com Alice e não algo que ela tem.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -779,8 +779,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Lugares recordam",
-      "description": "Locais importantes preservam sinais dos acontecimentos vividos neles.",
+      "title": "Ninguém É de Fato Executado",
+      "description": "A Rainha manda decapitar alguém quase a cada cena, e o Rei perdoa cada uma delas às escondidas. A ameaça é real para Alice e para mais ninguém, e é isso que torna a corte insuportável em vez de perigosa.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -794,8 +794,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuidade",
-      "body": "Acompanhar o que cada participante sabe antes de cada ponto de virada.",
+      "title": "Continuidade: de que tamanho ela está",
+      "body": "Alice muda de altura oito vezes e isso importa em toda cena em que acontece. Acompanhar explicitamente - o julgamento só funciona porque ela está crescendo enquanto ele corre.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -807,8 +807,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Motivo visual",
-      "body": "Repetir uma imagem reconhecível quando o conflito central mudar de direção.",
+      "title": "Motivo visual: instruções nas coisas",
+      "body": "Rótulos, placas, veredictos escritos antes dos julgamentos. O País das Maravilhas vive dizendo a Alice o que fazer por escrito, e o escrito nunca está errado e nunca é suficiente.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -820,8 +820,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Meta de revisão",
-      "body": "Manter explícita a relação de causa e consequência entre cenas vizinhas.",
+      "title": "Meta de revisão: a bifurcação é um temperamento",
+      "body": "Os dois finais dependem de uma coisa só: se Alice diz a coisa discreta ou a coisa em voz alta. Toda escolha no caminho até lá deve ser reconhecidamente a mesma decisão, em escala menor.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1172,7 +1172,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Objeto narrativo"
+      "value": "Objeto do País das Maravilhas"
     },
     {
       "id": "00MG3Y3JZRWPQZSDP98DQR1XE0",
@@ -1183,7 +1183,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Apresentado"
+      "value": "Cheia, sobre a mesa de vidro"
     }
   ],
   "characterRelations": [
@@ -1197,7 +1197,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
       "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "relationType": "Confiança"
+      "relationType": "Seguiu-o até aqui"
     },
     {
       "id": "2E6GWD8WCWX83ZDCJHHTS5XFAM",
@@ -1207,9 +1207,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "relationType": "Convidada sem convite"
     },
     {
       "id": "3DBYNTM10JWGJ690ZNHZB7W0PN",
@@ -1219,9 +1219,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
       "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "relationType": "Rivalidade"
+      "relationType": "Guia inútil"
     },
     {
       "id": "1DCG8S14PDN6MQR7APZ7YS6R3P",
@@ -1231,9 +1231,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "character2Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "relationType": "Família"
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "relationType": "Desafiou-a"
     },
     {
       "id": "7W9R3J57TV7P7Z3ZWA3T2XVK7N",
@@ -1243,9 +1243,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
       "character2Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "relationType": "Dívida"
+      "relationType": "Testemunha no julgamento dele"
     },
     {
       "id": "5EC0RTG0DX1Z3APMAFV4Y2C3E9",
@@ -1255,9 +1255,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "relationType": "Proteção"
+      "character1Id": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "relationType": "Arauto dela"
     },
     {
       "id": "51X0H12RTZANZ4T4JS24WSQXA8",
@@ -1267,9 +1267,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
-      "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "relationType": "Confiança"
+      "character1Id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "relationType": "Sentenciado por ela certa vez"
     },
     {
       "id": "6FBJGN34BZVQ7CY4WX0P0RTMNJ",
@@ -1279,9 +1279,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "character2Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
+      "relationType": "Acusadora"
     }
   ],
   "characterScenes": [
@@ -1374,6 +1374,50 @@
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF"
     },
     {
+      "id": "76Q2B35DP2RV3K3R69VARZM2P0",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
+    },
+    {
+      "id": "2F8VKJE4JMHK2Z4BB43CF6WNWY",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+    },
+    {
+      "id": "1H9ZESXY6PH68RKVZ28P161DA3",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2"
+    },
+    {
+      "id": "6GBNGD5EKR4ZQ68APN0Y67PCJ4",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+    },
+    {
       "id": "2252T20X8W8WY7XW06299A2R6J",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1385,7 +1429,7 @@
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT"
     },
     {
-      "id": "5WH44KY1E6A69XMHW9XZFP9QZ9",
+      "id": "5E3HM8M97X0VYBA2ZHJVHEYRVV",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1393,87 +1437,54 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764"
-    },
-    {
-      "id": "0WV36XX5N130KN196F6GC7K20X",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT"
-    },
-    {
-      "id": "1H2RCSYZ0FXNDXVFBASHQY1CHY",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31"
-    },
-    {
-      "id": "5DAN3NT6TQWPD35RKK9H62TDW1",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
-    },
-    {
-      "id": "3DT55D4YWA7V324R18G0YR2NJM",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2"
-    },
-    {
-      "id": "015ZS04VGMQ7P91KWQ3HA33YK1",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9"
     },
     {
-      "id": "72ZXN56HTE6KFVM6E2J0769V8X",
+      "id": "1J672MPYV41C5XT483N8EA37KE",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764"
-    },
-    {
-      "id": "1KMWHGN7J61RTEP278H4HN4S5F",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
       "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M"
     },
     {
-      "id": "6KW7QEY5EA3N2E2ZTWTR5GB97F",
+      "id": "01GKQ72ZRQ45DD6GTRJ5W67CF7",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "21DVEKTZND27TY3158T9SNQ6JF"
+    },
+    {
+      "id": "37J88QVGT8NQYPM3MNNTPJHC0D",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+    },
+    {
+      "id": "369E88HH8PWV0TWATAXXHQBH6S",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+    },
+    {
+      "id": "7N4667S3JP3Z16R7SRXAPFB7TC",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1481,7 +1492,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
+      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT"
     },
     {
       "id": "0W1ETVSVRB2X70KMBHXT8FRHS5",
@@ -1517,7 +1528,7 @@
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31"
     },
     {
-      "id": "08YM2H9BFQ1135QYNSVF6GFNRK",
+      "id": "0J6A6X54N7XY7CQD11GYCX1B67",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1525,18 +1536,29 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
     },
     {
-      "id": "7VM1D3SDBJQR9TD8ZY06G6RMKB",
+      "id": "7XDATB46XCKX911EE07JXYHY8M",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M"
+    },
+    {
+      "id": "7DGQYKSR14T5SW308M4A7VWBDB",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31"
     },
     {
       "id": "2BPYD7Q3W17B5AM7C1DZX7RT38",
@@ -1550,7 +1572,40 @@
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF"
     },
     {
-      "id": "3K3SWJ5VQ7FA2XB1Z5Q1W7664M",
+      "id": "2TR8D9R469HWXVHVMWYJ8Q1K51",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
+    },
+    {
+      "id": "3B79FJMZH3S6HFY0K17JW9JGXC",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+    },
+    {
+      "id": "0QMB27H5KPRCV1XAM547H7BNDK",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+    },
+    {
+      "id": "51Z9N85F68QVG0XTW59TYP93A5",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1558,7 +1613,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2"
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
     },
     {
       "id": "3H4A6VFWRZHTXSM68ZWB23NPZG",
@@ -1577,11 +1632,11 @@
     {
       "id": "01KYXK1XAWEGTPCV26S9PJ23HR",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "characterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
-      "name": "Garrafa com o rótulo \"BEBA-ME\"",
-      "category": "Poção",
-      "description": "Uma garrafinha encontrada sobre uma mesa de vidro, com uma etiqueta de papel amarrada no gargalo dizendo \"BEBA-ME\".",
-      "initialState": "Novo",
+      "characterOwnerId": null,
+      "name": "Garrafa marcada \"BEBA-ME\"",
+      "category": "Objeto do País das Maravilhas",
+      "description": "Uma garrafinha sobre uma mesa de vidro, com rótulo de papel, com gosto de torta de cereja, creme, abacaxi, peru assado, caramelo e torrada com manteiga ao mesmo tempo. Deixa menor quem a bebe.",
+      "initialState": "Cheia, sobre a mesa de vidro",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1593,11 +1648,11 @@
     {
       "id": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "characterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "name": "Bolo com o rótulo \"COMA-ME\"",
-      "category": "Comida",
-      "description": "Um bolinho encontrado debaixo da mesa, com as palavras \"COMA-ME\" formadas em passas de uva.",
-      "initialState": "Novo",
+      "characterOwnerId": null,
+      "name": "Bolo marcado \"COMA-ME\"",
+      "category": "Objeto do País das Maravilhas",
+      "description": "Um bolinho debaixo da mesa de vidro com COMA-ME escrito em passas de groselha. Faz o oposto da garrafa, e com a mesma brusquidão.",
+      "initialState": "Inteiro, sob a mesa",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1614,11 +1669,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterOwnerId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "name": "Uma Lembrança",
-      "category": "Objeto narrativo",
-      "description": "Um relato conciso desta etapa de Alice no País das Maravilhas, seu conflito e seu efeito sobre o que acontece depois.",
-      "initialState": "Apresentado",
+      "characterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "name": "O Relógio de Bolso do Coelho Branco",
+      "category": "Objeto do País das Maravilhas",
+      "description": "O relógio que o Coelho Branco não para de tirar do colete. Sempre lhe diz que está atrasado, e é a primeira coisa impossível que Alice decide valer a pena seguir.",
+      "initialState": "No colete do Coelho",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1633,9 +1688,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
-      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
-      "newCharacterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "newCharacterOwnerId": null,
+      "newState": "Encontrada sobre a mesa de vidro",
       "extraNotes": null
     },
     {
@@ -1647,9 +1702,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
-      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
-      "newCharacterOwnerId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Bebida até o fim",
       "extraNotes": null
     },
     {
@@ -1661,9 +1716,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
-      "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Vazia, e de nenhuma serventia",
       "extraNotes": null
     },
     {
@@ -1676,8 +1731,8 @@
       "deletedAt": null,
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
-      "newCharacterOwnerId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "newState": "Apresentado",
+      "newCharacterOwnerId": null,
+      "newState": "Encontrado sob a mesa",
       "extraNotes": null
     },
     {
@@ -1689,9 +1744,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
-      "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
-      "newCharacterOwnerId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Comido, com o efeito oposto",
       "extraNotes": null
     },
     {
@@ -1703,9 +1758,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
-      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Farelos num bolso",
       "extraNotes": null
     },
     {
@@ -1717,9 +1772,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4FPTSYS0EAR04WQWK2PNNNR23V",
-      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
-      "newCharacterOwnerId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "newCharacterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "newState": "Tirado de um colete",
       "extraNotes": null
     },
     {
@@ -1731,9 +1786,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4FPTSYS0EAR04WQWK2PNNNR23V",
-      "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "newCharacterOwnerId": "01KYXBHD0BBZN1R7TSRF3M00GN",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
+      "newCharacterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "newState": "Levado para dentro do castelo",
       "extraNotes": null
     },
     {
@@ -1745,9 +1800,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4FPTSYS0EAR04WQWK2PNNNR23V",
-      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "newState": "Juntado aos autos como prova",
       "extraNotes": null
     }
   ],
@@ -2171,7 +2226,7 @@
       "entityId": "01KYXBHD0BESDGG77MG3F2A721",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Uma jovem curiosa que prefere aventuras estranhas a tédio comum.",
+      "contentSnapshot": "Uma menina curiosa que prefere uma aventura estranha a uma tarde comum. É a única pessoa do País das Maravilhas que insiste em esperar que as coisas façam sentido, e a única a quem alguma coisa é explicada.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Base útil; preserve este fato durante a revisão.",
@@ -2189,7 +2244,7 @@
       "entityId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "Alice é arrastada para um jogo de croqué absurdo, jogado com flamingos e ouriços, sob o olhar impaciente da Rainha de Copas.",
+      "contentSnapshot": "O Chapeleiro e a Lebre de Março estão presos nas seis horas porque o Chapeleiro brigou com o Tempo, e o Tempo se recusa a andar para ele desde então. Fazem a Alice um enigma sem resposta e se ofendem quando ela pede uma.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Verifique se a transição está suficientemente clara.",
@@ -2207,7 +2262,7 @@
       "entityId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Um bolinho encontrado debaixo da mesa, com as palavras \"COMA-ME\" formadas em passas de uva.",
+      "contentSnapshot": "Um bolinho debaixo da mesa de vidro com COMA-ME escrito em passas de groselha. Faz o oposto da garrafa, e com a mesma brusquidão.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolva este risco de continuidade antes da publicação.",
@@ -2225,7 +2280,7 @@
       "entityId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Onde a Rainha governa seu campo de croqué e seus súditos-cartas.",
+      "contentSnapshot": "O gramado da Rainha, jogado com flamingos vivos e ouriços num terreno que se mexe. Perder com educação é tão perigoso quanto ganhar, e ninguém jamais terminou uma partida.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Este detalhe deveria repercutir em uma cena posterior.",
@@ -2429,7 +2484,7 @@
       "minVisits": null,
       "itemId": null,
       "itemPresence": null,
-      "triggerName": "secret_closed",
+      "triggerName": "a_corte_ja_a_viu",
       "triggerState": "set"
     },
     {
@@ -2486,7 +2541,7 @@
       "minVisits": null,
       "itemId": null,
       "itemPresence": null,
-      "triggerName": "path_revealed",
+      "triggerName": "gato_deu_as_indicacoes",
       "triggerState": "set"
     }
   ],
@@ -2500,7 +2555,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "entityId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "effectType": "itemGrant",
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
       "triggerName": null
@@ -2528,10 +2583,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
+      "entityId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "gato_deu_as_indicacoes"
     },
     {
       "id": "7XWYG7NWHM9Y2QWQZ01SCQ3BS6",
@@ -2542,10 +2597,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0BC0D1AGHBNZHY2E31",
+      "entityId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "a_corte_ja_a_viu"
     }
   ],
   "exampleCatalogEnriched": true,

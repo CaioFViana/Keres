@@ -1,3 +1,6 @@
+import { describeStoryIntegrityViolations, findStoryExportIntegrityErrors } from '@keres/shared';
+import { applyNarrative } from './lib/applyExampleNarrative';
+import { exampleStoryNarratives } from './lib/exampleStoryNarrative';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -16,39 +19,6 @@ const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
 const localized = {
   en: {
-    chapters: ['Opening', 'Confrontation', 'Resolution'],
-    chapterSummaries: [
-      'The central conflict and its participants are introduced.',
-      'The consequences grow and the characters must choose how to respond.',
-      'The main threads converge and reveal their consequences.',
-    ],
-    extraScenes: [
-      'A new consequence',
-      'An unexpected encounter',
-      'The difficult decision',
-      'Paths converge',
-      'The price of change',
-      'A final revelation',
-      'After the turning point',
-    ],
-    sceneSummary: (title: string) =>
-      `A concise account of this stage of ${title}, its conflict, and its effect on what follows.`,
-    extraCharacters: ['The Witness', 'The Messenger', 'The Chronicler'],
-    extraLocations: ['The Outer Road', 'The Crossroads', 'The Quiet Refuge'],
-    extraItems: ['A Sealed Letter', 'A Guiding Token', 'A Keepsake'],
-    worldRules: [
-      ['Consequences endure', 'Actions leave traces that later scenes must acknowledge.'],
-      ['Promises have weight', 'A freely given promise changes what its speaker may safely do.'],
-      ['Places remember', 'Important locations retain signs of the events that happened there.'],
-    ],
-    notes: [
-      ['Continuity', 'Track what each participant knows before every turning point.'],
-      ['Visual motif', 'Repeat a recognizable image when the central conflict changes direction.'],
-      ['Revision goal', 'Keep cause and consequence explicit between neighboring scenes.'],
-    ],
-    tags: ['Turning point', 'Foreshadowing', 'Conflict', 'Resolution'],
-    itemStates: ['Introduced', 'Changed hands', 'Transformed'],
-    relations: ['Trust', 'Shared purpose', 'Rivalry', 'Family', 'Debt', 'Protection'],
     plotNames: ['Main conflict', 'Inner change', 'Hidden consequence', 'Unused possibility'],
     plotDetails: [
       'The broad causal thread that carries the story from opening to resolution.',
@@ -62,7 +32,6 @@ const localized = {
       'Changes its direction',
       'Resolves it',
     ],
-    choice: 'Continue toward',
     comments: [
       'Useful foundation; preserve this fact during revision.',
       'Check whether the transition is sufficiently clear.',
@@ -101,51 +70,6 @@ const localized = {
     ],
   },
   pt: {
-    chapters: ['Abertura', 'Confronto', 'Resolução'],
-    chapterSummaries: [
-      'O conflito central e seus participantes são apresentados.',
-      'As consequências crescem e os personagens precisam decidir como reagir.',
-      'Os fios principais convergem e revelam suas consequências.',
-    ],
-    extraScenes: [
-      'Uma nova consequência',
-      'Um encontro inesperado',
-      'A decisão difícil',
-      'Caminhos convergem',
-      'O preço da mudança',
-      'Uma revelação final',
-      'Depois da virada',
-    ],
-    sceneSummary: (title: string) =>
-      `Um relato conciso desta etapa de ${title}, seu conflito e seu efeito sobre o que acontece depois.`,
-    extraCharacters: ['A Testemunha', 'O Mensageiro', 'O Cronista'],
-    extraLocations: ['A Estrada Exterior', 'A Encruzilhada', 'O Refúgio Silencioso'],
-    extraItems: ['Uma Carta Selada', 'Um Símbolo Guia', 'Uma Lembrança'],
-    worldRules: [
-      [
-        'Consequências permanecem',
-        'Ações deixam marcas que cenas posteriores precisam reconhecer.',
-      ],
-      [
-        'Promessas têm peso',
-        'Uma promessa feita livremente muda o que seu autor pode fazer em segurança.',
-      ],
-      ['Lugares recordam', 'Locais importantes preservam sinais dos acontecimentos vividos neles.'],
-    ],
-    notes: [
-      ['Continuidade', 'Acompanhar o que cada participante sabe antes de cada ponto de virada.'],
-      [
-        'Motivo visual',
-        'Repetir uma imagem reconhecível quando o conflito central mudar de direção.',
-      ],
-      [
-        'Meta de revisão',
-        'Manter explícita a relação de causa e consequência entre cenas vizinhas.',
-      ],
-    ],
-    tags: ['Ponto de virada', 'Prenúncio', 'Conflito', 'Resolução'],
-    itemStates: ['Apresentado', 'Mudou de mãos', 'Transformado'],
-    relations: ['Confiança', 'Propósito comum', 'Rivalidade', 'Família', 'Dívida', 'Proteção'],
     plotNames: [
       'Conflito principal',
       'Mudança interior',
@@ -159,7 +83,6 @@ const localized = {
       'Uma trama intencionalmente vazia para demonstrar o planejamento antes de atribuir cenas.',
     ],
     plotNotes: ['Introduz o fio', 'Desenvolve o fio', 'Muda sua direção', 'Resolve o fio'],
-    choice: 'Continuar em direção a',
     comments: [
       'Base útil; preserve este fato durante a revisão.',
       'Verifique se a transição está suficientemente clara.',
@@ -222,10 +145,23 @@ function base(id: string, storyId: string) {
   };
 }
 
-function ensureCount<T>(source: T[], count: number, create: (index: number) => T): T[] {
-  const result = source.slice(0, Math.max(source.length, count));
-  while (result.length < count) result.push(create(result.length));
-  return result;
+/**
+ * Nothing here invents narrative any more.
+ *
+ * This used to be `ensureCount`, which appended rows until a collection was as long as the tests
+ * counted: scenes named "A new consequence", locations called "The Crossroads", an item called
+ * "A Keepsake", each described with the same sentence about "this stage of <title>". A story with
+ * seven scenes was published with twelve, and its ending flag moved onto the padding. It is a
+ * refusal now: a story that has not been written is not something a script can finish.
+ */
+function requireCount(source: any[] | undefined, count: number, what: string, slug: string): any[] {
+  const rows = source ?? [];
+  if (rows.length < count) {
+    throw new Error(
+      `${slug}: has ${rows.length} ${what}, needs at least ${count}. Write them in scripts/lib/narratives/ - this script does not invent them.`,
+    );
+  }
+  return rows;
 }
 
 function buildStory(slug: string, language: Language, source: StoryDocument): StoryDocument {
@@ -233,42 +169,19 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
   const storyId = source.story.id as string;
   const id = (key: string) => deterministicUlid(slug, key);
 
-  const characters = ensureCount(source.characters ?? [], 6, (index) => ({
-    ...base(id(`character-${index}`), storyId),
-    name: text.extraCharacters[index % text.extraCharacters.length],
-    title: null,
-    gender: null,
-    race: null,
-    subrace: null,
-    description: text.sceneSummary(source.story.title),
-    personality: null,
-    motivation: null,
-    qualities: null,
-    weaknesses: null,
-    biography: null,
-    plannedTimeline: null,
-    isFavorite: false,
-    extraNotes: null,
-  })).map((character, index) => ({
-    ...character,
-    storyId,
-    description: character.description || text.sceneSummary(source.story.title),
-    isFavorite: index === 0,
-  }));
+  const characters = requireCount(source.characters, 6, 'characters', slug).map(
+    (character, index) => ({
+      ...character,
+      storyId,
+      description: character.description,
+      isFavorite: index === 0,
+    }),
+  );
 
-  const locations = ensureCount(source.locations ?? [], 5, (index) => ({
-    ...base(id(`location-${index}`), storyId),
-    name: text.extraLocations[index % text.extraLocations.length],
-    description: text.sceneSummary(source.story.title),
-    climate: null,
-    culture: null,
-    politics: null,
-    isFavorite: false,
-    extraNotes: null,
-  })).map((location) => ({
+  const locations = requireCount(source.locations, 5, 'locations', slug).map((location) => ({
     ...location,
     storyId,
-    description: location.description || text.sceneSummary(source.story.title),
+    description: location.description,
   }));
 
   const chapters = Array.from({ length: 3 }, (_, index) => {
@@ -277,20 +190,15 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       ...base(old?.id ?? id(`chapter-${index}`), storyId),
       ...old,
       storyId,
-      name: index === 0 && old?.name ? old.name : text.chapters[index],
+      name: old?.name,
       index: index + 1,
-      summary: text.chapterSummaries[index],
+      summary: old?.summary ?? null,
       isFavorite: false,
       extraNotes: old?.extraNotes ?? null,
     };
   });
 
-  const scenes = ensureCount(source.scenes ?? [], 12, (index) => ({
-    ...base(id(`scene-${index}`), storyId),
-    name: text.extraScenes[(index - (source.scenes?.length ?? 0)) % text.extraScenes.length],
-    summary: null,
-    extraNotes: null,
-  })).map((scene, index) => {
+  const scenes = requireCount(source.scenes, 12, 'scenes', slug).map((scene, index) => {
     const chapterIndex = Math.floor(index / 4);
     const durationUnits = ['minutes', 'hours', 'days', 'minutes', 'years'] as const;
     const gapUnits = ['minutes', 'hours', 'days', 'minutes'] as const;
@@ -300,9 +208,9 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       storyId,
       chapterId: chapters[chapterIndex].id,
       locationId: locations[index % locations.length].id,
-      name: scene.name || text.extraScenes[index % text.extraScenes.length],
+      name: scene.name,
       index: (index % 4) + 1,
-      summary: scene.summary || text.sceneSummary(source.story.title),
+      summary: scene.summary,
       gap: index === 0 ? 0 : index % 7 === 0 ? -2 : [15, 2, 1, 30][index % 4],
       gapType: gapUnits[index % gapUnits.length],
       duration: [10, 2, 1, 45, 1][index % 5],
@@ -314,45 +222,29 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     };
   });
 
-  const items = ensureCount(source.items ?? [], 3, (index) => ({
-    ...base(id(`item-${index}`), storyId),
-    characterOwnerId: characters[index % characters.length].id,
-    name: text.extraItems[index % text.extraItems.length],
-    category: language === 'pt' ? 'Objeto narrativo' : 'Narrative object',
-    description: text.sceneSummary(source.story.title),
-    initialState: text.itemStates[0],
-    isFavorite: false,
-    extraNotes: null,
-  })).map((item, index) => ({
+  const items = requireCount(source.items, 3, 'items', slug).map((item) => ({
     ...item,
     storyId,
-    characterOwnerId: characters[index % characters.length].id,
-    description: item.description || text.sceneSummary(source.story.title),
-    initialState: item.initialState || text.itemStates[0],
+    description: item.description,
+    initialState: item.initialState,
   }));
 
-  const worldRules = ensureCount(source.worldRules ?? [], 3, (index) => ({
-    ...base(id(`world-rule-${index}`), storyId),
-    title: text.worldRules[index][0],
-    description: text.worldRules[index][1],
-    isFavorite: false,
-    extraNotes: null,
-  })).map((rule, index) => ({
+  const worldRules = requireCount(source.worldRules, 3, 'worldRules', slug).map((rule) => ({
     ...rule,
     storyId,
-    description: rule.description || text.worldRules[index % text.worldRules.length][1],
+    description: rule.description,
   }));
 
   const notes = Array.from({ length: 3 }, (_, index) => ({
     ...base(id(`note-${index}`), storyId),
-    title: text.notes[index][0],
-    body: text.notes[index][1],
+    title: source.notes?.[index]?.title ?? '',
+    body: source.notes?.[index]?.body ?? '',
     isFavorite: false,
     extraNotes: null,
   }));
   const tags = Array.from({ length: 4 }, (_, index) => ({
     ...base(id(`tag-${index}`), storyId),
-    name: text.tags[index],
+    name: source.tags?.[index]?.name ?? '',
     color: ['#7C3AED', '#0EA5E9', '#F59E0B', '#10B981'][index],
     isFavorite: false,
     extraNotes: null,
@@ -378,15 +270,29 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     );
   });
 
-  const characterRelations = Array.from(
-    { length: Math.max(6, characters.length + 2) },
-    (_, index) => ({
-      ...base(id(`character-relation-${index}`), storyId),
-      character1Id: characters[index % characters.length].id,
-      character2Id: characters[(index + (index % 2 === 0 ? 1 : 2)) % characters.length].id,
-      relationType: text.relations[index % text.relations.length],
-    }),
-  );
+  // Distinct unordered pairs, taken in order from the combinations of the cast. The previous version
+  // walked the cast with two modular offsets, which wrapped around and produced the same pair twice
+  // once it ran past the end - the duplicated relations every bundled example shipped with. One
+  // relation exists per pair of characters, whichever column each id sits in.
+  const relationPairs: [number, number][] = [];
+  const relationTarget = Math.max(6, characters.length + 2);
+  for (
+    let first = 0;
+    first < characters.length && relationPairs.length < relationTarget;
+    first += 1
+  )
+    for (
+      let second = first + 1;
+      second < characters.length && relationPairs.length < relationTarget;
+      second += 1
+    )
+      relationPairs.push([first, second]);
+  const characterRelations = relationPairs.map(([first, second], index) => ({
+    ...base(id(`character-relation-${index}`), storyId),
+    character1Id: characters[first].id,
+    character2Id: characters[second].id,
+    relationType: '',
+  }));
 
   const locationRelations = [
     [0, 1, 'contains'],
@@ -409,7 +315,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
         journeyIndex === 2
           ? null
           : characters[(itemIndex + journeyIndex + 1) % characters.length].id,
-      newState: text.itemStates[journeyIndex],
+      newState: '',
       extraNotes: null,
     })),
   );
@@ -480,7 +386,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
   const attributeValues = storySchemaFields.flatMap((field, fieldIndex) =>
     [0, 1].map((characterIndex) => {
       const values: Record<string, string> = {
-        text: text.tags[(fieldIndex + characterIndex) % text.tags.length],
+        text: source.tags?.[(fieldIndex + characterIndex) % 4]?.name ?? '',
         long_text: text.comments[(fieldIndex + characterIndex) % text.comments.length],
         number: String(3 + characterIndex * 4),
         boolean: characterIndex === 0 ? 'true' : 'false',
@@ -507,8 +413,8 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     ...text.schema.listValues.map((value) => [`custom:${storySchemaFields[6].id}`, value]),
     ['character_gender', language === 'pt' ? 'Não informado' : 'Unspecified'],
     ['character_race', language === 'pt' ? 'Humano' : 'Human'],
-    ['item_category', language === 'pt' ? 'Objeto narrativo' : 'Narrative object'],
-    ['item_state', text.itemStates[0]],
+    ['item_category', ''],
+    ['item_state', ''],
   ];
   const suggestions = suggestionCatalogs.map(([type, value], index) => ({
     ...base(id(`suggestion-${index}`), storyId),
@@ -582,7 +488,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       ...base(id(`choice-${index}`), storyId),
       sceneId: scenes[from].id,
       nextSceneId: scenes[to].id,
-      text: `${text.choice} ${scenes[to].name}`,
+      text: '',
     }));
     choiceCheckGroups = [0, 1, 2, 3].map((index) => ({
       ...base(id(`choice-check-group-${index}`), storyId),
@@ -747,7 +653,29 @@ for (const slug of readdirSync(CONTENT_ROOT, { withFileTypes: true })
   for (const language of ['en', 'pt'] as const) {
     const file = join(CONTENT_ROOT, slug, `${language}.json`);
     const source = JSON.parse(readFileSync(file, 'utf8')) as StoryDocument;
-    const built = buildStory(slug, language, source);
+    const narrative = exampleStoryNarratives[slug]?.[language];
+    if (!narrative) {
+      throw new Error(
+        `${slug}/${language}: no authored narrative in scripts/lib/narratives/. Write one before building this story.`,
+      );
+    }
+    // The scaffolding first, then everything a reader sees. Splitting it this way is the point: this
+    // script lays out rows and links and knows nothing about any of these stories, and `applyNarrative`
+    // writes the authored text over them without touching a single id.
+    const built = applyNarrative(slug, buildStory(slug, language, source), narrative);
+    // This script writes over its own input, so anything it gets wrong is written to disk and
+    // becomes the source of the next run. It generates relations and references by arithmetic on
+    // indexes, which is exactly the kind of code that quietly wraps around and repeats itself: it
+    // shipped duplicated character relations that no test, no importer and no screen refused.
+    // Nothing leaves here that the importers would refuse.
+    const violations = findStoryExportIntegrityErrors(
+      built as StoryDocument & { story: { id: string } },
+    );
+    if (violations.length) {
+      throw new Error(
+        `${slug}/${language} would be written corrupt: ${describeStoryIntegrityViolations(violations)}`,
+      );
+    }
     writeFileSync(file, `${JSON.stringify(built, null, 2)}\n`, 'utf8');
   }
 }

@@ -4,7 +4,11 @@
 import { createExampleStoryService } from '../../src/services/storymanagement/ExampleStoryService';
 import { exampleStoryRegistry } from '../../src/exampleStories/generated/registry';
 import { reviveDates } from '../../src/utils/reviveDates';
-import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema } from '@keres/shared';
+import {
+  CURRENT_STORY_FORMAT_VERSION,
+  findStoryExportIntegrityViolations,
+  FullStoryExportSchema,
+} from '@keres/shared';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 import { statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -127,6 +131,28 @@ it('ships every public-domain example as a complete showcase of applicable featu
           new Set(['enable', 'block']),
         );
       }
+    }
+  }
+});
+
+/**
+ * The counts asserted above say a package is *big* enough; they say nothing about whether its rows
+ * agree with one another. That is how the bundled examples came to ship duplicated character
+ * relations: every count passed, every row validated, and the graph drew the same pair twice.
+ *
+ * This runs the same rule both importers run, so a package that would be refused on the way in can
+ * never be published in the first place.
+ */
+it('ships no bundled example that contradicts itself', () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const violations = findStoryExportIntegrityViolations(
+        reviveDates(language.story) as { story: { id: string } },
+      );
+      expect({
+        example: `${entry.slug}/${language.language}`,
+        violations: violations.map((violation) => violation.message),
+      }).toEqual({ example: `${entry.slug}/${language.language}`, violations: [] });
     }
   }
 });

@@ -4,7 +4,11 @@ import type {
   DeleteStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { CreateCharacterRelationDataSchema, PartialCharacterRelationSchema } from '@keres/shared';
+import {
+  CreateCharacterRelationDataSchema,
+  PartialCharacterRelationSchema,
+  sortIdPair,
+} from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characterRelations, characters } from '../../db/schema';
@@ -29,10 +33,6 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
         deletedAtColumnName: 'deletedAt',
       },
     );
-  }
-
-  private sortCharacterIds(id1: string, id2: string): [string, string] {
-    return id1 < id2 ? [id1, id2] : [id2, id1];
   }
 
   private async validateRelatedEntities(
@@ -77,7 +77,7 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     const validatedData: CreateCharacterRelationDataType = this.createSchema.parse(update.data);
 
     // Sort character IDs to ensure consistent storage and uniqueness checks
-    const [sortedChar1Id, sortedChar2Id] = this.sortCharacterIds(
+    const [sortedChar1Id, sortedChar2Id] = sortIdPair(
       validatedData.character1Id,
       validatedData.character2Id,
     );
@@ -128,7 +128,7 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
 
     // If character IDs are being updated, sort them and re-validate
     if (validatedChanges.character1Id || validatedChanges.character2Id) {
-      [newChar1Id, newChar2Id] = this.sortCharacterIds(newChar1Id, newChar2Id);
+      [newChar1Id, newChar2Id] = sortIdPair(newChar1Id, newChar2Id);
       await this.validateRelatedEntities(storyId, newChar1Id, newChar2Id);
 
       // After sorting, update the validatedChanges to reflect the sorted IDs

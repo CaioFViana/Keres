@@ -207,7 +207,9 @@ const ImportExportScreen = () => {
             ? 'import_story_future_version'
             : importError.reason === 'invalid_format'
               ? 'import_story_invalid_file'
-              : 'import_story_unreadable_file';
+              : importError.reason === 'corrupt_content'
+                ? 'import_story_corrupt_content'
+                : 'import_story_unreadable_file';
         showNotification(t(messageKey), 'error');
         return;
       }

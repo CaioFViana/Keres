@@ -16,6 +16,7 @@ import migration_12 from './0011_lumpy_groot';
 import migration_13 from './0012_past_gorgon';
 import migration_14 from './0013_jittery_nomad';
 import migration_15 from './0014_scene_index_one_based';
+import migration_16 from './0015_relation_uniqueness';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -33,6 +34,7 @@ const migrations = [
   { id: 13, name: '0012_past_gorgon', run: migration_13 },
   { id: 14, name: '0013_jittery_nomad', run: migration_14 },
   { id: 15, name: '0014_scene_index_one_based', run: migration_15 },
+  { id: 16, name: '0015_relation_uniqueness', run: migration_16 },
 ];
 
 export default migrations;

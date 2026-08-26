@@ -27,9 +27,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Royal Ball",
+      "name": "A Servant in Her Own House",
       "index": 1,
-      "summary": "The central conflict and its participants are introduced.",
+      "summary": "Cinderella's place in her father's house once her stepmother takes charge, and the royal invitation that finally gives her something to lose.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confrontation",
+      "name": "One Night at the Palace",
       "index": 2,
-      "summary": "The consequences grow and the characters must choose how to respond.",
+      "summary": "The Fairy Godmother lends rather than gives. Everything Cinderella gains that night is borrowed against a deadline she agrees to in advance.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolution",
+      "name": "The Slipper's Search",
       "index": 3,
-      "summary": "The main threads converge and reveal their consequences.",
+      "summary": "The one thing the spell fails to take back travels the kingdom house by house, until the household that hid her has to answer the door.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -72,10 +72,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
-      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
       "name": "A servant's life",
       "index": 1,
-      "summary": "Cinderella lives mistreated by her stepmother and stepsisters, doing all the housework.",
+      "summary": "Cinderella sleeps by the kitchen fire and answers to her stepmother and both stepsisters. The ashes that give her her name are the first thing anyone notices about her, and by now the only thing.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -97,7 +97,7 @@
       "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "name": "The invitation to the ball",
       "index": 2,
-      "summary": "A royal invitation arrives for a ball where the prince will choose his bride - every young woman in the kingdom is invited.",
+      "summary": "A royal invitation arrives for a ball where the prince will choose a bride. It is addressed to every young woman in the kingdom, which is precisely the problem: Cinderella is one of them, and everyone in the house knows it.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -116,10 +116,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
-      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
+      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "name": "The torn dress",
       "index": 3,
-      "summary": "Out of jealousy, the stepmother and stepsisters destroy Cinderella's dress, stopping her from going to the ball.",
+      "summary": "The stepsisters pull apart the dress Cinderella made from what she was allowed to keep, and the stepmother calls the matter settled. Nobody forbids her to go. They simply arrange for it to be impossible.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -141,7 +141,7 @@
       "locationId": "7T30Y2CEXRDJ5S0K17Q5A4R6YC",
       "name": "The Fairy Godmother",
       "index": 4,
-      "summary": "The Fairy Godmother appears and transforms a pumpkin, mice, and rags into a dress and carriage, warning that the spell ends at midnight.",
+      "summary": "Left crying in the garden, Cinderella is answered. The Fairy Godmother asks for a pumpkin, six mice and a pair of lizards, and names a condition instead of a price.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -160,10 +160,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
-      "name": "The ball",
+      "locationId": "7T30Y2CEXRDJ5S0K17Q5A4R6YC",
+      "name": "The pumpkin and the mice",
       "index": 1,
-      "summary": "Cinderella and the prince dance all night and fall in love, but she flees in a hurry as the clock starts striking midnight, losing a glass slipper on the staircase.",
+      "summary": "The garden empties itself into a carriage, a team of horses and a coachman, and Cinderella's rags become a gown. Only the glass slippers are made from nothing that was there before.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -182,10 +182,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
-      "name": "The search for the slipper",
+      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
+      "name": "The stranger at the ball",
       "index": 2,
-      "summary": "The prince searches the kingdom with the glass slipper, determined to find the young woman who danced with him.",
+      "summary": "Nobody at the palace recognises her, her own family least of all. The prince dances with her the whole evening and never once asks her name - an omission he will spend the rest of the story paying for.",
       "gap": 2,
       "gapType": "hours",
       "duration": 10,
@@ -204,10 +204,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
-      "name": "The glass slipper",
+      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
+      "name": "The stroke of midnight",
       "index": 3,
-      "summary": "The slipper fits Cinderella perfectly before her stepmother's shock, and she marries the prince.",
+      "summary": "The first stroke of the clock reaches Cinderella mid-sentence. She runs before the twelfth, because the Fairy Godmother stated the condition plainly and Cinderella agreed to it.",
       "gap": 1,
       "gapType": "days",
       "duration": 2,
@@ -225,11 +225,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A new consequence",
-      "summary": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The lost slipper",
+      "summary": "On the palace stairs one glass slipper comes away and stays behind. It is the only thing the spell does not reclaim, and the only evidence the prince is left holding.",
       "extraNotes": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
+      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
       "index": 4,
       "gap": -2,
       "gapType": "minutes",
@@ -247,11 +247,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "An unexpected encounter",
-      "summary": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "Back among the ashes",
+      "summary": "Cinderella is at the hearth before dawn, in her own rags, the second slipper hidden. Her stepsisters come home full of the mysterious princess and describe her at length, to her face.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
-      "locationId": "7T30Y2CEXRDJ5S0K17Q5A4R6YC",
+      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
       "index": 1,
       "gap": 15,
       "gapType": "minutes",
@@ -269,11 +269,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The difficult decision",
-      "summary": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The prince's search",
+      "summary": "The prince has the slipper carried from house to house across the kingdom. The method is absurd and everyone involved knows it, and it works anyway, because there is only one foot it can belong to.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
-      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -291,11 +291,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Paths converge",
-      "summary": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The stepsisters' turn",
+      "summary": "Both stepsisters force their feet at the slipper while the stepmother keeps Cinderella out of the room. Neither of them fits, and neither of them concedes it.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
-      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "index": 3,
       "gap": 1,
       "gapType": "days",
@@ -313,8 +313,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The price of change",
-      "summary": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The slipper fits",
+      "summary": "Cinderella asks to try, and it fits. Then she takes the matching slipper out of her pocket, which ends the argument before her stepmother can begin it.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
       "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
@@ -338,7 +338,7 @@
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "A kind and hard-working young woman, treated as a servant in her own home.",
+      "description": "A kind and hard-working young woman, treated as a servant in the house that was her father's. She obeys because refusing has never once worked, not because she agrees.",
       "personality": "Patient and good-natured despite years of mistreatment, never bitter toward her stepfamily.",
       "motivation": "Wishes, quietly and without much hope, for a single night of joy at the royal ball.",
       "qualities": "Graceful, hardworking, and kind even to the mice and small creatures around the house.",
@@ -361,7 +361,7 @@
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "A cold, calculating widow who openly favors her own daughters.",
+      "description": "A cold, calculating widow who openly favours her own daughters. She never forbids Cinderella anything outright; she arranges circumstances so the refusal is never hers to defend.",
       "personality": "Proud, controlling, and openly dismissive of Cinderella.",
       "motivation": "Wants only her own daughters to marry well, and sees Cinderella as competition to be kept down.",
       "qualities": "Sharp and strategic in running the household to her daughters' advantage.",
@@ -384,7 +384,7 @@
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "One of Cinderella's stepsisters, vain and clumsy.",
+      "description": "Cinderella's stepsister, vain and clumsy, and the first to reach for anything her sister wants.",
       "personality": "Vain and quick-tempered, easily jealous of anyone prettier.",
       "motivation": "Desperate to catch the Prince's eye at the ball, whatever the cost to Cinderella.",
       "qualities": "Confident enough to try on the glass slipper herself without a shred of doubt.",
@@ -407,7 +407,7 @@
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "The other stepsister, just as vain as the elder.",
+      "description": "The other stepsister, just as vain as the elder and quicker to say aloud what their mother only implies.",
       "personality": "Vain in her own right, though slightly less cruel than her elder sister.",
       "motivation": "Follows her sister and mother's lead in hoping to marry above her station.",
       "qualities": "Sociable enough to be tolerated at court, if not admired.",
@@ -425,12 +425,12 @@
     {
       "id": "01KYXBHD0JN10GNFGP4M876AKZ",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Fairy Godmother",
+      "name": "The Fairy Godmother",
       "title": null,
       "gender": "Female",
       "race": "Fairy",
       "subrace": null,
-      "description": "A kindly fairy who appears in moments of greatest need.",
+      "description": "A godmother who appears once, at the worst hour, and helps on terms stated in advance. She lends; she does not give.",
       "personality": "Warm, practical, and a little mischievous with her magic.",
       "motivation": "Wants Cinderella to have her one chance at the ball, however briefly.",
       "qualities": "Resourceful - able to turn a pumpkin, mice, and rags into a carriage, horses, and a gown in moments.",
@@ -448,12 +448,12 @@
     {
       "id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Prince",
+      "name": "The Prince",
       "title": "Heir to the throne",
       "gender": "Male",
       "race": "Human",
       "subrace": null,
-      "description": "The kingdom's heir, tasked with choosing a bride at the royal ball.",
+      "description": "The kingdom's heir, required to choose a bride at a single ball. He dances all night with a woman whose name he never thinks to ask for.",
       "personality": "Attentive and sincere, taken with Cinderella's company rather than just her appearance.",
       "motivation": "Wants to find the mysterious young woman who fled the ball, not just any bride.",
       "qualities": "Persistent - determined to search the whole kingdom with the glass slipper until he finds her.",
@@ -473,8 +473,8 @@
     {
       "id": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Cinderella's House",
-      "description": "The house where Cinderella lives under her stepmother's rule.",
+      "name": "The Kingdom",
+      "description": "The small kingdom Cinderella has never left, where the prince's family reigns and where a royal invitation reaches every house that has a door.",
       "climate": "A cold hearth for Cinderella, who sleeps near the cinders for warmth while her stepfamily keeps the good rooms.",
       "culture": "A household split in two - comfort and favor for the stepsisters, chores and silence for Cinderella.",
       "politics": "Ruled entirely by the Stepmother, with no one to appeal to on Cinderella's behalf.",
@@ -489,8 +489,8 @@
     {
       "id": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Royal Palace",
-      "description": "Where the great ball is held in search of a bride for the prince.",
+      "name": "Cinderella's House",
+      "description": "The house Cinderella's father left her, run since his death by her stepmother, who has never had to justify a single decision made inside it.",
       "climate": "Brightly lit and festive for the ball, its grand staircase the setting for Cinderella's hurried midnight escape.",
       "culture": "A court gathering meant to present every eligible young woman in the kingdom to the Prince.",
       "politics": "The seat of the kingdom's royal family.",
@@ -510,8 +510,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Quiet Refuge",
-      "description": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The Kitchen Hearth",
+      "description": "The corner beside the kitchen fire where Cinderella sleeps. The ashes that settle on her there are where her name comes from, and the household uses it without thinking.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -526,8 +526,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Outer Road",
-      "description": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The Garden",
+      "description": "The kitchen garden behind the house, with its pumpkin patch and its mice. Ordinary in every way until the night someone needs it to be otherwise.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -542,8 +542,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Crossroads",
-      "description": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "name": "The Royal Palace",
+      "description": "Where the great ball is held, and where the prince is expected to choose a bride in one evening from a crowd of women he has never met.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -556,7 +556,7 @@
       "id": "01KYXBHD0J4Z72KGB3F4P37R4W",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "title": "The Midnight Spell",
-      "description": "The Fairy Godmother's spell breaks precisely at midnight, when everything returns to how it was.",
+      "description": "The Fairy Godmother's spell ends at the twelfth stroke of midnight, and everything it transformed returns to what it was. The hour is not a punishment or a test - it is stated up front, and Cinderella accepts it before anything is conjured.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -569,7 +569,7 @@
       "id": "01KYXKHJQY4TPRPRHFH3EZJ2K3",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "title": "The Fairy Godmother's Transformations",
-      "description": "With a wave of her wand, the Fairy Godmother turns a pumpkin into a carriage, mice into horses, a rat into a coachman, and lizards into footmen - and Cinderella's rags into a gown fit for the ball. Every transformation reverts exactly at midnight.",
+      "description": "A wave of the wand turns a pumpkin into a carriage, mice into horses, a rat into a coachman and rags into a gown. Each transformation needs something real to work on: the magic changes what is there and never creates from nothing.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -586,8 +586,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Places remember",
-      "description": "Important locations retain signs of the events that happened there.",
+      "title": "What the Spell Cannot Undo",
+      "description": "The one exception to the rule above. The glass slippers were conjured rather than transformed, so midnight has no earlier state to return them to. A slipper lost on the stairs is still glass at dawn - and still the only proof that Cinderella was ever there.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -601,8 +601,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuity",
-      "body": "Track what each participant knows before every turning point.",
+      "title": "Continuity: the second slipper",
+      "body": "Cinderella has the matching slipper from the moment she gets home. Every scene after the ball has to be written as if she knows she can end the story whenever she chooses - and does not, until someone finally asks her.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -614,8 +614,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Visual motif",
-      "body": "Repeat a recognizable image when the central conflict changes direction.",
+      "title": "Visual motif: ashes and glass",
+      "body": "The two materials of the story. She is named for one and identified by the other. The hearth scenes and the palace scenes should keep trading them back and forth.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -627,8 +627,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Revision goal",
-      "body": "Keep cause and consequence explicit between neighboring scenes.",
+      "title": "Revision goal: nobody forbids her",
+      "body": "The stepmother never says no. She arranges circumstances instead, so that the obstacle is always a fact rather than a decision. Keep every obstacle in the first chapter deniable.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -979,7 +979,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Narrative object"
+      "value": "Conjured object"
     },
     {
       "id": "5H1NYA2Z831SJ77RPJ9STBHYWF",
@@ -990,7 +990,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Introduced"
+      "value": "Conjured"
     }
   ],
   "characterRelations": [
@@ -1004,7 +1004,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "relationType": "Trust"
+      "relationType": "Stepmother"
     },
     {
       "id": "3G84P4HXQADTHFXHEQV0QJGPZ3",
@@ -1014,9 +1014,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "relationType": "Shared purpose"
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "relationType": "Stepsister"
     },
     {
       "id": "2T391KJSE2M3RX53YH9B2VXRTG",
@@ -1026,9 +1026,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "relationType": "Rivalry"
+      "relationType": "Stepsister"
     },
     {
       "id": "73H80RKJ8XGSQG4TE3MNXA9G75",
@@ -1038,9 +1038,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "relationType": "Family"
+      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
+      "character2Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "relationType": "Mother and daughter"
     },
     {
       "id": "0Z2FP1E0WRXM066XDCBV0E8JFB",
@@ -1050,9 +1050,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JN10GNFGP4M876AKZ",
-      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "relationType": "Debt"
+      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
+      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "relationType": "Mother and daughter"
     },
     {
       "id": "08W6YXGMT0YF6T2SB49DCENH4X",
@@ -1062,9 +1062,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "relationType": "Protection"
+      "character1Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "relationType": "Sisters"
     },
     {
       "id": "2W63G89S5GHRRGYVMBM9Z7CAWB",
@@ -1075,8 +1075,8 @@
       "isDeleted": false,
       "deletedAt": null,
       "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "relationType": "Trust"
+      "character2Id": "01KYXBHD0JN10GNFGP4M876AKZ",
+      "relationType": "Godmother"
     },
     {
       "id": "6FZZ1AP0NB9GJS5XXWZ99EA4VE",
@@ -1086,9 +1086,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "relationType": "Shared purpose"
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "relationType": "In love"
     }
   ],
   "characterScenes": [
@@ -1181,6 +1181,39 @@
       "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B"
     },
     {
+      "id": "4AV7TJJVXF043BBSCYXX11GH8W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V"
+    },
+    {
+      "id": "4BWFM3VSZ797M89P92MMWDTJPW",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
+    },
+    {
+      "id": "1HTYG5429AZJW2P6DW3QGVHESE",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
+    },
+    {
       "id": "74B8Z1EWJY5EESMY85XWWBXV7P",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1192,6 +1225,17 @@
       "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
     },
     {
+      "id": "371TJ5WSPXFWDKTGAE6NZVYH51",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX"
+    },
+    {
       "id": "2SRMNZDA0BDBF9G763GWDT73B9",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1201,28 +1245,6 @@
       "deletedAt": null,
       "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
       "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ"
-    },
-    {
-      "id": "1X5AH6AEJ8VKH48K0B1NVBDYW7",
-      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
-      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X"
-    },
-    {
-      "id": "0FH7M20VVJ4TCFHHSVY56FKTY7",
-      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
-      "sceneId": "01KYXBHD0JG76K402BJRX50QB4"
     },
     {
       "id": "0C359M85RA8CDEJYJ72YM1YZPW",
@@ -1247,6 +1269,28 @@
       "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
     },
     {
+      "id": "1R3D73G422C318BVDR5B709N9T",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
+    },
+    {
+      "id": "0G865G9Q513TTGQSB7YT8T4S70",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JRER5VNKDJB326PKK",
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
+    },
+    {
       "id": "36VMZBVRXRFRG421BV992Q726G",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1269,17 +1313,6 @@
       "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ"
     },
     {
-      "id": "1KT2E22RAA76GEWQZY9VJDSG8V",
-      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ"
-    },
-    {
       "id": "163J62B48ZMS7Q6WC1KRJ9ENK5",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1291,7 +1324,7 @@
       "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V"
     },
     {
-      "id": "7EFWSHFTS3SJXRYKY2BCNFPVKS",
+      "id": "0DCHVKCAJ2DQH3WM74AY3ABGEM",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1299,10 +1332,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8"
+      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
     },
     {
-      "id": "72Y8380X6703QJX2T2N7EYZ4X0",
+      "id": "2R7SNJ43PXWPVKCXA5Q7H2CQDE",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1310,10 +1343,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D"
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
     },
     {
-      "id": "5XQMBMKBAEY397GK82N9H7FY9Q",
+      "id": "2GXSWD8Q9SQZP0DPRXKFJJ2QD7",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1321,10 +1354,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "01KYXBHD0JG76K402BJRX50QB4"
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX"
     },
     {
-      "id": "2RX257XQ8XNP9H764SKBB36AD9",
+      "id": "3R6262X8611DNRNJFSBB7KF9HZ",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1332,10 +1365,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8"
+      "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ"
     },
     {
-      "id": "22PTXH9PCDSHJXCA229Q8T97J6",
+      "id": "0XH28J6WEEAAZ8RFDKVG51SNGA",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1343,10 +1376,21 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
+      "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V"
     },
     {
-      "id": "4KGHK5NE99YJGV4YTWA1YE5G21",
+      "id": "6S65EZ6QACMAZA8V52CM0BR0NM",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
+    },
+    {
+      "id": "6WH86ERVTB796Y5GHJM740JANQ",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1354,10 +1398,21 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JN10GNFGP4M876AKZ",
-      "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B"
+      "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D"
     },
     {
-      "id": "730AHM5CDNKGHRVRCPBNGAPNEZ",
+      "id": "7TQCNSKKA7YEEG5TBA6V0PXX5W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JN10GNFGP4M876AKZ",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X"
+    },
+    {
+      "id": "6YA032ASVBTYYNB6GWEFNK7Z3R",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1365,7 +1420,40 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
+      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ"
+    },
+    {
+      "id": "0Z2V78953A21G7KH2YP8B71EH7",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "sceneId": "01KYXBHD0JG76K402BJRX50QB4"
+    },
+    {
+      "id": "2SR3NHPJVFT5GWX3W4Q3CYSPP2",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B"
+    },
+    {
+      "id": "7K6AEWG7HCM988N7M5YSBVKY6G",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8"
     },
     {
       "id": "5HPWZV0XX5WJZKM9VDH4PSPKSF",
@@ -1386,9 +1474,9 @@
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "characterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "name": "The Glass Slippers",
-      "category": "Enchanted footwear",
-      "description": "A pair of slippers made of glass, conjured by the Fairy Godmother, that fit no foot but Cinderella's own.",
-      "initialState": "New",
+      "category": "Conjured object",
+      "description": "A pair of slippers made of glass, conjured out of nothing rather than transformed from something. That is why they survive midnight when the rest of the spell does not.",
+      "initialState": "Conjured",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1400,11 +1488,11 @@
     {
       "id": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "characterOwnerId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "characterOwnerId": null,
       "name": "The Pumpkin Carriage",
-      "category": "Enchanted transport",
-      "description": "A carriage conjured from a garden pumpkin, drawn by horses that were once mice.",
-      "initialState": "New",
+      "category": "Conjured object",
+      "description": "A carriage made from a garden pumpkin, drawn by horses that were mice an hour ago and driven by a coachman who was a rat. Borrowed, in every sense.",
+      "initialState": "A pumpkin in the garden",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1416,11 +1504,11 @@
     {
       "id": "01KYXKHJQYDV5T2P7TT7DR9TVS",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "characterOwnerId": "01KYXBHD0JRER5VNKDJB326PKK",
+      "characterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "name": "The Ball Gown",
-      "category": "Enchanted clothing",
-      "description": "A magnificent gown conjured from Cinderella's own rags, undone at the stroke of midnight.",
-      "initialState": "New",
+      "category": "Conjured object",
+      "description": "A gown conjured from Cinderella's own rags, which is why it goes back to being rags: the spell only lends what it borrowed.",
+      "initialState": "Rags",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1440,9 +1528,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
-      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY",
-      "newCharacterOwnerId": "01KYXBHD0J895XZFCMMV9X03V5",
-      "newState": "Introduced",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Worn to the ball",
       "extraNotes": null
     },
     {
@@ -1454,9 +1542,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
-      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
-      "newCharacterOwnerId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "newState": "Changed hands",
+      "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B",
+      "newCharacterOwnerId": null,
+      "newState": "One left on the stairs",
       "extraNotes": null
     },
     {
@@ -1468,9 +1556,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
-      "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Matched to its pair",
       "extraNotes": null
     },
     {
@@ -1482,9 +1570,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
-      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
-      "newCharacterOwnerId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "newState": "Introduced",
+      "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
+      "newCharacterOwnerId": null,
+      "newState": "Chosen from the patch",
       "extraNotes": null
     },
     {
@@ -1496,9 +1584,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
-      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ",
-      "newCharacterOwnerId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "newState": "Changed hands",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Turned into a carriage",
       "extraNotes": null
     },
     {
@@ -1510,9 +1598,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
-      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8",
+      "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
       "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "newState": "A pumpkin again, on the road",
       "extraNotes": null
     },
     {
@@ -1524,9 +1612,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
-      "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ",
-      "newCharacterOwnerId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "newState": "Introduced",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Conjured from her rags",
       "extraNotes": null
     },
     {
@@ -1538,9 +1626,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
-      "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
-      "newCharacterOwnerId": "01KYXBHD0JN10GNFGP4M876AKZ",
-      "newState": "Changed hands",
+      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Worn, and unrecognised in",
       "extraNotes": null
     },
     {
@@ -1552,9 +1640,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
-      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Rags again",
       "extraNotes": null
     }
   ],
@@ -1978,7 +2066,7 @@
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A kind and hard-working young woman, treated as a servant in her own home.",
+      "contentSnapshot": "A kind and hard-working young woman, treated as a servant in the house that was her father's. She obeys because refusing has never once worked, not because she agrees.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Useful foundation; preserve this fact during revision.",
@@ -1996,7 +2084,7 @@
       "entityId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "Cinderella and the prince dance all night and fall in love, but she flees in a hurry as the clock starts striking midnight, losing a glass slipper on the staircase.",
+      "contentSnapshot": "The garden empties itself into a carriage, a team of horses and a coachman, and Cinderella's rags become a gown. Only the glass slippers are made from nothing that was there before.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Check whether the transition is sufficiently clear.",
@@ -2014,7 +2102,7 @@
       "entityId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A carriage conjured from a garden pumpkin, drawn by horses that were once mice.",
+      "contentSnapshot": "A carriage made from a garden pumpkin, drawn by horses that were mice an hour ago and driven by a coachman who was a rat. Borrowed, in every sense.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolve this continuity risk before publication.",
@@ -2032,7 +2120,7 @@
       "entityId": "14BE84T8E97AW0FEJC6CNSW1PE",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A concise account of this stage of Cinderella, its conflict, and its effect on what follows.",
+      "contentSnapshot": "The corner beside the kitchen fire where Cinderella sleeps. The ashes that settle on her there are where her name comes from, and the household uses it without thinking.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "This detail should echo in a later scene.",
@@ -2143,7 +2231,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "entityId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
       "effectType": "itemGrant",
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "triggerName": null
@@ -2157,7 +2245,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0J6R5HRKSAC9B75CGZ",
+      "entityId": "01KYXBHD0JG76K402BJRX50QB4",
       "effectType": "itemTake",
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "triggerName": null
@@ -2171,10 +2259,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "entityId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "invited_to_the_ball"
     },
     {
       "id": "2VMK8KFNBPT5STCPWYH04SP97Z",
@@ -2185,10 +2273,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0JG76K402BJRX50QB4",
+      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "recognised_at_home"
     }
   ],
   "exampleCatalogEnriched": true,

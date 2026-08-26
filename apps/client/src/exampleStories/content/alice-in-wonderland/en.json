@@ -29,7 +29,7 @@
       "deletedAt": null,
       "name": "Nothing Is What It Seems",
       "index": 1,
-      "summary": "The central conflict and its participants are introduced.",
+      "summary": "Alice follows something impossible out of boredom and lands somewhere with rules of its own, none of which anybody will explain.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confrontation",
+      "name": "Rules Without Reason",
       "index": 2,
-      "summary": "The consequences grow and the characters must choose how to respond.",
+      "summary": "Wonderland is not lawless. Its laws are perfectly consistent and completely arbitrary, and Alice is the only person present who finds that worth objecting to.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolution",
+      "name": "The Queen's Court",
       "index": 3,
-      "summary": "The main threads converge and reveal their consequences.",
+      "summary": "The Queen sentences first and tries afterwards. Alice can leave the court quietly or say out loud that the whole thing is nonsense, and the two roads end differently.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -75,7 +75,7 @@
       "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "name": "The rabbit hole",
       "index": 1,
-      "summary": "Alice chases the hurried White Rabbit and falls down a hole that takes her to the strange land of Wonderland.",
+      "summary": "A white rabbit in a waistcoat takes a watch out of its pocket and says it is late. Alice follows it across a field and down a hole without once considering how she will get back up.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -94,10 +94,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
-      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
-      "name": "Too small, too big",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "name": "The hall of little doors",
       "index": 2,
-      "summary": "Alice tries potions and cakes that change her size without warning, trying to reach a tiny door.",
+      "summary": "She lands in a long hall of locked doors, and behind a curtain finds one fifteen inches high onto the loveliest garden she has ever seen. The key is on a glass table she cannot reach without being smaller, and the door is too small to pass through while she can reach the key.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -116,10 +116,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
-      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
-      "name": "The mad tea party",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "name": "Drink me, eat me",
       "index": 3,
-      "summary": "Following a path through the woods, Alice meets the Mad Hatter at a never-ending tea party, where nothing makes much sense.",
+      "summary": "A bottle marked DRINK ME shrinks her past the key; a cake marked EAT ME sends her to the ceiling. She cries a pool of tears at nine feet tall and nearly drowns in it at three inches.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -141,7 +141,7 @@
       "locationId": "6S4G42C7CKG7M3F3784V5925Z0",
       "name": "The grinning cat",
       "index": 4,
-      "summary": "Following the river of tears, Alice meets the Cheshire Cat, who gives her enigmatic clues about where to go.",
+      "summary": "The Cheshire Cat appears in a tree by the tail first, and answers every question Alice asks with something true and useless. It tells her that everyone here is mad, including her, and offers to prove it by directions.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -161,9 +161,9 @@
       "deletedAt": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
       "locationId": "6E28262T30VM4RZDT12M72CBHR",
-      "name": "The croquet ground",
+      "name": "The mad tea party",
       "index": 1,
-      "summary": "Alice is dragged into an absurd game of croquet, played with flamingos and hedgehogs, under the impatient eye of the Queen of Hearts.",
+      "summary": "The Hatter and the March Hare are stuck at six o'clock because the Hatter quarrelled with Time, and Time has refused to move for him since. They ask Alice a riddle with no answer and are offended when she asks for one.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -182,10 +182,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
-      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
-      "name": "A quiet dismissal",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "name": "Painting the roses red",
       "index": 2,
-      "summary": "Alice politely disagrees with the Queen; annoyed but with no actual proof of any crime, the Queen sends her away from the castle without further fuss - and Alice wakes up in the shade of a tree, as if it had all been a vivid dream.",
+      "summary": "Three playing cards are painting a white rose bush red before the Queen sees it. They planted the wrong tree, and the punishment for the mistake is worse than the punishment for the fraud, so they are committing the fraud.",
       "gap": 2,
       "gapType": "hours",
       "duration": 10,
@@ -204,10 +204,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
-      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
-      "name": "Off with her head",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "name": "The croquet game",
       "index": 3,
-      "summary": "Alice dares to openly defy the Queen; furious, the Queen screams \"Off with her head!\" and the whole deck of cards rushes at Alice - who wakes with a start by the riverbank, and Wonderland dissolves like smoke.",
+      "summary": "The Queen plays croquet with live flamingos for mallets and hedgehogs for balls, on a ground that will not hold still. Nobody keeps score, because everyone is too busy being sentenced to bother finishing a turn.",
       "gap": 1,
       "gapType": "days",
       "duration": 2,
@@ -225,11 +225,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A new consequence",
-      "summary": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "A quiet dismissal",
+      "summary": "Alice disagrees with the Queen carefully, in the mildest words she can find. The Queen is annoyed, has nothing specific to charge her with, and lets the matter drop in front of the whole court.",
       "extraNotes": null,
       "chapterId": "3J3T30CXGHN1EHF9270KT6NXDZ",
-      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "index": 4,
       "gap": -2,
       "gapType": "minutes",
@@ -247,11 +247,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "An unexpected encounter",
-      "summary": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "Off with her head",
+      "summary": "Alice says plainly that the Queen is nothing but a playing card. The Queen screams for her execution, and the court is far more shocked by the observation than by the sentence.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
-      "locationId": "6S4G42C7CKG7M3F3784V5925Z0",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "index": 1,
       "gap": 15,
       "gapType": "minutes",
@@ -269,11 +269,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The difficult decision",
-      "summary": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "The trial of the Knave",
+      "summary": "The Knave of Hearts is tried for stealing tarts, with the verdict already written. Alice, growing larger by the minute, points out that the evidence proves nothing, and the King rules that she is out of order.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
-      "locationId": "6E28262T30VM4RZDT12M72CBHR",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -291,8 +291,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Paths converge",
-      "summary": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "Waking on the bank",
+      "summary": "Alice is on the riverbank with her head in her sister's lap and leaves falling on her face. She tells the whole thing as a dream, and cannot decide, in the telling, whether that makes it smaller.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
       "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
@@ -313,8 +313,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The price of change",
-      "summary": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "Staying for the sentence",
+      "summary": "Alice refuses to be dismissed and calls the court what it is: a pack of cards. They rise into the air and come down on her, and she meets them full height, awake, and unafraid.",
       "extraNotes": null,
       "chapterId": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
       "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
@@ -339,7 +339,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "nextSceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
-      "text": "Continue toward Too small, too big"
+      "text": "Continue toward The hall of little doors"
     },
     {
       "id": "1G34W0BT0QAC168PTBTEW0DV7F",
@@ -351,7 +351,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "nextSceneId": "01KYXBHD0BV57YSDKQAR1T1764",
-      "text": "Continue toward The mad tea party"
+      "text": "Continue toward Drink me, eat me"
     },
     {
       "id": "045AY9DJPDF5WTP4D05Y4NPZA5",
@@ -375,7 +375,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
-      "text": "Continue toward The croquet ground"
+      "text": "Continue toward The mad tea party"
     },
     {
       "id": "7E9M3H9Q54Q1T9Z4B48XTAWX63",
@@ -387,7 +387,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "nextSceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
-      "text": "Continue toward A quiet dismissal"
+      "text": "Continue toward Painting the roses red"
     },
     {
       "id": "4902C6M5PA0488NWNV94ZM7B9G",
@@ -399,7 +399,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continue toward Off with her head"
+      "text": "Continue toward The croquet game"
     },
     {
       "id": "1FVDHK39ZG3WPD639GAVZ0W2GJ",
@@ -411,7 +411,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "nextSceneId": "21DVEKTZND27TY3158T9SNQ6JF",
-      "text": "Continue toward A new consequence"
+      "text": "Continue toward A quiet dismissal"
     },
     {
       "id": "79DBZVNSNFZX1JSNHYTY73YNZA",
@@ -423,7 +423,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "06CG24WTEHTCV3267J4180G8SZ",
-      "text": "Continue toward An unexpected encounter"
+      "text": "Continue toward Off with her head"
     },
     {
       "id": "70QJFBB5B7PP1R1NP4DPEN9R4F",
@@ -435,7 +435,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
-      "text": "Continue toward The difficult decision"
+      "text": "Continue toward The trial of the Knave"
     },
     {
       "id": "7SG5ZW3H8V87ZBRVGFET1WJNJG",
@@ -447,7 +447,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continue toward Paths converge"
+      "text": "Continue toward Waking on the bank"
     },
     {
       "id": "4Y0XXGC50ZGY3YGEP7H51B08TJ",
@@ -459,7 +459,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continue toward The price of change"
+      "text": "Continue toward Staying for the sentence"
     },
     {
       "id": "2X40DPXMFG71JX8Q4M0965PEFH",
@@ -483,7 +483,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continue toward Off with her head"
+      "text": "Continue toward The croquet game"
     },
     {
       "id": "1SAM1CBJ91VA2TJWY15TGSJY35",
@@ -507,7 +507,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continue toward The price of change"
+      "text": "Continue toward Staying for the sentence"
     },
     {
       "id": "6Z89JKQ2G508YG5HAJZJM4XHCF",
@@ -519,7 +519,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continue toward Paths converge"
+      "text": "Continue toward Waking on the bank"
     }
   ],
   "characters": [
@@ -531,7 +531,7 @@
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "A curious young girl who prefers strange adventures to ordinary boredom.",
+      "description": "A curious girl who prefers a strange adventure to an ordinary afternoon. She is the only person in Wonderland who keeps expecting things to make sense, and the only one anything is ever explained to.",
       "personality": "Endlessly curious and quick to speak her mind, rarely frightened for long by what she sees.",
       "motivation": "Wants to make sense of Wonderland's strange rules and find her way back above ground.",
       "qualities": "Polite, logical, and remarkably composed in the face of nonsense.",
@@ -549,12 +549,12 @@
     {
       "id": "01KYXBHD0BF8DTMDDG223S8DYY",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "White Rabbit",
+      "name": "The White Rabbit",
       "title": null,
       "gender": "Male",
       "race": "Rabbit",
       "subrace": null,
-      "description": "Always late, always checking his pocket watch.",
+      "description": "Always late, always checking his pocket watch, and terrified of the Queen. He is the first impossible thing Alice sees and the reason she is here at all.",
       "personality": "Perpetually anxious and fussy, obsessed with punctuality.",
       "motivation": "Desperate not to be late for the Duchess and dreading the Queen's temper.",
       "qualities": "Well-dressed, meticulous, easily flustered.",
@@ -572,12 +572,12 @@
     {
       "id": "01KYXBHD0BR4KWKGX998QM9YHK",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Mad Hatter",
+      "name": "The Mad Hatter",
       "title": null,
       "gender": "Male",
       "race": "Human",
       "subrace": null,
-      "description": "Host of a tea party that never seems to end.",
+      "description": "Host of a tea party that never ends, having once been sentenced by the Queen for murdering time. Since then Time has stopped moving for him, which he treats as a scheduling problem.",
       "personality": "Whimsical and quick to argue about time, fond of riddles with no real answers.",
       "motivation": "Keeps the tea party going, seemingly stuck at six o'clock forever.",
       "qualities": "Witty, theatrical, unpredictable.",
@@ -595,12 +595,12 @@
     {
       "id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Cheshire Cat",
+      "name": "The Cheshire Cat",
       "title": null,
       "gender": null,
       "race": "Cat",
       "subrace": null,
-      "description": "An enigmatic cat who appears and vanishes at will, always grinning.",
+      "description": "A cat that appears and vanishes at will, in any order it likes, always grinning. It is the only creature in Wonderland that tells Alice the truth, and it is never once useful.",
       "personality": "Calm and sly, amused by everyone's confusion - including the confusion his own riddles cause.",
       "motivation": "Enjoys unsettling visitors with his ability to appear and vanish at will.",
       "qualities": "Wise in his own strange way, unbothered by anything.",
@@ -618,12 +618,12 @@
     {
       "id": "01KYXBHD0BBZN1R7TSRF3M00GN",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "Queen of Hearts",
+      "name": "The Queen of Hearts",
       "title": "Ruler of the card kingdom",
       "gender": "Female",
       "race": "Human",
       "subrace": null,
-      "description": "A ruler with an explosive temper, quick to order executions that never actually happen.",
+      "description": "A ruler with an explosive temper who orders an execution roughly once a scene. None of them are ever carried out, which nobody tells Alice.",
       "personality": "Tyrannical and quick to anger, prone to shouting \"Off with their head!\" at the smallest offense.",
       "motivation": "Demands absolute obedience and control over her court of playing cards.",
       "qualities": "A commanding presence, never openly questioned by her subjects.",
@@ -646,12 +646,12 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Chronicler",
+      "name": "The Knave of Hearts",
       "title": null,
       "gender": null,
       "race": null,
       "subrace": null,
-      "description": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "description": "Accused of stealing the Queen's tarts and tried on evidence that says nothing at all. He never speaks in his own defence, having grasped earlier than Alice how the court works.",
       "personality": null,
       "motivation": null,
       "qualities": null,
@@ -667,7 +667,7 @@
       "id": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Wonderland",
-      "description": "The strange world on the other side of the rabbit hole.",
+      "description": "The world on the far side of the rabbit hole. Its rules are perfectly consistent with one another and with nothing else, which is what makes them so difficult to argue against.",
       "climate": "Ever-changing, from garden warmth to sudden weather with no clear pattern.",
       "culture": "A patchwork of nonsensical customs where playing cards, animals, and objects all speak and hold court like people.",
       "politics": "Nominally ruled by the Queen of Hearts, whose word is law even when it makes no sense.",
@@ -682,8 +682,8 @@
     {
       "id": "01KYXBHD0B6RME43YC69PZR0W2",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "The Mad Hatter's House",
-      "description": "Where a tea party goes on without end, always at six o'clock.",
+      "name": "The Queen of Hearts' Castle",
+      "description": "A castle of painted roses and playing-card servants, where the Queen's word is law for exactly as long as she is in the room and the King quietly reverses it after she leaves.",
       "climate": "Always outdoors, at a long table permanently set for tea.",
       "culture": "An endless tea party where seats are shuffled constantly and riddles pass for conversation.",
       "politics": "No rule beyond the Hatter's own whims - and his ongoing feud with Time.",
@@ -698,8 +698,8 @@
     {
       "id": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "name": "The Queen of Hearts' Castle",
-      "description": "Where the Queen rules her croquet ground and her card subjects.",
+      "name": "The Croquet Ground",
+      "description": "The Queen's lawn, played with live flamingos and hedgehogs on ground that moves. Losing politely is as dangerous here as winning, and nobody has ever finished a game.",
       "climate": "A tidy garden framed by rose bushes, some famously painted red to hide a mistake.",
       "culture": "A rigid card-kingdom court built around croquet games and royal processions.",
       "politics": "Absolute monarchy - the Queen's temper decides who is in favor and who is sentenced, if only in name.",
@@ -719,8 +719,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Outer Road",
-      "description": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "The Duchess's Wood",
+      "description": "The wood between the castle and the tea table, where the Cheshire Cat appears in pieces and gives directions that are entirely accurate and no help whatsoever.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -735,8 +735,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "The Crossroads",
-      "description": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
+      "name": "The Mad Hatter's House",
+      "description": "Where a tea party goes on without end, always at six o'clock, because the Hatter quarrelled with Time and Time has not moved for him since.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -749,7 +749,7 @@
       "id": "01KYXBHD0B3KDBE4FC0Z8YWDH8",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "title": "The Logic of Wonderland",
-      "description": "In Wonderland, nothing is what it seems - and following the rules closely rarely leads anywhere.",
+      "description": "Wonderland is not lawless. Every rule in it is applied with complete consistency and rests on nothing at all, which is why arguing against one always sounds like the objection of somebody who has missed the point.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -762,7 +762,7 @@
       "id": "01KYXK1XAWFBNDS75MTNHHGW48",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "title": "Eat Me, Drink Me",
-      "description": "Wonderland is full of food and drink bearing instructions - a cake marked \"EAT ME\" or a bottle marked \"DRINK ME\" - and trying them changes the size of whoever does, often drastically and without warning.",
+      "description": "Wonderland is full of food and drink bearing instructions, and the instructions are always honest about what they do and silent about how much. Size here is a thing that happens to Alice rather than a thing she has.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -779,8 +779,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Places remember",
-      "description": "Important locations retain signs of the events that happened there.",
+      "title": "Nobody Is Ever Actually Executed",
+      "description": "The Queen orders a beheading roughly once a scene, and the King quietly pardons every one of them behind her back. The threat is real to Alice and to nobody else, which is what makes the court unbearable rather than dangerous.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -794,8 +794,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuity",
-      "body": "Track what each participant knows before every turning point.",
+      "title": "Continuity: what size is she",
+      "body": "Alice changes height eight times and it matters in every scene where it happens. Track it explicitly - the trial only works because she is growing while it runs.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -807,8 +807,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Visual motif",
-      "body": "Repeat a recognizable image when the central conflict changes direction.",
+      "title": "Visual motif: instructions on things",
+      "body": "Labels, signs, verdicts written before trials. Wonderland keeps telling Alice what to do in writing, and the writing is never wrong and never sufficient.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -820,8 +820,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Revision goal",
-      "body": "Keep cause and consequence explicit between neighboring scenes.",
+      "title": "Revision goal: the branch is a temperament",
+      "body": "The two endings turn on one thing: whether Alice says the quiet thing or the loud one. Every choice on the way there should be recognisably the same decision, made smaller.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1172,7 +1172,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Narrative object"
+      "value": "Wonderland object"
     },
     {
       "id": "00MG3Y3JZRWPQZSDP98DQR1XE0",
@@ -1183,7 +1183,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Introduced"
+      "value": "Full, on the glass table"
     }
   ],
   "characterRelations": [
@@ -1197,7 +1197,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
       "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "relationType": "Trust"
+      "relationType": "Followed him here"
     },
     {
       "id": "2E6GWD8WCWX83ZDCJHHTS5XFAM",
@@ -1207,9 +1207,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "relationType": "Shared purpose"
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "relationType": "Uninvited guest"
     },
     {
       "id": "3DBYNTM10JWGJ690ZNHZB7W0PN",
@@ -1219,9 +1219,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
       "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "relationType": "Rivalry"
+      "relationType": "Unhelpful guide"
     },
     {
       "id": "1DCG8S14PDN6MQR7APZ7YS6R3P",
@@ -1231,9 +1231,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "character2Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "relationType": "Family"
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "relationType": "Defied her"
     },
     {
       "id": "7W9R3J57TV7P7Z3ZWA3T2XVK7N",
@@ -1243,9 +1243,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
       "character2Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "relationType": "Debt"
+      "relationType": "Witness at his trial"
     },
     {
       "id": "5EC0RTG0DX1Z3APMAFV4Y2C3E9",
@@ -1255,9 +1255,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "relationType": "Protection"
+      "character1Id": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "relationType": "Her herald"
     },
     {
       "id": "51X0H12RTZANZ4T4JS24WSQXA8",
@@ -1267,9 +1267,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
-      "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "relationType": "Trust"
+      "character1Id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "relationType": "Sentenced by her once"
     },
     {
       "id": "6FBJGN34BZVQ7CY4WX0P0RTMNJ",
@@ -1279,9 +1279,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "relationType": "Shared purpose"
+      "character1Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "character2Id": "2JMG1W9RP6W2PRZ9KVS1VBR829",
+      "relationType": "Accuser"
     }
   ],
   "characterScenes": [
@@ -1374,6 +1374,50 @@
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF"
     },
     {
+      "id": "76Q2B35DP2RV3K3R69VARZM2P0",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
+    },
+    {
+      "id": "2F8VKJE4JMHK2Z4BB43CF6WNWY",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+    },
+    {
+      "id": "1H9ZESXY6PH68RKVZ28P161DA3",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2"
+    },
+    {
+      "id": "6GBNGD5EKR4ZQ68APN0Y67PCJ4",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+    },
+    {
       "id": "2252T20X8W8WY7XW06299A2R6J",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1385,7 +1429,7 @@
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT"
     },
     {
-      "id": "5WH44KY1E6A69XMHW9XZFP9QZ9",
+      "id": "5E3HM8M97X0VYBA2ZHJVHEYRVV",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1393,87 +1437,54 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764"
-    },
-    {
-      "id": "0WV36XX5N130KN196F6GC7K20X",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT"
-    },
-    {
-      "id": "1H2RCSYZ0FXNDXVFBASHQY1CHY",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31"
-    },
-    {
-      "id": "5DAN3NT6TQWPD35RKK9H62TDW1",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
-    },
-    {
-      "id": "3DT55D4YWA7V324R18G0YR2NJM",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2"
-    },
-    {
-      "id": "015ZS04VGMQ7P91KWQ3HA33YK1",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9"
     },
     {
-      "id": "72ZXN56HTE6KFVM6E2J0769V8X",
+      "id": "1J672MPYV41C5XT483N8EA37KE",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764"
-    },
-    {
-      "id": "1KMWHGN7J61RTEP278H4HN4S5F",
-      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
       "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M"
     },
     {
-      "id": "6KW7QEY5EA3N2E2ZTWTR5GB97F",
+      "id": "01GKQ72ZRQ45DD6GTRJ5W67CF7",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "21DVEKTZND27TY3158T9SNQ6JF"
+    },
+    {
+      "id": "37J88QVGT8NQYPM3MNNTPJHC0D",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+    },
+    {
+      "id": "369E88HH8PWV0TWATAXXHQBH6S",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+    },
+    {
+      "id": "7N4667S3JP3Z16R7SRXAPFB7TC",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1481,7 +1492,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
+      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT"
     },
     {
       "id": "0W1ETVSVRB2X70KMBHXT8FRHS5",
@@ -1517,7 +1528,7 @@
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31"
     },
     {
-      "id": "08YM2H9BFQ1135QYNSVF6GFNRK",
+      "id": "0J6A6X54N7XY7CQD11GYCX1B67",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1525,18 +1536,29 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
     },
     {
-      "id": "7VM1D3SDBJQR9TD8ZY06G6RMKB",
+      "id": "7XDATB46XCKX911EE07JXYHY8M",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M"
+    },
+    {
+      "id": "7DGQYKSR14T5SW308M4A7VWBDB",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31"
     },
     {
       "id": "2BPYD7Q3W17B5AM7C1DZX7RT38",
@@ -1550,7 +1572,40 @@
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF"
     },
     {
-      "id": "3K3SWJ5VQ7FA2XB1Z5Q1W7664M",
+      "id": "2TR8D9R469HWXVHVMWYJ8Q1K51",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "06CG24WTEHTCV3267J4180G8SZ"
+    },
+    {
+      "id": "3B79FJMZH3S6HFY0K17JW9JGXC",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
+    },
+    {
+      "id": "0QMB27H5KPRCV1XAM547H7BNDK",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
+    },
+    {
+      "id": "51Z9N85F68QVG0XTW59TYP93A5",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1558,7 +1613,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "2JMG1W9RP6W2PRZ9KVS1VBR829",
-      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2"
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3"
     },
     {
       "id": "3H4A6VFWRZHTXSM68ZWB23NPZG",
@@ -1577,11 +1632,11 @@
     {
       "id": "01KYXK1XAWEGTPCV26S9PJ23HR",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "characterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "characterOwnerId": null,
       "name": "Bottle labeled \"DRINK ME\"",
-      "category": "Potion",
-      "description": "A small bottle found on a glass table, with a paper tag reading \"DRINK ME\" tied around its neck.",
-      "initialState": "New",
+      "category": "Wonderland object",
+      "description": "A small bottle on a glass table with a paper label, tasting of cherry tart, custard, pineapple, roast turkey, toffee and hot buttered toast at once. It makes whoever drinks it smaller.",
+      "initialState": "Full, on the glass table",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1593,11 +1648,11 @@
     {
       "id": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
-      "characterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "characterOwnerId": null,
       "name": "Cake labeled \"EAT ME\"",
-      "category": "Food",
-      "description": "A small cake found under the table, with the words \"EAT ME\" marked out in currants.",
-      "initialState": "New",
+      "category": "Wonderland object",
+      "description": "A very small cake under the glass table with EAT ME marked out on it in currants. It does the opposite of the bottle, and just as suddenly.",
+      "initialState": "Whole, under the table",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1614,11 +1669,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterOwnerId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "name": "A Keepsake",
-      "category": "Narrative object",
-      "description": "A concise account of this stage of Alice in Wonderland, its conflict, and its effect on what follows.",
-      "initialState": "Introduced",
+      "characterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "name": "The White Rabbit's Pocket Watch",
+      "category": "Wonderland object",
+      "description": "The watch the White Rabbit keeps taking out of his waistcoat. It always tells him he is late, and it is the first impossible thing Alice decides is worth following.",
+      "initialState": "In the Rabbit's waistcoat",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1633,9 +1688,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
-      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
-      "newCharacterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
-      "newState": "Introduced",
+      "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "newCharacterOwnerId": null,
+      "newState": "Found on the glass table",
       "extraNotes": null
     },
     {
@@ -1647,9 +1702,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
-      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
-      "newCharacterOwnerId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "newState": "Changed hands",
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Drunk down to nothing",
       "extraNotes": null
     },
     {
@@ -1661,9 +1716,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
-      "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Empty, and no use at all",
       "extraNotes": null
     },
     {
@@ -1676,8 +1731,8 @@
       "deletedAt": null,
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
-      "newCharacterOwnerId": "01KYXBHD0BR4KWKGX998QM9YHK",
-      "newState": "Introduced",
+      "newCharacterOwnerId": null,
+      "newState": "Found under the table",
       "extraNotes": null
     },
     {
@@ -1689,9 +1744,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
-      "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
-      "newCharacterOwnerId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "newState": "Changed hands",
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Eaten, to the opposite effect",
       "extraNotes": null
     },
     {
@@ -1703,9 +1758,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
-      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
-      "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+      "newCharacterOwnerId": "01KYXBHD0BESDGG77MG3F2A721",
+      "newState": "Crumbs in a pocket",
       "extraNotes": null
     },
     {
@@ -1717,9 +1772,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4FPTSYS0EAR04WQWK2PNNNR23V",
-      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
-      "newCharacterOwnerId": "01KYXBHD0BAT4GXF7ANC6C4BJN",
-      "newState": "Introduced",
+      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "newCharacterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "newState": "Taken out of a waistcoat",
       "extraNotes": null
     },
     {
@@ -1731,9 +1786,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4FPTSYS0EAR04WQWK2PNNNR23V",
-      "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "newCharacterOwnerId": "01KYXBHD0BBZN1R7TSRF3M00GN",
-      "newState": "Changed hands",
+      "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
+      "newCharacterOwnerId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "newState": "Carried into the castle",
       "extraNotes": null
     },
     {
@@ -1745,9 +1800,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4FPTSYS0EAR04WQWK2PNNNR23V",
-      "sceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "newCharacterOwnerId": null,
-      "newState": "Transformed",
+      "newState": "Entered as evidence",
       "extraNotes": null
     }
   ],
@@ -2171,7 +2226,7 @@
       "entityId": "01KYXBHD0BESDGG77MG3F2A721",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A curious young girl who prefers strange adventures to ordinary boredom.",
+      "contentSnapshot": "A curious girl who prefers a strange adventure to an ordinary afternoon. She is the only person in Wonderland who keeps expecting things to make sense, and the only one anything is ever explained to.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Useful foundation; preserve this fact during revision.",
@@ -2189,7 +2244,7 @@
       "entityId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "Alice is dragged into an absurd game of croquet, played with flamingos and hedgehogs, under the impatient eye of the Queen of Hearts.",
+      "contentSnapshot": "The Hatter and the March Hare are stuck at six o'clock because the Hatter quarrelled with Time, and Time has refused to move for him since. They ask Alice a riddle with no answer and are offended when she asks for one.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Check whether the transition is sufficiently clear.",
@@ -2207,7 +2262,7 @@
       "entityId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A small cake found under the table, with the words \"EAT ME\" marked out in currants.",
+      "contentSnapshot": "A very small cake under the glass table with EAT ME marked out on it in currants. It does the opposite of the bottle, and just as suddenly.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolve this continuity risk before publication.",
@@ -2225,7 +2280,7 @@
       "entityId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Where the Queen rules her croquet ground and her card subjects.",
+      "contentSnapshot": "The Queen's lawn, played with live flamingos and hedgehogs on ground that moves. Losing politely is as dangerous here as winning, and nobody has ever finished a game.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "This detail should echo in a later scene.",
@@ -2429,7 +2484,7 @@
       "minVisits": null,
       "itemId": null,
       "itemPresence": null,
-      "triggerName": "secret_closed",
+      "triggerName": "court_has_seen_her",
       "triggerState": "set"
     },
     {
@@ -2486,7 +2541,7 @@
       "minVisits": null,
       "itemId": null,
       "itemPresence": null,
-      "triggerName": "path_revealed",
+      "triggerName": "cat_gave_directions",
       "triggerState": "set"
     }
   ],
@@ -2500,7 +2555,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "entityId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "effectType": "itemGrant",
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
       "triggerName": null
@@ -2528,10 +2583,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
+      "entityId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "cat_gave_directions"
     },
     {
       "id": "7XWYG7NWHM9Y2QWQZ01SCQ3BS6",
@@ -2542,10 +2597,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0BC0D1AGHBNZHY2E31",
+      "entityId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "court_has_seen_her"
     }
   ],
   "exampleCatalogEnriched": true,

@@ -16,6 +16,16 @@ export function sortEntityPair(a: EntityPairRef, b: EntityPairRef): [EntityPairR
   return `${a.type}:${a.id}` <= `${b.type}:${b.id}` ? [a, b] : [b, a];
 }
 
+/**
+ * The same canonicalisation for a pair of ids of a known type - a character relation, where both
+ * ends are always characters and only the ids need ordering. The API's sync handler sorts before
+ * writing so the unique constraint on the ordered pair behaves as an unordered one; its import path
+ * has to sort identically or (A,B) and (B,A) both get in.
+ */
+export function sortIdPair(a: string, b: string): [string, string] {
+  return a <= b ? [a, b] : [b, a];
+}
+
 export function isSameEntity(a: EntityPairRef, b: EntityPairRef): boolean {
   return a.type === b.type && a.id === b.id;
 }

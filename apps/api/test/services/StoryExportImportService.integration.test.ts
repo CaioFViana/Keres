@@ -418,16 +418,21 @@ describe('rejected packages', () => {
     await expect(service.importStory(IMPORTER_ID, { hello: 'world' })).rejects.toThrow();
   });
 
+  /**
+   * A dangling reference used to be caught halfway through the import, by the id remapping, as
+   * "not found in ID map" - a message about the importer's internals. `findStoryExportIntegrityErrors`
+   * now catches it before the transaction is even opened, and names the collection and the field.
+   */
   it('rejects a scene pointing at a chapter the package does not carry', async () => {
     const broken = buildExport({ scenes: [scene({ chapterId: newId() })] });
 
-    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/not found in ID map/);
+    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/scenes\.chapterId/);
   });
 
   it('rejects a scene pointing at a location the package does not carry', async () => {
     const broken = buildExport({ scenes: [scene({ locationId: newId() })] });
 
-    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/not found in ID map/);
+    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/scenes\.locationId/);
   });
 
   /** A partial import would be worse than no import: the user would be left with a broken story. */
@@ -535,7 +540,9 @@ describe('choice checks and effects', () => {
       choiceCheckGroups: [choiceCheckGroup({ choiceId: newId() })],
     });
 
-    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/not found in ID map/);
+    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(
+      /choiceCheckGroups\.choiceId/,
+    );
   });
 });
 

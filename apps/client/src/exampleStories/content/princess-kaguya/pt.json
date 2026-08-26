@@ -29,7 +29,7 @@
       "deletedAt": null,
       "name": "O Conto do Cortador de Bambu",
       "index": 1,
-      "summary": "O conflito central e seus participantes são apresentados.",
+      "summary": "Um casal de velhos sem filhos encontra uma criança dentro de um talo de bambu, e o bambuzal passa a pagar pelo sustento dela na mesma velocidade em que ela cresce.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confronto",
+      "name": "Cinco Tesouros Impossíveis",
       "index": 2,
-      "summary": "As consequências crescem e os personagens precisam decidir como reagir.",
+      "summary": "Kaguya-hime nunca recusa ninguém. Pede a cada um de cinco nobres uma coisa que não existe, e quatro deles voltam mentindo.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolução",
+      "name": "A Décima Quinta Noite",
       "index": 3,
-      "summary": "Os fios principais convergem e revelam suas consequências.",
+      "summary": "O Imperador não pode ser adiado com uma tarefa impossível, e a Lua não pode ser adiada de forma alguma. Tudo o que Kaguya-hime deixa para trás acaba não valendo nada para quem a queria.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -72,10 +72,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXGBR5M23BF2GRFFPAEW1Y0",
-      "locationId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "locationId": "30J511XZDT7TT8J6NBT68594FX",
       "name": "Uma criança no bambu",
       "index": 1,
-      "summary": "Enquanto corta bambu no bosque, um velho cortador de bambu encontra um único bambu brilhante escondendo uma menininha linda; ele e sua esposa a acolhem e a criam como filha.",
+      "summary": "Cortando bambu como em todos os dias de sua vida, Taketori no Okina encontra um talo brilhando por dentro. Dentro dele há uma criança não maior que sua mão, e ele a leva para casa nas palmas.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -97,7 +97,7 @@
       "locationId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
       "name": "Crescendo como bambu na primavera",
       "index": 2,
-      "summary": "A criança atinge a maturidade completa em apenas três meses; ela é batizada de Kaguya-hime, e sua beleza radiante atrai pretendentes de todos os cantos do reino.",
+      "summary": "A criança chega à idade adulta em três meses. Nem o velho nem a esposa perguntam por quê; querem uma filha há quarenta anos e não estão inclinados a interrogar uma.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -116,10 +116,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXGBR5M23BF2GRFFPAEW1Y0",
-      "locationId": "01KYXGBR5MGTCHS1A4532KPV94",
-      "name": "Os cinco tesouros impossíveis",
+      "locationId": "30J511XZDT7TT8J6NBT68594FX",
+      "name": "Ouro em cada talo",
       "index": 3,
-      "summary": "Cinco nobres pretendentes cortejam Kaguya-hime; para se livrar deles sem crueldade, ela promete se casar com quem lhe trouxer um de cinco tesouros ditos impossíveis de achar - a tigela de pedra de Buda, um galho enjoiado do Monte Horai, um manto de pele de rato-de-fogo, uma joia do pescoço de um dragão e uma concha nascida de uma andorinha.",
+      "summary": "Desde o dia em que a encontra, todo talo que o velho corta tem ouro dentro. A casa enriquece sem que ninguém tenha decidido enriquecer, e é o primeiro indício de que ela é sustentada de outro lugar.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -138,10 +138,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXGBR5M23BF2GRFFPAEW1Y0",
-      "locationId": "30J511XZDT7TT8J6NBT68594FX",
-      "name": "Fraudes e fracassos",
+      "locationId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
+      "name": "O nome Kaguya-hime",
       "index": 4,
-      "summary": "Um a um os pretendentes voltam com falsificações e desculpas - uma tigela enegrecida de fuligem, um galho falso feito por joalheiros, um manto que vira cinzas - ou se machucam atrás do prêmio, e Kaguya-hime enxerga cada truque.",
+      "summary": "A festa de nomeação dura três dias, e ela recebe o nome de Princesa Radiante do Bambu Flexível. A notícia de sua beleza sai da casa com os convidados e não para mais de viajar.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -160,10 +160,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "6M6G64JEZYMA9WS96HET7RQ06Q",
-      "locationId": "1R41VS2SRNRN49T1P7EEBPJX78",
-      "name": "O cortejo do Imperador",
+      "locationId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "name": "Cinco pretendentes no portão",
       "index": 1,
-      "summary": "Até o Imperador do Japão se encanta com a fama de sua beleza e pede sua mão; Kaguya-hime recusa gentilmente o casamento, mas ela e o Imperador trocam cartas e criam um carinho mútuo à distância respeitosa.",
+      "summary": "Cinco nobres acampam diante da casa e se recusam a ir embora. Kaguya-hime não quer nenhum deles e não vai dizê-lo, porque a recusa recairia sobre o velho, que precisa conviver com essas famílias.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -182,10 +182,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "6M6G64JEZYMA9WS96HET7RQ06Q",
-      "locationId": "01KYXGBR5MVSFG1QK139RXY4FB",
-      "name": "Um segredo da Lua",
+      "locationId": "01KYXGBR5MGTCHS1A4532KPV94",
+      "name": "A tigela de pedra e o ramo enjoiado",
       "index": 2,
-      "summary": "Conforme a décima quinta noite do outono se aproxima, Kaguya-hime fica triste e confessa aos pais adotivos que não é deste mundo - é uma princesa da Lua, e enviados celestiais logo virão buscá-la.",
+      "summary": "Ela impõe a cada pretendente um tesouro a buscar. O príncipe Ishitsukuri manda vir uma tigela comum de um templo fora da capital; o príncipe Kuramochi encomenda um ramo a seis joalheiros e conta uma longa história sobre navegar até o Monte Horai.",
       "gap": 2,
       "gapType": "hours",
       "duration": 10,
@@ -204,10 +204,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "6M6G64JEZYMA9WS96HET7RQ06Q",
-      "locationId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
-      "name": "O manto de penas",
+      "locationId": "01KYXGBR5MGTCHS1A4532KPV94",
+      "name": "O manto de rato-de-fogo e a joia do dragão",
       "index": 3,
-      "summary": "Mesmo com os soldados do Imperador cercando a casa para protegê-la, uma comitiva brilhante desce do céu na noite de lua cheia; Kaguya-hime deixa uma carta de despedida e um frasco do elixir da imortalidade para o Imperador, e então veste o Manto de Penas celestial - que apaga todo amor e tristeza terrenos - antes de subir à Lua.",
+      "summary": "O ministro Abe paga uma fortuna por um manto que queima na primeira chama que encontra. O conselheiro Otomo faz-se ao mar atrás de uma joia do pescoço de um dragão, quase se afoga numa tempestade e volta jurando que a vítima foi ele.",
       "gap": 1,
       "gapType": "days",
       "duration": 2,
@@ -226,10 +226,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "6M6G64JEZYMA9WS96HET7RQ06Q",
-      "locationId": "01KYXGBR5MGTCHS1A4532KPV94",
-      "name": "A montanha da imortalidade",
+      "locationId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "name": "A concha da andorinha",
       "index": 4,
-      "summary": "Arrasado, e sabendo que nenhuma vida vale a pena viver para sempre sem ela, o Imperador manda levar a carta de Kaguya-hime e o elixir ao topo da montanha mais alta perto dos céus e queimá-los lá; diz-se que fumaça sobe de seu cume desde então - por isso a montanha passou a se chamar Fuji, \"imortal\".",
+      "summary": "O conselheiro Isonokami sobe até um ninho de andorinha atrás de uma concha que não está lá, e cai. Os joalheiros chegam naquela mesma semana cobrando o pagamento do ramo, e as cinco histórias desmoronam de uma vez.",
       "gap": -2,
       "gapType": "minutes",
       "duration": 1,
@@ -247,11 +247,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Uma nova consequência",
-      "summary": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A corte do Imperador",
+      "summary": "O Imperador do Japão ouve os relatos e vem pessoalmente. É o único homem que não pode ser mandado atrás de um objeto impossível, e Kaguya-hime lhe diz com todas as letras que não é deste país - o que ele toma por modéstia.",
       "extraNotes": null,
       "chapterId": "35XSVK3C9TWRWGE6Y2XBEZBH74",
-      "locationId": "30J511XZDT7TT8J6NBT68594FX",
+      "locationId": "01KYXGBR5MVSFG1QK139RXY4FB",
       "index": 1,
       "gap": 15,
       "gapType": "minutes",
@@ -269,11 +269,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Um encontro inesperado",
-      "summary": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "Um segredo da Lua",
+      "summary": "Com a aproximação da décima quinta noite do oitavo mês, ela não consegue parar de chorar. Enfim conta ao casal de velhos de onde veio, que seu povo virá buscá-la, e que nada que alguém faça poderá impedir.",
       "extraNotes": null,
       "chapterId": "35XSVK3C9TWRWGE6Y2XBEZBH74",
-      "locationId": "1R41VS2SRNRN49T1P7EEBPJX78",
+      "locationId": "01KYXGBR5MGTCHS1A4532KPV94",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -291,11 +291,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A decisão difícil",
-      "summary": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O manto de plumas",
+      "summary": "Dois mil soldados do Imperador cercam a casa. Uma comitiva luminosa desce assim mesmo, os soldados não conseguem erguer os braços, e Kaguya-hime deixa uma carta e um frasco antes que o manto lhe seja posto sobre os ombros e ela esqueça todos eles.",
       "extraNotes": null,
       "chapterId": "35XSVK3C9TWRWGE6Y2XBEZBH74",
-      "locationId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "locationId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
       "index": 3,
       "gap": 1,
       "gapType": "days",
@@ -313,11 +313,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Caminhos convergem",
-      "summary": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A montanha da imortalidade",
+      "summary": "O Imperador lê a carta e recusa o elixir: a eternidade sem ela é a última coisa que quer. Manda queimar ambos no pico mais próximo do céu, e a fumaça não parou de subir do Monte Fuji desde então.",
       "extraNotes": null,
       "chapterId": "35XSVK3C9TWRWGE6Y2XBEZBH74",
-      "locationId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
+      "locationId": "1R41VS2SRNRN49T1P7EEBPJX78",
       "index": 4,
       "gap": 30,
       "gapType": "minutes",
@@ -338,7 +338,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": "Nascida na Lua",
-      "description": "Uma menina radiante encontrada quando bebê dentro de um bambu brilhante, que cresce até se tornar uma beleza incomparável - e revela ser uma princesa da Lua.",
+      "description": "Uma menina radiante encontrada ainda bebê dentro de um talo de bambu luminoso, adulta em três meses. Recusa todo mundo sem nunca dizer não, e guarda para si de onde veio até que guardar deixe de ser possível.",
       "personality": "Graciosa, astuta e discretamente pesarosa por um destino que não pode compartilhar com quem a ama.",
       "motivation": "Quer poupar os pais adotivos da dor pelo máximo de tempo possível, mesmo com sua verdadeira origem a chamando de volta para a Lua.",
       "qualities": "Perspicaz o bastante para enxergar através dos esquemas de cinco pretendentes diferentes sem nunca ser enganada.",
@@ -361,7 +361,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um cortador de bambu idoso que encontra Kaguya-hime quando bebê e a cria como filha, enriquecendo depois de passar a achar ouro dentro dos bambus.",
+      "description": "Um velho cortador de bambu que encontra Kaguya-hime no bambuzal e a cria como filha. É a única pessoa que tenta negociar com a Lua, e a única que nunca lhe pede nada.",
       "personality": "Trabalhador e dedicado, maravilhado com a fortuna que entra em sua vida junto com Kaguya-hime.",
       "motivation": "Quer dar à filha adotiva a melhor vida e o melhor casamento que puder conseguir.",
       "qualities": "Honesto e diligente - o ouro que passa a achar no bambu depois é tratado como uma bênção ligada a ela, não explorado.",
@@ -384,7 +384,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "A esposa dedicada do cortador de bambu, que ajuda a criar Kaguya-hime e a ama como filha de verdade.",
+      "description": "A velha que cria Kaguya-hime ao lado do marido. Nota a filha olhando para a lua meses antes de alguém perguntar, e nada diz até que lhe contem.",
       "personality": "Calorosa e maternal, tratando Kaguya-hime como filha de verdade desde o momento em que é encontrada.",
       "motivation": "Não quer nada além de ver a filha adotiva feliz e segura.",
       "qualities": "Paciente e amorosa, criando uma criança extraordinária sem nunca tratá-la como estranha.",
@@ -407,7 +407,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "O governante do Japão, encantado pela fama da beleza de Kaguya-hime; ele a corteja com respeito e, com o tempo, se torna um amigo de confiança.",
+      "description": "O soberano do Japão, atraído pelos relatos e impossível de ser mandado a um mandado qualquer. É recusado do modo mais gentil com que se pode recusar um soberano, e leva melhor que qualquer um dos cinco nobres.",
       "personality": "Digno e persistente, mas respeitoso diante das repetidas recusas de Kaguya-hime.",
       "motivation": "Deseja a mão de Kaguya-hime em casamento, atraído pela fama de sua beleza incomparável.",
       "qualities": "Paciente o bastante para se contentar com amizade e correspondência quando o casamento é recusado.",
@@ -430,7 +430,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um pretendente encarregado de trazer a tigela de pedra de esmolar de Buda, vinda da Índia; ele encomenda uma falsa em vez disso, e é desmascarado quando ela não brilha com luz sagrada.",
+      "description": "Encarregado de trazer a tigela de pedra de Buda, vinda da Índia. Compra uma tigela comum num templo fora da capital e é desmascarado no instante em que ela não brilha.",
       "personality": "Confiante e incapaz de admitir a derrota, mesmo quando pego em sua própria mentira.",
       "motivation": "Quer conquistar a mão de Kaguya-hime por qualquer meio, inclusive o engano.",
       "qualities": "Engenhoso o bastante para encomendar uma falsificação convincente no lugar do tesouro de verdade.",
@@ -453,7 +453,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um pretendente encarregado de trazer um galho enjoiado do lendário Monte Horai; ele manda fabricar uma réplica em segredo, mas os artesãos vêm cobrar o pagamento na frente de Kaguya-hime, revelando o embuste.",
+      "description": "Encarregado de trazer um ramo enjoiado do Monte Horai. Encomenda um a seis artesãos, inventa uma viagem marítima para explicá-lo, e se desmonta quando os artesãos aparecem na casa pedindo para receber.",
       "personality": "Elaborado e reservado, disposto a ir longe para montar uma mentira convincente.",
       "motivation": "Quer parecer que enfrentou o lendário Monte Horai com as próprias mãos.",
       "qualities": "Paciente o bastante para mandar mestres artesãos construírem um galho-réplica perfeito.",
@@ -476,7 +476,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um pretendente rico encarregado de trazer um manto feito de pele de rato-de-fogo; o manto caro que ele compra vira cinzas assim que é testado no fogo, provando ser falso.",
+      "description": "Encarregado de trazer um manto tecido com pelo do rato-de-fogo, que não queima. Paga uma soma enorme por um a um mercador chinês, e ele se desfaz ao primeiro toque de chama.",
       "personality": "Rico e confiante de que dinheiro sozinho resolve qualquer desafio.",
       "motivation": "Acredita que pode simplesmente comprar seu caminho até a mão de Kaguya-hime.",
       "qualities": "Engenhoso o bastante para localizar e comprar um suposto manto de rato-de-fogo a peso de ouro.",
@@ -499,7 +499,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um pretendente que parte em busca de uma joia de cinco cores no pescoço de um dragão; pego numa tempestade terrível que acha ser a fúria do dragão, ele abandona a busca e volta para casa doente e humilhado.",
+      "description": "Encarregado de trazer a joia de cinco cores do pescoço de um dragão. Sai em busca dela pelo mar, é apanhado por uma tempestade que quase o mata, e volta dizendo a todos que Kaguya-hime tentou afogá-lo.",
       "personality": "Ousado na ambição, mas rápido em perder a coragem diante do perigo de verdade.",
       "motivation": "Parte pessoalmente para caçar um dragão por sua joia de cinco cores.",
       "qualities": "Disposto, ao menos no início, a arriscar uma viagem marítima genuinamente perigosa em vez de trapacear.",
@@ -522,7 +522,7 @@
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Um pretendente que busca uma concha dita nascida de uma andorinha; ele cai ao tentar alcançar uma dentro de um ninho de andorinha e se machuca gravemente, encerrando seu cortejo.",
+      "description": "Encarregado de trazer a concha que se diz nascer de uma andorinha. Manda içar-se até um ninho, não encontra nada e cai - o único pretendente cujo fracasso lhe custa mais que o orgulho.",
       "personality": "Determinado mas azarado fisicamente, ferido em sua primeira tentativa de verdade.",
       "motivation": "Busca uma concha dita nascida de uma andorinha, considerada capaz de aliviar o parto.",
       "qualities": "Ao menos tenta a tarefa com honestidade, diferente de vários outros pretendentes.",
@@ -542,8 +542,8 @@
     {
       "id": "01KYXGBR5MVSFG1QK139RXY4FB",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "name": "O Bosque de Bambu",
-      "description": "Um bosque perto da casa do cortador de bambu, onde um único bambu brilhante um dia escondeu uma criança - e onde Kaguya-hime foi criada.",
+      "name": "A Capital e Suas Províncias",
+      "description": "O território que o Imperador governa e as estradas que levam o boato por ele. Tudo o que dá errado para um pretendente acontece em algum ponto daqui de fora, longe da vista da casa.",
       "climate": "Tranquilo e verde, animado pelo farfalhar dos altos bambus.",
       "culture": "Uma vida rural humilde construída em torno do corte e do ofício do bambu.",
       "politics": null,
@@ -558,8 +558,8 @@
     {
       "id": "01KYXGBR5MTPTHJBHV9WHXQVRV",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "name": "A Capital",
-      "description": "A capital imperial, onde nobres e o próprio Imperador vêm cortejar a mulher mais bela do reino.",
+      "name": "A Casa do Cortador de Bambu",
+      "description": "Uma casa pequena que se torna rica em uma estação, sem que ninguém lá dentro mude o próprio modo de viver. É onde Kaguya-hime é criada e onde a Lua vem buscá-la.",
       "climate": "Agitada com as idas e vindas de nobres e suas comitivas.",
       "culture": "Uma corte aristocrática preocupada com beleza, poesia e rituais de cortejo.",
       "politics": "Sede da corte do Imperador, o centro do poder político do Japão.",
@@ -574,8 +574,8 @@
     {
       "id": "01KYXGBR5MGTCHS1A4532KPV94",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "name": "Monte Fuji",
-      "description": "A montanha mais alta perto dos céus, escolhida por ser o lugar mais próximo da Lua para queimar a última carta de Kaguya-hime.",
+      "name": "A Varanda ao Luar",
+      "description": "A varanda onde Kaguya-hime recebe visitas por trás de um biombo e onde, nos últimos meses, fica olhando para a lua até que quem esteja com ela precise perguntar o que há.",
       "climate": "Fria e remota, seu cume mais perto dos céus do que qualquer outro lugar da terra.",
       "culture": null,
       "politics": null,
@@ -595,8 +595,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Estrada Exterior",
-      "description": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O Bambuzal",
+      "description": "O bambuzal em que o velho trabalha a vida inteira. Um talo dali abrigou uma criança, e enquanto ela ficar, todo talo que ele cortar terá ouro.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -611,8 +611,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Encruzilhada",
-      "description": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O Monte Fuji",
+      "description": "O pico mais próximo dos céus, escolhido como o lugar mais perto da Lua. O que se queima aqui não termina de queimar.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -624,8 +624,8 @@
     {
       "id": "01KYXGBR5MW6A4B018K9JP6VC1",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "title": "O Manto de Penas",
-      "description": "Quem veste o Manto de Penas celestial esquece na hora todo apego, amor e tristeza terrenos - por isso Kaguya-hime precisa se despedir e escrever sua carta final antes de o manto tocar seus ombros, não depois.",
+      "title": "O Manto de Plumas",
+      "description": "Quem veste o celeste Manto de Plumas esquece de imediato todo apego terreno - amor, luto, obrigação, as pessoas que o criaram. Não é castigo. É apenas o que voltar à Lua exige, e Kaguya-hime pede para terminar a carta antes que o ponham sobre ela.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -642,8 +642,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Promessas têm peso",
-      "description": "Uma promessa feita livremente muda o que seu autor pode fazer em segurança.",
+      "title": "Os Tesouros Impossíveis",
+      "description": "Kaguya-hime nunca recusa um pretendente. Impõe a cada um uma tarefa que não pode ser cumprida, de modo que toda recusa seja fracasso dele e não rejeição dela - o que permite a quatro dos cinco preservarem a posição mentindo, e é exatamente por isso que o quinto é o único que se machuca.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -655,8 +655,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Lugares recordam",
-      "description": "Locais importantes preservam sinais dos acontecimentos vividos neles.",
+      "title": "Nada da Lua Permanece",
+      "description": "O que vem da Lua volta para ela, e o que ela deixa não vale nada para quem fica. O ouro enche o bambu apenas enquanto ela está aqui; o elixir oferece a um homem o para sempre, justo na manhã em que o para sempre deixou de valer a pena.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -670,8 +670,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuidade",
-      "body": "Acompanhar o que cada participante sabe antes de cada ponto de virada.",
+      "title": "Continuidade: o ouro acaba",
+      "body": "O bambu só dá ouro enquanto Kaguya-hime está na casa. Nada diz isso em voz alta, mas nenhuma cena depois da partida dela pode mostrar o velho rico.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -683,8 +683,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Motivo visual",
-      "body": "Repetir uma imagem reconhecível quando o conflito central mudar de direção.",
+      "title": "Motivo visual: luz vinda de dentro",
+      "body": "O talo brilha, a criança brilha, a comitiva desce brilhando, e a montanha fumega. Todo ponto de virada da história é iluminado de dentro da própria coisa.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -696,8 +696,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Meta de revisão",
-      "body": "Manter explícita a relação de causa e consequência entre cenas vizinhas.",
+      "title": "Meta de revisão: ela nunca diz não",
+      "body": "Kaguya-hime declina cinco nobres e um imperador sem recusar ninguém uma única vez. Manter toda rejeição formulada como condição, para que o fracasso pertença sempre ao homem que a aceitou.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1048,7 +1048,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Objeto narrativo"
+      "value": "Objeto celeste"
     },
     {
       "id": "6FSNN8AV0VHDY4F38MVJ2HREXD",
@@ -1059,7 +1059,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Apresentado"
+      "value": "Sob a guarda da comitiva da Lua"
     }
   ],
   "characterRelations": [
@@ -1073,7 +1073,7 @@
       "deletedAt": null,
       "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
       "character2Id": "01KYXGBR5MXA37W9VGNVHGGSFF",
-      "relationType": "Confiança"
+      "relationType": "Pai adotivo"
     },
     {
       "id": "683A88QG3KFQC1NXNBDXJV88Y2",
@@ -1083,9 +1083,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5MXA37W9VGNVHGGSFF",
-      "character2Id": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
+      "character2Id": "01KYXGBR5MCEH1EH5BHMNKM7DH",
+      "relationType": "Mãe adotiva"
     },
     {
       "id": "4Y0C2ZFERSJPM81BW4C6CGKGS5",
@@ -1095,9 +1095,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "character2Id": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "relationType": "Rivalidade"
+      "character1Id": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "character2Id": "01KYXGBR5MCEH1EH5BHMNKM7DH",
+      "relationType": "Casados"
     },
     {
       "id": "6XZY453EH10310KK7F14EMPZ3J",
@@ -1107,9 +1107,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "character2Id": "01KYXGBR5MRNA8G2FH9S6C64AY",
-      "relationType": "Família"
+      "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
+      "character2Id": "01KYXGBR5MHZ18Z41SWFF2FY23",
+      "relationType": "Cortejada, e recusou"
     },
     {
       "id": "1H5BV1EKA9ZQ5FR70PRB9QN4DH",
@@ -1119,9 +1119,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5M0YWR45QBHCFKD8BE",
-      "character2Id": "01KYXGBR5MRNA8G2FH9S6C64AY",
-      "relationType": "Dívida"
+      "character1Id": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "character2Id": "01KYXGBR5MHZ18Z41SWFF2FY23",
+      "relationType": "Pediu-lhe proteção"
     },
     {
       "id": "1KT1D4MDQ3AS69FSKZVEM4JQGH",
@@ -1131,9 +1131,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5MRNA8G2FH9S6C64AY",
-      "character2Id": "01KYXGBR5M1JM2HTNP9TYW5RBX",
-      "relationType": "Proteção"
+      "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
+      "character2Id": "01KYXGBR5M0YWR45QBHCFKD8BE",
+      "relationType": "Pretendente"
     },
     {
       "id": "1ZCFBTRVHJSRRR2TMPP1MRY7RN",
@@ -1143,9 +1143,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5MZ9VH93235QK3TSD9",
-      "character2Id": "01KYXGBR5M1JM2HTNP9TYW5RBX",
-      "relationType": "Confiança"
+      "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
+      "character2Id": "01KYXGBR5MRNA8G2FH9S6C64AY",
+      "relationType": "Pretendente"
     },
     {
       "id": "25MYVMPS0CXP2H4C2YX7R6EFE2",
@@ -1155,9 +1155,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5M1JM2HTNP9TYW5RBX",
-      "character2Id": "01KYXGBR5M62694V70YZH2QPFC",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
+      "character2Id": "01KYXGBR5MZ9VH93235QK3TSD9",
+      "relationType": "Pretendente"
     },
     {
       "id": "7GPAGA5MM1BVK68F872AHN9BJ4",
@@ -1167,9 +1167,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXGBR5MFAQ4J3FW5Y3XRFQB",
-      "character2Id": "01KYXGBR5M62694V70YZH2QPFC",
-      "relationType": "Rivalidade"
+      "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
+      "character2Id": "01KYXGBR5M1JM2HTNP9TYW5RBX",
+      "relationType": "Pretendente"
     },
     {
       "id": "2RBVPV6NMMC5EZ70A8RW1VYVQA",
@@ -1180,20 +1180,8 @@
       "isDeleted": false,
       "deletedAt": null,
       "character1Id": "01KYXGBR5M62694V70YZH2QPFC",
-      "character2Id": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "relationType": "Família"
-    },
-    {
-      "id": "3CHC7Q4AG33AN0GD3WTCD3NZAB",
-      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "character1Id": "01KYXGBR5MXA37W9VGNVHGGSFF",
-      "character2Id": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "relationType": "Dívida"
+      "character2Id": "01KYXGBR5MFAQ4J3FW5Y3XRFQB",
+      "relationType": "Pretendente"
     }
   ],
   "characterScenes": [
@@ -1286,6 +1274,50 @@
       "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R"
     },
     {
+      "id": "76AVZFWEFG6Q8PVN0VZNGP0PQ6",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5M62694V70YZH2QPFC",
+      "sceneId": "16B2VEEAK59RXH2ZTR4B9Y1NWP"
+    },
+    {
+      "id": "3MJNDKAWP03Q4SF01V8K6FFG83",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5M62694V70YZH2QPFC",
+      "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1"
+    },
+    {
+      "id": "0Q7EQ939P9KD5VMA1KRHSTCDDQ",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5M62694V70YZH2QPFC",
+      "sceneId": "058J79M67QWAVTEBM68VRBABVD"
+    },
+    {
+      "id": "0WQ811HZ8PGZ183GWZA1BDX8VG",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5M62694V70YZH2QPFC",
+      "sceneId": "66N730PJZHT2DBT7Z68WKE2D54"
+    },
+    {
       "id": "2FHR35XMGPVPV6VCVWFE56R6P5",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1295,6 +1327,17 @@
       "deletedAt": null,
       "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
       "sceneId": "01KYXGBR5M8E9XRNT31VZ9581J"
+    },
+    {
+      "id": "59ZA12YDHZN16NTX533ETMG45T",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "sceneId": "01KYXGBR5MBPKAFMDNTC4AXV4S"
     },
     {
       "id": "1RC9MRBDVNF56QZKKX1RVXHWDW",
@@ -1308,6 +1351,17 @@
       "sceneId": "01KYXGBR5MMJPV7F6N68WG3HZG"
     },
     {
+      "id": "3KQEQCZZ5CJM7E34BMDSKEWFWF",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "sceneId": "01KYXGBR5MPVF998DJ960N4FX4"
+    },
+    {
       "id": "7BNF97K50FE7PZKZ2ZP5RFMP1Y",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1317,17 +1371,6 @@
       "deletedAt": null,
       "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
       "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP"
-    },
-    {
-      "id": "0AD4JQX923Q1NER5QHCPAG8KHN",
-      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
-      "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA"
     },
     {
       "id": "5WRD6J5Z3HQ3REHGE20FP0EK9P",
@@ -1341,6 +1384,17 @@
       "sceneId": "16B2VEEAK59RXH2ZTR4B9Y1NWP"
     },
     {
+      "id": "1YY56WBQFMBEN91H563EPBJ8SV",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1"
+    },
+    {
       "id": "3BPDHRQ1D7GTDCVBBTRZDGZACQ",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1350,6 +1404,28 @@
       "deletedAt": null,
       "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
       "sceneId": "058J79M67QWAVTEBM68VRBABVD"
+    },
+    {
+      "id": "41S2NH50PBANHYSQ48K74JKFTT",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "sceneId": "66N730PJZHT2DBT7Z68WKE2D54"
+    },
+    {
+      "id": "0J970JFXJN147827BNN6EN16YB",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
+      "sceneId": "01KYXGBR5M8E9XRNT31VZ9581J"
     },
     {
       "id": "70S9TX1PQ9TTAK2BK8JPYQH7X0",
@@ -1363,7 +1439,7 @@
       "sceneId": "01KYXGBR5MBPKAFMDNTC4AXV4S"
     },
     {
-      "id": "68VZGBSZSSKKA55ZN9BWVQR0G8",
+      "id": "72ETQFTEGBYRVQMBC0HV3EMPGC",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1371,29 +1447,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "sceneId": "01KYXGBR5MMJPV7F6N68WG3HZG"
-    },
-    {
-      "id": "72KSMRQDB2CQE1G012F08X3G1H",
-      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "sceneId": "01KYXGBR5MHS704JSHY935NY2K"
-    },
-    {
-      "id": "6V0YATBF175SY8KCFFNWNQ8163",
-      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "sceneId": "16B2VEEAK59RXH2ZTR4B9Y1NWP"
+      "sceneId": "01KYXGBR5MPVF998DJ960N4FX4"
     },
     {
       "id": "6DC48K2RQBCNAG5B0K3ACHABPN",
@@ -1407,29 +1461,29 @@
       "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1"
     },
     {
-      "id": "1JRWSWA98M1QG258J21XP970BF",
+      "id": "5FAY3KFCXDBXBB97TWEZ2QV8TW",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "sceneId": "01KYXGBR5MPVF998DJ960N4FX4"
+      "characterId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
+      "sceneId": "058J79M67QWAVTEBM68VRBABVD"
     },
     {
-      "id": "429N83BWSMY7RY76SQBHF63SSE",
+      "id": "1NB1R249W8SRBAH835P2YSTDJ2",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA"
+      "characterId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
+      "sceneId": "66N730PJZHT2DBT7Z68WKE2D54"
     },
     {
-      "id": "2F37EK7Y3P1223JZMAD91P2HFG",
+      "id": "4FB1GJV48E7BCGEZ91A7ZSTTWC",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1437,7 +1491,18 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1"
+      "sceneId": "16B2VEEAK59RXH2ZTR4B9Y1NWP"
+    },
+    {
+      "id": "1S6EZ039K0Z6HSZ023KZFT7BQT",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MHZ18Z41SWFF2FY23",
+      "sceneId": "058J79M67QWAVTEBM68VRBABVD"
     },
     {
       "id": "2H53HRZKYHTB1T55APWP8J4ZWG",
@@ -1451,7 +1516,7 @@
       "sceneId": "66N730PJZHT2DBT7Z68WKE2D54"
     },
     {
-      "id": "2GXXB3P8DXJGYZ0ZR2JW257DHC",
+      "id": "33FGPJYD9V6EJF0W4XJ6PT4AMQ",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1459,10 +1524,21 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5M0YWR45QBHCFKD8BE",
-      "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R"
+      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP"
     },
     {
-      "id": "2E7NJTHE76E55JPXJVVPMC8YC6",
+      "id": "0R204ABHS000G23CFBZQ9Z8JCY",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5M0YWR45QBHCFKD8BE",
+      "sceneId": "01KYXGBR5MHS704JSHY935NY2K"
+    },
+    {
+      "id": "2070YDR1G2XV2SERBXMSMV7W3P",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1470,10 +1546,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5MRNA8G2FH9S6C64AY",
-      "sceneId": "058J79M67QWAVTEBM68VRBABVD"
+      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP"
     },
     {
-      "id": "04KDRDY13CJ389GQ21YHGFVQG2",
+      "id": "6BVNQTCN3MZS7V7W0R78V4JSDD",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1481,7 +1557,18 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5MRNA8G2FH9S6C64AY",
-      "sceneId": "66N730PJZHT2DBT7Z68WKE2D54"
+      "sceneId": "01KYXGBR5MHS704JSHY935NY2K"
+    },
+    {
+      "id": "6PCZ87JM3Q0H47NYRYNZG703XG",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MZ9VH93235QK3TSD9",
+      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP"
     },
     {
       "id": "1HC8GY81D9020254SAKMRKAPAP",
@@ -1495,7 +1582,7 @@
       "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA"
     },
     {
-      "id": "4P9XXNBYSZMT2H8YPPFDBFH64Q",
+      "id": "16ZKJ2CXSV8J17YCED3NAQ295H",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1503,10 +1590,21 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5M1JM2HTNP9TYW5RBX",
-      "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R"
+      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP"
     },
     {
-      "id": "17FCPFW957FFEWFJQQY37P85YV",
+      "id": "2S2D602XSTCHPMCQTK3ZATPGKC",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5M1JM2HTNP9TYW5RBX",
+      "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA"
+    },
+    {
+      "id": "2WWEBVZHW314ZC7ZAWZ4NABB5G",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1514,7 +1612,18 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXGBR5MFAQ4J3FW5Y3XRFQB",
-      "sceneId": "16B2VEEAK59RXH2ZTR4B9Y1NWP"
+      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP"
+    },
+    {
+      "id": "7S3QJ5BS4B4GJ4VZFFDA80132B",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXGBR5MFAQ4J3FW5Y3XRFQB",
+      "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R"
     }
   ],
   "galleryItems": [],
@@ -1522,11 +1631,11 @@
     {
       "id": "01KYXM6K0E6TVQT4TYVDMDS4AV",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "characterOwnerId": "01KYXGBR5M62694V70YZH2QPFC",
+      "characterOwnerId": null,
       "name": "O Elixir da Imortalidade",
-      "category": "Poção encantada",
-      "description": "Um frasco do elixir do povo da Lua, que concede vida eterna a quem o bebe.",
-      "initialState": "Novo",
+      "category": "Objeto celeste",
+      "description": "Um frasco do elixir do povo da Lua, deixado como gentileza de despedida. Concede vida eterna a um homem que acaba de receber o único motivo para não querer uma.",
+      "initialState": "Sob a guarda da comitiva da Lua",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1538,11 +1647,11 @@
     {
       "id": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
-      "characterOwnerId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "characterOwnerId": "01KYXGBR5M62694V70YZH2QPFC",
       "name": "A Carta de Despedida de Kaguya-hime",
-      "category": "Carta",
-      "description": "Uma carta final escrita por Kaguya-hime ao Imperador antes de vestir o Manto de Penas e esquecer todo amor terreno.",
-      "initialState": "Novo",
+      "category": "Objeto celeste",
+      "description": "A última coisa que ela escreve sendo ela mesma, endereçada ao Imperador, antes que o Manto de Plumas leve embora todo apego que ela tem.",
+      "initialState": "Por escrever",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1559,11 +1668,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "characterOwnerId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "name": "Uma Lembrança",
-      "category": "Objeto narrativo",
-      "description": "Um relato conciso desta etapa de Princesa Kaguya, seu conflito e seu efeito sobre o que acontece depois.",
-      "initialState": "Apresentado",
+      "characterOwnerId": "01KYXGBR5MRNA8G2FH9S6C64AY",
+      "name": "O Ramo Enjoiado de Horai",
+      "category": "Tesouro forjado",
+      "description": "Um ramo de prata, ouro e jade branco, feito ao longo de três anos por seis dos melhores artesãos da capital, e apresentado como se tivesse sido colhido numa montanha que talvez não exista.",
+      "initialState": "Encomendado, ainda por fazer",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -1578,9 +1687,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
-      "sceneId": "01KYXGBR5M8E9XRNT31VZ9581J",
-      "newCharacterOwnerId": "01KYXGBR5MXA37W9VGNVHGGSFF",
-      "newState": "Apresentado",
+      "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1",
+      "newCharacterOwnerId": null,
+      "newState": "Mencionado, como presente de despedida da Lua",
       "extraNotes": null
     },
     {
@@ -1592,9 +1701,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
-      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP",
-      "newCharacterOwnerId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "newState": "Mudou de mãos",
+      "sceneId": "058J79M67QWAVTEBM68VRBABVD",
+      "newCharacterOwnerId": null,
+      "newState": "Deixado ao lado da carta",
       "extraNotes": null
     },
     {
@@ -1606,9 +1715,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
-      "sceneId": "16B2VEEAK59RXH2ZTR4B9Y1NWP",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "66N730PJZHT2DBT7Z68WKE2D54",
+      "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
+      "newState": "Queimado no cume",
       "extraNotes": null
     },
     {
@@ -1620,9 +1729,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
-      "sceneId": "01KYXGBR5MBPKAFMDNTC4AXV4S",
-      "newCharacterOwnerId": "01KYXGBR5MCEH1EH5BHMNKM7DH",
-      "newState": "Apresentado",
+      "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1",
+      "newCharacterOwnerId": "01KYXGBR5M62694V70YZH2QPFC",
+      "newState": "Começada em segredo",
       "extraNotes": null
     },
     {
@@ -1634,9 +1743,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
-      "sceneId": "01KYXGBR5MHS704JSHY935NY2K",
+      "sceneId": "058J79M67QWAVTEBM68VRBABVD",
       "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "newState": "Mudou de mãos",
+      "newState": "Deixada para o Imperador",
       "extraNotes": null
     },
     {
@@ -1648,9 +1757,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
-      "sceneId": "6K6MM7YEPYQK1ZCMK7W3XR63B1",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "66N730PJZHT2DBT7Z68WKE2D54",
+      "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
+      "newState": "Lida, e depois queimada",
       "extraNotes": null
     },
     {
@@ -1662,9 +1771,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4MXQWW41EAWP494EQWM9RF00A2",
-      "sceneId": "01KYXGBR5MMJPV7F6N68WG3HZG",
-      "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "newState": "Apresentado",
+      "sceneId": "01KYXGBR5MN0TK7PY3RPAWFZDP",
+      "newCharacterOwnerId": "01KYXGBR5MRNA8G2FH9S6C64AY",
+      "newState": "Encomendado a seis artesãos",
       "extraNotes": null
     },
     {
@@ -1676,9 +1785,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4MXQWW41EAWP494EQWM9RF00A2",
-      "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA",
-      "newCharacterOwnerId": "01KYXGBR5M0YWR45QBHCFKD8BE",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXGBR5MHS704JSHY935NY2K",
+      "newCharacterOwnerId": "01KYXGBR5M62694V70YZH2QPFC",
+      "newState": "Apresentado como trazido de Horai",
       "extraNotes": null
     },
     {
@@ -1690,9 +1799,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "4MXQWW41EAWP494EQWM9RF00A2",
-      "sceneId": "058J79M67QWAVTEBM68VRBABVD",
+      "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "newState": "Desmascarado quando os artesãos vêm cobrar",
       "extraNotes": null
     }
   ],
@@ -2116,7 +2225,7 @@
       "entityId": "01KYXGBR5M62694V70YZH2QPFC",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Uma menina radiante encontrada quando bebê dentro de um bambu brilhante, que cresce até se tornar uma beleza incomparável - e revela ser uma princesa da Lua.",
+      "contentSnapshot": "Uma menina radiante encontrada ainda bebê dentro de um talo de bambu luminoso, adulta em três meses. Recusa todo mundo sem nunca dizer não, e guarda para si de onde veio até que guardar deixe de ser possível.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Base útil; preserve este fato durante a revisão.",
@@ -2134,7 +2243,7 @@
       "entityId": "01KYXGBR5MN0TK7PY3RPAWFZDP",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "Até o Imperador do Japão se encanta com a fama de sua beleza e pede sua mão; Kaguya-hime recusa gentilmente o casamento, mas ela e o Imperador trocam cartas e criam um carinho mútuo à distância respeitosa.",
+      "contentSnapshot": "Cinco nobres acampam diante da casa e se recusam a ir embora. Kaguya-hime não quer nenhum deles e não vai dizê-lo, porque a recusa recairia sobre o velho, que precisa conviver com essas famílias.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Verifique se a transição está suficientemente clara.",
@@ -2152,7 +2261,7 @@
       "entityId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Uma carta final escrita por Kaguya-hime ao Imperador antes de vestir o Manto de Penas e esquecer todo amor terreno.",
+      "contentSnapshot": "A última coisa que ela escreve sendo ela mesma, endereçada ao Imperador, antes que o Manto de Plumas leve embora todo apego que ela tem.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolva este risco de continuidade antes da publicação.",
@@ -2170,7 +2279,7 @@
       "entityId": "01KYXGBR5MGTCHS1A4532KPV94",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "A montanha mais alta perto dos céus, escolhida por ser o lugar mais próximo da Lua para queimar a última carta de Kaguya-hime.",
+      "contentSnapshot": "A varanda onde Kaguya-hime recebe visitas por trás de um biombo e onde, nos últimos meses, fica olhando para a lua até que quem esteja com ela precise perguntar o que há.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Este detalhe deveria repercutir em uma cena posterior.",
@@ -2281,9 +2390,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXGBR5M8E9XRNT31VZ9581J",
+      "entityId": "058J79M67QWAVTEBM68VRBABVD",
       "effectType": "itemGrant",
-      "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
+      "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "triggerName": null
     },
     {
@@ -2295,9 +2404,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXGBR5MMJPV7F6N68WG3HZG",
+      "entityId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "effectType": "itemTake",
-      "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
+      "itemId": "4MXQWW41EAWP494EQWM9RF00A2",
       "triggerName": null
     },
     {
@@ -2309,10 +2418,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXGBR5MN0TK7PY3RPAWFZDP",
+      "entityId": "6K6MM7YEPYQK1ZCMK7W3XR63B1",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "segredo_da_lua_contado"
     },
     {
       "id": "2V8VABF24VTEV7B6KQ6NN3ACJA",
@@ -2323,10 +2432,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXGBR5M0DPWTX98SRBYB6NA",
+      "entityId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "pretendentes_ainda_esperancosos"
     }
   ],
   "exampleCatalogEnriched": true,

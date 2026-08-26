@@ -27,9 +27,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "O Baile Real",
+      "name": "Criada na Própria Casa",
       "index": 1,
-      "summary": "O conflito central e seus participantes são apresentados.",
+      "summary": "O lugar de Cinderela na casa do pai depois que a madrasta assume o comando, e o convite real que enfim lhe dá algo a perder.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -41,9 +41,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Confronto",
+      "name": "Uma Noite no Palácio",
       "index": 2,
-      "summary": "As consequências crescem e os personagens precisam decidir como reagir.",
+      "summary": "A Fada Madrinha empresta, não dá. Tudo o que Cinderela ganha naquela noite está tomado por empréstimo contra um prazo que ela aceita de antemão.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -55,9 +55,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Resolução",
+      "name": "A Busca do Sapatinho",
       "index": 3,
-      "summary": "Os fios principais convergem e revelam suas consequências.",
+      "summary": "A única coisa que o encanto não consegue retomar percorre o reino de casa em casa, até que a casa que a escondeu precise atender à porta.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -72,10 +72,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
-      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
-      "name": "Vida de serviçal",
+      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
+      "name": "Vida de criada",
       "index": 1,
-      "summary": "Cinderela vive maltratada pela madrasta e pelas irmãs postiças, fazendo todo o trabalho da casa.",
+      "summary": "Cinderela dorme junto ao fogo da cozinha e obedece à madrasta e às duas meias-irmãs. As cinzas que lhe dão o nome são a primeira coisa que qualquer um nota nela, e a esta altura a única.",
       "gap": 0,
       "gapType": "minutes",
       "duration": 10,
@@ -95,9 +95,9 @@
       "deletedAt": null,
       "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
       "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
-      "name": "O convite ao baile",
+      "name": "O convite para o baile",
       "index": 2,
-      "summary": "Chega um convite real para um baile em que o príncipe escolherá sua noiva - e todas as moças do reino estão convidadas.",
+      "summary": "Chega um convite real para um baile em que o príncipe escolherá sua noiva. É endereçado a todas as jovens do reino, e é justamente esse o problema: Cinderela é uma delas, e todos na casa sabem disso.",
       "gap": 2,
       "gapType": "hours",
       "duration": 2,
@@ -116,10 +116,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
-      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
+      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "name": "O vestido rasgado",
       "index": 3,
-      "summary": "Por ciúme, a madrasta e as irmãs destroem o vestido de Cinderela, impedindo-a de ir ao baile.",
+      "summary": "As meias-irmãs desfazem o vestido que Cinderela costurou com o pouco que lhe permitiram guardar, e a madrasta dá o assunto por encerrado. Ninguém a proíbe de ir. Apenas providenciam para que seja impossível.",
       "gap": 1,
       "gapType": "days",
       "duration": 1,
@@ -141,7 +141,7 @@
       "locationId": "7T30Y2CEXRDJ5S0K17Q5A4R6YC",
       "name": "A Fada Madrinha",
       "index": 4,
-      "summary": "A Fada Madrinha aparece e transforma abóbora, ratos e trapos num vestido e numa carruagem, avisando que o feitiço acaba à meia-noite.",
+      "summary": "Deixada chorando no jardim, Cinderela é atendida. A Fada Madrinha pede uma abóbora, seis ratos e um par de lagartixas, e enuncia uma condição em vez de cobrar um preço.",
       "gap": 30,
       "gapType": "minutes",
       "duration": 45,
@@ -160,10 +160,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
-      "name": "O baile",
+      "locationId": "7T30Y2CEXRDJ5S0K17Q5A4R6YC",
+      "name": "A abóbora e os ratos",
       "index": 1,
-      "summary": "Cinderela e o príncipe dançam a noite toda e se apaixonam, mas ela foge às pressas quando o relógio começa a bater meia-noite, perdendo um sapatinho de cristal na escadaria.",
+      "summary": "O jardim se esvazia numa carruagem, numa parelha de cavalos e num cocheiro, e os trapos de Cinderela viram um vestido. Só os sapatinhos de cristal não foram feitos de nada que já estivesse ali.",
       "gap": 15,
       "gapType": "minutes",
       "duration": 1,
@@ -182,10 +182,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
-      "name": "A busca pelo sapatinho",
+      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
+      "name": "A desconhecida no baile",
       "index": 2,
-      "summary": "O príncipe percorre o reino com o sapatinho de cristal, decidido a encontrar a moça que dançou com ele.",
+      "summary": "Ninguém no palácio a reconhece, e sua própria família menos que todos. O príncipe dança com ela a noite inteira e não lhe pergunta o nome nenhuma vez - omissão que ele passará o resto da história pagando.",
       "gap": 2,
       "gapType": "hours",
       "duration": 10,
@@ -204,10 +204,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
-      "name": "O sapatinho de cristal",
+      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
+      "name": "A badalada da meia-noite",
       "index": 3,
-      "summary": "O sapatinho serve perfeitamente em Cinderela diante da surpresa da madrasta, e ela se casa com o príncipe.",
+      "summary": "A primeira badalada do relógio alcança Cinderela no meio de uma frase. Ela corre antes da décima segunda, porque a Fada Madrinha enunciou a condição com todas as letras e Cinderela concordou com ela.",
       "gap": 1,
       "gapType": "days",
       "duration": 2,
@@ -225,11 +225,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Uma nova consequência",
-      "summary": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O sapatinho perdido",
+      "summary": "Na escadaria do palácio um sapatinho de cristal se solta e fica para trás. É a única coisa que o encanto não retoma, e a única prova que resta nas mãos do príncipe.",
       "extraNotes": null,
       "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
-      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
+      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
       "index": 4,
       "gap": -2,
       "gapType": "minutes",
@@ -247,11 +247,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Um encontro inesperado",
-      "summary": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "De volta às cinzas",
+      "summary": "Cinderela está junto ao fogo antes do amanhecer, em seus próprios trapos, com o segundo sapatinho escondido. As meias-irmãs voltam falando sem parar da princesa misteriosa e a descrevem longamente, na sua cara.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
-      "locationId": "7T30Y2CEXRDJ5S0K17Q5A4R6YC",
+      "locationId": "14BE84T8E97AW0FEJC6CNSW1PE",
       "index": 1,
       "gap": 15,
       "gapType": "minutes",
@@ -269,11 +269,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A decisão difícil",
-      "summary": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A busca do príncipe",
+      "summary": "O príncipe manda levar o sapatinho de casa em casa por todo o reino. O método é absurdo e todos os envolvidos sabem disso, e ainda assim funciona, porque existe um único pé a que ele pode pertencer.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
-      "locationId": "6P6GBJ4ETW68GFN00A70TRMG8K",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "index": 2,
       "gap": 2,
       "gapType": "hours",
@@ -291,11 +291,11 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "Caminhos convergem",
-      "summary": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "A vez das meias-irmãs",
+      "summary": "As duas meias-irmãs forçam o pé no sapatinho enquanto a madrasta mantém Cinderela fora da sala. Nenhuma das duas serve, e nenhuma das duas admite.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
-      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "index": 3,
       "gap": 1,
       "gapType": "days",
@@ -313,8 +313,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "O preço da mudança",
-      "summary": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O sapatinho serve",
+      "summary": "Cinderela pede para experimentar, e serve. Então tira do bolso o sapatinho do par, o que encerra a discussão antes que a madrasta consiga começá-la.",
       "extraNotes": null,
       "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
       "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
@@ -338,7 +338,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "Jovem gentil e trabalhadora, tratada como serviçal em sua própria casa.",
+      "description": "Uma jovem bondosa e trabalhadora, tratada como criada na casa que era de seu pai. Obedece porque recusar nunca funcionou uma única vez, não porque concorde.",
       "personality": "Paciente e de bom coração apesar de anos de maus-tratos, nunca amargurada com a família postiça.",
       "motivation": "Deseja, em silêncio e sem muita esperança, uma única noite de alegria no baile real.",
       "qualities": "Graciosa, trabalhadora e gentil até com os ratos e pequenas criaturas da casa.",
@@ -361,7 +361,7 @@
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "Viúva fria e calculista, favorece abertamente as próprias filhas.",
+      "description": "Uma viúva fria e calculista que favorece abertamente as próprias filhas. Nunca proíbe Cinderela de nada de forma explícita; arranja as circunstâncias para que a recusa nunca seja dela para defender.",
       "personality": "Orgulhosa, controladora e abertamente desdenhosa com Cinderela.",
       "motivation": "Quer só que as próprias filhas se casem bem, e vê Cinderela como uma rival a ser reprimida.",
       "qualities": "Perspicaz e estratégica em administrar a casa em favor das próprias filhas.",
@@ -379,12 +379,12 @@
     {
       "id": "01KYXBHD0JRER5VNKDJB326PKK",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "A Irmã Mais Velha",
+      "name": "A Meia-Irmã Mais Velha",
       "title": null,
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "Uma das irmãs postiças de Cinderela, vaidosa e desajeitada.",
+      "description": "Meia-irmã de Cinderela, vaidosa e desajeitada, e a primeira a estender a mão para qualquer coisa que a irmã queira.",
       "personality": "Vaidosa e de temperamento curto, com ciúme fácil de qualquer uma mais bonita.",
       "motivation": "Desesperada para chamar a atenção do Príncipe no baile, custe o que custar a Cinderela.",
       "qualities": "Confiante o bastante para experimentar o sapatinho de cristal sem a menor dúvida.",
@@ -402,12 +402,12 @@
     {
       "id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "A Irmã Mais Nova",
+      "name": "A Meia-Irmã Mais Nova",
       "title": null,
       "gender": "Feminino",
       "race": "Humana",
       "subrace": null,
-      "description": "A outra irmã postiça, tão vaidosa quanto a mais velha.",
+      "description": "A outra meia-irmã, tão vaidosa quanto a mais velha e mais rápida em dizer em voz alta o que a mãe apenas insinua.",
       "personality": "Vaidosa à sua própria maneira, embora um pouco menos cruel que a irmã mais velha.",
       "motivation": "Segue o exemplo da mãe e da irmã na esperança de se casar acima de sua condição.",
       "qualities": "Sociável o bastante para ser tolerada na corte, ainda que não admirada.",
@@ -425,12 +425,12 @@
     {
       "id": "01KYXBHD0JN10GNFGP4M876AKZ",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Fada Madrinha",
+      "name": "A Fada Madrinha",
       "title": null,
       "gender": "Feminino",
       "race": "Fada",
       "subrace": null,
-      "description": "Uma fada bondosa que aparece nos momentos de maior necessidade.",
+      "description": "Uma madrinha que aparece uma única vez, na pior hora, e ajuda em termos anunciados de antemão. Ela empresta; não dá.",
       "personality": "Calorosa, prática e um pouco travessa com sua magia.",
       "motivation": "Quer que Cinderela tenha sua única chance no baile, ainda que breve.",
       "qualities": "Engenhosa - capaz de transformar uma abóbora, ratos e trapos numa carruagem, cavalos e um vestido em instantes.",
@@ -448,12 +448,12 @@
     {
       "id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Príncipe",
+      "name": "O Príncipe",
       "title": "Herdeiro do trono",
       "gender": "Masculino",
       "race": "Humano",
       "subrace": null,
-      "description": "Herdeiro do reino, encarregado de escolher uma noiva no baile real.",
+      "description": "O herdeiro do reino, obrigado a escolher uma noiva num único baile. Dança a noite toda com uma mulher cujo nome não lhe ocorre perguntar.",
       "personality": "Atencioso e sincero, encantado pela companhia de Cinderela e não só por sua aparência.",
       "motivation": "Quer encontrar a jovem misteriosa que fugiu do baile, não uma noiva qualquer.",
       "qualities": "Persistente - decidido a procurar por todo o reino com o sapatinho de cristal até encontrá-la.",
@@ -473,8 +473,8 @@
     {
       "id": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Casa de Cinderela",
-      "description": "A casa onde Cinderela vive sob o comando da madrasta.",
+      "name": "O Reino",
+      "description": "O pequeno reino de que Cinderela nunca saiu, onde reina a família do príncipe e aonde um convite real chega a toda casa que tenha porta.",
       "climate": "Uma lareira fria para Cinderela, que dorme perto das cinzas para se aquecer enquanto a família postiça fica com os melhores cômodos.",
       "culture": "Uma casa dividida em dois - conforto e favoritismo para as irmãs postiças, tarefas e silêncio para Cinderela.",
       "politics": "Governada inteiramente pela Madrasta, sem ninguém a quem Cinderela possa recorrer.",
@@ -489,8 +489,8 @@
     {
       "id": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "name": "Palácio Real",
-      "description": "Onde acontece o grande baile em busca de uma noiva para o príncipe.",
+      "name": "A Casa de Cinderela",
+      "description": "A casa que o pai de Cinderela lhe deixou, administrada desde a morte dele pela madrasta, que jamais precisou justificar uma única decisão tomada ali dentro.",
       "climate": "Iluminado e festivo para o baile, sua grande escadaria é o cenário da fuga apressada de Cinderela à meia-noite.",
       "culture": "Uma reunião da corte pensada para apresentar ao Príncipe todas as jovens elegíveis do reino.",
       "politics": "A sede da família real do reino.",
@@ -510,8 +510,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "O Refúgio Silencioso",
-      "description": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O Canto da Lareira",
+      "description": "O canto junto ao fogo da cozinha onde Cinderela dorme. As cinzas que se assentam nela ali são a origem de seu nome, e a casa o usa sem pensar duas vezes.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -526,8 +526,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Estrada Exterior",
-      "description": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O Jardim",
+      "description": "A horta atrás da casa, com seu canteiro de abóboras e seus ratos. Comum sob todos os aspectos até a noite em que alguém precisa que não seja.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -542,8 +542,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "name": "A Encruzilhada",
-      "description": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "name": "O Palácio Real",
+      "description": "Onde se realiza o grande baile, e onde se espera que o príncipe escolha uma noiva em uma só noite, num salão cheio de mulheres que ele nunca viu.",
       "climate": null,
       "culture": null,
       "politics": null,
@@ -555,8 +555,8 @@
     {
       "id": "01KYXBHD0J4Z72KGB3F4P37R4W",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "title": "O Feitiço da Meia-Noite",
-      "description": "O feitiço da Fada Madrinha se desfaz precisamente à meia-noite, quando tudo volta a ser como antes.",
+      "title": "O Encanto da Meia-Noite",
+      "description": "O encanto da Fada Madrinha termina na décima segunda badalada da meia-noite, e tudo o que ele transformou volta ao que era. A hora não é castigo nem prova - é enunciada de saída, e Cinderela a aceita antes que qualquer coisa seja conjurada.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -569,7 +569,7 @@
       "id": "01KYXKHJQY4TPRPRHFH3EZJ2K3",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "title": "As Transformações da Fada Madrinha",
-      "description": "Com um aceno de varinha, a Fada Madrinha transforma uma abóbora em carruagem, ratos em cavalos, um rato grande em cocheiro e lagartixas em lacaios - e os trapos de Cinderela num vestido digno do baile. Cada transformação se desfaz exatamente à meia-noite.",
+      "description": "Um aceno da varinha transforma uma abóbora em carruagem, ratos em cavalos, um rato-do-mato em cocheiro e trapos em vestido. Cada transformação precisa de algo real sobre o que agir: a magia altera o que está ali e nunca cria a partir do nada.",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -586,8 +586,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Lugares recordam",
-      "description": "Locais importantes preservam sinais dos acontecimentos vividos neles.",
+      "title": "O Que o Encanto Não Desfaz",
+      "description": "A única exceção à regra acima. Os sapatinhos de cristal foram conjurados, não transformados, então a meia-noite não tem estado anterior a que devolvê-los. Um sapatinho perdido na escadaria continua de cristal ao amanhecer - e continua sendo a única prova de que Cinderela esteve ali.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -601,8 +601,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Continuidade",
-      "body": "Acompanhar o que cada participante sabe antes de cada ponto de virada.",
+      "title": "Continuidade: o segundo sapatinho",
+      "body": "Cinderela tem o sapatinho do par desde o instante em que chega em casa. Toda cena depois do baile precisa ser escrita como se ela soubesse que pode encerrar a história quando quiser - e não o faça, até que alguém enfim lhe pergunte.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -614,8 +614,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Motivo visual",
-      "body": "Repetir uma imagem reconhecível quando o conflito central mudar de direção.",
+      "title": "Motivo visual: cinzas e cristal",
+      "body": "Os dois materiais da história. Ela é nomeada por um e identificada pelo outro. As cenas da lareira e as cenas do palácio devem seguir trocando um pelo outro.",
       "isFavorite": false,
       "extraNotes": null
     },
@@ -627,8 +627,8 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "title": "Meta de revisão",
-      "body": "Manter explícita a relação de causa e consequência entre cenas vizinhas.",
+      "title": "Meta de revisão: ninguém a proíbe",
+      "body": "A madrasta nunca diz não. Ela arranja as circunstâncias, de modo que o obstáculo seja sempre um fato e não uma decisão. Manter todo obstáculo do primeiro capítulo negável.",
       "isFavorite": false,
       "extraNotes": null
     }
@@ -979,7 +979,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_category",
-      "value": "Objeto narrativo"
+      "value": "Objeto conjurado"
     },
     {
       "id": "5H1NYA2Z831SJ77RPJ9STBHYWF",
@@ -990,7 +990,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "type": "item_state",
-      "value": "Apresentado"
+      "value": "Conjurados"
     }
   ],
   "characterRelations": [
@@ -1004,7 +1004,7 @@
       "deletedAt": null,
       "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "relationType": "Confiança"
+      "relationType": "Madrasta"
     },
     {
       "id": "3G84P4HXQADTHFXHEQV0QJGPZ3",
@@ -1014,9 +1014,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "relationType": "Meia-irmã"
     },
     {
       "id": "2T391KJSE2M3RX53YH9B2VXRTG",
@@ -1026,9 +1026,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "relationType": "Rivalidade"
+      "relationType": "Meia-irmã"
     },
     {
       "id": "73H80RKJ8XGSQG4TE3MNXA9G75",
@@ -1038,9 +1038,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "relationType": "Família"
+      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
+      "character2Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "relationType": "Mãe e filha"
     },
     {
       "id": "0Z2FP1E0WRXM066XDCBV0E8JFB",
@@ -1050,9 +1050,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JN10GNFGP4M876AKZ",
-      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "relationType": "Dívida"
+      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
+      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "relationType": "Mãe e filha"
     },
     {
       "id": "08W6YXGMT0YF6T2SB49DCENH4X",
@@ -1062,9 +1062,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "relationType": "Proteção"
+      "character1Id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "relationType": "Irmãs"
     },
     {
       "id": "2W63G89S5GHRRGYVMBM9Z7CAWB",
@@ -1075,8 +1075,8 @@
       "isDeleted": false,
       "deletedAt": null,
       "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "relationType": "Confiança"
+      "character2Id": "01KYXBHD0JN10GNFGP4M876AKZ",
+      "relationType": "Madrinha"
     },
     {
       "id": "6FZZ1AP0NB9GJS5XXWZ99EA4VE",
@@ -1086,9 +1086,9 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "character1Id": "01KYXBHD0J895XZFCMMV9X03V5",
-      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "relationType": "Propósito comum"
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "relationType": "Apaixonados"
     }
   ],
   "characterScenes": [
@@ -1181,6 +1181,39 @@
       "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B"
     },
     {
+      "id": "4AV7TJJVXF043BBSCYXX11GH8W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V"
+    },
+    {
+      "id": "4BWFM3VSZ797M89P92MMWDTJPW",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
+    },
+    {
+      "id": "1HTYG5429AZJW2P6DW3QGVHESE",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
+    },
+    {
       "id": "74B8Z1EWJY5EESMY85XWWBXV7P",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1192,6 +1225,17 @@
       "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
     },
     {
+      "id": "371TJ5WSPXFWDKTGAE6NZVYH51",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX"
+    },
+    {
       "id": "2SRMNZDA0BDBF9G763GWDT73B9",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1201,28 +1245,6 @@
       "deletedAt": null,
       "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
       "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ"
-    },
-    {
-      "id": "1X5AH6AEJ8VKH48K0B1NVBDYW7",
-      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
-      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X"
-    },
-    {
-      "id": "0FH7M20VVJ4TCFHHSVY56FKTY7",
-      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
-      "sceneId": "01KYXBHD0JG76K402BJRX50QB4"
     },
     {
       "id": "0C359M85RA8CDEJYJ72YM1YZPW",
@@ -1247,6 +1269,28 @@
       "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
     },
     {
+      "id": "1R3D73G422C318BVDR5B709N9T",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
+    },
+    {
+      "id": "0G865G9Q513TTGQSB7YT8T4S70",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JRER5VNKDJB326PKK",
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
+    },
+    {
       "id": "36VMZBVRXRFRG421BV992Q726G",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1269,17 +1313,6 @@
       "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ"
     },
     {
-      "id": "1KT2E22RAA76GEWQZY9VJDSG8V",
-      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z",
-      "version": 1,
-      "isDeleted": false,
-      "deletedAt": null,
-      "characterId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ"
-    },
-    {
       "id": "163J62B48ZMS7Q6WC1KRJ9ENK5",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
@@ -1291,7 +1324,7 @@
       "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V"
     },
     {
-      "id": "7EFWSHFTS3SJXRYKY2BCNFPVKS",
+      "id": "0DCHVKCAJ2DQH3WM74AY3ABGEM",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1299,10 +1332,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8"
+      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
     },
     {
-      "id": "72Y8380X6703QJX2T2N7EYZ4X0",
+      "id": "2R7SNJ43PXWPVKCXA5Q7H2CQDE",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1310,10 +1343,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D"
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
     },
     {
-      "id": "5XQMBMKBAEY397GK82N9H7FY9Q",
+      "id": "2GXSWD8Q9SQZP0DPRXKFJJ2QD7",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1321,10 +1354,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "01KYXBHD0JG76K402BJRX50QB4"
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX"
     },
     {
-      "id": "2RX257XQ8XNP9H764SKBB36AD9",
+      "id": "3R6262X8611DNRNJFSBB7KF9HZ",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1332,10 +1365,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8"
+      "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ"
     },
     {
-      "id": "22PTXH9PCDSHJXCA229Q8T97J6",
+      "id": "0XH28J6WEEAAZ8RFDKVG51SNGA",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1343,10 +1376,21 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
+      "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V"
     },
     {
-      "id": "4KGHK5NE99YJGV4YTWA1YE5G21",
+      "id": "6S65EZ6QACMAZA8V52CM0BR0NM",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
+    },
+    {
+      "id": "6WH86ERVTB796Y5GHJM740JANQ",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1354,10 +1398,21 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JN10GNFGP4M876AKZ",
-      "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B"
+      "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D"
     },
     {
-      "id": "730AHM5CDNKGHRVRCPBNGAPNEZ",
+      "id": "7TQCNSKKA7YEEG5TBA6V0PXX5W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JN10GNFGP4M876AKZ",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X"
+    },
+    {
+      "id": "6YA032ASVBTYYNB6GWEFNK7Z3R",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z",
@@ -1365,7 +1420,40 @@
       "isDeleted": false,
       "deletedAt": null,
       "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
-      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1"
+      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ"
+    },
+    {
+      "id": "0Z2V78953A21G7KH2YP8B71EH7",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "sceneId": "01KYXBHD0JG76K402BJRX50QB4"
+    },
+    {
+      "id": "2SR3NHPJVFT5GWX3W4Q3CYSPP2",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B"
+    },
+    {
+      "id": "7K6AEWG7HCM988N7M5YSBVKY6G",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "characterId": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8"
     },
     {
       "id": "5HPWZV0XX5WJZKM9VDH4PSPKSF",
@@ -1386,9 +1474,9 @@
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "characterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "name": "Os Sapatinhos de Cristal",
-      "category": "Calçado encantado",
-      "description": "Um par de sapatinhos de cristal, conjurados pela Fada Madrinha, que não servem em nenhum pé além do de Cinderela.",
-      "initialState": "Novo",
+      "category": "Objeto conjurado",
+      "description": "Um par de sapatinhos de cristal, conjurados do nada em vez de transformados a partir de algo. É por isso que sobrevivem à meia-noite quando o resto do encanto não sobrevive.",
+      "initialState": "Conjurados",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1400,11 +1488,11 @@
     {
       "id": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "characterOwnerId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "characterOwnerId": null,
       "name": "A Carruagem de Abóbora",
-      "category": "Transporte encantado",
-      "description": "Uma carruagem conjurada a partir de uma abóbora do jardim, puxada por cavalos que antes eram ratos.",
-      "initialState": "Novo",
+      "category": "Objeto conjurado",
+      "description": "Uma carruagem feita de uma abóbora da horta, puxada por cavalos que eram ratos uma hora atrás e conduzida por um cocheiro que era um rato-do-mato. Emprestada, em todos os sentidos.",
+      "initialState": "Uma abóbora na horta",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1416,11 +1504,11 @@
     {
       "id": "01KYXKHJQYDV5T2P7TT7DR9TVS",
       "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
-      "characterOwnerId": "01KYXBHD0JRER5VNKDJB326PKK",
+      "characterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "name": "O Vestido de Baile",
-      "category": "Roupa encantada",
-      "description": "Um vestido magnífico conjurado a partir dos próprios trapos de Cinderela, desfeito à meia-noite.",
-      "initialState": "Novo",
+      "category": "Objeto conjurado",
+      "description": "Um vestido conjurado a partir dos próprios trapos de Cinderela, e é por isso que volta a ser trapos: o encanto só devolve o que tomou emprestado.",
+      "initialState": "Trapos",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -1440,9 +1528,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
-      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY",
-      "newCharacterOwnerId": "01KYXBHD0J895XZFCMMV9X03V5",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Calçados para o baile",
       "extraNotes": null
     },
     {
@@ -1454,9 +1542,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
-      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
-      "newCharacterOwnerId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "newState": "Mudou de mãos",
+      "sceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B",
+      "newCharacterOwnerId": null,
+      "newState": "Um deles fica na escadaria",
       "extraNotes": null
     },
     {
@@ -1468,9 +1556,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
-      "sceneId": "4NWHXAHMB4APXXVE8158T0ZM0V",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Reunido ao seu par",
       "extraNotes": null
     },
     {
@@ -1482,9 +1570,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
-      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
-      "newCharacterOwnerId": "01KYXBHD0JRER5VNKDJB326PKK",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
+      "newCharacterOwnerId": null,
+      "newState": "Escolhida no canteiro",
       "extraNotes": null
     },
     {
@@ -1496,9 +1584,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
-      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ",
-      "newCharacterOwnerId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Transformada em carruagem",
       "extraNotes": null
     },
     {
@@ -1510,9 +1598,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
-      "sceneId": "3F4EA2A8VYPRK1VSVWXN2S1HH8",
+      "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
       "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "newState": "Abóbora de novo, na estrada",
       "extraNotes": null
     },
     {
@@ -1524,9 +1612,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
-      "sceneId": "01KYXBHD0J6R5HRKSAC9B75CGZ",
-      "newCharacterOwnerId": "01KYXBHD0JA1MR77MHPJ7R4KNS",
-      "newState": "Apresentado",
+      "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Conjurado de seus trapos",
       "extraNotes": null
     },
     {
@@ -1538,9 +1626,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
-      "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
-      "newCharacterOwnerId": "01KYXBHD0JN10GNFGP4M876AKZ",
-      "newState": "Mudou de mãos",
+      "sceneId": "01KYXBHD0JYHST89WZ1A72TCCQ",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Usado, e não reconhecida nele",
       "extraNotes": null
     },
     {
@@ -1552,9 +1640,9 @@
       "isDeleted": false,
       "deletedAt": null,
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
-      "sceneId": "212Z87HTJZCEK2DD4N2EZ5V4Z1",
-      "newCharacterOwnerId": null,
-      "newState": "Transformado",
+      "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
+      "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "newState": "Trapos outra vez",
       "extraNotes": null
     }
   ],
@@ -1978,7 +2066,7 @@
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Jovem gentil e trabalhadora, tratada como serviçal em sua própria casa.",
+      "contentSnapshot": "Uma jovem bondosa e trabalhadora, tratada como criada na casa que era de seu pai. Obedece porque recusar nunca funcionou uma única vez, não porque concorde.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Base útil; preserve este fato durante a revisão.",
@@ -1996,7 +2084,7 @@
       "entityId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
       "fieldId": null,
       "fieldKey": "summary",
-      "contentSnapshot": "Cinderela e o príncipe dançam a noite toda e se apaixonam, mas ela foge às pressas quando o relógio começa a bater meia-noite, perdendo um sapatinho de cristal na escadaria.",
+      "contentSnapshot": "O jardim se esvazia numa carruagem, numa parelha de cavalos e num cocheiro, e os trapos de Cinderela viram um vestido. Só os sapatinhos de cristal não foram feitos de nada que já estivesse ali.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Verifique se a transição está suficientemente clara.",
@@ -2014,7 +2102,7 @@
       "entityId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Uma carruagem conjurada a partir de uma abóbora do jardim, puxada por cavalos que antes eram ratos.",
+      "contentSnapshot": "Uma carruagem feita de uma abóbora da horta, puxada por cavalos que eram ratos uma hora atrás e conduzida por um cocheiro que era um rato-do-mato. Emprestada, em todos os sentidos.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Resolva este risco de continuidade antes da publicação.",
@@ -2032,7 +2120,7 @@
       "entityId": "14BE84T8E97AW0FEJC6CNSW1PE",
       "fieldId": null,
       "fieldKey": "description",
-      "contentSnapshot": "Um relato conciso desta etapa de Cinderela, seu conflito e seu efeito sobre o que acontece depois.",
+      "contentSnapshot": "O canto junto ao fogo da cozinha onde Cinderela dorme. As cinzas que se assentam nela ali são a origem de seu nome, e a casa o usa sem pensar duas vezes.",
       "excerptText": null,
       "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
       "commentText": "Este detalhe deveria repercutir em uma cena posterior.",
@@ -2143,7 +2231,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "entityId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
       "effectType": "itemGrant",
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "triggerName": null
@@ -2157,7 +2245,7 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0J6R5HRKSAC9B75CGZ",
+      "entityId": "01KYXBHD0JG76K402BJRX50QB4",
       "effectType": "itemTake",
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "triggerName": null
@@ -2171,10 +2259,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "entityId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
       "effectType": "triggerSet",
       "itemId": null,
-      "triggerName": "path_revealed"
+      "triggerName": "convidada_para_o_baile"
     },
     {
       "id": "2VMK8KFNBPT5STCPWYH04SP97Z",
@@ -2185,10 +2273,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Scene",
-      "entityId": "01KYXBHD0JG76K402BJRX50QB4",
+      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
       "effectType": "triggerUnset",
       "itemId": null,
-      "triggerName": "secret_closed"
+      "triggerName": "reconhecida_em_casa"
     }
   ],
   "exampleCatalogEnriched": true,

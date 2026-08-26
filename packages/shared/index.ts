@@ -103,4 +103,5 @@ export * from './theme/palettes';
 export * from './rules/entityPair';
 export * from './rules/linearStoryScenes';
 export * from './rules/reorderIndices';
+export * from './rules/storyExportIntegrity';
 export * from './rules/storyOwnerFields';

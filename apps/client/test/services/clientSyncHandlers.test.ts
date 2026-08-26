@@ -238,10 +238,12 @@ const HANDLERS = [
     build: () => new TagClientSyncHandler(),
     table: schema.tags,
     labelColumn: 'name' as const,
+    // The name varies per id: since migration 0015 two tags of the same story cannot share one,
+    // exactly as on the server.
     data: (id: string) => ({
       id,
       storyId: STORY_ID,
-      name: 'Vilões',
+      name: `Vilões ${id}`,
       createdAt: CREATED_AT,
       updatedAt: CREATED_AT,
       version: 1,
@@ -312,11 +314,12 @@ const HANDLERS = [
     build: () => new SuggestionClientSyncHandler(),
     table: schema.suggestions,
     labelColumn: 'value' as const,
+    // Same reason as Tag above: one value per type per story.
     data: (id: string) => ({
       id,
       storyId: STORY_ID,
       type: 'character-name',
-      value: 'Nyx',
+      value: `Nyx ${id}`,
       createdAt: CREATED_AT,
       updatedAt: CREATED_AT,
       version: 1,

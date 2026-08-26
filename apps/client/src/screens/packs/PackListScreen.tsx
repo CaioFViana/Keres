@@ -10,7 +10,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SharePackModal from '../../components/features/packs/SharePackModal/SharePackModal';
 import { useDrizzle } from '../../db';
+import type { PackVisibility } from '@keres/shared';
 import type { ServerSelect } from '../../db/schema';
 import { packApiService } from '../../services/PackApiService';
 import { createServerService } from '../../services/ServerService';
@@ -47,6 +49,8 @@ const PackListScreen = () => {
   const [loading, setLoading] = useState(true);
   const [busyPackId, setBusyPackId] = useState<string | null>(null);
   const [servers, setServers] = useState<ServerSelect[]>([]);
+  /** The pack whose share modal is open, or `null`. */
+  const [sharingPack, setSharingPack] = useState<PackSummary | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -72,6 +76,9 @@ const PackListScreen = () => {
   /**
    * Sharing is an upload, not a publication: no synchronization state is consulted, and re-sharing
    * the same pack replaces the copy on the server - which is how its author releases a new version.
+   *
+   * The two questions it asks (which server, and whether it goes on that server's public showcase)
+   * live in `SharePackModal`, because an alert cannot ask two.
    */
   const handleShare = useCallback(
     (pack: PackSummary) => {
@@ -79,45 +86,32 @@ const PackListScreen = () => {
         showNotification(t('packs_share_no_server'), 'error');
         return;
       }
-      const send = async (server: ServerSelect, visibility: 'private' | 'public') => {
-        setBusyPackId(pack.id);
-        try {
-          const uploadable = await createPackService(drizzleDb).getPackForUpload(pack.id);
-          if (!uploadable) throw new Error('Pack could not be read.');
-          await packApiService.upload(server, { ...uploadable, visibility });
-          showNotification(t('packs_share_done', { name: pack.name }), 'success');
-        } catch (error) {
-          console.error('PackListScreen: failed to share pack.', error);
-          showNotification(t('packs_share_failed'), 'error');
-        } finally {
-          setBusyPackId(null);
-        }
-      };
-
-      /**
-       * Two questions, not one: which server, and then whether it goes on that server's public
-       * Showcase. Sharing with a server reaches your own devices and your collaborators; putting a
-       * pack on a page anyone can read is a separate decision, exactly as publishing a story is.
-       */
-      const askVisibility = (server: ServerSelect) =>
-        AppAlert.alert(t('packs_visibility_title'), t('packs_visibility_message'), [
-          { text: t('packs_visibility_private'), onPress: () => send(server, 'private') },
-          { text: t('packs_visibility_public'), onPress: () => send(server, 'public') },
-          { text: t('cancel'), style: 'cancel' },
-        ]);
-
-      AppAlert.alert(
-        t('packs_share_title'),
-        t('packs_share_message', { name: pack.name }),
-        servers
-          .map((server) => ({
-            text: server.name ?? server.url,
-            onPress: () => askVisibility(server),
-          }))
-          .concat([{ text: t('cancel'), onPress: () => undefined }]),
-      );
+      setSharingPack(pack);
     },
-    [servers, drizzleDb, showNotification, t],
+    [servers, showNotification, t],
+  );
+
+  const confirmShare = useCallback(
+    async (serverId: string, visibility: PackVisibility) => {
+      const pack = sharingPack;
+      const server = servers.find((candidate) => candidate.id === serverId);
+      setSharingPack(null);
+      if (!pack || !server) return;
+
+      setBusyPackId(pack.id);
+      try {
+        const uploadable = await createPackService(drizzleDb).getPackForUpload(pack.id);
+        if (!uploadable) throw new Error('Pack could not be read.');
+        await packApiService.upload(server, { ...uploadable, visibility });
+        showNotification(t('packs_share_done', { name: pack.name }), 'success');
+      } catch (error) {
+        console.error('PackListScreen: failed to share pack.', error);
+        showNotification(t('packs_share_failed'), 'error');
+      } finally {
+        setBusyPackId(null);
+      }
+    },
+    [sharingPack, servers, drizzleDb, showNotification, t],
   );
 
   const handleDelete = useCallback(
@@ -328,6 +322,13 @@ const PackListScreen = () => {
           </>
         }
         ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
+      />
+      <SharePackModal
+        visible={sharingPack !== null}
+        packName={sharingPack?.name ?? ''}
+        servers={servers}
+        onCancel={() => setSharingPack(null)}
+        onConfirm={confirmShare}
       />
     </View>
   );

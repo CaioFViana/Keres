@@ -42,6 +42,15 @@ interface PanZoomCanvasOptions {
   refitOnLayoutChange?: boolean;
   /** Some visualizations, such as a timeline, must preserve the vertical scale and scroll horizontally. */
   fitMode?: 'contain' | 'height';
+  /**
+   * A tap that landed on the drawing, in its own coordinates (already undoing pan and zoom).
+   *
+   * It exists so that a canvas whose whole surface is meaningful - a timeline band, a matrix column -
+   * can hit-test its own drawing instead of carpeting it with touch targets. Views that answer to
+   * touch take the responder on the finger's way down, and a pinch that starts on one of them never
+   * reaches the canvas: the map stops zooming as soon as the drawing covers the screen.
+   */
+  onTap?: (point: { x: number; y: number }) => void;
 }
 
 interface Transform {
@@ -60,6 +69,9 @@ export function usePanZoomCanvas(
   const fitVerticalAlignment = options.fitVerticalAlignment ?? 'center';
   const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
   const fitMode = options.fitMode ?? 'contain';
+  /** In a ref so that changing the handler does not rebuild the `PanResponder` mid-gesture. */
+  const onTap = useRef(options.onTap);
+  onTap.current = options.onTap;
 
   const viewport = useRef({ width: 0, height: 0 });
   /** The canvas's corner within the window, to convert the pinch's focus into local coordinates. */
@@ -73,6 +85,8 @@ export function usePanZoomCanvas(
 
   /** Estado do gesto em andamento; zerado a cada toque novo. */
   const gesture = useRef({ lastDx: 0, lastDy: 0, pinchDistance: 0, pinchScale: 1 });
+  /** The gesture still qualifies as a tap: one finger, and no drag so far. */
+  const tapping = useRef(false);
   /** The identity of the last layout already framed, so as not to reframe on every render. */
   const fittedLayout = useRef<PanZoomLayout | null>(null);
 
@@ -185,23 +199,28 @@ export function usePanZoomCanvas(
         // It does not capture the touch's start: that way a simple tap reaches the node and opens the
         // details. The drag is stolen from the node later, in the move's capture phase.
         onStartShouldSetPanResponderCapture: () => false,
+        // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
+        // `onTap` all start here, instead of the gesture being dropped for want of an owner.
+        onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponderCapture: (event, gestureState) =>
           event.nativeEvent.touches.length > 1 ||
           Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD,
 
-        onPanResponderGrant: () => {
+        onPanResponderGrant: (event) => {
           gesture.current = {
             lastDx: 0,
             lastDy: 0,
             pinchDistance: 0,
             pinchScale: transform.current.scale,
           };
+          tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
         },
 
         onPanResponderMove: (event, gestureState) => {
           const touches = event.nativeEvent.touches;
 
           if (touches.length >= 2) {
+            tapping.current = false;
             const [first, second] = touches;
             const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
             const focus = {
@@ -225,6 +244,8 @@ export function usePanZoomCanvas(
           }
 
           gesture.current.pinchDistance = 0;
+          if (Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD)
+            tapping.current = false;
           transform.current.x += gestureState.dx - gesture.current.lastDx;
           transform.current.y += gestureState.dy - gesture.current.lastDy;
           gesture.current.lastDx = gestureState.dx;
@@ -234,11 +255,21 @@ export function usePanZoomCanvas(
         },
 
         onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: () => {
+        onPanResponderRelease: (event, gestureState) => {
           gesture.current.pinchDistance = 0;
+          const wasTap =
+            tapping.current && Math.hypot(gestureState.dx, gestureState.dy) <= DRAG_THRESHOLD;
+          tapping.current = false;
+          if (!wasTap || !onTap.current) return;
+          const { pageX, pageY } = event.nativeEvent;
+          onTap.current({
+            x: (pageX - viewportOrigin.current.x - transform.current.x) / transform.current.scale,
+            y: (pageY - viewportOrigin.current.y - transform.current.y) / transform.current.scale,
+          });
         },
         onPanResponderTerminate: () => {
           gesture.current.pinchDistance = 0;
+          tapping.current = false;
         },
       }),
     [clamp, publish, zoomAround],

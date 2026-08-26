@@ -926,6 +926,7 @@
   "plot_matrix_export": "Exportar matriz como imagem",
   "plot_matrix_export_no_share_target": "Matriz salva em {{path}}.",
   "plot_matrix_export_success": "Matriz salva como {{fileName}}.",
+  "plot_matrix_open_plot": "Abrir trama",
   "plot_matrix_selected_all": "Todas as {{count}} selecionadas",
   "plot_matrix_show_compact": "Mostrar apenas {{count}}",
   "plot_matrix_start_title": "Tramas contra cenas",

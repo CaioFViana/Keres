@@ -926,6 +926,7 @@
   "plot_matrix_export": "Export matrix as image",
   "plot_matrix_export_no_share_target": "Matrix saved to {{path}}.",
   "plot_matrix_export_success": "Matrix saved as {{fileName}}.",
+  "plot_matrix_open_plot": "Open plot",
   "plot_matrix_selected_all": "All {{count}} selected",
   "plot_matrix_show_compact": "Show only {{count}}",
   "plot_matrix_start_title": "Plots against scenes",

@@ -60,6 +60,12 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v5
+      # The version script changes the build context before Docker sees it. Unlike the other
+      # release jobs, this one does not need a host-side dependency install: the Dockerfile
+      # installs the dependencies in its own build stages. It does need Bun to run that script.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
 
       # GHCR requires a lowercase image path; this repo's owner/name aren't guaranteed to be
       # (GitHub usernames/repo names can contain uppercase letters, and `github.repository`

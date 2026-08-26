@@ -1,12 +1,13 @@
-import { AppAlertButton, AppAlertOptions, useAppAlertStore } from '../state/appAlertStore';
+import type { AppAlertButton, AppAlertOptions } from '../state/appAlertStore';
+import { useAppAlertStore } from '../state/appAlertStore';
 
 /**
- * Substituto do `Alert.alert` do React Native: na web, `react-native-web`'s Alert é um
- * no-op silencioso (`static alert() {}` - node_modules/react-native-web/dist/exports/Alert),
- * então qualquer confirmação (excluir história, descartar alterações...) simplesmente não
- * aparecia. Mesma assinatura de `Alert.alert`, então trocar o import basta - a UI de verdade
- * é um `Modal` (`AppAlertHost`, montado uma vez em `App.tsx`), que já funciona em todas as
- * plataformas (mesma base de `NotificationPopup`, que sempre funcionou na web).
+ * A replacement for React Native's `Alert.alert`: on the web, `react-native-web`'s Alert is a silent
+ * no-op (`static alert() {}` - node_modules/react-native-web/dist/exports/Alert), so any confirmation
+ * (delete a story, discard changes...) simply did not appear. The same signature as `Alert.alert`, so
+ * swapping the import is enough - the real UI is a `Modal` (`AppAlertHost`, mounted once in `App.tsx`),
+ * which already works on every platform (the same base as `NotificationPopup`, which always worked on
+ * the web).
  */
 export const AppAlert = {
   alert(

@@ -1,12 +1,22 @@
-import { and, eq, ne, sql } from 'drizzle-orm';
+import { and, eq, inArray, ne, sql } from 'drizzle-orm';
+import type { StorySchemaEntityType } from '@keres/shared';
 import {
-  AppDrizzleClient,
+  AttributeType,
+  deriveAttributeKey,
+  encodeAttributeValue,
+  explodeAttributeUsageValue,
+  isSuggestionAttributeType,
+} from '@keres/shared';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
+import type { AppDrizzleClient, SuggestionInsert, SuggestionSelect } from '../../db';
+import {
   characterRelations,
   characters,
   itemJourneys,
   items,
-  SuggestionInsert,
-  SuggestionSelect,
+  attributeValues,
+  storySchemaFields,
   suggestions,
 } from '../../db';
 import { createULID } from '../../utils/entityUtils';
@@ -17,8 +27,8 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-import { deriveAttributeKey } from '@keres/shared';
 import { createAttributeValueService } from './AttributeValueService';
+import { getEntityTable } from '../entityTableRegistry';
 
 const CUSTOM_ATTRIBUTE_TYPE_PREFIX = 'custom:';
 export const LIST_CATALOG_TYPE = 'list_catalog';
@@ -68,20 +78,89 @@ export function parseNamedListCatalogValue(value: string): NamedSuggestionList |
 }
 
 const suggestionConfig = {
-  character_gender: { schema: characters, column: characters.gender },
-  character_race: { schema: characters, column: characters.race },
-  character_subrace: { schema: characters, column: characters.subrace },
-  characterRelation_type: { schema: characterRelations, column: characterRelations.relationType },
-  item_category: { schema: items, column: items.category },
-  item_initial_state: { schema: items, column: items.initialState },
-  item_state: { schema: itemJourneys, column: itemJourneys.newState },
+  character_gender: {
+    schema: characters,
+    column: characters.gender,
+    entityType: 'Character',
+    field: 'gender',
+    event: 'character_changed',
+  },
+  character_race: {
+    schema: characters,
+    column: characters.race,
+    entityType: 'Character',
+    field: 'race',
+    event: 'character_changed',
+  },
+  character_subrace: {
+    schema: characters,
+    column: characters.subrace,
+    entityType: 'Character',
+    field: 'subrace',
+    event: 'character_changed',
+  },
+  characterRelation_type: {
+    schema: characterRelations,
+    column: characterRelations.relationType,
+    entityType: 'CharacterRelation',
+    field: 'relationType',
+    event: 'character_relation_changed',
+  },
+  item_category: {
+    schema: items,
+    column: items.category,
+    entityType: 'Item',
+    field: 'category',
+    event: 'item_changed',
+  },
+  item_initial_state: {
+    schema: items,
+    column: items.initialState,
+    entityType: 'Item',
+    field: 'initialState',
+    event: 'item_changed',
+  },
+  item_state: {
+    schema: itemJourneys,
+    column: itemJourneys.newState,
+    entityType: 'ItemJourney',
+    field: 'newState',
+    event: 'item_journey_changed',
+  },
 };
 
 export type SuggestionType = string;
+export type SuggestionUsageEntityType =
+  | Exclude<GlobalSearchEntityType, 'Plot'>
+  | 'CharacterRelation';
+export interface SuggestionUsage {
+  entityType: SuggestionUsageEntityType;
+  id: string;
+  title: string;
+  snippet: string;
+  context?: string;
+  characterIds?: string[];
+  characterNames?: string[];
+}
 
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
+  /** Distinct values currently present in story entities, excluding saved catalog values. */
+  getSuggestionUsageCounts(type: SuggestionType, storyId: string): Promise<[string, number][]>;
   getStoredSuggestions(type: SuggestionType, storyId: string): Promise<SuggestionSelect[]>;
+  getSuggestionUsages(
+    type: SuggestionType,
+    storyId: string,
+    value: string,
+  ): Promise<SuggestionUsage[]>;
+  renameSuggestionValue(
+    currentUserId: string,
+    storyId: string,
+    type: SuggestionType,
+    oldValue: string,
+    newValue: string,
+    renameUsages: boolean,
+  ): Promise<{ updatedUsages: number; merged: boolean }>;
   createSuggestion(
     currentUserId: string,
     type: SuggestionType,
@@ -114,6 +193,29 @@ export interface SuggestionServiceInterface {
 export const createSuggestionService = (db: AppDrizzleClient): SuggestionServiceInterface => {
   const serverService = createServerService(db);
 
+  const getSuggestionUsageCounts = async (
+    type: SuggestionType,
+    storyId: string,
+  ): Promise<[string, number][]> => {
+    if (!storyId || isNamedListType(type)) return [];
+    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
+      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
+      return createAttributeValueService(db).getValueUsageCounts(fieldId);
+    }
+
+    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    if (!config) return [];
+    const dynamic = await db
+      .select({ value: config.column, count: sql<number>`count(*)` })
+      .from(config.schema)
+      .where(and(eq(config.schema.storyId, storyId), eq(config.schema.isDeleted, false)))
+      .groupBy(config.column)
+      .all();
+    return dynamic
+      .filter(({ value }) => typeof value === 'string' && Boolean(value))
+      .map(({ value, count }) => [value as string, count]);
+  };
+
   const ensureUnique = async (storyId: string, type: string, value: string, excludeId?: string) => {
     const conditions = [
       eq(suggestions.storyId, storyId),
@@ -129,6 +231,199 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       .limit(1)
       .get();
     if (existing) throw new Error('Suggestion already exists for this field.');
+  };
+
+  const getSuggestionUsages = async (
+    type: SuggestionType,
+    storyId: string,
+    value: string,
+  ): Promise<SuggestionUsage[]> => {
+    if (!storyId || !value || isNamedListType(type)) return [];
+    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
+      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
+      const field = await db.query.storySchemaFields.findFirst({
+        where: and(eq(storySchemaFields.id, fieldId), eq(storySchemaFields.storyId, storyId)),
+      });
+      if (!field || !isSuggestionAttributeType(field.type)) return [];
+      const rows = await db
+        .select()
+        .from(attributeValues)
+        .where(
+          and(
+            eq(attributeValues.storyId, storyId),
+            eq(attributeValues.fieldId, fieldId),
+            eq(attributeValues.isDeleted, false),
+          ),
+        )
+        .all();
+      const matching = rows.filter((row) =>
+        explodeAttributeUsageValue(field.type as AttributeType, row.value ?? '').includes(value),
+      );
+      const idsByType = new Map<GlobalSearchEntityType, Set<string>>();
+      matching.forEach((row) => {
+        const entityType = row.entityType as GlobalSearchEntityType;
+        if (!globalSearchFieldConfig[entityType]) return;
+        const ids = idsByType.get(entityType) ?? new Set<string>();
+        ids.add(row.entityId);
+        idsByType.set(entityType, ids);
+      });
+      const titles = new Map<string, string>();
+      await Promise.all(
+        Array.from(idsByType.entries()).map(async ([entityType, ids]) => {
+          const table = getEntityTable(entityType);
+          if (!table) return;
+          const titleField = globalSearchFieldConfig[entityType].titleField;
+          const rows = await db
+            .select({ id: (table as any).id, title: (table as any)[titleField] })
+            .from(table)
+            .where(
+              and(inArray((table as any).id, Array.from(ids)), eq((table as any).isDeleted, false)),
+            )
+            .all();
+          rows.forEach((row) => titles.set(`${entityType}:${row.id}`, String(row.title ?? '')));
+        }),
+      );
+      return matching.flatMap((row) => {
+        const entityType = row.entityType as GlobalSearchEntityType;
+        if (entityType === 'Plot') return [];
+        const title = titles.get(`${entityType}:${row.entityId}`);
+        return title === undefined
+          ? []
+          : [{ entityType, id: row.entityId, title, snippet: `${field.name}: ${value}` }];
+      });
+    }
+
+    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    if (!config) return [];
+    const rows = await db
+      .select()
+      .from(config.schema)
+      .where(
+        and(
+          eq((config.schema as any).storyId, storyId),
+          eq((config.schema as any).isDeleted, false),
+          eq(config.column as any, value),
+        ),
+      )
+      .all();
+    if (config.entityType === 'CharacterRelation') {
+      const ids = Array.from(
+        new Set(rows.flatMap((row: any) => [row.character1Id, row.character2Id])),
+      );
+      const names = new Map(
+        (
+          await db
+            .select({ id: characters.id, name: characters.name })
+            .from(characters)
+            .where(and(inArray(characters.id, ids), eq(characters.isDeleted, false)))
+            .all()
+        ).map((row) => [row.id, row.name]),
+      );
+      return rows.map((row: any) => ({
+        entityType: 'CharacterRelation' as const,
+        id: row.id,
+        title: `${names.get(row.character1Id) ?? ''} ↔ ${names.get(row.character2Id) ?? ''}`,
+        snippet: value,
+        characterIds: [row.character1Id, row.character2Id],
+        characterNames: [names.get(row.character1Id) ?? '', names.get(row.character2Id) ?? ''],
+      }));
+    }
+    const titleField =
+      config.entityType === 'Character' || config.entityType === 'Item' ? 'name' : 'newState';
+    return rows.map((row: any) => ({
+      entityType: config.entityType as SuggestionUsageEntityType,
+      id: row.id,
+      title: String(row[titleField] ?? ''),
+      snippet: `${config.field}: ${value}`,
+    }));
+  };
+
+  const renameSuggestionUsages = async (
+    currentUserId: string,
+    storyId: string,
+    type: SuggestionType,
+    oldValue: string,
+    newValue: string,
+  ) => {
+    const usages = await getSuggestionUsages(type, storyId, oldValue);
+    if (usages.length === 0) return 0;
+    await assertStoryIsWritable(db, storyId);
+    const userId = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
+      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
+      const field = await db.query.storySchemaFields.findFirst({
+        where: eq(storySchemaFields.id, fieldId),
+      });
+      if (!field) return 0;
+      const service = createAttributeValueService(db);
+      const rows = await db
+        .select()
+        .from(attributeValues)
+        .where(
+          and(
+            eq(attributeValues.storyId, storyId),
+            eq(attributeValues.fieldId, fieldId),
+            eq(attributeValues.isDeleted, false),
+          ),
+        )
+        .all();
+      const matching = rows.filter((row) =>
+        explodeAttributeUsageValue(field.type as AttributeType, row.value ?? '').includes(oldValue),
+      );
+      await Promise.all(
+        matching.map((row) => {
+          const next =
+            field.type === AttributeType.SUGGESTION_LIST
+              ? encodeAttributeValue(
+                  AttributeType.SUGGESTION_LIST,
+                  explodeAttributeUsageValue(AttributeType.SUGGESTION_LIST, row.value ?? '').map(
+                    (entry) => (entry === oldValue ? newValue : entry),
+                  ),
+                )
+              : newValue;
+          return service.saveValuesForEntity(
+            currentUserId,
+            storyId,
+            row.entityType as StorySchemaEntityType,
+            row.entityId,
+            { [fieldId]: next },
+          );
+        }),
+      );
+      return matching.length;
+    }
+    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    if (!config) return 0;
+    const rows = await db
+      .select()
+      .from(config.schema)
+      .where(
+        and(
+          eq((config.schema as any).storyId, storyId),
+          eq((config.schema as any).isDeleted, false),
+          eq(config.column as any, oldValue),
+        ),
+      )
+      .all();
+    for (const row of rows as any[]) {
+      const updated = await db
+        .update(config.schema as any)
+        .set({
+          [config.field]: newValue,
+          updatedAt: new Date(),
+          version: sql`${(config.schema as any).version} + 1`,
+        })
+        .where(eq((config.schema as any).id, row.id))
+        .returning({ version: (config.schema as any).version })
+        .get();
+      if (!updated) continue;
+      await recordLocalOperation(db, storyId, userId, 'update', config.entityType, row.id, {
+        [config.field]: newValue,
+        version: updated.version,
+      });
+      entityEventEmitter.emit(config.event, storyId, row.id);
+    }
+    return rows.length;
   };
 
   return {
@@ -156,31 +451,37 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         .all();
       stored.forEach(({ value }) => counts.set(value, counts.get(value) ?? 0));
 
-      if (isNamedList) {
-        // Só o catálogo gravado — listas nomeadas não têm coluna nativa nem AttributeValue.
-      } else if (isCustomAttribute) {
-        const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-        (await createAttributeValueService(db).getValueUsageCounts(fieldId)).forEach(
-          ([value, count]) => {
-            counts.set(value, (counts.get(value) ?? 0) + count);
-          },
-        );
-      } else {
-        const nativeConfig = config!;
-        const dynamic = await db
-          .select({ value: nativeConfig.column, count: sql<number>`count(*)` })
-          .from(nativeConfig.schema)
-          .where(
-            and(eq(nativeConfig.schema.storyId, storyId), eq(nativeConfig.schema.isDeleted, false)),
-          )
-          .groupBy(nativeConfig.column)
-          .all();
-        dynamic.forEach(({ value, count }) => {
-          if (value && typeof value === 'string')
-            counts.set(value, (counts.get(value) ?? 0) + count);
-        });
-      }
+      (await getSuggestionUsageCounts(type, storyId)).forEach(([value, count]) => {
+        counts.set(value, (counts.get(value) ?? 0) + count);
+      });
       return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    },
+
+    getSuggestionUsageCounts,
+
+    getSuggestionUsages,
+
+    async renameSuggestionValue(currentUserId, storyId, type, oldValue, newValue, renameUsages) {
+      const normalizedValue = newValue.trim();
+      if (!normalizedValue) throw new Error('Suggestion value is required.');
+      if (normalizedValue === oldValue) return { updatedUsages: 0, merged: false };
+      await assertStoryIsWritable(db, storyId);
+      const stored = await this.getStoredSuggestions(type, storyId);
+      const source = stored.find((suggestion) => suggestion.value === oldValue);
+      const destination = stored.find((suggestion) => suggestion.value === normalizedValue);
+      const merged = Boolean(destination && destination.id !== source?.id);
+      const usageCount = (await getSuggestionUsages(type, storyId, oldValue)).length;
+      if (merged && usageCount > 0 && !renameUsages) {
+        throw new Error('Renaming to an existing saved value requires merging all story usages.');
+      }
+      if (source) {
+        if (merged) await this.deleteSuggestion(currentUserId, source.id);
+        else await this.updateSuggestion(currentUserId, source.id, normalizedValue);
+      }
+      const updatedUsages = renameUsages
+        ? await renameSuggestionUsages(currentUserId, storyId, type, oldValue, normalizedValue)
+        : 0;
+      return { updatedUsages, merged };
     },
 
     async getStoredSuggestions(type, storyId) {

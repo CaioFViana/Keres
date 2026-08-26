@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
   test: {
@@ -8,8 +9,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
-      // Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 95, functions: 94, branches: 81 },
+      // A floor, not a target - see the ratchet rule in TESTING_PLAN.md.
+      thresholds: coverageThresholds.desktop,
     },
   },
 });

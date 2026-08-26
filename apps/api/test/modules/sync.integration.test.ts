@@ -14,7 +14,7 @@ const push = (token: string, story: string, updates: unknown[]) =>
 const pull = (token: string, story: string, lastOperationVersion = 0) =>
   request('GET', `/sync/${story}/pull`, { token, query: { lastOperationVersion } });
 
-/** Uma operação de criação de personagem, a forma mais simples de gravar algo pelo sync. */
+/** A character-create operation, the simplest way to write something through sync. */
 const createCharacter = (id: string, name: string, version = 0) => ({
   type: 'create' as const,
   entity: 'Character',
@@ -75,8 +75,8 @@ describe('POST /sync/:storyId', () => {
   });
 
   /**
-   * A base de comparação de um `update` vai em `changes.version`, não no `version` do topo -
-   * é de lá que `BaseSyncEntityHandler` a lê, e é o que `SyncEngineService` envia.
+   * An `update`'s comparison base goes in `changes.version`, not in the top-level `version` - that is
+   * where `BaseSyncEntityHandler` reads it from, and it is what `SyncEngineService` sends.
    */
   const updateCharacter = (
     id: string,
@@ -139,12 +139,12 @@ describe('POST /sync/:storyId', () => {
   });
 
   /**
-   * `changedFields` é o que permite ao cliente distinguir "a base ficou velha porque outro
-   * campo mudou" (mesclável sem perguntar nada) de "o mesmo campo que eu editei também mudou
-   * lá" (uma decisão real). Comparar `serverEntity` direto contra o que o cliente quer
-   * escrever não serviria: o valor atual de um campo que o cliente está editando sempre
-   * "parece" diferente do valor novo, tenha o servidor mexido nele ou não - só o histórico de
-   * operações (via `entityVersion`) diz o que realmente mudou.
+   * `changedFields` is what lets the client tell "the base went stale because another field changed"
+   * (mergeable without asking anything) from "the same field I edited also changed over there" (a real
+   * decision). Comparing `serverEntity` directly against what the client wants to write would not do:
+   * the current value of a field the client is editing always "looks" different from the new value,
+   * whether the server touched it or not - only the operation history (via `entityVersion`) says what
+   * actually changed.
    */
   it('reports only the fields that actually changed since the base version, not every field', async () => {
     const characterId = newId();
@@ -182,13 +182,12 @@ describe('POST /sync/:storyId', () => {
   });
 
   /**
-   * `entity_version` é nulo em linhas gravadas antes dessa coluna existir (comentário na
-   * própria migração). Uma dessas linhas não pode ser comparada contra a base do cliente -
-   * `entityVersion > sinceVersion` no Postgres nunca é verdadeiro pra NULL, então ela some da
-   * união sem aviso, e o conjunto de campos "que mudaram" volta incompleto. `changedFields`
-   * precisa vir ausente (não uma lista incompleta) pra que o cliente saiba que não pode confiar
-   * nele e caia no caminho seguro de sempre perguntar, em vez de arriscar mesclar por cima de
-   * uma disputa real que a lacuna escondeu.
+   * `entity_version` is null on rows written before that column existed (see the comment on the
+   * migration itself). One of those rows cannot be compared against the client's base -
+   * `entityVersion > sinceVersion` in Postgres is never true for NULL, so it drops out of the union with
+   * no warning, and the set of "changed" fields comes back incomplete. `changedFields` has to come back
+   * absent (not as an incomplete list) so the client knows it cannot trust it and falls back to the safe
+   * path of always asking, instead of risking a merge over a real dispute the gap concealed.
    */
   it('omits changedFields entirely when an intervening operation has no entityVersion recorded', async () => {
     const characterId = newId();
@@ -211,9 +210,9 @@ describe('POST /sync/:storyId', () => {
   });
 
   /**
-   * Armadilha real do protocolo: sem `changes.version` o servidor não tem base para comparar e
-   * aplica a escrita, virando último-a-escrever-vence. Um cliente que preencha só o `version`
-   * do topo perde a detecção de conflito inteira sem nenhum sinal.
+   * A real protocol trap: without `changes.version` the server has no base to compare against and
+   * applies the write, turning it into last-write-wins. A client that fills in only the top-level
+   * `version` loses conflict detection entirely with no signal at all.
    */
   it('rejects an update that omits changes.version instead of last-write-wins', async () => {
     const characterId = newId();
@@ -322,12 +321,12 @@ describe('POST /sync/:storyId', () => {
 });
 
 /**
- * Antes desta correção, um handler de relação (CharacterRelation, ChoiceCheck, ItemJourney...)
- * que referenciasse uma entidade excluída lançava um `Error` genérico, e o conflito chegava
- * ao cliente com `reason: 'unknown'` - indistinguível de qualquer outra falha inesperada. Isso
- * importa porque "manter a minha versão" nesse caso reenvia a mesma operação, que falha pelo
- * mesmo motivo de novo, sem fim - a tela de conflito precisa do `reason` certo pra saber que
- * essa opção não deveria nem ser oferecida (ver `SyncConflictModal.tsx`).
+ * Before this fix, a relation handler (CharacterRelation, ChoiceCheck, ItemJourney...) referencing a
+ * deleted entity threw a generic `Error`, and the conflict reached the client with
+ * `reason: 'unknown'` - indistinguishable from any other unexpected failure. That matters because
+ * "keep my version" in that case resends the same operation, which fails for the same reason again,
+ * endlessly - the conflict screen needs the right `reason` to know that option should not even be
+ * offered (see `SyncConflictModal.tsx`).
  */
 describe('a sync operation referencing a deleted entity', () => {
   it('reports referenced_entity_deleted instead of unknown', async () => {

@@ -4,7 +4,7 @@ import { Elysia, t } from 'elysia';
 import { env } from '../../config/env';
 import { db } from '../../db';
 import { galleries } from '../../db/schema';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { mediaStorageService } from '../../services/MediaStorageService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import {
@@ -15,23 +15,23 @@ import {
 const HASH_PATTERN = /^[a-f0-9]{32}$/;
 
 /**
- * Canal binário da galeria.
+ * The gallery's binary channel.
  *
- * Os *metadados* da mídia (nome, tipo, notas, vínculos) viajam pelo log de operações como
- * qualquer outra entidade. Só os bytes passam por aqui, endereçados pelo hash do conteúdo,
- * porque empacotar um vídeo dentro de um payload de sincronização JSON seria inviável.
+ * A media file's *metadata* (name, type, notes, links) travels through the operation log like any
+ * other entity. Only the bytes go through here, addressed by the content's hash, because packing a
+ * video inside a JSON synchronization payload would be unworkable.
  *
- * O fluxo do cliente é: sincroniza os metadados normalmente, pergunta em `/blobs/status`
- * quais hashes o servidor ainda não tem, sobe esses, e baixa os que apareceram no pull mas
- * faltam no aparelho.
+ * The client's flow is: synchronize the metadata as usual, ask `/blobs/status` which hashes the
+ * server does not have yet, upload those, and download the ones that appeared in the pull but are
+ * missing on the device.
  */
 export const mediaRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
 
   /**
-   * Autorização de leitura: além da permissão na história, o hash precisa ser referenciado
-   * por alguma mídia *daquela* história. Sem essa segunda checagem, o armazenamento ser
-   * deduplicado globalmente permitiria a um usuário ler o blob de outro conhecendo o hash.
+   * Read authorization: beyond permission on the story, the hash has to be referenced by some media
+   * file of *that* story. Without that second check, storage being globally deduplicated would let a
+   * user read someone else's blob just by knowing the hash.
    */
   .derive(({ user, set }) => ({
     requirePermission: async (storyId: string, level: 'reader' | 'writer') => {
@@ -41,7 +41,7 @@ export const mediaRoutes = new Elysia()
       }
       const allowed = await storyPermissionService.hasPermission(user.userId, storyId, level);
       if (!allowed) {
-        // 404 em vez de 403 para não confirmar a existência de uma história alheia.
+        // 404 rather than 403, so as not to confirm the existence of somebody else's story.
         set.status = 404;
         throw new Error('Story not found or not authorized.');
       }
@@ -120,7 +120,7 @@ export const mediaRoutes = new Elysia()
         );
         return { hash: stored.hash, sizeBytes: stored.sizeBytes, mimeType };
       } catch (error: any) {
-        // Divergência de hash é dado inválido do cliente, não falha do servidor.
+        // A hash mismatch is invalid client data, not a server failure.
         set.status = 400;
         throw new Error(error?.message || 'Failed to store media.');
       }
@@ -179,7 +179,7 @@ export const mediaRoutes = new Elysia()
       }
 
       set.headers['content-type'] = blob.mimeType;
-      // O conteúdo de um hash nunca muda, então pode ser guardado indefinidamente.
+      // A hash's content never changes, so it can be cached indefinitely.
       set.headers['cache-control'] = 'private, max-age=31536000, immutable';
       return blob.body;
     },

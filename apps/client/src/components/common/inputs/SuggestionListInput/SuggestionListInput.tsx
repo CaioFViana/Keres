@@ -11,14 +11,14 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import {
-  createSuggestionService,
+import type {
   SuggestionServiceInterface,
   SuggestionType,
 } from '../../../../services/storymanagement/SuggestionService';
+import { createSuggestionService } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { getContrastTextColor } from '../../../../utils/colorUtils';
+import { getContrastTextColor } from '@keres/shared';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -150,14 +150,15 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       flexWrap: 'wrap',
       alignItems: 'center',
       marginBottom: 6,
+      // Spacing between pills belongs to the container: with it on each pill, the last row still charged its
+      // bottom margin and left dead space under the row.
+      gap: 8,
     },
     pill: {
       flexDirection: 'row',
       borderRadius: 15,
       paddingVertical: 5,
       paddingHorizontal: 10,
-      marginRight: 8,
-      marginBottom: 8,
       alignItems: 'center',
       backgroundColor: pillBackgroundColor,
     },
@@ -217,6 +218,14 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       marginLeft: 8,
+    },
+    // The same reason as the options field: the reserved checkmark stops the row from growing when it is
+    // ticked.
+    suggestionCheck: {
+      width: 20,
+      height: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     suggestionCount: {
       color: colors.textSecondary,
@@ -330,7 +339,9 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
                   <Text style={styles.suggestionText}>{item[0]}</Text>
                   <View style={styles.suggestionMeta}>
                     {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
-                    {selected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    <View style={styles.suggestionCheck}>
+                      {selected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    </View>
                   </View>
                 </TouchableOpacity>
               );

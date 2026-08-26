@@ -32,7 +32,7 @@ describe('admin login', () => {
     });
     expect(mocks.setToken).toHaveBeenCalledWith('token');
     expect(mocks.setStoredUsername).toHaveBeenCalledWith('admin');
-    expect(mocks.get).toHaveBeenCalledWith('/admin/api/users', { params: { pageSize: 1 } });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/users', { params: { pageSize: 1 } });
     expect(mocks.clearLocalSession).not.toHaveBeenCalled();
   });
 

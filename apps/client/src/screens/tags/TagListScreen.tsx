@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -11,10 +13,13 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagListItem from '@/src/components/features/list-items/TagListItem';
-import { TagSelect } from '../../db/schemas/tags';
+import type { TagSelect } from '../../db/schemas/tags';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack';
+import type {
+  MainSystemDrawerParamList,
+  TagsStackParamList,
+} from '../../navigation/MainSystemStack';
 import { useTagStore } from '../../state/tagStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
@@ -33,6 +38,7 @@ const TagsScreen = () => {
   const {
     items: tags,
     loading,
+    isInitialLoading,
     error,
     storyId,
     searchQuery,
@@ -104,13 +110,10 @@ const TagsScreen = () => {
   }, [t]);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
   });
 
-  if (loading && tags.length === 0) {
+  if (isInitialLoading) {
     return <ScreenLoading message={t('loading_tags')} />;
   }
 

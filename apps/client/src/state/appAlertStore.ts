@@ -27,7 +27,7 @@ interface AppAlertState {
     buttons?: AppAlertButton[],
     options?: AppAlertOptions,
   ) => void;
-  /** Fecha sem acionar nenhum botão - toque fora (se `cancelable`) ou tecla Esc. */
+  /** It closes without triggering any button - a tap outside (if `cancelable`) or the Esc key. */
   dismiss: () => void;
 }
 
@@ -39,7 +39,7 @@ export const useAppAlertStore = create<AppAlertState>((set) => ({
       current: {
         title,
         message,
-        // Mesmo padrão do `Alert.alert` nativo: sem botões declarados, um "OK" que só fecha.
+        // The same behaviour as the native `Alert.alert`: with no buttons declared, an "OK" that only closes.
         buttons: buttons && buttons.length > 0 ? buttons : [{ text: 'OK' }],
         cancelable: options?.cancelable ?? true,
         onDismiss: options?.onDismiss,

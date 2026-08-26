@@ -1,13 +1,13 @@
 /**
- * Qual banco esta API está usando.
+ * Which database this API is using.
  *
- * `sqlite` existe para o Keres Server caseiro (um processo, sem Docker). Não é o dialecto
- * de uma API pública com várias instâncias — isso continua a ser Postgres.
+ * `sqlite` exists for the home-grown Keres Server (one process, no Docker). It is not the dialect of a
+ * public API with several instances - that is still Postgres.
  *
- * Lido do ambiente direto, e não de `config/env.ts`, porque o schema (`db/schema/**`) importa
- * este módulo e o drizzle-kit carrega o schema fora do processo da API - lá `env.ts` e as suas
- * validações de JWT, S3 e afins não têm como ser satisfeitas. A escolha do dialeto é a única
- * coisa que o schema precisa saber, e ela é uma string só.
+ * Read straight from the environment rather than from `config/env.ts`, because the schema
+ * (`db/schema/**`) imports this module and drizzle-kit loads the schema outside the API's process -
+ * there, `env.ts` and its validations of JWT, S3 and the like have no way of being satisfied. The
+ * dialect choice is the only thing the schema needs to know, and it is a single string.
  */
 
 export type DatabaseDriver = 'postgres' | 'sqlite';

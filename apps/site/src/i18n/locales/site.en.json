@@ -1,49 +1,66 @@
 {
-  "language": {
-    "label": "Language"
-  },
-  "theme": {
-    "system": "Theme: System",
-    "light": "Theme: Light",
-    "dark": "Theme: Dark"
-  },
-  "meta": {
-    "title": "Keres — Organize universes, connect narratives",
-    "description": "An offline-first story planning platform for phone, desktop, and the browser, served by the Keres server itself."
-  },
-  "nav": {
-    "product": "Product",
-    "universe": "Universe",
-    "platforms": "Platforms",
-    "download": "Download",
-    "github": "GitHub",
-    "menu": "Menu"
-  },
-  "hero": {
-    "eyebrow": "Story planning",
-    "title": "Organize universes, connect narratives, and write anywhere.",
-    "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
-    "ctaDownload": "Download",
-    "ctaGithub": "View on GitHub",
-    "ctaFeatures": "See what's included"
-  },
-  "pillars": {
-    "offline": {
-      "title": "Offline-first for real",
-      "body": "Every story lives in a local SQLite database. Plan on a train, a plane, or the sofa. When a network and a server are there, sync ships the changes and handles version conflicts."
-    },
-    "universe": {
-      "title": "The universe, not the manuscript",
-      "body": "Keres is not a text editor. You write the chapter wherever you prefer, and record here who was in the scene, what changed hands, and which world rule that respects."
-    },
-    "anywhere": {
-      "title": "Phone, desktop, and browser",
-      "body": "The same client on Android, iOS, and the desktop app for Windows, macOS, and Linux. In the browser, the API serves the client at the server root — only on that server's origin."
+  "download": {
+    "title": "Download and start",
+    "lead": "Official builds ship on GitHub Releases, together with Keres Server and the Docker image.",
+    "items": {
+      "releases": {
+        "title": "Client",
+        "body": "Desktop for Windows, macOS, and Linux, plus Android. Open the latest release and pick the file for your system.",
+        "cta": "Open releases"
+      },
+      "server": {
+        "title": "Keres Server",
+        "body": "Zips for Windows x64, Linux x64, and macOS Apple Silicon. On first run the wizard asks for the database, media, and port.",
+        "cta": "Download the server"
+      },
+      "docker": {
+        "title": "Docker image",
+        "body": "ghcr.io/caiofviana/keres — prefer an immutable tag in production. The repo ships a deploy Compose file.",
+        "cta": "View on GitHub"
+      },
+      "source": {
+        "title": "Source code",
+        "body": "An open monorepo: client, API, admin panel, desktop, and this landing page. Bun, TypeScript, tests in CI.",
+        "cta": "Open the repository"
+      }
     }
   },
-  "product": {
-    "title": "One place for the whole story",
-    "lead": "Open a story and the side menu lists every kind of element. Lists with search, filters, and favorites; records with relationships; graphs when space or choices ask for a map."
+  "faq": {
+    "title": "Frequently asked questions",
+    "items": {
+      "editor": {
+        "q": "Does Keres replace my text editor?",
+        "a": "No. It organizes the narrative universe. The manuscript, script, or campaign stays where you already write."
+      },
+      "browser": {
+        "q": "Does it run in the browser?",
+        "a": "Yes, at the Keres server itself (Docker or Keres Server), at the root. That client only connects to the API it was loaded from. Registering another server in the browser would be cross-origin again: web SQLite needs isolation on the same origin. On phone and desktop you can register any URL. Published stories live at /showcase."
+      },
+      "offline": {
+        "q": "Do I need the internet?",
+        "a": "Not to plan. The client keeps everything on the device. A network is only needed to sync, collaborate, or publish on a server."
+      },
+      "server": {
+        "q": "Do I need a server?",
+        "a": "No. A story can live only on the device. A server comes in when you want the same universe on the phone and the PC, or when you want to collaborate."
+      },
+      "languages": {
+        "q": "Which languages is the app in?",
+        "a": "Portuguese and English, in the client, the help, Keres Server, and this page."
+      },
+      "collaborate": {
+        "q": "Can more than one person write it?",
+        "a": "With a server: invite friends, choose whether they read or edit, and comment on records. Without a server, you can hand off an import/export package."
+      },
+      "cost": {
+        "q": "What does it cost?",
+        "a": "Keres is open software. You download the client and, if you want, run your own server. An operator of a public server may apply account limits — that is their decision, not the application's."
+      },
+      "showcase": {
+        "q": "Does this page publish stories?",
+        "a": "No. This is the project landing page. The showcase of published stories is a separate site, served by a Keres Server someone chose to run."
+      }
+    }
   },
   "features": {
     "universe": {
@@ -231,6 +248,48 @@
       }
     }
   },
+  "footer": {
+    "tagline": "A writing companion for planning stories.",
+    "source": "Open source on GitHub",
+    "docs": "Documentation in the repository"
+  },
+  "hero": {
+    "eyebrow": "Story planning",
+    "title": "Organize universes, connect narratives, and write anywhere.",
+    "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
+    "ctaDownload": "Download",
+    "ctaGithub": "View on GitHub",
+    "ctaFeatures": "See what's included"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "meta": {
+    "title": "Keres — Organize universes, connect narratives",
+    "description": "An offline-first story planning platform for phone, desktop, and the browser, served by the Keres server itself."
+  },
+  "nav": {
+    "product": "Product",
+    "universe": "Universe",
+    "platforms": "Platforms",
+    "download": "Download",
+    "github": "GitHub",
+    "menu": "Menu"
+  },
+  "pillars": {
+    "offline": {
+      "title": "Offline-first for real",
+      "body": "Every story lives in a local SQLite database. Plan on a train, a plane, or the sofa. When a network and a server are there, sync ships the changes and handles version conflicts."
+    },
+    "universe": {
+      "title": "The universe, not the manuscript",
+      "body": "Keres is not a text editor. You write the chapter wherever you prefer, and record here who was in the scene, what changed hands, and which world rule that respects."
+    },
+    "anywhere": {
+      "title": "Phone, desktop, and browser",
+      "body": "The same client on Android, iOS, and the desktop app for Windows, macOS, and Linux. In the browser, the API serves the client at the server root — only on that server's origin."
+    }
+  },
   "platforms": {
     "title": "Where Keres runs",
     "lead": "One client, several ways to reach it. A server, when you want one.",
@@ -269,30 +328,56 @@
       }
     }
   },
-  "download": {
-    "title": "Download and start",
-    "lead": "Official builds ship on GitHub Releases, together with Keres Server and the Docker image.",
+  "product": {
+    "title": "One place for the whole story",
+    "lead": "Open a story and the side menu lists every kind of element. Lists with search, filters, and favorites; records with relationships; graphs when space or choices ask for a map."
+  },
+  "showcase": {
+    "title": "See the app",
+    "lead": "Every picture below is a screenshot of Keres running, with one of the example stories that ship with the app open in it. Open the same story and you get the same screens.",
+    "note": "Six example stories come with the app. Each screen here is from one of them, follows this page's language and light or dark setting, and opens larger when you click it.",
     "items": {
-      "releases": {
-        "title": "Client",
-        "body": "Desktop for Windows, macOS, and Linux, plus Android. Open the latest release and pick the file for your system.",
-        "cta": "Open releases"
+      "narrative-elements": {
+        "title": "Chapters and scenes",
+        "body": "The list you spend most of your time in: chapters in order, the scenes inside them, and what each scene still needs."
       },
-      "server": {
-        "title": "Keres Server",
-        "body": "Zips for Windows x64, Linux x64, and macOS Apple Silicon. On first run the wizard asks for the database, media, and port.",
-        "cta": "Download the server"
+      "story-map": {
+        "title": "Story map",
+        "body": "Follow every path a reader can take: where the story forks, where it comes back together, and how each ending is reached."
       },
-      "docker": {
-        "title": "Docker image",
-        "body": "ghcr.io/caiofviana/keres — prefer an immutable tag in production. The repo ships a deploy Compose file.",
-        "cta": "View on GitHub"
+      "story-timeline": {
+        "title": "How time passes",
+        "body": "How long each scene lasts and how much time slips by between them - minutes, days or years."
       },
-      "source": {
-        "title": "Source code",
-        "body": "An open monorepo: client, API, admin panel, desktop, and this landing page. Bun, TypeScript, tests in CI.",
-        "cta": "Open the repository"
+      "plot-matrix": {
+        "title": "Plots across the scenes",
+        "body": "Each narrative line laid over the scenes it touches, with a note saying what that scene does for it."
+      },
+      "plot-coverage": {
+        "title": "How far each plot reaches",
+        "body": "Two plots can cover the same number of scenes and still be nothing alike: one runs through the whole book, the other hides in the last act."
+      },
+      "character-list": {
+        "title": "Your cast",
+        "body": "Search, filter and sort the cast; open a name where it sits to see the role, the description and the ties, without leaving the list."
+      },
+      "relation-map": {
+        "title": "Who knows whom",
+        "body": "The cast as a web of ties - and the little groups your story formed without you noticing."
+      },
+      "location-map": {
+        "title": "Your world's map",
+        "body": "Which places sit inside other places, and how someone gets from one to another."
+      },
+      "dashboard": {
+        "title": "Where the story stands",
+        "body": "Everything you have written, counted, next to what the story check found - and what changed most recently."
       }
+    },
+    "lightbox": {
+      "close": "Close",
+      "zoom": "Click the picture for real size.",
+      "shrink": "Click again to fit the picture on screen."
     }
   },
   "stack": {
@@ -304,46 +389,9 @@
     "admin": "A React panel served by the API at /admin, for accounts, plans, and registration.",
     "shared": "Entities, Zod contracts, and palettes shared across the apps."
   },
-  "faq": {
-    "title": "Frequently asked questions",
-    "items": {
-      "editor": {
-        "q": "Does Keres replace my text editor?",
-        "a": "No. It organizes the narrative universe. The manuscript, script, or campaign stays where you already write."
-      },
-      "browser": {
-        "q": "Does it run in the browser?",
-        "a": "Yes, at the Keres server itself (Docker or Keres Server), at the root. That client only connects to the API it was loaded from. Registering another server in the browser would be cross-origin again: web SQLite needs isolation on the same origin. On phone and desktop you can register any URL. Published stories live at /showcase."
-      },
-      "offline": {
-        "q": "Do I need the internet?",
-        "a": "Not to plan. The client keeps everything on the device. A network is only needed to sync, collaborate, or publish on a server."
-      },
-      "server": {
-        "q": "Do I need a server?",
-        "a": "No. A story can live only on the device. A server comes in when you want the same universe on the phone and the PC, or when you want to collaborate."
-      },
-      "languages": {
-        "q": "Which languages is the app in?",
-        "a": "Portuguese and English, in the client, the help, Keres Server, and this page."
-      },
-      "collaborate": {
-        "q": "Can more than one person write it?",
-        "a": "With a server: invite friends, choose whether they read or edit, and comment on records. Without a server, you can hand off an import/export package."
-      },
-      "cost": {
-        "q": "What does it cost?",
-        "a": "Keres is open software. You download the client and, if you want, run your own server. An operator of a public server may apply account limits — that is their decision, not the application's."
-      },
-      "showcase": {
-        "q": "Does this page publish stories?",
-        "a": "No. This is the project landing page. The showcase of published stories is a separate site, served by a Keres Server someone chose to run."
-      }
-    }
-  },
-  "footer": {
-    "tagline": "A writing companion for planning stories.",
-    "source": "Open source on GitHub",
-    "docs": "Documentation in the repository"
+  "theme": {
+    "system": "Theme: System",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark"
   }
 }

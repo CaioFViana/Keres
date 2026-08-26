@@ -1,10 +1,5 @@
-import {
-  CreateCommentDataSchema,
-  CreateCommentDataType,
-  CreateStoryUpdate,
-  PartialCommentSchema,
-  UpdateStoryUpdate,
-} from '@keres/shared';
+import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
 import { db } from '../../db';
 import { comments } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
@@ -32,8 +27,8 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
         'A user can only create comments under their own identity.',
       );
     }
-    // O portão reader/allowReaderComments já foi aplicado em SyncService.processAndRecordUpdates
-    // antes deste método ser chamado - nada extra a checar aqui quanto a isso.
+    // The reader/allowReaderComments gate was already applied in SyncService.processAndRecordUpdates
+    // before this method was called - nothing extra to check here about it.
     const now = this.parseOperationTime(update.operationTime);
     await db.insert(comments).values({
       id: update.id!,
@@ -61,9 +56,9 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     update: UpdateStoryUpdate,
     currentEntity: any,
   ): Promise<void> {
-    // Editar o texto/trecho/criticidade é sempre restrito ao autor, mesmo para o dono da
-    // história - o dono só tem um privilégio elevado de *exclusão* (ver SyncService.ts),
-    // não de edição do conteúdo escrito por outra pessoa.
+    // Editing the text/excerpt/criticality is always restricted to the author, even for the story's owner
+    // - the owner only has an elevated *deletion* privilege (see SyncService.ts), not the right to edit
+    // content written by somebody else.
     if (currentEntity.authorUserId !== userId) {
       throw new SyncConflictError('unauthorized', 'Only the comment author can edit it.');
     }
@@ -78,8 +73,7 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     await super.update(userId, storyId, { ...update, changes }, currentEntity);
   }
 
-  // delete() não é sobrescrito: a autorização (dono da história pode excluir qualquer
-  // comentário; escritor/leitor só o próprio) já é resolvida em
-  // SyncService.processAndRecordUpdates, o único lugar onde o `role` do usuário já está
-  // disponível sem precisar estender a interface SyncEntityHandler só para este caso.
+  // delete() is not overridden: authorization (a story's owner can delete any comment; a writer/reader
+  // only their own) is already resolved in SyncService.processAndRecordUpdates, the only place where the
+  // user's `role` is available without extending the SyncEntityHandler interface just for this case.
 }

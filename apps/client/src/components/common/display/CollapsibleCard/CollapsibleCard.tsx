@@ -1,12 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  useAnimatedReaction,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../../../../theme';
 
 interface CollapsibleCardProps {
@@ -41,17 +37,12 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
     }
   }, [expanded, opacity]);
 
-  useAnimatedReaction(
-    () => ({ expanded, contentHeight: contentHeight.value }),
-    (snapshot) => {
-      if (snapshot.expanded) {
-        animatedHeight.value = withTiming(snapshot.contentHeight, { duration: 300 });
-      } else {
-        animatedHeight.value = withTiming(0, { duration: 300 });
-      }
-    },
-    [expanded], // expanded is a state variable, not a shared value
-  );
+  // An effect, not `useAnimatedReaction`: on the web the reaction did not react to `expanded` changing
+  // (it is React state, not a shared value), and the card opened with its content at zero height - the
+  // header flipped, nothing underneath. The measurement still comes from `onLayout`.
+  React.useEffect(() => {
+    animatedHeight.value = withTiming(expanded ? contentHeight.value : 0, { duration: 300 });
+  }, [expanded, animatedHeight, contentHeight]);
 
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {

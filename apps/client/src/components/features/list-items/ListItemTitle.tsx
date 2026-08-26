@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+import { Text, View } from 'react-native';
 
 interface ListItemTitleProps {
   text: string;
@@ -8,9 +9,10 @@ interface ListItemTitleProps {
 }
 
 /**
- * `<View style={headerLeft}><Text style={name} numberOfLines={1} ellipsizeMode="tail">...`
- * era reescrito idêntico em cada `*ListItem.tsx` (Chapter/Character/Choice/Item/Location/
- * Scene/WorldRule) - só o texto e os dois estilos (que variam por entidade) mudavam.
+ * `<View style={headerLeft}><Text style={name} numberOfLines={1} ellipsizeMode="tail">...` was
+ * rewritten identically in every `*ListItem.tsx`
+ * (Chapter/Character/Choice/Item/Location/Scene/WorldRule) - only the text and the two styles (which
+ * vary by entity) differed.
  */
 const ListItemTitle: React.FC<ListItemTitleProps> = ({ text, headerLeftStyle, nameStyle }) => (
   <View style={headerLeftStyle}>

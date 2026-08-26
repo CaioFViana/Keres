@@ -42,8 +42,8 @@ export function StoryPage() {
     setDownloading(publicationId);
     setError(null);
     try {
-      // O link é pedido na hora: para uma história protegida ele carrega um token de 60
-      // segundos, curto demais para valer a pena guardar na página.
+      // The link is requested on demand: for a protected story it carries a 60-second token, too short
+      // to be worth keeping on the page.
       window.location.href = await fetchDownloadUrl(storyId, publicationId);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('story.downloadFailed'));
@@ -83,7 +83,7 @@ export function StoryPage() {
   const [newest, ...older] = versions;
 
   return (
-    // Aqui sim a paleta da história pinta a página inteira: é a página *dela*.
+    // Here the story's palette does tint the whole page: it is *its* page.
     <section className="story-page themed" style={paletteVars(snapshot.theme, resolved)}>
       <Link to="/" className="back-link">
         {t('story.back')}

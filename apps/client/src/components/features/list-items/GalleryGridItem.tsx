@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { MediaType } from '@keres/shared';
+import type { MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { GallerySelect } from '../../../db/schemas/galleries';
+import type { GallerySelect } from '../../../db/schemas/galleries';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { useTheme } from '../../../theme';
 
@@ -14,7 +14,7 @@ interface GalleryGridItemProps {
   onToggleFavorite?: (galleryId: string, isFavorite: boolean) => void;
 }
 
-/** Ícone que representa a mídia quando não há miniatura para mostrar. */
+/** The icon that represents the media when there is no thumbnail to show. */
 export const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap> = {
   image: 'image-outline',
   video: 'videocam-outline',
@@ -29,12 +29,12 @@ function formatSize(bytes: number): string {
 }
 
 /**
- * Uma célula da grade da galeria.
+ * A cell of the gallery's grid.
  *
- * Imagem usa o próprio arquivo como miniatura; vídeo usa um quadro extraído e persistido
- * em `thumbnailPath` (ver `MediaFileService.generateVideoThumbnail`), porque gerar isso na
- * hora do render travaria a rolagem de uma grade inteira. Áudio não tem quadro para
- * mostrar e fica só com o ícone do tipo.
+ * An image uses the file itself as its thumbnail; a video uses a frame extracted and persisted in
+ * `thumbnailPath` (see `MediaFileService.generateVideoThumbnail`), because generating that at render
+ * time would stall the scrolling of a whole grid. Audio has no frame to show and is left with the
+ * type's icon alone.
  */
 const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onToggleFavorite }) => {
   const { colors } = useTheme();

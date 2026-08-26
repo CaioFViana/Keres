@@ -6,6 +6,16 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    // Import de tipo é escrito como tal, e o compilador não adivinha: o que está escrito é o
+    // que sobra no bundle. Complementa `@typescript-eslint/consistent-type-imports`, que já
+    // cobra a mesma coisa linha a linha.
+    "verbatimModuleSyntax": true,
+    // Travas de compilador ligadas porque hoje custam zero erro (medido) e barram classes
+    // inteiras de descuido: variável/import esquecido, `case` que vaza para o seguinte, e
+    // método que sobrescreve o da classe base sem dizer.
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
     "skipLibCheck": true,
     "noEmit": true
   },

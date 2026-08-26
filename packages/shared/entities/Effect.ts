@@ -1,10 +1,10 @@
 /**
- * Mudança de estado que uma Scene ou Choice causa ao ser alcançada/escolhida - o lado
- * "escrita" que os `ChoiceCheck`s (lado "leitura") avaliam. Polimórfico como `Comment`
- * (`entityType`/`entityId`), sem FK de banco para `entityId`.
+ * A state change that a Scene or Choice causes when it is reached/chosen - the "write" side that
+ * the `ChoiceCheck`s (the "read" side) evaluate. Polymorphic like `Comment`
+ * (`entityType`/`entityId`), with no database FK for `entityId`.
  *
- * - `itemGrant`/`itemTake`: usam `itemId`
- * - `triggerSet`/`triggerUnset`: usam `triggerName`
+ * - `itemGrant`/`itemTake`: use `itemId`
+ * - `triggerSet`/`triggerUnset`: use `triggerName`
  */
 export interface Effect {
   id: string;

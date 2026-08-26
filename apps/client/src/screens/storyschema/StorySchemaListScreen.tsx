@@ -1,17 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { STORY_SCHEMA_ENTITY_TYPES, StorySchemaEntityType } from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { StorySchemaFieldReorderModal } from '../../components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
 import { useDrizzle } from '../../db';
-import { StorySchemaFieldSelect } from '../../db/schema';
+import type { StorySchemaFieldSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
+import type { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -53,8 +54,32 @@ const StorySchemaListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('story_schema_management_title') });
-    }, [navigation, t]),
+      navigation.getParent()?.setOptions({
+        title: t('story_schema_management_title'),
+        headerRight: canEdit
+          ? () => (
+              <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+                {fields.length > 1 && (
+                  <TouchableOpacity
+                    accessibilityLabel={t('reorder_attributes_title')}
+                    onPress={() => setIsReorderModalVisible(true)}
+                  >
+                    <Ionicons name="swap-vertical" size={26} color={colors.text} />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  accessibilityLabel={t('create_attribute_title')}
+                  onPress={() =>
+                    navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })
+                  }
+                >
+                  <Ionicons name="add" size={30} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+            )
+          : undefined,
+      });
+    }, [activeEntityType, canEdit, colors.text, fields.length, navigation, t]),
   );
 
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -114,26 +139,11 @@ const StorySchemaListScreen = () => {
       color: colors.textSecondary,
       marginTop: 2,
     },
-    actionButton: {
-      padding: 8,
-      marginLeft: 4,
-    },
+    actionButton: { padding: 8, marginLeft: 4 },
     emptyText: {
       color: colors.textSecondary,
       textAlign: 'center',
       marginTop: 30,
-    },
-    fab: {
-      position: 'absolute',
-      bottom: 20,
-      right: 20,
-      backgroundColor: colors.primary,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 6,
     },
   });
 
@@ -198,18 +208,7 @@ const StorySchemaListScreen = () => {
 
   return (
     <View style={commonContainerStyles.container}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.title}>{t('story_schema_management_title')}</Text>
-        {canEdit && fields.length > 1 && (
-          <TouchableOpacity
-            accessibilityLabel={t('reorder_attributes_title')}
-            style={styles.actionButton}
-            onPress={() => setIsReorderModalVisible(true)}
-          >
-            <Ionicons name="swap-vertical" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <Text style={styles.title}>{t('story_schema_management_title')}</Text>
       <Text style={styles.description}>{t('story_schema_management_description')}</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsContainer}>
@@ -263,16 +262,6 @@ const StorySchemaListScreen = () => {
         ListEmptyComponent={<Text style={styles.emptyText}>{t('no_custom_attributes')}</Text>}
       />
 
-      {canEdit && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() =>
-            navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })
-          }
-        >
-          <Ionicons name="add" size={30} color={colors.onPrimary} />
-        </TouchableOpacity>
-      )}
       <StorySchemaFieldReorderModal
         isVisible={isReorderModalVisible}
         fields={fields}

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,29 +12,27 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import {
-  createStoryAnalysisService,
-  StoryAnalysisReport,
-} from '../../services/storymanagement/StoryAnalysisService';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
+import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
+import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
 import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import {
-  StoryAnalysisCancelledError,
-  StoryAnalysisCategory,
-  StoryAnalysisFinding,
-} from '../../utils/storyAnalysisChecks';
+import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
+import { StoryAnalysisCancelledError } from '../../utils/storyAnalysisChecks';
 
 /**
- * Relatório de análise estrutural: não é busca, é achar o que o escritor dificilmente notaria
- * sozinho (ver `storyAnalysisChecks.ts`). As checagens rápidas recarregam ao focar - a pessoa
- * normalmente chega aqui, corrige um problema, volta e quer ver o relatório atualizado sem
- * precisar recarregar à mão. Alcançabilidade/satisfazibilidade de Choice (as caras, que percorrem
- * o grafo inteiro em rodadas de ponto fixo) só rodam sob demanda pelo botão: rodar isso a cada
- * foco de tela travaria a UI em histórias ramificadas grandes.
+ * The structural analysis report: it is not search, it is finding what the writer would hardly notice
+ * on their own (see `storyAnalysisChecks.ts`). The quick checks reload on focus - the person usually
+ * arrives here, fixes a problem, comes back and wants to see the updated report without reloading by
+ * hand. Choice reachability/satisfiability (the expensive ones, which walk the whole graph in
+ * fixed-point rounds) only run on demand through the button: running that on every screen focus would
+ * freeze the UI on large branching stories.
  */
 
 type StoryAnalysisNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'StoryAnalysis'>;
@@ -64,10 +62,11 @@ const StoryAnalysisScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<StoryAnalysisNavigationProp>();
   useBackButtonHandler({ showWebBackButton: true });
-  // Não usa route.params: chegar aqui direto pelo drawer (em vez de vindo do
-  // MainDashboard, que passa storyId explicitamente) navega sem nenhum param - a mesma
-  // história de selectedStory já corrigida em StorySettingsScreen.
+  // It does not use route.params: arriving here straight from the drawer (rather than from the
+  // MainDashboard, which passes storyId explicitly) navigates with no param at all - the same story as
+  // selectedStory, already fixed in StorySettingsScreen.
   const { selectedStory } = useStoryStore();
+  const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
   const drizzleDb = useDrizzle();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -76,9 +75,10 @@ const StoryAnalysisScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [normalizing, setNormalizing] = useState(false);
   const [progressFraction, setProgressFraction] = useState(0);
-  // Alcançabilidade/satisfazibilidade só valem pra história ramificada - pra história linear, a
-  // checagem rápida já é o relatório completo, sem precisar do botão.
+  // Reachability/satisfiability only apply to a branching story - for a linear one the quick check is
+  // already the full report, with no need for the button.
   const [hasRunFull, setHasRunFull] = useState(selectedStory?.type !== 'branching');
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -101,8 +101,8 @@ const StoryAnalysisScreen = () => {
   useFocusEffect(
     useCallback(() => {
       loadCheapReport();
-      // Cancela a análise pesada em andamento ao sair da tela - não faz sentido continuar
-      // rodando em background depois que ninguém mais está vendo o progresso.
+      // It cancels the heavy analysis in progress when leaving the screen - there is no point in carrying on
+      // in the background once nobody is watching the progress.
       return () => abortControllerRef.current?.abort();
     }, [loadCheapReport]),
   );
@@ -112,6 +112,35 @@ const StoryAnalysisScreen = () => {
       navigation.setOptions({ title: t('story_analysis_title') });
       setDocumentTitle(t('story_analysis_title'));
     }, [navigation, t]),
+  );
+
+  /**
+   * Renumbers chapters and scenes to 1..N. It sits behind an explicit tap and does not run when the
+   * screen opens: it touches many rows at once and becomes synchronization operations.
+   */
+  const normalizeIndexes = useCallback(async () => {
+    if (!storyId || !userId || normalizing) return;
+    setNormalizing(true);
+    try {
+      const changed = await createStoryIndexService(drizzleDb).normalizeIndexes(userId, storyId);
+      await loadCheapReport();
+      AppAlert.alert(t('success'), t('analysis_fix_indexes_done', changed));
+    } catch (normalizeError) {
+      console.error('StoryAnalysisScreen: failed to normalize indexes.', normalizeError);
+      AppAlert.alert(t('error'), t('analysis_fix_indexes_failed'));
+    } finally {
+      setNormalizing(false);
+    }
+  }, [drizzleDb, loadCheapReport, normalizing, storyId, t, userId]);
+
+  const hasIndexFindings = useMemo(
+    () =>
+      (report?.findings ?? []).some(
+        (finding) =>
+          finding.messageKey.startsWith('analysis_chapter_index_') ||
+          finding.messageKey.startsWith('analysis_scene_index_'),
+      ),
+    [report],
   );
 
   const runFullAnalysis = useCallback(async () => {
@@ -163,18 +192,25 @@ const StoryAnalysisScreen = () => {
   );
 
   const styles = StyleSheet.create({
+    ...commonDetailStyleDefs(colors),
     scrollContent: {
-      padding: 20,
+      // The common container already applies 20px on every side. Repeating the padding on the scrollable
+      // content left the check's card 40px away from the edges, unlike the drawer's other screens.
+      flexGrow: 1,
     },
     subtitle: {
       color: colors.textSecondary,
       marginBottom: 16,
     },
     analysisCard: {
-      backgroundColor: colors.surface,
+      // The same measurements as the result cards, so the check control does not look like a region with a
+      // deeper inset than the report below it.
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderWidth: 1,
       borderRadius: 8,
-      padding: 16,
-      marginBottom: 20,
+      padding: 15,
+      marginBottom: 10,
     },
     analysisHint: {
       color: colors.textSecondary,
@@ -205,6 +241,9 @@ const StoryAnalysisScreen = () => {
       backgroundColor: colors.error,
       marginTop: 4,
     },
+    fixButton: {
+      marginTop: 8,
+    },
     findingRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -226,19 +265,6 @@ const StoryAnalysisScreen = () => {
       fontSize: 13,
       color: colors.textSecondary,
       marginTop: 2,
-    },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 21,
     },
   });
 
@@ -275,6 +301,16 @@ const StoryAnalysisScreen = () => {
       ) : (
         <Button onPress={runFullAnalysis} disabled={!storyId} testID="run-full-analysis">
           {t('story_analysis_run_button')}
+        </Button>
+      )}
+      {hasIndexFindings && (
+        <Button
+          onPress={normalizeIndexes}
+          disabled={normalizing || analyzing}
+          style={styles.fixButton}
+          testID="fix-indexes"
+        >
+          {normalizing ? t('loading') : t('analysis_fix_indexes_button')}
         </Button>
       )}
     </View>

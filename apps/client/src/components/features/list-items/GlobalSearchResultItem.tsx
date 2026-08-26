@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
-import { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
+import type { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
 import { ENTITY_TYPE_ICONS } from '../../../utils/entityTypeIcons';
 
 interface GlobalSearchResultItemProps {
@@ -26,6 +26,11 @@ const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result,
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
           {result.title}
         </Text>
+        {!!result.context && (
+          <Text style={styles.context} numberOfLines={1} ellipsizeMode="tail">
+            {result.context}
+          </Text>
+        )}
         {!!result.snippet && (
           <Text style={styles.snippet} numberOfLines={2} ellipsizeMode="tail">
             {result.snippet}
@@ -64,6 +69,7 @@ const createStyles = (colors: any) =>
       color: colors.textSecondary,
       marginTop: 2,
     },
+    context: { fontSize: 12, color: colors.primary, marginTop: 2 },
   });
 
 export default GlobalSearchResultItem;

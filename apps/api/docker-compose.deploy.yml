@@ -26,14 +26,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
-      SERVER_VERSION: ${SERVER_VERSION:-unknown}
       DATABASE_URL: postgresql://${POSTGRES_USER:-keres}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}@db:5432/${POSTGRES_DB:-keres}
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET no arquivo .env}
       JWT_SECRET_REFRESH: ${JWT_SECRET_REFRESH:?Define JWT_SECRET_REFRESH no arquivo .env}
       ROOT_ADMIN_USERNAME: ${ROOT_ADMIN_USERNAME:-root}
       ROOT_ADMIN_PASSWORD: ${ROOT_ADMIN_PASSWORD:?Define ROOT_ADMIN_PASSWORD no arquivo .env}
-      # Local é o padrão. Para S3, preencha MEDIA_S3_* no .env de deploy; o servidor bloqueia
-      # uma troca de backend quando o banco já contém mídia, para evitar perda de arquivos.
+      # Local is the default. For S3, fill in MEDIA_S3_* in the deploy .env; the server blocks a backend
+      # switch when the database already holds media, to avoid losing files.
       MEDIA_STORAGE_DRIVER: ${MEDIA_STORAGE_DRIVER:-local}
       MEDIA_STORAGE_PATH: /app/apps/api/media-storage
       MEDIA_MAX_BYTES: ${MEDIA_MAX_BYTES:-52428800}
@@ -52,7 +51,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/kerescheck').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/api/kerescheck').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 5

@@ -1,18 +1,18 @@
 import { FullStoryExportSchema } from '@keres/shared';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import { exampleStoryRegistry } from '../../exampleStories/generated/registry';
-import { ExampleStoryEntry } from '../../exampleStories/types';
+import type { ExampleStoryEntry } from '../../exampleStories/types';
 import { reviveDates } from '../../utils/reviveDates';
 import { createStoryService } from './StoryService';
 
 /**
- * Instala uma história de exemplo (empacotada com o app) no repertório do usuário.
+ * Installs an example story (packaged with the app) into the user's repertoire.
  *
- * Reaproveita a mesma infraestrutura de import/export de histórias em vez de duplicá-la: o
- * conteúdo de cada exemplo já está no formato `FullStoryExportSchema` (o mesmo de um arquivo
- * `.json` exportado), então "instalar" é literalmente "importar" - checar se a história já
- * existe (mesma checagem de `ImportExportScreen`) e chamar `importFullStory`. Exemplos não
- * têm mídia (ver `exampleStories/`), então não há nada equivalente ao fluxo `.zip`.
+ * It reuses the same story import/export infrastructure instead of duplicating it: each example's
+ * content is already in the `FullStoryExportSchema` format (the same as an exported
+ * `.json` file), so "installing" is literally "importing" - checking whether the story already
+ * exists (the same check as `ImportExportScreen`) and calling `importFullStory`. Examples have
+ * no media (see `exampleStories/`), so there is nothing equivalent to the `.zip` flow.
  */
 
 export type InstallExampleStoryResult =
@@ -49,8 +49,8 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
         return { status: 'not_found' };
       }
 
-      // O JSON empacotado nunca teve suas datas revividas (é um `import` estático de `.json`,
-      // igual ao `JSON.parse` de um arquivo escolhido pelo usuário) - mesmo cuidado de
+      // The packaged JSON never had its dates revived (it is a static `import` of a `.json`,
+      // just like the `JSON.parse` of a file chosen by the user) - the same care as
       // `pickStoryExportFile`.
       const parsed = FullStoryExportSchema.safeParse(reviveDates(languageEntry.story));
       if (!parsed.success) {
@@ -61,7 +61,7 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
         return { status: 'invalid_content' };
       }
 
-      // A importação local cria a cópia e remapeia seus IDs, inclusive para exemplos.
+      // The local import creates the copy and remaps its IDs, examples included.
       const storyId = await storyService.importFullStory(userId, parsed.data, null);
       return { status: 'installed', storyId };
     },

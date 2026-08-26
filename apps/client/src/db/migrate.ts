@@ -1,4 +1,4 @@
-import { SQLiteDatabase } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
 // Import all migration files dynamically
 import migrations from './migrations/index'; // Import the generated migrations array

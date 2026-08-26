@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, {
   type Dispatch,
   type SetStateAction,
@@ -13,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
 import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
-import { DocLibrary, helpLibrary } from '../../help/library';
+import type { DocLibrary } from '../../help/library';
+import { helpLibrary } from '../../help/library';
 import { createHelpSearchIndex, searchHelp } from '../../help/search';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';
@@ -24,7 +26,7 @@ type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefine
 type HelpIndexScreenProps = {
   openSections?: Record<string, boolean>;
   onOpenSectionsChange?: Dispatch<SetStateAction<Record<string, boolean>>>;
-  /** Qual biblioteca renderizar. O padrão mantém esta tela como o índice da Ajuda. */
+  /** Which library to render. The default keeps this screen as the Help index. */
   library?: DocLibrary;
 };
 
@@ -66,7 +68,7 @@ export function HelpIndexScreen({
   );
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    ...commonScreenStyleDefs(colors),
     section: {
       marginHorizontal: 16,
       marginTop: 12,

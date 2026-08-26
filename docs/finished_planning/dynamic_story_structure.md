@@ -1,62 +1,62 @@
-# Suporte a Estruturas de História Dinâmicas (Interactive Fiction/CYOA)
+# Support for dynamic story structures (Interactive Fiction/CYOA)
 
-Este documento resume a discussão e o plano para adaptar a estrutura de dados do Keres para suportar narrativas não-lineares, como Interactive Fiction (IF) ou "Choose Your Own Adventure" (CYOA), sem comprometer a experiência existente para histórias lineares.
+This document summarises the discussion and the plan for adapting Keres's data structure to support non-linear narratives, such as Interactive Fiction (IF) or "Choose Your Own Adventure" (CYOA), without compromising the existing experience for linear stories.
 
-## Problema Inicial
+## The initial problem
 
-A estrutura atual das histórias no Keres é linear, definida pelos campos `index` em `Chapters` e `Scenes`. Isso impede a representação de caminhos de narrativa ramificados.
+The current structure of stories in Keres is linear, defined by the `index` fields on `Chapters` and `Scenes`. That prevents representing branching narrative paths.
 
-## Objetivo
+## Goal
 
-Permitir que os autores criem histórias com múltiplos caminhos e escolhas, mantendo a simplicidade para histórias lineares e sem a necessidade de lógica de jogo complexa ou preocupações com migração de dados existentes.
+To let authors create stories with multiple paths and choices, keeping things simple for linear stories and without needing complex game logic or worrying about migrating existing data.
 
-## Abordagem Proposta: Suporte Híbrido (Linear e Ramificado)
+## Proposed approach: hybrid support (linear and branching)
 
-A solução envolve a introdução de uma nova entidade `Choice` e um campo `type` na entidade `Story`, permitindo que o sistema se adapte dinamicamente ao tipo de narrativa.
+The solution involves introducing a new `Choice` entity and a `type` field on the `Story` entity, letting the system adapt dynamically to the kind of narrative.
 
-### 1. Ajustes no Modelo de Dados
+### 1. Data model adjustments
 
-*   **Manter `index` em `Chapter` e `Scene`:** O campo `index` será mantido. Para histórias lineares, ele continuará a definir a ordem sequencial. Para histórias ramificadas, ele servirá como uma ferramenta organizacional (ex: ordem padrão de exibição em listas).
+*   **Keep `index` on `Chapter` and `Scene`:** the `index` field will be kept. For linear stories, it will carry on defining the sequential order. For branching stories, it will serve as an organizational tool (e.g. the default display order in lists).
 
-*   **Adicionar `type` à `Story`:**
-    *   Um novo campo `type: 'linear' | 'branching'` será adicionado à entidade `Story` (e seus schemas Zod correspondentes).
-    *   Novas histórias terão `type` definido como `'linear'` por padrão, garantindo que a experiência existente não seja alterada.
+*   **Add `type` to `Story`:**
+    *   A new field `type: 'linear' | 'branching'` will be added to the `Story` entity (and its corresponding Zod schemas).
+    *   New stories will have `type` set to `'linear'` by default, guaranteeing the existing experience is not altered.
 
-*   **Introduzir a Entidade `Choice`:**
-    *   Uma nova entidade `Choice` será criada para representar as transições entre cenas baseadas em escolhas.
-    *   **Campos da Entidade `Choice`:**
+*   **Introduce the `Choice` entity:**
+    *   A new `Choice` entity will be created to represent choice-based transitions between scenes.
+    *   **The `Choice` entity's fields:**
         *   `id` (ULID)
-        *   `sceneId` (ULID, FK para a `Scene` onde a escolha é apresentada)
-        *   `text` (string, o texto da escolha, ex: "Vire à esquerda")
-        *   `nextSceneId` (ULID, FK para a `Scene` que esta escolha leva)
+        *   `sceneId` (ULID, an FK to the `Scene` where the choice is presented)
+        *   `text` (string, the choice's text, e.g. "Turn left")
+        *   `nextSceneId` (ULID, an FK to the `Scene` this choice leads to)
         *   `createdAt`, `updatedAt`
 
-### 2. Lógica de Backend (API)
+### 2. Backend logic (API)
 
-*   **Gerenciamento Condicional de `Choice`:**
-    *   **Para histórias `linear`:** nunca existe nenhuma `Choice` - a ordem é só o `index` da `Scene` dentro do capítulo. A API rejeita qualquer tentativa de criar/atualizar/excluir uma `Choice` via sync enquanto a história for `linear` (`ChoiceSyncHandler`).
-    *   **Para histórias `branching`:** Os objetos `Choice` serão criados, atualizados e excluídos explicitamente pelos usuários através da API.
-    *   **Conversão entre os dois:** feita pelo usuário (não automática) - ver `StoryService.convertStoryType`/`checkLinearCompatibility` em `apps/client/src/services/storymanagement/storyTypeConversion.ts` e a seção 2.3 de `docs/choice_mechanics.md`.
+*   **Conditional `Choice` management:**
+    *   **For `linear` stories:** no `Choice` ever exists - the order is only the `Scene`'s `index` within the chapter. The API rejects any attempt to create/update/delete a `Choice` through sync while the story is `linear` (`ChoiceSyncHandler`).
+    *   **For `branching` stories:** `Choice` objects will be created, updated and deleted explicitly by users through the API.
+    *   **Conversion between the two:** done by the user (not automatically) - see `StoryService.convertStoryType`/`checkLinearCompatibility` in `apps/client/src/services/storymanagement/storyTypeConversion.ts` and section 2.3 of `docs/choice_mechanics.md`.
 
-### 3. Experiência do Frontend
+### 3. Frontend experience
 
-*   **Configuração da História:** O usuário poderá selecionar o `type` da história (`linear` ou `branching`) ao criar uma nova história ou nas configurações da história.
+*   **Story settings:** the user will be able to select the story's `type` (`linear` or `branching`) when creating a new story or in the story's settings.
 
-*   **Preservação da Experiência Linear:**
-    *   Quando `Story.type` for `linear`, a interface de usuário existente para criação/edição de capítulos e cenas permanecerá inalterada.
-    *   O campo `index` continuará a guiar a ordem de exibição e navegação implícita.
-    *   As `Choice`s implícitas existirão nos dados, mas não serão expostas ou editáveis diretamente na UI linear.
+*   **Preserving the linear experience:**
+    *   When `Story.type` is `linear`, the existing user interface for creating/editing chapters and scenes will remain unchanged.
+    *   The `index` field will carry on guiding the display order and implicit navigation.
+    *   Implicit `Choice`s will exist in the data, but will not be exposed or directly editable in the linear UI.
 
-*   **Nova Experiência de Ramificação:**
-    *   Quando `Story.type` for `branching`, uma nova interface de usuário será ativada.
-    *   Esta UI permitirá que os usuários definam explicitamente as escolhas para cada cena (texto da escolha e a cena de destino).
-    *   Uma ferramenta de visualização em grafo poderá ser implementada para exibir cenas como nós e `Choice`s explícitas como arestas direcionadas, representando visualmente a narrativa ramificada.
+*   **The new branching experience:**
+    *   When `Story.type` is `branching`, a new user interface will be activated.
+    *   This UI will let users explicitly define the choices for each scene (the choice's text and the target scene).
+    *   A graph visualization tool may be implemented to display scenes as nodes and explicit `Choice`s as directed edges, visually representing the branching narrative.
 
-## Benefícios Desta Abordagem
+## Benefits of this approach
 
-*   **Compatibilidade Retroativa:** Histórias lineares existentes e novas continuarão a funcionar como antes.
-*   **Separação Clara:** O campo `Story.type` permite que a lógica de backend e frontend se adapte ao tipo de narrativa.
-*   **Grafo Subjacente Universal:** Todas as histórias, incluindo as lineares, terão uma representação de grafo, facilitando futuras funcionalidades como visualização ou conversão de tipo.
-*   **Sem Lógica de Jogo:** O foco permanece na organização e visualização de dados, sem a complexidade de estados de jogo ou condições de escolha.
+*   **Backward compatibility:** existing and new linear stories will carry on working as before.
+*   **A clear separation:** the `Story.type` field lets the backend and frontend logic adapt to the kind of narrative.
+*   **A universal underlying graph:** every story, including linear ones, will have a graph representation, making future features such as visualization or type conversion easier.
+*   **No game logic:** the focus stays on organizing and visualizing data, without the complexity of game states or choice conditions.
 
-Esta abordagem permite uma introdução gradual de narrativas ramificadas, começando com as mudanças no modelo de dados e API, e posteriormente desenvolvendo as interfaces de usuário específicas para a criação e visualização de histórias ramificadas.
+This approach allows a gradual introduction of branching narratives, starting with the changes to the data model and API, and later developing the specific user interfaces for creating and visualizing branching stories.

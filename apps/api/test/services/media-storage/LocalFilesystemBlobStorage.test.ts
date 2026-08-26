@@ -7,8 +7,8 @@ import { LocalFilesystemBlobStorage } from '../../../src/services/media-storage/
 const temporaryDirectories: string[] = [];
 
 beforeAll(() => {
-  // Vitest roda em Node; a produção roda a API com Bun. Este adaptador mínimo preserva o
-  // contrato de arquivos usado pelo backend local sem precisar de um servidor HTTP.
+  // Vitest runs in Node; production runs the API under Bun. This minimal adapter preserves the file
+  // contract the local backend uses without needing an HTTP server.
   vi.stubGlobal('Bun', {
     write: (filePath: string, bytes: ArrayBuffer) => writeFile(filePath, new Uint8Array(bytes)),
     file: (filePath: string) => ({

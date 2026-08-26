@@ -13,7 +13,10 @@ services:
       POSTGRES_PASSWORD: keres_test
       POSTGRES_DB: keres_test
     ports:
-      - '55432:5432'
+      # `KERES_TEST_DB_PORT` for whoever needs a different one: the 55389-55488 range (which held the
+      # old 55432) is reserved by Windows on machines with Hyper-V/WSL. Changing it here needs no other
+      # change - `test/setup.ts` reads the same variable.
+      - '${KERES_TEST_DB_PORT:-45432}:5432'
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:

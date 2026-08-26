@@ -1,11 +1,12 @@
 import { helpSections } from './catalog';
-import { getHelpPage, getHelpPages, resolveHelpPage, ResolvedHelpPage } from './repository';
-import { HelpPage, HelpSection } from './types';
+import type { ResolvedHelpPage } from './repository';
+import { getHelpPage, getHelpPages, resolveHelpPage } from './repository';
+import type { HelpPage, HelpSection } from './types';
 
 /**
- * Descreve uma biblioteca de documentação para as telas de índice e de página. Existem duas: a
- * Ajuda, que explica o aplicativo, e os Recursos Literários, que explicam o ofício da escrita.
- * As telas são idênticas; só mudam o catálogo, as chaves de tradução e as rotas.
+ * Describes a documentation library for the index and page screens. There are two: Help, which
+ * explains the application, and Literary Devices, which explain the craft of writing. The screens are
+ * identical; only the catalog, the translation keys and the routes differ.
  */
 export interface DocLibrary {
   id: 'help' | 'storyDevices';

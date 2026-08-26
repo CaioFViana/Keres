@@ -1,28 +1,28 @@
 /**
- * Um valor de `AttributeType.DATE` é uma data civil *flutuante*: não carrega fuso horário
- * nenhum, de propósito. `15/01/2024 10:30` é a hora interna da história, não um instante no
- * tempo real - tem que renderizar igual em Brasília, Tóquio e Londres.
+ * A value of `AttributeType.DATE` is a *floating* civil date: it deliberately carries no time zone.
+ * `15/01/2024 10:30` is the story's internal time, not an instant in real time - it has to render
+ * identically in Brasília, Tokyo and London.
  *
- * Isso obriga três cuidados que este arquivo centraliza, e que nenhum outro ponto do código
- * deve reimplementar:
+ * That forces three precautions this file centralises, and which no other point of the code should
+ * reimplement:
  *
- * 1. O valor NUNCA é parseado por `new Date(string)`. `new Date('2024-01-15')` é interpretado
- *    como meia-noite UTC e imprime 14/01 em qualquer fuso negativo - o bug clássico. Aqui o
- *    parser é uma regex que extrai os componentes.
- * 2. `Date` só é construído em UTC (`Date.UTC` + `getUTC*`), inclusive para descobrir o dia da
- *    semana, e toda formatação passa `timeZone: 'UTC'`. Assim o fuso do dispositivo não
- *    consegue deslocar nada.
- * 3. `Date.UTC(15, 0, 1)` significa 1915, não ano 15 - por isso o ano é sempre reaplicado com
- *    `setUTCFullYear` depois da construção.
+ * 1. The value is NEVER parsed with `new Date(string)`. `new Date('2024-01-15')` is interpreted as
+ *    midnight UTC and prints 14/01 in any negative time zone - the classic bug. Here the parser is a
+ *    regex that extracts the components.
+ * 2. `Date` is only ever built in UTC (`Date.UTC` + `getUTC*`), including to find the day of the
+ *    week, and every formatting call passes `timeZone: 'UTC'`. That way the device's time zone
+ *    cannot shift anything.
+ * 3. `Date.UTC(15, 0, 1)` means 1915, not year 15 - which is why the year is always reapplied with
+ *    `setUTCFullYear` after construction.
  */
 
 export interface AttributeDateParts {
   /** 1 a 9999. */
   year: number;
-  /** 1 a 12 (não é índice de mês do JS). */
+  /** 1 to 12 (not JS's month index). */
   month: number;
   day: number;
-  /** `null` nos dois campos significa "só data, sem hora". */
+  /** `null` in both fields means "date only, no time". */
   hour: number | null;
   minute: number | null;
 }
@@ -34,21 +34,21 @@ export const MIN_ATTRIBUTE_DATE_YEAR = 1;
 export const MAX_ATTRIBUTE_DATE_YEAR = 9999;
 
 /**
- * `Date` em UTC representando os componentes recebidos. Separado porque é o único jeito seguro
- * de alimentar o `Intl` sem que o fuso do dispositivo entre na conta.
+ * A `Date` in UTC representing the given components. Kept separate because it is the only safe way
+ * to feed `Intl` without the device's time zone entering the arithmetic.
  */
 export function toUtcDate(parts: AttributeDateParts): Date {
   const date = new Date(
     Date.UTC(2000, parts.month - 1, parts.day, parts.hour ?? 0, parts.minute ?? 0),
   );
-  // Anos de 1 a 99 seriam remapeados para 1901-1999 por `Date.UTC` - reaplicar é o que evita.
+  // Years from 1 to 99 would be remapped to 1901-1999 by `Date.UTC` - reapplying is what avoids that.
   date.setUTCFullYear(parts.year);
   return date;
 }
 
 /**
- * Componentes de uma string canônica, ou `null` se a string não for uma data válida. Rejeita
- * data impossível (30 de fevereiro) por round-trip, não só por faixa numérica.
+ * The components of a canonical string, or `null` if the string is not a valid date. It rejects an
+ * impossible date (30 February) by round-trip, not by numeric range alone.
  */
 export function parseAttributeDate(raw: string | null | undefined): AttributeDateParts | null {
   if (!raw) {
@@ -78,8 +78,8 @@ export function parseAttributeDate(raw: string | null | undefined): AttributeDat
 
   const parts: AttributeDateParts = { year, month, day, hour, minute };
   const utc = toUtcDate(parts);
-  // 2024-02-30 vira 2024-03-01 na construção; se os componentes não voltarem iguais, a data
-  // simplesmente não existe no calendário.
+  // 2024-02-30 becomes 2024-03-01 on construction; if the components do not come back identical, the
+  // date simply does not exist on the calendar.
   if (
     utc.getUTCFullYear() !== year ||
     utc.getUTCMonth() !== month - 1 ||
@@ -99,7 +99,7 @@ function pad(value: number, length: number): string {
   return String(value).padStart(length, '0');
 }
 
-/** Componentes → string canônica (`YYYY-MM-DD` ou `YYYY-MM-DDTHH:mm`). */
+/** Components → canonical string (`YYYY-MM-DD` or `YYYY-MM-DDTHH:mm`). */
 export function formatAttributeDate(parts: AttributeDateParts): string {
   const date = `${pad(parts.year, 4)}-${pad(parts.month, 2)}-${pad(parts.day, 2)}`;
   if (parts.hour === null || parts.minute === null) {
@@ -108,15 +108,16 @@ export function formatAttributeDate(parts: AttributeDateParts): string {
   return `${date}T${pad(parts.hour, 2)}:${pad(parts.minute, 2)}`;
 }
 
-/** Dia da semana, 0 (domingo) a 6 (sábado). Imune a fuso por ser lido em UTC. */
+/** Day of the week, 0 (Sunday) to 6 (Saturday). Immune to time zones because it is read in UTC. */
 export function attributeDateWeekday(parts: AttributeDateParts): number {
   return toUtcDate(parts).getUTCDay();
 }
 
-/** Quantos dias tem o mês (`month` de 1 a 12), respeitando ano bissexto. */
+/** How many days the month has (`month` from 1 to 12), leap years respected. */
 export function daysInMonth(year: number, month: number): number {
   const date = new Date(Date.UTC(2000, 0, 1));
-  // Índice `month` já é o mês SEGUINTE (a API é 0-based), e dia 0 dele é o último deste.
+  // The `month` index is already the NEXT month (the API is 0-based), and day 0 of it is the last day
+  // of this one.
   date.setUTCFullYear(year, month, 0);
   return date.getUTCDate();
 }
@@ -130,18 +131,18 @@ function safeFormat(
   try {
     return new Intl.DateTimeFormat(language, { ...options, timeZone: 'UTC' }).format(date);
   } catch {
-    // Runtime sem ICU completo: a string canônica ainda é legível, melhor que quebrar a tela.
+    // A runtime without full ICU: the canonical string is still readable, better than breaking the screen.
     return fallback;
   }
 }
 
 /**
- * Data no idioma da APLICAÇÃO (não do dispositivo), sempre com o dia da semana, e com a hora
- * só quando o valor tem hora. `null` quando a string não é uma data canônica - o chamador
- * decide o que fazer (as telas mostram o valor cru, para não sumir com texto legado).
+ * A date in the APPLICATION's language (not the device's), always with the day of the week, and with
+ * the time only when the value has one. `null` when the string is not a canonical date - the caller
+ * decides what to do (the screens show the raw value, so legacy text does not disappear).
  *
- * `use24HourTime` vem da preferência do usuário (Configurações), não do idioma: `pt` e `en`
- * têm convenções opostas, e a escolha é dele. `undefined` deixa o locale decidir.
+ * `use24HourTime` comes from the user's preference (Settings), not from the language: `pt` and `en`
+ * have opposite conventions, and the choice is theirs. `undefined` lets the locale decide.
  */
 export function formatAttributeDateForDisplay(
   raw: string | null | undefined,
@@ -178,9 +179,9 @@ export function formatAttributeDateForDisplay(
 }
 
 /**
- * Hora do relógio de parede a partir da hora de 0 a 23: em 24h devolve ela mesma; em AM/PM
- * devolve 1 a 12 mais o período. Existe para que o campo de hora do picker mostre o que a
- * pessoa espera, sem que o valor canônico (sempre 0-23) mude de forma.
+ * Wall-clock hour from an hour of 0 to 23: in 24h it returns the same; in AM/PM it returns 1 to 12
+ * plus the period. It exists so the picker's hour field shows what the person expects, without the
+ * canonical value (always 0-23) changing shape.
  */
 export function toClockHour(
   hour24: number,
@@ -194,7 +195,7 @@ export function toClockHour(
   return { hour, isPm };
 }
 
-/** Inverso de `toClockHour`: hora do relógio (1-12 com período, ou 0-23) para 0-23. */
+/** The inverse of `toClockHour`: clock hour (1-12 with a period, or 0-23) to 0-23. */
 export function fromClockHour(hour: number, isPm: boolean, use24HourTime: boolean): number {
   if (use24HourTime) {
     return clampHour(hour);
@@ -207,7 +208,7 @@ function clampHour(hour: number): number {
   return Math.min(23, Math.max(0, hour));
 }
 
-/** Rótulo curto do mês + ano para o cabeçalho do calendário ("janeiro de 2024"). */
+/** Short month + year label for the calendar's header ("January 2024"). */
 export function formatAttributeDateMonthLabel(
   year: number,
   month: number,
@@ -223,12 +224,12 @@ export function formatAttributeDateMonthLabel(
 }
 
 /**
- * Iniciais/abreviações dos 7 dias da semana no idioma do app, começando no domingo (mesma
- * ordem de `attributeDateWeekday`). Derivadas do `Intl` em vez de escritas à mão em cada
- * arquivo de tradução.
+ * Initials/abbreviations of the 7 days of the week in the app's language, starting on Sunday (the
+ * same order as `attributeDateWeekday`). Derived from `Intl` instead of written by hand in each
+ * translation file.
  */
 export function attributeDateWeekdayLabels(language: string): string[] {
-  // 2023-01-01 foi um domingo - âncora arbitrária só para varrer os 7 dias.
+  // 2023-01-01 was a Sunday - an arbitrary anchor, only to walk the 7 days.
   return Array.from({ length: 7 }, (_, index) => {
     const utc = new Date(Date.UTC(2023, 0, 1 + index));
     return safeFormat(language, { weekday: 'short' }, utc, String(index));

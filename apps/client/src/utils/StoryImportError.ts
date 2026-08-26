@@ -1,14 +1,26 @@
 /**
- * Erro de importação de história com causa que o usuário consegue entender e agir.
+ * `invalid_format` is a file that is not a story package; `corrupt_content` is one that *is* -
+ * every row valid on its own - but whose rows contradict each other: a duplicated relation, a
+ * reference to an entity the file does not carry. The distinction matters to the user, who can do
+ * nothing about the first and can go fix the second in the story it came from.
+ */
+export type StoryImportErrorReason =
+  | 'unreadable'
+  | 'invalid_format'
+  | 'corrupt_content'
+  | 'future_format_version';
+
+/**
+ * A story import error with a cause the user can understand and act on.
  *
- * Em arquivo próprio porque tanto `storyTransfer.ts` (leitura de `.json`) quanto
- * `storyMediaBundle.ts` (leitura de `.zip`) precisam lançá-lo, e nenhum dos dois deveria
- * depender do outro só por causa deste tipo.
+ * In its own file because both `storyTransfer.ts` (reading a `.json`) and
+ * `storyMediaBundle.ts` (reading a `.zip`) need to throw it, and neither of the two should
+ * depend on the other just because of this type.
  */
 export class StoryImportError extends Error {
-  readonly reason: 'unreadable' | 'invalid_format' | 'future_format_version';
+  readonly reason: StoryImportErrorReason;
 
-  constructor(reason: 'unreadable' | 'invalid_format' | 'future_format_version', message: string) {
+  constructor(reason: StoryImportErrorReason, message: string) {
     super(message);
     this.name = 'StoryImportError';
     this.reason = reason;

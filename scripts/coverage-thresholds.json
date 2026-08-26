@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "safetyMarginPercentagePoints": 3,
+    "description": "Single source of truth for workspace coverage thresholds. Update with bun run coverage:update."
+  },
+  "shared": {
+    "lines": 93,
+    "functions": 90.8,
+    "branches": 73.4
+  },
+  "client": {
+    "lines": 34,
+    "functions": 27.6,
+    "branches": 24
+  },
+  "clientSyncCore": {
+    "lines": 82.4,
+    "functions": 91.4,
+    "branches": 70.9
+  },
+  "clientSyncHandlers": {
+    "lines": 79.2,
+    "functions": 93.2,
+    "branches": 66.5
+  },
+  "clientStoryServices": {
+    "lines": 68.2,
+    "functions": 74.7,
+    "branches": 45.6
+  },
+  "apiUnit": {
+    "lines": 14,
+    "functions": 20,
+    "branches": 4
+  },
+  "apiIntegration": {
+    "lines": 69,
+    "functions": 70,
+    "branches": 55
+  },
+  "apiCombined": {
+    "lines": 78,
+    "functions": 76,
+    "branches": 65
+  },
+  "apiSyncCore": {
+    "lines": 75,
+    "functions": 77.7,
+    "branches": 63.1
+  },
+  "apiSyncHandlers": {
+    "lines": 75.6,
+    "functions": 88.7,
+    "branches": 57.8
+  },
+  "apiExportImport": {
+    "lines": 85.2,
+    "functions": 94.2,
+    "branches": 74.4
+  },
+  "admin": {
+    "lines": 70,
+    "functions": 53,
+    "branches": 47
+  },
+  "desktop": {
+    "lines": 95,
+    "functions": 94,
+    "branches": 81
+  },
+  "site": {
+    "lines": 90,
+    "functions": 90,
+    "branches": 80
+  }
+}

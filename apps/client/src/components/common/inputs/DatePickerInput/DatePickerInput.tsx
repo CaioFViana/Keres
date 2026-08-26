@@ -13,20 +13,21 @@ interface DatePickerInputProps {
   value: string | null;
   onChange: (value: string | null) => void;
   placeholder?: string;
-  /** Só posicionamento (margem, largura). NÃO passe `commonInputStyles.input` aqui: este
-   *  componente já desenha a moldura do campo, e uma segunda borda/altura por fora desalinha
-   *  o conteúdo interno. */
+  /**
+   * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
+   * draws the field's frame, and a second border/height around it misaligns the inner content.
+   */
   style?: any;
 }
 
 /**
- * Campo de data para `AttributeType.DATE`, mesma anatomia do `ColorPickerInput`: um botão com
- * ícone abre o modal, e o campo ao lado é somente leitura.
+ * A date field for `AttributeType.DATE`, the same anatomy as `ColorPickerInput`: a button with an icon
+ * opens the modal, and the field beside it is read-only.
  *
- * O que ele exibe é a data **já formatada** no idioma do app (o mesmo texto que a tela de
- * detalhe vai mostrar), não o valor canônico gravado - digitar data à mão é justamente o que
- * este picker existe para substituir. Um valor legado que não seja canônico é exibido cru, em
- * vez de sumir da tela.
+ * What it displays is the date **already formatted** in the app's language (the same text the detail
+ * screen will show), not the canonical stored value - typing a date by hand is precisely what this
+ * picker exists to replace. A legacy value that is not canonical is shown raw, rather than disappearing
+ * from the screen.
  */
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
   value,
@@ -50,10 +51,10 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   };
 
   const styles = StyleSheet.create({
-    // Uma borda só, aqui. `commonInputStyles.input` NÃO é aplicado no contêiner nem no
-    // TextInput interno: ele já traz borda + altura, e somado à borda deste wrapper desenhava
-    // duas molduras encaixadas (e uma caixa alta demais, com `height: 50` sobre
-    // `customComponentInput`, que ainda soma `paddingBottom: 50`).
+    // A single border, here. `commonInputStyles.input` is NOT applied to the container nor to the inner
+    // TextInput: it already brings a border + height, and added to this wrapper's border it drew two nested
+    // frames (and a box that was too tall, with `height: 50` on top of `customComponentInput`, which still
+    // adds `paddingBottom: 50`).
     container: {
       marginBottom: 10,
       width: '100%',

@@ -1,12 +1,12 @@
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
- * Vínculo N:N entre uma mídia e uma entidade da história.
+ * An N:N link between a medium and a story entity.
  *
- * Uma linha por par, com tombstone, exatamente como `tag_relations`: assim adicionar e
- * remover um vínculo sincroniza pelo mesmo caminho de qualquer outra entidade, sem
- * tratamento especial no motor.
+ * One row per pair, with a tombstone, exactly like `tag_relations`: that way adding and
+ * removing a link synchronizes through the same path as any other entity, with no
+ * special treatment in the engine.
  */
 export const galleryRelations = sqliteTable('gallery_relations', {
   id: text('id').primaryKey(),

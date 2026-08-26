@@ -1,203 +1,97 @@
-import {
+import type {
   ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
-  DeleteStoryUpdate,
   EffectiveStoryRole,
   Favorite,
-  MAX_SYNC_BATCH_SIZE,
-  MAX_SYNC_PULL_BATCH,
   StoryReorderingStoryUpdate,
   StoryUpdate,
-  SyncConflict as SharedSyncConflict,
-  SyncPushResult,
-  UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, asc, eq, isNull, lte, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
+import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { eq } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import { OperationLogSelect, ServerSelect } from '../db/schema';
+import type { ServerSelect } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
-import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import i18n from '../utils/i18n';
-import { createKeresAxiosInstance, isOfflineError, KeresAxiosInstance } from './apiClient';
+import type { KeresAxiosInstance } from './apiClient';
+import { createKeresAxiosInstance, isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
-import { getEntityTable, omitClientProtectedFields, toEntityColumns } from './entityTableRegistry';
-import { AttributeValueClientSyncHandler } from './entity-sync-handlers/AttributeValueClientSyncHandler';
-import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
-import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
-import { CharacterRelationClientSyncHandler } from './entity-sync-handlers/CharacterRelationClientSyncHandler';
-import { CharacterSceneClientSyncHandler } from './entity-sync-handlers/CharacterSceneClientSyncHandler';
-import { ChoiceCheckClientSyncHandler } from './entity-sync-handlers/ChoiceCheckClientSyncHandler';
-import { ChoiceCheckGroupClientSyncHandler } from './entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
-import { ChoiceClientSyncHandler } from './entity-sync-handlers/ChoiceClientSyncHandler';
-import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
-import { EffectClientSyncHandler } from './entity-sync-handlers/EffectClientSyncHandler';
-import { GalleryClientSyncHandler } from './entity-sync-handlers/GalleryClientSyncHandler';
-import { GalleryRelationClientSyncHandler } from './entity-sync-handlers/GalleryRelationClientSyncHandler';
-import { ItemClientSyncHandler } from './entity-sync-handlers/ItemClientSyncHandler';
-import { ItemJourneyClientSyncHandler } from './entity-sync-handlers/ItemJourneyClientSyncHandler';
-import { LocationClientSyncHandler } from './entity-sync-handlers/LocationClientSyncHandler';
-import { LocationRelationClientSyncHandler } from './entity-sync-handlers/LocationRelationClientSyncHandler';
-import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHandler';
-import { NoteRelationClientSyncHandler } from './entity-sync-handlers/NoteRelationClientSyncHandler';
-import { SceneClientSyncHandler } from './entity-sync-handlers/SceneClientSyncHandler';
-import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
-import { StorySchemaFieldClientSyncHandler } from './entity-sync-handlers/StorySchemaFieldClientSyncHandler';
-import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
-import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
-import { FavoriteClientSyncHandler } from './entity-sync-handlers/FavoriteClientSyncHandler';
-import { SeeAlsoRelationClientSyncHandler } from './entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
-import { CommentClientSyncHandler } from './entity-sync-handlers/CommentClientSyncHandler';
-import {
-  ModeClientSyncHandler,
-  StatClientSyncHandler,
-  StatRelationClientSyncHandler,
-  StatStrengthClientSyncHandler,
-} from './entity-sync-handlers/StatClientSyncHandler';
-import { SuggestionClientSyncHandler } from './entity-sync-handlers/SuggestionClientSyncHandler';
-import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
+import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import { createServerService } from './ServerService';
-import { createStoryService } from './storymanagement/StoryService';
-import { createFavoriteService } from './storymanagement/FavoriteService';
-import { createCommentService } from './storymanagement/CommentService';
+import type { SyncConflictService } from './SyncConflictService';
+import { applyReorderToLocalDb, createSyncConflictService } from './SyncConflictService';
 import {
-  applyReorderToLocalDb,
-  createSyncConflictService,
-  findContestedFields,
-  mergeLocalOperationPayloads,
-  SyncConflictService,
-} from './SyncConflictService';
+  downloadAndImportStory,
+  fetchServerStoryPreviews,
+  type ServerStoryPreview,
+  type StoryUploadResult,
+  uploadNewStoryToServer,
+} from './sync/StoryTransfer';
+import { SyncScheduler } from './sync/SyncScheduler';
+import { registerClientSyncHandlers } from './sync/registerClientSyncHandlers';
+import type { SyncContext } from './sync/SyncContext';
+import { SyncPull } from './sync/SyncPull';
+import { SyncPush } from './sync/SyncPush';
+import { SyncMedia } from './sync/SyncMedia';
+import { protectRemoteUpdate, syncEntityKey } from './sync/syncPure';
+import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './sync/syncEvents';
 
-export interface ServerStoryPreview {
-  storyId: string;
-  lastOperationVersion: number;
-  role: EffectiveStoryRole;
-}
-
-/**
- * Local writes already notify the UI with these events. Remote pulls use the
- * same event names so lists and detail screens do not need a second refresh
- * mechanism. The generic event below is kept for screens that aggregate more
- * than one entity type (dashboard and graph views).
- */
-const SYNC_ENTITY_EVENTS: Record<string, string> = {
-  Story: 'story_changed',
-  Character: 'character_changed',
-  CharacterRelation: 'character_relation_changed',
-  CharacterScene: 'character_scene_changed',
-  Tag: 'tag_changed',
-  TagRelation: 'tag_relation_changed',
-  Note: 'note_changed',
-  NoteRelation: 'note_relation_changed',
-  WorldRule: 'worldrule_changed',
-  Location: 'location_changed',
-  LocationRelation: 'location_relation_changed',
-  Chapter: 'chapter_changed',
-  Scene: 'scene_changed',
-  Choice: 'choice_changed',
-  ChoiceCheckGroup: 'choice_check_group_changed',
-  ChoiceCheck: 'choice_check_changed',
-  Effect: 'effect_changed',
-  Item: 'item_changed',
-  ItemJourney: 'item_journey_changed',
-  Gallery: 'gallery_changed',
-  GalleryRelation: 'gallery_relation_changed',
-  StorySchemaField: 'story_schema_field_changed',
-  AttributeValue: 'attribute_value_changed',
-  Favorite: 'favorite_changed',
-  SeeAlsoRelation: 'see_also_relation_changed',
-  Comment: 'comment_changed',
-  Suggestion: 'suggestion_changed',
-  Stat: 'stat_changed',
-  StatStrength: 'stat_strength_changed',
-  StatRelation: 'stat_relation_changed',
-  Mode: 'mode_changed',
-};
-
-const FAVORITE_TARGET_EVENTS: Record<string, string> = {
-  Story: 'story_changed',
-  Character: 'character_changed',
-  Chapter: 'chapter_changed',
-  Location: 'location_changed',
-  Scene: 'scene_changed',
-  Note: 'note_changed',
-  WorldRule: 'worldrule_changed',
-  Item: 'item_changed',
-  Gallery: 'gallery_changed',
-  Tag: 'tag_changed',
-};
-
-/** Normal cadence while the server is responding. */
-export const SYNC_INTERVAL_MS = 30000;
-/**
- * Cadence while the server is unreachable. Much shorter than the normal interval so
- * that coming back online is noticed (and announced) within seconds instead of leaving
- * the user staring at an "offline" banner long after the server is back.
- */
-export const OFFLINE_RETRY_MS = 5000;
+export type { ServerStoryPreview } from './sync/StoryTransfer';
+export { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from './sync/SyncScheduler';
 
 export class SyncEngineService {
   private static instance: SyncEngineService;
-  private syncTimer: ReturnType<typeof setTimeout> | null = null;
-  private isRunning: boolean = false;
-  private syncInFlight = false;
-  private syncQueued = false;
-  private activeSyncOperations = 0;
-  private syncIdleResolvers = new Set<() => void>();
-  /**
-   * Incremented by every start/stop. A cycle captures the value it started under and
-   * refuses to schedule its successor once it changes, so a cycle still in flight when
-   * sync is restarted can't leave a second timer chain running alongside the new one.
-   */
-  private syncGeneration: number = 0;
   private storyId: string | null = null;
   /**
-   * Guardado porque a transferência de mídia não passa pelo Axios (ver `MediaSyncService`)
-   * e precisa do servidor para montar a autenticação por conta própria.
+   * Held because media transfer does not go through Axios (see `MediaSyncService`) and needs the server
+   * to build its authentication on its own.
    */
   private activeServer: ServerSelect | null = null;
   private client: KeresAxiosInstance;
-  private intervalTimeMs: number = SYNC_INTERVAL_MS;
+  private scheduler: SyncScheduler;
+  private pull: SyncPull;
+  private push: SyncPush;
+  private media: SyncMedia;
   private _db: AppDrizzleClient | null = null;
   private _conflictService: SyncConflictService | null = null;
-  private _mediaSyncService: MediaSyncService | null = null;
   private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
 
   private constructor() {
     this.client = createKeresAxiosInstance();
-    this.entityHandlers = new Map<string, ClientSyncEntityHandler>();
-    // Register handlers
-    this.registerEntityHandler(new StoryClientSyncHandler());
-    this.registerEntityHandler(new CharacterClientSyncHandler());
-    this.registerEntityHandler(new TagClientSyncHandler());
-    this.registerEntityHandler(new NoteClientSyncHandler());
-    this.registerEntityHandler(new NoteRelationClientSyncHandler());
-    this.registerEntityHandler(new WorldRuleClientSyncHandler());
-    this.registerEntityHandler(new CharacterRelationClientSyncHandler());
-    this.registerEntityHandler(new LocationClientSyncHandler());
-    this.registerEntityHandler(new LocationRelationClientSyncHandler());
-    this.registerEntityHandler(new ChapterClientSyncHandler());
-    this.registerEntityHandler(new CharacterSceneClientSyncHandler());
-    this.registerEntityHandler(new ChoiceClientSyncHandler());
-    this.registerEntityHandler(new ChoiceCheckGroupClientSyncHandler());
-    this.registerEntityHandler(new ChoiceCheckClientSyncHandler());
-    this.registerEntityHandler(new EffectClientSyncHandler());
-    this.registerEntityHandler(new ItemClientSyncHandler());
-    this.registerEntityHandler(new ItemJourneyClientSyncHandler());
-    this.registerEntityHandler(new SceneClientSyncHandler());
-    this.registerEntityHandler(new GalleryClientSyncHandler());
-    this.registerEntityHandler(new GalleryRelationClientSyncHandler());
-    this.registerEntityHandler(new StorySchemaFieldClientSyncHandler());
-    this.registerEntityHandler(new AttributeValueClientSyncHandler());
-    this.registerEntityHandler(new FavoriteClientSyncHandler());
-    this.registerEntityHandler(new SeeAlsoRelationClientSyncHandler());
-    this.registerEntityHandler(new CommentClientSyncHandler());
-    this.registerEntityHandler(new SuggestionClientSyncHandler());
-    this.registerEntityHandler(new StatClientSyncHandler());
-    this.registerEntityHandler(new StatStrengthClientSyncHandler());
-    this.registerEntityHandler(new StatRelationClientSyncHandler());
-    this.registerEntityHandler(new ModeClientSyncHandler());
+    this.scheduler = new SyncScheduler({
+      readiness: () => ({
+        storyId: this.storyId,
+        hasServer: Boolean(this.client.defaults.baseURL),
+        hasDatabase: Boolean(this._db),
+      }),
+      performSync: () => this.performSync(),
+    });
+    this.entityHandlers = registerClientSyncHandlers();
+    const syncContext: SyncContext = {
+      db: () => {
+        if (!this._db) throw new Error('Sync database is not configured.');
+        return this._db;
+      },
+      storyId: () => {
+        if (!this.storyId) throw new Error('Sync story is not configured.');
+        return this.storyId;
+      },
+      client: () => this.client,
+      conflictService: () => this.conflictService,
+    };
+    this.push = new SyncPush(syncContext);
+    this.pull = new SyncPull({
+      context: syncContext,
+      rebasePendingOperations: (operations, version) =>
+        this.push.rebasePendingOperations(operations, version),
+    });
+    this.media = new SyncMedia({
+      db: () => this._db,
+      storyId: () => this.storyId,
+      server: () => this.activeServer,
+      client: () => this.client,
+    });
   }
 
   public static getInstance(): SyncEngineService {
@@ -207,13 +101,9 @@ export class SyncEngineService {
     return SyncEngineService.instance;
   }
 
-  private registerEntityHandler(handler: ClientSyncEntityHandler) {
-    this.entityHandlers.set(handler.entityName, handler);
-  }
-
   public setDbInstance(dbInstance: AppDrizzleClient) {
     this._db = dbInstance;
-    this._conflictService = null; // Recriado sob demanda, já ligado ao novo banco.
+    this._conflictService = null; // Recreated on demand, already bound to the new database.
     // Propagate the db instance to all registered handlers
     this.entityHandlers.forEach((handler) => handler.setDb(dbInstance));
 
@@ -240,316 +130,51 @@ export class SyncEngineService {
     }
   }
 
-  public startSync(intervalTimeMs?: number) {
-    if (this.isRunning) {
-      console.log('Sync engine already running.');
-      return;
-    }
-
-    if (!this.storyId) {
-      console.log('Cannot start sync: storyId is not set. Call configure() first.');
-      return;
-    }
-
-    if (!this.client.defaults.baseURL) {
-      console.log(
-        'Cannot start sync: server URL is not set. Call configure() with a valid serverUrl.',
-      );
-      return;
-    }
-
-    if (!this._db) {
-      console.log('Cannot start sync: Drizzle client (db) is not set. Call setDbInstance() first.');
-      return;
-    }
-
-    this.intervalTimeMs = intervalTimeMs || this.intervalTimeMs;
-    console.log(
-      `Starting sync for story ${this.storyId} with interval ${this.intervalTimeMs / 1000}s`,
-    );
-
-    this.isRunning = true;
-    this.syncGeneration += 1;
-    const generation = this.syncGeneration;
-
-    // Self-scheduling rather than setInterval: each cycle picks its own next delay, so
-    // an unreachable server is retried quickly while a healthy one keeps the slow
-    // cadence. It also guarantees cycles never overlap, which setInterval does not.
-    const runCycle = async () => {
-      let wasOffline = false;
-      try {
-        wasOffline = await this.runExclusiveSync();
-      } catch (error) {
-        if (isOfflineError(error)) {
-          console.log('SyncEngineService: sync cycle skipped, server unreachable.');
-          wasOffline = true;
-        } else {
-          console.error('SyncEngineService: Unexpected error during sync cycle.', error);
-        }
-      }
-
-      // Bail out if sync was stopped, or restarted under a new generation, while this
-      // cycle was in flight - otherwise we'd leave a stray timer chain behind.
-      if (!this.isRunning || this.syncGeneration !== generation) {
-        return;
-      }
-      this.syncTimer = setTimeout(runCycle, wasOffline ? OFFLINE_RETRY_MS : this.intervalTimeMs);
-    };
-
-    // First cycle runs immediately - no waiting for the interval to elapse.
-    runCycle();
+  public startSync(intervalTimeMs?: number): void {
+    this.scheduler.start(intervalTimeMs);
   }
 
-  /** Coalesced on-demand sync used by realtime notifications and local writes. */
   public requestSync(_reason: 'websocket' | 'initial' | 'local-change' = 'websocket'): void {
-    if (!this.storyId || !this._db || !this.client.defaults.baseURL) return;
-    void this.runExclusiveSync().catch((error) => {
-      console.log('SyncEngineService: on-demand sync failed.', error);
-    });
+    this.scheduler.request();
   }
 
-  /**
-   * Um único executante por vez para o ciclo de pull/push. O timer e o `requestSync`
-   * (websocket / escrita local) compartilham este cadeado - sem ele os dois corriam
-   * `performSync` em paralelo e podiam empurrar o mesmo lote duas vezes.
-   */
-  private async runExclusiveSync(): Promise<boolean> {
-    if (this.syncInFlight) {
-      this.syncQueued = true;
-      return false;
-    }
-    this.syncInFlight = true;
-    try {
-      let wasOffline = false;
-      do {
-        this.syncQueued = false;
-        wasOffline = await this.performTrackedSync();
-      } while (this.syncQueued);
-      return wasOffline;
-    } finally {
-      this.syncInFlight = false;
-    }
-  }
-
-  public stopSync() {
-    this.isRunning = false;
-    this.syncGeneration += 1; // Invalidate any cycle currently in flight
-    if (this.syncTimer) {
-      clearTimeout(this.syncTimer);
-      this.syncTimer = null;
-      console.log('Sync engine stopped.');
-    }
+  public stopSync(): void {
+    this.scheduler.stop();
     this.storyId = null;
     this.activeServer = null;
     this.client.defaults.baseURL = undefined;
   }
 
-  private async performTrackedSync(): Promise<boolean> {
-    this.activeSyncOperations += 1;
-    try {
-      return await this.performSync();
-    } finally {
-      this.activeSyncOperations -= 1;
-      if (this.activeSyncOperations === 0) {
-        for (const resolve of this.syncIdleResolvers) resolve();
-        this.syncIdleResolvers.clear();
-      }
-    }
-  }
-
-  private async waitForSyncIdle(): Promise<void> {
-    if (this.activeSyncOperations === 0) return;
-    await new Promise<void>((resolve) => this.syncIdleResolvers.add(resolve));
-  }
-
   public async reset(): Promise<void> {
-    this.stopSync();
-    this.syncQueued = false;
-    await this.waitForSyncIdle();
-    this.syncInFlight = false;
+    await this.scheduler.reset();
+    this.storyId = null;
+    this.activeServer = null;
+    this.client.defaults.baseURL = undefined;
     this._db = null;
     this._conflictService = null;
-    this._mediaSyncService = null;
+    this.media.reset();
     console.log('Sync engine has been reset, database instance cleared.');
   }
 
-  public async fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]> {
-    if (!server?.url) {
-      console.log('A server with a URL is required to fetch story previews.');
-      return [];
-    }
-
-    // Use a new instance from the factory, bound to this specific server so the
-    // interceptor attaches this server's own token rather than whatever another
-    // concurrent client last set.
-    const tempClient = createKeresAxiosInstance({
-      baseURL: server.url,
-    });
-    tempClient.setTokenProvider(authTokenManager);
-    tempClient.setActiveServer(server);
-
-    try {
-      const response = await tempClient.get<{
-        message: string;
-        storyPreviews: ServerStoryPreview[];
-      }>('/sync/pullpreviews');
-      return response.data.storyPreviews;
-    } catch (error) {
-      console.log(`Error fetching server story previews from ${server.url}:`, error);
-      return [];
-    }
+  public fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]> {
+    return fetchServerStoryPreviews(server);
   }
 
-  public async downloadAndImportStory(
+  public downloadAndImportStory(
     queriedServerId: string,
     storyId: string,
     userId: string,
     role: EffectiveStoryRole,
   ): Promise<void> {
-    const { showNotification } = useNotificationStore.getState();
-    if (!this._db) {
-      showNotification(`Failed to download story '${storyId}': Database not set.`, 'error');
-      return;
-    }
-    if (!queriedServerId) {
-      showNotification(`Failed to download story '${storyId}': Server ID not set.`, 'error');
-      return;
-    }
-    if (!userId) {
-      showNotification(`Failed to download story '${storyId}': User ID not set.`, 'error');
-      return;
-    }
-
-    let server: ServerSelect | undefined;
-    try {
-      const serverService = createServerService(this._db);
-      server = await serverService.getServerById(queriedServerId);
-      if (!server?.url) {
-        showNotification(
-          `Failed to download story '${storyId}': Server URL not found for ID ${queriedServerId}.`,
-          'error',
-        );
-        return;
-      }
-    } catch (error) {
-      console.error('Error fetching server details by ID:', error);
-      showNotification(
-        `Failed to download story '${storyId}': Error retrieving server details.`,
-        'error',
-      );
-      return;
-    }
-
-    if (!server?.url) {
-      return;
-    }
-
-    const tempClient = createKeresAxiosInstance({
-      baseURL: server.url,
-    });
-    tempClient.setTokenProvider(authTokenManager);
-    tempClient.setActiveServer(server);
-
-    // Título só existe depois do download; até lá a notificação de erro cai no id mesmo.
-    let storyTitle = storyId;
-    try {
-      const exportUrl = `/stories/${storyId}/export`;
-      console.log(`Attempting to download story ${storyId} from ${server.url}${exportUrl}`);
-      const response = await tempClient.get(exportUrl);
-      const fullStoryData = response.data;
-      storyTitle = fullStoryData?.story?.title || storyId;
-
-      const storyService = createStoryService(this._db);
-      await storyService.importFullStory(userId, fullStoryData, queriedServerId, role);
-      console.log(`Successfully downloaded and imported story ${storyId} (${storyTitle})`);
-      showNotification(i18n.t('story_downloaded_and_imported', { title: storyTitle }), 'success');
-    } catch (error) {
-      console.log(`Error downloading or importing story ${storyId} from ${server.url}:`, error);
-      showNotification(i18n.t('failed_to_download_story_named', { title: storyTitle }), 'error');
-    }
+    return downloadAndImportStory(this._db, queriedServerId, storyId, userId, role);
   }
 
-  /**
-   * Envia uma história totalmente local (`serverId` nulo) para um servidor pela primeira vez.
-   *
-   * Checa a existência direto no servidor (não via `fetchServerStoryPreviews`, que engole
-   * erros de rede e devolveria `[]` - o que pareceria "não existe" mesmo quando a checagem só
-   * falhou por estar offline) antes de exportar e enviar via `POST /stories/import?storyId=`,
-   * preservando o ID local. A checagem do lado da API (`StoryExportImportService.importStory`,
-   * escopada por id+usuário) é o backstop caso duas chamadas corram ao mesmo tempo.
-   */
-  public async uploadNewStoryToServer(
+  public uploadNewStoryToServer(
     storyId: string,
     server: ServerSelect,
     userId: string,
-  ): Promise<
-    { success: true } | { success: false; reason: 'already_exists' | 'error'; message?: string }
-  > {
-    if (!this._db) {
-      return { success: false, reason: 'error', message: 'Database not set.' };
-    }
-    if (!server?.url) {
-      return { success: false, reason: 'error', message: 'Server URL not set.' };
-    }
-
-    const tempClient = createKeresAxiosInstance({ baseURL: server.url });
-    tempClient.setTokenProvider(authTokenManager);
-    tempClient.setActiveServer(server);
-
-    try {
-      const previewsResponse = await tempClient.get<{
-        message: string;
-        storyPreviews: ServerStoryPreview[];
-      }>('/sync/pullpreviews');
-      if (previewsResponse.data.storyPreviews.some((preview) => preview.storyId === storyId)) {
-        return { success: false, reason: 'already_exists' };
-      }
-    } catch (error) {
-      console.log(`Error checking story existence on ${server.url}:`, error);
-      return { success: false, reason: 'error', message: (error as Error)?.message };
-    }
-
-    const storyService = createStoryService(this._db);
-    const story = await storyService.getStoryById(storyId);
-    if (!story) {
-      return { success: false, reason: 'error', message: `Story ${storyId} not found locally.` };
-    }
-    const storyExport = await storyService.exportFullStory(storyId);
-
-    try {
-      await tempClient.post(`/stories/import?storyId=${encodeURIComponent(storyId)}`, storyExport);
-    } catch (error) {
-      console.log(`Error uploading story ${storyId} to ${server.url}:`, error);
-      return { success: false, reason: 'error', message: (error as Error)?.message };
-    }
-
-    // O servidor agora tem exatamente o que o op-log local tinha no momento do export - é essa
-    // a base correta pro próximo ciclo de sync, não o `serverLastOperationVersion` do pacote
-    // exportado (que reflete um vínculo anterior, sempre 0 pra uma história nunca vinculada).
-    await createFavoriteService(this._db).migrateUserIdentity(storyId, userId, server.idUser);
-    await createCommentService(this._db).migrateAuthorIdentity(storyId, userId, server.idUser);
-    // Essas operações já estão representadas pelo snapshot importado. Reenviá-las carregaria
-    // a antiga identidade local, que não existe no servidor, e duplicaria o comentário.
-    await this._db
-      .update(schema.operationLogs)
-      .set({ isSynced: true })
-      .where(
-        and(
-          eq(schema.operationLogs.storyId, storyId),
-          sql`${schema.operationLogs.entityType} in ('Favorite', 'Comment')`,
-          lte(schema.operationLogs.operationVersion, story.lastOperationLog),
-        ),
-      );
-    await storyService.updateStory(userId, storyId, {
-      serverId: server.id,
-      lastServerSyncedLog: story.lastOperationLog,
-      lastPublicFavoriteLog: 0,
-      // Known synchronously: the caller is the one linking their own local story to the
-      // server, so there's no ambiguity to wait on a later sync pull to resolve.
-      myRole: 'owner',
-    });
-
-    return { success: true };
+  ): Promise<StoryUploadResult> {
+    return uploadNewStoryToServer(this._db, storyId, server, userId);
   }
 
   private get conflictService(): SyncConflictService {
@@ -565,43 +190,13 @@ export class SyncEngineService {
   }
 
   /**
-   * Versão em que o usuário se apoiou ao fazer a edição.
+   * The version the user based their edit on.
    *
-   * Todos os services locais incrementam `version` em exatamente 1 e gravam no payload da
-   * operação a versão *resultante*. O servidor precisa da base, não do resultado: é
-   * comparando a base com a versão que ele tem agora que se descobre se alguém escreveu no
-   * meio. Mandar o resultado (como era feito antes) fazia a checagem passar sempre.
+   * Every local service increments `version` by exactly 1 and writes the *resulting* version into the
+   * operation's payload. The server needs the base, not the result: it is by comparing the base with the
+   * version it holds now that it discovers whether somebody wrote in between. Sending the result (as used
+   * to happen) made the check always pass.
    */
-  private deriveBaseVersion(payload: Record<string, any>): number | undefined {
-    const resultingVersion = payload?.version;
-    if (typeof resultingVersion !== 'number' || resultingVersion < 1) {
-      return undefined;
-    }
-    return resultingVersion - 1;
-  }
-
-  /** Chave de agrupamento de operações e conflitos por entidade. */
-  private entityKey(entityType: string, entityId: string): string {
-    return `${entityType}:${entityId}`;
-  }
-
-  /** Remove colunas de bookkeeping local de um update remoto antes de aplicar. */
-  private protectRemoteUpdate(update: StoryUpdate): StoryUpdate {
-    if (update.type === 'create') {
-      return {
-        ...update,
-        data: omitClientProtectedFields(update.entity, update.data),
-      } as CreateStoryUpdate;
-    }
-    if (update.type === 'update') {
-      return {
-        ...update,
-        changes: omitClientProtectedFields(update.entity, update.changes),
-      } as UpdateStoryUpdate;
-    }
-    return update;
-  }
-
   /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
   private async performSync(): Promise<boolean> {
     const { showNotification } = useNotificationStore.getState();
@@ -645,8 +240,8 @@ export class SyncEngineService {
       const lastPublicFavoriteLog = localStory.lastPublicFavoriteLog || 0;
 
       // 2. Pull remote updates first (since the latest known server version).
-      // O servidor devolve no máximo MAX_SYNC_PULL_BATCH ops; repetimos até a página
-      // vir incompleta para não deixar um backlog grande para o ciclo seguinte.
+      // The server returns at most MAX_SYNC_PULL_BATCH ops; we repeat until a page comes back incomplete, so
+      // as not to leave a large backlog for the next cycle.
       console.log(
         `Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`,
       );
@@ -676,10 +271,10 @@ export class SyncEngineService {
       }
 
       /**
-       * Avançamos o marcador apenas até a operação mais alta que realmente chegou, e não
-       * até o `serverMaxOperationVersion` da resposta. Os dois são lidos em consultas
-       * separadas no servidor: uma operação gravada entre elas entra no máximo mas não na
-       * lista, e confiar no máximo a puliria para sempre.
+       * We move the marker only up to the highest operation that actually arrived, and not up to the
+       * response's `serverMaxOperationVersion`. The two are read in separate queries on the server: an
+       * operation written between them makes it into the maximum but not into the list, and trusting the
+       * maximum would skip it forever.
        */
       let highestAppliedRemoteVersion = lastSyncedLog;
       let highestAppliedPublicFavoriteVersion = lastPublicFavoriteLog;
@@ -716,17 +311,16 @@ export class SyncEngineService {
 
         console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
 
-        // Operações locais ainda não aceitas pelo servidor, indexadas por entidade. É com
-        // elas que as atualizações remotas podem colidir: aplicar a versão remota em cima
-        // apagaria em silêncio o que o usuário escreveu offline.
-        const pendingByEntity = await this.getPendingOperationsByEntity();
+        // Local operations not yet accepted by the server, indexed by entity. They are what remote updates can
+        // collide with: applying the remote version on top would silently erase what the user wrote offline.
+        const pendingByEntity = await this.push.getPendingOperationsByEntity();
         let conflictsDetected = 0;
         let pullBlocked = false;
 
         for (const rawUpdate of remoteUpdates) {
           if (pullBlocked) break;
 
-          const update = this.protectRemoteUpdate(rawUpdate);
+          const update = protectRemoteUpdate(rawUpdate);
           const handler = this.entityHandlers.get(update.entity);
           if (!handler) {
             console.log(`No client sync handler registered for entity type: ${update.entity}`);
@@ -736,35 +330,39 @@ export class SyncEngineService {
 
           if (update.entity === 'Story' && update.type === 'create' && update.id !== this.storyId) {
             console.warn(`Ignoring Story create for ${update.id} while syncing ${this.storyId}.`);
-            await this.recordRemoteOperationLocally(rawUpdate);
+            await this.pull.recordRemoteOperationLocally(rawUpdate);
             markRemoteOperationApplied(rawUpdate);
             continue;
           }
 
-          // Operação que este próprio cliente enviou e o servidor está devolvendo. Já está
-          // aplicada aqui; reaplicá-la só duplicaria a linha no log local.
-          if (await this.isOwnEchoedOperation(rawUpdate)) {
+          // An operation this very client sent and the server is handing back. It is already applied here;
+          // reapplying it would only duplicate the row in the local log.
+          if (await this.pull.isOwnEchoedOperation(rawUpdate)) {
             markRemoteOperationApplied(rawUpdate);
             continue;
           }
 
           const pendingLocalOps =
-            pendingByEntity.get(this.entityKey(update.entity, update.id || '')) || [];
+            pendingByEntity.get(syncEntityKey(update.entity, update.id || '')) || [];
 
           try {
             if (pendingLocalOps.length > 0) {
-              const outcome = await this.reconcileRemoteUpdate(update, pendingLocalOps, handler);
+              const outcome = await this.pull.reconcileRemoteUpdate(
+                update,
+                pendingLocalOps,
+                handler,
+              );
               if (outcome.conflicted) {
                 conflictsDetected += 1;
               }
               markEntityUpdated(update.entity, update.id);
-              await this.recordRemoteOperationLocally(rawUpdate);
+              await this.pull.recordRemoteOperationLocally(rawUpdate);
               markRemoteOperationApplied(rawUpdate);
               continue;
             }
 
             if (update.type === 'create') {
-              await this.applyRemoteCreate(update, handler);
+              await this.pull.applyRemoteCreate(update, handler);
             } else if (update.type === 'update') {
               await handler.applyUpdate(this.storyId, update);
             } else if (update.type === 'delete') {
@@ -786,7 +384,7 @@ export class SyncEngineService {
             }
             markEntityUpdated(update.entity, update.id);
 
-            await this.recordRemoteOperationLocally(rawUpdate);
+            await this.pull.recordRemoteOperationLocally(rawUpdate);
             markRemoteOperationApplied(rawUpdate);
           } catch (handlerError) {
             pullBlocked = true;
@@ -878,11 +476,10 @@ export class SyncEngineService {
         );
       }
 
-      // O snapshot público é a fonte autoritativa para favoritos dos colaboradores.
-      // Ele fecha lacunas deixadas por histórias importadas sem logs antigos e por cursores
-      // de clientes que já tinham avançado antes de a visibilidade pública ser ativada.
-      // O servidor exclui as linhas do usuário atual para não sobrescrever uma alteração
-      // local dele que ainda será enviada na etapa seguinte deste mesmo ciclo.
+      // The public snapshot is the authoritative source for collaborators' favourites. It closes gaps left by
+      // stories imported without old logs and by cursors of clients that had already moved on before public
+      // visibility was enabled. The server excludes the current user's rows so as not to overwrite a local
+      // change of theirs that is still to be sent in the next step of this same cycle.
       if (publicFavorites.length > 0) {
         const favoriteHandler = this.entityHandlers.get('Favorite');
         if (!favoriteHandler) {
@@ -902,8 +499,8 @@ export class SyncEngineService {
             localFavorite.userId !== favorite.userId;
           if (!changed) continue;
 
-          await this.applyRemoteCreate(
-            this.protectRemoteUpdate({
+          await this.pull.applyRemoteCreate(
+            protectRemoteUpdate({
               type: 'create',
               entity: 'Favorite',
               id: favorite.id,
@@ -927,7 +524,7 @@ export class SyncEngineService {
 
       // 3-4. Push pending local operations in batches the server will accept.
       try {
-        const pushed = await this.pushPendingOperations();
+        const pushed = await this.push.pushPendingOperations();
         if (pushed.offline) {
           return true;
         }
@@ -965,10 +562,10 @@ export class SyncEngineService {
         await serverService.updateServer(this.activeServer.id, { lastSyncDate: new Date() });
       }
 
-      // 6. Reconcile media files. Roda depois dos metadados de propósito: uma mídia só
-      // pode ser baixada depois que a linha que a descreve chegou, e só pode ser enviada
-      // depois que o servidor aceitou essa mesma linha.
-      return await this.syncMedia();
+      // 6. Reconcile media files. It runs after the metadata on purpose: a media file can only be downloaded
+      // after the row describing it has arrived, and can only be uploaded after the server has accepted that
+      // same row.
+      return await this.media.sync();
     } catch (error: any) {
       if (isOfflineError(error)) {
         // Offline-first: an unreachable server is expected, not a failure worth
@@ -980,628 +577,5 @@ export class SyncEngineService {
       showNotification(i18n.t('sync_failed'), 'error');
       return false;
     }
-  }
-
-  /**
-   * Sobe e baixa os arquivos da galeria. Resolve para `true` se o servidor estiver
-   * inacessível, para o ciclo tratar como offline.
-   *
-   * Uma falha aqui nunca derruba a sincronização: mídia que não transferiu continua
-   * marcada como pendente e é tentada de novo no ciclo seguinte, enquanto o texto da
-   * história segue sincronizando normalmente.
-   */
-  private async syncMedia(): Promise<boolean> {
-    if (!this._db || !this.storyId || !this.activeServer) {
-      return false;
-    }
-
-    try {
-      if (!this._mediaSyncService) {
-        this._mediaSyncService = createMediaSyncService(this._db);
-      }
-      const summary = await this._mediaSyncService.syncStoryMedia(
-        this.client,
-        this.activeServer,
-        this.storyId,
-      );
-
-      if (summary.uploaded > 0 || summary.downloaded > 0) {
-        console.log(
-          `Media sync for story ${this.storyId}: ${summary.uploaded} uploaded, ${summary.downloaded} downloaded, ${summary.failed} failed.`,
-        );
-        entityEventEmitter.emit('gallery_changed', this.storyId);
-      }
-      return summary.offline;
-    } catch (error) {
-      console.log(`Media sync skipped for story ${this.storyId}.`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Empurra a fila local em fatias de `MAX_SYNC_BATCH_SIZE`. Sem isto um backlog de 201+
-   * ops (edição longa offline) toma 422 no schema do servidor e nunca sincroniza.
-   */
-  private async pushPendingOperations(): Promise<{ offline: boolean }> {
-    const { showNotification } = useNotificationStore.getState();
-    let totalApplied = 0;
-    let totalConflicts = 0;
-
-    for (let chunk = 0; chunk < 50; chunk += 1) {
-      const pending = await this.getPushableOperations();
-      const mapped: { op: OperationLogSelect; update: StoryUpdate }[] = [];
-      for (const op of pending) {
-        const update = this.buildStoryUpdateFromLocalOp(op);
-        if (update) mapped.push({ op, update });
-      }
-      const prepared = mapped.slice(0, MAX_SYNC_BATCH_SIZE);
-      if (prepared.length === 0) break;
-
-      if (chunk === 0) {
-        console.log(`Pushing local operations for story ${this.storyId} to server...`);
-      }
-
-      const pushResponse = await this.client.post<SyncPushResult>(
-        `/sync/${this.storyId}`,
-        prepared.map((entry) => entry.update),
-      );
-      const summary = await this.applyPushResult(
-        pushResponse.data,
-        prepared.map((entry) => entry.op),
-        { silent: true },
-      );
-      totalApplied += summary.applied;
-      totalConflicts += summary.conflicts;
-
-      const remaining = await this.getPushableOperations();
-      if (remaining.length >= pending.length) {
-        break;
-      }
-    }
-
-    if (totalApplied > 0) {
-      showNotification(i18n.t('sync_pushed_updates', { count: totalApplied }), 'success');
-    }
-    if (totalConflicts > 0) {
-      showNotification(i18n.t('sync_conflicts_detected', { count: totalConflicts }), 'warning');
-    }
-    return { offline: false };
-  }
-
-  private buildStoryUpdateFromLocalOp(op: OperationLogSelect): StoryUpdate | null {
-    const payloadData = JSON.parse(op.payload);
-    const baseVersion = this.deriveBaseVersion(payloadData);
-
-    if (op.operationType === 'update' && typeof baseVersion !== 'number') {
-      console.warn(
-        `Skipping update ${op.entityType} ${op.entityId}: payload has no version, server would 422 the whole batch.`,
-      );
-      return null;
-    }
-    if (op.operationType === 'create' && !op.entityId) {
-      console.warn(`Skipping create of ${op.entityType}: missing entity id.`);
-      return null;
-    }
-
-    const baseUpdate: Omit<StoryUpdate, 'type'> = {
-      entity: op.entityType,
-      id: op.entityId,
-      version: baseVersion,
-      operationTime: op.createdAt.toISOString(),
-      clientOperationId: op.id,
-    };
-
-    const filteredPayloadData: Record<string, any> = { ...payloadData };
-    delete filteredPayloadData.createdAt;
-    delete filteredPayloadData.updatedAt;
-    delete filteredPayloadData.deletedAt;
-    delete filteredPayloadData.storyId;
-
-    switch (op.operationType) {
-      case 'create':
-        return {
-          ...baseUpdate,
-          type: 'create',
-          data: filteredPayloadData,
-        } as CreateStoryUpdate;
-      case 'update':
-        return {
-          ...baseUpdate,
-          type: 'update',
-          changes: {
-            ...filteredPayloadData,
-            version: baseVersion,
-          },
-        } as UpdateStoryUpdate;
-      case 'delete':
-        return {
-          ...baseUpdate,
-          type: 'delete',
-        } as DeleteStoryUpdate;
-      case 'reorder':
-        if (op.entityType === 'Chapter' && Array.isArray(filteredPayloadData.reorderItems)) {
-          return {
-            ...baseUpdate,
-            type: 'reorder',
-            entity: 'Chapter',
-            reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
-              ...item,
-            })),
-          } as ChapterReorderingStoryUpdate;
-        }
-        if (op.entityType === 'Story' && Array.isArray(filteredPayloadData.reorderItems)) {
-          return {
-            ...baseUpdate,
-            type: 'reorder',
-            entity: 'Story',
-            reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
-              ...item,
-            })),
-            reorderTarget: filteredPayloadData.reorderTarget,
-            schemaEntityType: filteredPayloadData.schemaEntityType,
-          } as StoryReorderingStoryUpdate;
-        }
-        console.warn(
-          `Unhandled reorder operation type or entity: ${op.entityType}, ${op.operationType}`,
-        );
-        return null;
-      default:
-        console.warn(`Unhandled operation type: ${op.operationType}`);
-        return null;
-    }
-  }
-
-  /**
-   * Operações locais que podem ir para o servidor: ainda não sincronizadas e sem conflito
-   * pendente. Excluir as conflitadas é o que impede o ciclo de reenviar para sempre uma
-   * operação que o servidor já recusou.
-   */
-  private async getPushableOperations(): Promise<OperationLogSelect[]> {
-    return this._db!.query.operationLogs.findMany({
-      where: and(
-        eq(schema.operationLogs.storyId, this.storyId!),
-        eq(schema.operationLogs.isSynced, false),
-        isNull(schema.operationLogs.conflictState),
-      ),
-      // Ordered by operationVersion (strictly monotonic per story), not createdAt: the SQLite
-      // timestamp column only has second precision, so two writes in the same second (e.g. a
-      // Gallery create immediately followed by its GalleryRelation create) could tie under
-      // createdAt and push in the wrong order, making the server reject the dependent create.
-      orderBy: ({ operationVersion }) => [asc(operationVersion)],
-    });
-  }
-
-  /** Operações locais pendentes agrupadas por entidade, para cruzar com o que vem do pull. */
-  private async getPendingOperationsByEntity(): Promise<Map<string, OperationLogSelect[]>> {
-    const pending = await this.getPushableOperations();
-    const byEntity = new Map<string, OperationLogSelect[]>();
-    for (const op of pending) {
-      const key = this.entityKey(op.entityType, op.entityId);
-      const bucket = byEntity.get(key);
-      if (bucket) {
-        bucket.push(op);
-      } else {
-        byEntity.set(key, [op]);
-      }
-    }
-    return byEntity;
-  }
-
-  /**
-   * A operação que veio do pull já está registrada localmente?
-   *
-   * Cobre dois casos: operações que este cliente empurrou e o servidor está devolvendo, e
-   * operações remotas que um pull anterior já aplicou. Nos dois, reaplicar é desnecessário
-   * e duplicaria a linha no log local.
-   */
-  private async isOwnEchoedOperation(update: StoryUpdate): Promise<boolean> {
-    if (!update.operationVersion) {
-      return false;
-    }
-    const existing = await this._db!.query.operationLogs.findFirst({
-      where: and(
-        eq(schema.operationLogs.storyId, this.storyId!),
-        eq(schema.operationLogs.serverOperationVersion, update.operationVersion),
-        eq(schema.operationLogs.isSynced, true),
-      ),
-      columns: { id: true },
-    });
-    return !!existing;
-  }
-
-  /**
-   * Aplica uma criação remota tolerando que a entidade já exista.
-   *
-   * Um `insert` cru falharia ao repetir a operação (por exemplo se a resposta de um push
-   * anterior se perdeu e o servidor devolveu a criação no pull seguinte), e a falha era
-   * contabilizada como "erro ao aplicar atualização remota" sem nada de errado ter
-   * acontecido de fato.
-   */
-  private async applyRemoteCreate(
-    update: StoryUpdate,
-    handler: ClientSyncEntityHandler,
-  ): Promise<void> {
-    const createUpdate = update as CreateStoryUpdate;
-    const existing = update.id ? await handler.getById(update.id) : undefined;
-
-    if (!existing) {
-      await handler.applyCreate(this.storyId!, createUpdate);
-      return;
-    }
-
-    await handler.applyUpdate(this.storyId!, {
-      ...createUpdate,
-      type: 'update',
-      id: update.id!,
-      changes: {
-        ...createUpdate.data,
-        version:
-          typeof createUpdate.data?.version === 'number'
-            ? createUpdate.data.version
-            : (createUpdate.version ?? 0),
-      },
-    } as UpdateStoryUpdate);
-  }
-
-  /**
-   * Registra no log local uma operação vinda do servidor.
-   *
-   * O id usado é o da operação *no servidor*. Antes usava-se o id da entidade, o que fazia
-   * a segunda operação sobre a mesma entidade colidir na chave primária - a falha era
-   * engolida e reportada ao usuário como "falha ao aplicar atualizações remotas".
-   */
-  private async recordRemoteOperationLocally(update: StoryUpdate): Promise<void> {
-    const payloadToStore =
-      update.type === 'create'
-        ? update.data
-        : update.type === 'update'
-          ? update.changes
-          : update.type === 'reorder'
-            ? { reorderItems: update.reorderItems }
-            : { id: update.id }; // For delete, just store the ID
-
-    await this._db!.insert(schema.operationLogs)
-      .values({
-        id: update.operationId || createULID(),
-        storyId: this.storyId!,
-        userId: update.originatingUser || 'unknown',
-        operationVersion: update.operationVersion || 0,
-        operationType: update.type,
-        entityType: update.entity,
-        entityId: update.id!,
-        payload: JSON.stringify(payloadToStore),
-        createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
-        isSynced: true, // Mark as synced because it came from the server
-        serverOperationVersion: update.operationVersion || 0,
-      })
-      .onConflictDoNothing();
-  }
-
-  /**
-   * Reconcilia uma atualização remota com edições locais ainda não aceitas na mesma entidade.
-   *
-   * A regra é preservar o que a pessoa fez: campos que só o servidor mudou são aplicados,
-   * campos que a pessoa também mudou ficam com o valor dela e viram um conflito para ela
-   * decidir. Antes, a atualização remota era escrita por cima e a edição offline
-   * desaparecia sem aviso.
-   */
-  private async reconcileRemoteUpdate(
-    update: StoryUpdate,
-    pendingLocalOps: OperationLogSelect[],
-    handler: ClientSyncEntityHandler,
-  ): Promise<{ conflicted: boolean }> {
-    const entityId = update.id!;
-
-    // Reorder não cabe no resto desta função: o valor em disputa é a ordem inteira
-    // (`reorderItems`), não campos escalares de uma entidade - `mergeLocalOperationPayloads`/
-    // `findContestedFields` não fazem sentido pra ele.
-    if (update.type === 'reorder') {
-      return this.reconcileRemoteReorder(
-        update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-        entityId,
-        pendingLocalOps,
-      );
-    }
-
-    const localWantsDelete = pendingLocalOps.some((op) => op.operationType === 'delete');
-    const localValues = mergeLocalOperationPayloads(pendingLocalOps);
-    const localOperationIds = pendingLocalOps.map((op) => op.id);
-    const localOperationType = localWantsDelete
-      ? 'delete'
-      : pendingLocalOps.some((op) => op.operationType === 'create')
-        ? 'create'
-        : 'update';
-
-    const recordConflict = (
-      reason: 'deleted_on_server' | 'edited_on_server' | 'concurrent_edit',
-      serverValues: Record<string, any> | null,
-    ) =>
-      this.conflictService.recordConflict({
-        storyId: this.storyId!,
-        entityType: update.entity,
-        entityId,
-        reason,
-        localOperationType,
-        localOperationIds,
-        localValues,
-        serverValues,
-        clientVersion: this.deriveBaseVersion(JSON.parse(pendingLocalOps[0].payload)) ?? null,
-        serverVersion: update.version ?? null,
-        message:
-          update.type === 'delete'
-            ? `Server deleted ${update.entity} ${entityId} while it had unsynced local edits.`
-            : `Server and local changes overlap on ${update.entity} ${entityId}.`,
-      });
-
-    if (update.type === 'delete') {
-      if (localWantsDelete) {
-        // Os dois lados excluíram: mesma intenção, nada a decidir.
-        await handler.applyDelete(this.storyId!, update as DeleteStoryUpdate);
-        return { conflicted: false };
-      }
-      // A exclusão remota não é aplicada de propósito: descartar aqui o que a pessoa
-      // escreveu tiraria dela a chance de recuperar a entidade.
-      await recordConflict('deleted_on_server', { isDeleted: true, version: update.version });
-      return { conflicted: true };
-    }
-
-    const remoteValues: Record<string, any> =
-      update.type === 'create'
-        ? { ...(update as CreateStoryUpdate).data }
-        : update.type === 'update'
-          ? { ...(update as UpdateStoryUpdate).changes }
-          : {};
-
-    if (localWantsDelete) {
-      await recordConflict('edited_on_server', remoteValues);
-      return { conflicted: true };
-    }
-
-    const contestedFields = findContestedFields(localValues, remoteValues);
-    const mergeableEntries = Object.entries(remoteValues).filter(
-      ([key]) => !contestedFields.includes(key),
-    );
-
-    if (mergeableEntries.length > 0) {
-      await handler.applyUpdate(this.storyId!, {
-        ...update,
-        type: 'update',
-        id: entityId,
-        changes: Object.fromEntries(mergeableEntries),
-      } as UpdateStoryUpdate);
-    }
-
-    if (contestedFields.length === 0) {
-      // As duas edições cabem juntas. A local só precisa ser reapoiada na versão nova,
-      // e assim ela passa no próximo push sem incomodar o usuário com uma decisão.
-      await this.rebasePendingOperations(pendingLocalOps, update.version);
-      return { conflicted: false };
-    }
-
-    await recordConflict('concurrent_edit', remoteValues);
-    return { conflicted: true };
-  }
-
-  /**
-   * Contraparte de `reconcileRemoteUpdate` só para reorder - extraída à parte porque o
-   * valor em disputa (`reorderItems`) não é um conjunto de campos de uma entidade, é a
-   * ordem inteira de N outras linhas (Scenes de um Chapter, ou Chapters de uma Story).
-   */
-  private async reconcileRemoteReorder(
-    update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-    entityId: string,
-    pendingLocalOps: OperationLogSelect[],
-  ): Promise<{ conflicted: boolean }> {
-    const localReorderOp = pendingLocalOps.find((op) => op.operationType === 'reorder');
-
-    if (!localReorderOp) {
-      // O que está pendente nesta entidade é de outro tipo (ex.: renomear um capítulo) - não
-      // conflita com a ordem vinda do servidor, que pode ser aplicada direto.
-      await applyReorderToLocalDb(this._db!, update, new Date(update.operationTime!));
-      return { conflicted: false };
-    }
-
-    const localPayload = JSON.parse(localReorderOp.payload);
-    await this.conflictService.recordConflict({
-      storyId: this.storyId!,
-      entityType: update.entity,
-      entityId,
-      reason: 'concurrent_edit',
-      localOperationType: 'reorder',
-      localOperationIds: [localReorderOp.id],
-      localValues: { reorderItems: localPayload.reorderItems ?? [] },
-      serverValues: {
-        reorderItems: update.reorderItems,
-        reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
-      },
-      clientVersion: this.deriveBaseVersion(localPayload) ?? null,
-      serverVersion: update.version ?? null,
-      message: `Server and local changes overlap on ordering ${update.entity} ${entityId}.`,
-    });
-    return { conflicted: true };
-  }
-
-  /**
-   * Reescreve a base das operações locais pendentes para a versão que a entidade tem
-   * agora, encadeando-as (a primeira apoia na versão nova, a segunda na seguinte, e assim
-   * por diante) para que o servidor as aceite em sequência.
-   */
-  private async rebasePendingOperations(
-    pendingLocalOps: OperationLogSelect[],
-    newEntityVersion?: number,
-  ): Promise<void> {
-    if (typeof newEntityVersion !== 'number') {
-      return;
-    }
-
-    let base = newEntityVersion;
-    for (const op of pendingLocalOps) {
-      const payload = JSON.parse(op.payload);
-      // O motor deriva a base como `payload.version - 1`, então gravamos base + 1.
-      payload.version = base + 1;
-      await this._db!.update(schema.operationLogs)
-        .set({ payload: JSON.stringify(payload) })
-        .where(eq(schema.operationLogs.id, op.id));
-      base += 1;
-    }
-  }
-
-  /**
-   * Processa a resposta do push: marca como sincronizadas só as operações que o servidor
-   * aceitou e transforma as recusadas em conflitos pendentes.
-   *
-   * Antes, qualquer resposta 2xx marcava *todas* as operações como sincronizadas, então uma
-   * operação recusada era descartada em silêncio - a edição do usuário simplesmente
-   * desaparecia.
-   */
-  private async applyPushResult(
-    result: SyncPushResult,
-    pushedOperations: OperationLogSelect[],
-    options: { silent?: boolean } = {},
-  ): Promise<{ applied: number; conflicts: number }> {
-    const { showNotification } = useNotificationStore.getState();
-
-    if (!Array.isArray(result?.applied) && !Array.isArray(result?.conflicts)) {
-      // Servidor anterior a esta mudança: não há resultado por operação para inspecionar.
-      // Mantemos o comportamento antigo em vez de deixar de sincronizar com ele.
-      console.log(
-        'SyncEngineService: server did not report per-operation results, assuming the whole batch was applied.',
-      );
-      for (const op of pushedOperations) {
-        await this._db!.update(schema.operationLogs)
-          .set({ isSynced: true, serverOperationVersion: result?.serverMaxOperationVersion || 0 })
-          .where(eq(schema.operationLogs.id, op.id));
-      }
-      entityEventEmitter.emit('operation_log_updated', this.storyId);
-      return { applied: pushedOperations.length, conflicts: 0 };
-    }
-
-    for (const entry of result.applied || []) {
-      if (!entry.clientOperationId) {
-        continue;
-      }
-      await this._db!.update(schema.operationLogs)
-        .set({ isSynced: true, serverOperationVersion: entry.operationVersion })
-        .where(eq(schema.operationLogs.id, entry.clientOperationId));
-    }
-
-    // Conflitos vêm por operação, mas a decisão é por entidade: cinco edições recusadas no
-    // mesmo capítulo são uma escolha do usuário, não cinco.
-    const conflictsByEntity = new Map<string, SharedSyncConflict[]>();
-    for (const conflict of result.conflicts || []) {
-      const key = this.entityKey(conflict.entity, conflict.entityId);
-      const bucket = conflictsByEntity.get(key);
-      if (bucket) {
-        bucket.push(conflict);
-      } else {
-        conflictsByEntity.set(key, [conflict]);
-      }
-    }
-
-    let autoMergedCount = 0;
-    for (const [key, group] of conflictsByEntity) {
-      const first = group[0];
-      // Todas as operações locais daquela entidade entram no conflito, e não só a que o
-      // servidor citou: as seguintes se apoiavam na base recusada.
-      const relatedOps = pushedOperations.filter(
-        (op) => this.entityKey(op.entityType, op.entityId) === key,
-      );
-      const localOperationType = relatedOps.some((op) => op.operationType === 'delete')
-        ? 'delete'
-        : relatedOps.some((op) => op.operationType === 'create')
-          ? 'create'
-          : 'update';
-      const localValues =
-        relatedOps.length > 0
-          ? mergeLocalOperationPayloads(relatedOps)
-          : first.attemptedChanges || {};
-
-      // `version_conflict` só diz que a base lida ficou velha, não que os dois lados
-      // mudaram os mesmos campos - `checkVersionConflict` no servidor compara só o número
-      // da versão (ver `BaseSyncEntityHandler.ts`). Se nenhum campo realmente disputa,
-      // mesclar em silêncio e reapoiar a operação pendente é o mesmo que `reconcileRemoteUpdate`
-      // já faz no caminho de pull; sem isto, editar campos diferentes do mesmo personagem em
-      // dois lugares sempre virava uma decisão do usuário, mesmo sem nada pra decidir. Restrito
-      // a `update` com a entidade ainda viva no servidor - uma entidade excluída chega com
-      // `reason: 'deleted_on_server'`, nunca `'version_conflict'` (checado antes, na própria
-      // `BaseSyncEntityHandler.update()`), então isto nunca mescla por cima de uma exclusão.
-      //
-      // Importante: `contestedFields` aqui NÃO pode vir de `findContestedFields(localValues,
-      // first.serverEntity)` como no caminho de pull. Lá `remoteValues` é só o delta de UMA
-      // operação remota específica, então comparar contra `localValues` responde "o servidor
-      // mudou este campo também?" corretamente. Aqui `first.serverEntity` é a linha inteira
-      // atual - o valor de um campo que o próprio cliente está editando sempre "parece"
-      // diferente do valor novo, tenha o servidor mexido nele ou não, o que faria todo campo
-      // editado parecer disputado. `first.changedFields` (populado pelo servidor a partir do
-      // seu próprio histórico de operações - ver `SyncService.getChangedFieldsSinceVersion`)
-      // é o delta de verdade: os campos que mudaram *desde a versão que o cliente leu*. Sem
-      // ele (servidor antigo, resposta sem esse campo), não há como provar que não há
-      // disputa real - o seguro é não mesclar, e deixar como conflito de sempre.
-      if (
-        first.reason === 'version_conflict' &&
-        localOperationType === 'update' &&
-        first.serverEntity &&
-        first.changedFields
-      ) {
-        // Um campo só é genuinamente disputado se (a) alguém mais mexeu nele desde a base do
-        // cliente E (b) o valor que o cliente quer escrever realmente diverge do que está lá
-        // agora - a segunda parte é o que faltava: pegar "changedFields" sozinho reconflita
-        // sempre que o valor final coincide por acaso (ex.: os dois lados renomearam pra o
-        // mesmo texto), mesmo não havendo nada de fato pra decidir. `findContestedFields` já
-        // faz a comparação de valor tolerante que o resto do sistema usa.
-        const contestedFields = findContestedFields(localValues, first.serverEntity).filter(
-          (field) => first.changedFields!.includes(field),
-        );
-        if (contestedFields.length === 0) {
-          const mergeableValues: Record<string, any> = {};
-          for (const [field, value] of Object.entries(first.serverEntity)) {
-            if (!contestedFields.includes(field)) {
-              mergeableValues[field] = value;
-            }
-          }
-          const table = getEntityTable(first.entity);
-          if (table) {
-            const columns = toEntityColumns(first.entity, mergeableValues);
-            if (Object.keys(columns).length > 0) {
-              await this._db!.update(table)
-                .set(columns)
-                .where(eq((table as any).id, first.entityId));
-            }
-          }
-          await this.rebasePendingOperations(relatedOps, first.serverVersion);
-          autoMergedCount++;
-          continue;
-        }
-      }
-
-      await this.conflictService.recordConflict({
-        storyId: this.storyId!,
-        entityType: first.entity,
-        entityId: first.entityId,
-        reason: first.reason,
-        localOperationType,
-        localOperationIds: relatedOps.map((op) => op.id),
-        localValues,
-        serverValues: first.serverEntity ?? null,
-        clientVersion: first.clientVersion ?? null,
-        serverVersion: first.serverVersion ?? null,
-        message: group.map((conflict) => conflict.message).join(' | '),
-      });
-    }
-
-    entityEventEmitter.emit('operation_log_updated', this.storyId);
-
-    const appliedCount = (result.applied || []).length;
-    const realConflictCount = conflictsByEntity.size - autoMergedCount;
-    if (appliedCount > 0) {
-      console.log(`Successfully pushed ${appliedCount} operations for story ${this.storyId}.`);
-      if (!options.silent) {
-        showNotification(i18n.t('sync_pushed_updates', { count: appliedCount }), 'success');
-      }
-    }
-    if (realConflictCount > 0 && !options.silent) {
-      showNotification(i18n.t('sync_conflicts_detected', { count: realConflictCount }), 'warning');
-    }
-    return { applied: appliedCount, conflicts: realConflictCount };
   }
 }

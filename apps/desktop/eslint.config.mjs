@@ -4,8 +4,8 @@ import tsParser from '@typescript-eslint/parser';
 export default [
   { ignores: ['node_modules/', 'dist-electron/', 'release/', 'coverage/'] },
   {
-    // `test/` e a config do Vitest também são TypeScript: sem eles aqui, o parser padrão do
-    // ESLint (espree) tenta ler anotações de tipo e falha com "Unexpected token :".
+    // `test/` and the Vitest config are TypeScript too: without them here, ESLint's default parser
+    // (espree) tries to read type annotations and fails with "Unexpected token :".
     files: ['src/**/*.ts', 'test/**/*.ts', 'vitest.config.ts'],
     languageOptions: {
       parser: tsParser,
@@ -15,6 +15,23 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
+      /**
+       * Type imports written as such. Without this, a type imported as a value keeps the whole
+       * module in the runtime graph - that is how ten client components dragged drizzle and
+       * expo-sqlite along just to draw a card. It is also what `verbatimModuleSyntax` enforces at
+       * the compiler level.
+       */
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        // `disallowTypeAnnotations` turned off: `typeof import('...')` inside an annotation loads no
+        // module at all, and it is what allows typing a module that is deliberately imported late
+        // (see the S3BlobStorage test, which only imports after setting up the environment).
+        {
+          prefer: 'type-imports',
+          fixStyle: 'separate-type-imports',
+          disallowTypeAnnotations: false,
+        },
+      ],
     },
   },
 ];

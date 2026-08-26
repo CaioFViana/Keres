@@ -1,13 +1,13 @@
 /**
- * Tipos de entidade que podem receber atributos customizados via Story Schemas - as entidades
- * com Form + Detail screen dedicadas, excluindo tabelas de relação/junção (CharacterRelation,
- * TagRelation, NoteRelation, CharacterScene, GalleryRelation, LocationRelation), Choice/Gallery (forms
- * estruturalmente diferentes) e a própria Story.
+ * Entity types that can receive custom attributes via Story Schemas - the entities with dedicated
+ * Form + Detail screens, excluding relation/junction tables (CharacterRelation, TagRelation,
+ * NoteRelation, CharacterScene, GalleryRelation, LocationRelation), Choice/Gallery (structurally
+ * different forms) and Story itself.
  *
- * Um array de constantes em vez de um enum para ficar trivial adicionar um tipo novo depois
- * (uma linha), sem precisar tocar em nenhum outro lugar que dependa da forma do enum. A lista
- * tambÃ©m define os alvos possÃ­veis de atributos do tipo Entidade; todo tipo adicionado aqui
- * precisa ter uma rota em `ENTITY_ROUTES` no client.
+ * An array of constants rather than an enum so that adding a new type later is trivial (one line),
+ * without having to touch anywhere else that depends on the enum's shape. The list also defines the
+ * possible targets of Entity-typed attributes; every type added here needs a route in
+ * `ENTITY_ROUTES` in the client.
  */
 export const STORY_SCHEMA_ENTITY_TYPES = [
   'Character',

@@ -6,11 +6,10 @@ import {
 } from '../../api/ShowcaseSettingsApiService';
 
 /**
- * A chave do site público deste servidor.
+ * Controls for the pages hosted on the API's own origin.
  *
- * Desligado (o padrão), `/` volta a redirecionar para a documentação, as rotas `/public/*`
- * respondem 404 e publicar é recusado. Nada é apagado: religar traz de volta exatamente o que
- * já estava publicado.
+ * The showcase starts off, while the hosted client starts on. Turning either off deletes no data:
+ * turning it back on restores whatever was already published, or the client at `/`.
  */
 export function ShowcaseSettingsCard() {
   const { t } = useTranslation('admin');
@@ -27,12 +26,14 @@ export function ShowcaseSettingsCard() {
       );
   }, []);
 
-  const toggle = async (isShowcaseEnabled: boolean) => {
+  const toggle = async (
+    patch: Partial<Pick<ShowcaseSettings, 'isShowcaseEnabled' | 'isHostedClientEnabled'>>,
+  ) => {
     setSaving(true);
     setError(null);
     setMessage(null);
     try {
-      setSettings(await ShowcaseSettingsApiService.update({ isShowcaseEnabled }));
+      setSettings(await ShowcaseSettingsApiService.update(patch));
       setMessage(t('settings.saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.saveFailed'));
@@ -49,15 +50,26 @@ export function ShowcaseSettingsCard() {
       {!settings && !error && <p className="loading-text">{t('common.loading')}</p>}
 
       {settings && (
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={settings.isShowcaseEnabled}
-            disabled={saving}
-            onChange={(e) => void toggle(e.target.checked)}
-          />
-          {t('showcaseSettings.enabled')}
-        </label>
+        <>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={settings.isShowcaseEnabled}
+              disabled={saving}
+              onChange={(e) => void toggle({ isShowcaseEnabled: e.target.checked })}
+            />
+            {t('showcaseSettings.enabled')}
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={settings.isHostedClientEnabled}
+              disabled={saving}
+              onChange={(e) => void toggle({ isHostedClientEnabled: e.target.checked })}
+            />
+            {t('showcaseSettings.hostedClientEnabled')}
+          </label>
+        </>
       )}
 
       {error && <p className="error-text">{error}</p>}

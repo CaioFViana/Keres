@@ -8,7 +8,7 @@ export const effects = table('effects', {
   storyId: text('story_id')
     .notNull()
     .references(() => stories.id),
-  // Polimórfico (Scene/Choice) - sem FK de banco, mesmo padrão de comments.entityType/entityId.
+  // Polymorphic (Scene/Choice) - no database FK, the same pattern as comments.entityType/entityId.
   entityType: text('entity_type', { enum: ['Scene', 'Choice'] }).notNull(),
   entityId: text('entity_id').notNull(),
   effectType: text('effect_type', {

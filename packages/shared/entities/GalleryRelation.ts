@@ -1,10 +1,10 @@
 import type { GalleryOwnerEntity } from '../schemas/GallerySchemas';
 
 /**
- * Vínculo entre uma mídia e uma entidade da história.
+ * A link between a media file and an entity of the story.
  *
- * A relação é N:N nos dois sentidos: uma entidade pode ter várias mídias e a mesma mídia
- * pode aparecer em várias entidades.
+ * The relation is N:N both ways: an entity can have several media files and the same media file
+ * can appear on several entities.
  */
 export interface GalleryRelation {
   id: string;

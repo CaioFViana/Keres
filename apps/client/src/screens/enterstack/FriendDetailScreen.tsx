@@ -5,18 +5,20 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schemas/servers';
+import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
-import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
+import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
+import type { FriendshipWithServer } from '../../services/FriendshipService';
+import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
@@ -159,7 +161,6 @@ const FriendDetailScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     avatarContainer: { alignItems: 'center', marginBottom: 15 },
     username: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', color: colors.text },
     statusBadge: {
@@ -209,7 +210,7 @@ const FriendDetailScreen = () => {
   return (
     <ScrollView
       style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
       <View style={styles.avatarContainer}>
         <Avatar

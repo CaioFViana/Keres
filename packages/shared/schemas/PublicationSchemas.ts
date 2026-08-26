@@ -27,9 +27,10 @@ export const StoryPublicationSchema = z.object({
 });
 
 /**
- * O que o dono manda ao publicar. `operationVersion` é o `lastOperationLog` local: o servidor
- * compara com o dele e recusa (409) se não baterem, porque publicar uma história que ainda tem
- * mudança local pendente geraria um pacote que não corresponde a nada que exista dos dois lados.
+ * What the owner sends when publishing. `operationVersion` is the local `lastOperationLog`: the
+ * server compares it with its own and refuses (409) if they do not match, because publishing a story
+ * that still has a pending local change would produce a package matching nothing that exists on
+ * either side.
  */
 export const CreatePublicationRequestSchema = z.object({
   operationVersion: z.number().int().nonnegative(),
@@ -39,7 +40,7 @@ export const CreatePublicationRequestSchema = z.object({
 export const UpdateShowcaseVisibilityRequestSchema = z
   .object({
     visibility: ShowcaseVisibilitySchema,
-    /** Obrigatória ao mudar para `password`; ignorada em `public`. */
+    /** Required when switching to `password`; ignored for `public`. */
     password: z.string().min(4).max(200).optional(),
   })
   .refine((data) => data.visibility === 'public' || !!data.password, {
@@ -102,13 +103,13 @@ function formatDatePart(publishedAt: Date): string {
 }
 
 /**
- * Monta o nome de uma versão no estilo que o dono escolheu.
+ * Builds a version's name in the style the owner chose.
  *
- * `version` e `both` carregam `operationVersion`, que é monotônico por história - não colidem.
- * `date` colide de verdade (duas publicações no mesmo dia), e aí ganha sufixo: `2026-08-19`,
- * depois `2026-08-19-02`, `-03`... O sufixo sai de `existingLabels` em vez de uma consulta,
- * para esta função continuar pura e o servidor poder chamá-la dentro da transação que já
- * segurou as labels existentes daquela história.
+ * `version` and `both` carry `operationVersion`, which is monotonic per story - they do not collide.
+ * `date` genuinely collides (two publications on the same day), and then it gets a suffix:
+ * `2026-08-19`, then `2026-08-19-02`, `-03`... The suffix comes from `existingLabels` rather than a
+ * query, so this function stays pure and the server can call it inside the transaction that already
+ * holds that story's existing labels.
  */
 export function buildPublicationLabel(
   mode: z.infer<typeof PublicationLabelModeSchema>,
@@ -128,7 +129,7 @@ export function buildPublicationLabel(
   if (!taken.has(base)) {
     return base;
   }
-  // Começa em 02: a primeira do dia é a que já está lá, sem sufixo.
+  // It starts at 02: the day's first one is the one already there, with no suffix.
   for (let suffix = 2; suffix < 1000; suffix++) {
     const candidate = `${base}-${String(suffix).padStart(2, '0')}`;
     if (!taken.has(candidate)) {

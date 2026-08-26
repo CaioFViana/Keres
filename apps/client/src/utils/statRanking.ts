@@ -4,16 +4,16 @@ import {
   tierOf,
   type StatNotation,
   type StatTier,
-} from './statLadder';
+} from '@keres/shared/graphs/statLadder';
 import { resolveStatValue, type StatValueIndex } from './statValues';
 
 /**
- * A tier list: todo mundo da história ordenado por um status.
+ * The tier list: everybody in the story sorted by one stat.
  *
- * Cada personagem entra pelo modo normal, e cada modo entra como uma linha própria - foi o que
- * você pediu, e é o que permite comparar "Ilda" com "Ilda · Na tempestade" lado a lado. Na
- * notação de letras as linhas saem agrupadas por degrau, que é o que faz disso uma tier list e
- * não só uma lista ordenada.
+ * Each character enters through the normal mode, and each mode enters as a row of its own - that is what
+ * you asked for, and it is what allows comparing "Ilda" with "Ilda · In the storm" side by side. In
+ * letter notation the rows come out grouped by tier, which is what makes this a tier list and
+ * not just a sorted list.
  */
 
 export interface RankingCharacter {
@@ -28,24 +28,24 @@ export interface RankingMode {
 }
 
 export interface RankingEntry {
-  /** Identidade estável da linha, para `key` de lista. */
+  /** A stable identity for the row, for a list `key`. */
   key: string;
   characterId: string;
   modeId: string | null;
   label: string;
   value: number | null;
-  /** O valor veio do modo normal porque este modo não tem um próprio. */
+  /** The value came from the normal mode because this mode does not have one of its own. */
   inherited: boolean;
-  /** Tier e número juntos, para quando a linha aparece fora de um grupo de tier. */
+  /** The tier and the number together, for when the row appears outside a tier group. */
   display: string;
-  /** Só o número, para quando o cabeçalho do grupo já diz o tier. */
+  /** The number only, for when the group's header already gives the tier. */
   valueDisplay: string;
 }
 
 export interface RankingGroup {
-  /** Índice do degrau, ou `'none'` para o grupo de quem não tem valor. */
+  /** The tier's index, or `'none'` for the group of those with no value. */
   key: string;
-  /** Rótulo do degrau; `null` no modo numérico, que não agrupa. */
+  /** The tier's label; `null` in numeric mode, which does not group. */
   label: string | null;
   entries: RankingEntry[];
 }
@@ -58,7 +58,7 @@ export interface StatRankingInput {
   ladder: readonly StatTier[];
   notation: StatNotation;
   direction: 'asc' | 'desc';
-  /** Esconde as linhas de modo que apenas repetem o valor do modo normal. */
+  /** It hides the mode rows that merely repeat the normal mode's value. */
   hideInherited?: boolean;
 }
 
@@ -85,7 +85,7 @@ export function buildStatRanking(input: StatRankingInput): RankingGroup[] {
   }
   for (const mode of modes) {
     const owner = characterById.get(mode.characterId);
-    if (!owner) continue; // Modo de um personagem que não está na lista (apagado, por exemplo).
+    if (!owner) continue; // A mode of a character that is not on the list (deleted, for instance).
     const resolved = resolveStatValue(values, mode.characterId, mode.id, statId);
     if (input.hideInherited && resolved.inherited) continue;
     entries.push({
@@ -111,7 +111,7 @@ export function buildStatRanking(input: StatRankingInput): RankingGroup[] {
 
   const groups: RankingGroup[] = [];
   if (notation === 'letter' && ladder.length > 0) {
-    // Um grupo por degrau, na mesma ordem da lista - do topo para a base quando decrescente.
+    // One group per tier, in the same order as the list - from the top down when descending.
     const byTier = new Map<number, RankingEntry[]>();
     for (const entry of rated) {
       const index = tierOf(entry.value as number, ladder)?.index ?? 0;

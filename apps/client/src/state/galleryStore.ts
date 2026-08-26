@@ -1,15 +1,15 @@
-import { MediaType } from '@keres/shared';
-import { GallerySelect } from '../db/schemas/galleries';
-import { createGalleryService, GalleryService } from '../services/storymanagement/GalleryService';
+import type { MediaType } from '@keres/shared';
+import type { GallerySelect } from '../db/schemas/galleries';
+import type { GalleryService } from '../services/storymanagement/GalleryService';
+import { createGalleryService } from '../services/storymanagement/GalleryService';
 import { createEntityStore } from './createEntityStore';
 
 export type { FavoriteFilterState } from '../types/entityFilters';
 
 /**
- * A galeria não filtra por etiquetas, então o slot genérico `activeFilterTags` da fábrica
- * de stores carrega aqui os tipos de mídia selecionados ('image' | 'video' | 'audio').
- * Reaproveitar o slot é o que permite usar `useEntityListScreen` e a barra de filtros
- * compartilhada sem um caminho paralelo só para esta tela.
+ * The gallery does not filter by tags, so the store factory's generic `activeFilterTags` slot carries
+ * the selected media types here ('image' | 'video' | 'audio'). Reusing the slot is what allows using
+ * `useEntityListScreen` and the shared filter bar without a parallel path just for this screen.
  */
 export const useGalleryStore = createEntityStore<'galleries', GallerySelect, GalleryService>({
   collectionKey: 'galleries',

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import { CommentSelect } from '../../../../db/schema';
+import type { CommentSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
 
@@ -28,10 +28,10 @@ interface CommentableDetailFieldProps {
 }
 
 /**
- * Drop-in para `<DetailField>` que adiciona um ícone de comentário (com contador) ao lado do
- * campo, abrindo `CommentThreadModal` para ver/adicionar comentários daquele campo específico.
- * Some campos não interessam a ninguém comentar e ninguém pode adicionar um comentário -
- * nesse caso não vale a pena mostrar o botão à toa, então cai de volta a um `DetailField` puro.
+ * A drop-in for `<DetailField>` that adds a comment icon (with a counter) beside the
+ * field, opening `CommentThreadModal` to see/add comments on that specific field.
+ * Some fields interest nobody enough to comment on and nobody can add a comment -
+ * in that case showing the button for nothing is not worth it, so it falls back to a plain `DetailField`.
  */
 const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   storyId,

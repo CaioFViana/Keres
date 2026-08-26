@@ -9,26 +9,31 @@ interface ReorderModalProps<T> {
   isVisible: boolean;
   onClose: () => void;
   title: string;
-  /** Já ordenado pelo chamador; a lista interna resincroniza sempre que `items` ou `isVisible`
-   * mudam, então reabrir o modal sempre parte da ordem atual, não da última rascunhada. */
+  /**
+   * Already sorted by the caller; the internal list resyncs whenever `items` or `isVisible` change, so
+   * reopening the modal always starts from the current order, not from the last draft.
+   */
   items: T[];
   getId: (item: T) => string;
   getLabel: (item: T) => string;
-  /** O chamador decide como mapear a lista reordenada pro formato que seu serviço espera
-   * (`{id, newIndex}`, `{id, order}`, etc.) - o modal só entrega a ordem final. */
+  /**
+   * The caller decides how to map the reordered list into the format its service expects
+   * (`{id, newIndex}`, `{id, order}`, etc.) - the modal only hands over the final order.
+   */
   onReorderConfirm: (reordered: T[]) => Promise<void>;
-  /** Slot pra controles extras entre o header e a lista, ex.: o seletor de capítulo do
-   * SceneReorderModal. */
+  /**
+   * A slot for extra controls between the header and the list, e.g. SceneReorderModal's chapter picker.
+   */
   headerExtra?: React.ReactNode;
   emptyListComponent?: React.ReactElement | null;
   confirmDisabled?: boolean;
 }
 
 /**
- * `ChapterReorderModal`, `SceneReorderModal` e `StorySchemaFieldReorderModal` reimplementavam,
- * cada um, a mesma modal (overlay, header, `FlatList` com setas pra cima/baixo, botões
- * confirmar/cancelar) - só o tipo da entidade mudava. Aqui genérico em `T`; cada chamador só
- * fornece como identificar/rotular um item e o que fazer com a ordem final.
+ * `ChapterReorderModal`, `SceneReorderModal` and `StorySchemaFieldReorderModal` each reimplemented the
+ * same modal (overlay, header, `FlatList` with up/down arrows, confirm/cancel buttons) - only the
+ * entity's type differed. Here it is generic in `T`; each caller only supplies how to identify/label an
+ * item and what to do with the final order.
  */
 function ReorderModal<T>({
   isVisible,

@@ -46,17 +46,17 @@ export interface DeletedItemsFilters {
 
 export const RecoveryApiService = {
   async listDeleted(filters: DeletedItemsFilters): Promise<DeletedItem[]> {
-    const { data } = await apiClient.get('/admin/api/recovery/deleted', { params: filters });
+    const { data } = await apiClient.get('/admin/recovery/deleted', { params: filters });
     return data;
   },
   async restore(entityType: string, id: string): Promise<unknown> {
     const safeType = assertSafePathSegment(entityType, 'entityType');
     const safeId = assertSafePathSegment(id);
-    const { data } = await apiClient.post(`/admin/api/recovery/${safeType}/${safeId}/restore`);
+    const { data } = await apiClient.post(`/admin/recovery/${safeType}/${safeId}/restore`);
     return data;
   },
   async browseOperationLog(filters: OperationLogFilters): Promise<Paginated<OperationLogEntry>> {
-    const { data } = await apiClient.get('/admin/api/recovery/operation-log', { params: filters });
+    const { data } = await apiClient.get('/admin/recovery/operation-log', { params: filters });
     return data;
   },
 };

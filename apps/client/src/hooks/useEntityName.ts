@@ -1,4 +1,4 @@
-import { OperationLogEntityType } from '@keres/shared';
+import type { OperationLogEntityType } from '@keres/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';

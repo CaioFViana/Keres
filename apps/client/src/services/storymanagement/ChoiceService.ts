@@ -1,9 +1,12 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { ChoiceInsert, choices, ChoiceSelect } from '../../db/schemas/choices';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
+import { choices } from '../../db/schemas/choices';
 import { scenes } from '../../db/schemas/scenes';
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { Create } from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
@@ -82,9 +85,9 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
           conditions.push(eq(choices.nextSceneId, nextSceneId) as SQL<boolean>);
         }
 
-        // `entityFieldMetadata` não descreve Choice (só as entidades com busca avançada na
-        // tela). Sem o `?? []` qualquer critério não reconhecido derrubava a consulta inteira
-        // com "cannot read property 'find' of undefined", em vez de ser simplesmente ignorado.
+        // `entityFieldMetadata` does not describe Choice (only the entities with advanced search on screen).
+        // Without the `?? []` any unrecognised criterion took the whole query down with "cannot read property
+        // 'find' of undefined", instead of simply being ignored.
         const choiceMetadata = entityFieldMetadata['Choice'] ?? [];
         for (const key in otherCriteria) {
           if (Object.prototype.hasOwnProperty.call(otherCriteria, key)) {
@@ -92,7 +95,11 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
             const fieldMeta = choiceMetadata.find((meta) => meta.name === key);
 
             if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
+              if (key === 'choiceSearch') {
+                conditions.push(
+                  sql`(${choices.text} LIKE ${`%${value}%`} COLLATE NOCASE OR ${choices.notes} LIKE ${`%${value}%`} COLLATE NOCASE)` as SQL<boolean>,
+                );
+              } else if (fieldMeta.type === 'string') {
                 conditions.push(
                   sql`${choices[key as keyof ChoiceSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
                 );

@@ -1,8 +1,5 @@
-import {
-  DrawerContentComponentProps,
-  DrawerContentScrollView,
-  DrawerItemList,
-} from '@react-navigation/drawer';
+import type { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -75,10 +72,15 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     },
     content: {
       flexGrow: 1,
+      // SafeAreaWrapper already reserves the window's insets for the whole application. The
+      // DrawerContentScrollView would add those same insets again, leaving the menu's first item further from
+      // the top than the last one is from the bottom.
+      paddingBottom: 12,
+      paddingTop: 12,
     },
     scrollView: {
-      // A alça é sobreposta à borda direita do drawer. Reservar a mesma largura para o
-      // ScrollView mantém sua barra de rolagem visível, ao lado da alça, em vez de atrás dela.
+      // The handle overlaps the drawer's right edge. Reserving the same width for the ScrollView keeps its
+      // scrollbar visible, beside the handle, rather than behind it.
       marginRight: resizable ? 10 : 0,
     },
     resizeHandle: {

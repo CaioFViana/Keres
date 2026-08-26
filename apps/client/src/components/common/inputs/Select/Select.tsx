@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DropDownPicker, { ItemType, ValueType } from 'react-native-dropdown-picker'; // Import ItemType and ValueType
+import type { ItemType, ValueType } from 'react-native-dropdown-picker';
+import DropDownPicker from 'react-native-dropdown-picker'; // Import ItemType and ValueType
 import { useTheme } from '../../../../theme';
 
 interface SelectOption {
   label: string;
   value: string;
-  /** Cor opcional exibida como marcador na lista e na badge de seleção. */
+  /** An optional colour shown as a marker in the list and in the selection badge. */
   color?: string | null;
 }
 

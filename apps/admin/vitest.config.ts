@@ -1,9 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import { keresAvatarIcons, keresLogo } from './vite.keresIcon';
+import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
-  // A marca do site é um módulo virtual gerado no build (vite.keresIcon.ts). Sem o plugin
-  // aqui, qualquer teste que renderize o layout do site falha ao resolver o import.
+  // The site's wordmark is a virtual module generated at build time (vite.keresIcon.ts). Without
+  // the plugin here, any test that renders the site's layout fails to resolve the import.
   plugins: [keresLogo(), keresAvatarIcons()],
   test: {
     environment: 'jsdom',
@@ -13,9 +14,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
-      // Baixo porque as 5 páginas React ficaram fora de escopo; o que está coberto é a
-      // camada de API. Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 70, functions: 53, branches: 47 },
+      // Low because the 5 React pages were left out of scope; what is covered is the API layer. A
+      // floor, not a target - see the ratchet rule in TESTING_PLAN.md.
+      thresholds: coverageThresholds.admin,
     },
   },
 });

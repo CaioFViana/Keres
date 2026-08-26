@@ -1,8 +1,11 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { ChapterInsert, chapters, ChapterSelect, stories } from '../../db/schema';
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import type { ChapterInsert, ChapterSelect } from '../../db/schema';
+import { chapters, stories } from '../../db/schema';
+import type { Create } from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
@@ -80,8 +83,8 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       }
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Chapter não está descrito em `entityFieldMetadata`; sem o `?? []` um critério
-        // desconhecido derruba a consulta em vez de ser ignorado.
+        // Chapter is not described in `entityFieldMetadata`; without the `?? []` an unknown criterion takes the
+        // query down instead of being ignored.
         const chapterMetadata = entityFieldMetadata['Chapter'] ?? [];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {

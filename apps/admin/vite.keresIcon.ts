@@ -5,16 +5,16 @@ import pngToIco from 'png-to-ico';
 import type { Plugin } from 'vite';
 
 /**
- * O ícone do Keres, para os dois apps web deste projeto.
+ * The Keres icon, for both web apps in this project.
  *
- * A fonte é uma só - `apps/client/assets/images/desktop_icon.png`, a mesma que o
- * electron-builder converte para o ícone do app de desktop. Nada é copiado para dentro de
- * `apps/admin`: o painel já gerava o `favicon.ico` a partir dela em tempo de build, e o site
- * público faz o mesmo, mais uma versão reduzida para a marca no cabeçalho e no rodapé.
+ * There is a single source - `apps/client/assets/images/desktop_icon.png`, the same one
+ * electron-builder converts into the desktop app's icon. Nothing is copied into `apps/admin`: the
+ * panel already generated its `favicon.ico` from it at build time, and the public site does the
+ * same, plus a scaled-down version for the wordmark in the header and the footer.
  *
- * Gerar em vez de versionar uma cópia mantém uma única verdade: trocar o desenho do ícone no
- * cliente atualiza favicon e marca do site no próximo build, sem ninguém precisar lembrar de
- * regerar arquivo nenhum.
+ * Generating instead of committing a copy keeps one truth: changing the icon artwork in the
+ * client updates the site's favicon and wordmark on the next build, with nobody having to
+ * remember to regenerate any file.
  */
 
 const adminDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -29,13 +29,13 @@ export const KERES_ICON_SOURCE = path.resolve(
 );
 
 /**
- * Lado da marca usada nas páginas. O original tem 1024px e quase 900 KB - peso que não se
- * justifica para um logo desenhado a 28px no cabeçalho. 128px cobre telas de alta densidade
- * (4x no cabeçalho, quase 6x no rodapé) por uma fração dos bytes.
+ * Side of the wordmark used on the pages. The original is 1024px and almost 900 KB - weight that
+ * does not pay off for a logo drawn at 28px in the header. 128px covers high-density screens (4x
+ * in the header, almost 6x in the footer) for a fraction of the bytes.
  */
 const LOGO_SIZE = 128;
 
-/** A lista canônica de ícones de avatar, compartilhada com o app e a API. */
+/** The canonical list of avatar icons, shared with the app and the API. */
 const AVATAR_ICON_NAMES_SOURCE = path.resolve(
   adminDirectory,
   '..',
@@ -47,11 +47,11 @@ const AVATAR_ICON_NAMES_SOURCE = path.resolve(
 );
 
 /**
- * Reduz um PNG quadrado por média de blocos.
+ * Downscales a square PNG by block averaging.
  *
- * A média é feita com alfa pré-multiplicado: sem isso, a cor de pixels totalmente
- * transparentes (que no PNG pode ser qualquer coisa, inclusive preto) entra na conta e deixa
- * uma auréola escura na borda do desenho - bem visível num logo recortado como este.
+ * The average is computed with premultiplied alpha: without that, the colour of fully transparent
+ * pixels (which in a PNG can be anything, black included) enters the sum and leaves a dark halo
+ * around the artwork's edge - very visible on a cut-out logo like this one.
  */
 function downscaleSquarePng(source: Buffer, size: number): Buffer {
   const image = PNG.sync.read(source);
@@ -97,7 +97,8 @@ function downscaleSquarePng(source: Buffer, size: number): Buffer {
         output.data[target + 3] = 0;
         continue;
       }
-      // Desfaz a pré-multiplicação: a cor volta a ser a cor, e o alfa vira a média das amostras.
+      // Undoes the premultiplication: colour goes back to being colour, and alpha becomes the average
+      // of the samples.
       output.data[target] = Math.round(red / alpha);
       output.data[target + 1] = Math.round(green / alpha);
       output.data[target + 2] = Math.round(blue / alpha);
@@ -109,11 +110,11 @@ function downscaleSquarePng(source: Buffer, size: number): Buffer {
 }
 
 /**
- * Constrói um `favicon.ico` multi-tamanho (16/24/32/48/64) a partir do PNG do desktop, a mesma
- * ideia do electron-builder convertendo esse arquivo para .ico.
+ * Builds a multi-size `favicon.ico` (16/24/32/48/64) from the desktop PNG, the same idea as
+ * electron-builder converting that file to .ico.
  *
- * `devUrls` são os caminhos que o servidor de desenvolvimento deve responder - o painel roda
- * sob `/admin/`, o site na raiz, e cada um pede o favicon do seu próprio prefixo.
+ * `devUrls` are the paths the development server has to answer - the panel runs under `/admin/`,
+ * the site at the root, and each asks for the favicon under its own prefix.
  */
 export function keresFavicon(devUrls: string[] = ['/favicon.ico']): Plugin {
   let icoPromise: Promise<Buffer> | null = null;
@@ -146,28 +147,28 @@ export function keresFavicon(devUrls: string[] = ['/favicon.ico']): Plugin {
   };
 }
 
-/** O módulo virtual com os desenhos dos ícones de avatar. */
+/** The virtual module with the avatar icons' artwork. */
 export const KERES_AVATAR_ICONS_MODULE_ID = 'virtual:keres-avatar-icons';
 const RESOLVED_AVATAR_ICONS_MODULE_ID = `\0${KERES_AVATAR_ICONS_MODULE_ID}`;
 
 /**
- * O conteúdo interno dos SVGs do Ionicons, só para os ícones que uma pessoa pode escolher como
- * avatar (`AVATAR_ICON_OPTIONS`).
+ * The inner content of the Ionicons SVGs, only for the icons a person can choose as an avatar
+ * (`AVATAR_ICON_OPTIONS`).
  *
- * Recortado em tempo de build em vez de embarcar a fonte inteira do Ionicons: são 28 desenhos
- * contra 1357 glifos, alguns KB contra ~380 KB. O `<svg>` externo é descartado porque o
- * componente monta o seu próprio, com o tamanho e a cor que precisa.
+ * Cut out at build time instead of shipping the whole Ionicons font: 28 drawings against 1357
+ * glyphs, a few KB against ~380 KB. The outer `<svg>` is discarded because the component builds
+ * its own, with the size and colour it needs.
  */
 async function buildAvatarIconPaths(): Promise<Record<string, string>> {
   const { readFile } = await import('node:fs/promises');
   const { createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
-  // Resolvido pela entrada principal, e não por `ionicons/package.json`: o pacote declara
-  // `exports` e não expõe o package.json como subcaminho. `dist/index.js` -> `dist/svg`.
+  // Resolved through the main entry point rather than `ionicons/package.json`: the package declares
+  // `exports` and does not expose its package.json as a subpath. `dist/index.js` -> `dist/svg`.
   const iconDirectory = path.join(path.dirname(require.resolve('ionicons')), 'svg');
 
-  // Lido do `.json` e não importado de `@keres/shared`: este arquivo roda em Node, que não
-  // carrega os `.ts` daquele pacote (ele é consumido como fonte, por bundlers).
+  // Read from the `.json` rather than imported from `@keres/shared`: this file runs in Node, which
+  // does not load that package's `.ts` files (it is consumed as source, by bundlers).
   const iconNames: string[] = JSON.parse(await readFile(AVATAR_ICON_NAMES_SOURCE, 'utf8'));
 
   const entries = await Promise.all(
@@ -181,11 +182,11 @@ async function buildAvatarIconPaths(): Promise<Record<string, string>> {
 }
 
 /**
- * Publica os ícones de avatar como `virtual:keres-avatar-icons`.
+ * Publishes the avatar icons as `virtual:keres-avatar-icons`.
  *
- * Os SVGs vêm do pacote `ionicons`, que é a mesma fonte de desenhos que o `@expo/vector-icons`
- * do app empacota como fonte - então o avatar no site é o mesmo desenho que a pessoa escolheu
- * no aplicativo, não uma aproximação.
+ * The SVGs come from the `ionicons` package, which is the same source of artwork that the app's
+ * `@expo/vector-icons` bundles as a font - so the avatar on the site is the same drawing the
+ * person picked in the application, not an approximation.
  */
 export function keresAvatarIcons(): Plugin {
   let iconsPromise: Promise<Record<string, string>> | null = null;
@@ -205,17 +206,17 @@ export function keresAvatarIcons(): Plugin {
   };
 }
 
-/** O módulo virtual que as páginas importam para obter a URL da marca. */
+/** The virtual module the pages import to get the wordmark's URL. */
 export const KERES_LOGO_MODULE_ID = 'virtual:keres-logo';
 const RESOLVED_LOGO_MODULE_ID = `\0${KERES_LOGO_MODULE_ID}`;
-/** Caminho servido em desenvolvimento, onde não existe emissão de asset. */
+/** Path served in development, where no asset is emitted. */
 const DEV_LOGO_URL = '/keres-logo.png';
 
 /**
- * Publica a marca reduzida como `virtual:keres-logo`, cujo default é a URL da imagem.
+ * Publishes the scaled-down wordmark as `virtual:keres-logo`, whose default export is the image's URL.
  *
- * Módulo virtual em vez de um arquivo importado direto porque a imagem não existe em disco
- * dentro de `apps/admin` - ela é derivada do ícone do cliente na hora do build.
+ * A virtual module rather than a directly imported file because the image does not exist on disk
+ * inside `apps/admin` - it is derived from the client's icon at build time.
  */
 export function keresLogo(): Plugin {
   let logoPromise: Promise<Buffer> | null = null;
@@ -249,7 +250,7 @@ export function keresLogo(): Plugin {
         name: 'keres-logo.png',
         source: await logo(),
       });
-      // O Vite reescreve isto para a URL final já com o `base` do app aplicado.
+      // Vite rewrites this into the final URL with the app's `base` already applied.
       return `export default import.meta.ROLLUP_FILE_URL_${referenceId};`;
     },
     configureServer(server) {

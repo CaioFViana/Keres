@@ -16,8 +16,8 @@ function isLinkLocal(address: string): boolean {
 }
 
 /**
- * IPv4 desta máquina que um telemóvel na LAN pode usar. Não escolhe “o certo”:
- * Wi‑Fi, cabo e VPN aparecem todos. Sem IPv6, sem 127.0.0.1, sem APIPA.
+ * This machine's IPv4 addresses that a phone on the LAN can use. It does not pick "the right one":
+ * Wi-Fi, cable and VPN all show up. No IPv6, no 127.0.0.1, no APIPA.
  */
 export function listLanIPv4(
   interfaces: NetworkInterfaceSnapshot = os.networkInterfaces(),

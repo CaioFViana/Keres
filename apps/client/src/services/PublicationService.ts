@@ -1,12 +1,12 @@
 import { stories } from '@/src/db/schemas/stories';
-import {
+import type {
   StoryPublicationInsert,
-  storyPublications,
   StoryPublicationSelect,
 } from '@/src/db/schemas/storyPublications';
-import { ServerSelect } from '@/src/db/schemas/servers';
+import { storyPublications } from '@/src/db/schemas/storyPublications';
+import type { ServerSelect } from '@/src/db/schemas/servers';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '../db';
 import { useNotificationStore } from '../state/notificationStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import i18n from '../utils/i18n';
@@ -14,17 +14,17 @@ import { isOfflineError } from './apiClient';
 import { publicationApiService } from './PublicationApiService';
 
 /**
- * O espelho local das versões públicas, e o aviso de que alguma apareceu.
+ * The local mirror of the public versions, and the notice that one has appeared.
  *
- * O desenho é o mesmo de `FriendshipService.performFriendshipSync`, e pelo mesmo motivo: o
- * servidor manda `story.published` pelo WebSocket, mas o barramento dele é em memória e não
- * reenvia nada para quem estava fora do ar. Então o aviso não nasce do evento - nasce da
- * *diferença* entre o que este aparelho já tinha e o que o servidor responde, e o app refaz
- * essa consulta em toda reconexão. Quem ficou uma semana offline recebe o aviso ao voltar.
+ * The design is the same as `FriendshipService.performFriendshipSync`, and for the same reason: the
+ * server sends `story.published` over the WebSocket, but its bus is in memory and does not
+ * redeliver anything to whoever was offline. So the notice is not born from the event - it is born from the
+ * *difference* between what this device already had and what the server answers, and the app redoes
+ * that query on every reconnection. Somebody who spent a week offline gets the notice on coming back.
  */
 
-// Reconexão e evento podem pedir a mesma atualização quase ao mesmo tempo, e o SQLite do Expo
-// não roda duas transações de escrita ao mesmo tempo. Mesma proteção que amizade já usa.
+// A reconnection and an event may ask for the same update at almost the same time, and Expo's SQLite
+// does not run two write transactions at once. The same protection friendship already uses.
 const publicationSyncInFlight = new Map<string, Promise<void>>();
 
 export const createPublicationService = (db: AppDrizzleClient) => new PublicationService(db);
@@ -51,8 +51,8 @@ export class PublicationService {
     sync
       .finally(() => publicationSyncInFlight.delete(server.id))
       .catch(() => {
-        // A promessa original é devolvida a quem chamou, que trata o erro. Este catch existe
-        // só para o encadeamento do finally não virar uma rejeição não tratada.
+        // The original promise is given back to the caller, which handles the error. This catch exists
+        // only so the finally's chaining does not become an unhandled rejection.
       });
     return sync;
   }
@@ -60,7 +60,7 @@ export class PublicationService {
   private async performPublicationSync(server: ServerSelect): Promise<void> {
     let remote: Awaited<ReturnType<typeof publicationApiService.listVisible>>;
     try {
-      // Antes da transação: uma ida à rede dentro dela seguraria o banco pelo caminho todo.
+      // Before the transaction: a network round trip inside it would hold the database for the whole way.
       remote = await publicationApiService.listVisible(server);
     } catch (error) {
       if (isOfflineError(error)) {
@@ -80,16 +80,16 @@ export class PublicationService {
         .all();
       const localById = new Map(local.map((row) => [row.id, row]));
 
-      // Uma versão apagada pelo dono some daqui também - o espelho reflete o servidor.
+      // A version deleted by the owner disappears from here too - the mirror reflects the server.
       const remoteIds = new Set(remote.map((publication) => publication.id));
       const goneIds = local.filter((row) => !remoteIds.has(row.id)).map((row) => row.id);
       if (goneIds.length > 0) {
         await tx.delete(storyPublications).where(inArray(storyPublications.id, goneIds)).run();
       }
 
-      // Primeira sincronização deste servidor: tudo que existe já existia antes deste aparelho
-      // saber que a funcionalidade existe. Gravar como já avisado, senão a pessoa levaria uma
-      // enxurrada de avisos sobre versões antigas.
+      // This server's first synchronization: everything that exists already existed before this device
+      // knew the feature existed. Record it as already notified, otherwise the person would take a
+      // flood of notices about old versions.
       const firstSync = local.length === 0;
 
       for (const publication of remote) {
@@ -114,9 +114,9 @@ export class PublicationService {
 
         if (isNew && !firstSync) {
           const story = stories.get(publication.storyId);
-          // Quem publica é o dono, então avisá-lo do que ele mesmo acabou de fazer é ruído. O
-          // evento continua chegando aos aparelhos dele - é o que mantém esta lista em dia -,
-          // mas o aviso na tela é só para quem lê ou escreve a história de outra pessoa.
+          // The publisher is the owner, so telling them about what they have just done themselves is noise. The
+          // event still reaches their devices - it is what keeps this list up to date -,
+          // but the on-screen notice is only for whoever reads or writes somebody else's story.
           if (story?.myRole !== 'owner') {
             notifications.push(
               i18n.t('story_version_published', {
@@ -134,7 +134,7 @@ export class PublicationService {
       }
     });
 
-    // Fora da transação: mostrar um aviso não pode ser motivo para desfazer a escrita.
+    // Outside the transaction: showing a notice must not be grounds for undoing the write.
     const showNotification = useNotificationStore.getState().showNotification;
     for (const message of notifications) {
       showNotification(message, 'info');
@@ -143,8 +143,8 @@ export class PublicationService {
   }
 
   /**
-   * As histórias citadas, como este aparelho as conhece: o título (para o aviso não dizer só um
-   * id) e o papel da pessoa nelas (para o dono não ser avisado da própria publicação).
+   * The stories mentioned, as this device knows them: the title (so the notice does not say only an
+   * id) and the person's role in them (so the owner is not told about their own publication).
    */
   private async localStories(
     storyIds: string[],

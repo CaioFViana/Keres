@@ -3,13 +3,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
-import { OperationLogSelect } from '../../../../db/schema';
+import type { OperationLogSelect } from '../../../../db/schema';
 import { createOperationLogService } from '../../../../services/OperationLogService';
 import { useTheme } from '../../../../theme';
 import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { FavoriteBehavior } from '@keres/shared';
+import type { FavoriteBehavior } from '@keres/shared';
 
 interface OperationLogListProps {
   storyId: string;

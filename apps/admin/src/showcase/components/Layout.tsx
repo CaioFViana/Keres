@@ -7,8 +7,8 @@ import keresLogoUrl from 'virtual:keres-logo';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 
 /**
- * O ícone do Keres - o mesmo desenho do app de desktop e do favicon, reduzido em tempo de
- * build a partir de `apps/client/assets/images/desktop_icon.png` (ver vite.keresIcon.ts).
+ * The Keres icon - the same artwork as the desktop app and the favicon, scaled down at build time
+ * from `apps/client/assets/images/desktop_icon.png` (see vite.keresIcon.ts).
  */
 function KeresMark({ size = 28 }: { size?: number }) {
   return (
@@ -18,8 +18,8 @@ function KeresMark({ size = 28 }: { size?: number }) {
       height={size}
       alt=""
       className="mark"
-      // Decorativo: o nome "Keres" aparece escrito ao lado em todos os usos, então anunciar a
-      // imagem também só faria o leitor de tela repetir a mesma palavra duas vezes.
+      // Decorative: the name "Keres" appears written next to it in every use, so announcing the image
+      // too would only make the screen reader repeat the same word twice.
       aria-hidden="true"
     />
   );
@@ -28,8 +28,8 @@ function KeresMark({ size = 28 }: { size?: number }) {
 function ThemeToggle() {
   const { preference, cyclePreference } = useShowcaseTheme();
   const { t } = useTranslation('showcase');
-  // O rótulo vem do dicionário, não do provider de tema: só a preferência é estado, o texto
-  // dela muda com o idioma.
+  // The label comes from the dictionary, not from the theme provider: only the preference is state,
+  // its text changes with the language.
   const label = t(`theme.${preference}`);
 
   return (
@@ -43,10 +43,10 @@ function ThemeToggle() {
 }
 
 /**
- * O mesmo cabeçalho e o mesmo rodapé em todas as páginas.
+ * The same header and the same footer on every page.
  *
- * Nada aqui aponta para `/admin`, de propósito: este é o rosto público do servidor, e o painel
- * administrativo não é parte dele nem deve ser anunciado por ele.
+ * Nothing here points at `/admin`, on purpose: this is the server's public face, and the
+ * administration panel is neither part of it nor to be advertised by it.
  */
 export function Layout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('showcase');

@@ -4,9 +4,9 @@ import { galleries, registrationSettings, stories, tiers, users } from '../db/sc
 import { syncService } from './SyncService';
 
 /**
- * Recusa de uma operação por ter estourado o teto do plano do usuário. Cada ponto de
- * chamada decide como traduzir isto para o formato de erro apropriado (SyncConflictError
- * no pipeline de sync, AppError na importação, um 403 simples no upload de mídia).
+ * Refusal of an operation for exceeding the user's plan ceiling. Each call site decides how to
+ * translate this into the appropriate error format (SyncConflictError in the sync pipeline, AppError
+ * on import, a plain 403 on media upload).
  */
 export class TierLimitExceededError extends Error {
   constructor(message: string) {
@@ -18,16 +18,15 @@ export class TierLimitExceededError extends Error {
 type TierRow = typeof tiers.$inferSelect;
 
 /**
- * Servidor é a fonte da verdade dos tetos de plano. As checagens aqui são feitas por
- * contagem simples (`SELECT COUNT ...` seguido de comparação), sem lock nem transação
- * dedicada - existe uma janela de corrida onde duas escritas concorrentes bem no limite
- * podem ambas passar e estourar o teto em 1. Isto é uma escolha deliberada: é um teto de
- * plano, não um limite financeiro/de integridade, e o resto do schema não usa nenhum lock
- * otimista/pessimista para nada parecido. Se o rigor estrito vier a ser
- * necessário, a correção é um `SELECT ... FOR UPDATE` por usuário, não infraestrutura nova.
+ * The server is the source of truth for plan ceilings. The checks here are done by simple counting
+ * (`SELECT COUNT ...` followed by a comparison), with no lock and no dedicated transaction - there is
+ * a race window where two concurrent writes right at the limit can both go through and exceed the
+ * ceiling by 1. That is a deliberate choice: it is a plan ceiling, not a financial/integrity limit,
+ * and the rest of the schema uses no optimistic/pessimistic locking for anything comparable. If strict
+ * rigour ever becomes necessary, the fix is a `SELECT ... FOR UPDATE` per user, not new infrastructure.
  */
 export class TierEnforcementService {
-  /** Tier do usuário; se nenhum, o tier padrão de cadastro; se nenhum, ilimitado (`null`). */
+  /** The user's tier; failing that, the default signup tier; failing that, unlimited (`null`). */
   async getEffectiveTier(userId: string): Promise<TierRow | null> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
@@ -67,7 +66,7 @@ export class TierEnforcementService {
     }
   }
 
-  /** `storyId` é a história em que a entidade está sendo criada; usado para o teto por-história. */
+  /** `storyId` is the story the entity is being created in; used for the per-story ceiling. */
   async assertCanCreateEntity(userId: string, storyId: string): Promise<void> {
     const tier = await this.getEffectiveTier(userId);
     if (!tier || (tier.maxEntitiesPerStory === null && tier.maxEntitiesTotal === null)) {
@@ -75,8 +74,8 @@ export class TierEnforcementService {
     }
 
     const handlers = [...syncService.getEntityHandlers().values()]
-      // Favorite e Comment são metadados/anotações pessoais, não conteúdo da história - não
-      // devem consumir nem ser bloqueados pelo limite de entidades do tier.
+      // Favorite and Comment are personal metadata/annotations, not story content - they must neither
+      // consume nor be blocked by the tier's entity limit.
       .filter(
         (h) =>
           h.entityName !== 'Story' && h.entityName !== 'Favorite' && h.entityName !== 'Comment',
@@ -109,9 +108,9 @@ export class TierEnforcementService {
   }
 
   /**
-   * Soma `galleries.sizeBytes` (não `mediaBlobs.sizeBytes`): o blob é deduplicado
-   * globalmente, então duas histórias referenciando o mesmo hash devem contar os bytes
-   * uma vez para cada uma (é o que elas "usam"), não uma vez só no total do servidor.
+   * It sums `galleries.sizeBytes` (not `mediaBlobs.sizeBytes`): the blob is deduplicated globally, so
+   * two stories referencing the same hash have to count the bytes once each (that is what they "use"),
+   * not once in the server's total.
    */
   async assertCanUploadMedia(
     userId: string,
@@ -124,11 +123,11 @@ export class TierEnforcementService {
     }
 
     if (tier.maxStorageBytesPerStory !== null) {
-      // Sem cast de propósito: um `::int` estouraria ("integer out of range" - o Postgres não
-      // trunca em silêncio) assim que o total de uma história passasse de ~2,1 GB, quebrando
-      // todo upload dela com um 500 opaco. Não é hipotético: o *limite* de um tier é limitado a
-      // isso pelo tipo da coluna, mas o uso real não é. O Postgres devolve `sum` de inteiro
-      // como bigint (string) e o SQLite como número, daí o `Number(...)` servir para os dois.
+      // Deliberately without a cast: an `::int` would overflow ("integer out of range" - Postgres does not
+      // truncate silently) as soon as a story's total went past ~2.1 GB, breaking every upload for it with
+      // an opaque 500. It is not hypothetical: a tier's *limit* is capped at that by the column's type, but
+      // actual usage is not. Postgres returns an integer `sum` as a bigint (a string) and SQLite as a
+      // number, which is why `Number(...)` serves both.
       const [{ used }] = await db
         .select({ used: sql<string | number>`coalesce(sum(${galleries.sizeBytes}), 0)` })
         .from(galleries)

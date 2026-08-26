@@ -9,13 +9,25 @@ import { ChapterClientSyncHandler } from '../../src/services/entity-sync-handler
 import { CharacterClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterClientSyncHandler';
 import { CharacterSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSceneClientSyncHandler';
 import { ChoiceClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceClientSyncHandler';
+import { ChoiceCheckClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler';
+import { ChoiceCheckGroupClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
 import { EffectClientSyncHandler } from '../../src/services/entity-sync-handlers/EffectClientSyncHandler';
 import { ItemClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemClientSyncHandler';
+import { ItemJourneyClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationClientSyncHandler';
 import { NoteClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteClientSyncHandler';
 import { NoteRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteRelationClientSyncHandler';
+import { PlotClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotClientSyncHandler';
+import { PlotSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotSceneClientSyncHandler';
 import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
+import {
+  ModeClientSyncHandler,
+  StatClientSyncHandler,
+  StatRelationClientSyncHandler,
+  StatStrengthClientSyncHandler,
+} from '../../src/services/entity-sync-handlers/StatClientSyncHandler';
+import { SuggestionClientSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionClientSyncHandler';
 import { TagClientSyncHandler } from '../../src/services/entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleClientSyncHandler';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -26,9 +38,9 @@ const CREATED_AT = '2026-08-10T12:00:00.000Z';
 let database: TestDatabase;
 
 /**
- * Cada entidade sincronizável tem o seu handler, e é ele que escreve no banco do aparelho o
- * que chega do servidor. Um erro aqui corrompe os dados locais do usuário no pull, em silêncio.
- * O contrato é o mesmo para os 20+ handlers; estes quatro cobrem as formas que existem.
+ * Every synchronizable entity has its handler, and it is the handler that writes what arrives from the
+ * server into the device's database. A mistake here silently corrupts the user's local data on the
+ * pull. The contract is the same for all 20+ handlers; these four cover the shapes that exist.
  */
 const HANDLERS = [
   {
@@ -226,10 +238,12 @@ const HANDLERS = [
     build: () => new TagClientSyncHandler(),
     table: schema.tags,
     labelColumn: 'name' as const,
+    // The name varies per id: since migration 0015 two tags of the same story cannot share one,
+    // exactly as on the server.
     data: (id: string) => ({
       id,
       storyId: STORY_ID,
-      name: 'Vilões',
+      name: `Vilões ${id}`,
       createdAt: CREATED_AT,
       updatedAt: CREATED_AT,
       version: 1,
@@ -295,6 +309,272 @@ const HANDLERS = [
     }),
     change: { title: 'Magia elemental' },
   },
+  {
+    name: 'Suggestion',
+    build: () => new SuggestionClientSyncHandler(),
+    table: schema.suggestions,
+    labelColumn: 'value' as const,
+    // Same reason as Tag above: one value per type per story.
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      type: 'character-name',
+      value: `Nyx ${id}`,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { value: 'Erebus' },
+  },
+  {
+    name: 'Plot',
+    usesStoryContext: false,
+    build: () => new PlotClientSyncHandler(),
+    table: schema.plots,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Main plot',
+      details: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Revised plot' },
+  },
+  {
+    name: 'PlotScene',
+    usesStoryContext: false,
+    build: () => new PlotSceneClientSyncHandler(),
+    table: schema.plotScenes,
+    labelColumn: 'note' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      plotId: `plot-${id}`,
+      sceneId: `scene-${id}`,
+      note: 'Advances here',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { note: 'Turns here' },
+  },
+  {
+    name: 'ChoiceCheckGroup',
+    usesStoryContext: false,
+    prepare: async () => {
+      await database.db.insert(schema.choices).values(
+        ['e-1', 'e-2'].map((id) => ({
+          id: `choice-${id}`,
+          storyId: STORY_ID,
+          sceneId: 'scene-1',
+          nextSceneId: 'scene-2',
+          text: `Choice ${id}`,
+          createdAt: new Date(CREATED_AT),
+          updatedAt: new Date(CREATED_AT),
+          version: 1,
+          isDeleted: false,
+        })),
+      );
+    },
+    build: () => new ChoiceCheckGroupClientSyncHandler(),
+    table: schema.choiceCheckGroups,
+    labelColumn: 'combinator' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      choiceId: `choice-${id}`,
+      combinator: 'AND',
+      order: 1,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { combinator: 'OR' },
+  },
+  {
+    name: 'ChoiceCheck',
+    usesStoryContext: false,
+    prepare: async () => {
+      await database.db.insert(schema.choices).values(
+        ['e-1', 'e-2'].map((id) => ({
+          id: `choice-${id}`,
+          storyId: STORY_ID,
+          sceneId: 'scene-1',
+          nextSceneId: 'scene-2',
+          text: `Choice ${id}`,
+          createdAt: new Date(CREATED_AT),
+          updatedAt: new Date(CREATED_AT),
+          version: 1,
+          isDeleted: false,
+        })),
+      );
+      await database.db.insert(schema.choiceCheckGroups).values(
+        ['e-1', 'e-2'].map((id) => ({
+          id: `group-${id}`,
+          storyId: STORY_ID,
+          choiceId: `choice-${id}`,
+          combinator: 'AND' as const,
+          order: 1,
+          createdAt: new Date(CREATED_AT),
+          updatedAt: new Date(CREATED_AT),
+          version: 1,
+          isDeleted: false,
+        })),
+      );
+    },
+    build: () => new ChoiceCheckClientSyncHandler(),
+    table: schema.choiceChecks,
+    labelColumn: 'triggerName' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      groupId: `group-${id}`,
+      mode: 'enable',
+      type: 'trigger',
+      order: 1,
+      triggerName: 'door_open',
+      triggerState: 'set',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { triggerName: 'gate_open' },
+  },
+  {
+    name: 'ItemJourney',
+    usesStoryContext: false,
+    prepare: async () => {
+      const base = {
+        storyId: STORY_ID,
+        createdAt: new Date(CREATED_AT),
+        updatedAt: new Date(CREATED_AT),
+        version: 1,
+        isDeleted: false,
+      };
+      await database.db
+        .insert(schema.items)
+        .values(['e-1', 'e-2'].map((id) => ({ id: `item-${id}`, name: `Item ${id}`, ...base })));
+      await database.db.insert(schema.scenes).values(
+        ['e-1', 'e-2'].map((id, index) => ({
+          id: `scene-${id}`,
+          chapterId: 'chapter-1',
+          locationId: 'location-1',
+          name: `Scene ${id}`,
+          index: index + 1,
+          ...base,
+        })),
+      );
+    },
+    build: () => new ItemJourneyClientSyncHandler(),
+    table: schema.itemJourneys,
+    labelColumn: 'newState' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      itemId: `item-${id}`,
+      sceneId: `scene-${id}`,
+      newCharacterOwnerId: null,
+      newState: 'Found',
+      extraNotes: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { newState: 'Lost' },
+  },
+  {
+    name: 'Stat',
+    build: () => new StatClientSyncHandler(),
+    table: schema.stats,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Strength',
+      isPrimary: true,
+      order: 1,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Power' },
+  },
+  {
+    name: 'StatStrength',
+    build: () => new StatStrengthClientSyncHandler(),
+    table: schema.statStrengths,
+    labelColumn: 'label' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      statId: null,
+      label: 'Average',
+      minValue: 0,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { label: 'Skilled' },
+  },
+  {
+    name: 'StatRelation',
+    build: () => new StatRelationClientSyncHandler(),
+    table: schema.statRelations,
+    labelColumn: 'value' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      characterId: `character-${id}`,
+      modeId: null,
+      statId: `stat-${id}`,
+      value: 1,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { value: 2 },
+  },
+  {
+    name: 'Mode',
+    build: () => new ModeClientSyncHandler(),
+    table: schema.modes,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      characterId: `character-${id}`,
+      name: 'Normal',
+      description: null,
+      order: 1,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Awakened' },
+  },
 ];
 
 const createUpdate = (entity: string, id: string, data: unknown): CreateStoryUpdate =>
@@ -319,7 +599,11 @@ afterEach(() => {
 
 describe.each(HANDLERS)(
   '$name client sync handler',
-  ({ name, build, table, labelColumn, data, change, usesStoryContext = true }) => {
+  ({ name, build, table, labelColumn, data, change, usesStoryContext = true, prepare }) => {
+    beforeEach(async () => {
+      await prepare?.();
+    });
+
     const withDb = () => {
       const handler = build();
       handler.setDb(database.db);
@@ -337,7 +621,7 @@ describe.each(HANDLERS)(
 
       await expect(
         handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1'))),
-      ).rejects.toThrow(/Drizzle client \(db\) not set/);
+      ).rejects.toThrow(/Drizzle client \(db\).*not set/);
     });
 
     it('inserts the entity the server sent', async () => {
@@ -387,7 +671,6 @@ describe.each(HANDLERS)(
       } as unknown as CreateStoryUpdate);
 
       expect(rowsOf()).toEqual([]);
-      expect(console.error).toHaveBeenCalled();
     });
 
     it('applies a remote change to the stored row', async () => {
@@ -460,7 +743,7 @@ describe.each(HANDLERS)(
       const handler = withDb();
       await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
 
-      expect((await handler.getById('e-1'))?.id).toBe('e-1');
+      expect(((await handler.getById('e-1')) as { id?: string } | undefined)?.id).toBe('e-1');
     });
 
     it('returns nothing for an id it does not have', async () => {

@@ -20,24 +20,23 @@ export const operationLog = table(
     entityId: text('entity_id').notNull(),
     payload: json('payload').notNull(), // Store the data/changes as JSONB
     /**
-     * Versão da *entidade* depois desta operação, distinta de `operationVersion` (que é a
-     * posição da operação na sequência da história). Sem esta coluna o pull não tem como
-     * informar a versão real da entidade e acaba mandando `operationVersion` no lugar -
-     * um número muito maior, que faz a checagem de concorrência otimista do cliente passar
-     * sempre e portanto nunca detectar conflito.
+     * The *entity's* version after this operation, distinct from `operationVersion` (which is the
+     * operation's position in the story's sequence). Without this column the pull has no way to report the
+     * entity's real version and ends up sending `operationVersion` instead - a far larger number, which
+     * makes the client's optimistic concurrency check always pass and therefore never detect a conflict.
      *
-     * Nulo nas linhas gravadas antes desta coluna existir.
+     * Null on rows written before this column existed.
      */
     entityVersion: integer('entity_version'),
     createdAt: timestampNow('created_at'),
   },
   (table) => [
     /**
-     * Rede de segurança para o contador atômico em `stories.lastOperationVersion`: se algum
-     * caminho algum dia inserir sem passar por `SyncService.appendOperationLog` (ou se o
-     * contador for calculado errado), o banco recusa a duplicata em vez de aceitá-la em
-     * silêncio - o que antes fazia uma das duas operações ficar invisível para sempre no
-     * `pull` incremental de outros colaboradores (o filtro usa `operation_version > cursor`).
+     * A safety net for the atomic counter in `stories.lastOperationVersion`: if some path ever inserts
+     * without going through `SyncService.appendOperationLog` (or if the counter is computed wrongly), the
+     * database refuses the duplicate instead of silently accepting it - which used to make one of the two
+     * operations invisible forever in other collaborators' incremental `pull` (the filter uses
+     * `operation_version > cursor`).
      */
     uniqueIndex('operation_log_story_id_operation_version_idx').on(
       table.storyId,

@@ -11,8 +11,10 @@ interface AnalysisSummaryBannerProps {
   onPress: () => void;
 }
 
-/** Linha tocável no topo do card, resumindo o relatório de análise estrutural (ver
- *  `StoryAnalysisService`) - mesma convenção de cores de `NotificationItem` (error/primary). */
+/**
+ * A tappable line at the top of the card, summarising the structural analysis report (see
+ * `StoryAnalysisService`) - the same colour convention as `NotificationItem` (error/primary).
+ */
 const AnalysisSummaryBanner: React.FC<AnalysisSummaryBannerProps> = ({ issueCount, onPress }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -121,7 +123,7 @@ interface SummaryCardProps {
   branchingStoryForkCount?: number; // New prop for the count of forks in branching stories
   isBranchingStory?: boolean; // New prop to indicate if the summary is for a single branching story
   title?: string; // Optional title for the card, e.g., "Global Summary" or "Story Summary"
-  /** Quando presente, mostra o resumo do relatório de análise estrutural acima da grade. */
+  /** When present, it shows the structural analysis report's summary above the grid. */
   analysisSummary?: { issueCount: number; onPress: () => void };
 }
 

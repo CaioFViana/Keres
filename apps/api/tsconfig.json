@@ -6,6 +6,13 @@
     "module": "esnext",
     "lib": ["es2022", "dom"],
     "strict": true,
+    // Import de tipo é escrito como tal, e o compilador não adivinha: o que está escrito é o
+    // que sobra no bundle. Complementa `@typescript-eslint/consistent-type-imports`, que já
+    // cobra a mesma coisa linha a linha.
+    "verbatimModuleSyntax": true,
+    // `noImplicitOverride` fica de fora por enquanto: 52 métodos herdados pedem o modificador.
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

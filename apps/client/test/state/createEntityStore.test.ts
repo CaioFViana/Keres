@@ -36,10 +36,10 @@ const fakeDb = {} as any;
 const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
 
 /**
- * Esta fábrica gera as 17 stores de lista de entidade do app - cobrir a fábrica cobre todas.
- * O que interessa é o contrato compartilhado: nomes de chave derivados de `collectionKey`,
- * quando a busca é refeita, e o comportamento otimista do favorito (que escreve na tela antes
- * de escrever no banco e precisa desfazer sozinho quando a escrita falha).
+ * This factory generates the app's 17 entity list stores - covering the factory covers them all.
+ * What matters is the shared contract: key names derived from `collectionKey`,
+ * when the search is redone, and the favourite's optimistic behaviour (which writes to the screen before
+ * writing to the database and has to undo itself when the write fails).
  */
 function buildStore(overrides: Partial<Parameters<typeof createEntityStore>[0]> = {}) {
   const fetchEntities = jest.fn(async (_service: unknown, _params: EntityQueryParams) => [

@@ -1,0 +1,1 @@
+ALTER TABLE "showcase_settings" ADD COLUMN "is_hosted_client_enabled" boolean DEFAULT true NOT NULL;

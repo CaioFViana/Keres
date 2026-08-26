@@ -1,9 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { Character } from '@keres/shared/entities/Character'; // Import the Character entity interface
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type { Character } from '@keres/shared/entities/Character'; // Import the Character entity interface
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Character';

@@ -1,9 +1,5 @@
-import {
-  AttributeType,
-  decodeAttributeValue,
-  encodeAttributeValue,
-  StorySchemaEntityType,
-} from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, encodeAttributeValue } from '@keres/shared';
 import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
@@ -21,8 +17,10 @@ interface AttributeValueInputProps {
   onChange: (value: string | null) => void;
   placeholder?: string;
   storyId?: string;
-  /** Só usado quando `type === SUGGESTION`. Sem isto (campo recém-criado, ainda sem id salvo),
-   *  cai pra texto simples em vez de tentar abrir sugestões de um campo que não existe. */
+  /**
+   * Only used when `type === SUGGESTION`. Without it (a freshly created field, with no saved id yet), it
+   * falls back to plain text instead of trying to open suggestions for a field that does not exist.
+   */
   suggestionFieldId?: string;
   /** Declared target of an ENTITY field. */
   targetEntityType?: StorySchemaEntityType | null;
@@ -30,10 +28,10 @@ interface AttributeValueInputProps {
 }
 
 /**
- * Dispatcher único por `AttributeType`, usado tanto pelos campos customizados de verdade
- * (`CustomAttributeFields`, em Forms) quanto pelo campo "Valor Padrão" da própria tela de
- * gerenciamento de schema (`StorySchemaFieldFormScreen`) - mesma lógica de renderização por
- * tipo em vez de duas implementações levemente diferentes.
+ * A single dispatcher per `AttributeType`, used both by the real custom fields (`CustomAttributeFields`,
+ * in Forms) and by the "Default Value" field of the schema management screen itself
+ * (`StorySchemaFieldFormScreen`) - the same per-type rendering logic instead of two slightly different
+ * implementations.
  */
 const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
   type,

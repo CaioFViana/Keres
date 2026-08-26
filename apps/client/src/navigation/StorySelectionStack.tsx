@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 import {
   DrawerActions,
   getFocusedRouteNameFromRoute,
-  NavigationState,
-  NavigatorScreenParams,
   StackActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -35,8 +35,10 @@ import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
-import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
-import StoryDevicesStackNavigator, { StoryDevicesStackParamList } from './StoryDevicesStack';
+import type { HelpStackParamList } from './HelpStack';
+import HelpStackNavigator from './HelpStack';
+import type { StoryDevicesStackParamList } from './StoryDevicesStack';
+import StoryDevicesStackNavigator from './StoryDevicesStack';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -77,7 +79,7 @@ const storySelectionStackRootScreens = new Set([
   'StorySelectionScreen',
   'ServerManagement',
   'FriendshipList',
-  // Mesma razão do drawer da história: a raiz de um stack aberto pelo menu não mostra seta.
+  // The same reason as the story's drawer: the root of a stack opened from the menu shows no arrow.
   'HelpIndex',
   'DeviceIndex',
 ]);
@@ -210,8 +212,10 @@ const StorySelectionNavigator = () => {
       screenOptions={({ navigation, route }) => {
         const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
         const helpPageId = screenHelpPage[activeRouteName];
-        const isHelpPage = activeRouteName === 'HelpPage';
         const nestedState = (route as typeof route & { state?: NavigationState }).state;
+        const focusedNestedRoute = nestedState?.routes[nestedState.index ?? 0];
+        const isHelpPage =
+          activeRouteName === 'HelpPage' || focusedNestedRoute?.name === 'HelpPage';
         const nestedStackKey = nestedState?.key;
         const isNestedDestination =
           activeRouteName !== route.name && !storySelectionStackRootScreens.has(activeRouteName);
@@ -244,8 +248,8 @@ const StorySelectionNavigator = () => {
             !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
               ? { marginLeft: 15 }
               : undefined,
-          // Subtelas podem ocupar headerRight com ações próprias; manter a ajuda à esquerda
-          // garante que o atalho contextual não desapareça em formulários e detalhes.
+          // Sub-screens may take over headerRight with their own actions; keeping the help on the left
+          // guarantees the contextual shortcut does not disappear in forms and details.
           headerLeft: isHelpPage
             ? () => (
                 <NavigationBackButton
@@ -268,7 +272,7 @@ const StorySelectionNavigator = () => {
                         onPress={() =>
                           navigation.navigate('HelpDrawer', {
                             screen: 'HelpPage',
-                            params: { pageId: helpPageId },
+                            params: { pageId: helpPageId, returnDrawerRoute: route.name },
                           })
                         }
                         style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}
@@ -384,8 +388,8 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('story_devices_title'),
           drawerLabel: t('story_devices_title'),
-          // A tela continua registrada quando o ajuste está desligado para que uma navegação
-          // direta ou um link de ajuda não quebre; só o item do menu some.
+          // The screen stays registered when the setting is off so a direct navigation
+          // or a help link does not break; only the menu item disappears.
           drawerItemStyle: {
             height: suggestLiteraryDevices ? undefined : 0,
             overflow: 'hidden',

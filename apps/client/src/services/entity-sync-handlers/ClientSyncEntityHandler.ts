@@ -1,5 +1,5 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { AppDrizzleClient } from '../../db';
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type { AppDrizzleClient } from '../../db';
 
 export interface ClientSyncEntityHandler {
   entityName: string;

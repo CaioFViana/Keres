@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { HelpBlock } from '@/src/help/types';
+import type { HelpBlock } from '@/src/help/types';
 import { useTheme } from '@/src/theme';
 import { HelpFieldTable } from '../HelpFieldTable/HelpFieldTable';
 

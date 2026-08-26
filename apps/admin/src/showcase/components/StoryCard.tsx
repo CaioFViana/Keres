@@ -15,8 +15,8 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
     <Link
       to={`/story/${story.storyId}`}
       className="story-card"
-      // Só o realce do card usa a paleta da história na listagem - a página inteira só é
-      // tingida ao abrir a história, para a vitrine não virar um mosaico ilegível.
+      // Only the card's accent uses the story's palette in the listing - the whole page is tinted only
+      // when the story is opened, so the showcase does not turn into an unreadable mosaic.
       style={paletteVars(snapshot.theme, resolved)}
     >
       <div className="story-card-accent" aria-hidden="true" />

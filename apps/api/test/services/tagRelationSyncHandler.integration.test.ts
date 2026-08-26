@@ -94,8 +94,8 @@ beforeEach(async () => {
   );
   const scenes = new SceneSyncHandler();
   for (const [id, name, index] of [
-    [firstSceneId, 'Chegada', 0],
-    [secondSceneId, 'Partida', 1],
+    [firstSceneId, 'Chegada', 1],
+    [secondSceneId, 'Partida', 2],
   ] as const) {
     await scenes.create(
       userId,
@@ -110,8 +110,8 @@ beforeEach(async () => {
         gapType: null,
         duration: null,
         durationType: null,
-        isStart: index === 0,
-        isFinish: index === 1,
+        isStart: index === 1,
+        isFinish: index === 2,
         isFavorite: false,
         extraNotes: null,
       }),

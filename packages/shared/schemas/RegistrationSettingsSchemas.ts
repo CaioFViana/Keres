@@ -6,9 +6,9 @@ import { UlidSchema } from './SyncSchemas';
 export const RegistrationSettingsSchema = z.object({
   id: z.string(),
   isRegistrationOpen: z.boolean(),
-  /** `null` = sem teto de usuários. */
+  /** `null` = no user ceiling. */
   maxUsers: z.number().int().positive().nullable(),
-  /** Quando true, `isRegistrationOpen` é recalculado a cada cadastro a partir de `maxUsers`. */
+  /** When true, `isRegistrationOpen` is recomputed on every signup from `maxUsers`. */
   autoManage: z.boolean(),
   defaultTierId: UlidSchema.nullable(),
   updatedAt: z.coerce.date(),

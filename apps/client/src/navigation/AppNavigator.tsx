@@ -7,6 +7,8 @@ import { useDrizzle } from '../db';
 import { getClientSettings } from '../services/ClientSettingsService';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import { useTheme } from '../theme';
+import { readShowcaseRequest } from '../showcase/showcaseRequest';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import StorySelectionStack from './StorySelectionStack';
@@ -26,8 +28,11 @@ interface AppNavigatorProps {
 const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
+  const [showcaseReady, setShowcaseReady] = useState(false);
+  const showcase = readShowcaseRequest();
 
   const drizzleDb = useDrizzle();
+  const { colors } = useTheme();
 
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
@@ -39,6 +44,18 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
 
     const checkColdInstall = async () => {
       try {
+        // The showcase creates its own settings; the welcome screen does not get in the way.
+        if (showcase) {
+          // A late import: the showcase drags the whole story services along, and none of that
+          // needs to exist when the app opens normally (which is always, apart from the screen capture).
+          const { prepareShowcase } = await import('../showcase/prepareShowcase');
+          const ready = await prepareShowcase(drizzleDb, showcase);
+          setShowcaseReady(ready);
+          setIsColdInstallNeeded(!ready);
+          await initializeThemeSettings(drizzleDb);
+          return;
+        }
+
         const settings = await getClientSettings(drizzleDb);
         if (!settings) {
           setIsColdInstallNeeded(true);
@@ -56,7 +73,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
     };
 
     checkColdInstall();
-  }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb]);
+  }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb, showcase]);
 
   if (isLoading) {
     return (
@@ -68,12 +85,16 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
 
   const initialRouteName: keyof RootStackParamList = isColdInstallNeeded
     ? 'ColdInstall'
-    : 'StorySelection';
+    : showcaseReady
+      ? // The showcase has already chosen the story; going through the selection would only show a screen the
+        // capture does not want.
+        'MainSystem'
+      : 'StorySelection';
 
   return (
     <SyncInitializer>
       <RootStack.Navigator
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
         initialRouteName={initialRouteName}
       >
         <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />

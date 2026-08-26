@@ -1,21 +1,20 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
-import { JWTPayload } from '../index';
+import type { JWTPayload } from '../index';
 import { AppError } from './errors';
 
 /**
- * Guarda centralizada para as rotas /admin/api/*, no lugar de cada módulo repetir a
- * checagem (como `requirePermission` em media.route.ts fazia por módulo).
+ * A centralised guard for the /api/admin/* routes, instead of each module repeating the check (as
+ * `requirePermission` in media.route.ts did per module).
  *
- * `isAdmin` é checado no banco a cada request, nunca confiado a partir do JWT: o token
- * vive 1h e esta API não tem lista de revogação, então uma claim `isAdmin` embutida no
- * token continuaria válida por até uma hora depois de um admin ser rebaixado ou excluído.
+ * `isAdmin` is checked against the database on every request, never trusted from the JWT: the token
+ * lives for 1h and this API has no revocation list, so an `isAdmin` claim embedded in the token would
+ * stay valid for up to an hour after an admin was demoted or deleted.
  *
- * Função simples em vez de um plugin Elysia com `.derive()`: compor esse derive através de
- * `.use()` entre módulos não propagava o tipo `requireAdmin` de forma confiável para as
- * rotas - uma função chamada explicitamente com `user` do contexto é mais simples e evita
- * essa armadilha do sistema de tipos.
+ * A plain function instead of an Elysia plugin with `.derive()`: composing that derive through `.use()`
+ * across modules did not propagate the `requireAdmin` type reliably into the routes - a function called
+ * explicitly with the context's `user` is simpler and avoids that type-system trap.
  */
 export async function requireAdmin(user: JWTPayload | null): Promise<string> {
   if (!user?.userId) {

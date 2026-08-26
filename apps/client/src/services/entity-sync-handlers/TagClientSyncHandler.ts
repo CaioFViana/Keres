@@ -1,9 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { Tag } from '@keres/shared/entities/Tag'; // Import the Tag entity interface
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type { Tag } from '@keres/shared/entities/Tag'; // Import the Tag entity interface
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class TagClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Tag';

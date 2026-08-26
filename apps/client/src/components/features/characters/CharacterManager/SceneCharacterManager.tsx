@@ -1,5 +1,5 @@
-import { Character } from '@keres/shared/entities/Character';
-import { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Character } from '@keres/shared/entities/Character';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
@@ -16,8 +16,10 @@ interface SceneCharacterManagerProps {
   currentSceneId: string; // The ID of the scene this character is related to
 }
 
-/** Personagens presentes nesta Cena, vista do lado da Cena - o irmão de `CharacterSceneManager`,
- * que é a mesma relação (Character-Scene) vista do lado do Personagem. */
+/**
+ * Characters present in this Scene, seen from the Scene's side - the sibling of `CharacterSceneManager`,
+ * which is the same relation (Character-Scene) seen from the Character's side.
+ */
 const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
   characterRelations,
   availableCharacters,

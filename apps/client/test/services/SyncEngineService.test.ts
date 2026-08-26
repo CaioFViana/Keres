@@ -6,8 +6,8 @@ jest.mock('../../src/state/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
-// A reconciliação de mídia roda no fim de cada ciclo e transfere bytes por fora do Axios;
-// aqui só interessa que ela não interfira no que o ciclo de metadados fez.
+// Media reconciliation runs at the end of every cycle and transfers bytes outside Axios;
+// here all that matters is that it does not interfere with what the metadata cycle did.
 const mockSyncStoryMedia = jest.fn(async () => ({
   uploaded: 0,
   downloaded: 0,
@@ -38,7 +38,7 @@ const base = { createdAt: NOW, updatedAt: NOW, version: 1, isDeleted: false };
 let database: TestDatabase;
 let engine: SyncEngineService;
 
-/** Requisições vistas pelo adapter, para afirmar o que o motor mandou (e o que não mandou). */
+/** Requests seen by the adapter, to assert what the engine sent (and what it did not). */
 interface SeenRequest {
   method: string;
   url: string;
@@ -55,16 +55,16 @@ let pullResponse: {
 };
 /** Resposta do push. */
 let pushResponse: any;
-/** Quando definido, o adapter falha como se o servidor estivesse fora do ar. */
+/** When set, the adapter fails as if the server were down. */
 let offlineOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
 let echoPushApplied: boolean;
 
 /**
- * O Axios resolve o adapter na hora da requisição e cai em `axios.defaults.adapter` quando a
- * instância não tem um próprio - e `createKeresAxiosInstance()` nunca define um. É isso que
- * permite interceptar o cliente privado do motor sem mockar o módulo nem abrir um seam no
- * serviço. Os interceptors dele continuam rodando normalmente.
+ * Axios resolves the adapter at request time and falls back to `axios.defaults.adapter` when the
+ * instance has none of its own - and `createKeresAxiosInstance()` never sets one. That is what
+ * allows intercepting the engine's private client without mocking the module or opening a seam in the
+ * service. Its interceptors carry on running normally.
  */
 function installAdapter() {
   seen = [];
@@ -149,7 +149,7 @@ async function seedPendingOperation(
   return row;
 }
 
-/** Operação remota de criação de personagem, na forma que o pull entrega. */
+/** A remote character-creation operation, in the shape the pull delivers. */
 const remoteCreate = (id: string, name: string, operationVersion: number) => ({
   type: 'create',
   entity: 'Character',
@@ -172,8 +172,8 @@ const readStory = () =>
   database.db.query.stories.findFirst({ where: eq(schema.stories.id, STORY_ID) });
 
 /**
- * Um único ciclo de sincronização, sem timers. O retorno é o sinal de "servidor inalcançável"
- * que `startSync` usa para escolher entre a cadência normal e a de retentativa rápida.
+ * A single synchronization cycle, without timers. The return value is the "server unreachable" signal
+ * that `startSync` uses to choose between the normal cadence and the fast-retry one.
  */
 async function runOneCycle(): Promise<boolean> {
   return (engine as any).performSync();
@@ -240,10 +240,10 @@ describe('pull', () => {
   });
 
   /**
-   * O cursor avança até a operação mais alta que realmente chegou, nunca até o
-   * `serverMaxOperationVersion` da resposta: os dois são lidos em consultas separadas no
-   * servidor, e uma operação gravada entre elas entra no máximo mas não na lista - confiar no
-   * máximo a puliria para sempre.
+   * The cursor advances to the highest operation that actually arrived, never to the response's
+   * `serverMaxOperationVersion`: the two are read in separate queries on the
+   * server, and an operation written between them enters the maximum but not the list - trusting the
+   * maximum would skip it forever.
    */
   it('advances the cursor only to the highest operation it actually received', async () => {
     await seedStory();
@@ -328,10 +328,10 @@ describe('pull', () => {
 });
 
 /**
- * Antes desta correção, um reorder remoto era sempre aplicado direto, mesmo com uma
- * reordenação local ainda não enviada na mesma entidade - e o inverso também acontecia
- * (o reorder local pendente sobrescrevia de volta depois). Nunca virava um `SyncConflict`,
- * então a pessoa nunca ficava sabendo que perdeu a própria reordenação.
+ * Before this fix, a remote reorder was always applied straight away, even with an unsent local
+ * reordering on the same entity - and the reverse happened too
+ * (the pending local reorder overwrote it back afterwards). It never became a `SyncConflict`,
+ * so the person never found out they had lost their own reordering.
  */
 describe('reconciling a remote reorder against pending local changes', () => {
   it('records a conflict instead of silently overwriting a pending local reorder', async () => {
@@ -401,8 +401,8 @@ describe('reconciling a remote reorder against pending local changes', () => {
       reason: 'concurrent_edit',
     });
 
-    // A ordem local não foi tocada - ela continua exatamente como o usuário deixou, esperando
-    // a decisão dele na tela de conflito.
+    // The local order was not touched - it stays exactly as the user left it, awaiting
+    // their decision on the conflict screen.
     const sceneA = await database.db.query.scenes.findFirst({
       where: eq(schema.scenes.id, 'scene-a'),
     });
@@ -519,8 +519,8 @@ describe('push', () => {
   });
 
   /**
-   * Uma operação em conflito fica fora do push até o usuário decidir. Sem isso ela seria
-   * reenviada e recusada em todo ciclo, para sempre.
+   * An operation in conflict stays out of the push until the user decides. Without that it would be
+   * resent and refused on every cycle, forever.
    */
   it.each(['conflicted', 'abandoned'] as const)(
     'does not push an operation marked %s',
@@ -580,11 +580,11 @@ describe('push', () => {
 });
 
 /**
- * `version_conflict` só diz que a base do cliente ficou velha, não que os dois lados
- * mudaram os mesmos campos. `changedFields` (calculado pelo servidor a partir do próprio
- * histórico de operações - ver `SyncService.getChangedFieldsSinceVersion` na API) é o que
- * permite ao cliente mesclar em silêncio quando não há disputa real, em vez de sempre abrir
- * uma decisão para o usuário.
+ * `version_conflict` only says that the client's base has gone stale, not that both sides
+ * changed the same fields. `changedFields` (computed by the server from its own
+ * operation history - see `SyncService.getChangedFieldsSinceVersion` in the API) is what
+ * allows the client to merge silently when there is no real dispute, instead of always opening
+ * a decision for the user.
  */
 describe('push - auto-merging non-overlapping field conflicts', () => {
   async function seedLocalCharacter(
@@ -655,16 +655,16 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     });
     expect(log!.isSynced).toBe(false);
     expect(log!.conflictState).toBeNull();
-    // Reapoiada na versão nova do servidor, pronta pra ir no próximo ciclo sem incomodar o usuário.
+    // Rebased on the server's new version, ready to go in the next cycle without bothering the user.
     expect(JSON.parse(log!.payload).version).toBe(3);
   });
 
   /**
-   * Regressão: `changedFields` sozinho só diz "alguém mais mexeu nisso", não "o valor que eu
-   * quero escrever é diferente do que já está lá". Duas pessoas renomeando pro mesmo texto (ou
-   * uma reenviando uma operação que já tinha ido) fazia o campo aparecer como disputado mesmo
-   * sem nada de fato pra decidir - um conflito de dois botões que só reforçava um valor já
-   * correto.
+   * Regression: `changedFields` on its own only says "somebody else touched this", not "the value I
+   * want to write differs from the one already there". Two people renaming to the same text (or
+   * one resending an operation that had already gone) made the field show as disputed even
+   * with nothing actually to decide - a two-button conflict that only reinforced an already
+   * correct value.
    */
   it('merges silently even when the changed field coincidentally ends up with the same value', async () => {
     await seedStory({ lastOperationLog: 1 });
@@ -874,9 +874,9 @@ describe('guards before a cycle runs', () => {
 });
 
 describe('startSync', () => {
-  // `performSync` já é coberto pelos outros describes deste arquivo; aqui interessa só o
-  // agendamento em si (roda na hora, reagenda com a cadência certa, não duplica o laço),
-  // então ele é mockado para isolar isso de toda a cadeia real de rede/DB.
+  // `performSync` is already covered by this file's other describes; here all that matters is the
+  // scheduling itself (it runs immediately, reschedules with the right cadence, does not duplicate the loop),
+  // so it is mocked to isolate that from the whole real network/DB chain.
   let performSyncSpy: jest.SpyInstance;
 
   const flush = async () => {

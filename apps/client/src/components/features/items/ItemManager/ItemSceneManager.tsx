@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { ItemJourney, Item } from '@keres/shared/entities/Item';
-import { Character } from '@keres/shared/entities/Character';
+import type { ItemJourney, Item } from '@keres/shared/entities/Item';
+import type { Character } from '@keres/shared/entities/Character';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';

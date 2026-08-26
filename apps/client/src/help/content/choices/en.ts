@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'choices',
   title: 'Choices',
@@ -55,6 +55,13 @@ const page: HelpPage = {
           whatToWrite:
             'Record the intention, consequence, or a review reminder. It can be left blank.',
           note: 'It appears in the choice details, separate from linked notes.',
+        },
+        {
+          key: 'choiceSearch',
+          label: 'Choice text or notes',
+          whatToWrite:
+            'This is a search-only field. Enter a word to find it in either the choice text or its notes.',
+          note: 'It appears in Advanced search and does not add a new value to the choice.',
         },
       ],
     },

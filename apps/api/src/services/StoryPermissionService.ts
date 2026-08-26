@@ -68,10 +68,10 @@ export class StoryPermissionService {
     targetUserId: string,
     permissionType: 'reader' | 'writer',
   ) {
-    // `AppError` e não `Error`: são recusas deliberadas, com mensagem que o usuário precisa
-    // ler. Um `Error` simples aqui não bate com o prefixo "Unauthorized" que
-    // `withOwnershipCheck` traduz, cai no fallback do `onError` e chega ao cliente como
-    // "Internal server error." - indistinguível de uma falha de verdade.
+    // `AppError` and not `Error`: these are deliberate refusals, with a message the user needs to read. A
+    // plain `Error` here does not match the "Unauthorized" prefix `withOwnershipCheck` translates, falls
+    // into `onError`'s fallback and reaches the client as "Internal server error." - indistinguishable from
+    // a real failure.
     if (ownerUserId === targetUserId) {
       throw new AppError(
         400,
@@ -222,14 +222,13 @@ export class StoryPermissionService {
   }
 
   /**
-   * O `isDeleted` no filtro é o que faz uma revogação valer.
+   * The `isDeleted` in the filter is what makes a revocation stick.
    *
-   * `deleteStoryPermission` é soft delete (a linha precisa sobreviver para o cliente receber
-   * o tombstone pelo sync). Sem excluí-la aqui, todo chamador - `hasPermission` (export de
-   * história, rotas de mídia, WebSocket) e os dois pontos de `SyncService` que derivam o
-   * papel do usuário - continuava enxergando o colaborador removido como se ele ainda
-   * tivesse acesso. `getReadableStoryIds` já filtrava, e era só por isso que a história
-   * sumia da lista do `pullpreviews` enquanto continuava acessível por id.
+   * `deleteStoryPermission` is a soft delete (the row has to survive so the client receives the tombstone
+   * through sync). Without excluding it here, every caller - `hasPermission` (story export, media routes,
+   * WebSocket) and the two points in `SyncService` that derive the user's role - kept seeing the removed
+   * collaborator as if they still had access. `getReadableStoryIds` already filtered, and that alone was
+   * why the story disappeared from the `pullpreviews` list while remaining accessible by id.
    */
   async getUserPermissionForStory(userId: string, storyId: string) {
     const permission = await db.query.storyPermissions.findFirst({

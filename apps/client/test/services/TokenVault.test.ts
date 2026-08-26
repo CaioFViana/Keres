@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-// `__esModule` importa: o cofre usa `import * as SecureStore`, e sem esta marca o interop do
-// Babel entrega o mock inteiro como `default`, deixando o namespace sem nenhuma função.
+// `__esModule` matters: the vault uses `import * as SecureStore`, and without this mark Babel's
+// interop hands the whole mock over as `default`, leaving the namespace without a single function.
 jest.mock('expo-secure-store', () => ({
   __esModule: true,
   getItemAsync: jest.fn(),
@@ -43,7 +43,7 @@ beforeEach(async () => {
   mockSecureStore.setItemAsync.mockResolvedValue(undefined);
   mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
   setPlatform('ios');
-  // O cofre mantém um cache em memória; limpar os servidores usados isola cada teste.
+  // The vault keeps an in-memory cache; clearing the servers used isolates each test.
   for (const serverId of ['server-1', 'server-2']) {
     await tokenVault.remove(serverId);
   }
@@ -57,9 +57,9 @@ afterEach(() => {
 });
 
 /**
- * As credenciais ficam fora do SQLite/OPFS de propósito: no nativo vão para o SecureStore, e
- * no desktop para o cofre do sistema via ponte do Electron. O cache em memória existe para o
- * caminho quente da sincronização não pagar uma leitura de cofre a cada requisição.
+ * The credentials deliberately stay outside SQLite/OPFS: on native they go to the SecureStore, and
+ * on the desktop to the system vault through the Electron bridge. The in-memory cache exists so the
+ * synchronization's hot path does not pay a vault read on every request.
  */
 describe('on native', () => {
   it('reads from the secure store the first time', async () => {
@@ -158,7 +158,7 @@ describe('on web, through the Electron bridge', () => {
     expect(bridge.write).toHaveBeenCalledWith('server-1', TOKENS);
   });
 
-  /** Sem cofre do sistema, o token vive só na memória - nunca é gravado em claro. */
+  /** Without a system vault, the token lives only in memory - it is never written in the clear. */
   it('does not write when the platform has no secure storage', async () => {
     const bridge = electronBridge(false);
     (globalThis as any).window = { keresAuth: bridge };

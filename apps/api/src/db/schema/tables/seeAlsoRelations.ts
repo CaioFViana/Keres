@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
+import type { SeeAlsoEntityType } from '@keres/shared';
 
 export const seeAlsoRelations = table(
   'see_also_relations',
@@ -9,11 +10,11 @@ export const seeAlsoRelations = table(
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
-    // Ambos os lados são polimórficos (Character/Location/Chapter/Scene/Item/ItemJourney/
-    // WorldRule/Choice) - sem FK de banco, validado em SeeAlsoRelationSyncHandler.
-    entityAType: text('entity_a_type').notNull(),
+    // Both sides are polymorphic (Character/Location/Chapter/Scene/Item/ItemJourney/WorldRule/Choice) -
+    // no database FK, validated in SeeAlsoRelationSyncHandler.
+    entityAType: text('entity_a_type').$type<SeeAlsoEntityType>().notNull(),
     entityAId: text('entity_a_id').notNull(),
-    entityBType: text('entity_b_type').notNull(),
+    entityBType: text('entity_b_type').$type<SeeAlsoEntityType>().notNull(),
     entityBId: text('entity_b_id').notNull(),
     createdAt: timestampNow('created_at'),
     updatedAt: timestampNow('updated_at'),
@@ -22,8 +23,8 @@ export const seeAlsoRelations = table(
     deletedAt: timestamp('deleted_at'),
   },
   (table) => ({
-    // Só protege contra duplicatas se A/B forem sempre canonicalizados (ordenados) antes do
-    // insert - ver SeeAlsoRelationSyncHandler/SeeAlsoRelationService.
+    // It only protects against duplicates if A/B are always canonicalised (sorted) before the insert -
+    // see SeeAlsoRelationSyncHandler/SeeAlsoRelationService.
     unq: unique('see_also_story_a_b_unq').on(
       table.storyId,
       table.entityAType,

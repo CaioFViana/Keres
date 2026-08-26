@@ -1,10 +1,14 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { NoteInsert, notes, NoteSelect } from '../../db/schemas/notes';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import type { NoteInsert, NoteSelect } from '../../db/schemas/notes';
+import { notes } from '../../db/schemas/notes';
 import { tagRelations } from '../../db/schemas/tagRelations';
-import { tags, TagSelect } from '../../db/schemas/tags'; // Import tags schema
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { TagSelect } from '../../db/schemas/tags';
+import { tags } from '../../db/schemas/tags'; // Import tags schema
+import type { Create } from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,

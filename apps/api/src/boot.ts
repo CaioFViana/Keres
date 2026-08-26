@@ -10,13 +10,13 @@ import { logger, setLogSink } from './utils/logger';
 export type ListeningAddress = { hostname: string; port: number };
 
 /**
- * Efeitos de produção extraídos de `server.ts` para o launcher (e os testes) poderem
- * arrancar a API sem duplicar a ordem: migrações → logs persistidos → mídia → admin → listen.
+ * Production effects pulled out of `server.ts` so the launcher (and the tests) can start the API
+ * without duplicating the order: migrations → persisted logs → media → admin → listen.
  */
 export async function preparePersistence(): Promise<void> {
   await runMigrations();
-  // Só depois das migrações: a tabela `api_logs` pode não existir ainda num primeiro boot.
-  // Os poucos logs antes deste ponto continuam só-console, o que é aceitável.
+  // Only after the migrations: the `api_logs` table may not exist yet on a first boot. The few logs
+  // before this point stay console-only, which is acceptable.
   setLogSink(persistApiLog);
   await assertMediaStorageConfiguration();
   const abandonedMediaUploads = await mediaStorageService.cleanupTemporaryFiles();
@@ -32,11 +32,11 @@ export async function bootAndListen(options?: {
   try {
     await preparePersistence();
   } catch (error) {
-    // Sem isto, uma falha aqui (ex.: Postgres fora do ar) subia como unhandled rejection do
-    // próprio Bun - sem passar pelo `logger` estruturado que o resto do app usa, e sem deixar
-    // claro que foi o boot que falhou (em vez de alguma requisição). Toda falha aqui é fatal -
-    // a API não faz sentido sem migração/config de mídia/admin reconciliados - então também
-    // derruba o processo explicitamente em vez de deixar a exceção não tratada decidir.
+    // Without this, a failure here (say, Postgres being down) came up as an unhandled rejection from Bun
+    // itself - never passing through the structured `logger` the rest of the app uses, and never making it
+    // clear that it was the boot that failed (rather than some request). Every failure here is fatal - the
+    // API makes no sense without migrations/media config/admin reconciled - so it also brings the process
+    // down explicitly instead of letting the unhandled exception decide.
     logger.error('Fatal error during startup', error);
     process.exit(1);
   }
@@ -60,7 +60,7 @@ export async function bootAndListen(options?: {
         port: port ?? Number(env.PORT),
       };
       logger.info(`Elysia is running at http://${address.hostname}:${address.port}`);
-      logger.info(`Swagger UI at http://${address.hostname}:${address.port}/swagger`);
+      logger.info(`Swagger UI at http://${address.hostname}:${address.port}/api/swagger`);
       options?.onListening?.(address);
     },
   );

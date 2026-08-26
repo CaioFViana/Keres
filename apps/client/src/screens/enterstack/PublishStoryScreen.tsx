@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { useDrizzle } from '../../db';
 import * as schema from '../../db/schema';
-import { ServerSelect, StorySelect } from '../../db/schema';
+import type { ServerSelect, StorySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { isOfflineError } from '../../services/apiClient';
 import {
@@ -34,17 +34,18 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 
 /**
- * Publicar uma história no Showcase do servidor.
+ * Publishing a story to the server's Showcase.
  *
- * Só aparecem histórias que este aparelho pode de fato publicar: ligadas a um servidor e das
- * quais esta conta é dona. Uma história de outra pessoa, mesmo com permissão de escrita, não
- * entra na lista - publicar expõe a história ao mundo, e essa decisão é de quem é dono dela.
+ * Only stories this device can actually publish appear: linked to a server and owned by this account.
+ * Somebody else's story, even with write permission, does not make the list - publishing exposes the
+ * story to the world, and that decision belongs to its owner.
  *
- * As três condições para o botão (online, sem operação pendente, contador igual ao do servidor)
- * são verificadas de novo pelo servidor, que devolve 409 se não baterem. Aqui elas existem para
- * a pessoa entender *por que* não dá, em vez de encarar um botão morto.
+ * The three conditions for the button (online, no pending operation, the counter matching the
+ * server's) are checked again by the server, which returns 409 if they do not match. Here they exist so
+ * the person understands *why* they cannot, instead of facing a dead button.
  */
 
 type LabelMode = PublicationLabelMode;
@@ -52,16 +53,16 @@ type LabelMode = PublicationLabelMode;
 interface StoryRow {
   story: StorySelect;
   server: ServerSelect;
-  /** Operações locais ainda não enviadas ao servidor. */
+  /** Local operations not yet sent to the server. */
   pendingOperations: number;
 }
 
 /**
- * O endereço público de uma história.
+ * A story's public address.
  *
- * Montado aqui a partir de `servers.url` porque o app já sabe onde o servidor mora - o site é
- * servido pelo mesmo processo e na mesma origem da API (ver o catch-all em
- * apps/api/src/index.ts), então não há nada a perguntar ao servidor.
+ * Assembled here from `servers.url` because the app already knows where the server lives - the site is
+ * served by the same process and on the same origin as the API (see the catch-all in
+ * apps/api/src/index.ts), so there is nothing to ask the server.
  */
 export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {
   return `${serverUrl.replace(/\/+$/, '')}/story/${storyId}`;
@@ -116,8 +117,8 @@ const PublishStoryScreen = () => {
       }
       setRows(built);
 
-      // O espelho local basta para listar; a consulta ao servidor é o que traz a visibilidade
-      // atual e é feita só para os servidores que de fato têm história aqui.
+      // The local mirror is enough to list them; querying the server is what brings the current visibility,
+      // and it is done only for the servers that actually have a story here.
       const publicationService = createPublicationService(drizzleDb);
       const showcase: Record<string, StoryShowcaseState> = {};
       for (const row of built) {
@@ -142,8 +143,8 @@ const PublishStoryScreen = () => {
       }
       setShowcaseByStory(showcase);
 
-      // Estado autoritativo, quando o servidor responder. Falhar aqui não estraga a tela - o
-      // espelho local acima já a deixou utilizável.
+      // The authoritative state, when the server answers. Failing here does not spoil the screen - the local
+      // mirror above has already made it usable.
       for (const row of built) {
         try {
           const remote = await publicationApiService.getStoryShowcase(row.server, row.story.id);
@@ -168,7 +169,7 @@ const PublishStoryScreen = () => {
     }, [load]),
   );
 
-  /** Por que esta história não pode ser publicada agora - ou `null` se pode. */
+  /** Why this story cannot be published right now - or `null` if it can. */
   const blockedReason = useCallback(
     (row: StoryRow): string | null => {
       if (isOffline(row.server.id)) {
@@ -189,9 +190,9 @@ const PublishStoryScreen = () => {
     async (row: StoryRow) => {
       setBusyStoryId(row.story.id);
       try {
-        // A visibilidade vai junto da publicação, em vez de numa segunda chamada só quando há
-        // senha: assim publicar com o cadeado desligado realmente torna a história pública, e
-        // não deixa em silêncio uma senha antiga valendo.
+        // Visibility travels with the publication, rather than in a second call only when there is a password:
+        // that way publishing with the padlock off really does make the story public, and does not silently
+        // leave an old password in force.
         const published = await publicationApiService.publish(
           row.server,
           row.story.id,
@@ -202,8 +203,8 @@ const PublishStoryScreen = () => {
         );
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
 
-        // Publicar sem dizer onde a história foi parar deixa a pessoa sem nada em mãos - o
-        // endereço é o resultado da ação, então ele aparece de imediato e continua na tela.
+        // Publishing without saying where the story ended up leaves the person with nothing in hand - the
+        // address is the action's result, so it appears immediately and stays on the screen.
         const url = buildStoryPublicUrl(row.server.url, row.story.id);
         AppAlert.alert(
           t('publish_version_created'),
@@ -220,7 +221,7 @@ const PublishStoryScreen = () => {
       } catch (publishError) {
         const status = (publishError as { response?: { status?: number } })?.response?.status;
         if (status === 409) {
-          // O servidor discorda do nosso contador: sincronizar é o único caminho.
+          // The server disagrees with our counter: synchronizing is the only way.
           showNotification(t('publish_blocked_not_synced'), 'error');
         } else if (status === 403) {
           showNotification(t('publish_showcase_disabled'), 'error');
@@ -244,9 +245,9 @@ const PublishStoryScreen = () => {
         return;
       }
 
-      // A visibilidade vale para a história inteira: tirar a senha agora também abre as versões
-      // que já estavam publicadas atrás dela. Isso não é óbvio a partir de um botão "publicar",
-      // então é dito antes de acontecer, e não depois.
+      // Visibility applies to the whole story: removing the password now also opens the versions that were
+      // already published behind it. That is not obvious from a "publish" button, so it is said before it
+      // happens, not afterwards.
       const showcase = showcaseByStory[row.story.id];
       const opensProtectedVersions =
         !usePassword && showcase?.visibility === 'password' && showcase.publications.length > 0;
@@ -331,7 +332,7 @@ const PublishStoryScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 6 },
     sectionDescription: {
@@ -457,9 +458,9 @@ const PublishStoryScreen = () => {
               <TouchableOpacity
                 style={styles.storyHeader}
                 onPress={() => {
-                  // Ao abrir, o cadeado começa refletindo como a história está publicada hoje:
-                  // um controle que diz "sem senha" numa história protegida faria a pessoa
-                  // acreditar que já a tornou pública sem ter feito nada.
+                  // On opening, the padlock starts by reflecting how the story is published today: a control saying "no
+                  // password" on a protected story would make the person believe they had already made it public without
+                  // having done anything.
                   if (!expanded) {
                     setUsePassword(showcase?.visibility === 'password');
                     setPassword('');
@@ -542,8 +543,8 @@ const PublishStoryScreen = () => {
                         secureTextEntry
                       />
                       {showcase?.hasPassword && (
-                        // Publicar de novo grava a senha digitada agora, então deixar o campo
-                        // em branco não é "manter a que já existe" - é publicar sem senha.
+                        // Publishing again saves the password typed now, so leaving the field blank is not "keep the existing
+                        // one" - it is publishing with no password.
                         <Text style={styles.hint}>{t('publish_password_replaces_previous')}</Text>
                       )}
                     </>
@@ -564,9 +565,9 @@ const PublishStoryScreen = () => {
                   </TouchableOpacity>
 
                   {showcase?.isPublished && (
-                    // O endereço fica à vista sempre que a história está publicada, não só no
-                    // instante em que ela é publicada: é o que a pessoa precisa copiar para
-                    // mandar a alguém, e ela não vai republicar só para vê-lo de novo.
+                    // The address stays in sight whenever the story is published, not only at the instant it is published:
+                    // it is what the person needs to copy to send to somebody, and they are not going to republish just to
+                    // see it again.
                     <View style={styles.linkBox}>
                       <Text style={styles.label}>{t('publish_public_link')}</Text>
                       <Text style={styles.linkText} selectable>

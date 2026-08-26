@@ -10,18 +10,18 @@ import { Pool } from 'pg';
 import '../setup';
 
 /**
- * Aplica as migrações uma única vez, antes de qualquer arquivo de teste rodar.
+ * Applies the migrations exactly once, before any test file runs.
  *
- * Não reusa `runMigrations()` de `src/db/migrate.ts` de propósito: aquela função resolve a
- * pasta por `import.meta.dir`, que é API do Bun e vem `undefined` nos workers do Vitest. O
- * caminho aqui sai de `import.meta.url`, que funciona nos dois runtimes.
+ * It deliberately does not reuse `runMigrations()` from `src/db/migrate.ts`: that function resolves
+ * the folder through `import.meta.dir`, which is a Bun API and comes back `undefined` in Vitest's
+ * workers. The path here comes from `import.meta.url`, which works in both runtimes.
  *
- * Também usa uma conexão própria, encerrada no fim, em vez do singleton de `src/db`: o global
- * setup roda fora do contexto dos testes e uma conexão deixada aberta aqui seguraria o
- * processo do Vitest no ar.
+ * It also uses a connection of its own, closed at the end, instead of `src/db`'s singleton: the
+ * global setup runs outside the tests' context and a connection left open here would keep Vitest's
+ * process alive.
  *
- * A suíte roda contra os dois motores: `DATABASE_DRIVER=sqlite` a executa sobre um arquivo
- * descartável, sem precisar de Postgres nenhum no ar.
+ * The suite runs against both engines: `DATABASE_DRIVER=sqlite` runs it over a disposable file, with
+ * no Postgres up at all.
  */
 const API_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -41,8 +41,8 @@ async function setupPostgres(): Promise<void> {
 }
 
 async function setupSqlite(): Promise<void> {
-  // Arquivo novo a cada execução: as migrações são aplicadas do zero, e nenhum resíduo de uma
-  // rodada anterior entra numa nova.
+  // A fresh file on every run: the migrations are applied from scratch, and no residue from a previous
+  // run leaks into a new one.
   const file = process.env.DATABASE_URL!.replace(/^file:/, '');
   await rm(file, { force: true });
   await rm(`${file}-wal`, { force: true });

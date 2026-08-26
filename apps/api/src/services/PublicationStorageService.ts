@@ -2,16 +2,16 @@ import type { BlobStorage } from './media-storage/BlobStorage';
 import { createBlobStorage } from './media-storage/createBlobStorage';
 
 /**
- * Onde ficam os .zip das versões publicadas.
+ * Where the .zip files of published versions live.
  *
- * Usa o mesmo `createBlobStorage()` da mídia - então um servidor configurado com
- * `MEDIA_STORAGE_DRIVER=s3` já guarda as publicações em S3, que é onde elas devem estar:
- * são os maiores objetos que esta API produz. Sem variável de ambiente nova.
+ * It uses the same `createBlobStorage()` as media - so a server configured with
+ * `MEDIA_STORAGE_DRIVER=s3` already keeps publications in S3, which is where they belong: they are
+ * the largest objects this API produces. No new environment variable.
  *
- * Fora de `MediaStorageService` de propósito: lá os blobs são endereçados por MD5,
- * deduplicados globalmente, contam na cota do tier e são coletados por
- * `deleteBlobIfUnreferenced`. Um pacote de publicação não é nada disso - é um artefato único,
- * com dono e tempo de vida próprios, apagado junto com a linha que o descreve.
+ * Outside `MediaStorageService` on purpose: there, blobs are addressed by MD5, deduplicated
+ * globally, counted against the tier's quota and collected by `deleteBlobIfUnreferenced`. A
+ * publication package is none of that - it is a unique artifact, with its own owner and lifetime,
+ * deleted along with the row that describes it.
  */
 export class PublicationStorageService {
   constructor(private readonly blobStorage: BlobStorage = createBlobStorage()) {}
@@ -33,8 +33,8 @@ export class PublicationStorageService {
   }
 
   /**
-   * URL assinada de curta duração, quando o backend suporta (S3). `null` no disco local, e aí
-   * quem chama serve os bytes normalmente.
+   * A short-lived signed URL, when the backend supports it (S3). `null` on local disk, and then the
+   * caller serves the bytes normally.
    */
   async presignedUrl(
     storyId: string,

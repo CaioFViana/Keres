@@ -1,138 +1,139 @@
-# Sistema de Status (stats) no Keres
+# The stat system in Keres
 
-Sistema opcional, ligado por história, para medir personagens em eixos criados pelo autor e
-compará-los num gráfico radar. Este documento descreve o modelo de dados, a matemática da escada e
-as regras que não cabem em constraint de banco.
+An optional system, turned on per story, for measuring characters on axes created by the author and
+comparing them on a radar chart. This document describes the data model, the ladder maths and
+the rules that do not fit in a database constraint.
 
-## 1. Ligar e desligar
+## 1. Turning it on and off
 
-`Story` tem dois campos:
+`Story` has two fields:
 
-- **`statSystem: boolean`** (padrão `false`) - liga a feature naquela história. Desligado, o item
-  "Status" some do menu lateral e o painel some do detalhe do personagem; **nada é apagado**, e
-  religar devolve tudo.
-- **`statNotation: 'letter' | 'number'`** (padrão `'letter'`) - como os valores são exibidos. Com
-  letras aparece o rótulo do degrau (`F`, `C`, `SS`); com números, o próprio valor.
+- **`statSystem: boolean`** (default `false`) - turns the feature on in that story. Off, the
+  "Stats" item disappears from the side menu and the panel disappears from the character's detail;
+  **nothing is deleted**, and turning it back on gives everything back.
+- **`statNotation: 'letter' | 'number'`** (default `'letter'`) - how the values are displayed. With
+  letters the tier's label appears (`F`, `C`, `SS`); with numbers, the value itself.
 
-Os dois são editados em Configurações da História e sincronizam junto com o resto da `Story`.
+Both are edited in Story Settings and synchronize along with the rest of the `Story`.
 
-## 2. As quatro entidades
+## 2. The four entities
 
-| Entidade | O que é | Campos próprios |
+| Entity | What it is | Own fields |
 |---|---|---|
-| `Stat` | Um eixo mensurável | `name`, `isPrimary`, `order` |
-| `StatStrength` | Um degrau da escada de valores | `statId` (anulável), `label`, `minValue` |
-| `StatRelation` | O valor de um stat para um personagem | `characterId`, `modeId` (anulável), `statId`, `value` |
-| `Mode` | Uma forma alternativa de um personagem | `characterId`, `name`, `modeChanges`, `order` |
+| `Stat` | A measurable axis | `name`, `isPrimary`, `order` |
+| `StatStrength` | A tier of the value ladder | `statId` (nullable), `label`, `minValue` |
+| `StatRelation` | A stat's value for a character | `characterId`, `modeId` (nullable), `statId`, `value` |
+| `Mode` | An alternative form of a character | `characterId`, `name`, `modeChanges`, `order` |
 
-**Primário x secundário.** Só os primários viram eixo do radar, e por isso são no máximo **12**
-(`MAX_PRIMARY_STATS`); acima disso o desenho fica ilegível. Secundários não têm limite: aparecem
-apenas como lista de texto. O gráfico precisa de pelo menos **3** primários
-(`MIN_PRIMARY_STATS_FOR_CHART`) - abaixo disso o polígono degenera numa linha, e a tela mostra um
-convite a cadastrar mais no lugar do desenho.
+**Primary vs. secondary.** Only the primary ones become a radar axis, and that is why there are at most **12**
+(`MAX_PRIMARY_STATS`); beyond that the drawing becomes illegible. Secondary ones have no limit: they appear
+only as a text list. The chart needs at least **3** primary ones
+(`MIN_PRIMARY_STATS_FOR_CHART`) - below that the polygon degenerates into a line, and the screen shows an
+invitation to register more in place of the drawing.
 
-**Modos.** Existem mesmo com o sistema desligado: descrever o que muda numa transformação é útil
-por si só. `Mode` entra na busca global pelo nome; como não tem tela própria, o resultado carrega o
-**id do personagem dono** e abrir leva ao detalhe dele (ver `ENTITY_ROUTES.Mode` em
+**Modes.** They exist even with the system off: describing what changes in a transformation is useful
+in itself. `Mode` enters the global search by name; since it has no screen of its own, the result carries the
+**owning character's id** and opening it leads to that character's detail (see `ENTITY_ROUTES.Mode` in
 `apps/client/src/utils/entityNavigation.ts`).
 
-## 3. A escada de tiers
+## 3. The tier ladder
 
-Cada degrau guarda só o próprio piso; o intervalo dele é `[minValue, piso do próximo[`. A escada
-inteira sai de ordenar os degraus por `minValue`, e a escada sempre abre no zero - quando o degrau
-mais baixo começa acima de 0, `sortLadder` insere um degrau implícito (sem id, rótulo `—`) para
-que nenhum valor fique fora de todos os intervalos.
+Each tier stores only its own floor; its interval is `[minValue, the next one's floor[`. The whole
+ladder comes from sorting the tiers by `minValue`, and the ladder always opens at zero - when the lowest
+tier starts above 0, `sortLadder` inserts an implicit tier (with no id, labelled `—`) so that
+no value falls outside every interval.
 
-**Por stat, com padrão da história.** `StatStrength.statId` nulo é a escada padrão, usada por todo
-status que não tenha uma própria. Preenchido, é o override daquele status. Assim "destreza vai de 0
-a 100" e "força vai de F a S" convivem na mesma história sem obrigar 12 cadastros.
+**Per stat, with a story default.** A null `StatStrength.statId` is the default ladder, used by every
+stat that does not have one of its own. Filled in, it is that stat's override. That way "dexterity goes from 0
+to 100" and "strength goes from F to S" coexist in the same story without requiring 12 registrations.
 
-**Notação numérica.** Usa a mesma tabela: a tela oferece um gerador (`de 0 a 100 de 10 em 10`) que
-grava as linhas, e o rótulo é o próprio número. Um único caminho de renderização e de
-sincronização para as duas notações.
+**Numeric notation.** It uses the same table: the screen offers a generator (`from 0 to 100 in steps of 10`) that
+writes the rows, and the label is the number itself. A single rendering and synchronization path for
+both notations.
 
-### Do valor ao raio
+### From the value to the radius
 
-Com pisos `c0=0 < c1 < … < cn`, o anel *k* fica no raio `k/n`, e um valor em `[ck, ck+1[` fica em
-`(k + fração)/n`. É o exemplo do pedido original: com F em 0, C em 50 e A em 400, o valor 100 está
-dentro de C, a um terço do caminho até A.
+With floors `c0=0 < c1 < … < cn`, ring *k* sits at radius `k/n`, and a value in `[ck, ck+1[` sits at
+`(k + fraction)/n`. It is the example from the original request: with F at 0, C at 50 and A at 400, the value 100 is
+inside C, a third of the way to A.
 
-**Transbordo.** O último degrau não tem topo. Acima de `cn` o desenho entra numa faixa reservada de
-20% do raio (`OVERSHOOT_RATIO`): um degrau inteiro além do topo - medido pela largura do último
-intervalo fechado - preenche a faixa toda, e daí para cima trava na borda. O anel externo dessa
-faixa é tracejado, que é o que deixa "acima da escala" visível sem reescalar o gráfico inteiro por
-causa de um personagem.
+**Overflow.** The last tier has no top. Above `cn` the drawing enters a reserved band of
+20% of the radius (`OVERSHOOT_RATIO`): a whole tier beyond the top - measured by the width of the last
+closed interval - fills the whole band, and from there upwards it clamps to the edge. The outer ring of that
+band is dashed, which is what makes "above the scale" visible without rescaling the whole chart because
+of one character.
 
-### A régua de tiers
+### The tier bar
 
-O campo de valor é um número solto: sozinho, ele não diz que 100 é "C" nesta escada nem quanto
-falta para o próximo degrau. Por isso o formulário do personagem desenha, sob cada campo, uma
-régua com uma faixa por degrau, uma marca em cada piso e o ponto do valor - que acompanha o que
-está sendo digitado, antes mesmo de salvar. O mesmo componente aparece na tela da escada, como
-prévia do que está sendo montado.
+The value field is a bare number: on its own, it does not say that 100 is "C" on this ladder nor how much
+is left to the next tier. That is why the character's form draws, under each field, a
+bar with one band per tier, a mark at each floor and the value's point - which follows what is
+being typed, before it is even saved. The same component appears on the ladder screen, as a
+preview of what is being assembled.
 
-Ao lado do campo há um **selo com o rótulo do degrau** em que o número caiu, atualizado enquanto
-se digita. A régua diz *onde* o valor está; o selo diz *como ele se chama* - que é justamente o
-que uma escada de pisos arbitrários (F em 0, C em 50, A em 400) esconde. Vale nas duas notações,
-já que na numérica o rótulo é o piso do degrau. Acima do último degrau o selo mostra `A+`, o mesmo
-transbordo que a faixa tracejada desenha (`formatTierLabel` em `statLadder.ts`).
+Beside the field there is a **badge with the label of the tier** the number fell into, updated as you
+type. The bar says *where* the value is; the badge says *what it is called* - which is precisely
+what a ladder of arbitrary floors (F at 0, C at 50, A at 400) hides. It applies to both notations,
+since in the numeric one the label is the tier's floor. Above the last tier the badge shows `A+`, the same
+overflow the dashed band draws (`formatTierLabel` in `statLadder.ts`).
 
-**Um cartão por status a partir de médio.** Em tela estreita nome, campo e régua empilhados
-bastam. Numa tela larga a mesma disposição deixa o campo numérico com metade da largura e a
-barra esticada sem necessidade, então de `medium` para cima cada status vira um cartão num
-`ResponsiveGrid` (duas colunas em médio, três em largo) com o campo em largura fixa. O
-agrupamento também deixa claro a que status cada régua pertence.
+**One card per stat from medium up.** On a narrow screen, the name, field and bar stacked
+are enough. On a wide screen the same arrangement leaves the numeric field at half the width and the
+bar needlessly stretched, so from `medium` up each stat becomes a card in a
+`ResponsiveGrid` (two columns at medium, three at wide) with the field at a fixed width. The
+grouping also makes it clear which stat each bar belongs to.
 
-O eixo da régua é **numérico**, e não um degrau por fatia igual como no radar. São perguntas
-diferentes: o radar compara personagens entre eixos, então cada anel é um degrau; a régua mostra
-o formato da escada, então F em 0, C em 50 e A em 400 aparece como uma faixa estreita seguida de
-uma enorme, que é a verdade sobre aqueles números. A faixa tracejada no fim é o mesmo transbordo
-de 20% do radar.
+The bar's axis is **numeric**, and not one tier per equal slice as on the radar. They are
+different questions: the radar compares characters across axes, so each ring is a tier; the bar shows
+the ladder's shape, so F at 0, C at 50 and A at 400 appears as a narrow band followed by
+a huge one, which is the truth about those numbers. The dashed band at the end is the same 20%
+overflow as the radar's.
 
-Rótulos que não cabem são omitidos, sempre preservando os das duas pontas. O cálculo respeita o
-alinhamento com que cada um é desenhado (o primeiro sai da marca para a direita, o último para a
-esquerda) - supor todos centrados fazia "90" e "100" saírem colados numa escada numérica.
+Labels that do not fit are omitted, always preserving the two at the ends. The calculation respects the
+alignment each one is drawn with (the first goes from the mark to the right, the last to the
+left) - assuming all of them centred made "90" and "100" come out glued together on a numeric ladder.
 
-## 4. Herança de modo
+## 4. Mode inheritance
 
-Um modo que **não** tem linha própria para um status lê o valor do modo normal, marcado como
-herdado na interface. Gravar um valor num modo é justamente o ato de deixar de herdar; limpar o
-campo apaga a linha e devolve a herança. A regra vive num lugar só,
-`apps/client/src/utils/statValues.ts`, consumida pelo painel, pela comparação e pelo ranking.
+A mode that does **not** have a row of its own for a stat reads the normal mode's value, marked as
+inherited in the interface. Writing a value in a mode is precisely the act of no longer inheriting; clearing
+the field deletes the row and gives the inheritance back. The rule lives in a single place,
+`apps/client/src/utils/statValues.ts`, consumed by the panel, the comparison and the ranking.
 
-Apagar um modo apaga junto os valores registrados só para ele: sem o modo, uma `StatRelation` com
-aquele `modeId` ficaria órfã e o servidor recusaria qualquer edição posterior nela.
+Deleting a mode also deletes the values registered only for it: without the mode, a `StatRelation` with
+that `modeId` would be orphaned and the server would refuse any later edit to it.
 
-## 5. Invariantes e conflitos
+## 5. Invariants and conflicts
 
-`stat_id` e `mode_id` são anuláveis, e no Postgres NULLs são distintos entre si - um índice único
-deixaria passar justamente as colisões da escada padrão e do modo normal. Quem garante são os
-handlers de sincronização da API, que levantam `SyncConflictError` e deixam o cliente abrir a tela
-de resolução:
+`stat_id` and `mode_id` are nullable, and in Postgres NULLs are distinct from one another - a unique index
+would let through precisely the collisions of the default ladder and the normal mode. What guarantees them are
+the API's synchronization handlers, which raise `SyncConflictError` and let the client open the
+resolution screen:
 
-- **`StatStrength`**: dois degraus com o mesmo piso na mesma escada. O intervalo de um deles teria
-  largura zero e nenhum valor cairia nele.
-- **`StatRelation`**: dois valores para o mesmo `(personagem, modo, status)`. A leitura passaria a
-  depender da ordem das linhas.
-- **`Stat`**: o 13º primário. O teto é invariante de dado, não só de tela: um cliente antigo não
-  pode empurrá-lo pela sincronização.
-- **FKs**: status, personagem ou modo inexistente, e modo que não pertence ao personagem.
+- **`StatStrength`**: two tiers with the same floor on the same ladder. One of their intervals would have
+  zero width and no value would fall into it.
+- **`StatRelation`**: two values for the same `(character, mode, stat)`. Reading would come
+  to depend on the rows' order.
+- **`Stat`**: the 13th primary. The ceiling is a data invariant, not just a screen one: an old client cannot
+  push it through synchronization.
+- **FKs**: a non-existent stat, character or mode, and a mode that does not belong to the character.
 
-O cliente repete as duas primeiras checagens antes de gravar, para virarem erro de formulário
-imediato em vez de conflito de sync opaco horas depois.
+The client repeats the first two checks before writing, so they become an immediate form error
+instead of an opaque sync conflict hours later.
 
-## 6. Onde está o quê
+## 6. Where everything is
 
-- **Matemática pura** (sem React, sem banco): `apps/client/src/utils/statLadder.ts` (escada),
-  `statValues.ts` (herança), `statRadarLayout.ts` (geometria), `statRanking.ts` (tier list),
-  `statRadarSvg.ts` (arquivo exportado), `statLadderBarLayout.ts` (a régua de tiers). Mesma
-  disciplina dos layouts de grafo do app: a tela interativa e o SVG exportado consomem a mesma
-  geometria e nunca discordam.
-- **Telas**: `apps/client/src/screens/stats/` - lista, formulário, escada, comparação e ranking,
-  todas sob a entrada "Status" do menu da história (`navigation/StatsStack.tsx`).
-- **No personagem**: painel no detalhe (`components/features/stats/CharacterStatPanel`), e no
-  formulário os modos (`ModeManager`) e os valores (`CharacterStatValuesEditor`) - o detalhe só
-  exibe, nunca edita.
-- **Formato de exportação**: as quatro coleções entraram na **V5** (`CURRENT_STORY_FORMAT_VERSION`);
-  a migração `V4 -> V5` materializa listas vazias e deixa `statSystem` desligado, então pacotes
-  antigos continuam importáveis sem ligar a feature sozinhos.
+- **Pure maths** (no React, no database): `packages/shared/graphs/statLadder.ts` (the ladder),
+  `statRadarLayout.ts` (the geometry), `statRadarSvg.ts` (the exported file) and
+  `statLadderBarLayout.ts` (the tier bar), plus `apps/client/src/utils/statValues.ts`
+  (inheritance) and `statRanking.ts` (the tier list). The same discipline as the app's graph layouts: the
+  interactive screen and the exported SVG consume the same geometry and never disagree - and because they are
+  shared, the site's showcase draws exactly the same charts.
+- **Screens**: `apps/client/src/screens/stats/` - list, form, ladder, comparison and ranking,
+  all under the "Stats" entry of the story menu (`navigation/StatsStack.tsx`).
+- **On the character**: the panel on the detail (`components/features/stats/CharacterStatPanel`), and on the
+  form the modes (`ModeManager`) and the values (`CharacterStatValuesEditor`) - the detail only
+  displays, it never edits.
+- **Export format**: the four collections entered in **V5** (`CURRENT_STORY_FORMAT_VERSION`);
+  the `V4 -> V5` migration materialises empty lists and leaves `statSystem` off, so old
+  packages remain importable without turning the feature on by themselves.

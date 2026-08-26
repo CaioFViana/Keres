@@ -1,22 +1,22 @@
 import React from 'react';
-import { Modal } from 'react-native';
+import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
 import GalleryDetailContent from '../../../../screens/gallery/GalleryDetailContent';
 import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
 
 /**
- * Monta a mídia "espiada" de uma tela de entidade, por cima de tudo, sem passar pela
- * navegação. Ver `state/galleryMediaViewerStore.ts` e `GalleryDetailContent.tsx` para o
- * motivo de existir (evitar o reset de pilha acionado por perda de foco do Drawer).
+ * Mounts the medium "peeked at" from an entity screen, on top of everything, without going through
+ * navigation. See `state/galleryMediaViewerStore.ts` and `GalleryDetailContent.tsx` for the
+ * reason it exists (avoiding the stack reset triggered by losing the Drawer's focus).
  *
- * Fica montado uma vez, como irmão do Drawer em `MainSystemNavigator` - o `Modal` cuida de
- * aparecer por cima e de tratar o botão físico de voltar do Android (`onRequestClose`).
+ * It stays mounted once, as a sibling of the Drawer in `MainSystemNavigator` - the `Modal` takes care of
+ * appearing on top and of handling Android's physical back button (`onRequestClose`).
  */
 const GalleryMediaViewerOverlay: React.FC = () => {
   const galleryId = useGalleryMediaViewerStore((state) => state.galleryId);
   const close = useGalleryMediaViewerStore((state) => state.close);
 
   return (
-    <Modal visible={galleryId !== null} animationType="slide" onRequestClose={close}>
+    <ThemedFullscreenModal visible={galleryId !== null} onRequestClose={close}>
       {galleryId && (
         <GalleryDetailContent
           key={galleryId}
@@ -25,7 +25,7 @@ const GalleryMediaViewerOverlay: React.FC = () => {
           showCloseButton
         />
       )}
-    </Modal>
+    </ThemedFullscreenModal>
   );
 };
 

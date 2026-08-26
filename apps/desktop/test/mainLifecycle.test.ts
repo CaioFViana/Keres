@@ -12,8 +12,8 @@ const electronMocks = vi.hoisted(() => {
   const BrowserWindow = vi.fn(function () {
     const window = {
       loadURL: vi.fn(async () => {}),
-      // `setWindowOpenHandler` faz parte do desvio de links para o navegador do sistema
-      // (main.ts); sem ele no dublê, `createWindow` explode antes de carregar a página.
+      // `setWindowOpenHandler` is part of routing links to the system browser (main.ts); without it in
+      // the double, `createWindow` blows up before loading the page.
       webContents: { on: vi.fn(), setWindowOpenHandler: vi.fn() },
     };
     windows.push(window);
@@ -127,14 +127,14 @@ describe('desktop startup', () => {
 });
 
 describe('external links', () => {
-  /** O handler que `createWindow` registrou para `window.open`. */
+  /** The handler `createWindow` registered for `window.open`. */
   function windowOpenHandler() {
     return electronMocks.windows[0].webContents.setWindowOpenHandler.mock.calls[0][0] as (details: {
       url: string;
     }) => { action: string };
   }
 
-  /** O handler de `will-navigate`, procurado entre os listeners registrados. */
+  /** The `will-navigate` handler, looked up among the registered listeners. */
   function willNavigateHandler() {
     const call = electronMocks.windows[0].webContents.on.mock.calls.find(
       (args: any[]) => args[0] === 'will-navigate',
@@ -150,7 +150,7 @@ describe('external links', () => {
     const result = windowOpenHandler()({ url: 'https://keres.example/story/01ARZ3ND' });
 
     expect(electronMocks.openExternal).toHaveBeenCalledWith('https://keres.example/story/01ARZ3ND');
-    // Nunca abre uma janela do Electron, nem para o endereço que aceitou.
+    // It never opens an Electron window, not even for the address it accepted.
     expect(result).toEqual({ action: 'deny' });
   });
 
@@ -169,7 +169,7 @@ describe('external links', () => {
     expect(electronMocks.openExternal).toHaveBeenCalledWith('https://keres.example/');
   });
 
-  // A navegação interna do próprio app não pode ser interrompida.
+  // The app's own internal navigation must not be interrupted.
   it('lets the app navigate within itself', () => {
     const event = { preventDefault: vi.fn() };
     willNavigateHandler()(event, 'app://app/story');

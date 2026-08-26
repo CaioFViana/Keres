@@ -1,7 +1,7 @@
 /**
- * Grupo de condições (`ChoiceCheck`) que precisam ser satisfeitas para uma Choice ficar
- * disponível. Os checks dentro de um grupo se combinam pelo `combinator` do grupo
- * (AND = todos, OR = algum); os grupos de uma mesma Choice se combinam por AND entre si.
+ * A group of conditions (`ChoiceCheck`) that have to be satisfied for a Choice to become
+ * available. The checks inside a group combine through the group's `combinator` (AND = all,
+ * OR = any); the groups of the same Choice combine with AND between them.
  */
 export interface ChoiceCheckGroup {
   id: string;

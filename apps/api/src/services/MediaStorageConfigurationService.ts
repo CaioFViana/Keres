@@ -20,7 +20,7 @@ export function configuredMediaStorageIdentity(): string {
   return `s3:${endpoint}:${env.MEDIA_S3_REGION}:${env.MEDIA_S3_BUCKET}:${prefix}:${env.MEDIA_S3_FORCE_PATH_STYLE ? 'path' : 'virtual'}`;
 }
 
-/** Executado antes da API aceitar tráfego; nunca muda a origem de mídia de forma silenciosa. */
+/** Run before the API accepts traffic; it never changes the media source silently. */
 export async function assertMediaStorageConfiguration(): Promise<void> {
   const identity = configuredMediaStorageIdentity();
   const setting = await db.query.mediaStorageSettings.findFirst({
@@ -29,8 +29,8 @@ export async function assertMediaStorageConfiguration(): Promise<void> {
 
   if (!setting) {
     const [{ value: blobCount }] = await db.select({ value: count() }).from(mediaBlobs);
-    // Bancos criados antes desta proteção já eram necessariamente locais. Não aceitamos
-    // apontá-los para S3 por engano só porque a tabela de configuração acabou de surgir.
+    // Databases created before this protection were necessarily local. We do not accept pointing them at
+    // S3 by mistake just because the configuration table has only now appeared.
     if (Number(blobCount) > 0 && env.MEDIA_STORAGE_DRIVER !== 'local') {
       throw new Error(
         'This database already contains gallery media from the legacy local filesystem storage. ' +
@@ -47,8 +47,8 @@ export async function assertMediaStorageConfiguration(): Promise<void> {
       })
       .onConflictDoNothing();
 
-    // Dois containers podem subir juntos. Releia a linha após o insert para que o processo
-    // que perdeu a corrida não comece apontando para outro backend.
+    // Two containers can come up together. Re-read the row after the insert so the process that lost the
+    // race does not start out pointing at a different backend.
     const persisted = await db.query.mediaStorageSettings.findFirst({
       where: eq(mediaStorageSettings.id, MEDIA_STORAGE_SETTINGS_SINGLETON_ID),
     });

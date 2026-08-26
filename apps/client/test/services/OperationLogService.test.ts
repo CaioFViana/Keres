@@ -31,7 +31,7 @@ async function seedStory(
   });
 }
 
-/** Cada log ganha um instante distinto e crescente, para a ordenação ser observável. */
+/** Each log gets a distinct, increasing instant, so the ordering is observable. */
 async function logOperation(overrides: Partial<typeof operationLogs.$inferInsert> = {}) {
   clock += 1000;
   const row = {
@@ -182,8 +182,8 @@ describe('getOperationLogById', () => {
 });
 
 /**
- * Com favoritos individuais, o que cada pessoa marcou é dela: o log de operações não pode
- * virar uma janela para as escolhas dos outros colaboradores da história.
+ * With individual favourites, what each person marked is theirs: the operation log must not become a
+ * window into the other collaborators' choices.
  */
 describe('privacy of individual favourites', () => {
   it('hides another user’s favourite operations', async () => {

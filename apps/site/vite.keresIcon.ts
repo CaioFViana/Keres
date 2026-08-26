@@ -5,11 +5,12 @@ import pngToIco from 'png-to-ico';
 import type { Plugin } from 'vite';
 
 /**
- * Favicon e marca da landing, a partir do mesmo PNG que o desktop e o painel já usam.
+ * The landing page's favicon and wordmark, from the same PNG the desktop app and the admin
+ * panel already use.
  *
- * A fonte é uma só — `apps/client/assets/images/desktop_icon.png`. Gerar em vez de
- * versionar uma cópia mantém uma única verdade: trocar o ícone no cliente atualiza
- * favicon e marca da landing no próximo build.
+ * There is a single source - `apps/client/assets/images/desktop_icon.png`. Generating instead
+ * of committing a copy keeps one truth: changing the icon in the client updates the landing
+ * page's favicon and wordmark on the next build.
  */
 
 const siteDirectory = path.dirname(fileURLToPath(import.meta.url));

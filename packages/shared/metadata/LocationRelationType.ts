@@ -1,7 +1,7 @@
 /**
- * Os dois tipos de relacionamento entre Locations: `contains` é direcional (locationAId é o pai,
- * locationBId é o filho, uma Location só pode ter um pai vivo por vez) e `connected_to` é
- * bidirecional (par não-ordenado, sem conceito de hierarquia/ciclo).
+ * The two kinds of relationship between Locations: `contains` is directional (locationAId is the
+ * parent, locationBId is the child, and a Location can only have one live parent at a time) and
+ * `connected_to` is bidirectional (an unordered pair, with no notion of hierarchy or cycles).
  */
 export const LOCATION_RELATION_TYPES = ['contains', 'connected_to'] as const;
 

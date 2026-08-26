@@ -1,11 +1,10 @@
-import {
-  CreateGalleryRelationDataSchema,
+import type {
   CreateGalleryRelationDataType,
   CreateStoryUpdate,
   GalleryOwnerEntity,
-  PartialGalleryRelationSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateGalleryRelationDataSchema, PartialGalleryRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import {
@@ -20,10 +19,10 @@ import {
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**
- * Sincroniza o vínculo entre uma mídia e uma entidade da história.
+ * Synchronizes the link between a media file and an entity of the story.
  *
- * Mesma forma do `TagRelationSyncHandler`: o dono é polimórfico, então a existência dele
- * é conferida aqui em vez de por foreign key.
+ * The same shape as `TagRelationSyncHandler`: the owner is polymorphic, so its existence is checked
+ * here instead of by a foreign key.
  */
 export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateGalleryRelationDataSchema,
@@ -132,7 +131,7 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  /** O par (mídia, dono) é único enquanto estiver ativo; o tombstone não conta. */
+  /** The (media, owner) pair is unique while it is active; the tombstone does not count. */
   private async findActiveDuplicate(
     storyId: string,
     galleryId: string,

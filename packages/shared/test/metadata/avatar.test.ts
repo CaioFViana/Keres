@@ -16,7 +16,7 @@ describe('avatar icon options', () => {
     expect(AVATAR_ICON_OPTIONS).toContain(DEFAULT_AVATAR_ICON);
   });
 
-  // Os nomes viram tanto glifo da fonte (app) quanto nome de arquivo .svg (site).
+  // The names become both a font glyph (the app) and an .svg file name (the site).
   it('uses names that are safe as file names', () => {
     for (const icon of AVATAR_ICON_OPTIONS) {
       expect(icon).toMatch(/^[a-z][a-z-]*[a-z]$/);
@@ -31,7 +31,7 @@ describe('avatarColorFromSeed', () => {
     }
   });
 
-  // O mesmo usuário precisa ter a mesma cor no app e no site, sem nada guardado no banco.
+  // The same user has to get the same colour in the app and on the site, with nothing stored in the database.
   it('gives the same seed the same color every time', () => {
     expect(avatarColorFromSeed('ana')).toBe(avatarColorFromSeed('ana'));
     expect(avatarColorFromSeed('ana')).not.toBe(avatarColorFromSeed('ana '));

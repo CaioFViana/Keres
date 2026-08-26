@@ -1,13 +1,11 @@
-import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
-import { TagRelationEntities } from '@keres/shared/entities/Tag';
+import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
+import type { TagRelationEntities } from '@keres/shared/entities/Tag';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
-import { TagSelect } from '../db/schema';
-import {
-  createNoteRelationService,
-  SaveNoteRelation,
-} from '../services/storymanagement/NoteRelationService';
+import type { TagSelect } from '../db/schema';
+import type { SaveNoteRelation } from '../services/storymanagement/NoteRelationService';
+import { createNoteRelationService } from '../services/storymanagement/NoteRelationService';
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';
 import { createTagService } from '../services/storymanagement/TagService';
@@ -66,8 +64,8 @@ export function useEntityRelations({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [allNotes, setAllNotes] = useState<Note[]>([]);
   const [noteRelations, setNoteRelations] = useState<NoteRelation[]>([]);
-  // Enquanto `entityId` é undefined (criando), não há entidade real pra gravar a relação -
-  // guardado aqui até `persistNoteRelations` ser chamado com o id de verdade depois do save.
+  // While `entityId` is undefined (creating), there is no real entity to save the relation against - it
+  // is held here until `persistNoteRelations` is called with the real id after the save.
   const [pendingNoteRelations, setPendingNoteRelations] = useState<NoteRelation[]>([]);
 
   const refreshAvailableTags = useCallback(async () => {
@@ -209,8 +207,8 @@ export function useEntityRelations({
   const saveNoteRelation = useCallback(
     async (relation: SaveNoteRelation) => {
       if (!entityId) {
-        // Ainda criando - guarda localmente com um id sintético só pra a UI (lista, key,
-        // remover) funcionar igual; `relationId` de verdade só existe no replay.
+        // Still creating - it is held locally with a synthetic id just so the UI (list, key, remove) behaves
+        // the same; the real `relationId` only exists during the replay.
         const draft: NoteRelation = {
           ...relation,
           id: `pending-${createULID()}`,
@@ -273,9 +271,9 @@ export function useEntityRelations({
   );
 
   /**
-   * Grava de verdade as relações de nota acumuladas enquanto a entidade ainda não existia.
-   * Mesmo padrão de `persistTagRelations`: chamado pelo form logo depois do save principal,
-   * com o id que só existe a partir dali.
+   * Actually saves the note relations accumulated while the entity did not exist yet. The same pattern
+   * as `persistTagRelations`: called by the form right after the main save, with the id that only exists
+   * from then on.
    */
   const persistNoteRelations = useCallback(
     async (targetEntityId: string) => {
@@ -311,8 +309,8 @@ export function useEntityRelations({
     setSelectedTagIds,
     selectedTags,
     allNotes,
-    // Sem entidade ainda, `noteRelations` fetched fica sempre vazia - mostra o buffer local
-    // no lugar, transparente pra quem consome (NoteRelationManager não sabe a diferença).
+    // With no entity yet, the fetched `noteRelations` is always empty - it shows the local buffer instead,
+    // transparently to the consumer (NoteRelationManager cannot tell the difference).
     noteRelations: entityId ? noteRelations : pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,

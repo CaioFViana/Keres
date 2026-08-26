@@ -1,6 +1,8 @@
-import { SeeAlsoEntityType } from '@keres/shared';
+import type { SeeAlsoEntityType } from '@keres/shared';
+import { isSameEntity, SELF_LINK_ERROR, sortEntityPair } from '@keres/shared';
 import { and, eq, or, sql } from 'drizzle-orm';
-import { AppDrizzleClient, SeeAlsoRelationSelect, seeAlsoRelations } from '../../db';
+import type { AppDrizzleClient, SeeAlsoRelationSelect } from '../../db';
+import { seeAlsoRelations } from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
@@ -11,12 +13,20 @@ export interface SeeAlsoEntityRef {
   entityId: string;
 }
 
-/** Ordenação canônica (A/B), mesma usada pelo servidor - ver SeeAlsoRelationSyncHandler.ts (API). */
+/** Canonical ordering (A/B), the same one the server uses - see SeeAlsoRelationSyncHandler.ts (API). */
+/**
+ * The pair's canonical ordering, delegated to `@keres/shared`: it is the same one the server uses on
+ * receiving the synchronization. Here it only translates this layer's field names.
+ */
 function sortEntityRefs(
   a: SeeAlsoEntityRef,
   b: SeeAlsoEntityRef,
 ): [SeeAlsoEntityRef, SeeAlsoEntityRef] {
-  return `${a.entityType}:${a.entityId}` <= `${b.entityType}:${b.entityId}` ? [a, b] : [b, a];
+  const [first] = sortEntityPair(
+    { type: a.entityType, id: a.entityId },
+    { type: b.entityType, id: b.entityId },
+  );
+  return first.id === a.entityId && first.type === a.entityType ? [a, b] : [b, a];
 }
 
 export interface SeeAlsoRelationService {
@@ -32,7 +42,7 @@ export interface SeeAlsoRelationService {
     b: SeeAlsoEntityRef,
   ): Promise<SeeAlsoRelationSelect>;
   removeSeeAlsoLink(currentUserId: string, relationId: string): Promise<boolean>;
-  /** Reconcilia o conjunto atual de vínculos de `entity` para exatamente `targets` (diff add/remove). */
+  /** Reconciles `entity`'s current set of links to exactly `targets` (an add/remove diff). */
   setSeeAlsoTargets(
     currentUserId: string,
     storyId: string,
@@ -102,8 +112,10 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
     },
 
     async addSeeAlsoLink(currentUserId, storyId, a, b) {
-      if (a.entityType === b.entityType && a.entityId === b.entityId) {
-        throw new Error('Validation Error: an entity cannot be See-Also-linked to itself.');
+      if (
+        isSameEntity({ type: a.entityType, id: a.entityId }, { type: b.entityType, id: b.entityId })
+      ) {
+        throw new Error(SELF_LINK_ERROR);
       }
 
       const [entityA, entityB] = sortEntityRefs(a, b);

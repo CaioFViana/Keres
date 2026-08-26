@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -10,12 +12,15 @@ import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSo
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '../../db';
-import { GallerySelect } from '../../db/schemas/galleries';
+import type { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  GalleryStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -40,7 +45,7 @@ const GalleryListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
 
-  /** Importar mídia é I/O de arquivo, não instantâneo; sem isto a tela pareceria travada. */
+  /** Importing media is file I/O, not instantaneous; without this the screen would look frozen. */
   const [importing, setImporting] = useState(false);
 
   const {
@@ -70,11 +75,11 @@ const GalleryListScreen = () => {
   const { canEdit } = useStoryRole(storyId);
 
   /**
-   * Importa os arquivos escolhidos.
+   * Imports the chosen files.
    *
-   * Mídia já presente na história (mesmo hash) não vira um registro novo: o endereçamento
-   * por conteúdo torna a duplicata detectável, e criar outra linha só encheria a galeria de
-   * cópias da mesma imagem.
+   * Media already present in the story (the same hash) does not become a new record: content addressing
+   * makes the duplicate detectable, and creating another row would only fill the gallery with copies of
+   * the same image.
    */
   const handleAddMedia = useCallback(async () => {
     if (!storyId || !userId) {
@@ -181,10 +186,7 @@ const GalleryListScreen = () => {
   const numColumns = breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2;
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     columnWrapper: {
       paddingHorizontal: 5,
     },

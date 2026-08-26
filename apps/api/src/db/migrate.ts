@@ -17,8 +17,8 @@ import { db } from './index';
  * next to the executable, while `bun run` still finds `apps/api/drizzle`.
  */
 export async function runMigrations(): Promise<void> {
-  // Cada motor tem o seu conjunto: o SQL gerado difere de dialeto para dialeto (tipos de
-  // coluna, ENUM que só o Postgres tem), então são duas pastas, não uma compartilhada.
+  // Each engine has its own set: the generated SQL differs from dialect to dialect (column types, ENUMs
+  // that only Postgres has), so there are two folders, not one shared.
   const folder = migrationsFolder(usingSqlite);
   logger.info(`Applying database migrations from ${folder}...`);
   if (usingSqlite) {

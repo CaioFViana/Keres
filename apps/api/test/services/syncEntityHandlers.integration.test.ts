@@ -42,7 +42,7 @@ async function seedWorld() {
   } as never);
 }
 
-/** Cria um personagem pelo próprio handler e devolve a linha resultante. */
+/** Creates a character through the handler itself and returns the resulting row. */
 async function createCharacter(id = newId(), name = 'Keres') {
   await handler.create(USER_ID, STORY_ID, createUpdate(id, { name }));
   return handler.findById(id);
@@ -133,8 +133,8 @@ describe('update', () => {
   });
 
   /**
-   * A comparação de versão é de igualdade, não `<`: com `<`, uma edição feita sobre uma base
-   * mais nova que a do servidor passava sem checagem e todo conflito escapava.
+   * The version comparison is equality, not `<`: with `<`, an edit made on a base newer than the
+   * server's went through unchecked and every conflict escaped.
    */
   it('refuses an edit built on a stale base version', async () => {
     const entity = await createCharacter();
@@ -259,7 +259,7 @@ describe('update', () => {
     expect((await handler.findById(entity.id)).updatedAt.toISOString()).toBe(operationTime);
   });
 
-  /** Relógio adiantado do cliente não pode empurrar a entidade para o futuro. */
+  /** A client clock running fast must not push the entity into the future. */
   it('refuses an operation time in the future', async () => {
     const entity = await createCharacter();
     const operationTime = new Date(Date.now() + 60_000).toISOString();
@@ -306,7 +306,7 @@ describe('delete', () => {
     expect(row.deletedAt).toBeInstanceOf(Date);
   });
 
-  /** Reenviar a mesma exclusão (resposta anterior perdida) não é conflito: já surtiu efeito. */
+  /** Resending the same deletion (a lost previous response) is not a conflict: it already took effect. */
   it('treats a repeated delete as a success', async () => {
     const entity = await createCharacter();
     await handler.delete(USER_ID, STORY_ID, deleteUpdate(entity.id, 1), entity);
@@ -418,9 +418,9 @@ describe('findDeleted', () => {
 });
 
 /**
- * O comportamento acima é da base, compartilhada pelos 25 handlers. Estes casos confirmam que
- * um handler com colunas diferentes herda o mesmo contrato, em vez de o teste estar medindo
- * uma particularidade de `Character`.
+ * The behaviour above comes from the base class, shared by the 25 handlers. These cases confirm that a
+ * handler with different columns inherits the same contract, rather than the test measuring a
+ * peculiarity of `Character`.
  */
 describe('other entities inherit the same contract', () => {
   it('a Tag goes through the same create/update/delete cycle', async () => {
@@ -458,11 +458,10 @@ describe('other entities inherit the same contract', () => {
   });
 
   /**
-   * `Note` e `WorldRule` tinham um override de `update` que repetia a base sem
-   * `checkVersionConflict`: uma edição concorrente sobre essas duas entidades não gerava
-   * conflito nenhum, e quando o `where version = ...` daquele override não casava, a edição
-   * do usuário sumia sem erro. Os overrides foram removidos; estes casos garantem que as duas
-   * não voltem a divergir do contrato.
+   * `Note` and `WorldRule` used to have an `update` override that repeated the base without
+   * `checkVersionConflict`: a concurrent edit on those two entities produced no conflict at all, and
+   * when that override's `where version = ...` did not match, the user's edit vanished with no error.
+   * The overrides were removed; these cases make sure the two do not drift from the contract again.
    */
   it.each([
     [

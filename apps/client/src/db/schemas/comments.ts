@@ -1,12 +1,13 @@
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type { CommentEntityType } from '@keres/shared';
 
 export const comments = sqliteTable('comments', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  entityType: text('entity_type').notNull(),
+  entityType: text('entity_type').$type<CommentEntityType>().notNull(),
   entityId: text('entity_id').notNull(),
-  // Exatamente um de fieldId/fieldKey é preenchido - ver packages/shared/entities/Comment.ts.
+  // Exactly one of fieldId/fieldKey is filled in - see packages/shared/entities/Comment.ts.
   fieldId: text('field_id'),
   fieldKey: text('field_key'),
   contentSnapshot: text('content_snapshot'),

@@ -34,7 +34,7 @@ const isSceneTimingUnit = (value: string | null | undefined): value is SceneTimi
   value !== null && sceneTimingUnits.includes(value as SceneTimingUnit);
 
 const getTimingPart = (value: number | null | undefined, unit: string | null | undefined) => {
-  if (!value || !Number.isFinite(value) || value < 0 || !isSceneTimingUnit(unit)) {
+  if (!value || !Number.isFinite(value) || !isSceneTimingUnit(unit)) {
     return null;
   }
 
@@ -52,7 +52,7 @@ const formatTimingTotals = (
   if (normalize) {
     const carry = (from: SceneTimingUnit, to: SceneTimingUnit, amount: number) => {
       const value = totals.get(from) ?? 0;
-      const transferred = Math.floor(value / amount);
+      const transferred = Math.trunc(value / amount);
       if (transferred > 0) {
         totals.set(from, value % amount);
         totals.set(to, (totals.get(to) ?? 0) + transferred);
@@ -71,7 +71,7 @@ const formatTimingTotals = (
 
   const parts = sceneTimingUnits
     .map((unit) => ({ unit, value: totals.get(unit) ?? 0 }))
-    .filter(({ value }) => value > 0)
+    .filter(({ value }) => value !== 0)
     .map(({ unit, value }) => formatTimingPart(value, unit, t));
 
   return parts.length > 0 ? parts.join(', ') : formatTimingPart(0, 'minutes', t);

@@ -13,18 +13,18 @@ import { createStatRelationService } from '../services/storymanagement/StatRelat
 import { createStatService } from '../services/storymanagement/StatService';
 import { createStatStrengthService } from '../services/storymanagement/StatStrengthService';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { resolveLadder, type StatTier } from '../utils/statLadder';
+import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { indexStatValues, type StatValueIndex } from '../utils/statValues';
 
 /**
- * Tudo que uma tela de status precisa, numa consulta só e atualizado por evento.
+ * Everything a stats screen needs, in a single query and refreshed by event.
  *
- * Painel do personagem, comparação e ranking leem os mesmos quatro conjuntos; buscar cada um
- * por conta própria multiplicaria as consultas e abriria espaço para as telas discordarem sobre
- * qual escada vale para um status.
+ * The character panel, the comparison and the ranking read the same four sets; fetching each one on its
+ * own would multiply the queries and open room for the screens to disagree about which ladder applies
+ * to a stat.
  */
 export interface StoryStatsData {
-  /** Os personagens da história, para legenda e ranking sem uma segunda consulta. */
+  /** The story's characters, for the legend and the ranking without a second query. */
   characters: CharacterSelect[];
   stats: StatSelect[];
   primaryStats: StatSelect[];
@@ -32,9 +32,9 @@ export interface StoryStatsData {
   modes: ModeSelect[];
   values: StatRelationSelect[];
   valueIndex: StatValueIndex;
-  /** A escada que vale para um status: a própria, ou a padrão da história. */
+  /** The ladder that applies to a stat: its own, or the story's default. */
   ladderOf: (statId: string) => StatTier[];
-  /** A escada padrão da história, editável na tela dedicada. */
+  /** The story's default ladder, editable on the dedicated screen. */
   defaultLadder: StatTier[];
   loading: boolean;
   reload: () => Promise<void>;
@@ -104,7 +104,7 @@ export function useStoryStats(storyId: string | undefined | null): StoryStatsDat
         ladderCache.set(statId, ladder);
         return ladder;
       },
-      // `resolveLadder` com um id que nenhum status tem devolve sempre a escada padrão.
+      // `resolveLadder` with an id no stat has always returns the default ladder.
       defaultLadder: resolveLadder('', data.strengths),
       loading,
       reload,

@@ -1,17 +1,17 @@
-import { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
+import type { StorySchemaEntityType } from '../metadata/StorySchemaEntityType';
 
 /**
- * Valor de um atributo customizado numa entidade específica. `entityId` é uma FK polimórfica
- * (aponta pra `characters.id`/`locations.id`/etc conforme `entityType`), mesmo padrão já usado
- * por `NoteRelation.relationId`/`TagRelation.relationId`/`GalleryRelation.ownerId`.
+ * The value of a custom attribute on a specific entity. `entityId` is a polymorphic FK (it points
+ * at `characters.id`/`locations.id`/etc according to `entityType`), the same pattern already used
+ * by `NoteRelation.relationId`/`TagRelation.relationId`/`GalleryRelation.ownerId`.
  *
- * `value` é sempre texto puro independente de `StorySchemaField.type` - ver
- * `attributeValueCodec.ts` pra codificação/decodificação consistente (number/boolean nunca
- * comparados como texto cru contra um valor tipado, isso quebra no Postgres).
+ * `value` is always plain text regardless of `StorySchemaField.type` - see
+ * `attributeValueCodec.ts` for consistent encoding/decoding (number/boolean are never compared as
+ * raw text against a typed value, which breaks on Postgres).
  */
 export interface AttributeValue {
   id: string;
-  /** Denormalizado do campo, para consultas/índices sem join - mesmo padrão de outras tabelas. */
+  /** Denormalised from the field, for queries/indexes without a join - the same pattern as other tables. */
   storyId: string;
   entityType: StorySchemaEntityType;
   entityId: string;

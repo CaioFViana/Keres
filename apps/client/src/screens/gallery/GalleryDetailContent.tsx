@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { MediaType } from '@keres/shared';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,7 @@ import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/Audi
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
 import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
 import { useDrizzle } from '../../db';
-import { GallerySelect } from '../../db/schemas/galleries';
+import type { GallerySelect } from '../../db/schemas/galleries';
 import {
   decodeOwnerValue,
   encodeOwnerValue,
@@ -26,10 +27,8 @@ import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { mediaFileService } from '../../services/MediaFileService';
-import {
-  createGalleryRelationService,
-  GalleryOwnerRef,
-} from '../../services/storymanagement/GalleryRelationService';
+import type { GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
+import { createGalleryRelationService } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -53,11 +52,11 @@ function formatSize(bytes: number): string {
 interface GalleryDetailContentProps {
   galleryId: string;
   /**
-   * Chamado ao salvar, excluir, ou pedir para fechar (botão "voltar" da tela hospedeira).
+   * Called on save, on delete, or when asked to close (the host screen's "back" button).
    *
-   * O componente não sabe se está dentro de uma navegação real (`GalleryStack.GalleryDetail`)
-   * ou de um overlay simples (o "espiar" aberto de uma tela de entidade); por isso não
-   * chama `navigation.goBack()` diretamente - quem o hospeda decide o que "fechar" significa.
+   * The component does not know whether it sits inside real navigation (`GalleryStack.GalleryDetail`) or
+   * a simple overlay (the "peek" opened from an entity screen); that is why it does not call
+   * `navigation.goBack()` directly - its host decides what "close" means.
    */
   onClose: () => void;
   /** Exibe um controle expl\u00edcito para fechar a tela ou o overlay que hospeda o conte\u00fado. */
@@ -65,19 +64,18 @@ interface GalleryDetailContentProps {
 }
 
 /**
- * Conteúdo da tela de detalhe de uma mídia: busca, preview/player, edição e vínculos.
+ * The content of a media file's detail screen: fetching, preview/player, editing and links.
  *
- * Deliberadamente sem nada de navegação (sem `useRoute`/`useNavigation`) para poder ser
- * hospedado de duas formas: como uma tela normal da pilha de Galeria (`GalleryDetailScreen`,
- * navegação de verdade, botão de voltar sai da própria pilha), ou dentro de um `Modal` aberto
- * por `GalleryMediaViewerOverlay` quando uma tela de entidade "espia" uma mídia vinculada.
+ * Deliberately with nothing about navigation (no `useRoute`/`useNavigation`) so it can be hosted two
+ * ways: as an ordinary screen of the Gallery stack (`GalleryDetailScreen`, real navigation, the back
+ * button leaving its own stack), or inside a `Modal` opened by `GalleryMediaViewerOverlay` when an
+ * entity screen "peeks" at a linked media file.
  *
- * Essa segunda forma existe porque abrir a mídia via `navigation.navigate` faz o app inteiro
- * perder o foco da aba do Drawer em que a pessoa estava, e cada aba tem um listener de
- * `blur` que reresetiza sua própria pilha para a lista (ver `MainSystemStack.tsx`) - útil
- * para trocar de aba de verdade, mas descartava a tela de detalhe da entidade só por ter
- * mostrado uma mídia por cima. Um `Modal` não participa do foco do React Navigation, então
- * não aciona esse reset.
+ * That second form exists because opening the media through `navigation.navigate` makes the whole app
+ * lose focus on the Drawer tab the person was on, and each tab has a `blur` listener that resets its
+ * own stack to the list (see `MainSystemStack.tsx`) - useful for genuinely switching tabs, but it threw
+ * away the entity's detail screen merely for having shown a media file on top. A `Modal` does not take
+ * part in React Navigation's focus, so it does not trigger that reset.
  */
 const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   galleryId,
@@ -217,11 +215,10 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
         onPress: async () => {
           try {
             await galleryService.deleteGallery(userId, media.id);
-            // O arquivo local só é removido depois que o registro foi marcado como
-            // excluído: se a ordem fosse a inversa, uma falha na exclusão deixaria uma
-            // mídia ativa apontando para um arquivo que não existe mais. Hash é único por
-            // história (dedupe em galleryMediaImport), então este é o único registro que
-            // aponta para este arquivo e sua miniatura - remover ambos é seguro.
+            // The local file is only removed after the record has been marked deleted: were the order reversed, a
+            // failure in the deletion would leave an active media file pointing at a file that no longer exists. A
+            // hash is unique per story (deduped in galleryMediaImport), so this is the only record pointing at this
+            // file and its thumbnail - removing both is safe.
             mediaFileService.deleteLocal(media.localPath);
             mediaFileService.deleteLocal(media.thumbnailPath);
             showNotification(t('media_deleted_successfully'), 'success');
@@ -236,10 +233,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   }, [media, userId, galleryService, showNotification, t, onClose]);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     content: {
       padding: 20,
       width: '100%',

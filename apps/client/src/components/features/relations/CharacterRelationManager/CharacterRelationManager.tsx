@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Character } from '@keres/shared/entities/Character';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Character } from '@keres/shared/entities/Character';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -147,8 +147,8 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
                 return (
                   <RelationRow
                     key={item.id}
-                    // Em `editable` (form) a linha não navega - sair da tela perderia
-                    // alterações não salvas do formulário.
+                    // In `editable` (a form) the row does not navigate - leaving the screen would lose the form's
+                    // unsaved changes.
                     onPress={editable ? undefined : () => handleCharacterPress(relatedChar)}
                     extraActions={
                       editable && (

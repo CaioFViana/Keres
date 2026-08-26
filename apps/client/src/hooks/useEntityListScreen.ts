@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import { EntityStoreCore } from '../state/createEntityStore';
+import type { EntityStoreCore } from '../state/createEntityStore';
 import { useStoryStore } from '../state/storyStore';
-import { SortDirection } from '../types/entityFilters';
+import type { SortDirection } from '../types/entityFilters';
 import { debounce } from '../utils/debounce';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
@@ -76,6 +76,10 @@ export function useEntityListScreen<
   const fetchItems = store[fetchKey] as () => Promise<void>;
 
   const [searchQuery, setSearchQuery] = useState(storeSearchTerm);
+  // Keep the list shell mounted after its first response for a story. A filter can quite
+  // legitimately return no rows; replacing the whole screen with a loading state at that
+  // point would also unmount open filter controls (including MultiSelectPill's modal).
+  const [loadedStoryId, setLoadedStoryId] = useState<string | null>(null);
 
   const debouncedSetStoreSearchTerm = useMemo(
     () => debounce((term: string) => setStoreSearchTerm(term), searchDebounceMs),
@@ -106,7 +110,15 @@ export function useEntityListScreen<
   // is a stable store method, so without `storyId` here a story switch would keep the
   // previous story's rows on screen until the user touched a filter.
   useEffect(() => {
-    fetchItems();
+    let cancelled = false;
+
+    void fetchItems().finally(() => {
+      if (!cancelled) setLoadedStoryId(storyId ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     storyId,
     storeSearchTerm,
@@ -117,6 +129,8 @@ export function useEntityListScreen<
     advancedSearchCriteria,
     fetchItems,
   ]);
+
+  const isInitialLoading = !!storyId && loadedStoryId !== storyId;
 
   useEffect(() => {
     const handleChange = (changedStoryId: string) => {
@@ -133,6 +147,8 @@ export function useEntityListScreen<
   return {
     items,
     loading,
+    /** True only until this screen has received its first response for the selected story. */
+    isInitialLoading,
     error,
     storyId,
     /** Local, updates per keystroke - bind this to the search input. */

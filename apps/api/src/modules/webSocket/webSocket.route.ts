@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { eventManager } from '../../utils/EventManager'; // Import eventManager
 import { logger } from '../../utils/logger';
@@ -7,9 +7,9 @@ import { RealtimeSessionService, type RealtimeEvent } from '../../services/Realt
 
 const realtimeSessions = new RealtimeSessionService({
   eventBus: eventManager,
-  // Encaminhamento tardio: StoryPermissionService participa do grafo de SyncService, que por
-  // sua vez registra wsRoutes. Ler o método no momento da chamada evita depender da ordem de
-  // avaliação desses módulos circulares.
+  // Late forwarding: StoryPermissionService is part of SyncService's graph, which in turn registers
+  // wsRoutes. Reading the method at call time avoids depending on the evaluation order of those
+  // circular modules.
   canReadStory: (userId, storyId, role) =>
     storyPermissionService.hasPermission(userId, storyId, role),
   getReadableStoryIds: (userId) => storyPermissionService.getReadableStoryIds(userId),

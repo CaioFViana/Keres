@@ -1,8 +1,5 @@
-import {
-  createNoteService,
-  NoteService,
-  NoteWithTags,
-} from '../services/storymanagement/NoteService';
+import type { NoteService, NoteWithTags } from '../services/storymanagement/NoteService';
+import { createNoteService } from '../services/storymanagement/NoteService';
 import { createEntityStore } from './createEntityStore';
 
 export type { FavoriteFilterState } from '../types/entityFilters';

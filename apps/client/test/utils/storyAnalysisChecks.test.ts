@@ -10,7 +10,17 @@ const baseInput = (): StoryAnalysisInput => ({
   characterRelations: [],
   locations: [{ id: 'location', name: 'Location' }],
   locationRelations: [],
-  scenes: [{ id: 'start', name: 'Start', locationId: 'location', isStart: true, isFinish: false }],
+  scenes: [
+    {
+      id: 'start',
+      name: 'Start',
+      locationId: 'location',
+      isStart: true,
+      isFinish: false,
+      chapterId: 'chapter',
+      index: 1,
+    },
+  ],
   choices: [],
   choiceCheckGroups: [],
   choiceChecks: [],
@@ -24,6 +34,79 @@ const baseInput = (): StoryAnalysisInput => ({
   worldRules: [],
   storySchemaFields: [],
   attributeValues: [],
+});
+
+describe('duplicate relations', () => {
+  const twoCharacters = () => {
+    const input = baseInput();
+    input.characters.push({ id: 'other', name: 'Other' });
+    input.characterScenes.push({ characterId: 'character' }, { characterId: 'other' });
+    return input;
+  };
+
+  /**
+   * The analysis reported a clean bill of health on the bundled examples while they carried the same
+   * pair of characters related twice - there simply was no check for it.
+   */
+  it('reports the same pair of characters related twice, whichever way round', async () => {
+    const input = twoCharacters();
+    input.characterRelations.push(
+      { character1Id: 'character', character2Id: 'other' },
+      { character1Id: 'other', character2Id: 'character' },
+    );
+
+    const findings = await buildStoryAnalysisReport(input);
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_duplicate_character_relation',
+          severity: 'error',
+          entityId: 'other',
+          messageParams: { otherName: 'Character' },
+        }),
+      ]),
+    );
+  });
+
+  it('says nothing about a single relation per pair', async () => {
+    const input = twoCharacters();
+    input.characterRelations.push({ character1Id: 'character', character2Id: 'other' });
+
+    expect(await buildStoryAnalysisReport(input)).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_duplicate_character_relation' }),
+      ]),
+    );
+  });
+
+  /** Two places can be both "contains" and "connected_to"; they cannot contain each other twice. */
+  it('reports duplicate location connections only within the same type', async () => {
+    const input = baseInput();
+    input.locations.push({ id: 'other-location', name: 'Other Location' });
+    input.locationRelations.push(
+      { locationAId: 'location', locationBId: 'other-location', relationType: 'contains' },
+      { locationAId: 'location', locationBId: 'other-location', relationType: 'connected_to' },
+    );
+    expect(await buildStoryAnalysisReport(input)).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_duplicate_location_relation' }),
+      ]),
+    );
+
+    input.locationRelations.push({
+      locationAId: 'other-location',
+      locationBId: 'location',
+      relationType: 'contains',
+    });
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_duplicate_location_relation',
+          severity: 'error',
+        }),
+      ]),
+    );
+  });
 });
 
 describe('buildStoryAnalysisReport', () => {
@@ -57,6 +140,8 @@ describe('buildStoryAnalysisReport', () => {
       locationId: 'location',
       isStart: false,
       isFinish: false,
+      chapterId: 'chapter',
+      index: 1,
     });
 
     const keys = (await buildStoryAnalysisReport(input)).map((finding) => finding.messageKey);
@@ -104,6 +189,8 @@ describe('buildStoryAnalysisReport', () => {
         locationId: 'location',
         isStart: false,
         isFinish: false,
+        chapterId: 'chapter',
+        index: 1,
       });
       input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'end', text: 'go' });
       input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'AND' });
@@ -128,8 +215,24 @@ describe('buildStoryAnalysisReport', () => {
     it('flags a scene-count check requiring more than one visit when there is no cycle to revisit it', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
-        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false },
+        {
+          id: 'target',
+          name: 'Target',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
+        {
+          id: 'end',
+          name: 'End',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
       );
       input.choices.push(
         { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
@@ -157,8 +260,24 @@ describe('buildStoryAnalysisReport', () => {
     it('does not flag a scene-count check requiring more than one visit when the scene is revisitable via a cycle', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
-        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false },
+        {
+          id: 'target',
+          name: 'Target',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
+        {
+          id: 'end',
+          name: 'End',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
       );
       input.choices.push(
         { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
@@ -192,6 +311,8 @@ describe('buildStoryAnalysisReport', () => {
         locationId: 'location',
         isStart: false,
         isFinish: false,
+        chapterId: 'chapter',
+        index: 1,
       });
       input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'end', text: 'go' });
       input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'OR' });
@@ -235,6 +356,8 @@ describe('buildStoryAnalysisReport', () => {
         locationId: 'location',
         isStart: false,
         isFinish: false,
+        chapterId: 'chapter',
+        index: 1,
       });
       input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'onlyVia', text: 'go' });
       input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'AND' });
@@ -268,8 +391,24 @@ describe('buildStoryAnalysisReport', () => {
     it('cascades through two levels: a choice gated on a scene that is itself only reachable via a never-satisfiable choice', async () => {
       const input = baseInput();
       input.scenes.push(
-        { id: 'sceneX', name: 'Scene X', locationId: 'location', isStart: false, isFinish: false },
-        { id: 'sceneY', name: 'Scene Y', locationId: 'location', isStart: false, isFinish: false },
+        {
+          id: 'sceneX',
+          name: 'Scene X',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
+        {
+          id: 'sceneY',
+          name: 'Scene Y',
+          locationId: 'location',
+          isStart: false,
+          isFinish: false,
+          chapterId: 'chapter',
+          index: 1,
+        },
       );
       // Branch 1: start -> sceneX, gated on an item that is never granted anywhere - sceneX can
       // never actually be reached, even though it's structurally connected to the graph.
@@ -315,7 +454,6 @@ describe('buildStoryAnalysisReport', () => {
       });
 
       const findings = await buildStoryAnalysisReport(input);
-      const keys = findings.map((f) => f.messageKey);
       const neverSatisfiableChoiceIds = findings
         .filter((f) => f.messageKey === 'analysis_choice_never_satisfiable')
         .map((f) => f.entityId);
@@ -328,5 +466,99 @@ describe('buildStoryAnalysisReport', () => {
         ]),
       );
     });
+  });
+});
+
+/**
+ * Numbering outside 1..N is not fussiness: the API refuses a reorder whose indices do not form a
+ * contiguous 1..N, so the check is the warning before the synchronization conflict.
+ */
+describe('narrative index checks', () => {
+  const linearInput = (): StoryAnalysisInput => {
+    const input = baseInput();
+    input.storyType = 'linear';
+    input.chapters = [{ id: 'chapter', name: 'Capítulo', index: 1 }];
+    input.scenes = [];
+    return input;
+  };
+  const scene = (id: string, index: number) => ({
+    id,
+    name: id,
+    locationId: 'location',
+    isStart: false,
+    isFinish: false,
+    chapterId: 'chapter',
+    index,
+  });
+
+  it('says nothing about numbering when chapters and scenes are 1..N', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 1), scene('b', 2));
+
+    const findings = await buildStoryAnalysisReport(input);
+
+    expect(findings.filter((finding) => finding.messageKey.includes('_index_'))).toEqual([]);
+  });
+
+  it('flags a gap in the scene numbering of a chapter', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 1), scene('b', 3));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_scene_index_gap',
+          messageParams: { chapterName: 'Capítulo' },
+        }),
+      ]),
+    );
+  });
+
+  it('flags two scenes fighting over the same number', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 1), scene('b', 1));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_scene_index_duplicate' }),
+      ]),
+    );
+  });
+
+  it('flags scenes still numbered from zero', async () => {
+    const input = linearInput();
+    input.scenes.push(scene('a', 0), scene('b', 1));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_scene_index_start' }),
+      ]),
+    );
+  });
+
+  it('flags chapter numbering that does not start at 1', async () => {
+    const input = linearInput();
+    input.chapters = [
+      { id: 'chapter', name: 'Capítulo', index: 2 },
+      { id: 'other', name: 'Outro', index: 3 },
+    ];
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_chapter_index_start' }),
+      ]),
+    );
+  });
+
+  it('stays out of branching stories, where the index is not the reading order', async () => {
+    const input = linearInput();
+    input.storyType = 'branching';
+    input.scenes.push(scene('a', 1), scene('b', 3));
+
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ messageKey: 'analysis_scene_index_gap' }),
+      ]),
+    );
   });
 });

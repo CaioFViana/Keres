@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * O alvo aqui é o schema de validação, não o carregamento de arquivo. Sem neutralizar o
- * dotenv, um `apps/api/.env` presente na máquina do operador preenche justamente as variáveis
- * que os testes de "faltando" precisam remover, e a suíte passa ou falha conforme a máquina.
+ * The target here is the validation schema, not file loading. Without neutralising dotenv, an
+ * `apps/api/.env` present on the operator's machine fills in exactly the variables the "missing"
+ * tests need to remove, and the suite passes or fails depending on the machine.
  */
 vi.mock('dotenv', () => ({ config: () => ({ parsed: {} }) }));
 
 /**
- * `src/config/env.ts` valida no import: qualquer mudança precisa de um módulo novo. Todas as
- * variáveis relevantes são stubadas explicitamente.
+ * `src/config/env.ts` validates at import: any change needs a fresh module. Every relevant variable
+ * is stubbed explicitly.
  */
 const BASE_ENV: Record<string, string> = {
   DATABASE_URL: 'postgres://test:test@localhost:5432/keres_test',
@@ -17,7 +17,6 @@ const BASE_ENV: Record<string, string> = {
   JWT_SECRET_REFRESH: 'test-refresh-secret-that-is-at-least-thirty-two-characters',
   PORT: '',
   HOST: '',
-  SERVER_VERSION: '',
   MEDIA_STORAGE_DRIVER: '',
   MEDIA_STORAGE_PATH: '',
   MEDIA_S3_ENDPOINT: '',
@@ -32,11 +31,10 @@ const BASE_ENV: Record<string, string> = {
   ROOT_ADMIN_PASSWORD: '',
 };
 
-/** Campos com `.default()` puro: string vazia é inválida, então precisam ser removidos. */
+/** Fields with a plain `.default()`: an empty string is invalid, so they have to be removed. */
 const DEFAULTED_KEYS = [
   'PORT',
   'HOST',
-  'SERVER_VERSION',
   'MEDIA_STORAGE_DRIVER',
   'MEDIA_STORAGE_PATH',
   'MEDIA_S3_REGION',
@@ -77,7 +75,6 @@ describe('env', () => {
     expect(env.HOST).toBeUndefined();
     expect(env).toMatchObject({
       PORT: '3000',
-      SERVER_VERSION: '1.0.0',
       MEDIA_STORAGE_DRIVER: 'local',
       MEDIA_STORAGE_PATH: './media-storage',
       MEDIA_S3_REGION: 'us-east-1',
@@ -89,7 +86,7 @@ describe('env', () => {
 
   it.each([
     ['not a URL at all', 'not a url'],
-    // `new URL()` aceita isto (lê "localhost:" como esquema), então só a checagem de esquema pega.
+    // `new URL()` accepts this (reading "localhost:" as the scheme), so only the scheme check catches it.
     ['a host:port missing its scheme', 'localhost:5432'],
     ['a scheme for another database', 'mysql://user:pass@localhost:3306/keres'],
     ['an http URL', 'http://localhost:5432/keres'],

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { SeeAlsoEntityType } from '@keres/shared';
+import type { SeeAlsoEntityType } from '@keres/shared';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -22,20 +22,22 @@ interface SeeAlsoManagerProps {
   editable: boolean;
 }
 
-/** Escape hatch pro form chamar depois do save principal, quando `entityId` passou de vazio
- * pro id de verdade - mesmo motivo do `PanZoomCanvasHandle`: o componente já possui o hook
- * (`useSeeAlsoRelations`) que guarda a seleção pendente, então só ele pode disparar o replay. */
+/**
+ * An escape hatch for the form to call after the main save, when `entityId` has gone from empty
+ * to the real id - the same reason as `PanZoomCanvasHandle`: the component owns the hook
+ * (`useSeeAlsoRelations`) that holds the pending selection, so only it can trigger the replay.
+ */
 export interface SeeAlsoManagerHandle {
   persistPending: (targetEntityId: string) => Promise<void>;
 }
 
 /**
- * Seção "Veja também" de uma tela de detalhe: lista, clicável, de outras entidades marcadas
- * como relacionadas a esta (vínculo mútuo - ver useSeeAlsoRelations), mais um picker
- * (`MultiSelectPill` em modo agrupado, o mesmo usado na Galeria) para adicionar/remover vínculos.
+ * A detail screen's "See also" section: a clickable list of other entities marked
+ * as related to this one (a mutual link - see useSeeAlsoRelations), plus a picker
+ * (`MultiSelectPill` in grouped mode, the same one used in the Gallery) for adding/removing links.
  *
- * Aplica a mudança imediatamente ao selecionar/desselecionar (sem botão "Salvar" separado) -
- * mesmo padrão de TagChipList/NoteManager/CharacterRelationManager nestas mesmas telas.
+ * It applies the change immediately on selecting/deselecting (with no separate "Save" button) -
+ * the same pattern as TagChipList/NoteManager/CharacterRelationManager on these same screens.
  */
 const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
   ({ storyId, entityType, entityId, editable }, ref) => {
@@ -131,8 +133,8 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
                 )}
               </>
             );
-            // Em Forms (editable), a linha não navega - sair da tela perderia as alterações não
-            // salvas do formulário. Só as telas de detalhe (view-only) navegam ao tocar.
+            // On Forms (editable), the row does not navigate - leaving the screen would lose the form's
+            // unsaved changes. Only the detail screens (view-only) navigate on tap.
             return editable ? (
               <View key={relation.relationId} style={rowStyle}>
                 {rowContent}

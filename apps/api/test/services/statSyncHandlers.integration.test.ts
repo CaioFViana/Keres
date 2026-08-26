@@ -20,10 +20,10 @@ import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 /**
- * As invariantes do sistema de status não cabem em constraint de banco: `stat_id` e `mode_id`
- * são anuláveis, e no Postgres NULLs são distintos entre si, então um índice único deixaria
- * passar justamente as colisões da escada padrão e do modo normal. Quem garante é o handler,
- * e é ele que este arquivo exercita.
+ * The stat system's invariants do not fit into a database constraint: `stat_id` and `mode_id` are
+ * nullable, and in Postgres NULLs are distinct from one another, so a unique index would let through
+ * exactly the collisions of the default ladder and the normal mode. What guarantees them is the
+ * handler, and it is the handler this file exercises.
  */
 const statHandler = new StatSyncHandler();
 const strengthHandler = new StatStrengthSyncHandler();
@@ -131,7 +131,7 @@ describe('StatStrength', () => {
       storyId,
       create('StatStrength', defaultTier, { label: 'F', minValue: 0 }),
     );
-    // Mesmo piso, escada diferente: não é colisão.
+    // The same floor, a different ladder: not a collision.
     await strengthHandler.create(
       userId,
       storyId,

@@ -6,20 +6,20 @@ import Select from '../../../common/inputs/Select/Select';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import type { StoryStatsData } from '../../../../hooks/useStoryStats';
 import { useTheme } from '../../../../theme';
-import { formatStatValueDetailed, type StatNotation } from '../../../../utils/statLadder';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
-} from '../../../../utils/statRadarLayout';
+} from '@keres/shared/graphs/statRadarLayout';
 import { resolveStatValue } from '../../../../utils/statValues';
 import { StatRadarChart } from '../StatRadarChart/StatRadarChart';
 
 /**
- * O bloco de status na tela de detalhe do personagem. Não é `CollapsibleCard` de propósito: é a
- * leitura principal desta parte da tela, e o gráfico perde a graça atrás de um cabeçalho.
+ * The stat block on the character's detail screen. Deliberately not a `CollapsibleCard`: it is the
+ * main reading of this part of the screen, and the chart loses its point behind a header.
  *
- * Em tela estreita o gráfico vai em cima e a lista embaixo; a partir de médio os dois ficam
- * lado a lado, seguindo `GalleryDetailContent`.
+ * On a narrow screen the chart goes on top and the list below; from medium up the two sit side by side,
+ * following `GalleryDetailContent`.
  */
 interface CharacterStatPanelProps {
   characterId: string;

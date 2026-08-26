@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import apiClient from './apiClient';
+import apiClient, { apiUrl } from './apiClient';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from './browserCookieSession';
 import { createServerService } from './ServerService';
 
@@ -13,9 +13,9 @@ interface HostedMeResponse {
 }
 
 /**
- * Recupera a sessão web depois de um F5: os JWT estão no cookie HttpOnly, não no cofre.
- * Cria ou atualiza o servidor local apontando para a origem desta página. Mobile e
- * Electron nunca chamam isto com efeito — `usesHttpOnlyCookieSession()` é falso lá.
+ * Recovers the web session after an F5: the JWTs are in the HttpOnly cookie, not in the vault. It
+ * creates or updates the local server pointing at this page's origin. Mobile and Electron never call
+ * this with any effect - `usesHttpOnlyCookieSession()` is false there.
  */
 export async function restoreHostedCookieSession(
   db: AppDrizzleClient,
@@ -27,7 +27,7 @@ export async function restoreHostedCookieSession(
   const origin = hostedApiOrigin();
   let me: HostedMeResponse;
   try {
-    const response = await axios.get<HostedMeResponse>(`${origin}/auth/me`, {
+    const response = await axios.get<HostedMeResponse>(apiUrl(origin, '/auth/me'), {
       timeout: 5000,
       validateStatus: () => true,
     });

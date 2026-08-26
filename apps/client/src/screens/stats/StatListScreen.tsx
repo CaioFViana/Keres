@@ -1,17 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ReorderModal from '../../components/common/modals/ReorderModal/ReorderModal';
 import { useDrizzle } from '../../db';
-import { StatSelect } from '../../db/schema';
+import type { StatSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import { StatsStackParamList } from '../../navigation/StatsStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { createStatService } from '../../services/storymanagement/StatService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -19,11 +19,11 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
-import { formatStatValue, type StatNotation } from '../../utils/statLadder';
+import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
-/** A raiz do menu "Status": os eixos cadastrados, e os atalhos para escada, comparação e ranking. */
+/** The root of the "Stats" menu: the registered axes, and the shortcuts to the ladder, the comparison and the ranking. */
 const StatListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
@@ -38,12 +38,6 @@ const StatListScreen = () => {
   const { canEdit } = useStoryRole(storyId);
   const data = useStoryStats(storyId);
   const [reordering, setReordering] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('stats_title') });
-    }, [navigation, t]),
-  );
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = useMemo(
@@ -71,18 +65,6 @@ const StatListScreen = () => {
         name: { fontSize: 16, fontWeight: 'bold', color: colors.text },
         meta: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
         empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 30 },
-        fab: {
-          position: 'absolute',
-          bottom: 20,
-          right: 20,
-          backgroundColor: colors.primary,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 6,
-        },
       }),
     [colors],
   );
@@ -131,11 +113,28 @@ const StatListScreen = () => {
   const handleCreate = useCallback(() => {
     const primaries = data.stats.filter((stat) => stat.isPrimary).length;
     if (primaries >= MAX_PRIMARY_STATS) {
-      // Avisar antes de abrir o formulário poupa preencher tudo para ser recusado no save.
+      // Warning before opening the form saves filling everything in only to be refused on save.
       AppAlert.alert(t('error'), t('stat_limit_reached', { count: MAX_PRIMARY_STATS }));
     }
     navigation.navigate('StatForm', {});
   }, [data.stats, navigation, t]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('stats_title'),
+        headerRight: canEdit
+          ? () => (
+              <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+                <TouchableOpacity onPress={handleCreate} accessibilityLabel={t('add')}>
+                  <Ionicons name="add" size={30} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+            )
+          : undefined,
+      });
+    }, [canEdit, colors.text, handleCreate, navigation, t]),
+  );
 
   if (!storyId) {
     return (
@@ -235,12 +234,6 @@ const StatListScreen = () => {
           </View>
         )}
       />
-
-      {canEdit ? (
-        <TouchableOpacity style={styles.fab} onPress={handleCreate} accessibilityLabel={t('add')}>
-          <Ionicons name="add" size={30} color={colors.onPrimary} />
-        </TouchableOpacity>
-      ) : null}
 
       <ReorderModal
         isVisible={reordering}

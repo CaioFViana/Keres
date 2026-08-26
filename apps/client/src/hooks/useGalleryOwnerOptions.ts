@@ -1,13 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
-import { GALLERY_OWNER_ENTITIES, GalleryOwnerEntity } from '@keres/shared';
+import type { Ionicons } from '@expo/vector-icons';
+import type { GalleryOwnerEntity } from '@keres/shared';
+import { GALLERY_OWNER_ENTITIES } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
 import * as schema from '../db/schema';
 
-/** Mesmos ícone e cor usados para cada tipo de entidade nos blocos do Story Overview (`SummaryCard`). */
+/** The same icon and colour used for each entity type in the Story Overview's blocks (`SummaryCard`). */
 const OWNER_TYPE_ICON: Record<GalleryOwnerEntity, keyof typeof Ionicons.glyphMap> = {
   Character: 'people',
   Location: 'map',
@@ -24,18 +25,17 @@ const OWNER_TYPE_COLOR: Record<GalleryOwnerEntity, string> = {
 };
 
 /**
- * As entidades da história às quais uma mídia pode ser vinculada, prontas para um seletor.
+ * The story's entities a media file can be linked to, ready for a picker.
  *
- * O valor de cada opção é `Tipo:id` num campo só porque o seletor múltiplo trabalha com
- * uma lista plana de strings; separar em cinco seletores (um por tipo) encheria a tela sem
- * ganho nenhum, já que a pessoa pensa em "vincular à Ana", não em "vincular a um
- * Personagem, e o personagem é a Ana".
+ * Each option's value is `Type:id` in a single field because the multi-picker works with a flat list of
+ * strings; splitting it into five pickers (one per type) would fill the screen with no gain at all,
+ * since the person thinks "link it to Ana", not "link it to a Character, and the character is Ana".
  */
 
 export interface GalleryOwnerOption {
   /** Com o tipo prefixado (`"Personagem: Ana"`) - para a lista achatada, que mistura os cinco tipos. */
   label: string;
-  /** Sem o prefixo de tipo - para o seletor agrupado, onde o tipo já está no cabeçalho do grupo. */
+  /** Without the type prefix - for the grouped picker, where the type is already in the group's header. */
   name: string;
   value: string;
   ownerId: string;
@@ -115,8 +115,8 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
         for (const row of byType[ownerType]) {
           const name = row.name || t('unnamed');
           collected.push({
-            // O tipo entra no rótulo porque a lista achatada mistura os cinco: sem ele, dois
-            // nomes iguais em entidades diferentes ficariam indistinguíveis.
+            // The type goes into the label because the flat list mixes all five: without it, two identical names
+            // on different entities would be indistinguishable.
             label: `${t(ownerType.toLowerCase())}: ${name}`,
             name,
             value: encodeOwnerValue(ownerType, row.id),
@@ -145,9 +145,9 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
   );
 
   /**
-   * Os mesmos vínculos agrupados por tipo, para o seletor em dois passos (`GroupedMultiSelectPill`):
-   * primeiro o tipo de entidade, só depois a lista - que senão cresce junto com a história e vira
-   * uma rolagem só, sem filtro, misturando os cinco tipos.
+   * The same links grouped by type, for the two-step picker (`GroupedMultiSelectPill`): the entity type
+   * first, only then the list - which otherwise grows along with the story and becomes one long scroll,
+   * with no filter, mixing all five types.
    */
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({

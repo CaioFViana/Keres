@@ -113,9 +113,9 @@ describe('API log services', () => {
   });
 
   it('persists a rejected-request log even when userId/storyId do not exist here', async () => {
-    // O caso que o servidor empacotado batia: GET /sync/:storyId/pull sem auth, com um
-    // storyId que só existe no cliente. A FK em api_logs fazia o próprio insert do log
-    // falhar com SQLITE_CONSTRAINT_FOREIGNKEY.
+    // The case the packaged server hit: GET /sync/:storyId/pull with no auth, with a storyId that only
+    // exists on the client. The FK in api_logs made the log's own insert fail with
+    // SQLITE_CONSTRAINT_FOREIGNKEY.
     const missingStoryId = newId();
     await persistApiLog({
       level: 'warn',

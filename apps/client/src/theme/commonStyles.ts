@@ -1,11 +1,9 @@
 import { Platform, StyleSheet } from 'react-native';
-import { useThemeStore } from '../state/themeStore';
-import { themes } from './palettes';
-import { ThemeColors } from './ThemeColors';
+import type { ThemeColors } from '@keres/shared';
 
 // Compatibility re-export: color analysis stays in the pure utility module so it can be
 // shared by themed and non-themed components without an import cycle.
-export { isColorLight } from '../utils/colorUtils';
+export { isColorLight } from '@keres/shared';
 
 // Helper function to slightly saturate a hex color
 export const saturateColor = (hex: string, factor: number = 1.1): string => {
@@ -20,14 +18,6 @@ export const saturateColor = (hex: string, factor: number = 1.1): string => {
   b = Math.min(255, Math.floor(b * factor));
 
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-};
-
-export const useThemeColors = (themeName: string | null | undefined): ThemeColors => {
-  const { darkMode } = useThemeStore(); // Get darkMode state
-
-  const selectedTheme = themes[themeName || 'default'] || themes['default'];
-
-  return darkMode ? selectedTheme.darkColors : selectedTheme.lightColors;
 };
 
 export const getCommonCardStyles = (colors: ThemeColors) =>
@@ -202,3 +192,114 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
     },
     // Add other common input styles here if needed
   });
+
+/**
+ * A form's skeleton: scrolling, title, field label, section, switch row
+ * and the two footer buttons.
+ *
+ * A plain object, and not `StyleSheet.create`, so it can be spread inside the screen's own
+ * `StyleSheet.create` - the same arrangement as `relationSectionStyleDefs`. The screen declares what is its
+ * own after the spread and, if it needs to, overrides one entry without having to give up the
+ * rest.
+ *
+ * It exists because these same measurements were copied across ten to twenty screens each, with
+ * accidental variations of a comma or of a `color` - and `deleteButton` went as far as hard-coding
+ * a literal `'red'` in five of them, ignoring the palette.
+ */
+export const commonFormStyleDefs = (colors: ThemeColors, scrollBottomPadding?: number) => ({
+  scrollViewContent: {
+    padding: 20,
+    paddingBottom: scrollBottomPadding,
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginBottom: 5,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  switchContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  saveButton: {
+    marginTop: 10,
+    marginBottom: 0,
+  },
+  deleteButton: {
+    backgroundColor: colors.error,
+    marginBottom: 15,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+});
+
+/**
+ * A detail screen's skeleton: the entity's name, section titles, the footer's back button
+ * and the empty state. The same arrangement as `commonFormStyleDefs`.
+ */
+export const commonDetailStyleDefs = (colors: ThemeColors) => ({
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  buttonContainer: {
+    marginTop: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    padding: 32,
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center' as const,
+    lineHeight: 21,
+  },
+});
+
+/**
+ * The frame of a screen that hands its body over to a list or a chart: it takes up the screen and uses the
+ * theme's background, without `getCommonContainerStyles`'s breathing room (which is for screens with direct
+ * content, not for lists that need to bleed to the edge).
+ *
+ * It was the base's most common duplication - 22 screens declaring the same two lines.
+ */
+export const commonScreenStyleDefs = (colors: ThemeColors) => ({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+});

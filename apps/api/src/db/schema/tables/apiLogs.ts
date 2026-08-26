@@ -5,13 +5,13 @@ import { stories } from './stories';
 import { users } from './users';
 
 /**
- * Persistência do que já passa por `utils/logger.ts` (erros tratados + eventos de
- * domínio) - nem toda linha tem `userId`/`storyId`, por isso ambos ficam nullable (ex:
- * eventos do sistema de amizades não pertencem a uma história).
+ * Persistence for what already goes through `utils/logger.ts` (handled errors + domain events) - not
+ * every row has a `userId`/`storyId`, which is why both are nullable (friendship system events, for
+ * instance, do not belong to a story).
  *
- * Sem foreign key de propósito: um 401 em `/sync/:storyId/pull` registra o id da URL
- * mesmo quando a história não existe neste servidor (cliente local, token inválido,
- * probe). Log é observação - uma FK faria o próprio registro do rejeite falhar.
+ * Deliberately without a foreign key: a 401 on `/sync/:storyId/pull` records the id from the URL even
+ * when the story does not exist on this server (a local client, an invalid token, a probe). A log is
+ * an observation - an FK would make recording the rejection itself fail.
  */
 export const apiLogs = table(
   'api_logs',
@@ -25,8 +25,8 @@ export const apiLogs = table(
     createdAt: timestampNow('created_at'),
   },
   (table) => [
-    // Os quatro filtros que a tabela do admin oferece - sem estes índices, a paginação por
-    // offset degrada num log que só cresce.
+    // The four filters the admin table offers - without these indexes, offset pagination degrades on a
+    // log that only grows.
     index('api_logs_story_id_idx').on(table.storyId),
     index('api_logs_user_id_idx').on(table.userId),
     index('api_logs_created_at_idx').on(desc(table.createdAt)),

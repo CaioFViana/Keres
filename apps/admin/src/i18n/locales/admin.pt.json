@@ -1,11 +1,9 @@
 {
-  "language": {
-    "label": "Idioma"
-  },
-  "theme": {
-    "system": "Tema: Sistema",
-    "light": "Tema: Claro",
-    "dark": "Tema: Escuro"
+  "appearance": {
+    "title": "Aparência",
+    "hint": "Salvo apenas neste navegador.",
+    "palette": "Paleta",
+    "followingSystem": "Seguindo a configuração do seu dispositivo."
   },
   "common": {
     "loading": "Carregando...",
@@ -29,6 +27,34 @@
     "actionFailed": "A ação falhou.",
     "blankUnlimited": "(em branco = ilimitado)"
   },
+  "language": {
+    "label": "Idioma"
+  },
+  "login": {
+    "title": "Keres Admin",
+    "username": "Usuário",
+    "password": "Senha",
+    "signIn": "Entrar",
+    "signingIn": "Entrando...",
+    "failed": "Não foi possível entrar."
+  },
+  "logs": {
+    "title": "Registros",
+    "level": "Nível",
+    "allLevels": "Todos os níveis",
+    "storyId": "ID da história",
+    "userId": "ID do usuário",
+    "searchPlaceholder": "Mensagem, história, usuário…",
+    "from": "De",
+    "to": "Até",
+    "columnWhen": "Quando",
+    "columnLevel": "Nível",
+    "columnMessage": "Mensagem",
+    "columnStory": "História",
+    "columnUser": "Usuário",
+    "empty": "Nenhuma entrada. Faça uma busca acima.",
+    "detail": "Detalhe do registro"
+  },
   "nav": {
     "title": "Keres Admin",
     "menu": "Menu",
@@ -41,57 +67,6 @@
     "signedIn": "Conectado",
     "signOut": "Sair",
     "ariaLabel": "Administração"
-  },
-  "login": {
-    "title": "Keres Admin",
-    "username": "Usuário",
-    "password": "Senha",
-    "signIn": "Entrar",
-    "signingIn": "Entrando...",
-    "failed": "Não foi possível entrar."
-  },
-  "users": {
-    "title": "Usuários",
-    "newUser": "Novo usuário",
-    "searchPlaceholder": "Usuário ou tag...",
-    "searchAriaLabel": "Buscar por usuário ou tag",
-    "showDeleted": "Mostrar excluídos",
-    "columnUsername": "Usuário",
-    "columnTag": "Tag",
-    "columnAdmin": "Admin",
-    "columnTier": "Plano",
-    "columnCreated": "Criado em",
-    "columnStatus": "Situação",
-    "statusActive": "Ativo",
-    "statusDeleted": "Excluído",
-    "empty": "Nenhum usuário encontrado.",
-    "confirmDelete": "Excluir o usuário \"{{username}}\"?",
-    "confirmDeleteAdmin": "Excluir o admin \"{{username}}\"? Ele perde o acesso até ser restaurado."
-  },
-  "userForm": {
-    "newTitle": "Novo usuário",
-    "editTitle": "Editar {{username}}",
-    "username": "Usuário",
-    "password": "Senha",
-    "tag": "Tag",
-    "tagPlaceholder": "(padrão: o nome de usuário)",
-    "bio": "Bio",
-    "tier": "Plano",
-    "tierNone": "(nenhum / padrão)",
-    "adminAccess": "Acesso de administrador",
-    "confirmAdmin": "Criar este usuário com acesso de administrador? Ele poderá gerenciar o painel.",
-    "recoveryTitle": "Códigos de recuperação de {{username}}",
-    "recoveryHint": "Cada código serve uma vez para redefinir a senha sem saber a atual. Eles aparecem só desta vez - entregue-os agora, não dá para consultá-los depois.",
-    "copyCodes": "Copiar códigos",
-    "copied": "Copiado para a área de transferência.",
-    "copyFailed": "Não foi possível copiar automaticamente — selecione os códigos à mão.",
-    "lockedOutTitle": "Perdeu o acesso à conta?",
-    "lockedOutHint": "Gera um lote novo de códigos de recuperação e invalida os antigos. Entregue um código à pessoa - é com ele que ela define a própria senha nova, que você nunca vê.",
-    "regenerate": "Gerar novos códigos de recuperação",
-    "regenerating": "Gerando...",
-    "confirmRegenerate": "Gerar novos códigos de recuperação de {{username}}? Todos os códigos anteriores deixam de funcionar.",
-    "regenerateFailed": "Não foi possível gerar os códigos de recuperação.",
-    "loadTiersFailed": "Não foi possível carregar os planos."
   },
   "recovery": {
     "title": "Recuperação",
@@ -119,22 +94,29 @@
     "operationVersion": "Versão da operação",
     "entityVersion": "Versão da entidade"
   },
-  "logs": {
-    "title": "Registros",
-    "level": "Nível",
-    "allLevels": "Todos os níveis",
-    "storyId": "ID da história",
-    "userId": "ID do usuário",
-    "searchPlaceholder": "Mensagem, história, usuário…",
-    "from": "De",
-    "to": "Até",
-    "columnWhen": "Quando",
-    "columnLevel": "Nível",
-    "columnMessage": "Mensagem",
-    "columnStory": "História",
-    "columnUser": "Usuário",
-    "empty": "Nenhuma entrada. Faça uma busca acima.",
-    "detail": "Detalhe do registro"
+  "settings": {
+    "title": "Configurações",
+    "registration": "Cadastro",
+    "autoManage": "Abrir/fechar automaticamente conforme o máximo de usuários",
+    "registrationOpen": "Cadastro aberto",
+    "maxUsers": "Máximo de usuários",
+    "maxUsersHint": "(em branco = sem teto)",
+    "defaultTier": "Plano padrão para novos cadastros",
+    "defaultTierNone": "(nenhum / ilimitado)",
+    "saved": "Salvo.",
+    "loadTiersFailed": "Não foi possível carregar os planos."
+  },
+  "showcaseSettings": {
+    "title": "Páginas hospedadas",
+    "description": "A vitrine lista histórias publicadas. O cliente hospedado é o aplicativo web servido na raiz; ao desligá-lo, a raiz mostra uma página simples com links para administração e vitrine.",
+    "enabled": "Vitrine ativada",
+    "hostedClientEnabled": "Cliente hospedado ativado na raiz",
+    "loadFailed": "Não foi possível carregar."
+  },
+  "theme": {
+    "system": "Tema: Sistema",
+    "light": "Tema: Claro",
+    "dark": "Tema: Escuro"
   },
   "tiers": {
     "title": "Planos",
@@ -155,28 +137,47 @@
     "empty": "Nenhum plano ainda.",
     "confirmDelete": "Excluir o plano \"{{name}}\"?"
   },
-  "settings": {
-    "title": "Configurações",
-    "registration": "Cadastro",
-    "autoManage": "Abrir/fechar automaticamente conforme o máximo de usuários",
-    "registrationOpen": "Cadastro aberto",
-    "maxUsers": "Máximo de usuários",
-    "maxUsersHint": "(em branco = sem teto)",
-    "defaultTier": "Plano padrão para novos cadastros",
-    "defaultTierNone": "(nenhum / ilimitado)",
-    "saved": "Salvo.",
+  "userForm": {
+    "newTitle": "Novo usuário",
+    "editTitle": "Editar {{username}}",
+    "username": "Usuário",
+    "password": "Senha",
+    "tag": "Tag",
+    "tagPlaceholder": "(padrão: o nome de usuário)",
+    "bio": "Bio",
+    "tier": "Plano",
+    "tierNone": "(nenhum / padrão)",
+    "adminAccess": "Acesso de administrador",
+    "confirmAdmin": "Criar este usuário com acesso de administrador? Ele poderá gerenciar o painel.",
+    "recoveryTitle": "Códigos de recuperação de {{username}}",
+    "recoveryHint": "Cada código serve uma vez para redefinir a senha sem saber a atual. Eles aparecem só desta vez - entregue-os agora, não dá para consultá-los depois.",
+    "copyCodes": "Copiar códigos",
+    "copied": "Copiado para a área de transferência.",
+    "copyFailed": "Não foi possível copiar automaticamente — selecione os códigos à mão.",
+    "lockedOutTitle": "Perdeu o acesso à conta?",
+    "lockedOutHint": "Gera um lote novo de códigos de recuperação e invalida os antigos. Entregue um código à pessoa - é com ele que ela define a própria senha nova, que você nunca vê.",
+    "regenerate": "Gerar novos códigos de recuperação",
+    "regenerating": "Gerando...",
+    "confirmRegenerate": "Gerar novos códigos de recuperação de {{username}}? Todos os códigos anteriores deixam de funcionar.",
+    "regenerateFailed": "Não foi possível gerar os códigos de recuperação.",
     "loadTiersFailed": "Não foi possível carregar os planos."
   },
-  "showcaseSettings": {
-    "title": "Vitrine pública",
-    "description": "Quando ativada, este servidor passa a servir uma página pública no seu endereço raiz, listando as histórias que os usuários escolheram publicar. Qualquer pessoa pode ver e baixar essas histórias, sem conta. Histórias protegidas por senha continuam fora da listagem nos dois casos.",
-    "enabled": "Vitrine ativada",
-    "loadFailed": "Não foi possível carregar."
-  },
-  "appearance": {
-    "title": "Aparência",
-    "hint": "Salvo apenas neste navegador.",
-    "palette": "Paleta",
-    "followingSystem": "Seguindo a configuração do seu dispositivo."
+  "users": {
+    "title": "Usuários",
+    "newUser": "Novo usuário",
+    "searchPlaceholder": "Usuário ou tag...",
+    "searchAriaLabel": "Buscar por usuário ou tag",
+    "showDeleted": "Mostrar excluídos",
+    "columnUsername": "Usuário",
+    "columnTag": "Tag",
+    "columnAdmin": "Admin",
+    "columnTier": "Plano",
+    "columnCreated": "Criado em",
+    "columnStatus": "Situação",
+    "statusActive": "Ativo",
+    "statusDeleted": "Excluído",
+    "empty": "Nenhum usuário encontrado.",
+    "confirmDelete": "Excluir o usuário \"{{username}}\"?",
+    "confirmDeleteAdmin": "Excluir o admin \"{{username}}\"? Ele perde o acesso até ser restaurado."
   }
 }

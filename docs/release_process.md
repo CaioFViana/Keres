@@ -5,29 +5,30 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 
 ## 1. Pre-flight
 
-- [ ] `bun run typecheck`, `bun run lint`, and `bun run test:coverage` all pass
-      (the same three commands the release workflow's `verify` job runs
-      before any platform build starts — catching a failure locally is
-      faster than catching it after a tag is already pushed).
-- [ ] `bun run format` to run biome.
+- [ ] `bun run release:check` passes. It first audits the client, admin, showcase and site
+      translations so as to fail early; then it runs `typecheck` and `lint`, applies the
+      formatting, checks that every version controlled by `scripts/lib/version.ts` matches
+      the root `package.json`'s version, requires a clean worktree and finishes on
+      `test:report` (with integration and coverage).
+- [ ] The release's `verify` job runs the same command with `--ci`: there the formatting is only
+      checked, the worktree does not have to be clean (the workflow itself writes the version coming
+      from the tag) and the suites are the unit ones with coverage - the integration ones have their own job in
+      `ci.yml`. No artifact starts being compiled before that passes.
 
 ## 2. Version and release name
 
 - [ ] Decide the new semver version and a codename in the spirit of
       [`docs/fluff_release_names.md`](fluff_release_names.md).
-- [ ] Update `name` and `version` in
-      [`apps/client/src/config/appRelease.ts`](../apps/client/src/config/appRelease.ts)
-      — the in-app, human-facing release identity. Nothing else sets this file.
+- [ ] Run `bun run version:set 1.2.3 Galatea` (replace both values). It updates every
+      workspace `package.json`, Expo's `app.json`, and
+      [`packages/shared/metadata/AppRelease.ts`](../packages/shared/metadata/AppRelease.ts),
+      the one human-facing identity consumed by both client and server.
 - [ ] Add the release's entry to
       [`docs/fluff_release_names.md`](fluff_release_names.md).
 
-> **`package.json` versions are automated — no manual edit needed.**
-> `scripts/ci/set-version.mjs` stamps the version parsed from the git tag
-> into all 6 `package.json` files (root, `apps/api`, `apps/client`,
-> `apps/desktop`, `apps/admin`, `packages/shared`) plus `apps/client/app.json`'s
-> `expo.version`, as part of the release workflow. Internal workspace
-> packages reference each other via `workspace:*`, so the committed
-> version numbers never need to match for `bun install` to resolve.
+> The release workflow repeats the version stamp from the tag as a safeguard. The local
+> command includes `apps/site` as well, so every workspace manifest and the packaged
+> application version stay aligned before the tag is created.
 
 ## 3. Tag and push
 
@@ -59,7 +60,7 @@ Pushing the tag runs `.github/workflows/release.yml`, which:
 6. Collects every artifact into a single GitHub Release on the tag, with
    auto-generated release notes.
 
-Local packaging of **Keres Server** is `bun run package:server` (same
+Local packaging of **Keres Server** is `bun run api:build` (same
 script the release job runs). It writes `apps/api/dist-server/keres-server/`
 and a versioned zip next to it.
 

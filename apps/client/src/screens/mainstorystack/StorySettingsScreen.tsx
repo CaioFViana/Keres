@@ -2,24 +2,25 @@ import { Button, Select } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schema';
+import type { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
-import { StoryCollaborator, storyPermissionApi } from '../../services/StoryPermissionService';
+import type { StoryCollaborator } from '../../services/StoryPermissionService';
+import { storyPermissionApi } from '../../services/StoryPermissionService';
 import { SyncEngineService } from '../../services/SyncEngineService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -174,9 +175,9 @@ const StorySettingsScreen = () => {
         if (err?.response?.status === 403) {
           setIsOwnerOnServer(false);
         } else {
-          // Erro de rede ou outro imprevisto - deixa como "não checado" em vez de assumir
-          // que não é dono; o botão de desvincular fica escondido de qualquer forma até
-          // conseguirmos confirmar.
+          // A network error or another mishap - it is left as "not checked" instead of assuming
+          // the person is not the owner; the unlink button stays hidden either way until
+          // we manage to confirm.
           console.error('Failed to check story ownership/collaborators on server:', err);
           setIsOwnerOnServer(null);
         }
@@ -236,9 +237,9 @@ const StorySettingsScreen = () => {
     setError(null);
 
     try {
-      // `type` não entra aqui - converter tipo tem efeitos colaterais (gerar/apagar Choices,
-      // reordenar cenas) que não fazem sentido como um campo de formulário comum; ver
-      // `handleTypeChange`, que já persiste a conversão por conta própria.
+      // `type` does not go in here - converting the type has side effects (generating/deleting Choices,
+      // reordering scenes) that make no sense as an ordinary form field; see
+      // `handleTypeChange`, which already persists the conversion on its own.
       const storyData: Partial<
         Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
       > = {
@@ -253,12 +254,12 @@ const StorySettingsScreen = () => {
         normalizeSceneTiming,
         statSystem,
         statNotation,
-        // `type` / `favoriteBehavior` / `allowReaderComments` são política de dono - um
-        // writer que os mandasse gravaria localmente e levaria `unauthorized` em todo push.
+        // `type` / `favoriteBehavior` / `allowReaderComments` are owner policy - a
+        // writer who sent them would write locally and take an `unauthorized` on every push.
         ...(canManageStoryPolicy ? { favoriteBehavior, allowReaderComments } : {}),
-        // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
-        // (enviar a história, avisar o servidor) que não fazem sentido como campo de
-        // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
+        // `serverId` does not go in here - linking/unlinking has network side effects
+        // (sending the story, telling the server) that make no sense as an ordinary form
+        // field; see handleSendToServer/handleUnlinkFromServer.
       };
 
       await storyService().updateStory(userId, storyId, storyData);
@@ -280,35 +281,57 @@ const StorySettingsScreen = () => {
     if (!storyId || !userId || !canManageStoryPolicy || newType === type) return;
 
     if (newType === 'branching') {
-      AppAlert.alert(
-        t('convert_to_branching_title'),
-        t('convert_to_branching_message'),
-        [
-          { text: t('cancel'), style: 'cancel' },
-          {
-            text: t('convert'),
-            onPress: async () => {
-              try {
-                setLoading(true);
-                await storyService().convertStoryType(userId, storyId, 'branching');
-                setType('branching');
-                AppAlert.alert(t('success'), t('story_type_converted_successfully'));
-              } catch (err) {
-                console.error('Failed to convert story to branching:', err);
-                AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
-              } finally {
-                setLoading(false);
-              }
-            },
-          },
-        ],
-        { cancelable: true },
-      );
+      // Plots only exist in linear stories: warn before asking, as in the opposite
+      // direction, instead of letting the conversion fail without explanation.
+      (async () => {
+        try {
+          setLoading(true);
+          const activePlots = await storyService().countActivePlots(storyId);
+          setLoading(false);
+
+          if (activePlots > 0) {
+            AppAlert.alert(
+              t('cannot_convert_to_branching_title'),
+              t('cannot_convert_to_branching_plots_message', { count: activePlots }),
+            );
+            return;
+          }
+
+          AppAlert.alert(
+            t('convert_to_branching_title'),
+            t('convert_to_branching_message'),
+            [
+              { text: t('cancel'), style: 'cancel' },
+              {
+                text: t('convert'),
+                onPress: async () => {
+                  try {
+                    setLoading(true);
+                    await storyService().convertStoryType(userId, storyId, 'branching');
+                    setType('branching');
+                    AppAlert.alert(t('success'), t('story_type_converted_successfully'));
+                  } catch (err) {
+                    console.error('Failed to convert story to branching:', err);
+                    AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
+                  } finally {
+                    setLoading(false);
+                  }
+                },
+              },
+            ],
+            { cancelable: true },
+          );
+        } catch (err) {
+          console.error('Failed to check plots before converting to branching:', err);
+          setLoading(false);
+          AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
+        }
+      })();
       return;
     }
 
-    // branching -> linear: valida antes de perguntar qualquer coisa, pra mostrar exatamente
-    // o que está bloqueando em vez de deixar a conversão falhar sem explicação.
+    // branching -> linear: validate before asking anything, so as to show exactly
+    // what is blocking instead of letting the conversion fail without explanation.
     (async () => {
       try {
         setLoading(true);
@@ -374,9 +397,9 @@ const StorySettingsScreen = () => {
       if (result.success) {
         setServerId(targetServer.id);
         setUploadTargetServerId(null);
-        // `SyncInitializer` só (re)configura o motor de sync quando `selectedStory.serverId`
-        // muda de verdade - sem atualizar a store aqui, ele continua achando que a história
-        // é local e nunca liga a sincronização, mesmo com o vínculo já gravado no banco.
+        // `SyncInitializer` only (re)configures the sync engine when `selectedStory.serverId`
+        // genuinely changes - without updating the store here, it carries on believing the story
+        // is local and never turns synchronization on, even with the link already written to the database.
         if (selectedStory) {
           setSelectedStory({ ...selectedStory, serverId: targetServer.id });
         }
@@ -499,11 +522,11 @@ const StorySettingsScreen = () => {
               setServerId(null);
               setIsOwnerOnServer(null);
               setCollaborators(null);
-              // Mesma razão do handleSendToServer: sem isto o motor de sync continua rodando
-              // com a configuração antiga (mesmo storyId/servidor) até algo mais disparar o
-              // efeito do SyncInitializer de novo - e o próximo ciclo periódico encontraria a
-              // história marcada como excluída no servidor e tentaria aplicar isso localmente,
-              // exatamente o que "desvincular" deveria evitar.
+              // The same reason as handleSendToServer: without this the sync engine keeps running
+              // with the old configuration (the same storyId/server) until something else fires
+              // SyncInitializer's effect again - and the next periodic cycle would find the
+              // story marked as deleted on the server and would try to apply that locally,
+              // exactly what "unlink" is supposed to avoid.
               if (selectedStory) {
                 setSelectedStory({ ...selectedStory, serverId: null });
               }
@@ -590,9 +613,9 @@ const StorySettingsScreen = () => {
 
   const addableFriendOptions = addableFriends.map((f) => ({ label: f.username, value: f.id }));
 
-  // Servidores disponíveis pra enviar uma história totalmente local pela primeira vez -
-  // ver handleSendToServer. Diferente do antigo Select genérico, não tem opção "Nenhum
-  // servidor": desvincular é uma ação própria (handleUnlinkFromServer), não um valor de campo.
+  // Servers available for sending a fully local story for the first time -
+  // see handleSendToServer. Unlike the old generic Select, it has no "No
+  // server" option: unlinking is an action of its own (handleUnlinkFromServer), not a field value.
   const uploadServerOptions = availableServers.map((server) => ({
     label: server.name,
     value: server.id,
@@ -837,7 +860,7 @@ const StorySettingsScreen = () => {
               <Button
                 onPress={handleUnlinkFromServer}
                 disabled={serverActionLoading || collaborators === null || collaborators.length > 0}
-                style={[styles.saveButton, styles.deleteButton]}
+                style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
               >
                 {t('unlink_from_server_title')}
               </Button>
@@ -852,7 +875,7 @@ const StorySettingsScreen = () => {
 
       <Button
         onPress={handleDelete}
-        style={[styles.saveButton, styles.deleteButton]}
+        style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
         disabled={!canManageStoryPolicy}
       >
         {t('delete_story_title')}
@@ -891,7 +914,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     marginTop: 10,
     marginBottom: 15,
-    backgroundColor: 'red', // Destructive color
+    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
   },
   collaboratorsSection: {
     marginTop: 15,

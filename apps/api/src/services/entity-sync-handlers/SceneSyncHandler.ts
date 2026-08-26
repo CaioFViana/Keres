@@ -1,11 +1,10 @@
-import {
-  CreateSceneDataSchema,
+import type {
   CreateSceneDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialSceneSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateSceneDataSchema, PartialSceneSchema } from '@keres/shared';
 import { and, eq, not, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { chapters, locations, scenes, stories } from '../../db/schema';

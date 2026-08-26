@@ -1,10 +1,9 @@
-import {
-  CreateStatStrengthDataSchema,
+import type {
   CreateStatStrengthDataType,
   CreateStoryUpdate,
-  PartialStatStrengthSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateStatStrengthDataSchema, PartialStatStrengthSchema } from '@keres/shared';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { statStrengths, stats } from '../../db/schema';
@@ -32,7 +31,7 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
   }
 
   private async assertStatExists(storyId: string, statId: string | null): Promise<void> {
-    if (!statId) return; // Escada padrão da história: não referencia stat nenhum.
+    if (!statId) return; // The story's default ladder: it references no stat at all.
 
     const stat = await db.query.stats.findFirst({
       where: and(eq(stats.id, statId), eq(stats.storyId, storyId), eq(stats.isDeleted, false)),
@@ -46,10 +45,10 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
   }
 
   /**
-   * Dois degraus com o mesmo piso tornam a escada ambígua: o intervalo de um deles teria
-   * largura zero e nenhum valor cairia nele. É o caso que você pediu para o sistema de
-   * conflitos sinalizar, então vira `SyncConflictError` e não erro genérico - assim o cliente
-   * abre a tela de resolução e escolhe qual degrau fica.
+   * Two rungs with the same floor make the ladder ambiguous: one of them would have a zero-width range
+   * and no value would land in it. It is the case you asked the conflict system to flag, so it becomes a
+   * `SyncConflictError` rather than a generic error - that way the client opens the resolution screen
+   * and chooses which rung stays.
    */
   private async assertNoDuplicateFloor(
     storyId: string,

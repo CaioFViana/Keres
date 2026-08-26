@@ -1,16 +1,11 @@
-import {
-  AttributeType,
-  decodeAttributeValue,
-  FavoriteEntityType,
-  joinSuggestionListForDisplay,
-} from '@keres/shared';
-import {
-  globalSearchFieldConfig,
-  GlobalSearchEntityType,
-} from '@keres/shared/metadata/globalSearchFields';
-import { and, eq, inArray, ne, or, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { attributeValues, storySchemaFields } from '../../db/schema';
+import type { FavoriteEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, joinSuggestionListForDisplay } from '@keres/shared';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
+import type { SQL } from 'drizzle-orm';
+import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import { attributeValues, chapters, scenes, storySchemaFields } from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
 import { truncate } from '../../utils/stringUtils';
 import { createFavoriteService } from './FavoriteService';
@@ -20,6 +15,8 @@ export interface GlobalSearchResult {
   id: string;
   title: string;
   snippet: string;
+  /** Caminho contextual para resultados que vivem dentro de outra entidade, como Scene. */
+  context?: string;
   /** `null` marks entity types that do not support favorites. */
   isFavorite: boolean | null;
 }
@@ -118,8 +115,8 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
 
         for (const row of rows as Record<string, any>[]) {
           const match = findMatchingField(row, searchFields, trimmedTerm);
-          // Modo não tem tela própria: o resultado carrega o id do personagem dono, que é para
-          // onde `navigateToEntityDetail` leva (ver ENTITY_ROUTES.Mode em entityNavigation).
+          // A Mode has no screen of its own: the result carries the owning character's id, which is where
+          // `navigateToEntityDetail` goes (see ENTITY_ROUTES.Mode in entityNavigation).
           const resultId = entityType === 'Mode' ? row.characterId : row.id;
           const key = `${entityType}:${row.id}`;
           results.set(key, {
@@ -314,6 +311,31 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
       })();
 
       await Promise.all([...nativeQueries, attributeQuery, entityAttributeQuery]);
+
+      // Scene is no longer a drawer destination of its own: keeping the chapter here stops a search result
+      // from looking like a loose scene and gives the author its narrative position.
+      const sceneResults = Array.from(results.values()).filter(
+        (result) => result.entityType === 'Scene',
+      );
+      if (sceneResults.length > 0) {
+        const sceneContexts = await db
+          .select({ sceneId: scenes.id, chapterName: chapters.name, chapterIndex: chapters.index })
+          .from(scenes)
+          .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+          .where(
+            inArray(
+              scenes.id,
+              sceneResults.map((result) => result.id),
+            ),
+          )
+          .all();
+        const contextBySceneId = new Map(
+          sceneContexts.map((row) => [row.sceneId, `${row.chapterIndex}. ${row.chapterName}`]),
+        );
+        sceneResults.forEach((result) => {
+          result.context = contextBySceneId.get(result.id);
+        });
+      }
 
       const favoriteService = createFavoriteService(db);
       await Promise.all(

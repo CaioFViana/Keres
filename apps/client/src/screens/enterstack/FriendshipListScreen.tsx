@@ -1,17 +1,18 @@
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
+import type { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
-import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
+import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
+import type { FriendshipWithServer } from '../../services/FriendshipService';
+import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -91,9 +92,29 @@ const FriendshipListScreen = () => {
     };
   }, [fetchFriendshipsAndServers, navigation]);
 
-  const handleAddFriendship = () => {
+  // `useCallback` so it can go into the header effect's dependencies below: as a loose function it is
+  // born anew on every render and would make the effect run every time.
+  const handleAddFriendship = useCallback(() => {
     navigation.navigate('FriendshipForm');
-  };
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('manage_friendships'),
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+            <TouchableOpacity
+              onPress={handleAddFriendship}
+              accessibilityLabel={t('add_new_friendship')}
+            >
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        ),
+      });
+    }, [colors.text, handleAddFriendship, navigation, t]),
+  );
 
   const runFriendshipAction = useFriendshipActionHandler(
     useCallback((serverId: string) => serversMap.get(serverId), [serversMap]),
@@ -280,12 +301,6 @@ const FriendshipListScreen = () => {
           </Text>
         }
       />
-      <TouchableOpacity
-        style={[styles.floatingButton, { backgroundColor: colors.primary }]}
-        onPress={() => handleAddFriendship()}
-      >
-        <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -326,22 +341,6 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: 8,
     marginLeft: 5,
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#6200EE',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
 });
 

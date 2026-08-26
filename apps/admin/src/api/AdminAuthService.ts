@@ -18,20 +18,20 @@ export async function clearServerSession(): Promise<void> {
 }
 
 /**
- * O login em si (`POST /auth/login`) não diz se a conta é admin - o JWT nunca carrega essa
- * claim (ver apps/api/src/utils/adminAuth.ts). Por isso, depois de logar, este serviço
- * sonda um endpoint só-admin; se vier 403, a conta é real mas não é admin, e o token é
- * descartado antes de qualquer tela do painel aparecer.
+ * The login itself (`POST /auth/login`) does not say whether the account is an admin - the JWT
+ * never carries that claim (see apps/api/src/utils/adminAuth.ts). So after logging in, this
+ * service probes an admin-only endpoint; if it answers 403, the account is real but not an admin,
+ * and the token is discarded before any panel screen appears.
  *
- * O interceptor do apiClient já transforma erros axios em `Error` com a mensagem da API,
- * então a distinção 403 vs outro é pela mensagem (`Admin access required.`).
+ * The apiClient's interceptor already turns axios errors into an `Error` carrying the API's
+ * message, so telling 403 from anything else is done by the message (`Admin access required.`).
  */
 export async function login(username: string, password: string): Promise<LoginResult> {
   const { data } = await apiClient.post('/auth/login', { username, password });
   setToken(data.accessToken);
 
   try {
-    await apiClient.get('/admin/api/users', { params: { pageSize: 1 } });
+    await apiClient.get('/admin/users', { params: { pageSize: 1 } });
   } catch (err) {
     clearLocalSession();
     await clearServerSession();
@@ -53,5 +53,5 @@ export async function logout(): Promise<void> {
 
 /** Cheap probe used on bootstrap to confirm a persisted token still has admin access. */
 export async function probeAdminAccess(): Promise<void> {
-  await apiClient.get('/admin/api/users', { params: { pageSize: 1 } });
+  await apiClient.get('/admin/users', { params: { pageSize: 1 } });
 }

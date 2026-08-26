@@ -10,7 +10,7 @@ import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');
 
-/** Devolve a própria chave, para o teste ler o rótulo sem depender do arquivo de tradução. */
+/** It returns the key itself, so the test can read the label without depending on the translation file. */
 const t = ((key: string) => key) as unknown as TFunction;
 
 let database: TestDatabase;
@@ -37,9 +37,9 @@ afterEach(() => {
 });
 
 /**
- * `getEntityName` é o que dá nome legível a cada linha da tela de log de operações. Sem ele o
- * histórico vira uma lista de ULIDs, então o que importa é justamente o caso em que a entidade
- * não é mais encontrável: precisa degradar para o tipo traduzido, nunca quebrar a tela.
+ * `getEntityName` is what gives a readable name to each row of the operation log screen. Without it
+ * the history becomes a list of ULIDs, so what matters is exactly the case where the entity is no
+ * longer findable: it has to degrade to the translated type, never break the screen.
  */
 describe('getEntityName', () => {
   it('names a story by its title', async () => {
@@ -116,8 +116,8 @@ describe('getEntityName', () => {
   });
 
   /**
-   * Um log de exclusão aponta justamente para uma linha marcada como excluída; a consulta
-   * filtra `isDeleted`, então esse caso cai no rótulo genérico em vez de mostrar o nome.
+   * A deletion log points precisely at a row marked as deleted; the query filters `isDeleted`, so that
+   * case falls back to the generic label instead of showing the name.
    */
   it('falls back to the translated type for a deleted entity', async () => {
     await seedStory();
@@ -243,8 +243,8 @@ describe('getEntityIdentifier', () => {
 });
 
 /**
- * As entidades do sistema de status entraram depois do resto, e o sintoma de esquecer um `case`
- * aqui é o log de operações mostrar "entidade desconhecida" - foi exatamente o que aconteceu.
+ * The stat system's entities came after the rest, and the symptom of forgetting a `case` here is the
+ * operation log showing "unknown entity" - which is exactly what happened.
  */
 describe('stat system entities', () => {
   async function seedStatWorld() {

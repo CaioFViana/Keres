@@ -1,11 +1,10 @@
-import {
-  CreateItemJourneyDataSchema,
+import type {
   CreateItemJourneyDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialItemJourneySchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateItemJourneyDataSchema, PartialItemJourneySchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, itemJourneys, items, scenes } from '../../db/schema';

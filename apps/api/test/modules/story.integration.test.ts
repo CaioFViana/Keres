@@ -164,9 +164,9 @@ describe('POST /stories/import', () => {
   });
 
   /**
-   * O caminho que o cliente usa ao subir pela primeira vez uma história que só existia no
-   * aparelho: o id local precisa sobreviver, senão os dois lados passam a chamar a mesma
-   * história por nomes diferentes.
+   * The path the client uses when uploading for the first time a story that only existed on the device:
+   * the local id has to survive, otherwise the two sides start calling the same story by different
+   * names.
    */
   it('keeps the id the client asks to preserve', async () => {
     const story = await createStory(ana.token);

@@ -1,32 +1,32 @@
 /**
- * Uma versão pública de uma história ("publicação"): um pacote imutável, já empacotado, que
- * o Showcase oferece para download.
+ * A public version of a story (a "publication"): an immutable, already-packaged bundle that the
+ * Showcase offers for download.
  *
- * Deliberadamente fora do motor de sincronização - não tem `version`, `isDeleted` nem
- * entrada no log de operações. É rastreado por fora, do mesmo jeito que amizade já é.
+ * Deliberately outside the synchronization engine - it has no `version`, no `isDeleted` and no
+ * entry in the operation log. It is tracked separately, the same way friendship already is.
  */
 export interface StoryPublication {
   id: string;
   storyId: string;
-  /** Dono da história no momento da publicação (`stories.userId`). */
+  /** The story's owner at the moment of publication (`stories.userId`). */
   ownerUserId: string;
-  /** Nome da versão exibido no site. Formato depende do `PublicationLabelMode` escolhido. */
+  /** The version name shown on the site. Its format depends on the chosen `PublicationLabelMode`. */
   label: string;
-  /** `stories.lastOperationVersion` no instante da publicação. */
+  /** `stories.lastOperationVersion` at the instant of publication. */
   operationVersion: number;
-  /** `CURRENT_STORY_FORMAT_VERSION` no instante da publicação. */
+  /** `CURRENT_STORY_FORMAT_VERSION` at the instant of publication. */
   formatVersion: number;
   /** Tamanho do .zip em bytes. */
   byteSize: number;
-  /** Quantas mídias entraram no pacote, de quantas a história referencia. */
+  /** How many media files went into the package, out of how many the story references. */
   mediaIncluded: number;
   mediaTotal: number;
   createdAt: Date;
 }
 
 /**
- * Os campos da história congelados no momento da publicação. O site descreve a versão que
- * foi publicada, não a história como ela está hoje - por isso a cópia, e não um join.
+ * The story's fields frozen at the moment of publication. The site describes the version that was
+ * published, not the story as it stands today - hence the copy rather than a join.
  */
 export interface StoryPublicationSnapshot {
   title: string;
@@ -38,8 +38,8 @@ export interface StoryPublicationSnapshot {
   theme: string | null;
 }
 
-/** Como o dono quer que as versões sejam nomeadas. */
+/** How the owner wants the versions to be named. */
 export type PublicationLabelMode = 'version' | 'date' | 'both';
 
-/** `public` aparece na lista do site; `password` só abre para quem tem a senha. */
+/** `public` shows up in the site's list; `password` only opens for whoever has the password. */
 export type ShowcaseVisibility = 'public' | 'password';

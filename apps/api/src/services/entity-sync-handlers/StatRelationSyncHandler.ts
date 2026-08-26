@@ -1,10 +1,9 @@
-import {
-  CreateStatRelationDataSchema,
+import type {
   CreateStatRelationDataType,
   CreateStoryUpdate,
-  PartialStatRelationSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateStatRelationDataSchema, PartialStatRelationSchema } from '@keres/shared';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, modes, statRelations, stats } from '../../db/schema';
@@ -71,7 +70,7 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
           `Validation Error: Mode with ID ${modeId} not found, is deleted, or does not belong to story ${storyId}.`,
         );
       }
-      // Um modo pertence a um personagem; um valor não pode cruzar os dois.
+      // A mode belongs to a character; a value cannot cross the two.
       if (mode.characterId !== characterId) {
         throw new SyncConflictError(
           'validation',

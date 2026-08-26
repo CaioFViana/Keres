@@ -1,14 +1,14 @@
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
- * Uma mídia da história.
+ * A story's medium.
  *
- * As colunas dividem-se em duas naturezas. As primeiras descrevem a mídia e sincronizam
- * com o servidor como qualquer outra entidade. As últimas (`localPath`, `uploadState`,
- * `downloadState`) descrevem o estado *deste aparelho* e nunca são enviadas: elas não
- * existem no `GallerySchema` compartilhado, e o zod do servidor descarta chaves
- * desconhecidas, então mesmo indo junto no payload elas param na borda.
+ * The columns split into two natures. The first ones describe the medium and synchronize
+ * with the server like any other entity. The last ones (`localPath`, `uploadState`,
+ * `downloadState`) describe *this device's* state and are never sent: they do not
+ * exist in the shared `GallerySchema`, and the server's zod discards unknown
+ * keys, so even travelling along in the payload they stop at the border.
  */
 export const galleries = sqliteTable('galleries', {
   id: text('id').primaryKey(),
@@ -16,7 +16,7 @@ export const galleries = sqliteTable('galleries', {
   mediaType: text('media_type').notNull(), // 'image' | 'video' | 'audio'
   mimeType: text('mime_type').notNull(),
   fileName: text('file_name').notNull(),
-  /** Checksum do conteúdo; é por ele que o arquivo é localizado aqui e no servidor. */
+  /** The content's checksum; it is by this that the file is located here and on the server. */
   hash: text('hash').notNull(),
   sizeBytes: integer('size_bytes').notNull().default(0),
   title: text('title'),
@@ -28,18 +28,18 @@ export const galleries = sqliteTable('galleries', {
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 
-  // --- Estado local, não sincronizado ---
+  // --- Local state, not synchronized ---
 
-  /** `file://` do arquivo neste aparelho. Nulo enquanto a mídia veio do servidor e ainda não baixou. */
+  /** The `file://` of the file on this device. Null while the medium came from the server and has not been downloaded yet. */
   localPath: text('local_path'),
-  /** 'pending' | 'uploaded' | 'failed' — se os bytes já chegaram ao servidor. */
+  /** 'pending' | 'uploaded' | 'failed' — whether the bytes have reached the server. */
   uploadState: text('upload_state').notNull().default('pending'),
-  /** 'pending' | 'downloaded' | 'failed' — se os bytes já chegaram a este aparelho. */
+  /** 'pending' | 'downloaded' | 'failed' — whether the bytes have reached this device. */
   downloadState: text('download_state').notNull().default('downloaded'),
   /**
-   * Frame extraído de um vídeo, para mostrar em grades/tiras sem montar um player por
-   * célula. Só se aplica a `mediaType: 'video'`; imagem usa o próprio arquivo e áudio não
-   * tem um quadro para extrair.
+   * A frame extracted from a video, to show in grids/strips without mounting a player per
+   * cell. It only applies to `mediaType: 'video'`; an image uses the file itself and audio has
+   * no frame to extract.
    */
   thumbnailPath: text('thumbnail_path'),
 });

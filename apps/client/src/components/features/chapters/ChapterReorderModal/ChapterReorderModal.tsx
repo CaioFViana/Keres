@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChapterSelect } from '../../../../db/schema';
+import type { ChapterSelect } from '../../../../db/schema';
+import { buildReorderItems } from '@keres/shared';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 
 interface ChapterReorderModalProps {
@@ -22,9 +23,7 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
 
   const handleConfirm = useCallback(
     async (reordered: ChapterSelect[]) => {
-      await onReorderConfirm(
-        reordered.map((chapter, idx) => ({ id: chapter.id, newIndex: idx + 1 })),
-      );
+      await onReorderConfirm(buildReorderItems(reordered, (chapter) => chapter.id));
     },
     [onReorderConfirm],
   );

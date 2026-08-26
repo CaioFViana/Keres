@@ -14,8 +14,9 @@ function cssVar(name: string): string {
 }
 
 /**
- * Diferença de luminância entre duas cores. Não é a razão de contraste da WCAG, mas separa com
- * folga o caso que motivou este teste - texto claro sobre fundo claro - de um par utilizável.
+ * Luminance difference between two colours. It is not the WCAG contrast ratio, but it separates by
+ * a wide margin the case that motivated this test - light text on a light background - from a
+ * usable pair.
  */
 function luminanceGap(first: string, second: string): number {
   return Math.abs((getColorLuminance(first) ?? 0) - (getColorLuminance(second) ?? 0));
@@ -49,8 +50,8 @@ describe('admin palette selection', () => {
     expect(PALETTE_NAMES.length).toBeGreaterThan(1);
   });
 
-  // O CSS do painel já traz a paleta default; escrever variáveis por cima seria redundante e
-  // faria "voltar ao padrão" depender de as duas cópias continuarem iguais.
+  // The panel's CSS already carries the default palette; writing variables on top would be redundant
+  // and would make "back to default" depend on the two copies staying identical.
   it('writes no variables for the default palette', () => {
     applyPalette('twilight', 'light');
     expect(cssVar('--color-sidebar-bg')).not.toBe('');
@@ -70,8 +71,8 @@ describe('admin palette selection', () => {
 });
 
 describe('derived palette colors', () => {
-  // A regressão que originou isto: a barra lateral usava `onPrimary` como texto sobre
-  // `primaryVariant` como fundo, e nas paletas do app esses dois tokens não são um par.
+  // The regression that started this: the sidebar used `onPrimary` as text over `primaryVariant` as
+  // background, and in the app's palettes those two tokens are not a pair.
   it.each(PALETTE_NAMES.filter((name) => name !== 'default'))(
     'keeps the %s sidebar readable in both modes',
     (palette) => {

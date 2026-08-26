@@ -2,7 +2,8 @@ import { eq } from 'drizzle-orm';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
-import { ServerSelect, users } from '../db/schema';
+import type { ServerSelect } from '../db/schema';
+import { users } from '../db/schema';
 import { friendshipApiService } from '../services/FriendshipApiService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -15,19 +16,21 @@ export interface ResolvedUserProfile {
   isCurrentUser: boolean;
 }
 
-/** Compartilhado entre toda instância do hook (não por componente) - mesmo cache que
- *  `FavoritedByList` mantinha privadamente antes desta extração. */
+/**
+ * Shared across every instance of the hook (not per component) - the same cache
+ * `FavoritedByList` kept privately before this extraction.
+ */
 const remoteProfileCache = new Map<string, Promise<ResolvedUserProfile | undefined>>();
 
 /**
- * Resolve o perfil (nome + avatar) de um `userId`, priorizando o cache local de usuários
- * (mantido em dia pela sincronização de friendship) e caindo para uma busca de rede
- * cacheada por servidor quando necessário. Extraído de `FavoritedByList` para ser
- * reutilizado por qualquer lugar que precise mostrar "quem fez X" com nome+avatar
- * (comentários, por exemplo) sem duplicar essa lógica.
+ * Resolves a `userId`'s profile (name + avatar), preferring the local user cache
+ * (kept up to date by the friendship synchronization) and falling back to a network lookup
+ * cached per server when necessary. Extracted from `FavoritedByList` so it can be
+ * reused by anywhere that needs to show "who did X" with a name+avatar
+ * (comments, for instance) without duplicating that logic.
  *
- * Retorna a função resolvedora (não um perfil já resolvido) porque os consumidores
- * tipicamente resolvem vários perfis por render via `Promise.all`, não um só.
+ * It returns the resolver function (not an already-resolved profile) because consumers
+ * typically resolve several profiles per render through `Promise.all`, not just one.
  */
 export function useUserProfileResolver() {
   const db = useDrizzle();
@@ -94,9 +97,9 @@ export function useUserProfileResolver() {
     [db, localUserId, localUsername, t],
   );
 
-  // Só invalida o cache compartilhado - quem quiser re-buscar perfis já exibidos precisa
-  // do próprio listener de `friendship_changed` chamando seu próprio refetch (ver
-  // FavoritedByList, que mantém o dele mesmo após esta extração).
+  // It only invalidates the shared cache - whoever wants to re-fetch profiles already displayed needs
+  // their own `friendship_changed` listener calling their own refetch (see
+  // FavoritedByList, which keeps its own even after this extraction).
   useEffect(() => {
     const handleFriendshipChange = () => remoteProfileCache.clear();
     entityEventEmitter.on('friendship_changed', handleFriendshipChange);

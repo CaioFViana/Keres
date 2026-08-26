@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { ThemeColors } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
 
 /**
- * `characterListItemStyles.ts` e `worldRuleListItemStyles.ts` eram idênticos linha a linha;
- * `chapterListItemStyles.ts`, `choiceListItemStyles.ts` e `sceneListItemStyles.ts` também
- * compartilhavam a mesma forma. Uma factory só por formato, em vez de um arquivo por entidade.
+ * `characterListItemStyles.ts` and `worldRuleListItemStyles.ts` were identical line by line;
+ * `chapterListItemStyles.ts`, `choiceListItemStyles.ts` and `sceneListItemStyles.ts` also
+ * shared the same shape. One factory per shape, instead of one file per entity.
  */
 export const createSimpleEntityListItemStyles = (colors: ThemeColors) =>
   StyleSheet.create({

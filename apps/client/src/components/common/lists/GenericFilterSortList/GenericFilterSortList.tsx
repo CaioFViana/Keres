@@ -1,19 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
+import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import Select from '@/src/components/common/inputs/Select/Select';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -53,11 +53,14 @@ interface GenericFilterSortListProps<T> {
   storyId?: string;
   onAdvancedSearch?: (criteria: { [key: string]: any }) => void;
   currentAdvancedSearchCriteria?: { [key: string]: any };
+  advancedSearchScopes?: AdvancedSearchScope[];
   disableTagFilter?: boolean;
   isLoading?: boolean;
+  /** Contextual count supplied by composite lists, e.g. items nested under each result. */
+  resultsMeta?: string;
   /**
-   * Colunas da lista. A galeria mostra miniaturas em grade; as demais telas são listas de
-   * uma coluna e não passam nada.
+   * The list's columns. The gallery shows thumbnails in a grid; the other screens are single-column
+   * lists and pass nothing.
    */
   numColumns?: number;
   columnWrapperStyle?: StyleProp<ViewStyle>;
@@ -87,9 +90,11 @@ const GenericFilterSortList = <T,>({
   storyId,
   onAdvancedSearch,
   currentAdvancedSearchCriteria,
+  advancedSearchScopes,
   disableFavoriteFilter = false,
   disableTagFilter = false,
   isLoading = false,
+  resultsMeta,
   numColumns = 1,
   columnWrapperStyle,
 }: GenericFilterSortListProps<T>) => {
@@ -109,13 +114,15 @@ const GenericFilterSortList = <T,>({
   // instead of needing a separate story-scoped fetch just to decide visibility.
   const hasAdvancedSearchFields = useMemo(() => {
     if (!entityName) return false;
-    const metadata = entityFieldMetadata[entityName];
-    const hasNativeSearchableFields = !!metadata && metadata.some((field) => field.isSearchable);
-    const supportsCustomAttributes = (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(
-      entityName,
+    const entities = advancedSearchScopes?.map((scope) => scope.entityName) ?? [entityName];
+    const hasNativeSearchableFields = entities.some((name) =>
+      entityFieldMetadata[name]?.some((field) => field.isSearchable),
+    );
+    const supportsCustomAttributes = entities.some((name) =>
+      (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(name),
     );
     return hasNativeSearchableFields || supportsCustomAttributes;
-  }, [entityName]);
+  }, [advancedSearchScopes, entityName]);
 
   React.useEffect(() => {
     setSelectedFilter(selectedFilterValues || []);
@@ -250,7 +257,6 @@ const GenericFilterSortList = <T,>({
                   overflow: 'hidden',
                   justifyContent: 'center',
                 }}
-                pillStyle={{ marginBottom: 0 }}
               />
             ) : (
               <Select
@@ -318,6 +324,7 @@ const GenericFilterSortList = <T,>({
         )}
         <Text style={styles(colors).resultsCountText}>
           {t('total_results_found', { count: data.length })}
+          {resultsMeta ? ` (${resultsMeta})` : ''}
         </Text>
       </View>
       <FlatList
@@ -342,6 +349,7 @@ const GenericFilterSortList = <T,>({
             onClose={handleCloseAdvancedSearchModal}
             onSearch={handleAdvancedSearchSubmit}
             initialCriteria={currentAdvancedSearchCriteria}
+            scopes={advancedSearchScopes}
           />
         )}
     </View>

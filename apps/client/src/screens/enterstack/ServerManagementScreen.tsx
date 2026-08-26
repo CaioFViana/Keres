@@ -1,8 +1,8 @@
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,14 +14,11 @@ import {
   View,
 } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schema';
-import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
-import apiClient, { isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
-import {
-  createServerService,
-  OwnedServerStory,
-  ServerHasOwnedStoriesError,
-} from '../../services/ServerService';
+import type { ServerSelect } from '../../db/schema';
+import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
+import apiClient, { apiUrl, isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
+import type { OwnedServerStory } from '../../services/ServerService';
+import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
@@ -59,7 +56,7 @@ const ServerManagementScreen = () => {
 
   const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
     try {
-      const checkUrl = `${server.url}/kerescheck`;
+      const checkUrl = apiUrl(server.url, '/kerescheck');
       const response = await apiClient.get(checkUrl, {
         timeout: 5000, // 5 seconds timeout
         validateStatus: () => true, // Always resolve, don't reject on HTTP status codes
@@ -230,6 +227,24 @@ const ServerManagementScreen = () => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('manage_servers'),
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ServerRegistration', {})}
+              accessibilityLabel={t('register_new_server')}
+            >
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        ),
+      });
+    }, [colors.text, navigation, t]),
+  );
+
   const renderServerItem = ({ item }: { item: ServerWithStatus }) => (
     <View
       style={[commonCardStyles.cardContainer, styles.serverItem, { borderColor: colors.border }]}
@@ -345,14 +360,7 @@ const ServerManagementScreen = () => {
             {t('no_servers_found')}
           </Text>
         }
-        contentContainerStyle={styles.listContentContainer}
       />
-      <TouchableOpacity
-        style={[styles.floatingButton, { backgroundColor: colors.primary }]}
-        onPress={() => navigation.navigate('ServerRegistration', {})}
-      >
-        <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -371,9 +379,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-  },
-  listContentContainer: {
-    paddingBottom: 80, // To prevent floating button from obscuring last item
   },
   serverItem: {
     flexDirection: 'row',
@@ -426,21 +431,6 @@ const styles = StyleSheet.create({
   },
   serverActions: {
     flexDirection: 'row',
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
 });
 

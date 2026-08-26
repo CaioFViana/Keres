@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import { ConflictSummary } from '../../../../services/ConflictSummaryService';
-import { PendingConflict } from '../../../../services/SyncConflictService';
+import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
+import type { PendingConflict } from '../../../../services/SyncConflictService';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -21,11 +21,10 @@ interface ConflictFieldDiffSheetProps {
 }
 
 /**
- * Drill-in de diff campo a campo - a lógica de `SyncConflictModal.tsx` original, só que
- * alcançável apenas para conflitos `kind === 'content'` com múltiplos campos genuinamente
- * disputados (`summary.diffFields`, já com nomes resolvidos em vez de IDs crus quando um
- * campo aponta pra outra entidade). Nunca abre para nenhum dos 8 tipos de relação - esses se
- * resolvem em um toque direto na lista.
+ * The field-by-field diff drill-in - the original `SyncConflictModal.tsx` logic, only reachable for
+ * `kind === 'content'` conflicts with multiple genuinely disputed fields (`summary.diffFields`, already
+ * with names resolved instead of raw IDs when a field points at another entity). It never opens for any
+ * of the 8 relation types - those are resolved with a single tap in the list.
  */
 const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
   conflict,

@@ -25,7 +25,7 @@ export function UserFormPage() {
   const [tierError, setTierError] = useState<string | null>(null);
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
-  /** Mostrados só uma vez - depois disto só o hash de cada um existe no servidor. */
+  /** Shown only once - after this, only each one's hash exists on the server. */
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   useEffect(() => {

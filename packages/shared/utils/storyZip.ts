@@ -4,49 +4,47 @@ import type { FullStoryExportType } from '../schemas/FullStorySchemas';
 import type { GalleryType } from '../schemas/GallerySchemas';
 
 /**
- * O empacotamento de uma história com a mídia da galeria, na forma que cliente e servidor
- * compartilham.
+ * Packaging a story together with its gallery media, in the shape client and server share.
  *
- * O JSON de exportação sempre carregou os *metadados* da galeria (título, hash, vínculos) -
- * as tabelas de galeria fazem parte do `FullStoryExportType` como qualquer outra entidade. O
- * que falta ali são os *bytes*: cada mídia é um arquivo à parte, endereçado pelo hash. Este
- * módulo é só a ponte entre os dois.
+ * The export JSON has always carried the gallery's *metadata* (title, hash, links) - the gallery
+ * tables are part of `FullStoryExportType` like any other entity. What is missing there are the
+ * *bytes*: each media file is a separate file, addressed by its hash. This module is only the bridge
+ * between the two.
  *
- * Layout do .zip:
- *   story.json          - o mesmo JSON da exportação simples
- *   media/<hash>.<ext>  - cada arquivo de mídia que quem empacotou conseguiu resolver
+ * Layout of the .zip:
+ *   story.json          - the same JSON as the plain export
+ *   media/<hash>.<ext>  - each media file the packager managed to resolve
  *
- * Mora em `@keres/shared` porque os dois lados precisam produzir o *mesmo* arquivo: o app
- * exporta do aparelho (bytes vindos do disco local) e a API publica no Showcase (bytes vindos
- * do armazenamento de mídia). Só o resolvedor muda; o formato não pode mudar, senão um pacote
- * baixado do site não importaria de volta no app.
+ * It lives in `@keres/shared` because both sides have to produce the *same* file: the app exports
+ * from the device (bytes from local disk) and the API publishes to the Showcase (bytes from media
+ * storage). Only the resolver changes; the format cannot, or a package downloaded from the site
+ * would not import back into the app.
  *
- * Sem compressão (`STORE`): a galeria é majoritariamente imagem/vídeo/áudio, formatos que já
- * chegam comprimidos - rodar DEFLATE por cima só gastaria CPU sem reduzir nada.
+ * No compression (`STORE`): the gallery is mostly image/video/audio, formats that already arrive
+ * compressed - running DEFLATE over them would only burn CPU without shrinking anything.
  */
 
 export const STORY_JSON_ENTRY = 'story.json';
 export const MEDIA_DIR_PREFIX = 'media/';
 
 /**
- * Devolve os bytes de uma mídia, ou `null` quando quem empacota não tem esse arquivo (não
- * baixado no aparelho, ou ausente do armazenamento do servidor).
+ * Returns a media file's bytes, or `null` when the packager does not have that file (not downloaded
+ * on the device, or absent from the server's storage).
  */
 export type MediaByteResolver = (item: GalleryType) => Promise<Uint8Array | null>;
 
 export interface BuildStoryZipResult {
   bytes: Uint8Array;
-  /** Quantas mídias entraram no pacote, do total que a história referencia. */
+  /** How many media files went into the package, out of the total the story references. */
   includedCount: number;
   totalCount: number;
 }
 
 /**
- * Monta os bytes do .zip para uma história já exportada.
+ * Builds the .zip bytes for an already-exported story.
  *
- * Mídia que o resolvedor não encontra é simplesmente deixada de fora - o pacote continua útil
- * com o resto, e quem chama recebe a contagem para avisar a pessoa em vez de fingir que está
- * tudo lá.
+ * Media the resolver cannot find is simply left out - the package is still useful with the rest, and
+ * the caller receives the count so it can tell the person instead of pretending everything is there.
  */
 export async function buildStoryZipBytes(
   storyExport: FullStoryExportType,

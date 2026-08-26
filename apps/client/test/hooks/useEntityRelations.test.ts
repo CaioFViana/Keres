@@ -61,9 +61,9 @@ const tagRelationService = {
 const noteService = { getNotesByStoryId: jest.fn(async () => NOTES) };
 
 /**
- * O dublê guarda estado porque o hook, ao salvar ou excluir, emite `note_relation_changed` e
- * ouve o próprio evento - relendo o serviço logo em seguida. Com um retorno fixo, essa releitura
- * desfaria a escrita e o teste mediria o mock, não o hook.
+ * The double holds state because the hook, on saving or deleting, emits `note_relation_changed` and
+ * listens to its own event - re-reading the service right afterwards. With a fixed return value, that re-read
+ * would undo the write and the test would measure the mock, not the hook.
  */
 let storedRelations: { id: string; noteId: string }[] = [];
 const noteRelationService = {
@@ -133,7 +133,7 @@ describe('loading', () => {
     expect(result.current.selectedTags).toEqual([TAGS[0]]);
   });
 
-  /** Na criação a entidade ainda não existe; a seleção de tags fica só na memória. */
+  /** On creation the entity does not exist yet; the tag selection stays in memory only. */
   it('loads the available tags but no selection while the entity has no id', async () => {
     const { result } = await renderHook(() =>
       useEntityRelations({ entityType: ENTITY_TYPE, entityId: undefined } as never),
@@ -347,7 +347,7 @@ describe('reacting to changes elsewhere in the app', () => {
     expect(tagService.getTagsByStoryId).not.toHaveBeenCalled();
   });
 
-  /** O evento de tag carrega a entidade a que pertence; as das outras não interessam. */
+  /** The tag event carries the entity it belongs to; the others' are of no interest. */
   it('ignores a tag relation change that belongs to another entity', async () => {
     await render();
     tagRelationService.getTagsForEntity.mockClear();

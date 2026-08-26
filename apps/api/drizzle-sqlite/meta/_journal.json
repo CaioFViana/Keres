@@ -22,6 +22,20 @@
       "when": 1787339414224,
       "tag": "0002_swift_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787494750189,
+      "tag": "0003_clear_blazing_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787510000000,
+      "tag": "0004_add_plots",
+      "breakpoints": true
     }
   ]
 }

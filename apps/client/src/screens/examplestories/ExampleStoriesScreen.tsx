@@ -1,4 +1,5 @@
 import Select from '@/src/components/common/inputs/Select/Select';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';
+import type { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createExampleStoryService } from '../../services/storymanagement/ExampleStoryService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -24,23 +25,22 @@ import { useDocumentTitle } from '../../utils/documentTitle';
 import { getLanguageOptions } from '../../utils/i18n';
 
 /**
- * Catálogo de histórias de exemplo empacotadas com o app.
+ * The catalog of example stories packaged with the app.
  *
- * "Instalar" reaproveita a mesma infraestrutura de import de histórias (`ExampleStoryService`
- * -> `StoryService.importFullStory`): o usuário não cria nem remove exemplos do catálogo -
- * só escolhe instalar uma cópia no seu repertório, que passa a ser uma história normal,
- * removível pelos meios já existentes.
+ * "Install" reuses the same story import infrastructure (`ExampleStoryService` ->
+ * `StoryService.importFullStory`): the user neither creates nor removes examples from the catalog -
+ * they only choose to install a copy into their own repertoire, which then becomes an ordinary story,
+ * removable through the existing means.
  *
- * A escolha de idioma usa o mesmo `Select` das telas de filtro (não um `Alert` com um botão
- * por idioma) - um dropdown não muda de forma conforme a lista de idiomas cresce, um `Alert`
- * viraria uma coluna de botões cada vez mais alta.
+ * The language choice uses the same `Select` as the filter screens (not an `Alert` with one button per
+ * language) - a dropdown does not change shape as the list of languages grows, an `Alert` would become
+ * an ever-taller column of buttons.
  *
- * O catálogo em si (`exampleStoryRegistry`) é estático - nenhuma história de exemplo ainda
- * está empacotada (ver `exampleStories/content/`), então o estado vazio é o que esta tela
- * mostra por enquanto.
+ * The catalog itself (`exampleStoryRegistry`) is static - no example story is packaged yet (see
+ * `exampleStories/content/`), so the empty state is what this screen shows for now.
  */
 
-/** Só mostra o rótulo do idioma, sem precisar de uma chave nova por idioma da história. */
+/** It only shows the language's label, with no need for a new key per story language. */
 function useLanguageLabel() {
   const { t } = useTranslation();
   const labelByCode = useMemo(
@@ -50,7 +50,7 @@ function useLanguageLabel() {
   return useCallback((code: string) => labelByCode.get(code) ?? code, [labelByCode]);
 }
 
-/** Idioma preferido para pré-selecionar no dropdown: o do app atual, senão o primeiro empacotado. */
+/** The preferred language to pre-select in the dropdown: the app's current one, failing that the first */
 function pickPreferredLanguage(entry: ExampleStoryEntry, preferredLanguage: string): string | null {
   const match = entry.languages.find((language) => language.language === preferredLanguage);
   return (match ?? entry.languages[0])?.language ?? null;
@@ -63,7 +63,7 @@ interface StoryPreview {
   author: string | null;
 }
 
-/** Leitura defensiva - o conteúdo só é validado de verdade (`FullStoryExportSchema`) na instalação. */
+/** A defensive read - the content is only really validated (`FullStoryExportSchema`) on installation. */
 function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string): StoryPreview {
   const story = (
     language.story as {
@@ -90,9 +90,9 @@ const ExampleStoriesScreen = () => {
   const languageLabel = useLanguageLabel();
 
   const [entries, setEntries] = useState<ExampleStoryEntry[]>([]);
-  /** `slug` da história em instalação, para desabilitar só o card dela. */
+  /** The `slug` of the story being installed, to disable only its own card. */
   const [installingSlug, setInstallingSlug] = useState<string | null>(null);
-  /** Idioma escolhido no dropdown de cada história, por slug; ausente = ainda no padrão. */
+  /** The language chosen in each story's dropdown, by slug; absent = still on the default. */
   const [chosenLanguageBySlug, setChosenLanguageBySlug] = useState<Record<string, string>>({});
 
   useFocusEffect(
@@ -135,10 +135,8 @@ const ExampleStoriesScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
     content: {
       padding: 20,
       paddingBottom: 60,
@@ -199,19 +197,6 @@ const ExampleStoriesScreen = () => {
     },
     installButtonDisabled: {
       opacity: 0.5,
-    },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 21,
     },
   });
 

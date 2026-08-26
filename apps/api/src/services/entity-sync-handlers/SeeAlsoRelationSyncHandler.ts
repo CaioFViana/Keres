@@ -1,11 +1,16 @@
-import {
-  CreateSeeAlsoRelationDataSchema,
+import type {
   CreateSeeAlsoRelationDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialSeeAlsoRelationSchema,
   SeeAlsoEntityType,
   UpdateStoryUpdate,
+} from '@keres/shared';
+import {
+  CreateSeeAlsoRelationDataSchema,
+  isSameEntity,
+  PartialSeeAlsoRelationSchema,
+  SELF_LINK_ERROR,
+  sortEntityPair,
 } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
 import { db } from '../../db';
@@ -24,11 +29,11 @@ import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandle
 
 type EntityRef = { type: SeeAlsoEntityType; id: string };
 
-/** Ordenação canônica (A/B) usada tanto na criação quanto na checagem de duplicidade, para
- *  que o mesmo par não-ordenado nunca seja armazenado duas vezes em ordens diferentes. */
-function sortEntityRefs(a: EntityRef, b: EntityRef): [EntityRef, EntityRef] {
-  return `${a.type}:${a.id}` <= `${b.type}:${b.id}` ? [a, b] : [b, a];
-}
+/**
+ * The canonical (A/B) ordering and the refusal of self-links come from `@keres/shared`: they are the
+ * same rules the client applies before writing to the operation log.
+ */
+const sortEntityRefs = sortEntityPair as (a: EntityRef, b: EntityRef) => [EntityRef, EntityRef];
 
 export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateSeeAlsoRelationDataSchema,
@@ -166,8 +171,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     const refA: EntityRef = { type: validatedData.entityAType, id: validatedData.entityAId };
     const refB: EntityRef = { type: validatedData.entityBType, id: validatedData.entityBId };
 
-    if (refA.type === refB.type && refA.id === refB.id) {
-      throw new Error('Validation Error: an entity cannot be See-Also-linked to itself.');
+    if (isSameEntity(refA, refB)) {
+      throw new Error(SELF_LINK_ERROR);
     }
 
     const [entityA, entityB] = sortEntityRefs(refA, refB);
@@ -204,8 +209,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    // Um vínculo "Veja também" ou existe ou não existe - não há edição parcial que faça
-    // sentido além de restaurar a partir de um tombstone (tratado pela classe base).
+    // A "See also" link either exists or it does not - there is no partial edit that makes sense beyond
+    // restoring from a tombstone (handled by the base class).
     if (
       validatedChanges.entityAType ||
       validatedChanges.entityAId ||

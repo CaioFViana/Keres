@@ -5,13 +5,13 @@ import type { BlobStorage } from './media-storage/BlobStorage';
 import { createBlobStorage } from './media-storage/createBlobStorage';
 
 /**
- * Metadados e ciclo de vida dos blobs de galeria. O backend físico pode ser a pasta local
- * simples ou um endpoint S3 compatível; autorização continua exclusivamente na rota de mídia.
+ * Metadata and lifecycle of the gallery's blobs. The physical backend can be the plain local folder
+ * or an S3-compatible endpoint; authorization stays exclusively in the media route.
  */
 export class MediaStorageService {
   constructor(private readonly blobStorage: BlobStorage = createBlobStorage()) {}
 
-  /** Chave estável e compatível com o layout local já existente. */
+  /** A stable key, compatible with the existing local layout. */
   private storageKeyFor(hash: string): string {
     if (!/^[a-f0-9]{32}$/.test(hash)) {
       throw new Error(`Invalid media hash: ${hash}`);
@@ -26,8 +26,8 @@ export class MediaStorageService {
 
   async filterPresent(hashes: string[]): Promise<{ present: string[]; missing: string[] }> {
     const results: Array<{ hash: string; present: boolean }> = [];
-    // A rota aceita até 500 hashes. Em S3 cada um vira uma chamada remota, então limitamos a
-    // concorrência para não produzir um pico desnecessário no provedor nem no servidor.
+    // The route accepts up to 500 hashes. On S3 each one becomes a remote call, so we cap the concurrency
+    // to avoid an unnecessary spike at the provider or on the server.
     for (let start = 0; start < hashes.length; start += 20) {
       const batch = hashes.slice(start, start + 20);
       results.push(
@@ -55,8 +55,8 @@ export class MediaStorageService {
     }
 
     const storagePath = this.storageKeyFor(actualHash);
-    // Registrar primeiro evita um arquivo final órfão se o banco falhar. Até o backend físico
-    // receber os bytes, `has()` continua respondendo "missing" e o cliente pode reenviar.
+    // Registering first avoids an orphaned final file if the database fails. Until the physical backend
+    // receives the bytes, `has()` keeps answering "missing" and the client can resend.
     await db
       .insert(mediaBlobs)
       .values({
@@ -107,8 +107,8 @@ export class MediaStorageService {
   }
 
   async cleanupTemporaryFiles(): Promise<number> {
-    // Uma hora é muito acima da duração normal de um upload, mas evita apagar um arquivo em
-    // trânsito depois de uma reinicialização muito próxima.
+    // An hour is far beyond a normal upload's duration, but it avoids deleting a file in flight after a
+    // restart that happened too close to it.
     return this.blobStorage.cleanupTemporaryFiles?.(60 * 60 * 1000) ?? 0;
   }
 }

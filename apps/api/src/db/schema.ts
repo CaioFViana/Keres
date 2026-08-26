@@ -25,6 +25,8 @@ export * from './schema/tables/modes';
 export * from './schema/tables/notes';
 export * from './schema/tables/noteRelations';
 export * from './schema/tables/operationLog';
+export * from './schema/tables/plots';
+export * from './schema/tables/plotScenes';
 export * from './schema/tables/registrationSettings';
 export * from './schema/tables/showcaseSettings';
 export * from './schema/tables/scenes';

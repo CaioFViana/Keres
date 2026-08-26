@@ -17,7 +17,7 @@ const sceneBase = {
   chapterId: ulid('chapter1'),
   locationId: ulid('location1'),
   name: 'Cena de abertura',
-  index: 0,
+  index: 1,
   summary: null,
   gap: null,
   gapType: null,
@@ -29,9 +29,9 @@ const sceneBase = {
 const chapterBase = { name: 'Capítulo 1', index: 1, summary: null, extraNotes: null };
 
 /**
- * Estes schemas são a fronteira de validação compartilhada entre client e API: o mesmo objeto
- * é validado no cliente antes do push e de novo no servidor antes de gravar. Um campo que
- * silenciosamente vira opcional aqui abre um buraco nos dois lados de uma vez.
+ * These schemas are the validation boundary shared by client and API: the same object is validated
+ * in the client before the push and again on the server before writing. A field that silently
+ * becomes optional here opens a hole on both sides at once.
  */
 describe('create-entity schemas', () => {
   it.each([
@@ -68,8 +68,14 @@ describe('create-entity schemas', () => {
     expect(CreateChapterDataSchema.safeParse({ ...chapterBase, index: 1.5 }).success).toBe(false);
   });
 
-  it('accepts a scene index of 0, since scenes are numbered from 0 inside a chapter', () => {
-    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 0 }).success).toBe(true);
+  /**
+   * Scene and chapter follow the same numbering on purpose. Accepting 0 for a scene is what left
+   * creation and reordering with incompatible contracts: the API's reorder handler refuses any set
+   * that is not contiguous 1..N.
+   */
+  it('rejects a scene index below 1, like the chapter it lives in', () => {
+    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 1 }).success).toBe(true);
+    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: 0 }).success).toBe(false);
     expect(CreateSceneDataSchema.safeParse({ ...sceneBase, index: -1 }).success).toBe(false);
   });
 

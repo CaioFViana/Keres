@@ -1,10 +1,5 @@
-import {
-  CreateFavoriteDataSchema,
-  CreateStoryUpdate,
-  DeleteStoryUpdate,
-  PartialFavoriteSchema,
-  UpdateStoryUpdate,
-} from '@keres/shared';
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
 import { db } from '../../db';
 import { favorites } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';

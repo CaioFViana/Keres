@@ -1,4 +1,4 @@
-import { FavoriteEntityType } from '@keres/shared';
+import type { FavoriteEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -8,10 +8,8 @@ import { servers, stories } from '../../../../db/schema';
 import { createFavoriteService } from '../../../../services/storymanagement/FavoriteService';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
-import {
-  ResolvedUserProfile,
-  useUserProfileResolver,
-} from '../../../../hooks/useUserProfileResolver';
+import type { ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
+import { useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
 import Avatar from '../../../common/display/Avatar/Avatar';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
 
@@ -85,9 +83,9 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     const handleStoryChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) fetchFavoriters();
     };
-    // O hook `useUserProfileResolver` já limpa o cache compartilhado de perfis remotos ao
-    // ouvir este mesmo evento - este listener continua existindo aqui só para acionar o
-    // refetch dos `profiles` já exibidos (o hook não sabe disso, só invalida o cache).
+    // The `useUserProfileResolver` hook already clears the shared cache of remote profiles when it
+    // hears this same event - this listener still exists here only to trigger the
+    // refetch of the `profiles` already displayed (the hook does not know about that, it only invalidates the cache).
     const handleFriendshipChange = () => {
       fetchFavoriters();
     };

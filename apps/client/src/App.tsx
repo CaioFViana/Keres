@@ -4,11 +4,17 @@ import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
+import {
+  DefaultTheme as DefaultNavigationTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
+import type { AppDrizzleClient } from './db';
+import { DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
@@ -38,6 +44,12 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   // Determine status bar style based on background color lightness
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
 
+  // The native window's background shows for an instant during stack and Modal transitions. Keeping it
+  // in sync with the palette avoids revealing the default white outside the React tree.
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+  }, [colors.background]);
+
   return (
     <View
       style={{
@@ -59,13 +71,42 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/**
+ * Drawers and headers read React Navigation's theme, while the application reads its own
+ * ThemeProvider. Keeping the two in sync prevents navigation's light default border from
+ * appearing as a white divider in a dark story or dark mode.
+ */
+const NavigationThemeBridge = ({ children }: { children: React.ReactNode }) => {
+  const { colors, isDarkMode } = useTheme();
+  const navigationTheme = React.useMemo(
+    () => ({
+      ...DefaultNavigationTheme,
+      dark: isDarkMode,
+      colors: {
+        ...DefaultNavigationTheme.colors,
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.notification,
+      },
+    }),
+    [colors, isDarkMode],
+  );
+
+  return <NavigationThemeProvider value={navigationTheme}>{children}</NavigationThemeProvider>;
+};
+
 // New ThemeInitializer component to provide drizzleClient to ThemeProvider
 const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
   const drizzleClient = useDrizzle(); // Get drizzleClient from context
 
   return (
     <ThemeProvider drizzleClient={drizzleClient}>
-      <SafeAreaWrapper>{children}</SafeAreaWrapper>
+      <NavigationThemeBridge>
+        <SafeAreaWrapper>{children}</SafeAreaWrapper>
+      </NavigationThemeBridge>
     </ThemeProvider>
   );
 };
@@ -82,8 +123,8 @@ const DatabaseInitializer = () => {
       console.log('DatabaseInitializer: Starting database initialization...');
       try {
         if (Platform.OS === 'web') {
-          // Popula o cache síncrono de "o que já existe" do mediaFileService (ver
-          // webMediaStore.ts) antes de qualquer tela/sync que dependa de `exists()` rodar.
+          // It populates mediaFileService's synchronous "what already exists" cache (see webMediaStore.ts)
+          // before any screen/sync that depends on `exists()` runs.
           await hydrateWebMediaStore();
         }
         await migrate(db);

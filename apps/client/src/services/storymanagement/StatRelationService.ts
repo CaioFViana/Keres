@@ -1,7 +1,9 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { StatRelationInsert, StatRelationSelect, statRelations } from '../../db/schema';
-import { Create, prepareNewEntityData } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '../../db';
+import type { StatRelationInsert, StatRelationSelect } from '../../db/schema';
+import { statRelations } from '../../db/schema';
+import type { Create } from '../../utils/entityUtils';
+import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
@@ -11,12 +13,12 @@ import {
 import { createServerService } from '../ServerService';
 
 export interface StatRelationService {
-  /** Todos os valores da história - o suficiente para montar radar e ranking de uma vez. */
+  /** Every value in the story - enough to build the radar and the ranking in one go. */
   getValuesByStoryId(storyId: string): Promise<StatRelationSelect[]>;
   getValuesByCharacterId(characterId: string): Promise<StatRelationSelect[]>;
   /**
-   * Grava o valor de um stat num modo. Sem linha própria o modo herda o valor do modo normal,
-   * então gravar é justamente o ato de deixar de herdar.
+   * Saves a stat's value in a mode. With no row of its own the mode inherits the normal mode's value, so
+   * saving is precisely the act of ceasing to inherit.
    */
   setValue(
     currentUserId: string,
@@ -28,7 +30,7 @@ export interface StatRelationService {
       value: number;
     },
   ): Promise<void>;
-  /** Apaga o valor próprio: o modo volta a herdar do modo normal. */
+  /** It deletes the mode's own value: the mode goes back to inheriting from the normal mode. */
   clearValue(
     currentUserId: string,
     params: { characterId: string; modeId: string | null; statId: string },
@@ -39,21 +41,20 @@ const valueKey = (characterId: string, modeId: string | null, statId: string) =>
   `${characterId}:${modeId ?? ''}:${statId}`;
 
 /**
- * Uma fila por (personagem, modo, stat), no escopo do módulo para valer entre instâncias do
- * serviço.
+ * A queue per (character, mode, stat), at module scope so it holds across instances of the service.
  *
- * Gravar um valor é ler-para-decidir-e-escrever: sem linha, cria; com linha, atualiza. Duas
- * chamadas concorrentes para o mesmo campo - que é o que um `onBlur` disparado duas vezes
- * produz - leem as duas "não existe" e inserem as duas. O banco local não tem único que pegue
- * isso (`mode_id` é anulável, e no SQLite, como no Postgres, NULLs são distintos entre si),
- * então a segunda linha só aparecia lá na frente, como um conflito de sincronização opaco: o
- * servidor recusa o segundo create porque para ele já existe valor vivo para aquele trio.
+ * Saving a value is read-to-decide-then-write: with no row, create; with a row, update. Two concurrent
+ * calls for the same field - which is what an `onBlur` fired twice produces - both read "does not
+ * exist" and both insert. The local database has no unique constraint that would catch that (`mode_id`
+ * is nullable, and in SQLite, as in Postgres, NULLs are distinct from one another), so the second row
+ * only showed up much later, as an opaque synchronization conflict: the server refuses the second
+ * create because for it a live value already exists for that trio.
  */
 const pendingWrites = new Map<string, Promise<unknown>>();
 
 function enqueue<T>(key: string, task: () => Promise<T>): Promise<T> {
   const previous = pendingWrites.get(key) ?? Promise.resolve();
-  // `catch` no encadeamento: uma escrita que falhou não pode derrubar a próxima da fila.
+  // A `catch` in the chain: a failed write must not take the next one in the queue down.
   const next = previous.then(task, task);
   pendingWrites.set(
     key,
@@ -80,7 +81,7 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
           eq(statRelations.isDeleted, false),
         ),
       )
-      // ULID é ordenável por tempo de criação: a linha mais antiga é a que fica.
+      // A ULID is sortable by creation time: the oldest row is the one that stays.
       .orderBy(asc(statRelations.id))
       .all();
 
@@ -104,11 +105,11 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
   };
 
   /**
-   * A linha que vale para este campo, com as excedentes apagadas no caminho.
+   * The row that counts for this field, with the surplus ones deleted along the way.
    *
-   * A limpeza é o conserto de aparelhos que já ficaram com duplicatas antes da fila acima
-   * existir: sem ela, o mesmo conflito voltaria em toda sincronização, porque o servidor
-   * continuaria recusando o create da segunda linha.
+   * The cleanup is the fix for devices that already ended up with duplicates before the queue above
+   * existed: without it, the same conflict would come back on every synchronization, because the server
+   * would keep refusing the second row's create.
    */
   const takeSingleLiveValue = async (
     currentUserId: string,
@@ -191,8 +192,8 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
         if (live.length === 0) return;
         await assertStoryIsWritable(db, live[0]!.storyId);
 
-        // Apaga todas as vivas, não só a primeira: limpar o campo é dizer "aqui não há valor
-        // próprio", e uma duplicata sobrevivente faria o valor reaparecer sozinho.
+        // It deletes every live one, not only the first: clearing the field means saying "there is no value of
+        // its own here", and a surviving duplicate would make the value reappear on its own.
         for (const row of live) await softDelete(row, currentUserId);
         entityEventEmitter.emit('stat_relation_changed', live[0]!.storyId, characterId);
       });

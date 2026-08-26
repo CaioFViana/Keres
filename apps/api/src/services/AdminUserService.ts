@@ -1,4 +1,4 @@
-import { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
+import type { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
 import { and, asc, count, eq, or } from 'drizzle-orm';
 import { insensitiveLike } from '../db/sqlOperators';
 import { ulid } from 'ulid';
@@ -24,12 +24,12 @@ export class AdminUserNotFoundError extends Error {
 }
 
 /**
- * Recusa demover/excluir a conta root reconciliada via env (ver RootAdminService) - ela só
- * pode ser removida mudando/removendo as env vars e reiniciando a API, nunca pela UI.
+ * Refuses to demote/delete the root account reconciled through the env (see RootAdminService) - it
+ * can only be removed by changing/removing the env vars and restarting the API, never through the UI.
  *
- * Só essas duas ações são bloqueadas em `update`/`softDelete` abaixo - tag, avatar, bio e
- * tierId da conta root passam por edição normal, então a mensagem não deve dizer "modificada"
- * sem qualificar, isso sobra a impressão de que a conta é imutável por completo.
+ * Only those two actions are blocked in `update`/`softDelete` below - the root account's tag, avatar,
+ * bio and tierId go through normal editing, so the message must not say "modified" without
+ * qualification, which would leave the impression that the account is immutable altogether.
  */
 export class RootAdminProtectedError extends Error {
   constructor() {
@@ -129,8 +129,8 @@ export class AdminUserService {
     const id = ulid();
     const desiredTag = input.tag ?? input.username;
 
-    // Mesmo fallback de sufixo do auto-cadastro (auth.route.ts): a tag pode já estar em
-    // uso mesmo que o username não esteja, já que as duas colunas não compartilham unicidade.
+    // The same suffix fallback as self-registration (auth.route.ts): the tag may already be taken even
+    // when the username is not, since the two columns do not share uniqueness.
     let created;
     try {
       [created] = await db
@@ -159,8 +159,8 @@ export class AdminUserService {
             })
             .returning(ADMIN_USER_RETURNING);
         } catch (retryError) {
-          // Mesmo caso de `auth.route.ts`: a tag era só a primeira restrição reclamada, e o
-          // username também está tomado. Qual delas o banco acusa primeiro varia por motor.
+          // Same case as `auth.route.ts`: the tag was only the first constraint complained about, and the
+          // username is taken too. Which one the database reports first varies by engine.
           if (isUniqueViolation(retryError)) {
             throw new UsernameAlreadyTakenError();
           }
@@ -176,14 +176,14 @@ export class AdminUserService {
       }
     }
 
-    // O admin está criando a conta em nome de outra pessoa - mostrados aqui pra ele
-    // repassar, já que não há e-mail para enviá-los depois (ver auth.route.ts /register,
-    // mesma lógica do lado do autosserviço).
+    // The admin is creating the account on somebody else's behalf - shown here so they can pass them
+    // along, since there is no email to send them later (see auth.route.ts /register, the same logic on
+    // the self-service side).
     const recoveryCodes = await recoveryCodeService.generateCodes(created!.id);
     return { ...created!, recoveryCodes };
   }
 
-  /** Sem confirmação da senha atual - o admin age em nome de outra pessoa, não é autosserviço. */
+  /** No confirmation of the current password - the admin acts on somebody else's behalf, this is not */
   async regenerateRecoveryCodes(id: string): Promise<string[]> {
     const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
     if (!existing) {

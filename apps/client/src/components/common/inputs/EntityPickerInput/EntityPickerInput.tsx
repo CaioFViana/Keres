@@ -1,10 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { StorySchemaEntityType } from '@keres/shared';
+import type { Ionicons } from '@expo/vector-icons';
+import type { StorySchemaEntityType } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
-import MultiSelectPill, { MultiSelectGroup } from '../MultiSelectPill/MultiSelectPill';
+import type { MultiSelectGroup } from '../MultiSelectPill/MultiSelectPill';
+import MultiSelectPill from '../MultiSelectPill/MultiSelectPill';
 
 interface EntityPickerInputProps {
   storyId: string;

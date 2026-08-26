@@ -9,15 +9,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import { CommentSelect, servers, stories } from '../../../../db/schema';
-import {
-  ResolvedUserProfile,
-  useUserProfileResolver,
-} from '../../../../hooks/useUserProfileResolver';
+import type { CommentSelect } from '../../../../db/schema';
+import { servers, stories } from '../../../../db/schema';
+import type { ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
+import { useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../../theme';
 import { AppAlert } from '../../../../utils/AppAlert';
+import type { CommentCriticality } from '../../../../utils/commentCriticality';
 import {
-  CommentCriticality,
   CRITICALITY_ICONS,
   CRITICALITY_LEVELS,
   DEFAULT_CRITICALITY,
@@ -201,9 +200,9 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     excerptInput: { minHeight: 40, textAlignVertical: 'top' },
     commentInput: { minHeight: 70, textAlignVertical: 'top' },
     warningText: { color: colors.notification, fontSize: 12, marginBottom: 8 },
-    // Ícones de criticidade e o botão de postar dividem a mesma linha, em vez de cada um
-    // ocupar a largura toda em linhas separadas - ficava com bastante espaço horizontal
-    // ocioso em telas largas.
+    // Criticality icons and the post button share the same row, instead of each one
+    // taking the full width on separate rows - that left a fair amount of horizontal
+    // space idle on wide screens.
     actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     criticalityRow: { flexDirection: 'row' },
     criticalityButton: { padding: 8, borderRadius: 8, marginRight: 6 },

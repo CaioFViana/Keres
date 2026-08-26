@@ -69,8 +69,8 @@ vi.mock('../../src/api/RecoveryApiService', () => ({
 }));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
 
-// `ThemeProvider` porque a página de settings passou a incluir o cartão de aparência, que lê
-// a paleta escolhida do contexto de tema.
+// `ThemeProvider` because the settings page now includes the appearance card, which reads the
+// chosen palette from the theme context.
 const withRouter = (page: ReactElement, route = '/') =>
   render(
     <MemoryRouter initialEntries={[route]}>
@@ -177,7 +177,7 @@ describe('admin page actions', () => {
   it('saves registration settings after loading them', async () => {
     const view = await withRouter(<RegistrationSettingsPage />);
     await flush();
-    // O primeiro form da página é o de cadastro; aparência e showcase não são formulários.
+    // The page's first form is the registration one; appearance and showcase are not forms.
     await submit(view.container.querySelector('form')!);
     await flush();
 

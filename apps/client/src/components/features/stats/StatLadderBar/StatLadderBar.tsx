@@ -2,14 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../../../theme';
-import type { StatTier } from '../../../../utils/statLadder';
-import { buildStatLadderBar } from '../../../../utils/statLadderBarLayout';
+import type { StatTier } from '@keres/shared/graphs/statLadder';
+import { buildStatLadderBar } from '@keres/shared/graphs/statLadderBarLayout';
 
 /**
- * A régua de tiers de um status: onde cada degrau começa e onde o valor do personagem cai.
+ * A stat's tier ruler: where each rung starts and where the character's value lands.
  *
- * Existe porque o campo de valor é um número solto - sem isto o autor não tem como saber que
- * 100 é "C" nesta escada, nem quanto falta para o próximo degrau.
+ * It exists because the value field is a bare number - without this the author has no way to know that
+ * 100 is "C" on this ladder, nor how far the next rung is.
  */
 interface StatLadderBarProps {
   ladder: readonly StatTier[];
@@ -93,7 +93,7 @@ export function StatLadderBar({ ladder, value }: StatLadderBarProps) {
                 x={marker.x}
                 y={height - 2}
                 fontSize={10}
-                // Os rótulos das pontas encostariam na borda se ficassem centrados.
+                // The end labels would touch the border if they were centred.
                 textAnchor={
                   index === 0 ? 'start' : index === layout.markers.length - 1 ? 'end' : 'middle'
                 }

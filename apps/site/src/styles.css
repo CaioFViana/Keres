@@ -468,3 +468,163 @@ code {
     max-width: none;
   }
 }
+/* --- Vitrine ---------------------------------------------------------------
+   São fotos do app rodando (1440px de largura), então a moldura aqui é só borda,
+   recorte e sombra: nada de barra de título falsa - a foto já traz o cabeçalho e a
+   gaveta do próprio aplicativo. */
+.showcase-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+
+.showcase-shot {
+  margin: 0;
+}
+
+/* A legenda vem antes da foto: o leitor sabe o que está olhando antes de olhar. */
+.showcase-shot figcaption {
+  max-width: 62ch;
+  margin: 0 0 14px;
+}
+
+.showcase-shot figcaption h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.showcase-shot figcaption p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.97rem;
+  line-height: 1.55;
+}
+
+.showcase-window {
+  display: block;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  background: var(--color-bg);
+  /* A foto acompanha o tema da página, e o fundo dela é o do app: sem o mesmo fundo aqui,
+     aparecia uma borda clara em volta de uma tela escura enquanto a imagem carregava. */
+}
+
+.showcase-window:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+.showcase-window img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.showcase-note {
+  margin: 40px 0 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .showcase-shots {
+    gap: 32px;
+  }
+}
+
+/* --- Foto ampliada ----------------------------------------------------------
+   `<dialog>` nativo: o fundo escuro é o `::backdrop`, Esc fecha sozinho. */
+.lightbox {
+  width: min(96vw, 1600px);
+  max-width: none;
+  max-height: 92vh;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.lightbox::backdrop {
+  background: rgb(0 0 0 / 0.72);
+}
+
+.lightbox-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.lightbox-bar h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.lightbox-bar button {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.lightbox-bar button:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+/* Reduzida, a foto cabe inteira; ampliada, ela rola dentro desta moldura. */
+.lightbox-viewport {
+  overflow: auto;
+  max-height: calc(92vh - 108px);
+  background: var(--color-bg);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-surface)) transparent;
+}
+
+.lightbox-viewport img {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: zoom-in;
+}
+
+.lightbox-viewport.is-zoomed img {
+  width: auto;
+  max-width: none;
+  cursor: zoom-out;
+}
+
+.lightbox-viewport::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.lightbox-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lightbox-viewport::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-primary) 45%, var(--color-surface));
+  border: 3px solid var(--color-bg);
+  border-radius: 999px;
+}
+
+.lightbox-hint {
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}

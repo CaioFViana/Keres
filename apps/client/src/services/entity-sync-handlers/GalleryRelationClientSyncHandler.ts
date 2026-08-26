@@ -1,14 +1,14 @@
-import {
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   GalleryRelation,
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { GalleryRelationSelect } from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { GalleryRelationSelect } from '../../db/schema';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'GalleryRelation';

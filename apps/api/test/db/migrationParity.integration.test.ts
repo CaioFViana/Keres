@@ -9,26 +9,26 @@ import { usingSqlite } from '../../src/db/dialect';
 import * as schema from '../../src/db/schema';
 
 /**
- * As migrações do SQLite descrevem o mesmo schema que o código define.
+ * The SQLite migrations describe the same schema the code defines.
  *
- * O motivo de existir: são duas pastas de migração, uma por motor, e é preciso lembrar de
- * gerar as duas (`db:generate` e `db:generate:sqlite`). Esquecer a segunda não quebra nada em
- * desenvolvimento com Postgres - quebra só na instalação de alguém que escolheu SQLite, no
- * primeiro boot, longe de quem fez a mudança. Este teste aplica as migrações do SQLite num
- * arquivo novo e compara tabela por tabela, coluna por coluna, com o que o schema declara.
+ * Why it exists: there are two migration folders, one per engine, and both have to be generated
+ * (`db:generate` and `db:generate:sqlite`). Forgetting the second breaks nothing in development on
+ * Postgres - it only breaks the installation of somebody who chose SQLite, on the first boot, far from
+ * whoever made the change. This test applies the SQLite migrations to a fresh file and compares table
+ * by table, column by column, with what the schema declares.
  *
- * Só roda no modo SQLite: com o Postgres ativo, `schema` constrói tabelas do outro dialeto e
- * a comparação não faria sentido.
+ * It only runs in SQLite mode: with Postgres active, `schema` builds tables of the other dialect and
+ * the comparison would make no sense.
  */
 
 const describeForSqlite = usingSqlite ? describe : describe.skip;
 
-/** As tabelas como o código as declara. */
+/** The tables as the code declares them. */
 function declaredTables(): Map<string, Set<string>> {
   const tables = new Map<string, Set<string>>();
   for (const value of Object.values(schema)) {
-    // O barrel exporta também relations, enums e constantes; `is` é o verificador do próprio
-    // drizzle, e é o único jeito confiável de separar uma tabela do resto.
+    // The barrel also exports relations, enums and constants; `is` is drizzle's own checker, and it is the
+    // only reliable way to separate a table from the rest.
     if (!is(value, SQLiteTable)) {
       continue;
     }
@@ -77,14 +77,14 @@ describeForSqlite('the SQLite migrations match the schema', () => {
       }
     } finally {
       client.close();
-      // No Windows o arquivo continua travado por um instante depois do `close`; é um
-      // temporário, então falhar em apagá-lo não pode reprovar o teste.
+      // On Windows the file stays locked for a moment after `close`; it is a temporary file, so failing to
+      // delete it must not fail the test.
       await rm(file, { force: true }).catch(() => undefined);
     }
   });
 
-  // A tabela de controle do drizzle mora no banco principal (no Postgres é um schema à parte),
-  // e é ela que a limpeza entre testes precisa poupar - ver `truncateAll`.
+  // drizzle's control table lives in the main database (on Postgres it is a separate schema), and it is
+  // the one the cleanup between tests has to spare - see `truncateAll`.
   it('keeps its bookkeeping in __drizzle_migrations', async () => {
     const { db } = await import('../../src/db');
     const sqliteDb = db as unknown as { all: (query: unknown) => Promise<unknown> };

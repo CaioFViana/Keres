@@ -1,6 +1,6 @@
-import { FavoriteBehavior, FavoriteEntityType } from '@keres/shared';
+import type { FavoriteBehavior, FavoriteEntityType } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import { favorites, stories } from '../../db/schema';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';

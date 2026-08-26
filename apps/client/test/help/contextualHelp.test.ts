@@ -18,8 +18,8 @@ it('covers every application screen with a reader-facing header', () => {
       (match) => match[1],
     ),
   );
-  // As duas bibliotecas de documentação não têm atalho contextual: a página de destino seria
-  // ela mesma.
+  // The two documentation libraries have no contextual shortcut: the destination page would be
+  // themselves.
   const intentionallyUnmapped = new Set([
     'HelpDrawer',
     'StatsDrawer',

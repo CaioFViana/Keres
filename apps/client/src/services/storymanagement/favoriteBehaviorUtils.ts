@@ -1,5 +1,5 @@
-import { FavoriteEntityType } from '@keres/shared';
-import { AppDrizzleClient } from '../../db';
+import type { FavoriteEntityType } from '@keres/shared';
+import type { AppDrizzleClient } from '../../db';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { createFavoriteService } from './FavoriteService';
 

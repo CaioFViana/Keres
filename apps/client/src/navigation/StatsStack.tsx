@@ -9,7 +9,7 @@ import StatRankingScreen from '../screens/stats/StatRankingScreen';
 export type StatsStackParamList = {
   StatList: undefined;
   StatForm: { statId?: string } | undefined;
-  /** `statId` ausente = a escada padrão da história. */
+  /** An absent `statId` = the story's default ladder. */
   StatLadder: { statId?: string } | undefined;
   StatComparison: { characterId?: string; modeId?: string } | undefined;
   StatRanking: { statId?: string } | undefined;

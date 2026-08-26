@@ -6,11 +6,11 @@ import {
 } from '../../src/utils/errors';
 
 /**
- * As diferenças entre os dois motores que o código precisa reconhecer.
+ * The differences between the two engines the code has to recognise.
  *
- * Estes casos não dependem de banco no ar: são a tradução dos erros que cada driver devolve.
- * Cobrem justamente o que quebrou ao portar - um erro de unicidade do SQLite não se parece em
- * nada com o do Postgres, e tratar mal isso transforma um 409 limpo num 500.
+ * These cases need no database up: they are the translation of the errors each driver returns. They
+ * cover exactly what broke during the port - a SQLite uniqueness error looks nothing like Postgres's,
+ * and mishandling that turns a clean 409 into a 500.
  */
 
 /** Um erro como o drizzle o entrega: o dele por fora, o do driver pendurado em `cause`. */
@@ -31,8 +31,8 @@ describe('unique violations, in either engine', () => {
     expect(isUniqueViolation(error)).toBe(true);
   });
 
-  // O SQLite usa o mesmo código para toda restrição. Confundir uma chave estrangeira com uma
-  // violação de unicidade faria o cadastro tentar de novo, com outra tag, para sempre.
+  // SQLite uses the same code for every constraint. Mistaking a foreign key for a uniqueness violation
+  // would make registration retry, with another tag, forever.
   it('does not mistake another SQLite constraint for a unique one', () => {
     const error = drizzleError({
       code: 'SQLITE_CONSTRAINT',
@@ -76,7 +76,7 @@ describe('which constraint was violated', () => {
     );
   });
 
-  // Num índice de expressão (`lower(tag)`) o SQLite dá o nome do índice...
+  // On an expression index (`lower(tag)`) SQLite gives the index's name...
   it('reads the index name out of the SQLite message', () => {
     const error = drizzleError({
       code: 'SQLITE_CONSTRAINT',
@@ -85,7 +85,7 @@ describe('which constraint was violated', () => {
     expect(postgresErrorConstraint(error)).toBe('users_tag_lower_idx');
   });
 
-  // ...e num índice comum, as colunas.
+  // ...and on an ordinary index, the columns.
   it('falls back to the columns when SQLite names no index', () => {
     const error = drizzleError({
       code: 'SQLITE_CONSTRAINT',

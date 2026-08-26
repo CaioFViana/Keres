@@ -1,10 +1,10 @@
 /**
- * A mesma suíte de integração, rodando sobre um arquivo SQLite.
+ * The same integration suite, running over a SQLite file.
  *
- * `DATABASE_DRIVER` é fixado aqui, antes de qualquer módulo carregar, pelo mesmo motivo de
- * `drizzle.sqlite.config.ts`: o schema decide o dialeto no momento em que é importado. Um
- * arquivo de config em vez de uma variável na linha de comando porque `VAR=valor comando` não
- * funciona no PowerShell, e isto precisa rodar igual em qualquer máquina.
+ * `DATABASE_DRIVER` is set here, before any module loads, for the same reason as
+ * `drizzle.sqlite.config.ts`: the schema decides its dialect at import time. A config file rather than
+ * a variable on the command line because `VAR=value command` does not work in PowerShell, and this has
+ * to run the same on any machine.
  */
 process.env.DATABASE_DRIVER = 'sqlite';
 

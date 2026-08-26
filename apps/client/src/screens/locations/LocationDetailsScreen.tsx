@@ -17,49 +17,43 @@ import ScenePresenceList, {
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
-import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
+import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
+import type { RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useDrizzle } from '../../db';
-import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
-import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
+import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
+import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { LocationStackParamList } from '../../navigation/MainSystemStack';
-import {
-  CharacterSceneServiceInterface,
-  createCharacterSceneService,
-} from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import {
-  CharacterService,
-  createCharacterService,
-} from '../../services/storymanagement/CharacterService'; // Import CharacterService
-import {
-  createItemJourneyService,
-  ItemJourneyService,
-} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import {
-  createLocationRelationService,
-  LocationRelationService,
-} from '../../services/storymanagement/LocationRelationService';
+import type { LocationStackParamList } from '../../navigation/MainSystemStack';
+import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import type { CharacterService } from '../../services/storymanagement/CharacterService';
+import { createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
+import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '../../services/storymanagement/ItemService';
+import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
+import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { LocationsScreenNavigationProp } from './LocationListScreen';
+import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {
   LocationDetail: { locationId: string };
@@ -494,26 +488,12 @@ const LocationDetailsScreen = () => {
   ]);
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
+    ...commonDetailStyleDefs(colors),
     title: {
       fontSize: 24,
       fontWeight: 'bold',
       color: colors.text,
       marginBottom: 10,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
     },
   });
 
@@ -550,7 +530,7 @@ const LocationDetailsScreen = () => {
   return (
     <ScrollView
       style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 

@@ -1,15 +1,11 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Added
-import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import {
-  CharacterInsert,
-  characters,
-  CharacterSelect,
-  tagRelations,
-  tags,
-  TagSelect,
-} from '../../db/schema'; // Import CharacterInsert and stories
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
+import type { SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import type { CharacterInsert, CharacterSelect, TagSelect } from '../../db/schema';
+import { characters, characterRelations, tagRelations, tags } from '../../db/schema'; // Import CharacterInsert and stories
+import type { Create } from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import characterEventEmitter
 import {
   assertStoryIsWritable,
@@ -105,6 +101,20 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
           if (advancedSearchCriteria.hasOwnProperty(key)) {
             const value = advancedSearchCriteria[key];
             if (value === undefined || value === null || value === '') continue; // Skip empty values
+
+            if (key === 'relationType') {
+              whereConditions.push(
+                sql`EXISTS (
+                  SELECT 1 FROM ${characterRelations}
+                  WHERE ${characterRelations.storyId} = ${storyId}
+                    AND ${characterRelations.isDeleted} = false
+                    AND ${characterRelations.relationType} LIKE ${`%${value}%`} COLLATE NOCASE
+                    AND (${characterRelations.character1Id} = ${characters.id}
+                      OR ${characterRelations.character2Id} = ${characters.id})
+                )` as SQL<boolean>,
+              );
+              continue;
+            }
 
             const fieldMetadata = characterMetadata.find((meta) => meta.name === key);
 

@@ -1,14 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  GestureResponderEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 
 interface AudioPreviewPlayerProps {
@@ -26,13 +20,13 @@ function formatTime(seconds: number): string {
 }
 
 /**
- * Player de áudio.
+ * The audio player.
  *
- * O `expo-audio` não vem com uma interface pronta (diferente do `expo-video`, que tem
- * `VideoView` com controles nativos) - só a API de controle (`play`, `pause`, `seekTo`) e
- * o status de reprodução. A barra de progresso aqui é tocável (`Pressable` medindo a
- * própria largura em `onLayout`) para dar pelo menos a navegação básica que um áudio
- * precisa para ser útil.
+ * `expo-audio` does not come with a ready-made interface (unlike `expo-video`, which has
+ * `VideoView` with native controls) - only the control API (`play`, `pause`, `seekTo`) and
+ * the playback status. The progress bar here is tappable (a `Pressable` measuring its
+ * own width in `onLayout`) to give at least the basic navigation an audio
+ * needs in order to be useful.
  */
 const AudioPreviewPlayer: React.FC<AudioPreviewPlayerProps> = ({ uri }) => {
   const { colors } = useTheme();
@@ -46,8 +40,8 @@ const AudioPreviewPlayer: React.FC<AudioPreviewPlayerProps> = ({ uri }) => {
       player.pause();
       return;
     }
-    // Sem isto, tocar de novo depois do fim não faz nada visível - a pessoa acharia que
-    // o botão travou.
+    // Without this, playing again after the end does nothing visible - the person would think
+    // the button had jammed.
     if (status.duration > 0 && status.currentTime >= status.duration) {
       player.seekTo(0);
     }

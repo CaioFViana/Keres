@@ -1,22 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
-  Animated,
-  Easing,
   ScrollView,
-  StyleProp,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ViewStyle,
   useWindowDimensions,
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
-import { getContrastTextColor } from '../../../../utils/colorUtils';
+import { getContrastTextColor } from '@keres/shared';
 
 export interface MultiSelectOption {
   label: string;
@@ -33,35 +30,41 @@ export interface MultiSelectGroup {
 }
 
 interface MultiSelectPillProps {
-  /** Lista achatada num modal só - bom para um punhado de opções (ex.: tags). */
+  /** A flat list in a single modal - good for a handful of options (tags, say). */
   options?: MultiSelectOption[];
-  /** Seleção em dois passos: tipo primeiro, depois a entidade - bom quando há centenas de
-   * opções de tipos diferentes (ex.: o `EntityPickerInput`). Exatamente um dos dois (`options`
-   * ou `groups`) deve ser passado. */
+  /**
+   * Selection in two steps: the type first, then the entity - good when there are hundreds of options of
+   * different types (the `EntityPickerInput`, say). Exactly one of the two (`options` or `groups`) has to
+   * be passed.
+   */
   groups?: MultiSelectGroup[];
   selectedValues: string[];
   onSelectionChange: (selected: string[]) => void;
   placeholder?: string;
   label?: string;
   noOptionsText?: string;
-  /** Só aparece dentro de um grupo (achatado conta como um grupo só). */
+  /** It only appears inside a group (a flat list counts as a single group). */
   searchPlaceholder?: string;
-  /** Limita a seleção a um valor e fecha o modal após a escolha. */
+  /** Limits the selection to one value and closes the modal after the choice. */
   singleSelect?: boolean;
+  /** Maximum number of simultaneous options. Options not yet chosen become unavailable. */
+  maxSelections?: number;
   /** Ajustes de layout para contextos compactos, como barras de filtro. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
   pillStyle?: StyleProp<ViewStyle>;
+  /** Compact text for large selections, without losing the real selection inside the modal. */
+  selectionSummary?: string;
 }
 
 const FLAT_GROUP_KEY = '__flat__';
 
 /**
- * Um único componente pra dois modos que antes eram dois componentes quase idênticos
- * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 linhas de estilo/animação duplicadas):
- * `options` acha a lista direto num modal só; `groups` pede o tipo primeiro. Quando só há um
- * grupo (`options` achatado, ou `groups` com um item só), a etapa de escolher tipo é pulada -
- * é o mesmo caminho que o `EntityPickerInput` já usava em modo `singleSelect`.
+ * A single component for two modes that used to be two nearly identical components
+ * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 duplicated lines of style/animation): `options`
+ * flattens the list straight into one modal; `groups` asks for the type first. When there is only one
+ * group (a flat `options`, or `groups` with a single item), the type-picking step is skipped - the same
+ * path `EntityPickerInput` already used in `singleSelect` mode.
  */
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   options,
@@ -73,17 +76,18 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   noOptionsText,
   searchPlaceholder,
   singleSelect = false,
+  maxSelections,
   style,
   triggerStyle,
   pillStyle,
+  selectionSummary,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+  const { height: screenHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
   const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const dropdownAnim = useRef(new Animated.Value(0)).current;
 
   const effectiveGroups = useMemo<MultiSelectGroup[]>(
     () => groups ?? [{ key: FLAT_GROUP_KEY, label: '', options: options ?? [] }],
@@ -124,31 +128,25 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     setSearch('');
     setActiveGroupKey(effectiveGroups.length === 1 ? (effectiveGroups[0]?.key ?? null) : null);
     setModalVisible(true);
-    Animated.timing(dropdownAnim, {
-      toValue: 1,
-      duration: 200,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start();
-  }, [dropdownAnim, effectiveGroups]);
+  }, [effectiveGroups]);
 
   const closeModal = useCallback(() => {
-    Animated.timing(dropdownAnim, {
-      toValue: 0,
-      duration: 200,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start(() => {
-      setModalVisible(false);
-      // Reseta para a lista de tipos na próxima abertura, em vez de reabrir dentro do
-      // último grupo visitado.
-      setActiveGroupKey(null);
-      setSearch('');
-    });
-  }, [dropdownAnim]);
+    setModalVisible(false);
+    // It resets to the type list on the next opening, instead of reopening inside the last visited group.
+    setActiveGroupKey(null);
+    setSearch('');
+  }, []);
 
   const toggleOption = useCallback(
     (value: string) => {
+      if (
+        !singleSelect &&
+        maxSelections !== undefined &&
+        !selectedValues.includes(value) &&
+        selectedValues.length >= maxSelections
+      ) {
+        return;
+      }
       const newSelection = singleSelect
         ? selectedValues.includes(value)
           ? []
@@ -161,7 +159,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         closeModal();
       }
     },
-    [selectedValues, onSelectionChange, singleSelect, closeModal],
+    [selectedValues, onSelectionChange, singleSelect, maxSelections, closeModal],
   );
 
   const openGroup = useCallback((groupKey: string) => {
@@ -196,14 +194,16 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       alignItems: 'center',
       borderColor: colors.border,
       borderWidth: 1,
+      // The spacing between pills belongs to the container, not to each pill. With a margin on each one, the
+      // last still charged its bottom margin: the field grew when the first option was chosen and the pill
+      // sat above the centre, with 8px of slack underneath it.
+      gap: 8,
     },
     pill: {
       flexDirection: 'row',
       borderRadius: 15,
       paddingVertical: 5,
       paddingHorizontal: 10,
-      marginRight: 8,
-      marginBottom: 8,
       alignItems: 'center',
     },
     pillText: {
@@ -212,6 +212,11 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     placeholderText: {
       color: colors.textSecondary,
       fontSize: 16,
+    },
+    selectionSummary: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
     },
     modalContent: {
       backgroundColor: colors.background,
@@ -295,6 +300,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       justifyContent: 'space-between',
       alignItems: 'center',
     },
+    optionDisabled: {
+      opacity: 0.45,
+    },
     optionLeading: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -312,6 +320,14 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       fontSize: 16,
       color: colors.text,
     },
+    // The check's space is always reserved: appearing only when ticked, it pushed the row a few pixels
+    // down, and the whole list danced with every choice.
+    optionCheck: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     noOptionsText: {
       padding: 15,
       color: colors.textSecondary,
@@ -327,13 +343,16 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         onPress={openModal}
         style={[styles.pillContainer, triggerStyle]}
       >
-        {selectedOptionDetails.length > 0 ? (
+        {selectionSummary ? (
+          <Text style={styles.selectionSummary}>{selectionSummary}</Text>
+        ) : selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option) => {
             const pillBackgroundColor = option.color || colors.primaryContainer;
             const pillTextColor = getContrastTextColor(pillBackgroundColor);
             return (
               <View
                 key={option.value}
+                testID={`multiselect-pill-${option.value}`}
                 style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
               >
                 <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
@@ -357,18 +376,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         contentStyle={styles.modalContent}
         maxHeight={Math.min(screenHeight * 0.75, 720)}
       >
-        <Animated.View
-          style={{
-            transform: [
-              {
-                translateY: dropdownAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [screenHeight, 0],
-                }),
-              },
-            ],
-          }}
-        >
+        <View>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderTitleRow}>
               {activeGroup && effectiveGroups.length > 1 && (
@@ -440,29 +448,39 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                 );
               })
             ) : visibleOptions.length > 0 ? (
-              visibleOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  testID={`multiselect-option-${option.value}`}
-                  style={styles.optionContainer}
-                  onPress={() => toggleOption(option.value)}
-                >
-                  <View style={styles.optionLeading}>
-                    {option.color && (
-                      <View style={[styles.optionColor, { backgroundColor: option.color }]} />
-                    )}
-                    <Text style={styles.optionText}>{option.label}</Text>
-                  </View>
-                  {selectedValues.includes(option.value) && (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              ))
+              visibleOptions.map((option) => {
+                const atSelectionLimit =
+                  !singleSelect &&
+                  maxSelections !== undefined &&
+                  selectedValues.length >= maxSelections &&
+                  !selectedValues.includes(option.value);
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    testID={`multiselect-option-${option.value}`}
+                    style={[styles.optionContainer, atSelectionLimit && styles.optionDisabled]}
+                    onPress={() => toggleOption(option.value)}
+                    disabled={atSelectionLimit}
+                  >
+                    <View style={styles.optionLeading}>
+                      {option.color && (
+                        <View style={[styles.optionColor, { backgroundColor: option.color }]} />
+                      )}
+                      <Text style={styles.optionText}>{option.label}</Text>
+                    </View>
+                    <View testID={`multiselect-check-${option.value}`} style={styles.optionCheck}>
+                      {selectedValues.includes(option.value) && (
+                        <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
             )}
           </ScrollView>
-        </Animated.View>
+        </View>
       </ResponsiveModal>
     </View>
   );

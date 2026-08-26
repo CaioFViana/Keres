@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'chapters',
   title: 'Chapters',
@@ -23,7 +23,7 @@ const page: HelpPage = {
       items: [
         'Create a chapter and enter Name.',
         'Use Summary to record its role in the narrative.',
-        'Save it and create or associate scenes with it.',
+        'Save it, open the chapter in the list, and create or associate scenes inside it.',
         'Use chapter reordering when you want to change reading order.',
       ],
     },

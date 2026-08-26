@@ -5,6 +5,7 @@ jest.mock('react-native-safe-area-context', () => ({
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import MultiSelectPill from '../../src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 
 jest.mock('../../src/theme', () => ({
@@ -113,5 +114,114 @@ describe('MultiSelectPill flat mode (options)', () => {
     await fireEvent.press(screen.getByTestId('multiselect-option-mystery'));
 
     expect(onSelectionChange).toHaveBeenCalledWith(['adventure', 'mystery']);
+  });
+
+  it('keeps unselected options unavailable after reaching a selection limit', async () => {
+    const onSelectionChange = jest.fn();
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={['adventure']}
+        onSelectionChange={onSelectionChange}
+        maxSelections={1}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await fireEvent.press(screen.getByTestId('multiselect-option-mystery'));
+
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The field had a variable height: each pill carried a `marginBottom`, so choosing the first option
+ * stretched the field by 8px and left the pill above the centre, with the slack underneath. On screens
+ * with a narrow field - the presence matrix, the plot one - that was enough to make the whole bar jump.
+ * The spacing is now the container's `gap`.
+ */
+describe('MultiSelectPill, pill spacing', () => {
+  const options = [
+    { label: 'Atena', value: 'atena' },
+    { label: 'Keres', value: 'keres' },
+  ];
+
+  /** The field's style, already flattened - it is where the minimum height and the spacing live. */
+  const triggerStyleOf = (screen: {
+    getByTestId: (id: string) => { props: { style?: unknown } };
+  }) =>
+    StyleSheet.flatten(screen.getByTestId('multiselect-trigger').props.style as never) as {
+      gap?: number;
+      minHeight?: number;
+    };
+
+  it('separates the pills through the container, with no margin on each one', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
+    );
+
+    expect(triggerStyleOf(screen).gap).toBe(8);
+
+    const pill = StyleSheet.flatten(screen.getByTestId('multiselect-pill-atena').props.style);
+    expect(pill.marginBottom).toBeUndefined();
+    expect(pill.marginRight).toBeUndefined();
+  });
+
+  it('keeps the same minimum height with and without a selection', async () => {
+    const empty = await render(
+      <MultiSelectPill options={options} selectedValues={[]} onSelectionChange={jest.fn()} />,
+    );
+    const filled = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
+    );
+
+    expect(triggerStyleOf(filled).minHeight).toBe(triggerStyleOf(empty).minHeight);
+    // The content's height must not exceed the minimum: a pill (14px of text + 10 of vertical padding)
+    // plus the container's padding fits within the 50px.
+    expect(triggerStyleOf(filled).minHeight).toBe(50);
+  });
+});
+
+/**
+ * The options list also changed height: the check only existed on the ticked option, and since it is
+ * taller than the text, ticking an option pushed the ones below it a few pixels down. The check's space
+ * now always exists, ticked or not.
+ */
+describe('MultiSelectPill, option height in the modal', () => {
+  const options = [
+    { label: 'Atena', value: 'atena' },
+    { label: 'Keres', value: 'keres' },
+  ];
+
+  const checkSlotOf = (
+    screen: { getByTestId: (id: string) => { props: { style?: unknown } } },
+    value: string,
+  ) =>
+    StyleSheet.flatten(screen.getByTestId(`multiselect-check-${value}`).props.style as never) as {
+      width?: number;
+      height?: number;
+    };
+
+  it('reserves the checkmark space on both the selected and the unselected option', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
+    );
+    fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await waitFor(() => screen.getByTestId('multiselect-option-atena'));
+
+    expect(checkSlotOf(screen, 'atena')).toMatchObject({ width: 24, height: 24 });
+    expect(checkSlotOf(screen, 'keres')).toEqual(checkSlotOf(screen, 'atena'));
   });
 });

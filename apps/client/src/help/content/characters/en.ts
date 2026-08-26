@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'characters',
   title: 'Characters',
@@ -113,6 +113,13 @@ const page: HelpPage = {
           label: 'Extra notes',
           whatToWrite: 'Details that do not fit other fields.',
           note: 'They remain in the profile.',
+        },
+        {
+          key: 'relationType',
+          label: 'Relation type',
+          whatToWrite:
+            'This is a search-only field. Choose a relation type to find characters connected by that type of relationship.',
+          note: 'It searches the character’s relationships and does not add a field to the character profile.',
         },
       ],
     },

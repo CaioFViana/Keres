@@ -1,18 +1,24 @@
 {
-  "language": {
-    "label": "Idioma"
-  },
-  "theme": {
-    "system": "Tema: Sistema",
-    "light": "Tema: Claro",
-    "dark": "Tema: Escuro"
-  },
-  "nav": {
-    "stories": "Histórias",
-    "about": "Sobre"
+  "about": {
+    "title": "Sobre esta página",
+    "intro": "O Keres é uma ferramenta para planejar histórias: personagens, capítulos, cenas, locais, itens, regras de mundo e como tudo isso se conecta. Esta página é o rosto público de um servidor Keres - um lugar onde quem escreve nele pode deixar uma história à vista de qualquer pessoa.",
+    "downloadTitle": "O que dá para baixar aqui",
+    "downloadBody": "Cada versão publicada é um pacote completo da base Keres de uma história: a estrutura dela e tudo o que foi escrito em volta, mais as mídias que quem publicou anexou. Não é a história como obra pronta - o Keres é sempre um complemento ao meio em que a história está de fato sendo feita, seja um romance, um jogo ou uma campanha.",
+    "importBody": "Abra um pacote no Keres por <strong>Importar / Exportar</strong>. Importar cria uma cópia separada no seu aparelho; não entra na história de quem publicou nem envia nada de volta para ela.",
+    "responsibilityTitle": "De quem é a responsabilidade",
+    "responsibilityBody": "As histórias aqui pertencem a quem as publicou, e este servidor é mantido por quem escolheu mantê-lo. O Keres, o aplicativo, não tem vínculo com nenhum dos dois, não hospeda nem modera estas histórias e não toma posição sobre elas.",
+    "serverVersion": "Versão do servidor {{version}}"
   },
   "footer": {
     "disclaimer": "O Keres é um companheiro de escrita para planejar histórias. Ele não tem vínculo com o servidor que hospeda esta página nem com as histórias publicadas nela, e não as endossa nem modera. Cada história aqui pertence a quem a publicou."
+  },
+  "gate": {
+    "title": "Esta história é privada",
+    "intro": "Quem a publicou escolheu não listá-la. Digite a senha que lhe passaram para abrir a página.",
+    "password": "Senha",
+    "open": "Abrir história",
+    "opening": "Abrindo…",
+    "failed": "Senha incorreta."
   },
   "home": {
     "eyebrow": "Vitrine Keres",
@@ -22,6 +28,13 @@
     "loading": "Carregando…",
     "empty": "Nada foi publicado neste servidor ainda. Quando alguém publicar uma história, ela aparece aqui.",
     "loadFailed": "Não foi possível carregar as histórias."
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "nav": {
+    "stories": "Histórias",
+    "about": "Sobre"
   },
   "story": {
     "back": "← Todas as histórias",
@@ -45,22 +58,9 @@
     "downloadFailed": "Não foi possível iniciar o download.",
     "mediaCount": "{{included}}/{{total}} mídias"
   },
-  "gate": {
-    "title": "Esta história é privada",
-    "intro": "Quem a publicou escolheu não listá-la. Digite a senha que lhe passaram para abrir a página.",
-    "password": "Senha",
-    "open": "Abrir história",
-    "opening": "Abrindo…",
-    "failed": "Senha incorreta."
-  },
-  "about": {
-    "title": "Sobre esta página",
-    "intro": "O Keres é uma ferramenta para planejar histórias: personagens, capítulos, cenas, locais, itens, regras de mundo e como tudo isso se conecta. Esta página é o rosto público de um servidor Keres - um lugar onde quem escreve nele pode deixar uma história à vista de qualquer pessoa.",
-    "downloadTitle": "O que dá para baixar aqui",
-    "downloadBody": "Cada versão publicada é um pacote completo da base Keres de uma história: a estrutura dela e tudo o que foi escrito em volta, mais as mídias que quem publicou anexou. Não é a história como obra pronta - o Keres é sempre um complemento ao meio em que a história está de fato sendo feita, seja um romance, um jogo ou uma campanha.",
-    "importBody": "Abra um pacote no Keres por <strong>Importar / Exportar</strong>. Importar cria uma cópia separada no seu aparelho; não entra na história de quem publicou nem envia nada de volta para ela.",
-    "responsibilityTitle": "De quem é a responsabilidade",
-    "responsibilityBody": "As histórias aqui pertencem a quem as publicou, e este servidor é mantido por quem escolheu mantê-lo. O Keres, o aplicativo, não tem vínculo com nenhum dos dois, não hospeda nem modera estas histórias e não toma posição sobre elas.",
-    "serverVersion": "Versão do servidor {{version}}"
+  "theme": {
+    "system": "Tema: Sistema",
+    "light": "Tema: Claro",
+    "dark": "Tema: Escuro"
   }
 }

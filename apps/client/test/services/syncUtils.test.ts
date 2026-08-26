@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import { operationLogs, stories } from '../../src/db/schema';
+import { stories } from '../../src/db/schema';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import {
   assertStoryIsOwned,
@@ -47,9 +47,9 @@ afterEach(() => {
 });
 
 /**
- * O log de operações é o que o push envia; a numeração dele é o que dá ordem à sincronização.
- * Um `operationVersion` repetido ou um `lastOperationLog` que não avança corrompe o que o
- * servidor recebe, e é invisível até a próxima sincronização.
+ * The operation log is what the push sends; its numbering is what gives synchronization its order. A
+ * repeated `operationVersion` or a `lastOperationLog` that does not advance corrupts what the server
+ * receives, and it is invisible until the next synchronization.
  */
 describe('recordLocalOperation', () => {
   it('records the operation with everything the push needs', async () => {
@@ -236,9 +236,9 @@ describe('recordLocalOperation', () => {
 });
 
 /**
- * Esta guarda existe porque a escrita local é otimista: sem ela, a edição de um leitor entra
- * no banco na hora, é recusada pelo servidor em todo ciclo de sincronização daí em diante, e
- * nunca some.
+ * This guard exists because the local write is optimistic: without it, a reader's edit enters the
+ * database right away, is refused by the server on every synchronization cycle from then on, and never
+ * goes away.
  */
 describe('assertStoryIsWritable', () => {
   it('allows a story that was never linked to a server', async () => {
@@ -278,9 +278,9 @@ describe('assertStoryIsWritable', () => {
 });
 
 /**
- * Política e identidade da história são só do dono no servidor. Sem esta guarda, um writer
- * gravaria type/favoriteBehavior/allowReaderComments (ou apagaria a história) localmente e
- * o push voltaria `unauthorized` em todo ciclo.
+ * A story's policy and identity belong to its owner on the server alone. Without this guard, a writer
+ * would write type/favoriteBehavior/allowReaderComments (or delete the story) locally and the push
+ * would come back `unauthorized` on every cycle.
  */
 describe('assertStoryIsOwned', () => {
   it('allows a story that was never linked to a server', async () => {

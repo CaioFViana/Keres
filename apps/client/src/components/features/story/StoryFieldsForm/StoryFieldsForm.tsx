@@ -4,10 +4,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { FavoriteBehavior } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { themeDisplayOptions } from '../../../../theme/palettes';
+import { themeDisplayOptions } from '@keres/shared';
 import { getLanguageOptions } from '../../../../utils/i18n';
 
 interface StoryFieldsFormProps {
@@ -39,13 +39,13 @@ interface StoryFieldsFormProps {
 }
 
 /**
- * Campos "núcleo" de uma história (título, tipo, descrição, gênero, autor, idioma, favorito,
- * comportamento de favorito, notas extras, tema) - o que `StorySettingsScreen` (dentro do
- * drawer, só edição) e `StoryFormScreen` (fora do stack da história, criação+edição)
- * duplicavam quase byte a byte. Tipo e `favoriteBehavior` são política de dono no servidor;
- * as telas passam `typeDisabled` / `favoriteBehaviorDisabled` para writers. O que não é
- * comum a ambos (conversão de tipo linear/branching, vínculo com servidor, colaboradores,
- * normalizeSceneTiming/allowReaderComments) fica em cada tela, não aqui.
+ * A story's "core" fields (title, type, description, genre, author, language, favourite,
+ * favourite behaviour, extra notes, theme) - what `StorySettingsScreen` (inside the
+ * drawer, editing only) and `StoryFormScreen` (outside the story stack, creation+editing)
+ * duplicated almost byte for byte. Type and `favoriteBehavior` are owner policy on the server;
+ * the screens pass `typeDisabled` / `favoriteBehaviorDisabled` for writers. Whatever is not
+ * common to both (linear/branching type conversion, the server link, collaborators,
+ * normalizeSceneTiming/allowReaderComments) stays in each screen, not here.
  */
 const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
   title,

@@ -1,12 +1,12 @@
 import type { TFunction } from 'i18next';
-import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import { Effect } from '@keres/shared/entities/Effect';
+import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import type { Effect } from '@keres/shared/entities/Effect';
 
 /**
- * Frases legíveis pra um ChoiceCheck/Effect, compartilhadas entre `ChoiceDetailScreen` (lista
- * completa, por grupo) e o mapa da história (`ChoiceViewScreen`, resumo compacto por Choice) -
- * um único lugar decide como uma condição ou efeito vira texto, os dois nunca descrevem a
- * mesma Choice de jeitos diferentes.
+ * Readable phrases for a ChoiceCheck/Effect, shared between `ChoiceDetailScreen` (the full list, by
+ * group) and the story map (`ChoiceViewScreen`, a compact summary per Choice) - a single place decides
+ * how a condition or an effect becomes text, and the two never describe the same Choice in different
+ * ways.
  */
 
 function describeCheckCondition(

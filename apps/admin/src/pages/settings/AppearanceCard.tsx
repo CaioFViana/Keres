@@ -3,12 +3,12 @@ import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
 import { useTheme } from '../../theme/ThemeProvider';
 
 /**
- * A paleta do painel.
+ * The panel's palette.
  *
- * As cores do `styles.css` sempre foram uma cópia da paleta `default` do app; agora que as
- * paletas moram em `@keres/shared`, o painel pode usar qualquer uma. Escolha guardada em
- * `localStorage`, por navegador - é preferência de quem está olhando, não configuração do
- * servidor, então nada disso vai para a API.
+ * The colours in `styles.css` were always a copy of the app's `default` palette; now that the
+ * palettes live in `@keres/shared`, the panel can use any of them. The choice is kept in
+ * `localStorage`, per browser - it is a preference of whoever is looking, not server configuration,
+ * so none of it goes to the API.
  */
 export function AppearanceCard() {
   const { t } = useTranslation('admin');

@@ -1,4 +1,4 @@
-import { StoryDeviceSection } from './types';
+import type { StoryDeviceSection } from './types';
 
 export const storyDeviceSections: StoryDeviceSection[] = [
   {

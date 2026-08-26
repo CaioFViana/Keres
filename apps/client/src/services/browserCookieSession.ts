@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
 
 /**
- * Sessão por cookie HttpOnly, só no cliente web co-hospedado pela API (HTML marcado com
- * `meta[name=keres-hosted]`). Mobile usa SecureStore; o Electron, `window.keresAuth`.
- * O `expo start --web` não tem essa meta, então não tenta cookie same-origin.
+ * A session by HttpOnly cookie, only on the web client co-hosted by the API (HTML marked with
+ * `meta[name=keres-hosted]`). Mobile uses SecureStore; Electron, `window.keresAuth`. `expo start --web`
+ * does not have that meta, so it does not try a same-origin cookie.
  */
 
 export function usesHttpOnlyCookieSession(): boolean {

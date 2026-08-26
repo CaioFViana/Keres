@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'choices',
   title: 'Escolhas',
@@ -55,6 +55,13 @@ const page: HelpPage = {
           whatToWrite:
             'Registre intenção, consequência ou uma pendência de revisão. Pode ficar em branco.',
           note: 'Aparece no detalhe da escolha, separada de notas vinculadas.',
+        },
+        {
+          key: 'choiceSearch',
+          label: 'Texto ou anotações da escolha',
+          whatToWrite:
+            'Este é um campo apenas de busca. Digite uma palavra para encontrá-la no texto ou nas anotações da escolha.',
+          note: 'Ele aparece na busca avançada e não adiciona um novo valor à escolha.',
         },
       ],
     },

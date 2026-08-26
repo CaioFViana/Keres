@@ -1,6 +1,7 @@
 import { useVideoPlayer, VideoView } from 'expo-video';
 import React, { useMemo } from 'react';
-import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 interface VideoPreviewPlayerProps {
   uri: string;
@@ -8,14 +9,14 @@ interface VideoPreviewPlayerProps {
 }
 
 /**
- * Player de vídeo com os controles nativos da plataforma (play/pausar, arrastar, tela
- * cheia). Fica num componente próprio, e não inline na tela de detalhe, porque
- * `useVideoPlayer` é um hook: só pode ser chamado incondicionalmente, e vídeo é só um dos
- * três tipos de mídia possíveis ali.
+ * A video player with the platform's native controls (play/pause, scrubbing, full
+ * screen). It lives in a component of its own, and not inline on the detail screen, because
+ * `useVideoPlayer` is a hook: it can only be called unconditionally, and video is only one of the
+ * three possible media types there.
  */
 const VideoPreviewPlayer: React.FC<VideoPreviewPlayerProps> = ({ uri, style }) => {
-  // Memoizado para o player não ser recriado a cada render deste componente - só quando o
-  // arquivo de fato muda.
+  // Memoized so the player is not recreated on every render of this component - only when the
+  // file actually changes.
   const source = useMemo(() => ({ uri }), [uri]);
   const player = useVideoPlayer(source, (instance) => {
     instance.loop = false;

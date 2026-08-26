@@ -1,10 +1,5 @@
-import {
-  CreateEffectDataSchema,
-  CreateStoryUpdate,
-  DeleteStoryUpdate,
-  PartialEffectSchema,
-  UpdateStoryUpdate,
-} from '@keres/shared';
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateEffectDataSchema, PartialEffectSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { effects, items } from '../../db/schema';
@@ -24,8 +19,8 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  // Sem validação de existência para entityId (Scene ou Choice) - polimórfico, sem FK de
-  // banco, mesmo padrão de CommentSyncHandler para entityType/entityId.
+  // No existence validation for entityId (Scene or Choice) - polymorphic, no database FK, the same
+  // pattern as CommentSyncHandler for entityType/entityId.
   private async validateRelatedEntities(storyId: string, itemId: string | null): Promise<void> {
     if (itemId) {
       const itemExists = await db.query.items.findFirst({

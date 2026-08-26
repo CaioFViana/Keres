@@ -1,14 +1,14 @@
-import {
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   StorySchemaField,
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID } from '../../utils/entityUtils';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'StorySchemaField';
@@ -81,14 +81,14 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
       where: eq(schema.storySchemaFields.id, update.id),
     });
     if (!existing || existing.isDeleted) {
-      // Não existe localmente ainda (pull fora de ordem) ou já foi aplicado - idempotente.
+      // It does not exist locally yet (an out-of-order pull) or has already been applied - idempotent.
       return;
     }
 
-    // Muta a key ao aplicar a exclusão remota, mesma razão do lado que efetivamente apagou (ver
-    // StorySchemaFieldService.deleteField): a constraint unique(storyId, entityType, key) local
-    // não é filtrada por isDeleted, então sem isto este dispositivo não conseguiria recriar um
-    // campo com a mesma chave depois.
+    // It mutates the key when applying the remote deletion, the same reason as the side that actually deleted (see
+    // StorySchemaFieldService.deleteField): the local unique(storyId, entityType, key) constraint
+    // is not filtered by isDeleted, so without this the device would not be able to recreate a
+    // field with the same key afterwards.
     await this.db
       .update(schema.storySchemaFields)
       .set({

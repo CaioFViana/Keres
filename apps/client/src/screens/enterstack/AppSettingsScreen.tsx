@@ -4,16 +4,16 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { APP_RELEASE } from '../../config/appRelease';
+import { APP_RELEASE } from '@keres/shared';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
-import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
+import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { mediaFileService } from '../../services/MediaFileService';
 import { SyncEngineService } from '../../services/SyncEngineService'; // Import SyncEngineService

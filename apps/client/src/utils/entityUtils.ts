@@ -1,5 +1,5 @@
 import { ulid } from 'ulid';
-import { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '../db';
 
 export type BaseEntityFieldNames =
   | 'id'

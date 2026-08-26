@@ -1,6 +1,6 @@
 import { UpdateRegistrationSettingsSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { requireAdmin } from '../../utils/adminAuth';
 

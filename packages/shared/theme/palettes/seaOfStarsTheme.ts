@@ -1,4 +1,4 @@
-import { ThemeColors } from '../ThemeColors';
+import type { ThemeColors } from '../ThemeColors';
 
 const lightColors: ThemeColors = {
   primary: '#B58500',

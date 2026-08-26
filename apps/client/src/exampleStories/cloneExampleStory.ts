@@ -4,11 +4,11 @@ import { createULID } from '../utils/entityUtils';
 type EntityWithId = { id: string };
 
 /**
- * Cria uma cópia independente de uma história local antes de instalá-la ou importá-la.
+ * Creates an independent copy of a local story before installing or importing it.
  *
- * Arquivos empacotados e exports locais podem ter IDs que já existem no aparelho. Todos os
- * IDs são substituídos antes da escrita, incluindo os vínculos internos, para que a origem
- * permaneça intacta e a cópia possa ser importada mais de uma vez.
+ * Packaged files and local exports can carry IDs that already exist on the device. Every ID is replaced
+ * before writing, internal links included, so the source stays intact and the copy can be imported more
+ * than once.
  */
 export function cloneExampleStoryForInstall(
   example: FullStoryExportType,
@@ -38,6 +38,8 @@ export function cloneExampleStoryForInstall(
   registerAll(example.suggestions);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
+  registerAll(example.plots);
+  registerAll(example.plotScenes);
   registerAll(example.galleryItems);
   registerAll(example.galleryRelations);
   registerAll(example.items);
@@ -70,7 +72,7 @@ export function cloneExampleStoryForInstall(
       ...cloneEntity(example.story),
       id: storyId,
       userId,
-      // Uma instalação é uma nova história local, não uma restauração do histórico do pacote.
+      // An installation is a new local story, not a restoration of the package's history.
       createdAt: new Date(),
       updatedAt: new Date(),
       version: 1,
@@ -138,6 +140,13 @@ export function cloneExampleStoryForInstall(
       characterId: remapId(relation.characterId),
       sceneId: remapId(relation.sceneId),
     })),
+    plots: example.plots?.map((plot) => ({ ...cloneEntity(plot), storyId })),
+    plotScenes: example.plotScenes?.map((relation) => ({
+      ...cloneEntity(relation),
+      storyId,
+      plotId: remapId(relation.plotId),
+      sceneId: remapId(relation.sceneId),
+    })),
     galleryItems: example.galleryItems.map((item) => ({ ...cloneEntity(item), storyId })),
     galleryRelations: example.galleryRelations?.map((relation) => ({
       ...cloneEntity(relation),
@@ -200,7 +209,7 @@ export function cloneExampleStoryForInstall(
     statStrengths: example.statStrengths?.map((strength) => ({
       ...cloneEntity(strength),
       storyId,
-      // Nulo é a escada padrão da história e continua nulo na cópia.
+      // Null is the story's default ladder and stays null in the copy.
       statId: remapNullableId(strength.statId),
     })),
     statRelations: example.statRelations?.map((value) => ({
@@ -215,10 +224,10 @@ export function cloneExampleStoryForInstall(
       storyId,
       characterId: remapId(mode.characterId),
     })),
-    // O cursor pertence ao servidor de origem, não à cópia recém-instalada.
+    // The cursor belongs to the source server, not to the freshly installed copy.
     serverLastOperationVersion: 0,
   };
 
-  // Mantém esta função segura caso um exemplo novo introduza um vínculo inválido.
+  // It keeps this function safe should a new example introduce an invalid link.
   return FullStoryExportSchema.parse(cloned);
 }

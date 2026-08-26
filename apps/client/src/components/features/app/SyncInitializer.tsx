@@ -7,7 +7,8 @@ import { createFriendshipService } from '../../../services/FriendshipService';
 import { createServerService } from '../../../services/ServerService';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
-import { ServerStoryPreview, SyncEngineService } from '../../../services/SyncEngineService';
+import type { ServerStoryPreview } from '../../../services/SyncEngineService';
+import { SyncEngineService } from '../../../services/SyncEngineService';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryListStore } from '../../../state/storyListStore';
 import { useStoryStore } from '../../../state/storyStore'; // Import useStoryStore
@@ -231,9 +232,9 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     return () => entityEventEmitter.off('operation_log_updated', pushLocalChange);
   }, [selectedStory?.id]);
 
-  // Mantém a lista de conflitos pendentes em sincronia com o banco. O motor de
-  // sincronização emite o evento quando um push é recusado ou quando um pull colide com
-  // edições locais; é isso que faz a tela de resolução aparecer.
+  // Keeps the list of pending conflicts in sync with the database. The synchronization
+  // engine emits the event when a push is refused or when a pull collides with local
+  // edits; that is what makes the resolution screen appear.
   useEffect(() => {
     if (!drizzleClient) {
       return;
@@ -282,11 +283,11 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             );
             SyncEngineService.getInstance().configure(selectedStory.id, server);
             SyncEngineService.getInstance().requestSync('initial');
-            // Sem isto, o único jeito de sincronizar era um evento local ou uma mensagem de
-            // WebSocket - uma desconexão perdida ou um app em background por um tempo deixava
-            // o estado local parado, sem nenhum recurso de reconciliação periódica (ver
-            // plano de correção de sync/conflitos). `startSync` é um no-op se já estiver
-            // rodando, então é seguro chamar de novo a cada troca de história/servidor.
+            // Without this, the only way to synchronize was a local event or a WebSocket
+            // message - a missed disconnection or an app in the background for a while left
+            // the local state stuck, with no periodic reconciliation to fall back on (see the
+            // sync/conflicts fix plan). `startSync` is a no-op if it is already
+            // running, so it is safe to call again on every story/server change.
             SyncEngineService.getInstance().startSync();
             realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store

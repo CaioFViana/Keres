@@ -1,12 +1,12 @@
 /**
- * Empacota o Keres Server: binário Bun + sidecar do libSQL nativo + SQL + painel.
+ * Packages Keres Server: the Bun binary + libSQL's native sidecar + SQL + the admin panel.
  *
- * O `bun build --compile` sozinho não resolve `@libsql/<platform>` (o native addon é
- * `require()` dinâmico). O zip leva essa pasta ao lado do executável. Migrações e o
- * dist do admin também vão ao lado — o `--asset` desta versão do Bun não embute pastas.
+ * `bun build --compile` on its own does not resolve `@libsql/<platform>` (the native addon is a
+ * dynamic `require()`). The zip carries that folder next to the executable. Migrations and the
+ * admin's dist go alongside too - this Bun version's `--asset` does not embed folders.
  *
- * Ícone no Windows: `--windows-icon` da Bun 1.2.19 imprime "Failed to set executable icon"
- * e deixa o ícone da Bun. O rcedit (Electron) grava o .ico depois do compile.
+ * Icon on Windows: Bun 1.2.19's `--windows-icon` prints "Failed to set executable icon" and leaves
+ * Bun's icon in place. rcedit (Electron) writes the .ico after the compile.
  */
 import {
   cpSync,
@@ -70,9 +70,10 @@ function libsqlNativePackage(): string {
 }
 
 /**
- * Copia um dos três bundles web (painel, vitrine, cliente) e exige `index.html` no destino:
- * um `dist` ausente ou pela metade só aparecia depois, no servidor a responder 404 - a cópia
- * do cliente chegou a ser condicional e o release saiu sem ela sem uma linha de aviso.
+ * Copies one of the three web bundles (panel, showcase, client) and requires an `index.html` at
+ * the destination: a missing or half-built `dist` only showed up later, as the server answering
+ * 404 - the client's copy was once conditional and a release shipped without it with not a single
+ * line of warning.
  */
 function copyWebBundle(source: string, bundleFolder: string, buildScript: string): void {
   if (!existsSync(path.join(source, 'index.html'))) {
@@ -120,14 +121,9 @@ async function applyWindowsIcon(exePath: string): Promise<void> {
 rmSync(outRoot, { recursive: true, force: true });
 mkdirSync(bundleDir, { recursive: true });
 
-run('bun', ['run', 'build'], path.join(repoRoot, 'apps', 'admin'));
-run('bun', ['run', 'build:showcase'], path.join(repoRoot, 'apps', 'admin'));
-// O export web do cliente é build daqui, não pré-requisito: no checkout limpo do runner
-// `apps/client/dist` não existe, e a cópia condicional que havia aqui simplesmente pulava a
-// pasta - o zip do release saía sem `client-dist` e a raiz do servidor respondia 404. Mesmo
-// artefato que o Electron empacota (`apps/desktop`, `build:client`) e que o Dockerfile
-// constrói no estágio `client-web-build`.
-run('bun', ['run', 'export:web'], path.join(repoRoot, 'apps', 'client'));
+// The web bundles (panel, showcase, client) come from the API's `prebuild` - see the `package.json`
+// here. This script packages, it does not build; if a bundle is missing, `copyWebBundle` says which
+// one and how to generate it, instead of the zip coming out half-empty and the server answering 404.
 
 const exePath = path.join(bundleDir, exeName);
 run('bun', [
@@ -147,13 +143,13 @@ cpSync(path.join(apiRoot, 'drizzle'), path.join(bundleDir, 'drizzle'), { recursi
 cpSync(path.join(apiRoot, 'drizzle-sqlite'), path.join(bundleDir, 'drizzle-sqlite'), {
   recursive: true,
 });
-copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'admin-dist', 'build');
+copyWebBundle(path.join(repoRoot, 'apps', 'admin', 'dist'), 'admin-dist', 'admin:build');
 copyWebBundle(
   path.join(repoRoot, 'apps', 'admin', 'dist-showcase'),
   'dist-showcase',
-  'build:showcase',
+  'admin:build',
 );
-copyWebBundle(path.join(repoRoot, 'apps', 'client', 'dist'), 'client-dist', 'export:web');
+copyWebBundle(path.join(repoRoot, 'apps', 'client', 'dist'), 'client-dist', 'client:build');
 cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),

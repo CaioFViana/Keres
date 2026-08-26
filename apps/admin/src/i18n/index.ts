@@ -6,20 +6,21 @@ import showcaseEn from './locales/showcase.en.json';
 import showcasePt from './locales/showcase.pt.json';
 
 /**
- * Tradução do painel e do site público.
+ * Translation for the panel and the public site.
  *
- * Mesma pilha do aplicativo (`i18next` + `react-i18next`, ver apps/client/src/utils/i18n.ts) em
- * vez de um mecanismo próprio: quem já mexeu nas traduções do app não precisa aprender um
- * segundo sistema, e plural e interpolação vêm prontos.
+ * The same stack as the application (`i18next` + `react-i18next`, see apps/client/src/utils/i18n.ts)
+ * rather than a mechanism of its own: whoever has touched the app's translations does not have to
+ * learn a second system, and plurals and interpolation come for free.
  *
- * Dois namespaces porque são dois apps que só dividem o repositório: o painel é interno e o
- * site é público, não têm texto em comum, e separar evita que uma tradução de um vaze no outro.
+ * Two namespaces because these are two apps that only share the repository: the panel is internal
+ * and the site is public, they have no text in common, and separating them keeps a translation for
+ * one from leaking into the other.
  */
 
 export const SUPPORTED_LANGUAGES = ['en', 'pt'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-/** Chaves distintas: painel e site são coisas separadas, como já acontece com o tema. */
+/** Distinct keys: panel and site are separate things, as is already the case for the theme. */
 export const ADMIN_LANGUAGE_KEY = 'keres_admin_language';
 export const SHOWCASE_LANGUAGE_KEY = 'keres_showcase_language';
 
@@ -28,10 +29,11 @@ function isSupported(value: string | null | undefined): value is SupportedLangua
 }
 
 /**
- * O idioma inicial: o que a pessoa escolheu antes; senão, o do navegador; senão, inglês.
+ * The initial language: whatever the person chose before; failing that, the browser's; failing
+ * that, English.
  *
- * `navigator.language` vem como `pt-BR`/`en-US`, então só a primeira parte interessa - o app
- * não distingue variantes regionais.
+ * `navigator.language` arrives as `pt-BR`/`en-US`, so only the first part matters - the app does
+ * not distinguish regional variants.
  */
 export function detectLanguage(storageKey: string): SupportedLanguage {
   const stored = typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey);
@@ -47,7 +49,7 @@ export function storeLanguage(storageKey: string, language: SupportedLanguage): 
   localStorage.setItem(storageKey, language);
 }
 
-/** Nome de cada idioma no próprio idioma - quem não lê a língua atual ainda se reconhece. */
+/** Each language's name in its own language - someone who cannot read the current one still */
 export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   en: 'English',
   pt: 'Português',

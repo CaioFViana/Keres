@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { CharacterWithTags } from '../../../services/storymanagement/CharacterService';
+import type { CharacterWithTags } from '../../../services/storymanagement/CharacterService';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
@@ -13,14 +13,20 @@ interface CharacterListItemProps {
   character: CharacterWithTags;
   onToggleFavorite: (characterId: string, isFavorite: boolean) => void;
   onViewDetails: (characterId: string) => void;
+  renderRelations?: (options: {
+    expanded: boolean;
+    onExpandedChange: (expanded: boolean) => void;
+  }) => React.ReactNode;
 }
 
 const CharacterListItem: React.FC<CharacterListItemProps> = ({
   character,
   onToggleFavorite,
   onViewDetails,
+  renderRelations,
 }) => {
   const { colors } = useTheme();
+  const [relationsExpanded, setRelationsExpanded] = React.useState(false);
 
   const descriptionSummary = truncate(character.description, 150);
 
@@ -43,6 +49,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
       )}
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
       {char.tags && char.tags.length > 0 && <TagList tags={char.tags} />}
+      {renderRelations?.({ expanded: relationsExpanded, onExpandedChange: setRelationsExpanded })}
     </View>
   );
 

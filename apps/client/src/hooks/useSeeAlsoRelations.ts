@@ -1,10 +1,8 @@
-import { SeeAlsoEntityType } from '@keres/shared';
+import type { SeeAlsoEntityType } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import {
-  createSeeAlsoRelationService,
-  SeeAlsoEntityRef,
-} from '../services/storymanagement/SeeAlsoRelationService';
+import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
+import { createSeeAlsoRelationService } from '../services/storymanagement/SeeAlsoRelationService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
@@ -15,9 +13,9 @@ export interface SeeAlsoLink {
 }
 
 /**
- * Vínculos "Veja também" de uma entidade específica - busca, escuta `see_also_relation_changed`
- * (emitido para ambos os lados de cada vínculo, ver SeeAlsoRelationService) e expõe
- * save/remove. Mesmo padrão de `useEntityRelations`, mas escopado a um único entityId.
+ * A specific entity's "See also" links - it fetches, listens to `see_also_relation_changed`
+ * (emitted for both sides of every link, see SeeAlsoRelationService) and exposes
+ * save/remove. The same pattern as `useEntityRelations`, but scoped to a single entityId.
  */
 export function useSeeAlsoRelations(
   storyId: string | undefined,
@@ -34,9 +32,9 @@ export function useSeeAlsoRelations(
 
   const [relations, setRelations] = useState<SeeAlsoLink[]>([]);
   const [loading, setLoading] = useState(true);
-  // Enquanto `entityId` é undefined (criando), não há entidade real pra gravar o vínculo -
-  // guarda o alvo escolhido aqui até `persistSeeAlsoRelations` ser chamado com o id de
-  // verdade depois do save. `null` = nunca mexeu (diferente de `[]`, que é "desmarcou tudo").
+  // While `entityId` is undefined (creating), there is no real entity to write the link to -
+  // it holds the chosen target here until `persistSeeAlsoRelations` is called with the real
+  // id after the save. `null` = never touched (unlike `[]`, which is "deselected everything").
   const [pendingTargets, setPendingTargets] = useState<SeeAlsoEntityRef[] | null>(null);
 
   const refresh = useCallback(async () => {
@@ -108,9 +106,9 @@ export function useSeeAlsoRelations(
   );
 
   /**
-   * Grava de verdade o conjunto de alvos escolhido enquanto a entidade ainda não existia.
-   * Mesmo padrão de `persistTagRelations`/`persistNoteRelations`: chamado pelo form logo
-   * depois do save principal, com o id que só existe a partir dali.
+   * Actually writes the set of targets chosen while the entity did not exist yet.
+   * The same pattern as `persistTagRelations`/`persistNoteRelations`: called by the form right
+   * after the main save, with the id that only exists from then on.
    */
   const persistSeeAlsoRelations = useCallback(
     async (targetEntityId: string) => {

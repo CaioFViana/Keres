@@ -1,14 +1,14 @@
-import { StorySchemaEntityType } from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '../db';
-import { StorySchemaFieldSelect } from '../db/schema';
+import type { StorySchemaFieldSelect } from '../db/schema';
 import { createStorySchemaFieldService } from '../services/storymanagement/StorySchemaFieldService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 /**
- * Campos customizados de Story Schema para um `entityType` dentro de uma story, já ordenados
- * por `order` - usado tanto pelos Form/Detail screens (via `CustomAttributeFields`/
- * `CustomAttributeDetailFields`) quanto pela tela de gerenciamento de schemas.
+ * A Story Schema's custom fields for an `entityType` within a story, already sorted by `order` - used
+ * both by the Form/Detail screens (through
+ * `CustomAttributeFields`/`CustomAttributeDetailFields`) and by the schema management screen.
  */
 export function useStorySchemaFields(
   storyId: string | undefined | null,

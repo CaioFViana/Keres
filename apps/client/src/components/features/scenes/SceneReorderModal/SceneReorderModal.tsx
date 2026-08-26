@@ -2,9 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import { SceneSelect } from '../../../../db/schema';
+import type { SceneSelect } from '../../../../db/schema';
 import { useChapterStore } from '../../../../state/chapterStore';
 import { useTheme } from '../../../../theme';
+import { buildReorderItems } from '@keres/shared';
 import Select from '@/src/components/common/inputs/Select/Select';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 
@@ -17,6 +18,7 @@ interface SceneReorderModalProps {
     chapterId: string,
     newOrder: { id: string; newIndex: number }[],
   ) => Promise<void>;
+  initialChapterId?: string | null;
 }
 
 const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
@@ -25,6 +27,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
   storyId,
   scenes,
   onReorderConfirm,
+  initialChapterId = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -36,7 +39,11 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
     initializeService: initializeChapterService,
   } = useChapterStore();
 
-  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(initialChapterId);
+
+  useEffect(() => {
+    if (isVisible) setSelectedChapterId(initialChapterId);
+  }, [initialChapterId, isVisible]);
 
   useEffect(() => {
     if (drizzleDb && storyId) {
@@ -62,13 +69,14 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
     () => chapters.map((chapter) => ({ label: chapter.name, value: chapter.id })),
     [chapters],
   );
+  const isChapterLocked = Boolean(initialChapterId);
 
   const handleConfirm = useCallback(
     async (reordered: SceneSelect[]) => {
       if (!selectedChapterId) return;
       await onReorderConfirm(
         selectedChapterId,
-        reordered.map((scene, idx) => ({ id: scene.id, newIndex: idx + 1 })),
+        buildReorderItems(reordered, (scene) => scene.id),
       );
     },
     [selectedChapterId, onReorderConfirm],
@@ -97,15 +105,17 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
       onReorderConfirm={handleConfirm}
       confirmDisabled={!selectedChapterId || sortedScenesInChapter.length === 0}
       headerExtra={
-        <View style={styles.chapterSelectContainer}>
-          <Select
-            options={chapterOptions}
-            value={selectedChapterId}
-            onValueChange={setSelectedChapterId}
-            placeholder={t('select_chapter_to_reorder')}
-            multiple={false}
-          />
-        </View>
+        isChapterLocked ? undefined : (
+          <View style={styles.chapterSelectContainer}>
+            <Select
+              options={chapterOptions}
+              value={selectedChapterId}
+              onValueChange={setSelectedChapterId}
+              placeholder={t('select_chapter_to_reorder')}
+              multiple={false}
+            />
+          </View>
+        )
       }
       emptyListComponent={
         <Text style={styles.emptyListText}>

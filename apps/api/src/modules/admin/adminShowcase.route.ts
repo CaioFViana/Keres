@@ -1,14 +1,13 @@
 import { Elysia, t } from 'elysia';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { requireAdmin } from '../../utils/adminAuth';
 
 /**
- * A chave do site público, na mão de quem hospeda o servidor.
+ * The public site's switch, in the hands of whoever hosts the server.
  *
- * Desligada, `/` volta a ser o atalho para o Swagger, `/public/*` responde 404 e publicar é
- * recusado - inclusive para histórias que já tinham versões, que simplesmente deixam de ser
- * alcançáveis sem serem apagadas.
+ * The showcase can be turned off without erasing what has already been published. The client hosted
+ * at `/` has a control of its own and, when off, gives way to the server's minimal landing page.
  */
 export const adminShowcaseRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -32,12 +31,17 @@ export const adminShowcaseRoutes = new Elysia()
     '/',
     async ({ body, user }) => {
       await requireAdmin(user);
-      return showcaseSettingsService.update({ isShowcaseEnabled: body.isShowcaseEnabled });
+      return showcaseSettingsService.update(body);
     },
     {
-      body: t.Object({ isShowcaseEnabled: t.Boolean() }),
+      body: t.Partial(
+        t.Object({
+          isShowcaseEnabled: t.Boolean(),
+          isHostedClientEnabled: t.Boolean(),
+        }),
+      ),
       detail: {
-        summary: 'Enable or disable the public showcase',
+        summary: 'Configure the hosted client and public showcase',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

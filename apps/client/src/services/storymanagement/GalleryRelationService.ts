@@ -1,7 +1,8 @@
-import { GalleryOwnerEntity } from '@keres/shared';
+import type { GalleryOwnerEntity } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { galleryRelations, GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
+import type { AppDrizzleClient } from '../../db';
+import type { GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
+import { galleryRelations } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
@@ -11,16 +12,16 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
-/** Uma entidade à qual uma mídia está (ou pode ser) vinculada. */
+/** An entity a media file is (or can be) linked to. */
 export interface GalleryOwnerRef {
   ownerId: string;
   ownerType: GalleryOwnerEntity;
 }
 
 export interface GalleryRelationService {
-  /** Os vínculos ativos de uma mídia — a quais entidades ela pertence. */
+  /** A media file's active links - which entities it belongs to. */
   getOwnersForGallery(storyId: string, galleryId: string): Promise<GalleryRelationSelect[]>;
-  /** Os vínculos ativos de uma entidade — quais mídias ela tem. */
+  /** An entity's active links - which media files it has. */
   getRelationsForOwner(
     storyId: string,
     ownerId: string,
@@ -38,14 +39,14 @@ export interface GalleryRelationService {
     galleryId: string,
     owner: GalleryOwnerRef,
   ): Promise<void>;
-  /** Reconcilia os donos de uma mídia para exatamente esta lista. */
+  /** Reconciles a media file's owners to exactly this list. */
   setOwnersForGallery(
     currentUserId: string,
     storyId: string,
     galleryId: string,
     owners: GalleryOwnerRef[],
   ): Promise<void>;
-  /** Reconcilia as mídias de uma entidade para exatamente esta lista. */
+  /** Reconciles an entity's media files to exactly this list. */
   setGalleriesForOwner(
     currentUserId: string,
     storyId: string,
@@ -97,9 +98,9 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
         return;
       }
 
-      // Revincular algo que já foi desvinculado reaproveita a linha em vez de criar outra:
-      // o servidor considera o par (mídia, dono) único entre os ativos, então uma segunda
-      // linha para o mesmo par seria recusada no push.
+      // Relinking something that was unlinked reuses the row instead of creating another: the server treats
+      // the (media, owner) pair as unique among the active ones, so a second row for the same pair would be
+      // refused on the push.
       const tombstone = await db.query.galleryRelations.findFirst({
         where: and(
           eq(galleryRelations.storyId, storyId),

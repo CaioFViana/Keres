@@ -1,12 +1,14 @@
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
+import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import {
+import type {
   MainSystemDrawerParamList,
   OperationLogStackParamList,
 } from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
@@ -68,10 +70,7 @@ const OperationLogScreen: React.FC = () => {
   }, [selectedStory?.id]);
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     title: {
       fontSize: 24,
       fontWeight: 'bold',

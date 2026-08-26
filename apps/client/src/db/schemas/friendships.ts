@@ -1,5 +1,5 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 import { servers } from './servers'; // Import servers table
 import { users } from './users';

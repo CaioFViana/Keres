@@ -1,6 +1,6 @@
 import { helpRegistry } from './generated/registry';
 import { helpPageIds } from './catalog';
-import { HelpPage, HelpPageId } from './types';
+import type { HelpPage, HelpPageId } from './types';
 
 export interface ResolvedHelpPage {
   page: HelpPage | undefined;
@@ -11,7 +11,7 @@ function getLanguageCode(language: string): string {
   return language.toLowerCase().split('-')[0] ?? language;
 }
 
-/** Conteúdo pronto para renderizar, sempre vindo do registry gerado no build. */
+/** Content ready to render, always coming from the registry generated at build time. */
 export function resolveHelpPage(pageId: string, language: string): ResolvedHelpPage {
   const page = helpRegistry[pageId as HelpPageId];
   const localizedPage = page?.[getLanguageCode(language)];

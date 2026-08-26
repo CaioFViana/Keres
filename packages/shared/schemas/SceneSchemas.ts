@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+// PostgreSQL `integer` is the narrowest persistence target; keeping this bound in the shared
+// contract prevents a local SQLite value from becoming impossible to synchronize later.
+const SceneTimingValueSchema = z
+  .number()
+  .int('Scene timing must be a whole number')
+  .finite('Scene timing must be finite')
+  .min(-2147483648)
+  .max(2147483647)
+  .nullable();
+
 export const SceneSchema = z.object({
   id: z.string(),
   storyId: z.string(),
@@ -8,9 +18,9 @@ export const SceneSchema = z.object({
   name: z.string(),
   index: z.number(),
   summary: z.string().nullable(),
-  gap: z.number().nullable(),
+  gap: SceneTimingValueSchema,
   gapType: z.string().nullable(),
-  duration: z.number().nullable(),
+  duration: SceneTimingValueSchema,
   durationType: z.string().nullable(),
   isFinish: z.boolean(),
   isStart: z.boolean(),
@@ -34,7 +44,9 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   deletedAt: true,
 }).extend({
   name: z.string().min(1, 'Scene name cannot be empty'),
-  index: z.number().int().min(0, 'Index must be a non-negative integer'),
+  // 1..N within the chapter, like the chapter index: it is what the API requires when reordering, and
+  // accepting 0 here is what left creation and reordering with incompatible contracts.
+  index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
   isFavorite: z.boolean().default(false),
   isStart: z.boolean().default(false),
   isFinish: z.boolean().default(false),

@@ -3,10 +3,10 @@ import { db } from '../db';
 import { SHOWCASE_SETTINGS_SINGLETON_ID, showcaseSettings } from '../db/schema';
 
 /**
- * Configuração do Showcase, uma linha só (`id = 'singleton'`), criada com valores padrão na
- * primeira leitura - mesmo padrão de `RegistrationSettingsService`, sem passo de seed.
+ * Showcase configuration, a single row (`id = 'singleton'`), created with default values on the
+ * first read - the same pattern as `RegistrationSettingsService`, with no seed step.
  *
- * O padrão é *desligado*: subir a API não pode, por si só, publicar um site aberto ao mundo.
+ * The default is *off*: bringing the API up must not, on its own, publish a site open to the world.
  */
 export class ShowcaseSettingsService {
   async getOrCreate() {
@@ -23,7 +23,7 @@ export class ShowcaseSettingsService {
       .onConflictDoNothing()
       .returning();
 
-    // Corrida entre dois requests na primeira leitura: o insert perdedor não retorna linha.
+    // A race between two requests on the first read: the losing insert returns no row.
     return (
       created ??
       (await db.query.showcaseSettings.findFirst({
@@ -36,7 +36,11 @@ export class ShowcaseSettingsService {
     return (await this.getOrCreate()).isShowcaseEnabled;
   }
 
-  async update(patch: { isShowcaseEnabled: boolean }) {
+  async isHostedClientEnabled(): Promise<boolean> {
+    return (await this.getOrCreate()).isHostedClientEnabled;
+  }
+
+  async update(patch: { isShowcaseEnabled?: boolean; isHostedClientEnabled?: boolean }) {
     await this.getOrCreate();
     const [updated] = await db
       .update(showcaseSettings)

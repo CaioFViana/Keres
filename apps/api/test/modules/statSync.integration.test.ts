@@ -3,12 +3,12 @@ import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 /**
- * O stream de operações que o cliente produz ao mexer em valores de status, replayado pelo
- * endpoint real de push.
+ * The stream of operations the client produces when touching stat values, replayed through the real
+ * push endpoint.
  *
- * `SyncEngineService.deriveBaseVersion` manda a versão *base* (a que o cliente leu antes de
- * escrever), que é `payload.version - 1`; é por isso que um create vai com `version: 0` e o
- * delete de uma linha recém-criada vai com `version: 1`.
+ * `SyncEngineService.deriveBaseVersion` sends the *base* version (the one the client read before
+ * writing), which is `payload.version - 1`; that is why a create goes with `version: 0` and the
+ * delete of a just-created row goes with `version: 1`.
  */
 let ana: TestUser;
 let storyId: string;

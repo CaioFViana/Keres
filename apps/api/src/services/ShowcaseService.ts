@@ -11,11 +11,11 @@ import { db } from '../db';
 import { storyPublications, storyShowcaseEntries, users } from '../db/schema';
 
 /**
- * As leituras anônimas do site público.
+ * The public site's anonymous reads.
  *
- * Tudo o que sai daqui já é conteúdo que alguém escolheu publicar. Nada de id de usuário,
- * e-mail, linha de permissão ou história sem publicação - e nada, nem o título, sobre uma
- * história protegida por senha antes do unlock.
+ * Everything that comes out of here is already content somebody chose to publish. No user id, no
+ * email, no permission row and no story without a publication - and nothing, not even the title, about
+ * a password-protected story before the unlock.
  */
 export class ShowcaseService {
   private ownerOf(row: {
@@ -44,8 +44,8 @@ export class ShowcaseService {
   }
 
   /**
-   * Assinatura da listagem, para o `If-None-Match` do site. Contagem + instante mais recente
-   * cobre publicar, apagar versão e despublicar sem precisar de uma coluna dedicada.
+   * The listing's signature, for the site's `If-None-Match`. A count plus the most recent instant covers
+   * publishing, deleting a version and unpublishing without needing a dedicated column.
    */
   async listEtag(): Promise<string> {
     const [row] = await db
@@ -58,7 +58,7 @@ export class ShowcaseService {
     return `W/"showcase-${row?.count ?? 0}-${row?.latest ?? 'empty'}"`;
   }
 
-  /** Só histórias públicas. Uma protegida por senha nunca aparece aqui. */
+  /** Public stories only. A password-protected one never shows up here. */
   async listPublicStories(): Promise<ShowcaseStoryCard[]> {
     const entries = await db
       .select({
@@ -139,11 +139,11 @@ export class ShowcaseService {
   }
 
   /**
-   * Confere a senha de uma história protegida.
+   * Checks a protected story's password.
    *
-   * Sempre roda um bcrypt, mesmo quando a história não existe ou não é protegida: sem isso, o
-   * tempo de resposta separaria "não existe" de "senha errada", e o endpoint viraria um oráculo
-   * de existência - exatamente o que a resposta genérica de 401 evita.
+   * It always runs a bcrypt, even when the story does not exist or is not protected: without that,
+   * response time would separate "does not exist" from "wrong password", and the endpoint would become an
+   * existence oracle - exactly what the generic 401 response avoids.
    */
   async verifyPassword(storyId: string, password: string): Promise<boolean> {
     const entry = await this.getEntry(storyId);
@@ -163,7 +163,7 @@ export class ShowcaseService {
   }
 }
 
-/** Hash de uma senha que ninguém tem, só para o caminho de falha custar o mesmo do de sucesso. */
+/** The hash of a password nobody has, just so the failure path costs the same as the success path. */
 const DUMMY_BCRYPT_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
 export const showcaseService = new ShowcaseService();

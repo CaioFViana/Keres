@@ -3,14 +3,14 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schemas/servers';
+import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
+import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import ServerService

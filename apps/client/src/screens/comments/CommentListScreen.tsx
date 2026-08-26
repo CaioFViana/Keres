@@ -1,20 +1,21 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import CommentList from '@/src/components/features/comments/CommentList/CommentList';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { CommentSelect } from '../../db/schema';
+import type { CommentSelect } from '../../db/schema';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { NavigableEntityType } from '../../utils/entityNavigation';
+import type { NavigableEntityType } from '../../utils/entityNavigation';
 
 /**
- * Lista compreensiva de todos os comentários da história atual, cross-entidade - modelada em
- * `OperationLogListScreen`. Tocar um item navega para a entidade-alvo (v1: só navega até a
- * tela de detalhe, não abre o modal do campo específico - ver plano de implementação).
+ * A comprehensive list of every comment in the current story, cross-entity - modelled on
+ * `OperationLogListScreen`. Tapping an item navigates to the target entity (v1: it only navigates to the
+ * detail screen, it does not open the specific field's modal - see the implementation plan).
  */
 const CommentListScreen: React.FC = () => {
   useBackButtonHandler();
@@ -39,7 +40,7 @@ const CommentListScreen: React.FC = () => {
   );
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    ...commonScreenStyleDefs(colors),
     noStoryContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     noStoryText: { fontSize: 18, color: colors.textSecondary },
   });

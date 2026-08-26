@@ -1,7 +1,9 @@
-import { FormEvent, KeyboardEvent, useState } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared';
-import { DeletedItem, OperationLogEntry, RecoveryApiService } from '../../api/RecoveryApiService';
+import type { DeletedItem, OperationLogEntry } from '../../api/RecoveryApiService';
+import { RecoveryApiService } from '../../api/RecoveryApiService';
 
 export function RecoveryPage() {
   const { t, i18n } = useTranslation('admin');

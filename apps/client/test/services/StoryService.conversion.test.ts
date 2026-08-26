@@ -20,8 +20,8 @@ beforeEach(async () => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
 
   await database.db.insert(schema.chapters).values([
-    { id: FIRST_CHAPTER_ID, storyId: TEST_STORY_ID, name: 'Inicio', index: 0, ...entityBase },
-    { id: SECOND_CHAPTER_ID, storyId: TEST_STORY_ID, name: 'Fim', index: 1, ...entityBase },
+    { id: FIRST_CHAPTER_ID, storyId: TEST_STORY_ID, name: 'Inicio', index: 1, ...entityBase },
+    { id: SECOND_CHAPTER_ID, storyId: TEST_STORY_ID, name: 'Fim', index: 2, ...entityBase },
   ]);
   await database.db.insert(schema.scenes).values([
     {
@@ -30,7 +30,7 @@ beforeEach(async () => {
       chapterId: FIRST_CHAPTER_ID,
       locationId: 'location-1',
       name: 'Abertura',
-      index: 0,
+      index: 1,
       ...entityBase,
     },
     {
@@ -39,7 +39,7 @@ beforeEach(async () => {
       chapterId: FIRST_CHAPTER_ID,
       locationId: 'location-1',
       name: 'Virada',
-      index: 1,
+      index: 2,
       ...entityBase,
     },
     {
@@ -48,7 +48,7 @@ beforeEach(async () => {
       chapterId: SECOND_CHAPTER_ID,
       locationId: 'location-2',
       name: 'Confronto',
-      index: 0,
+      index: 1,
       ...entityBase,
     },
     {
@@ -57,7 +57,7 @@ beforeEach(async () => {
       chapterId: SECOND_CHAPTER_ID,
       locationId: 'location-2',
       name: 'Desfecho',
-      index: 1,
+      index: 2,
       ...entityBase,
     },
   ]);
@@ -165,11 +165,11 @@ describe('StoryService type conversion', () => {
       .where(eq(schema.scenes.chapterId, SECOND_CHAPTER_ID));
     await database.db
       .update(schema.scenes)
-      .set({ index: 1 })
+      .set({ index: 2 })
       .where(eq(schema.scenes.id, FIRST_SCENE_ID));
     await database.db
       .update(schema.scenes)
-      .set({ index: 0 })
+      .set({ index: 1 })
       .where(eq(schema.scenes.id, SECOND_SCENE_ID));
     await database.db.insert(schema.choices).values({
       id: 'choice-first-second',
@@ -198,8 +198,8 @@ describe('StoryService type conversion', () => {
         .orderBy(asc(schema.scenes.index))
         .all(),
     ).toEqual([
-      { id: FIRST_SCENE_ID, index: 0 },
-      { id: SECOND_SCENE_ID, index: 1 },
+      { id: FIRST_SCENE_ID, index: 1 },
+      { id: SECOND_SCENE_ID, index: 2 },
     ]);
   });
 });

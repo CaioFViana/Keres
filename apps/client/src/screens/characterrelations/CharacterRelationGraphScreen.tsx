@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,40 +9,36 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import CharacterRelationGraphCanvas, {
-  CharacterRelationGraphCanvasHandle,
-} from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import type { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import { useDrizzle } from '../../db';
-import { CharacterSelect } from '../../db/schema';
+import type { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import {
-  createCharacterRelationService,
-  CharacterRelationWithNames,
-} from '../../services/storymanagement/CharacterRelationService';
+import type { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import {
-  buildCharacterRelationGraphLayout,
-  RelationGraphNode,
-} from '../../utils/characterRelationGraphLayout';
-import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
+import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGraphLayout';
+import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
+import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { CharacterRelationsScreenNavigationProp } from './CharacterRelationListScreen';
+import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 
 /**
- * Mapa de relações: os personagens de uma história e quem conhece quem.
+ * The relations map: a story's characters and who knows whom.
  *
- * Espelha o mapa de história (`ChoiceViewScreen`) na experiência - painel de detalhe ao
- * tocar num nó, pan/zoom, rótulos que se escondem sozinhos quando o grafo cresce - mas o
- * layout de fundo é outro (`characterRelationGraphLayout`), porque relação entre personagens
- * não tem direção nem "início": ver `characterRelationGraphLayout.ts` para o porquê.
+ * It mirrors the story map (`ChoiceViewScreen`) in experience - a detail panel on
+ * tapping a node, pan/zoom, labels that hide themselves when the graph grows - but the
+ * underlying layout is another one (`characterRelationGraphLayout`), because a relation between characters
+ * has neither direction nor a "start": see `characterRelationGraphLayout.ts` for why.
  */
 
-/** Acima disso o tipo de relação em cada aresta polui mais do que informa; a pessoa pode reativar. */
+/** Above that the relation type on each edge pollutes more than it informs; the person can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
 interface CharacterRelationNodeConnection {
@@ -55,10 +52,11 @@ const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<CharacterRelationsScreenNavigationProp>();
+  const navigation = useNavigation<CharactersScreenNavigationProp>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
+  const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<CharacterRelationGraphCanvasHandle>(null);
 
@@ -91,7 +89,7 @@ const CharacterRelationGraphScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Recarrega ao focar: personagens e relações podem ter mudado em outra tela.
+  // Reloads on focus: characters and relations may have changed on another screen.
   useFocusEffect(
     useCallback(() => {
       loadGraph();
@@ -118,8 +116,13 @@ const CharacterRelationGraphScreen = () => {
   );
 
   const layout = useMemo(
-    () => buildCharacterRelationGraphLayout(characters, relations),
-    [characters, relations],
+    () =>
+      buildCharacterRelationGraphLayout(
+        characters,
+        relations,
+        isCompact ? 'top-to-bottom' : 'left-to-right',
+      ),
+    [characters, relations, isCompact],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
@@ -203,8 +206,8 @@ const CharacterRelationGraphScreen = () => {
           'success',
         );
       } else {
-        // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
-        // ele está é mais útil do que alegar sucesso.
+        // With no share sheet the file exists, but the user has no way to reach it; saying where
+        // it is is more useful than claiming success.
         showNotification(
           t('character_relation_map_export_no_share_target', {
             path: result.uri || result.fileName,
@@ -223,10 +226,8 @@ const CharacterRelationGraphScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
-          flex: 1,
-          backgroundColor: colors.background,
-        },
+        ...commonScreenStyleDefs(colors),
+        ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
@@ -261,19 +262,6 @@ const CharacterRelationGraphScreen = () => {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
           outlineWidth: 0,
-        },
-        emptyContainer: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 32,
-        },
-        emptyText: {
-          marginTop: 12,
-          fontSize: 15,
-          color: colors.textSecondary,
-          textAlign: 'center',
-          lineHeight: 21,
         },
       }),
     [colors],

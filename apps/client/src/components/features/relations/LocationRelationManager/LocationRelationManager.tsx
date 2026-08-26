@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
+import type { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
@@ -24,8 +24,10 @@ interface LocationRelationManagerProps {
 
 type ActivePicker = 'parent' | 'child' | 'connection' | null;
 
-/** Ancestrais de `locationId` (não inclui ele mesmo) - cadeia de pais via 'contains', calculada
- *  em memória a partir da lista já carregada pela tela (evita ida e volta ao banco por toque). */
+/**
+ * `locationId`'s ancestors (it does not include itself) - the chain of parents through 'contains', computed
+ * in memory from the list the screen has already loaded (it avoids a database round trip per tap).
+ */
 const computeAncestorIds = (
   relations: LocationRelationSelect[],
   locationId: string,
@@ -45,7 +47,7 @@ const computeAncestorIds = (
   return ancestors;
 };
 
-/** Descendentes de `locationId` (não inclui ele mesmo), via BFS sobre as arestas 'contains'. */
+/** `locationId`'s descendants (it does not include itself), through a BFS over the 'contains' edges. */
 const computeDescendantIds = (
   relations: LocationRelationSelect[],
   locationId: string,
@@ -219,8 +221,8 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
           <Text style={styles.subsectionTitle}>{t('parent_location')}</Text>
           {parentRelation ? (
             <RelationRow
-              // Em `editable` (form) a linha não navega - sair da tela perderia alterações
-              // não salvas do formulário.
+              // In `editable` (a form) the row does not navigate - leaving the screen would lose the form's
+              // unsaved changes.
               onPress={editable ? undefined : () => handleLocationPress(parentRelation.locationAId)}
               onRemove={editable ? handleRemoveParent : undefined}
             >

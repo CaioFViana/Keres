@@ -126,6 +126,9 @@ describe('SuggestionService', () => {
       ['Feminino', 1],
       ['Neutro', 0],
     ]);
+    expect(await service.getSuggestionUsageCounts('character_gender', STORY_ID)).toEqual([
+      ['Feminino', 1],
+    ]);
     await expect(
       service.createSuggestion(USER_ID, 'character_gender', 'Neutro', STORY_ID),
     ).rejects.toThrow('already exists');
@@ -159,6 +162,81 @@ describe('SuggestionService', () => {
     ]);
 
     expect(await service.getSuggestions('custom:origin', STORY_ID)).toEqual([['Lua', 2]]);
+    expect(await service.getSuggestionUsageCounts('custom:origin', STORY_ID)).toEqual([['Lua', 2]]);
+  });
+
+  it('finds exact entity usages and can merge a saved value into another value', async () => {
+    const service = createSuggestionService(database.db);
+    await database.db.insert(schema.characters).values({
+      id: 'char-1',
+      storyId: STORY_ID,
+      name: 'Ada',
+      gender: 'B',
+      ...base,
+    });
+    await service.createSuggestion(USER_ID, 'character_gender', 'A', STORY_ID);
+    await service.createSuggestion(USER_ID, 'character_gender', 'B', STORY_ID);
+
+    expect(await service.getSuggestionUsages('character_gender', STORY_ID, 'B')).toEqual([
+      expect.objectContaining({ entityType: 'Character', id: 'char-1', title: 'Ada' }),
+    ]);
+    await expect(
+      service.renameSuggestionValue(USER_ID, STORY_ID, 'character_gender', 'B', 'A', false),
+    ).rejects.toThrow('requires merging');
+
+    await expect(
+      service.renameSuggestionValue(USER_ID, STORY_ID, 'character_gender', 'B', 'A', true),
+    ).resolves.toEqual({ updatedUsages: 1, merged: true });
+    expect(
+      (
+        await database.db.query.characters.findFirst({
+          where: (row, { eq }) => eq(row.id, 'char-1'),
+        })
+      )?.gender,
+    ).toBe('A');
+    expect(
+      (await service.getStoredSuggestions('character_gender', STORY_ID)).map((row) => row.value),
+    ).toEqual(['A']);
+  });
+
+  it('renames an individual entry inside a custom suggestion list', async () => {
+    const service = createSuggestionService(database.db);
+    await database.db.insert(schema.characters).values({
+      id: 'char-1',
+      storyId: STORY_ID,
+      name: 'Ada',
+      ...base,
+    });
+    await database.db.insert(schema.storySchemaFields).values({
+      id: 'traits',
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'Traits',
+      key: 'traits',
+      type: AttributeType.SUGGESTION_LIST,
+      isRequired: false,
+      order: 0,
+      ...base,
+    });
+    await database.db.insert(schema.attributeValues).values({
+      id: 'traits-1',
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: 'char-1',
+      fieldId: 'traits',
+      value: '["old","other"]',
+      ...base,
+    });
+
+    await service.renameSuggestionValue(USER_ID, STORY_ID, 'custom:traits', 'old', 'new', true);
+
+    expect(
+      (
+        await database.db.query.attributeValues.findFirst({
+          where: (row, { eq }) => eq(row.id, 'traits-1'),
+        })
+      )?.value,
+    ).toBe('["new","other"]');
   });
 });
 

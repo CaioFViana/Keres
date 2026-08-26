@@ -1,14 +1,14 @@
-import { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import type { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
 import { create } from 'zustand';
-import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 
 interface UserSettingsState {
   userId: string | null; // Add userId to state
   username: string | null;
   language: string | null;
-  /** `true` = 24h, `false` = AM/PM. Vale para toda exibição/edição de hora das features de Data. */
+  /** `true` = 24h, `false` = AM/PM. It applies to every time display/edit in the Date features. */
   use24HourTime: boolean;
   showContextualHelp: boolean;
   suggestLiteraryDevices: boolean;

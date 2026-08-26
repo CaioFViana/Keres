@@ -1,7 +1,7 @@
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
-// Singleton de módulo, compartilhado por todos os serviços: sem limpar, um teste vaza no outro
-// exatamente como um listener esquecido vazaria entre telas.
+// A module singleton, shared by every service: without clearing it, one test leaks into the next
+// exactly as a forgotten listener would leak between screens.
 const registered: { event: string; listener: (...args: any[]) => void }[] = [];
 
 function listen(event: string, listener: (...args: any[]) => void) {

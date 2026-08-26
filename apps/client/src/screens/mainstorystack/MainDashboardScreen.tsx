@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
+import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +13,7 @@ import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanne
 import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -213,10 +214,7 @@ const MainDashboardScreen = () => {
   }, [navigation, selectedStory?.id, showNotification, t, colors.text]); // Dependencies
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
+    ...commonScreenStyleDefs(colors),
     content: {
       width: '100%',
       maxWidth: isWide ? 1280 : undefined,

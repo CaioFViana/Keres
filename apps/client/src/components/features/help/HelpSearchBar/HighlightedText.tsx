@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, TextStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
+import { Text } from 'react-native';
 
 const normalize = (value: string) =>
   value

@@ -11,8 +11,8 @@ import { setDocumentTitle, useDocumentTitle } from '../../src/utils/documentTitl
 const useFocusEffectMock = useFocusEffect as jest.Mock;
 
 /**
- * O título da aba é o que distingue várias janelas do Keres abertas ao mesmo tempo, e no
- * nativo `document` simplesmente não existe - chamar isto lá tem que ser inofensivo.
+ * The tab's title is what tells several Keres windows open at the same time apart, and on
+ * native `document` simply does not exist - calling this there has to be harmless.
  */
 const setPlatform = (os: string) => {
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });

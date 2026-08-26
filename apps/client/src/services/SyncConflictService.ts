@@ -1,20 +1,20 @@
-import {
+import type {
   ChapterReorderingStoryUpdate,
   StoryReorderingStoryUpdate,
   SyncConflictReason,
 } from '@keres/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import { OperationLogSelect, SyncConflictSelect } from '../db/schema';
+import type { OperationLogSelect, SyncConflictSelect } from '../db/schema';
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
 
 /**
- * Campos que nunca entram num comparativo de conflito: são metadados de bookkeeping,
- * mudam em toda escrita e portanto apareceriam como "divergentes" em todo conflito sem
- * que o usuário tenha qualquer decisão a tomar sobre eles.
+ * Fields that never enter a conflict comparison: they are bookkeeping metadata, they change on every
+ * write and would therefore show up as "divergent" in every conflict without the user having any
+ * decision to make about them.
  */
 const BOOKKEEPING_FIELDS = new Set([
   'id',
@@ -27,7 +27,7 @@ const BOOKKEEPING_FIELDS = new Set([
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
-/** Um conflito com os JSONs já desempacotados, como a tela consome. */
+/** A conflict with the JSONs already unpacked, as the screen consumes it. */
 export interface PendingConflict {
   id: string;
   storyId: string;
@@ -36,19 +36,19 @@ export interface PendingConflict {
   reason: SyncConflictReason;
   localOperationType: 'create' | 'update' | 'delete' | 'reorder';
   localOperationIds: string[];
-  /** Campos que o usuário mudou e ainda não foram aceitos pelo servidor. */
+  /** Fields the user changed that have not been accepted by the server yet. */
   localValues: Record<string, any>;
-  /** Estado da entidade no servidor. `null` quando ela não existe mais lá. */
+  /** The entity's state on the server. `null` when it no longer exists there. */
   serverValues: Record<string, any> | null;
   clientVersion: number | null;
   serverVersion: number | null;
   message: string | null;
   detectedAt: Date;
-  /** Campos em que os dois lados divergem - o que a tela pede para o usuário decidir. */
+  /** Fields where the two sides diverge - what the screen asks the user to decide. */
   contestedFields: string[];
-  /** A entidade foi excluída no servidor mas o usuário continuou editando. */
+  /** The entity was deleted on the server but the user carried on editing. */
   isDeletedOnServer: boolean;
-  /** O usuário excluiu localmente algo que o servidor continuou editando. */
+  /** The user deleted locally something the server carried on editing. */
   isLocalDelete: boolean;
 }
 
@@ -70,11 +70,11 @@ export interface SyncConflictService {
   recordConflict(input: RecordConflictInput): Promise<void>;
   getPendingConflicts(storyId?: string): Promise<PendingConflict[]>;
   countPendingConflicts(storyId?: string): Promise<number>;
-  /** Preserva o trabalho do usuário, rebaseado sobre a versão atual do servidor. */
+  /** Preserves the user's work, rebased onto the server's current version. */
   resolveKeepLocal(conflictId: string, chosenValues?: Record<string, any>): Promise<void>;
-  /** Aceita o que o servidor tem e descarta as operações locais pendentes. */
+  /** Accepts what the server has and discards the pending local operations. */
   resolveKeepServer(conflictId: string): Promise<void>;
-  /** Tira o conflito da frente sem resolver; as operações locais seguem bloqueadas. */
+  /** Gets the conflict out of the way without resolving it; the local operations stay blocked. */
   dismissConflict(conflictId: string): Promise<void>;
 }
 
@@ -103,16 +103,15 @@ function valuesDiffer(a: any, b: any): boolean {
 }
 
 /**
- * Campos que o usuário mudou e sobre os quais o servidor tem outra opinião.
+ * Fields the user changed and about which the server has a different opinion.
  *
- * Só estes precisam de decisão: se o usuário mudou o resumo e o servidor mudou o título,
- * os dois cabem juntos e não há nada para escolher.
+ * Only these need a decision: if the user changed the summary and the server changed the title, both
+ * fit together and there is nothing to choose.
  *
- * A chave tem que estar *presente* em `serverValues`, e não apenas divergir. No caminho do
- * pull, `serverValues` são só os campos que a operação remota alterou: um campo ausente
- * significa que o servidor não opinou sobre ele, e compará-lo com `undefined` marcaria como
- * disputado justamente o que deveria se mesclar em silêncio. No caminho do push,
- * `serverValues` é a entidade inteira, então todas as chaves existem e vale a comparação.
+ * The key has to be *present* in `serverValues`, not merely differ. On the pull path, `serverValues` is
+ * only the fields the remote operation changed: an absent field means the server had no opinion about
+ * it, and comparing it with `undefined` would flag as disputed exactly what should merge silently. On
+ * the push path, `serverValues` is the whole entity, so every key exists and the comparison holds.
  */
 export function findContestedFields(
   localValues: Record<string, any>,
@@ -127,14 +126,14 @@ export function findContestedFields(
     .filter((key) => valuesDiffer(localValues[key], serverValues[key]));
 }
 
-/** Une os payloads das operações locais pendentes num único conjunto de valores desejados. */
+/** It merges the pending local operations' payloads into a single set of desired values. */
 export function mergeLocalOperationPayloads(operations: OperationLogSelect[]): Record<string, any> {
   const merged: Record<string, any> = {};
   for (const op of operations) {
     const payload = parseJson<Record<string, any>>(op.payload, {});
     for (const [key, value] of Object.entries(payload)) {
       if (BOOKKEEPING_FIELDS.has(key)) continue;
-      // Operações mais recentes vêm depois e portanto ganham: é a última intenção do usuário.
+      // More recent operations come later and therefore win: it is the user's latest intent.
       merged[key] = value;
     }
   }
@@ -142,10 +141,10 @@ export function mergeLocalOperationPayloads(operations: OperationLogSelect[]): R
 }
 
 /**
- * Aplica uma reordenação remota (ou a versão do servidor de uma que conflitou) ao banco
- * local. Fica aqui, e não em `SyncEngineService`, porque `resolveKeepServer` também precisa
- * dela para o caso de reorder - e este arquivo não pode depender de volta de
- * `SyncEngineService`, que já depende deste (ver `conflictService` lá).
+ * Applies a remote reorder (or the server's version of one that conflicted) to the local database. It
+ * lives here, and not in `SyncEngineService`, because `resolveKeepServer` also needs it for the reorder
+ * case - and this file must not depend back on `SyncEngineService`, which already depends on this one
+ * (see `conflictService` there).
  */
 export async function applyReorderToLocalDb(
   db: AppDrizzleClient,
@@ -213,10 +212,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       serverVersion: row.serverVersion,
       message: row.message,
       detectedAt: row.detectedAt,
-      // Um reorder não tem "campos" no sentido em que o resto do conflito entende - o valor
-      // em disputa é a ordem inteira (`reorderItems`), não algo pra comparar item a item.
-      // Forçar vazio aqui faz a tela cair no fallback binário (manter a minha ordem / usar a
-      // do servidor) em vez de tentar montar um seletor de campo com JSON cru dentro.
+      // A reorder has no "fields" in the sense the rest of the conflict machinery understands - the disputed
+      // value is the whole order (`reorderItems`), not something to compare item by item. Forcing it empty
+      // here makes the screen fall back to the binary choice (keep my order / use the server's) instead of
+      // trying to build a field picker with raw JSON inside.
       contestedFields:
         row.localOperationType === 'reorder' ? [] : findContestedFields(localValues, serverValues),
       isDeletedOnServer: row.reason === 'deleted_on_server' || !!serverValues?.isDeleted,
@@ -225,9 +224,9 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   };
 
   /**
-   * Marca as operações locais do conflito para que o motor de sincronização não as
-   * reenvie. Sem isto o ciclo tentaria empurrar a mesma operação recusada a cada 30
-   * segundos, produzindo um conflito novo em cada volta.
+   * Marks the conflict's local operations so the synchronization engine does not resend them. Without
+   * this the cycle would try to push the same refused operation every 30 seconds, producing a new conflict
+   * on every round.
    */
   const blockOperations = async (operationIds: string[]) => {
     if (operationIds.length === 0) return;
@@ -260,11 +259,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   };
 
   /**
-   * Grava uma nova operação local já rebaseada: o payload leva `version = base + 1`,
-   * que é a convenção que o motor de sincronização usa para derivar a base enviada ao
-   * servidor. Rebasear é o que faz o "manter o meu" funcionar - a edição é reenviada
-   * apoiada na versão que o servidor tem *agora*, então passa na checagem de concorrência
-   * em vez de conflitar de novo.
+   * Records a new, already-rebased local operation: the payload carries `version = base + 1`, which is
+   * the convention the synchronization engine uses to derive the base sent to the server. Rebasing is
+   * what makes "keep mine" work - the edit is resent resting on the version the server holds *now*, so it
+   * passes the concurrency check instead of conflicting again.
    */
   const recordRebasedOperation = async (
     conflict: PendingConflict,
@@ -298,7 +296,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       .where(eq(schema.stories.id, conflict.storyId));
   };
 
-  /** Leitura genérica da entidade local, usada ao recriar algo removido no servidor. */
+  /** A generic read of the local entity, used when recreating something removed on the server. */
   const readLocalEntity = async (
     entityType: string,
     entityId: string,
@@ -313,7 +311,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     return rows.at(0) as Record<string, any> | undefined;
   };
 
-  /** Escreve valores na entidade local e alinha a versão com a do servidor. */
+  /** Writes values into the local entity and aligns the version with the server's. */
   const writeEntity = async (
     entityType: string,
     entityId: string,
@@ -337,8 +335,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     async recordConflict(input: RecordConflictInput): Promise<void> {
       await blockOperations(input.localOperationIds);
 
-      // Um conflito por entidade: se já existe um pendente para ela, o novo push apenas
-      // traz informação mais fresca do servidor, não uma segunda decisão a tomar.
+      // One conflict per entity: if there is already one pending for it, the new push only brings fresher
+      // information from the server, not a second decision to take.
       const existing = await db.query.syncConflicts.findFirst({
         where: and(
           eq(schema.syncConflicts.storyId, input.storyId),
@@ -435,11 +433,11 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       }
 
       if (conflict.localOperationType === 'reorder') {
-        // Diferente dos outros tipos, não há uma linha de entidade só pra "a ordem" - a
-        // operação de reorder pendente já tem os índices certos, só precisa ser reapoiada na
-        // versão atual do servidor e liberada pra ir no próximo push. Não passa por
-        // `abandonOperations`/`recordRebasedOperation` (que descartam e recriam a operação):
-        // aqui a mesma operação continua, só com a base atualizada.
+        // Unlike the other types, there is no entity row for "the order" - the pending reorder operation
+        // already holds the right indices, it only has to be rebased onto the server's current version and
+        // released to go in the next push. It does not go through
+        // `abandonOperations`/`recordRebasedOperation` (which discard and recreate the operation): here the
+        // same operation carries on, only with an updated base.
         const baseVersion = conflict.serverVersion ?? 0;
         for (const opId of conflict.localOperationIds) {
           const op = await db.query.operationLogs.findFirst({
@@ -459,17 +457,17 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         return;
       }
 
-      // Sem versão do servidor não há em que rebasear. 0 só serve quando a entidade
-      // ainda não existe lá (create); num update/delete contra uma linha viva isso
-      // volta como `version_conflict` em vez de last-write-wins.
+      // With no server version there is nothing to rebase onto. 0 only works when the entity does not exist
+      // there yet (a create); on an update/delete against a live row that comes back as `version_conflict`
+      // rather than last-write-wins.
       const baseVersion = conflict.serverVersion ?? 0;
       const values = chosenValues ?? conflict.localValues;
 
       await abandonOperations(conflict.localOperationIds);
 
       if (conflict.isLocalDelete) {
-        // O usuário excluiu; manter a decisão dele significa reenviar a exclusão sobre a
-        // versão atual do servidor.
+        // The user deleted; keeping their decision means resending the deletion on top of the server's current
+        // version.
         await writeEntity(
           conflict.entityType,
           conflict.entityId,
@@ -487,15 +485,14 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         conflict.reason === 'not_found' ||
         conflict.reason === 'limit_exceeded'
       ) {
-        // A entidade não existe no servidor - por a operação local original já ser um
-        // `create` (qualquer que seja o motivo recusado - `not_found` de uma dependência
-        // ausente, `limit_exceeded` do teto do plano, ou até `unknown` de uma falha de
-        // validação no servidor), ou por ter sido removida lá depois (`not_found` numa
-        // operação que era `update`/`reorder`). Em todos esses casos "manter a minha versão"
-        // tem que reenviar como `create`, não `update`: um `update` contra uma entidade que
-        // o servidor nunca teve voltaria como um novo conflito `not_found` em vez de dar à
-        // tentativa uma chance real de passar - exatamente o loop que deixava uma
-        // GalleryRelation presa pra sempre quando seu dono ainda não existia no servidor.
+        // The entity does not exist on the server - either because the original local operation was already a
+        // `create` (whatever the refusal reason - `not_found` from a missing dependency, `limit_exceeded` from
+        // the plan's ceiling, or even `unknown` from a validation failure on the server), or because it was
+        // removed there afterwards (`not_found` on an operation that was an `update`/`reorder`). In all those
+        // cases "keep my version" has to resend as a `create`, not an `update`: an `update` against an entity
+        // the server never had would come back as a new `not_found` conflict rather than giving the attempt a
+        // real chance to go through - exactly the loop that kept a GalleryRelation stuck forever when its owner
+        // did not exist on the server yet.
         const local = await readLocalEntity(conflict.entityType, conflict.entityId);
         await recordRebasedOperation(
           conflict,
@@ -510,8 +507,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
           1,
         );
       } else {
-        // Inclui o caso `deleted_on_server`: mandar `isDeleted: false` restaura a entidade
-        // no servidor junto com os valores que o usuário escreveu.
+        // It includes the `deleted_on_server` case: sending `isDeleted: false` restores the entity on the
+        // server along with the values the user wrote.
         const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
         const nextValues = { ...values, ...restoreFields };
         await writeEntity(
@@ -520,10 +517,9 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
           { ...nextValues, deletedAt: null },
           baseVersion + 1,
         );
-        // Só reenvia os campos que realmente divergem do que o servidor tem agora. Sem isto,
-        // "manter o meu" reenviava o valor inteiro mesmo quando ele já batia com o que está
-        // lá (ex.: os dois lados renomearam pra o mesmo texto) - uma operação nova no log
-        // sem nenhuma informação de fato nova, só ruído.
+        // It only resends the fields that genuinely differ from what the server holds now. Without this, "keep
+        // mine" resent the whole value even when it already matched what is there (both sides renaming to the
+        // same text, say) - a new operation in the log with no actually new information, just noise.
         const changedValues = Object.fromEntries(
           Object.entries(nextValues).filter(([field, value]) =>
             valuesDiffer(value, conflict.serverValues?.[field]),
@@ -534,7 +530,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         }
       }
 
-      await closeConflict(conflictId, chosenValues ? 'merge' : 'keep_local');
+      await closeConflict(
+        conflictId,
+        chosenValues ? 'merge' : conflict.isDeletedOnServer ? 'restore' : 'keep_local',
+      );
       entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
       entityEventEmitter.emit('operation_log_updated', conflict.storyId);
     },
@@ -549,9 +548,9 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       await abandonOperations(conflict.localOperationIds);
 
       if (conflict.localOperationType === 'reorder') {
-        // Idem: não é uma linha de entidade a escrever, é a ordem de N outras linhas -
-        // aplica a ordem que o servidor tem, com a mesma lógica usada ao aplicar um reorder
-        // remoto normal (ver `SyncEngineService`).
+        // Likewise: there is no entity row to write, it is the order of N other rows - it applies the order the
+        // server holds, with the same logic used when applying an ordinary remote reorder (see
+        // `SyncEngineService`).
         const reorderItems = conflict.serverValues?.reorderItems as
           | { id: string; newIndex: number }[]
           | undefined;
@@ -567,8 +566,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
           );
         }
       } else if (!conflict.serverValues) {
-        // O servidor não tem a entidade. Aceitar isso é removê-la aqui - e sem gravar
-        // operação, porque não há nada a informar a quem já não a tem.
+        // The server does not have the entity. Accepting that means removing it here - and without recording an
+        // operation, because there is nothing to tell whoever no longer has it.
         await writeEntity(
           conflict.entityType,
           conflict.entityId,
@@ -584,7 +583,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         );
       }
 
-      await closeConflict(conflictId, 'keep_server');
+      await closeConflict(conflictId, conflict.isDeletedOnServer ? 'discard' : 'keep_server');
       entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
       entityEventEmitter.emit('operation_log_updated', conflict.storyId);
     },

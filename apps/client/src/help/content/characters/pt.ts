@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'characters',
   title: 'Personagens',
@@ -113,6 +113,13 @@ const page: HelpPage = {
           label: 'Anotações extras',
           whatToWrite: 'Detalhes que não cabem nos outros campos.',
           note: 'Ficam na ficha.',
+        },
+        {
+          key: 'relationType',
+          label: 'Tipo de relação',
+          whatToWrite:
+            'Este é um campo apenas de busca. Escolha um tipo de relação para encontrar personagens conectados por esse tipo de relação.',
+          note: 'Ele busca nas relações do personagem e não adiciona um campo à ficha.',
         },
       ],
     },

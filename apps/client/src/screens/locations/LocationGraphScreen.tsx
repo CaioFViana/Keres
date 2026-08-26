@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,36 +9,36 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import LocationGraphCanvas, {
-  LocationGraphCanvasHandle,
-} from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
+import type { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
+import LocationGraphCanvas from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import { useDrizzle } from '../../db';
-import { LocationRelationSelect, LocationSelect } from '../../db/schema';
+import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import {
-  buildLocationGraphLayout,
+import type {
   GraphLocationRelation,
   LocationGraphNode,
   LocationRelationKind,
-} from '../../utils/locationGraphLayout';
-import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
+} from '@keres/shared/graphs/locationGraphLayout';
+import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
+import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { LocationsScreenNavigationProp } from './LocationListScreen';
+import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 /**
- * Grafo de estrutura de Locations: cada Location vira um nó, `contains`/`connected_to` viram
- * arestas. Espelha `CharacterRelationGraphScreen` na experiência (pan/zoom, painel de detalhe
- * ao tocar num nó), mas com layout em árvore (`locationGraphLayout`) em vez de radial, porque
- * `contains` tem hierarquia e `connected_to` não.
+ * The Locations structure graph: each Location becomes a node, `contains`/`connected_to` become
+ * edges. It mirrors `CharacterRelationGraphScreen` in experience (pan/zoom, a detail panel
+ * on tapping a node), but with a tree layout (`locationGraphLayout`) instead of a radial one, because
+ * `contains` is hierarchical and `connected_to` is not.
  *
- * Só visualização/navegação nesta etapa - sem edição visual (arrastar para reparentar etc.).
+ * Visualization/navigation only at this stage - no visual editing (dragging to reparent, etc.).
  */
 
 interface LocationNodeConnection {
@@ -54,6 +55,7 @@ const LocationGraphScreen = () => {
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
+  const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<LocationGraphCanvasHandle>(null);
 
@@ -85,7 +87,7 @@ const LocationGraphScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Recarrega ao focar: locations e relações podem ter mudado em outra tela.
+  // Reloads on focus: locations and relations may have changed on another screen.
   useFocusEffect(
     useCallback(() => {
       loadGraph();
@@ -120,8 +122,13 @@ const LocationGraphScreen = () => {
   );
 
   const layout = useMemo(
-    () => buildLocationGraphLayout(locations, graphRelations),
-    [locations, graphRelations],
+    () =>
+      buildLocationGraphLayout(
+        locations,
+        graphRelations,
+        isCompact ? 'top-to-bottom' : 'left-to-right',
+      ),
+    [locations, graphRelations, isCompact],
   );
 
   const selectedNode = useMemo(
@@ -229,8 +236,8 @@ const LocationGraphScreen = () => {
           'success',
         );
       } else {
-        // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
-        // ele está é mais útil do que alegar sucesso.
+        // With no share sheet the file exists, but the user has no way to reach it; saying where
+        // it is is more useful than claiming success.
         showNotification(
           t('location_graph_export_no_share_target', { path: result.uri || result.fileName }),
           'warning',
@@ -247,10 +254,8 @@ const LocationGraphScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {
-          flex: 1,
-          backgroundColor: colors.background,
-        },
+        ...commonScreenStyleDefs(colors),
+        ...commonDetailStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
@@ -285,19 +290,6 @@ const LocationGraphScreen = () => {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
           outlineWidth: 0,
-        },
-        emptyContainer: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 32,
-        },
-        emptyText: {
-          marginTop: 12,
-          fontSize: 15,
-          color: colors.textSecondary,
-          textAlign: 'center',
-          lineHeight: 21,
         },
       }),
     [colors],

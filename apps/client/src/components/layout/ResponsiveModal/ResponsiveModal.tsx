@@ -1,14 +1,6 @@
 import React from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleProp,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
@@ -19,7 +11,7 @@ interface ResponsiveModalProps {
   children: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   maxHeight?: number | `${number}%`;
-  /** Desative quando o conteúdo já usa KeyboardAwareScreen para evitar ajuste duplicado. */
+  /** Turn it off when the content already uses KeyboardAwareScreen, to avoid a double adjustment. */
   keyboardAvoiding?: boolean;
   /** `adaptive` uses the bottom sheet on compact screens and a left panel on wide screens. */
   placement?: 'center' | 'bottom' | 'side' | 'adaptive';

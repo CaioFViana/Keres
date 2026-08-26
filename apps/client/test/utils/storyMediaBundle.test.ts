@@ -9,8 +9,8 @@ import {
 } from '../../src/utils/storyMediaBundle';
 import { StoryImportError } from '../../src/utils/StoryImportError';
 
-// `buildStoryZipBytes` lê arquivos do aparelho; só a leitura do pacote (`extractStoryZip`) é
-// exercitada aqui, então o serviço de arquivos é neutralizado para o módulo poder ser importado.
+// `buildStoryZipBytes` reads files from the device; only reading the package (`extractStoryZip`) is
+// exercised here, so the file service is neutralized so the module can be imported.
 jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
 }));

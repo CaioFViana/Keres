@@ -1,14 +1,17 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { AttributeType, decodeAttributeValue, StorySchemaEntityType } from '@keres/shared';
-import { StorySchemaFieldSelect } from '../../../../db/schema';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue } from '@keres/shared';
+import type { StorySchemaFieldSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 
 export type CustomAttributeValues = Record<string, string | null>;
 
-/** Valores padrão de cada campo, pra pré-preencher o estado local de uma entidade NOVA (nunca
- *  sobrescreve uma entidade existente sendo editada - o form só chama isto uma vez, ao criar). */
+/**
+ * Each field's default values, to pre-fill the local state of a NEW entity (it never
+ * overwrites an existing entity being edited - the form only calls this once, on creation).
+ */
 export function getDefaultCustomAttributeValues(
   fields: StorySchemaFieldSelect[],
 ): CustomAttributeValues {
@@ -19,8 +22,10 @@ export function getDefaultCustomAttributeValues(
   return defaults;
 }
 
-/** Mensagem de erro do primeiro campo obrigatório vazio, ou `null` se todos estão preenchidos -
- *  mesma forma de validação simples já usada inline nos forms (`if (!name.trim())`). */
+/**
+ * The error message of the first empty required field, or `null` if they are all filled in -
+ * the same shape of simple validation already used inline in the forms (`if (!name.trim())`).
+ */
 export function validateRequiredCustomAttributes(
   fields: StorySchemaFieldSelect[],
   values: CustomAttributeValues,
@@ -50,9 +55,9 @@ interface CustomAttributeFieldsProps {
 }
 
 /**
- * Renderiza os atributos customizados de um Story Schema como campos de formulário, na mesma
- * posição em todo Form screen: depois dos campos nativos, antes de Tags/relações. Um único
- * componente reaproveitado por todos os 7 tipos de entidade em vez de lógica duplicada por tela.
+ * Renders a Story Schema's custom attributes as form fields, in the same
+ * position on every Form screen: after the native fields, before Tags/relations. A single
+ * component reused by all 7 entity types instead of logic duplicated per screen.
  */
 const CustomAttributeFields: React.FC<CustomAttributeFieldsProps> = ({
   storyId,

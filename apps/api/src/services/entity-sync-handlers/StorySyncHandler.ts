@@ -1,16 +1,19 @@
-import {
-  CreateStoryDataSchema,
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialStorySchema,
   StoryReorderingStoryUpdate,
-  StoryReorderingStoryUpdateSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import {
+  CreateStoryDataSchema,
+  PartialStorySchema,
+  reorderIndicesProblem,
+  StoryReorderingStoryUpdateSchema,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { db } from '../../db';
-import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
+import { chapters, galleries, plots, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -36,12 +39,12 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
   }
 
   /**
-   * Story tem `storyIdColumnName` indefinido (é o próprio topo, não uma linha filha de uma
-   * história), então a base class assume "linha de topo, sem como checar, deixa passar" - o
-   * que na prática não checa nada. Sem este override, um usuário com acesso de escrita à sua
-   * própria história A podia empurrar `{entity:'Story', type:'update'|'delete', id:<história
-   * B de outro usuário>}` para `/sync/A` e alterar ou apagar a história B só por saber o ULID
-   * dela. "Pertencer à história" para a própria Story só pode significar "ser aquela história".
+   * Story has an undefined `storyIdColumnName` (it is the top itself, not a child row of a story), so
+   * the base class assumes "a top-level row, no way to check, let it through" - which in practice checks
+   * nothing. Without this override, a user with write access to their own story A could push
+   * `{entity:'Story', type:'update'|'delete', id:<another user's story B>}` to `/sync/A` and change or
+   * delete story B just by knowing its ULID. "Belonging to the story" for the Story itself can only mean
+   * "being that story".
    */
   checkBelongsToStory(entity: any, storyId: string): boolean {
     return entity[this.idColumnName] === storyId;
@@ -172,20 +175,13 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           );
         }
 
-        // Ensure new indices are unique and sequential (optional, but good for data integrity)
-        const newIndices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
-        if (new Set(newIndices).size !== newIndices.length) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Duplicate newIndex values found in reorder items.',
-          );
-        }
-        // Assuming indices start from 1 and are sequential without gaps.
-        if (Math.min(...newIndices) !== 1 || Math.max(...newIndices) !== newIndices.length) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: New indices must be sequential starting from 1 without gaps.',
-          );
+        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
+        // `buildReorderItems` from it, and this handler enforces the same thing.
+        const problem = reorderIndicesProblem(
+          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        );
+        if (problem) {
+          throw new SyncConflictError('validation', problem);
         }
 
         // 2. Batch Update Chapter Indices
@@ -219,6 +215,19 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       });
     } else {
       // If it's not a story reorder update, delegate to the base class's update method
+      const changes = this.updateSchema.parse((update as UpdateStoryUpdate).changes);
+      if (changes.type === 'branching' && currentEntity.type !== 'branching') {
+        const activePlot = await db.query.plots.findFirst({
+          where: and(eq(plots.storyId, storyId), eq(plots.isDeleted, false)),
+          columns: { id: true },
+        });
+        if (activePlot) {
+          throw new SyncConflictError(
+            'validation',
+            'Remove all plots before converting this story to branching.',
+          );
+        }
+      }
       await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
     }
   }
@@ -231,10 +240,9 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
 
-    // O tombstone acima é só da história - ele não se propaga para as Galleries dela (cada
-    // entidade sincroniza o próprio tombstone independentemente), então sem esta varredura
-    // todo hash que essa história já referenciou ficaria órfão no disco para sempre assim
-    // que a história sumisse da visão de todo mundo.
+    // The tombstone above is only the story's - it does not propagate to its Galleries (each entity
+    // synchronizes its own tombstone independently), so without this sweep every hash that story ever
+    // referenced would be orphaned on disk forever as soon as the story disappeared from everyone's view.
     const referencedHashes = await db
       .selectDistinct({ hash: galleries.hash })
       .from(galleries)

@@ -1,7 +1,9 @@
 import { and, asc, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { ModeInsert, ModeSelect, modes, statRelations } from '../../db/schema';
-import { Create, prepareNewEntityData } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '../../db';
+import type { ModeInsert, ModeSelect } from '../../db/schema';
+import { modes, statRelations } from '../../db/schema';
+import type { Create } from '../../utils/entityUtils';
+import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
@@ -109,8 +111,8 @@ export const createModeService = (db: AppDrizzleClient): ModeService => {
         currentUserId,
       );
 
-      // Os valores daquele modo não sobrevivem a ele: sem o modo, uma StatRelation com esse
-      // modeId ficaria órfã e o servidor recusaria qualquer edição posterior nela.
+      // That mode's values do not survive it: without the mode, a StatRelation with that modeId would be
+      // orphaned and the server would refuse any later edit to it.
       const orphanValues = await db
         .select({ id: statRelations.id })
         .from(statRelations)

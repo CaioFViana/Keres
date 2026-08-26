@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 
 const page: HelpPage = {
   id: 'suggestions',
@@ -34,7 +34,8 @@ const page: HelpPage = {
       items: [
         'Choose the list you want. Native and custom lists are labeled with the element type and field. Lists you created are labeled with their name, and a short field key appears under the title — the same kind of key custom attributes show, not the internal identifier.',
         'Enter a new value and tap Add.',
-        'Use the pencil on a value to correct it, or the trash icon to remove it. Only someone who can edit the story can make those changes.',
+        'Tap a value to open its details. There you can see every entity that uses it, rename it, or remove it from saved values. Only someone who can edit the story can make those changes.',
+        'When renaming, choose whether to also update every current use in the story. Renaming to a value that already exists merges them: all current uses are changed and the old saved value is removed.',
         'Use the plus icon to create a named list. Type a display name and save.',
         'On a named list, use the pencil in the toolbar to rename it. That changes only the name you see in the list and in the story history. The field key stays the same.',
         'Use the copy icon to copy stored values into other lists. Only unique values are added; values already present in the destination are skipped. The lists are not kept in sync afterwards.',
@@ -50,7 +51,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The selected list appears in the forms that use that field. Changing a list does not rewrite values already saved on profiles; it only changes the options offered in future edits. Creating, renaming, or deleting a named list is recorded in the operation log under the list’s display name, not under an internal identifier.',
+      text: 'The selected list appears in the forms that use that field. Removing a value only removes it from the saved catalog; existing uses remain. Renaming can optionally rewrite every current use, and every changed entity is recorded in the operation log. Creating, renaming, or deleting a named list is recorded under the list’s display name, not under an internal identifier.',
     },
     {
       type: 'seeAlso',

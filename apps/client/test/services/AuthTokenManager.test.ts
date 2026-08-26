@@ -89,8 +89,8 @@ describe('updateTokens', () => {
   });
 
   /**
-   * O refresh que acabou de acontecer pode pertencer a uma sincronização em segundo plano de
-   * um servidor que não é o aberto na tela. Escrever esses tokens no servidor errado seria bug.
+   * The refresh that just happened may belong to a background synchronization of a server other than the
+   * one open on screen. Writing those tokens to the wrong server would be a bug.
    */
   it('does not touch the UI active server when the refresh was for another one', async () => {
     mockUserSettings.activeServer = { id: 'outro-servidor', url: 'http://outro' };
@@ -116,7 +116,7 @@ describe('refreshAccessToken', () => {
     const result = await authTokenManager.refreshAccessToken(SERVER.id, 'refresh-1');
 
     expect(result).toEqual({ accessToken: 'novo-access', refreshToken: 'novo-refresh' });
-    expect(seen).toEqual(['POST http://servidor/auth/refresh']);
+    expect(seen).toEqual(['POST http://servidor/api/auth/refresh']);
   });
 
   it('stores the refreshed pair', async () => {
@@ -130,7 +130,7 @@ describe('refreshAccessToken', () => {
     });
   });
 
-  /** O cofre é a fonte de verdade; o parâmetro é só o resgate para o interceptor. */
+  /** The vault is the source of truth; the parameter is only the fallback for the interceptor. */
   it('prefers the refresh token in the vault over the one it was handed', async () => {
     await tokenVault.set(SERVER.id, { accessToken: 'a', refreshToken: 'refresh-do-cofre' });
     let body: any;
@@ -159,9 +159,8 @@ describe('refreshAccessToken', () => {
   });
 
   /**
-   * O ponto mais importante deste serviço: servidor fora do ar não diz nada sobre a validade
-   * da credencial. Limpar aqui deslogaria uma conta perfeitamente boa por causa de uma
-   * oscilação de rede.
+   * This service's most important point: a server being down says nothing about the credential's
+   * validity. Clearing here would log out a perfectly good account because of a network hiccup.
    */
   it('keeps the credentials when the server is unreachable', async () => {
     await tokenVault.set(SERVER.id, TOKENS);

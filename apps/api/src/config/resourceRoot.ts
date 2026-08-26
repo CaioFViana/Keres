@@ -3,14 +3,14 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**
- * Onde a API acha migrações, painel admin, export do cliente e ícone — em dev, no zip
- * portátil e num `bun build --compile`.
+ * Where the API finds migrations, the admin panel, the client's export and the icon - in dev, in
+ * the portable zip and in a `bun build --compile`.
  *
- * Não usa `process.cwd()`: Docker, atalhos e o binário compilado arrancam de pastas
- * que não são `apps/api`. Candidatos, por ordem:
- *   1. `KERES_RESOURCE_ROOT` (empacotador / testes);
- *   2. pasta do executável (layout do zip: `drizzle/`, `admin-dist/`, …);
- *   3. árvore do monorepo a partir deste ficheiro (`src/config` → `apps/api` / `apps/admin`).
+ * It does not use `process.cwd()`: Docker, shortcuts and the compiled binary start from folders that
+ * are not `apps/api`. Candidates, in order:
+ *   1. `KERES_RESOURCE_ROOT` (packager / tests);
+ *   2. the executable's folder (the zip's layout: `drizzle/`, `admin-dist/`, …);
+ *   3. the monorepo tree from this file (`src/config` → `apps/api` / `apps/admin`).
  */
 
 const thisDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -33,7 +33,7 @@ function executableDirectory(): string {
   return path.dirname(process.execPath);
 }
 
-/** `apps/api` no checkout; a pasta do binário no pacote. */
+/** `apps/api` in the checkout; the binary's folder in the package. */
 export function apiPackageRoot(): string {
   const override = resourceOverride();
   const found = firstExistingPath(

@@ -4,6 +4,7 @@ jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
 
+import { FullStoryExportSchema } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import { mediaFileService } from '../../src/services/MediaFileService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
@@ -102,9 +103,10 @@ it('round-trips portable story data after a permanent local purge and clears sta
   const service = createStoryService(database.db);
   const exported = await service.exportFullStory(STORY_ID);
   expect(exported.characters.map((character) => character.id)).toEqual([CHARACTER_ID]);
-  expect(exported.characterRelations).toEqual([
-    expect.objectContaining({ character1Id: CHARACTER_ID, character2Id: DELETED_CHARACTER_ID }),
-  ]);
+  // The relation's other end is a soft-deleted character, which the export leaves out - so the
+  // relation goes with it. It used to travel inside the package and re-import as a link to nothing,
+  // which is why the relation graph learned to skip edges whose ends it cannot find.
+  expect(exported.characterRelations).toEqual([]);
   expect(exported.attributeValues).toEqual([expect.objectContaining({ fieldId: FIELD_ID })]);
 
   await service.deleteStory(STORY_ID);
@@ -168,4 +170,142 @@ it('round-trips portable story data after a permanent local purge and clears sta
   expect(await database.db.query.comments.findFirst()).toEqual(
     expect.objectContaining({ storyId: importedStoryId, authorUserId: LOCAL_USER_ID }),
   );
+});
+
+/**
+ * The device's export did not carry the choices' conditions and effects: the importer here always knew
+ * how to read them and the API always exported them, but whoever generated the package in the app sent
+ * the story without the choices' logic - and with no error, because the three fields are optional in
+ * the schema.
+ */
+it('exports the choices checks, check groups and effects', async () => {
+  const SCENE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC0';
+  const CHAPTER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC1';
+  const LOCATION_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC2';
+  const CHOICE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC3';
+  const GROUP_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC4';
+  const CHECK_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC5';
+  const EFFECT_ID = '01ARZ3NDEKTSV4RRFFQ69G5FC6';
+
+  await database.db
+    .insert(schema.chapters)
+    .values({ id: CHAPTER_ID, storyId: STORY_ID, name: 'Um', index: 1, ...entityBase });
+  await database.db
+    .insert(schema.locations)
+    .values({ id: LOCATION_ID, storyId: STORY_ID, name: 'Praça', ...entityBase });
+  await database.db.insert(schema.scenes).values({
+    id: SCENE_ID,
+    storyId: STORY_ID,
+    chapterId: CHAPTER_ID,
+    locationId: LOCATION_ID,
+    name: 'Encontro',
+    index: 1,
+    ...entityBase,
+  });
+  await database.db.insert(schema.choices).values({
+    id: CHOICE_ID,
+    storyId: STORY_ID,
+    sceneId: SCENE_ID,
+    nextSceneId: SCENE_ID,
+    text: 'Seguir',
+    ...entityBase,
+  });
+  await database.db.insert(schema.choiceCheckGroups).values({
+    id: GROUP_ID,
+    storyId: STORY_ID,
+    choiceId: CHOICE_ID,
+    combinator: 'AND',
+    order: 1,
+    ...entityBase,
+  });
+  await database.db.insert(schema.choiceChecks).values({
+    id: CHECK_ID,
+    storyId: STORY_ID,
+    groupId: GROUP_ID,
+    mode: 'block',
+    type: 'trigger',
+    order: 1,
+    triggerName: 'porta_aberta',
+    triggerState: 'set',
+    ...entityBase,
+  });
+  await database.db.insert(schema.effects).values({
+    id: EFFECT_ID,
+    storyId: STORY_ID,
+    entityType: 'Choice',
+    entityId: CHOICE_ID,
+    effectType: 'triggerSet',
+    triggerName: 'porta_aberta',
+    ...entityBase,
+  });
+
+  const exported = await createStoryService(database.db).exportFullStory(STORY_ID);
+
+  expect(exported.choiceCheckGroups?.map((group) => group.id)).toEqual([GROUP_ID]);
+  expect(exported.choiceChecks?.map((check) => check.id)).toEqual([CHECK_ID]);
+  expect(exported.effects?.map((effect) => effect.id)).toEqual([EFFECT_ID]);
+});
+
+/**
+ * A structural guard: every entity the format knows about has to come out in the export, even as an
+ * empty list. A new entity forgotten here breaks nothing visible - the package merely comes out
+ * incomplete, and the loss shows up weeks later, on the way back in.
+ */
+it('exports one list for every entity the export format knows about', async () => {
+  const exported = await createStoryService(database.db).exportFullStory(STORY_ID);
+
+  const missing = Object.keys(FullStoryExportSchema.shape).filter(
+    (key) => !(key in (exported as Record<string, unknown>)),
+  );
+
+  expect(missing).toEqual([]);
+});
+
+/**
+ * The importer inserts row by row, with no checks, and local SQLite has always been more permissive
+ * than the server's PostgreSQL. A package carrying the same character relation twice used to install
+ * cleanly and only fail much later, on a synchronization - after the writer had already seen the pair
+ * drawn twice on the relation graph.
+ */
+it('refuses a package whose rows contradict one another', async () => {
+  await database.db.insert(schema.characters).values([
+    { id: CHARACTER_ID, storyId: STORY_ID, name: 'Ariane', ...entityBase },
+    { id: DELETED_CHARACTER_ID, storyId: STORY_ID, name: 'Belmiro', ...entityBase },
+  ]);
+  (
+    database.db as unknown as {
+      transaction: <T>(callback: (tx: typeof database.db) => Promise<T>) => Promise<T>;
+    }
+  ).transaction = async (callback) => callback(database.db);
+
+  const service = createStoryService(database.db);
+  const exported = await service.exportFullStory(STORY_ID);
+  const relation = {
+    storyId: STORY_ID,
+    character1Id: CHARACTER_ID,
+    character2Id: DELETED_CHARACTER_ID,
+    relationType: 'mentor',
+    ...entityBase,
+  };
+  const corrupt = {
+    ...exported,
+    // Reversed, not repeated: this is the pair the server's unique constraint on the ordered pair
+    // does not see either.
+    characterRelations: [
+      { ...relation, id: RELATION_ID },
+      {
+        ...relation,
+        id: `${RELATION_ID.slice(0, -1)}2`,
+        character1Id: DELETED_CHARACTER_ID,
+        character2Id: CHARACTER_ID,
+      },
+    ],
+  } as typeof exported;
+
+  await expect(service.importFullStory(LOCAL_USER_ID, corrupt, null)).rejects.toThrow(
+    /characterRelations/,
+  );
+  expect(
+    (await database.db.query.stories.findMany()).filter((story) => story.id !== STORY_ID),
+  ).toEqual([]);
 });

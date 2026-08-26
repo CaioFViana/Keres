@@ -41,7 +41,7 @@ export const StatStrengthSchema = z.object({
   storyId: z.string(),
   statId: z.string().nullable(),
   label: z.string().min(1, 'Tier label cannot be empty'),
-  // O piso do degrau. Negativo não faz sentido numa escada que sempre abre no zero.
+  // The rung's floor. A negative value makes no sense on a ladder that always opens at zero.
   minValue: z.number().min(0, 'Tier value cannot be negative'),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),

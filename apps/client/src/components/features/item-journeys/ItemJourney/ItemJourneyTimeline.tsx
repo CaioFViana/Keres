@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
-import {
+import type {
   CharacterSelect,
   ChapterSelect,
   ChoiceSelect,
@@ -13,7 +12,8 @@ import {
   ItemSelect,
   SceneSelect,
 } from '../../../../db/schema';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createCharacterService } from '../../../../services/storymanagement/CharacterService';
 import { createChapterService } from '../../../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../../../services/storymanagement/ChoiceService';
@@ -23,7 +23,7 @@ import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntity
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
-import { buildChapterColors } from '../../../../utils/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 
 interface ItemJourneyTimelineProps {
   item: ItemSelect;
@@ -32,18 +32,18 @@ interface ItemJourneyTimelineProps {
 }
 
 /**
- * A história de um Item como uma sequência de cartões conectados - a cena onde ele nasceu
- * (a partir do próprio Item, `characterOwnerId`/`initialState`) seguida de cada Item Journey,
- * na ordem narrativa (`orderItemJourneysByNarrative`), com um cartão final pra criar a
- * próxima. Inspirado visualmente na tela do Mapa da História (`ChoiceViewScreen`) - cor por
- * capítulo, cartões nativos - mas como uma linha do tempo simples: a jornada de um item é uma
- * sequência única por definição (é o que a estratégia de ordenação garante), não um grafo
- * ramificado, então não precisa do canvas de pan/zoom nem das curvas SVG daquela tela.
+ * An Item's history as a sequence of connected cards - the scene where it was born (from the Item
+ * itself, `characterOwnerId`/`initialState`) followed by each Item Journey, in narrative order
+ * (`orderItemJourneysByNarrative`), with a final card for creating the next one. Visually inspired by
+ * the Story Map screen (`ChoiceViewScreen`) - colour per chapter, native cards - but as a simple
+ * timeline: an item's journey is a single sequence by definition (which is what the ordering strategy
+ * guarantees), not a branching graph, so it needs neither the pan/zoom canvas nor that screen's SVG
+ * curves.
  */
 const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId, storyType }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
   const drizzleDb = useDrizzle();
 
@@ -117,14 +117,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
   );
 
   const handleAddJourney = useCallback(() => {
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      drawerNavigation.navigate('ItemJourneysStack', {
-        screen: 'ItemJourneyForm',
-        params: { itemId: item.id },
-      });
-    }
+    navigation.navigate('ItemJourneyForm', { itemId: item.id });
   }, [navigation, item.id]);
 
   const originOwner = item.characterOwnerId ? characterById.get(item.characterOwnerId) : undefined;

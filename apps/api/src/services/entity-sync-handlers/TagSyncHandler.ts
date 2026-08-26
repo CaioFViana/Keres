@@ -1,11 +1,10 @@
-import {
+import type {
   CreateStoryUpdate,
-  CreateTagDataSchema,
   CreateTagDataType,
   DeleteStoryUpdate,
-  PartialTagSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateTagDataSchema, PartialTagSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { tags } from '../../db/schema';

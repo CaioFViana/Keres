@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '../db';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 
 interface ThemeState {

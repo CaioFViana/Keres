@@ -20,9 +20,9 @@ const field = (overrides: Record<string, unknown> = {}) =>
   }) as never;
 
 /**
- * Os campos customizados de um Story Schema viram `EntityFieldMetadata` sintéticos, tratados
- * pela busca avançada exatamente como um campo nativo. O `name` usa o `fieldId` e não a chave
- * legível justamente para sobreviver a uma renomeação do campo pelo usuário.
+ * A Story Schema's custom fields become synthetic `EntityFieldMetadata`, treated
+ * by the advanced search exactly like a native field. The `name` uses the `fieldId` and not the readable
+ * key precisely so as to survive the user renaming the field.
  */
 describe('buildCustomAttributeFieldMetadata', () => {
   it('names the synthetic field after the field id, not the readable key', () => {

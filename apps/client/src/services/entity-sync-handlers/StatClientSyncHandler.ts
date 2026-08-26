@@ -1,4 +1,4 @@
-import {
+import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   Mode,
@@ -8,15 +8,15 @@ import {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
- * As quatro entidades do sistema de status (e os modos) só carregam colunas próprias, sem
- * chave derivada nem cascata como StorySchemaField - então a aplicação de create/update/delete
- * é a mesma para todas, e o que muda é só a tabela. Uma classe base evita quatro cópias do
- * mesmo corpo.
+ * The four entities of the stats system (and the modes) only carry columns of their own, with no
+ * derived key nor cascade like StorySchemaField - so applying create/update/delete
+ * is the same for all of them, and all that changes is the table. A base class avoids four copies of the
+ * same body.
  */
 abstract class SimpleTableClientSyncHandler<TTable extends { id: any; isDeleted: any }>
   implements ClientSyncEntityHandler
@@ -104,7 +104,7 @@ export class StatClientSyncHandler extends SimpleTableClientSyncHandler<typeof s
   protected get table() {
     return schema.stats;
   }
-  async getById(id: string): Promise<Stat | undefined> {
+  override async getById(id: string): Promise<Stat | undefined> {
     return (await super.getById(id)) as Stat | undefined;
   }
 }
@@ -116,7 +116,7 @@ export class StatStrengthClientSyncHandler extends SimpleTableClientSyncHandler<
   protected get table() {
     return schema.statStrengths;
   }
-  async getById(id: string): Promise<StatStrength | undefined> {
+  override async getById(id: string): Promise<StatStrength | undefined> {
     return (await super.getById(id)) as StatStrength | undefined;
   }
 }
@@ -128,7 +128,7 @@ export class StatRelationClientSyncHandler extends SimpleTableClientSyncHandler<
   protected get table() {
     return schema.statRelations;
   }
-  async getById(id: string): Promise<StatRelation | undefined> {
+  override async getById(id: string): Promise<StatRelation | undefined> {
     return (await super.getById(id)) as StatRelation | undefined;
   }
 }
@@ -138,7 +138,7 @@ export class ModeClientSyncHandler extends SimpleTableClientSyncHandler<typeof s
   protected get table() {
     return schema.modes;
   }
-  async getById(id: string): Promise<Mode | undefined> {
+  override async getById(id: string): Promise<Mode | undefined> {
     return (await super.getById(id)) as Mode | undefined;
   }
 }

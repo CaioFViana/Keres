@@ -14,7 +14,7 @@ let storyId: string;
 
 const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
 
-/** O servidor recalcula o hash dos bytes recebidos; é MD5 porque é o que o cliente consegue calcular. */
+/** The server recomputes the hash of the bytes it receives; it is MD5 because that is what the client */
 const md5 = (bytes: Uint8Array) => createHash('md5').update(Buffer.from(bytes)).digest('hex');
 
 const PNG_HASH = md5(PNG_BYTES);
@@ -38,7 +38,7 @@ const blobStatus = (token: string, hashes: string[], story = storyId) =>
 const download = (token: string, hash: string, story = storyId) =>
   request('GET', `/media/${story}/blobs/${hash}`, { token });
 
-/** Registra a mídia na galeria da história - é o que autoriza a leitura dos bytes. */
+/** Registers the media in the story's gallery - that is what authorizes reading the bytes. */
 async function referenceInGallery(hash: string, story = storyId, mimeType = 'image/png') {
   const now = new Date();
   await db.insert(galleries).values({
@@ -140,7 +140,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
     expect(status).toBe(200);
   });
 
-  /** O servidor recalcula o hash: um cliente não consegue registrar bytes sob um hash alheio. */
+  /** The server recomputes the hash: a client cannot register bytes under somebody else's hash. */
   it('rejects an upload whose bytes do not match the hash', async () => {
     const outrosBytes = new Uint8Array([9, 9, 9]);
 
@@ -221,9 +221,9 @@ describe('GET /media/:storyId/blobs/:hash', () => {
   });
 
   /**
-   * A propriedade que mais importa nesta rota: o armazenamento é deduplicado globalmente por
-   * hash, então permissão na história não basta - a história precisa referenciar aquele hash.
-   * Sem essa segunda checagem, conhecer um hash daria acesso à mídia de qualquer usuário.
+   * The property that matters most on this route: storage is deduplicated globally by hash, so
+   * permission on the story is not enough - the story has to reference that hash. Without that second
+   * check, knowing a hash would grant access to any user's media.
    */
   it('refuses a hash the story does not reference, even to its owner', async () => {
     await upload(ana.token, PNG_HASH, PNG_BYTES);

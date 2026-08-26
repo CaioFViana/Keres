@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-nativ
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CommentListItem from '@/src/components/features/list-items/CommentListItem';
 import { useDrizzle } from '../../../../db';
-import { CommentSelect } from '../../../../db/schema';
+import type { CommentSelect } from '../../../../db/schema';
 import { createCommentService } from '../../../../services/storymanagement/CommentService';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
@@ -16,8 +16,8 @@ interface CommentListProps {
 }
 
 /**
- * Lista paginada, cross-entidade, de todos os comentários da história - modelada em
- * `OperationLogList` mas sem a lógica de "lacunas privadas" (não se aplica a comentários).
+ * A paginated, cross-entity list of every comment in the story - modelled on `OperationLogList` but
+ * without the "private gaps" logic (which does not apply to comments).
  */
 const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPressItem }) => {
   const { colors } = useTheme();

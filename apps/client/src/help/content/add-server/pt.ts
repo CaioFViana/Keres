@@ -1,4 +1,4 @@
-import { HelpPage } from '../../types';
+import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'add-server',
   title: 'Cadastrando um servidor',
@@ -29,7 +29,7 @@ const page: HelpPage = {
       items: [
         'No menu principal, abra Servidores e toque em adicionar.',
         'Escolha Entrar para uma conta existente ou Criar conta para um cadastro novo.',
-        'Informe o Endereço do servidor, sem caminhos como /admin ou /swagger, seu nome de usuário e senha.',
+        'Informe o Endereço do servidor, sem caminhos como /api, /admin ou /swagger, seu nome de usuário e senha.',
         'Ao criar conta, confirme a senha e, se quiser, dê um Nome ao servidor para reconhecê-lo na lista.',
         'Confirme. Ao criar uma conta nova, a tela mostra em seguida uma lista de códigos de recuperação.',
       ],

@@ -18,9 +18,9 @@ beforeEach(() => {
 });
 
 /**
- * A sincronização roda em timer: um servidor fora do ar falha em todo ciclo. Avisar em cada
- * falha soterra o usuário; não avisar em nenhuma o deixa sem entender por que nada salva.
- * Por isso a store só fala nas *transições* - exatamente duas mensagens por queda.
+ * Synchronization runs on a timer: a server that is down fails on every cycle. Warning on every failure
+ * buries the user; warning on none leaves them not understanding why nothing saves. That is why the
+ * store only speaks on *transitions* - exactly two messages per outage.
  */
 describe('reportUnreachable', () => {
   it('announces the first time a server goes down', () => {

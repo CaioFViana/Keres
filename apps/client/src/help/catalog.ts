@@ -1,4 +1,4 @@
-import { HelpSection } from './types';
+import type { HelpSection } from './types';
 
 export const helpSections: HelpSection[] = [
   {
@@ -40,9 +40,11 @@ export const helpSections: HelpSection[] = [
       'character-relationships',
       'character-modes',
       'stats',
+      'narrative-elements',
       'chapters',
       'scenes',
       'scene-timing',
+      'plots',
       'locations',
       'location-map',
       'items',

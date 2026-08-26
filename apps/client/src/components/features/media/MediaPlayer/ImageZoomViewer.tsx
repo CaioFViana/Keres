@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 
 /**
- * Visualizador de imagem em tela cheia, com zoom por pinça, arraste e duplo toque.
+ * A full-screen image viewer, with pinch zoom, drag and double tap.
  *
- * Usa `PanResponder` (API nativa do React Native) em vez de `react-native-gesture-handler`,
- * pelo mesmo motivo do `StoryGraphCanvas`: o app não monta `GestureHandlerRootView` na
- * raiz, e adicionar isso só por causa desta tela mexeria no provedor de toda a aplicação.
- * A matemática de pinça/arraste/limite espelha a do mapa da história.
+ * It uses `PanResponder` (React Native's native API) instead of `react-native-gesture-handler`,
+ * for the same reason as `StoryGraphCanvas`: the app does not mount `GestureHandlerRootView` at the
+ * root, and adding that just because of this screen would touch the whole application's provider.
+ * The pinch/drag/clamp maths mirrors the story map's.
  */
 
 interface ImageZoomViewerProps {
@@ -26,12 +26,12 @@ interface ImageZoomViewerProps {
   onClose: () => void;
 }
 
-const MIN_SCALE = 1; // Não dá pra afastar além do "encaixado na tela".
+const MIN_SCALE = 1; // There is no zooming out past "fitted to the screen".
 const MAX_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.5;
 /** Acima disso o toque deixa de ser considerado toque e passa a ser arraste. */
 const TAP_MOVE_THRESHOLD = 8;
-/** Acima disso, dois toques não contam mais como duplo toque. */
+/** Above that, two taps no longer count as a double tap. */
 const DOUBLE_TAP_MAX_DELAY = 300;
 
 interface Transform {
@@ -63,7 +63,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     animatedY.setValue(transform.current.y);
   }, [animatedScale, animatedX, animatedY]);
 
-  /** Centraliza a imagem "encaixada na tela" - o mesmo cálculo de `resizeMode: contain`. */
+  /** Centres the image "fitted to the screen" - the same calculation as `resizeMode: contain`. */
   const fitToScreen = useCallback(
     (box: { width: number; height: number }) => {
       const { width: viewportWidth, height: viewportHeight } = viewport.current;
@@ -95,8 +95,8 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
         }
       },
       () => {
-        // Sem tamanho natural, usa a tela inteira como base - zoom ainda funciona, só
-        // parte de um encaixe aproximado em vez do exato.
+        // With no natural size, it uses the whole screen as the basis - zoom still works, it just
+        // starts from an approximate fit instead of the exact one.
         if (!cancelled) {
           fitToScreen({ width: viewport.current.width, height: viewport.current.height });
         }
@@ -108,7 +108,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, uri]);
 
-  /** Mantém a imagem alcançável: não deixa arrastar para fora da tela quando ampliada. */
+  /** Keeps the image reachable: it does not let you drag it off the screen when zoomed in. */
   const clamp = useCallback(() => {
     if (!content) return;
     const { width: viewportWidth, height: viewportHeight } = viewport.current;
@@ -126,7 +126,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
         : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
   }, [content]);
 
-  /** Aplica um zoom mantendo fixo o ponto da imagem que está sob `focus`. */
+  /** Applies a zoom keeping fixed the point of the image that lies under `focus`. */
   const zoomAround = useCallback(
     (nextScale: number, focus: { x: number; y: number }) => {
       const previous = transform.current.scale;
@@ -216,8 +216,8 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
           }
 
           gesture.current.pinchDistance = 0;
-          // Arrastar só faz sentido ampliado; sem isto um arraste em tamanho normal
-          // descentralizaria a imagem sem motivo.
+          // Dragging only makes sense zoomed in; without this a drag at normal size
+          // would decentre the image for no reason.
           if (transform.current.scale > MIN_SCALE + 0.01) {
             transform.current.x += gestureState.dx - gesture.current.lastDx;
             transform.current.y += gestureState.dy - gesture.current.lastDy;

@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { env } from '../../config/env';
+import { APP_RELEASE } from '@keres/shared';
 import { jwtShowcase } from '../../config/jwt';
 import { publicationStorageService } from '../../services/PublicationStorageService';
 import { showcaseService } from '../../services/ShowcaseService';
@@ -8,20 +8,20 @@ import { AppError } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 
 /**
- * O site público. Nenhuma rota daqui exige autenticação, e nenhuma delas devolve algo que o
- * dono de uma história não tenha escolhido publicar.
+ * The public site. No route here requires authentication, and none of them returns anything a
+ * story's owner has not chosen to publish.
  *
- * Com o Showcase desligado (o padrão), tudo aqui responde 404 - não 403: um servidor que não
- * quer ter cara pública também não precisa anunciar que a funcionalidade existe.
+ * With the Showcase off (the default), everything here answers 404 - not 403: a server that does not
+ * want a public face also does not need to announce that the feature exists.
  */
 
-/** Mesma janela do /login: 5 tentativas por 15 minutos, por história e por IP. */
+/** The same window as /login: 5 attempts per 15 minutes, per story and per IP. */
 const unlockLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
 
-/** Vida da URL assinada de download. Curta: ela vaza em histórico de navegador e log de proxy. */
+/** Lifetime of the signed download URL. Short: it leaks into browser history and proxy logs. */
 const DOWNLOAD_URL_TTL_SECONDS = 60;
 
-/** Mensagem única para "não existe" e "senha errada" - ver o comentário em `/unlock`. */
+/** A single message for "does not exist" and "wrong password" - see the comment on `/unlock`. */
 const UNLOCK_FAILURE = 'Incorrect password.';
 
 function slugify(title: string): string {
@@ -68,7 +68,7 @@ export const publicRoutes = new Elysia()
     '/config',
     async () => ({
       showcaseEnabled: await showcaseSettingsService.isEnabled(),
-      serverVersion: env.SERVER_VERSION,
+      serverVersion: APP_RELEASE.version,
     }),
     {
       response: t.Object({ showcaseEnabled: t.Boolean(), serverVersion: t.String() }),
@@ -80,11 +80,11 @@ export const publicRoutes = new Elysia()
       },
     },
   )
-  // Todo o resto só existe com o Showcase ligado.
+  // Everything else only exists with the Showcase on.
   .guard({}, (app) =>
     app
       .onBeforeHandle(async ({ path }) => {
-        if (path === '/public/config') {
+        if (path === '/api/public/config') {
           return;
         }
         if (!(await showcaseSettingsService.isEnabled())) {
@@ -97,8 +97,8 @@ export const publicRoutes = new Elysia()
           const etag = await showcaseService.listEtag();
           const cacheControl = 'public, max-age=0, must-revalidate';
           if (headers['if-none-match'] === etag) {
-            // `Response` direto: um 304 não pode ter corpo, e devolver um valor daqui faria o
-            // Elysia montar uma resposta com corpo por cima desse status.
+            // A raw `Response`: a 304 cannot have a body, and returning a value from here would make Elysia
+            // build a response with a body on top of that status.
             return new Response(null, {
               status: 304,
               headers: { etag, 'cache-control': cacheControl },
@@ -134,9 +134,8 @@ export const publicRoutes = new Elysia()
               params.storyId,
             );
             if (!unlocked) {
-              // Só isto. Nem título, nem autor, nem quantas versões existem: um link vazado não
-              // pode ser interessante por si só, e o 200 aqui não confirma nada que o próprio
-              // ULID no endereço já não dissesse.
+              // Only this. No title, no author, no count of versions: a leaked link must not be interesting on its
+              // own, and the 200 here confirms nothing the ULID in the address did not already say.
               return { storyId: params.storyId, protected: true as const };
             }
           }
@@ -177,9 +176,9 @@ export const publicRoutes = new Elysia()
             return { message: 'Too many attempts. Try again later.' };
           }
 
-          // Uma resposta só para "história não existe" e "senha errada". Distinguir as duas
-          // transformaria este endpoint num oráculo de existência, desfazendo o silêncio que
-          // GET /stories/:storyId mantém de propósito.
+          // A single answer for "the story does not exist" and "wrong password". Telling them apart would turn
+          // this endpoint into an existence oracle, undoing the silence GET /stories/:storyId deliberately
+          // keeps.
           if (!(await showcaseService.verifyPassword(params.storyId, body.password))) {
             set.status = 401;
             return { message: UNLOCK_FAILURE };
@@ -208,9 +207,9 @@ export const publicRoutes = new Elysia()
             throw new AppError(404, 'Not found.');
           }
           if (entry.visibility === 'password') {
-            // Um `<a download>` não carrega header, então a página pede o link em
-            // `POST .../download-url` e recebe o token de volta como parâmetro, com validade
-            // de 60 segundos. É o único lugar onde ele aparece numa URL.
+            // An `<a download>` carries no header, so the page asks for the link at `POST .../download-url` and
+            // gets the token back as a parameter, valid for 60 seconds. It is the only place where it appears in
+            // a URL.
             const authorized =
               (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
               (await verifyShowcaseToken(
@@ -237,9 +236,9 @@ export const publicRoutes = new Elysia()
             (publication.snapshot as { title: string }).title,
           )}-${publication.label}.zip`;
 
-          // Em S3, redirecionar em vez de repassar os bytes: é justamente para o processo da
-          // API não virar o gargalo de banda de uma história popular que o armazenamento
-          // remoto existe. No disco local não há URL para assinar, então servimos normalmente.
+          // On S3, redirect instead of relaying the bytes: keeping the API process from becoming a popular
+          // story's bandwidth bottleneck is precisely why remote storage exists. On local disk there is no URL
+          // to sign, so we serve it normally.
           const presigned = await publicationStorageService.presignedUrl(
             params.storyId,
             params.publicationId,
@@ -259,7 +258,7 @@ export const publicRoutes = new Elysia()
 
           set.headers['content-type'] = 'application/zip';
           set.headers['content-disposition'] = `attachment; filename="${fileName}"`;
-          // Uma publicação nunca muda depois de criada.
+          // A publication never changes after it is created.
           set.headers['cache-control'] = 'public, max-age=31536000, immutable';
           return body;
         },
@@ -307,7 +306,7 @@ export const publicRoutes = new Elysia()
                 })
               : undefined;
 
-          const base = `/public/stories/${params.storyId}/publications/${params.publicationId}/download`;
+          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/download`;
           return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
         },
         {
@@ -324,9 +323,9 @@ export const publicRoutes = new Elysia()
   );
 
 /**
- * Confere um `Authorization: Showcase <token>` e devolve se ele abre *esta* história.
+ * Checks an `Authorization: Showcase <token>` and returns whether it unlocks *this* story.
  *
- * O escopo é por história de propósito: quem tem a senha de uma não passa a enxergar outra.
+ * The scope is per story on purpose: holding one story's password does not make another visible.
  */
 async function verifyShowcaseToken(
   showcaseJwt: { verify: (token: string) => Promise<{ storyId?: string } | false> },

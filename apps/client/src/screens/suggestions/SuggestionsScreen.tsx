@@ -1,18 +1,16 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  isSuggestionAttributeType,
-  STORY_SCHEMA_ENTITY_TYPES,
-  StorySchemaEntityType,
-} from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
+import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { SuggestionSelect } from '../../db/schema';
+import type { SuggestionSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -26,11 +24,21 @@ import {
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
+type StorySuggestion = [value: string, usageCount: number];
+
+const SUGGESTION_SOURCE_EVENTS = [
+  'character_changed',
+  'character_relation_changed',
+  'item_changed',
+  'item_journey_changed',
+  'attribute_value_changed',
+] as const;
 
 const ENTITY_LABELS: Record<string, string> = {
   Character: 'characters_title',
@@ -53,6 +61,8 @@ const SuggestionsScreen = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();
+  const commonContainerStyles = getCommonContainerStyles(colors);
+  const commonInputStyles = getCommonInputStyles(colors);
   const navigation = useNavigation<any>();
   const { isCompact } = useResponsiveLayout();
   const db = useDrizzle();
@@ -64,9 +74,9 @@ const SuggestionsScreen = () => {
   const [groups, setGroups] = useState<SuggestionGroup[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [stored, setStored] = useState<SuggestionSelect[]>([]);
+  const [storyValues, setStoryValues] = useState<StorySuggestion[]>([]);
+  const [usageByValue, setUsageByValue] = useState<Map<string, number>>(new Map());
   const [newValue, setNewValue] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
   const [newListName, setNewListName] = useState('');
   const [creatingList, setCreatingList] = useState(false);
   const [renamingList, setRenamingList] = useState(false);
@@ -76,15 +86,33 @@ const SuggestionsScreen = () => {
 
   const loadGroups = useCallback(async () => {
     if (!storyId) return setGroups([]);
-    const native = Object.entries(entityFieldMetadata).flatMap(([entity, fields]) =>
+    const nativeByType = new Map<
+      string,
+      { type: string; key: string; entityLabels: string[]; fieldLabels: string[] }
+    >();
+    Object.entries(entityFieldMetadata).forEach(([entity, fields]) => {
       fields
         .filter((field) => field.isSuggestion && field.suggestionsSource)
-        .map((field) => ({
-          type: field.suggestionsSource!,
-          key: field.suggestionsSource!,
-          label: `${t(ENTITY_LABELS[entity] ?? entity)} · ${t(field.label)}`,
-        })),
-    );
+        .forEach((field) => {
+          const type = field.suggestionsSource!;
+          const current = nativeByType.get(type) ?? {
+            type,
+            key: type,
+            entityLabels: [],
+            fieldLabels: [],
+          };
+          const entityLabel = t(ENTITY_LABELS[entity] ?? entity);
+          const fieldLabel = t(field.label);
+          if (!current.entityLabels.includes(entityLabel)) current.entityLabels.push(entityLabel);
+          if (!current.fieldLabels.includes(fieldLabel)) current.fieldLabels.push(fieldLabel);
+          nativeByType.set(type, current);
+        });
+    });
+    const native = Array.from(nativeByType.values()).map((group) => ({
+      type: group.type,
+      key: group.key,
+      label: `${group.entityLabels.join(' + ')} · ${group.fieldLabels.join(' / ')}`,
+    }));
     const schemaService = createStorySchemaFieldService(db);
     const batches = await Promise.all(
       STORY_SCHEMA_ENTITY_TYPES.map((entityType) =>
@@ -113,31 +141,128 @@ const SuggestionsScreen = () => {
     );
   }, [db, storyId, suggestionService, t]);
 
-  const loadStored = useCallback(async () => {
-    if (!storyId || !selectedType) return setStored([]);
-    setStored(await suggestionService.getStoredSuggestions(selectedType, storyId));
+  const loadValues = useCallback(async () => {
+    if (!storyId || !selectedType) {
+      setStored([]);
+      setStoryValues([]);
+      setUsageByValue(new Map());
+      return;
+    }
+    const [storedSuggestions, usageCounts] = await Promise.all([
+      suggestionService.getStoredSuggestions(selectedType, storyId),
+      suggestionService.getSuggestionUsageCounts(selectedType, storyId),
+    ]);
+    const storedValues = new Set(storedSuggestions.map((suggestion) => suggestion.value));
+    setStored(storedSuggestions);
+    setUsageByValue(new Map(usageCounts));
+    setStoryValues(usageCounts.filter(([value]) => !storedValues.has(value)));
   }, [selectedType, storyId, suggestionService]);
+
+  const selectedGroup = groups.find((group) => group.type === selectedType);
+  const copyDestinations = groups.filter((group) => group.type !== selectedType);
+
+  const removeNamedList = useCallback(() => {
+    if (!selectedType || !isNamedListType(selectedType)) return;
+    AppAlert.alert(t('delete'), t('delete_named_suggestion_list_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: async () => {
+          if (!userId || !storyId) return;
+          await suggestionService.deleteNamedList(userId, storyId, selectedType);
+          await loadGroups();
+        },
+      },
+    ]);
+  }, [loadGroups, selectedType, storyId, suggestionService, t, userId]);
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('standard_suggestions_title') });
+      navigation.getParent()?.setOptions({
+        title: t('standard_suggestions_title'),
+        headerRight: () =>
+          canEdit ? (
+            <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setCreatingList(true);
+                  setRenamingList(false);
+                  setCopying(false);
+                }}
+                accessibilityLabel={t('suggestion_new_list')}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+              {selectedType && stored.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setCopying(true);
+                    setCopyTargets([]);
+                  }}
+                  accessibilityLabel={t('suggestion_copy_to')}
+                >
+                  <Ionicons name="copy-outline" size={24} color={colors.text} />
+                </TouchableOpacity>
+              )}
+              {selectedType && isNamedListType(selectedType) && (
+                <>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setRenamingList(true);
+                      setRenameListName(selectedGroup?.name ?? '');
+                      setCreatingList(false);
+                      setCopying(false);
+                    }}
+                    accessibilityLabel={t('suggestion_rename_list')}
+                  >
+                    <Ionicons name="pencil-outline" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={removeNamedList}
+                    accessibilityLabel={t('suggestion_delete_list')}
+                  >
+                    <Ionicons name="trash-outline" size={24} color={colors.error} />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          ) : undefined,
+      });
       loadGroups();
-    }, [loadGroups, navigation, t]),
+      loadValues();
+    }, [
+      canEdit,
+      colors.error,
+      colors.text,
+      loadGroups,
+      loadValues,
+      navigation,
+      removeNamedList,
+      selectedGroup?.name,
+      selectedType,
+      stored.length,
+      t,
+    ]),
   );
   useEffect(() => {
-    loadStored();
-  }, [loadStored]);
+    loadValues();
+  }, [loadValues]);
   useEffect(() => {
     setRenamingList(false);
     setRenameListName('');
   }, [selectedType]);
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadStored();
+      if (changedStoryId === storyId) loadValues();
     };
     entityEventEmitter.on('suggestion_changed', refresh);
-    return () => entityEventEmitter.off('suggestion_changed', refresh);
-  }, [loadStored, storyId]);
+    SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.on(event, refresh));
+    return () => {
+      entityEventEmitter.off('suggestion_changed', refresh);
+      SUGGESTION_SOURCE_EVENTS.forEach((event) => entityEventEmitter.off(event, refresh));
+    };
+  }, [loadValues, storyId]);
 
   const add = async () => {
     if (!userId || !storyId || !selectedType || !newValue.trim()) return;
@@ -148,27 +273,6 @@ const SuggestionsScreen = () => {
       AppAlert.alert(t('error'), (error as Error).message);
     }
   };
-  const saveEdit = async () => {
-    if (!userId || !editingId || !editingValue.trim()) return;
-    try {
-      await suggestionService.updateSuggestion(userId, editingId, editingValue);
-      setEditingId(null);
-    } catch (error) {
-      AppAlert.alert(t('error'), (error as Error).message);
-    }
-  };
-  const remove = (id: string) =>
-    AppAlert.alert(t('delete'), t('delete_suggestion_message'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          if (userId) await suggestionService.deleteSuggestion(userId, id);
-        },
-      },
-    ]);
-
   const createList = async () => {
     if (!userId || !storyId || !newListName.trim()) return;
     try {
@@ -213,41 +317,22 @@ const SuggestionsScreen = () => {
     }
   };
 
-  const removeNamedList = () => {
-    if (!selectedType || !isNamedListType(selectedType)) return;
-    AppAlert.alert(t('delete'), t('delete_named_suggestion_list_message'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          if (!userId || !storyId) return;
-          await suggestionService.deleteNamedList(userId, storyId, selectedType);
-          await loadGroups();
-        },
-      },
-    ]);
-  };
-
   const toggleCopyTarget = (type: string) => {
     setCopyTargets((current) =>
       current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
     );
   };
 
-  const selectedGroup = groups.find((group) => group.type === selectedType);
-  const copyDestinations = groups.filter((group) => group.type !== selectedType);
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background, padding: 16 },
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
     description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
-    // Compacto: tira de chips com rolagem horizontal (cabe bem em telas estreitas). Largo:
-    // coluna fixa à esquerda com a lista completa de grupos, sem depender de rolagem
-    // horizontal para alcançar grupos "fora da tela" - o problema original nesta tela.
+    // Compact: a strip of chips with horizontal scrolling (it fits well on narrow screens). Wide: a fixed
+    // left-hand column with the complete list of groups, without depending on horizontal scrolling to reach
+    // groups "off screen" - the original problem on this screen.
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    // Rolagem vertical com quebra de linha, não rolagem horizontal - numa lista com muitos
-    // grupos, um chip "fora da tela" para o lado não tinha nenhuma pista visual de que
-    // existia mais coisa para rolar; quebrando linha, tudo fica alcançável só descendo.
+    // Vertical scrolling with line wrapping, not horizontal scrolling - in a list with many groups, a chip
+    // "off screen" to the side gave no visual clue that there was more to scroll to; with wrapping,
+    // everything is reachable just by going down.
     groups: { maxHeight: 160, marginBottom: 16 },
     groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
     chip: {
@@ -280,17 +365,30 @@ const SuggestionsScreen = () => {
     row: {
       flexDirection: 'row',
       alignItems: 'center',
+      height: 58,
       paddingVertical: 11,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
     value: { flex: 1, color: colors.text, fontSize: 16 },
+    storyValue: { flex: 1, color: colors.textSecondary, fontSize: 16 },
+    usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
+    sectionTitle: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 2,
+      textTransform: 'uppercase',
+    },
     icon: { padding: 7 },
     empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
     copyList: { marginBottom: 12 },
     copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     copyLabel: { flex: 1, color: colors.text },
+    modalContent: { padding: 16, gap: 12 },
+    modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   });
 
   const groupsList = isCompact ? (
@@ -340,90 +438,103 @@ const SuggestionsScreen = () => {
           {t('suggestion_key')}: {selectedGroup.key}
         </Text>
       )}
-      {canEdit && (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.icon}
-            onPress={() => {
-              setCreatingList((open) => !open);
-              setRenamingList(false);
-            }}
-            accessibilityLabel={t('suggestion_new_list')}
-          >
-            <Ionicons
-              name="add-circle-outline"
-              size={26}
-              color={creatingList ? colors.primary : colors.text}
-            />
-          </TouchableOpacity>
-          {selectedType && stored.length > 0 && (
-            <TouchableOpacity
-              style={styles.icon}
-              onPress={() => {
-                setCopying((open) => !open);
-                setCopyTargets([]);
-              }}
-              accessibilityLabel={t('suggestion_copy_to')}
-            >
-              <Ionicons
-                name="copy-outline"
-                size={24}
-                color={copying ? colors.primary : colors.text}
-              />
-            </TouchableOpacity>
-          )}
-          {selectedType && isNamedListType(selectedType) && (
-            <>
-              <TouchableOpacity
-                style={styles.icon}
-                onPress={() => {
-                  setRenamingList((open) => !open);
-                  setCreatingList(false);
-                  setRenameListName(selectedGroup?.name ?? '');
-                }}
-                accessibilityLabel={t('suggestion_rename_list')}
-              >
-                <Ionicons
-                  name="pencil-outline"
-                  size={24}
-                  color={renamingList ? colors.primary : colors.text}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.icon}
-                onPress={removeNamedList}
-                accessibilityLabel={t('suggestion_delete_list')}
-              >
-                <Ionicons name="trash-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      )}
-      {canEdit && creatingList && (
+      {canEdit && selectedType && (
         <View style={styles.inputRow}>
           <TextInput
-            value={newListName}
-            onChangeText={setNewListName}
-            placeholder={t('suggestion_list_name_placeholder')}
+            value={newValue}
+            onChangeText={setNewValue}
+            placeholder={t('suggestion_value_placeholder')}
             style={styles.input}
           />
+          <Button onPress={add}>{t('add')}</Button>
+        </View>
+      )}
+      <ScrollView>
+        {stored.length > 0 && (
+          <Text style={styles.sectionTitle}>{t('suggestion_saved_values')}</Text>
+        )}
+        {stored.map((suggestion) => (
+          <TouchableOpacity
+            key={suggestion.id}
+            style={styles.row}
+            onPress={() =>
+              navigation.navigate('SuggestionUsage', {
+                type: selectedType,
+                value: suggestion.value,
+              })
+            }
+          >
+            <Text style={styles.value}>{suggestion.value}</Text>
+            <Text style={styles.usage}>{usageByValue.get(suggestion.value) ?? 0}</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ))}
+        {storyValues.length > 0 && (
+          <Text style={styles.sectionTitle}>{t('suggestion_values_in_story')}</Text>
+        )}
+        {storyValues.map(([value, usageCount]) => (
+          <TouchableOpacity
+            key={value}
+            style={styles.row}
+            onPress={() => navigation.navigate('SuggestionUsage', { type: selectedType, value })}
+          >
+            <Text style={styles.storyValue}>{value}</Text>
+            <Text style={styles.usage}>{usageCount}</Text>
+            <View style={styles.icon}>
+              <Ionicons
+                name="link-outline"
+                size={20}
+                color={colors.textSecondary}
+                accessibilityLabel={t('suggestion_value_from_story')}
+              />
+            </View>
+          </TouchableOpacity>
+        ))}
+        {selectedType && stored.length === 0 && storyValues.length === 0 && (
+          <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
+        )}
+      </ScrollView>
+      <ResponsiveModal
+        visible={creatingList}
+        onClose={() => setCreatingList(false)}
+        contentStyle={styles.modalContent}
+      >
+        <Text style={styles.modalTitle}>{t('suggestion_new_list')}</Text>
+        <TextInput
+          value={newListName}
+          onChangeText={setNewListName}
+          placeholder={t('suggestion_list_name_placeholder')}
+          style={commonInputStyles.input}
+        />
+        <View style={styles.modalActions}>
+          <Button onPress={() => setCreatingList(false)}>{t('cancel')}</Button>
           <Button onPress={createList}>{t('add')}</Button>
         </View>
-      )}
-      {canEdit && renamingList && (
-        <View style={styles.inputRow}>
-          <TextInput
-            value={renameListName}
-            onChangeText={setRenameListName}
-            placeholder={t('suggestion_list_name_placeholder')}
-            style={styles.input}
-          />
+      </ResponsiveModal>
+      <ResponsiveModal
+        visible={renamingList}
+        onClose={() => setRenamingList(false)}
+        contentStyle={styles.modalContent}
+      >
+        <Text style={styles.modalTitle}>{t('suggestion_rename_list')}</Text>
+        <TextInput
+          value={renameListName}
+          onChangeText={setRenameListName}
+          placeholder={t('suggestion_list_name_placeholder')}
+          style={commonInputStyles.input}
+        />
+        <View style={styles.modalActions}>
+          <Button onPress={() => setRenamingList(false)}>{t('cancel')}</Button>
           <Button onPress={renameList}>{t('save')}</Button>
         </View>
-      )}
-      {canEdit && copying && (
-        <View style={styles.copyList}>
+      </ResponsiveModal>
+      <ResponsiveModal
+        visible={copying}
+        onClose={() => setCopying(false)}
+        contentStyle={styles.modalContent}
+      >
+        <Text style={styles.modalTitle}>{t('suggestion_copy_to')}</Text>
+        <ScrollView style={styles.copyList}>
           {copyDestinations.map((group) => (
             <TouchableOpacity
               key={group.type}
@@ -438,66 +549,17 @@ const SuggestionsScreen = () => {
               <Text style={styles.copyLabel}>{group.label}</Text>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity
-            style={styles.icon}
-            onPress={copyToSelected}
-            accessibilityLabel={t('suggestion_copy_confirm')}
-          >
-            <Ionicons name="checkmark-circle-outline" size={26} color={colors.primary} />
-          </TouchableOpacity>
+        </ScrollView>
+        <View style={styles.modalActions}>
+          <Button onPress={() => setCopying(false)}>{t('cancel')}</Button>
+          <Button onPress={copyToSelected}>{t('suggestion_copy_confirm')}</Button>
         </View>
-      )}
-      {canEdit && selectedType && (
-        <View style={styles.inputRow}>
-          <TextInput
-            value={newValue}
-            onChangeText={setNewValue}
-            placeholder={t('suggestion_value_placeholder')}
-            style={styles.input}
-          />
-          <Button onPress={add}>{t('add')}</Button>
-        </View>
-      )}
-      <ScrollView>
-        {stored.map((suggestion) => (
-          <View key={suggestion.id} style={styles.row}>
-            {editingId === suggestion.id ? (
-              <TextInput value={editingValue} onChangeText={setEditingValue} style={styles.input} />
-            ) : (
-              <Text style={styles.value}>{suggestion.value}</Text>
-            )}
-            {canEdit &&
-              (editingId === suggestion.id ? (
-                <TouchableOpacity style={styles.icon} onPress={saveEdit}>
-                  <Ionicons name="checkmark" size={22} color={colors.primary} />
-                </TouchableOpacity>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.icon}
-                    onPress={() => {
-                      setEditingId(suggestion.id);
-                      setEditingValue(suggestion.value);
-                    }}
-                  >
-                    <Ionicons name="pencil-outline" size={20} color={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.icon} onPress={() => remove(suggestion.id)}>
-                    <Ionicons name="trash-outline" size={20} color={colors.error} />
-                  </TouchableOpacity>
-                </>
-              ))}
-          </View>
-        ))}
-        {selectedType && stored.length === 0 && (
-          <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
-        )}
-      </ScrollView>
+      </ResponsiveModal>
     </>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={commonContainerStyles.container}>
       <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
       <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
       {isCompact ? (

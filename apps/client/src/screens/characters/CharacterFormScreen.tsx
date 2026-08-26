@@ -1,7 +1,7 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
-  CustomAttributeValues,
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -12,36 +12,28 @@ import NoteManager from '@/src/components/features/notes/NoteManager'; // Import
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
-import SeeAlsoManager, {
-  SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { Character } from '@keres/shared/entities/Character';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import {
-  RouteProp,
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native'; // Import StackActions
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { Character } from '@keres/shared/entities/Character';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import type { RouteProp } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
+import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { CharacterStackParamList } from '../../navigation/MainSystemStack';
+import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import {
-  CharacterRelationServiceInterface,
-  createCharacterRelationService,
-} from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { createModeService } from '../../services/storymanagement/ModeService';
@@ -49,7 +41,11 @@ import { createStatRelationService } from '../../services/storymanagement/StatRe
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import {
+  commonFormStyleDefs,
+  getCommonContainerStyles,
+  getCommonInputStyles,
+} from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
@@ -111,9 +107,9 @@ const CharacterFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
-  // Modos e valores de status só existem depois que o personagem tem id, então os dois blocos
-  // abaixo aparecem apenas em edição - criar já com modos exigiria uma fila de pendentes como a
-  // de relações, sem ganho: o autor acabou de nomear o personagem.
+  // Modes and stat values only exist once the character has an id, so the two blocks below appear only
+  // when editing - creating with modes already in place would require a pending queue like the relations'
+  // one, with no gain: the author has only just named the character.
   const statData = useStoryStats(selectedStory?.id);
   const characterModes = useMemo(
     () => statData.modes.filter((mode) => mode.characterId === currentCharacterId),
@@ -122,8 +118,8 @@ const CharacterFormScreen = () => {
   const modeService = useCallback(() => createModeService(drizzleDb), [drizzleDb]);
   const statRelationService = useCallback(() => createStatRelationService(drizzleDb), [drizzleDb]);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
-  // Enquanto `currentCharacterId` é undefined (criando), guarda aqui - sem id real ainda pra
-  // gravar a relação. Replay em `persistPendingCharacterRelations` depois do save principal.
+  // While `currentCharacterId` is undefined (creating), it is held here - there is no real id yet to save
+  // the relation against. Replayed in `persistPendingCharacterRelations` after the main save.
   const [pendingCharacterRelations, setPendingCharacterRelations] = useState<CharacterRelation[]>(
     [],
   );
@@ -440,9 +436,9 @@ const CharacterFormScreen = () => {
   };
 
   /**
-   * Grava de verdade as relações acumuladas enquanto o personagem ainda não existia -
-   * `character1Id`/`character2Id` guardaram '' no lugar do id (placeholder do form, ver
-   * `CharacterRelationManager`); troca pelo id de verdade aqui.
+   * Actually saves the relations accumulated while the character did not exist yet -
+   * `character1Id`/`character2Id` held '' in place of the id (the form's placeholder, see
+   * `CharacterRelationManager`); it swaps in the real id here.
    */
   const persistPendingCharacterRelations = async (targetCharacterId: string) => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !userId) return;
@@ -460,42 +456,7 @@ const CharacterFormScreen = () => {
   };
 
   const styles = StyleSheet.create({
-    scrollViewContent: {
-      padding: 20,
-      paddingBottom: scrollBottomPadding,
-      flexGrow: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    switchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 15,
-      marginBottom: 5,
-    },
-    saveButton: {
-      marginTop: 10,
-      marginBottom: 0,
-    },
-    deleteButton: {
-      backgroundColor: 'red',
-      marginBottom: 15,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
+    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: {
       // Renamed from tagSection for clarity.
       marginTop: 20,
@@ -690,7 +651,9 @@ const CharacterFormScreen = () => {
                 storyId: selectedStory.id,
                 characterId: currentCharacterId,
                 ...mode,
-                order: characterModes.length,
+                // The highest + 1: counting would repeat an existing mode's number after a deletion in the middle of
+                // the list.
+                order: Math.max(0, ...characterModes.map((existing) => existing.order + 1)),
               });
             }}
             onUpdate={(modeId, mode) => modeService().updateMode(userId!, modeId, mode)}

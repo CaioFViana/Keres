@@ -24,7 +24,7 @@ export const users = table(
     avatarIcon: text('avatar_icon'),
     /** Free-text profile description, capped at 200 chars (enforced in UpdateUserProfileSchema). */
     bio: text('bio'),
-    /** Grants access to the /admin panel and /admin/api/* routes. Checked from the DB per request, never trusted from the JWT. */
+    /** Grants access to the /admin panel and /api/admin/* routes. Checked from the DB per request, never trusted from the JWT. */
     isAdmin: boolean('is_admin').notNull().default(false),
     /** `null` = no tier assigned; TierEnforcementService falls back to the registration settings' default tier, then to unlimited. */
     tierId: text('tier_id').references(() => tiers.id),

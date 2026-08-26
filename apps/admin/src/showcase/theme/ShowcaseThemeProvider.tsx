@@ -1,12 +1,5 @@
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   applyResolvedTheme,
   cycleThemePreference,
@@ -28,12 +21,12 @@ interface ShowcaseThemeState {
 const ShowcaseThemeContext = createContext<ShowcaseThemeState | null>(null);
 
 /**
- * Claro / escuro / sistema, com sistema por padrão.
+ * Light / dark / system, system by default.
  *
- * Reaproveita `theme.ts` do painel: a mecânica é a mesma (atributo `data-theme` no `<html>`,
- * escolha explícita gravada em `localStorage`, `matchMedia` ao vivo enquanto a preferência é
- * "sistema"). O que muda é só a chave de armazenamento - painel e site são coisas separadas e
- * cada um lembra da sua própria preferência.
+ * It reuses the panel's `theme.ts`: the mechanics are the same (a `data-theme` attribute on
+ * `<html>`, an explicit choice written to `localStorage`, live `matchMedia` while the preference is
+ * "system"). All that changes is the storage key - panel and site are separate things and each one
+ * remembers its own preference.
  */
 export function ShowcaseThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreference] = useState<ThemePreference>(() =>

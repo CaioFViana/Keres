@@ -5,22 +5,22 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import RelatedEntitiesList, {
-  RelatedEntityItem,
-} from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
 import { Ionicons } from '@expo/vector-icons';
-import { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
+import type { RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
-import { NoteSelect } from '../../db/schemas/notes';
+import type { TagSelect } from '../../db/schema';
+import type { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -32,10 +32,10 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { NotesScreenNavigationProp } from './NoteListScreen';
+import type { NotesScreenNavigationProp } from './NoteListScreen';
 
 // Define the parameter list for this screen
 export type NoteDetailScreenParamList = {
@@ -108,22 +108,7 @@ const NoteDetailScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
   });
 
   const fetchNote = useCallback(async () => {

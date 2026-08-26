@@ -3,8 +3,8 @@ import { table, text, timestampNow } from '../columns';
 export const MEDIA_STORAGE_SETTINGS_SINGLETON_ID = 'singleton';
 
 /**
- * Trava o banco a um destino de blobs. Isso impede que uma troca acidental de `.env` faça
- * o servidor parecer vazio e comece a gravar mídia em outro lugar.
+ * Locks the database to one blob destination. That stops an accidental `.env` switch from making the
+ * server look empty and starting to write media somewhere else.
  */
 export const mediaStorageSettings = table('media_storage_settings', {
   id: text('id').primaryKey(),

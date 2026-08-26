@@ -1,14 +1,15 @@
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import type { SeeAlsoEntityType } from '@keres/shared';
 
 export const seeAlsoRelations = sqliteTable(
   'see_also_relations',
   {
     id: text('id').primaryKey(),
     storyId: text('story_id').notNull(),
-    entityAType: text('entity_a_type').notNull(),
+    entityAType: text('entity_a_type').$type<SeeAlsoEntityType>().notNull(),
     entityAId: text('entity_a_id').notNull(),
-    entityBType: text('entity_b_type').notNull(),
+    entityBType: text('entity_b_type').$type<SeeAlsoEntityType>().notNull(),
     entityBId: text('entity_b_id').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -17,8 +18,8 @@ export const seeAlsoRelations = sqliteTable(
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   (table) => [
-    // Só protege contra duplicatas se A/B forem sempre canonicalizados (ordenados) antes do
-    // insert - ver SeeAlsoRelationService.sortEntityRefs.
+    // It only protects against duplicates if A/B are always canonicalized (sorted) before the
+    // insert - see SeeAlsoRelationService.sortEntityRefs.
     unique('see_also_story_a_b_unq').on(
       table.storyId,
       table.entityAType,

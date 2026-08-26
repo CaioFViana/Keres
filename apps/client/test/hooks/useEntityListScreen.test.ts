@@ -63,6 +63,24 @@ afterEach(() => {
 });
 
 describe('bootstrapping', () => {
+  it('only reports the blocking loading state until the first response for a story', async () => {
+    let resolveFetch: (() => void) | undefined;
+    store = buildStore({
+      fetchTags: jest.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFetch = resolve;
+          }),
+      ),
+    });
+
+    const { result } = await render();
+    expect(result.current.isInitialLoading).toBe(true);
+
+    await act(async () => resolveFetch?.());
+    await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
+  });
+
   it('hands the store the database and the open story', async () => {
     await render();
 
@@ -106,8 +124,8 @@ describe('bootstrapping', () => {
 });
 
 /**
- * A busca é de dois níveis de propósito: o campo responde a cada tecla, e a consulta só sai
- * quando a digitação para. Sem isso cada letra dispararia uma query.
+ * The search is two-tiered on purpose: the field responds to every keystroke, and the query only goes
+ * out when the typing stops. Without that every letter would fire a query.
  */
 describe('search', () => {
   it('updates the input on every keystroke without querying', async () => {

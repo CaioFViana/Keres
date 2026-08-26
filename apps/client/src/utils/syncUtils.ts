@@ -1,8 +1,8 @@
-import { StoryUpdateType } from '@keres/shared';
+import type { StoryUpdateType } from '@keres/shared';
 import { eq } from 'drizzle-orm'; // Import eq
-import { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema'; // Import all schema
-import { ServerService } from '../services/ServerService'; // Import ServerService
+import type { ServerService } from '../services/ServerService'; // Import ServerService
 import { entityEventEmitter } from './EventEmitter';
 import i18n from './i18n';
 import { createULID } from './entityUtils';

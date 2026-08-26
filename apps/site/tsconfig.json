@@ -12,9 +12,18 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    // Import de tipo é escrito como tal, e o compilador não adivinha: o que está escrito é o
+    // que sobra no bundle. Complementa `@typescript-eslint/consistent-type-imports`, que já
+    // cobra a mesma coisa linha a linha.
+    "verbatimModuleSyntax": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/src/*": ["../client/src/*"],
+      "react-native": ["react-native-web"]
+    }
   },
   "include": ["src", "test"]
 }

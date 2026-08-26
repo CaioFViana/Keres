@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,14 +16,12 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import {
-  createGlobalSearchService,
-  GlobalSearchResult,
-} from '../../services/storymanagement/GlobalSearchService';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type { GlobalSearchResult } from '../../services/storymanagement/GlobalSearchService';
+import { createGlobalSearchService } from '../../services/storymanagement/GlobalSearchService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { FavoriteFilterState } from '../../types/entityFilters';
+import type { FavoriteFilterState } from '../../types/entityFilters';
 import { debounce } from '../../utils/debounce';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
@@ -46,6 +44,7 @@ const SECTION_ORDER: { entityType: GlobalSearchEntityType; titleKey: string }[] 
   { entityType: 'Tag', titleKey: 'tags_title' },
   { entityType: 'Note', titleKey: 'notes_title' },
   { entityType: 'WorldRule', titleKey: 'world_rules_title' },
+  { entityType: 'Plot', titleKey: 'plots_title' },
 ];
 
 const SEARCH_DEBOUNCE_MS = 400;

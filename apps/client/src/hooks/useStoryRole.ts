@@ -1,4 +1,4 @@
-import { EffectiveStoryRole } from '@keres/shared';
+import type { EffectiveStoryRole } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '../db';
 import { entityEventEmitter } from '../utils/EventEmitter';

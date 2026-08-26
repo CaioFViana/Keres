@@ -2,21 +2,22 @@ import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path, Polygon, Rect as SvgRect, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
-import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
+import type { PanZoomCanvasHandle } from '../../../../hooks/usePanZoomCanvas';
+import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
-import { GraphNode, StoryGraphLayout } from '../../../../utils/storyGraphLayout';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 
 /**
- * Desenho interativo do mapa da história.
+ * The interactive drawing of the story map.
  *
- * Duas camadas sobre as mesmas coordenadas: as arestas em SVG (curva com ponta de seta é o
- * que SVG faz bem) e as cenas como Views nativas por cima. Os nós não são SVG de propósito -
- * como View eles ganham quebra de texto de verdade, `numberOfLines` e toque nativo, então
- * tocar numa cena não precisa de cálculo de acerto manual: o React Native já resolve isso,
- * inclusive com o mapa ampliado.
+ * Two layers over the same coordinates: the edges in SVG (a curve with an arrowhead is what
+ * SVG does well) and the scenes as native Views on top. The nodes are deliberately not SVG -
+ * as a View they get real text wrapping, `numberOfLines` and native touch, so tapping a scene
+ * needs no manual hit testing: React Native already solves that,
+ * including with the map zoomed in.
  *
- * Pan e zoom vêm de `usePanZoomCanvas`, compartilhado com o mapa de relações entre
- * personagens - ver o hook para o porquê de `PanResponder` em vez de
+ * Pan and zoom come from `usePanZoomCanvas`, shared with the character relations map - see the
+ * hook for why `PanResponder` instead of
  * `react-native-gesture-handler`.
  */
 

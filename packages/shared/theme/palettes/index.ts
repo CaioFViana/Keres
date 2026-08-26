@@ -1,4 +1,4 @@
-import { ThemeColors } from '../ThemeColors';
+import type { ThemeColors } from '../ThemeColors';
 import { amethystTheme } from './amethystTheme';
 import { cherryBlossomTheme } from './cherryBlossomTheme';
 import { crimsonSunsetTheme } from './crimsonSunsetTheme';

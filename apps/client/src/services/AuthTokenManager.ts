@@ -1,17 +1,19 @@
 import { eq } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
-import { ServerSelect, servers } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
+import { servers } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import type { TokenProvider } from './apiClient';
 import apiClient, {
   clearAllServerAuthState,
   clearServerTokenCache,
   createKeresAxiosInstance,
   isOfflineError,
-  TokenProvider,
   updateServerTokenCache,
 } from './apiClient';
 import { canRefreshSessionWithCookie, usesHttpOnlyCookieSession } from './browserCookieSession';
-import { AuthTokens, tokenVault } from './TokenVault';
+import type { AuthTokens } from './TokenVault';
+import { tokenVault } from './TokenVault';
 
 let drizzleDb: AppDrizzleClient | null = null;
 

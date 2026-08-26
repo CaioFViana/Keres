@@ -1,9 +1,9 @@
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import { Story } from '@keres/shared/entities/Story';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { Story } from '@keres/shared/entities/Story';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,15 +12,12 @@ import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
+import { useThemeColors } from '../../theme/useThemeColors';
 import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  getCommonCardStyles,
-  getCommonContainerStyles,
-  useThemeColors,
-} from '../../theme/commonStyles';
+import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
@@ -229,9 +226,29 @@ const StorySelectionScreen = () => {
     navigation.replace('MainSystem', { storyId: story.id });
   };
 
-  const handleCreateNewStory = () => {
+  // `useCallback` so it can go into the header effect's dependencies below: as a loose function it is
+  // born anew on every render and would make the effect run every time.
+  const handleCreateNewStory = useCallback(() => {
     navigation.navigate('StoryForm', {});
-  };
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('story_selection_title'),
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
+            <TouchableOpacity
+              onPress={handleCreateNewStory}
+              accessibilityLabel={t('create_new_story')}
+            >
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        ),
+      });
+    }, [colors.text, handleCreateNewStory, navigation, t]),
+  );
 
   const handleEditStory = (storyId: string) => {
     navigation.navigate('StoryForm', { storyId });
@@ -294,22 +311,6 @@ const StorySelectionScreen = () => {
     favoriteButton: {
       padding: 5,
     },
-    floatingButton: {
-      position: 'absolute',
-      bottom: 20,
-      right: 20,
-      backgroundColor: colors.primary,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 8,
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4,
-    },
   });
 
   return (
@@ -337,13 +338,6 @@ const StorySelectionScreen = () => {
         }
         style={{ flex: 1 }}
       />
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={handleCreateNewStory}
-        onLongPress={() => showNotification(t('create_new_story'), 'info')}
-      >
-        <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
-      </TouchableOpacity>
     </View>
   );
 };

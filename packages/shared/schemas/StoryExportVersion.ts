@@ -1,8 +1,8 @@
 /**
- * Versão do formato de exportação de história (`FullStoryExportType`), independente do
- * número de versão do app (client/api/package.json não são uma única fonte de verdade hoje).
+ * Version of the story export format (`FullStoryExportType`), independent of the app's version
+ * number (client/api/package.json are not a single source of truth today).
  *
- * Só sobe manualmente quando uma release oficial muda o formato do pacote exportado -
- * não a cada commit/build.
+ * It is only bumped manually when an official release changes the exported package's format - not on
+ * every commit/build.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 5;
+export const CURRENT_STORY_FORMAT_VERSION = 6;

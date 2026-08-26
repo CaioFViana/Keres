@@ -1,13 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
-import { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import type { Ionicons } from '@expo/vector-icons';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 
 /**
- * Ícone por tipo de entidade, usado em qualquer lugar que precise exibir "ícone + nome" para
- * uma entidade genérica (busca global, "Veja também", lista de comentários). Extraído do que
- * era um mapa privado dentro de `GlobalSearchResultItem` para que as demais telas não
- * duplicassem os mesmos 10 pares. Indexado pelo tipo mais amplo (`GlobalSearchEntityType`,
- * 10 tipos) - subconjuntos como `SeeAlsoEntityType` (8 tipos) ou `CommentEntityType` (10
- * tipos) indexam aqui sem cast.
+ * An icon per entity type, used anywhere that needs to show "icon + name" for a generic entity (global
+ * search, "See also", the comment list). Extracted from what was a private map inside
+ * `GlobalSearchResultItem` so the other screens would not duplicate the same 10 pairs. Indexed by the
+ * broadest type (`GlobalSearchEntityType`, 10 types) - subsets like `SeeAlsoEntityType` (8 types) or
+ * `CommentEntityType` (10 types) index into it with no cast.
  */
 export const ENTITY_TYPE_ICONS: Record<GlobalSearchEntityType, keyof typeof Ionicons.glyphMap> = {
   Character: 'person-outline',
@@ -21,4 +20,5 @@ export const ENTITY_TYPE_ICONS: Record<GlobalSearchEntityType, keyof typeof Ioni
   Note: 'document-text-outline',
   WorldRule: 'shield-checkmark-outline',
   Mode: 'sparkles-outline',
+  Plot: 'git-network-outline',
 };

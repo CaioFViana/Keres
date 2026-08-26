@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Showcase } from '../components/Showcase';
 import { DOWNLOADS, FAQ_ITEMS, FEATURE_GROUPS, PILLARS, PLATFORMS } from '../content/catalog';
 import { DOCKER_IMAGE, GITHUB_RELEASES_URL, GITHUB_REPO_URL } from '../content/links';
 import keresLogoUrl from 'virtual:keres-logo';
@@ -63,6 +64,8 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      <Showcase />
 
       {FEATURE_GROUPS.map((group) => (
         <section

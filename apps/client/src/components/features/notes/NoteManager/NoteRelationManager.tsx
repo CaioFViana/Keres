@@ -1,4 +1,4 @@
-import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
+import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';

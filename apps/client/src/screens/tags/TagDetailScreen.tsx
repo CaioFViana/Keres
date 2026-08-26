@@ -3,19 +3,19 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import RelatedEntitiesList, {
-  RelatedEntityItem,
-} from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { Ionicons } from '@expo/vector-icons';
-import { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
+import type { RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema'; // Import TagSelect
+import type { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -24,10 +24,10 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { TagsScreenNavigationProp } from './TagListScreen';
+import type { TagsScreenNavigationProp } from './TagListScreen';
 
 // Define the parameter list for this screen
 export type TagDetailScreenParamList = {
@@ -100,12 +100,7 @@ const TagDetailScreen = () => {
   // Move styles declaration to the top
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
     detailText: {
       fontSize: 16,
       color: colors.text,
@@ -123,16 +118,6 @@ const TagDetailScreen = () => {
       borderWidth: 1,
       borderColor: colors.textSecondary,
       marginRight: 10,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
     },
   });
 

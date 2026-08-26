@@ -16,7 +16,7 @@ export function backupFolderName(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
 }
 
-/** Pasta-mãe dos backups, ao lado da pasta de dados — nunca dentro dela. */
+/** The backups' parent folder, next to the data folder - never inside it. */
 export function defaultBackupParent(dataDir: string): string {
   return `${dataDir.replace(/[\\/]+$/, '')}-backups`;
 }

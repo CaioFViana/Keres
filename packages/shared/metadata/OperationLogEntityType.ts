@@ -18,6 +18,8 @@ export enum OperationLogEntityType {
   OperationLog = 'OperationLog',
   ItemJourney = 'ItemJourney',
   CharacterScene = 'CharacterScene',
+  Plot = 'Plot',
+  PlotScene = 'PlotScene',
   StorySchemaField = 'StorySchemaField',
   AttributeValue = 'AttributeValue',
   LocationRelation = 'LocationRelation',

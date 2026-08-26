@@ -3,22 +3,22 @@ import type { AnyColumn } from 'drizzle-orm';
 import { usingSqlite } from './dialect';
 
 /**
- * Operadores cujo SQL muda de um motor para o outro.
+ * Operators whose SQL changes from one engine to the other.
  *
- * O resto das consultas desta API é escrito pelo drizzle e sai idêntico nos dois dialetos;
- * o que sobra é isto.
+ * The rest of this API's queries are written by drizzle and come out identical in both dialects; what
+ * is left over is this.
  */
 
 /**
- * Busca por trecho, ignorando maiúsculas e minúsculas.
+ * Substring search, ignoring case.
  *
- * `ILIKE` é do Postgres. No SQLite o `LIKE` já ignora caixa por conta própria, mas só em
- * ASCII - então a comparação é feita com os dois lados em minúsculas, o que dá o mesmo
- * resultado para o alfabeto latino sem acento.
+ * `ILIKE` is Postgres's. On SQLite `LIKE` already ignores case by itself, but only in ASCII - so the
+ * comparison is made with both sides lowercased, which gives the same result for the unaccented Latin
+ * alphabet.
  *
- * Diferença conhecida e aceita: no Postgres "José" casa com "josé"; no SQLite não, porque nem
- * `LIKE` nem `lower()` de lá conhecem acentuação. Isso afeta a busca administrativa por nome
- * de usuário e título de história - encontra menos, nunca encontra errado.
+ * A known and accepted difference: on Postgres "José" matches "josé"; on SQLite it does not, because
+ * neither its `LIKE` nor its `lower()` knows about accents. That affects the administrative search by
+ * username and story title - it finds less, never wrongly.
  */
 export function insensitiveLike(column: AnyColumn, pattern: string): SQL {
   if (usingSqlite) {
@@ -28,16 +28,16 @@ export function insensitiveLike(column: AnyColumn, pattern: string): SQL {
 }
 
 /**
- * Serializa transações concorrentes que mexem no mesmo par de usuários.
+ * Serialises concurrent transactions touching the same pair of users.
  *
- * No Postgres é um advisory lock por transação: dois pedidos de amizade em sentidos opostos
- * (A→B e B→A) disputam a mesma chave e nunca leem "não existe" ao mesmo tempo - a restrição de
- * unicidade sozinha só pega a duplicata exata (A→B duas vezes).
+ * On Postgres it is a per-transaction advisory lock: two friendship requests in opposite directions
+ * (A→B and B→A) contend for the same key and never read "does not exist" at the same time - the
+ * uniqueness constraint alone only catches the exact duplicate (A→B twice).
  *
- * No SQLite não existe advisory lock, e nem é preciso: a transação é aberta em modo
- * `immediate` (ver `writeTransactionConfig`), que toma a trava de escrita do banco inteiro
- * logo no início. É uma serialização mais grosseira - vale para todos os escritores, não só
- * para este par - e para um servidor de um processo só isso é aceitável.
+ * On SQLite there is no advisory lock, and none is needed: the transaction is opened in `immediate`
+ * mode (see `writeTransactionConfig`), which takes the whole database's write lock right at the start.
+ * It is a coarser serialisation - it applies to every writer, not only to this pair - and for a
+ * single-process server that is acceptable.
  */
 export async function lockUserPair(
   tx: { execute: (query: SQL) => Promise<unknown> },
@@ -52,12 +52,12 @@ export async function lockUserPair(
 }
 
 /**
- * Configuração para uma transação que vai escrever e não pode competir com outra.
+ * Configuration for a transaction that is going to write and must not compete with another.
  *
- * Vazia no Postgres, onde a serialização vem do advisory lock acima. No SQLite pede
- * `immediate`, que adquire a trava de escrita ao abrir em vez de no primeiro `INSERT` - sem
- * isso, duas transações que leem antes de escrever podem chegar juntas à escrita e uma delas
- * morrer com "database is locked".
+ * Empty on Postgres, where serialisation comes from the advisory lock above. On SQLite it asks for
+ * `immediate`, which acquires the write lock on opening rather than at the first `INSERT` - without
+ * that, two transactions that read before writing can reach the write together and one of them dies
+ * with "database is locked".
  */
 export const writeTransactionConfig = (usingSqlite ? { behavior: 'immediate' } : {}) as Record<
   string,

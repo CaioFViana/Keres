@@ -8,7 +8,7 @@ const ulid = (suffix: string) => suffix.toUpperCase().padStart(26, '0');
 const STORY_ID = ulid('story1');
 const USER_ID = ulid('user1');
 
-/** Coleções que todo export precisa trazer, mesmo vazias. */
+/** Collections every export has to carry, even when empty. */
 const REQUIRED_COLLECTIONS = [
   'chapters',
   'scenes',
@@ -28,8 +28,8 @@ const REQUIRED_COLLECTIONS = [
 ] as const;
 
 /**
- * Coleções adicionadas depois que o formato já existia. Precisam continuar opcionais: um
- * pacote antigo no disco do usuário tem de importar sem erro.
+ * Collections added after the format already existed. They have to stay optional: an old package on
+ * the user's disk must import without error.
  */
 const LEGACY_OPTIONAL_COLLECTIONS = [
   'galleryRelations',

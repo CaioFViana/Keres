@@ -1,8 +1,10 @@
-import { ItemJourney } from '@keres/shared/entities/Item';
+import type { ItemJourney } from '@keres/shared/entities/Item';
 import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntityType';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, itemJourneys } from '../../db';
+import type { AppDrizzleClient } from '../../db';
+import { itemJourneys } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
@@ -115,6 +117,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         newItemJourney.id,
         newItemJourney,
       );
+      entityEventEmitter.emit('item_journey_changed', newItemJourney.storyId, newItemJourney.id);
 
       return newItemJourney;
     },
@@ -177,6 +180,11 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
           changes,
         );
       }
+      entityEventEmitter.emit(
+        'item_journey_changed',
+        updatedItemJourney.storyId,
+        updatedItemJourney.id,
+      );
 
       return updatedItemJourney;
     },
@@ -217,6 +225,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         id,
         { id, version: removed?.version },
       );
+      entityEventEmitter.emit('item_journey_changed', itemJourneyToDelete.storyId, id);
     },
   };
 };

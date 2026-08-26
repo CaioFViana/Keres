@@ -26,7 +26,7 @@ export interface ApiLogFilters {
 
 export const LogsApiService = {
   async list(filters: ApiLogFilters): Promise<Paginated<ApiLogEntry>> {
-    const { data } = await apiClient.get('/admin/api/logs', { params: filters });
+    const { data } = await apiClient.get('/admin/logs', { params: filters });
     return data;
   },
 };

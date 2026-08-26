@@ -1,12 +1,13 @@
-import { StorySchemaEntityType } from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
-import { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { buildCustomAttributeFieldMetadata } from '../../../../utils/customAttributeFieldMetadata';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -24,6 +25,13 @@ interface AdvancedSearchModalProps {
   onSearch: (criteria: { [key: string]: any }) => void;
   storyId: string;
   initialCriteria?: { [key: string]: any };
+  scopes?: AdvancedSearchScope[];
+}
+
+export interface AdvancedSearchScope {
+  entityName: string;
+  prefix: string;
+  label: string;
 }
 
 const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
@@ -33,28 +41,15 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   onSearch,
   storyId,
   initialCriteria = {},
+  scopes,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [searchCriteria, setSearchCriteria] = useState<{ [key: string]: any }>(initialCriteria);
 
-  // Get metadata for the specified entity
-  const nativeFieldsMetadata = useMemo(() => {
-    return entityFieldMetadata[entityName]?.filter((field) => field.isSearchable) || [];
-  }, [entityName]);
-
-  // Campos customizados de Story Schema para este tipo de entidade - vazio (sem custo extra
-  // além da própria query, que só encontra 0 linhas) para tipos de entidade fora do escopo
-  // suportado, sem precisar de um type guard aqui.
-  const customFields = useStorySchemaFields(storyId, entityName as StorySchemaEntityType);
-  const customFieldsMetadata = useMemo(
-    () => buildCustomAttributeFieldMetadata(customFields),
-    [customFields],
-  );
-
-  const fieldsMetadata = useMemo(
-    () => [...nativeFieldsMetadata, ...customFieldsMetadata],
-    [nativeFieldsMetadata, customFieldsMetadata],
+  const effectiveScopes = useMemo<AdvancedSearchScope[]>(
+    () => scopes ?? [{ entityName: entityName as StorySchemaEntityType, prefix: '', label: '' }],
+    [entityName, scopes],
   );
 
   useEffect(() => {
@@ -82,9 +77,12 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   const renderFieldInput = useCallback(
     (field: EntityFieldMetadata, styleOverrides?: any) => {
       const value = searchCriteria[field.name];
-      // Campos customizados de Story Schema já vêm com o texto de exibição pronto (`rawLabel`,
-      // definido pelo usuário) - não é uma chave de tradução, então não passa por `t()`.
+      // A Story Schema's custom fields already come with their display text ready (`rawLabel`, defined by
+      // the user) - it is not a translation key, so it does not go through `t()`.
       const fieldLabel = field.rawLabel ?? t(field.label);
+      const fieldLabelText = (
+        <Text style={[styles.filledFieldLabel, { color: colors.textSecondary }]}>{fieldLabel}</Text>
+      );
 
       if (field.isSuggestion) {
         return (
@@ -92,6 +90,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             key={field.name}
             style={[styles.inputContainer, styles.inputContainerSuggestion, styleOverrides]}
           >
+            {fieldLabelText}
             <SuggestionTextInput
               placeholder={fieldLabel}
               value={value || ''}
@@ -108,6 +107,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         case 'id': // Treat ID fields as string for search input
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              {fieldLabelText}
               <TextInput // Custom TextInput
                 value={value || ''}
                 onChangeText={(text) => handleInputChange(field.name, text)}
@@ -138,6 +138,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           // For numbers, could offer range or exact match. For simplicity, single text input for now.
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              {fieldLabelText}
               <TextInput // Custom TextInput
                 value={value !== undefined && value !== null ? String(value) : ''}
                 onChangeText={(text) =>
@@ -151,14 +152,15 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             </View>
           );
         case 'date':
-          // Nenhum campo NATIVO é `type: 'date'` em `entityFields.ts` - este case só é alcançado
-          // por atributo customizado, então usa o mesmo picker do formulário. O filtro casa por
-          // substring (ver `attributeSearchPredicate`), então uma data completa acha o dia exato.
+          // No NATIVE field is `type: 'date'` in `entityFields.ts` - this case is only reached through a custom
+          // attribute, so it uses the same picker as the form. The filter matches by substring (see
+          // `attributeSearchPredicate`), so a complete date finds the exact day.
           return (
             <View
               key={field.name}
               style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
             >
+              {fieldLabelText}
               <DatePickerInput
                 value={value ? String(value) : null}
                 onChange={(newValue) => handleInputChange(field.name, newValue ?? undefined)}
@@ -172,6 +174,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               key={field.name}
               style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
             >
+              {fieldLabelText}
               <ColorPickerInput
                 currentColor={value || ''}
                 onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
@@ -183,6 +186,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           if (!field.entityTargetType) return null;
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              {fieldLabelText}
               <EntityPickerInput
                 storyId={storyId}
                 entityType={field.entityTargetType as StorySchemaEntityType}
@@ -217,8 +221,20 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
-      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
-        {fieldsMetadata.map(renderFieldInput)}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {effectiveScopes.map((scope) => (
+          <AdvancedSearchScopeFields
+            key={`${scope.entityName}:${scope.prefix}`}
+            scope={scope}
+            storyId={storyId}
+            showLabel={effectiveScopes.length > 1}
+            renderFieldInput={renderFieldInput}
+          />
+        ))}
       </ScrollView>
       <View style={styles.modalFooter}>
         <View style={styles.buttonWrapper}>
@@ -236,11 +252,51 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   );
 };
 
+interface AdvancedSearchScopeFieldsProps {
+  scope: AdvancedSearchScope;
+  storyId: string;
+  showLabel: boolean;
+  renderFieldInput: (field: EntityFieldMetadata, styleOverrides?: any) => React.ReactNode;
+}
+
+const AdvancedSearchScopeFields: React.FC<AdvancedSearchScopeFieldsProps> = ({
+  scope,
+  storyId,
+  showLabel,
+  renderFieldInput,
+}) => {
+  const { colors } = useTheme();
+  const customFields = useStorySchemaFields(storyId, scope.entityName as StorySchemaEntityType);
+  const fields = useMemo(
+    () => [
+      ...(entityFieldMetadata[scope.entityName]?.filter((field) => field.isSearchable) ?? []),
+      ...buildCustomAttributeFieldMetadata(customFields),
+    ],
+    [customFields, scope.entityName],
+  );
+
+  return (
+    <View>
+      {showLabel && <Text style={[styles.scopeTitle, { color: colors.text }]}>{scope.label}</Text>}
+      {fields.map((field) =>
+        renderFieldInput({
+          ...field,
+          name: scope.prefix ? `${scope.prefix}:${field.name}` : field.name,
+        }),
+      )}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   modalContent: {
     borderRadius: 10,
     borderWidth: 1,
     padding: 20,
+    // ResponsiveModal normally clips to preserve rounded media/modal surfaces.
+    // Advanced-search controls draw their focus treatment at the edge, so this
+    // particular form must let that treatment extend into its own padding.
+    overflow: 'visible',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -256,11 +312,31 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     marginBottom: 20,
   },
+  // Keeps an input's themed focus border inside the scrollable clipping area.
+  scrollContent: {
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+  },
   inputContainer: {
     marginBottom: 0,
+    // The native/web focus treatment can extend a pixel beyond the control.
+    // Keep that room at the immediate parent, not only at ScrollView level.
+    paddingHorizontal: 2,
+    paddingVertical: 2,
   },
   inputContainerSuggestion: {
     marginBottom: 20,
+  },
+  filledFieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  scopeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 8,
+    marginBottom: 8,
   },
   booleanRow: {
     flexDirection: 'row',

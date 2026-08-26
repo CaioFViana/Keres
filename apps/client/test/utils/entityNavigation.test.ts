@@ -1,5 +1,6 @@
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import { navigateToEntityDetail, type NavigableEntityType } from '../../src/utils/entityNavigation';
+import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
 
 const ENTITY_TYPES: NavigableEntityType[] = [
   'Character',
@@ -12,14 +13,15 @@ const ENTITY_TYPES: NavigableEntityType[] = [
   'Chapter',
   'Note',
   'WorldRule',
+  'Plot',
   // Modo abre o detalhe do personagem dono - ver ENTITY_ROUTES.Mode.
   'Mode',
 ];
 
 /**
- * Modo é o único tipo navegável sem stack e sem tela própria: o resultado da busca carrega o id
- * do personagem dono, e abrir leva ao detalhe dele. Por isso ele fica fora da checagem de
- * convenção de nomes abaixo, mas continua dentro da checagem de paridade com a busca global.
+ * Mode is the only navigable type with no stack and no screen of its own: the search result carries the id
+ * of the owning character, and opening it leads to that character's detail. That is why it stays out of the
+ * naming convention check below, but remains inside the parity check with the global search.
  */
 const OWN_SCREEN_ENTITY_TYPES = ENTITY_TYPES.filter((entityType) => entityType !== 'Mode');
 
@@ -29,6 +31,7 @@ function fakeDrawer() {
 }
 
 describe('navigateToEntityDetail', () => {
+  beforeEach(() => useHeaderBackActionStore.setState({ crossStackReturnAction: undefined }));
   it('routes to the entity stack, its detail screen and its id param', () => {
     const { navigate, drawer } = fakeDrawer();
 
@@ -47,7 +50,16 @@ describe('navigateToEntityDetail', () => {
 
     expect(navigate).toHaveBeenCalledTimes(1);
     const [stack, params] = navigate.mock.calls[0];
-    expect(stack).toBe(`${entityType === 'WorldRule' ? 'WorldRules' : `${entityType}s`}Stack`);
+    const mergedStacks: Partial<Record<NavigableEntityType, string>> = {
+      Scene: 'NarrativeElementsStack',
+      Choice: 'NarrativeElementsStack',
+      Chapter: 'NarrativeElementsStack',
+      ItemJourney: 'ItemsStack',
+    };
+    expect(stack).toBe(
+      mergedStacks[entityType] ??
+        `${entityType === 'WorldRule' ? 'WorldRules' : `${entityType}s`}Stack`,
+    );
     expect(params.screen).toBe(`${entityType}Detail`);
     expect(Object.values(params.params)).toEqual(['id-1']);
   });
@@ -78,13 +90,24 @@ describe('navigateToEntityDetail', () => {
 
     expect(navigate.mock.calls[0][1].params.noteId).toBe('01ARZ3NDEKTSV4RRFFQ69G5FAV');
   });
+
+  it('records an optional one-shot return for cross-stack callers', () => {
+    const { drawer } = fakeDrawer();
+    const returnToOrigin = jest.fn();
+
+    navigateToEntityDetail(drawer, 'Character', 'char-1', { onReturn: returnToOrigin });
+
+    expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBe(
+      returnToOrigin,
+    );
+  });
 });
 
 /**
- * `packages/shared/metadata/globalSearchFields.ts` documenta que a sua lista de tipos espelha
- * `NavigableEntityType` à mão, porque shared não pode importar do client. Este teste é o que
- * transforma esse comentário numa checagem: um resultado da busca global sem rota aqui seria
- * um item que não navega para lugar nenhum.
+ * `packages/shared/metadata/globalSearchFields.ts` documents that its list of types mirrors
+ * `NavigableEntityType` by hand, because shared cannot import from the client. This test is what
+ * turns that comment into a check: a global search result with no route here would be
+ * an item that navigates nowhere.
  */
 describe('parity with the global search entity types', () => {
   it('can navigate to every entity type the global search can return', () => {

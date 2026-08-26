@@ -13,7 +13,13 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ isFavorite, onPress, si
   const { colors } = useTheme();
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.button}>
+    <TouchableOpacity
+      onPress={(event) => {
+        event.stopPropagation();
+        onPress();
+      }}
+      style={styles.button}
+    >
       <MaterialCommunityIcons
         name={isFavorite ? 'star' : 'star-outline'}
         size={size}

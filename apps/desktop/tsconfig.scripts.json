@@ -1,0 +1,14 @@
+{
+  // Os scripts daqui (captura de telas, smoke do SQLite web) rodam com `bun`, em ESM - ao
+  // contrário do processo principal do Electron, que é CommonJS e por isso tem o tsconfig
+  // separado. Sem este arquivo eles seriam a única parte do desktop sem checagem de tipos.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "noEmit": true,
+    "types": ["bun", "node"]
+  },
+  "include": ["scripts", "test/run-sqlite-web-smoke.ts"]
+}

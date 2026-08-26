@@ -1,9 +1,5 @@
-import {
-  CreateLocationDataSchema,
-  CreateLocationDataType,
-  CreateStoryUpdate,
-  PartialLocationSchema,
-} from '@keres/shared';
+import type { CreateLocationDataType, CreateStoryUpdate } from '@keres/shared';
+import { CreateLocationDataSchema, PartialLocationSchema } from '@keres/shared';
 import { db } from '../../db';
 import { locations } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';

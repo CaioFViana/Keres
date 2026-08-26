@@ -48,8 +48,8 @@ export function RegistrationSettingsPage() {
     }
   };
 
-  // A página reúne mais de um assunto: cadastro, site público e aparência. Os dois últimos não
-  // dependem do carregamento do primeiro, então continuam utilizáveis mesmo se ele falhar.
+  // The page gathers more than one subject: registration, public site and appearance. The last two
+  // do not depend on the first one loading, so they stay usable even if it fails.
   return (
     <div>
       <div className="page-header">
@@ -69,7 +69,7 @@ export function RegistrationSettingsPage() {
               checked={settings.autoManage}
               onChange={(e) => setSettings({ ...settings, autoManage: e.target.checked })}
             />
-            Auto-manage open/closed based on max users
+            {t('settings.autoManage')}
           </label>
 
           {!settings.autoManage && (
@@ -79,7 +79,7 @@ export function RegistrationSettingsPage() {
                 checked={settings.isRegistrationOpen}
                 onChange={(e) => setSettings({ ...settings, isRegistrationOpen: e.target.checked })}
               />
-              Registration open
+              {t('settings.registrationOpen')}
             </label>
           )}
 

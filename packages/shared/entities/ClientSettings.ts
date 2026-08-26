@@ -5,9 +5,9 @@ export interface ClientSettings {
   darkMode: boolean; // Preferred dark mode setting for this device
   /** Formato de hora das features de Data neste dispositivo: `true` = 24h, `false` = AM/PM. */
   use24HourTime: boolean;
-  /** Quando ativo, exibe o atalho de ajuda contextual nos headers do aplicativo. */
+  /** When on, it shows the contextual help shortcut in the application's headers. */
   showContextualHelp: boolean;
-  /** Quando ativo, o menu oferece a lista de recursos literários. */
+  /** When on, the menu offers the list of literary devices. */
   suggestLiteraryDevices: boolean;
   createdAt: Date;
   updatedAt: Date;

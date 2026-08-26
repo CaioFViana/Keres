@@ -1,6 +1,7 @@
 import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { locations } from './locations';
 import { stories } from './stories';
+import type { LocationRelationType } from '@keres/shared';
 
 export const locationRelations = table(
   'location_relations',
@@ -15,7 +16,7 @@ export const locationRelations = table(
     locationBId: text('location_b_id')
       .notNull()
       .references(() => locations.id),
-    relationType: text('relation_type').notNull(),
+    relationType: text('relation_type').$type<LocationRelationType>().notNull(),
     createdAt: timestampNow('created_at'),
     updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),

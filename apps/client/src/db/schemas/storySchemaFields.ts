@@ -1,12 +1,13 @@
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import type { StorySchemaEntityType } from '@keres/shared';
 
 export const storySchemaFields = sqliteTable(
   'story_schema_fields',
   {
     id: text('id').primaryKey(),
     storyId: text('story_id').notNull(),
-    entityType: text('entity_type').notNull(),
+    entityType: text('entity_type').$type<StorySchemaEntityType>().notNull(),
     name: text('name').notNull(),
     key: text('key').notNull(),
     description: text('description'),
@@ -22,8 +23,8 @@ export const storySchemaFields = sqliteTable(
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   (table) => [
-    // Não filtrado por isDeleted - ver StorySchemaFieldService.deleteField, que muta `key` no
-    // soft-delete pra liberar o slot, mesma razão do lado API (StorySchemaFieldSyncHandler).
+    // Not filtered by isDeleted - see StorySchemaFieldService.deleteField, which mutates `key` on the
+    // soft-delete to free the slot, the same reason as on the API side (StorySchemaFieldSyncHandler).
     unique('story_entitytype_key_unq').on(table.storyId, table.entityType, table.key),
   ],
 );

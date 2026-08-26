@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { NoteWithTags } from '../../../services/storymanagement/NoteService';
+import type { NoteWithTags } from '../../../services/storymanagement/NoteService';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 

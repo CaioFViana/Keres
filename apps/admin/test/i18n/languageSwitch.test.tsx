@@ -67,7 +67,7 @@ describe('the language dropdown', () => {
     await unmount();
   });
 
-  // Nomes no próprio idioma: quem não lê a língua atual ainda se reconhece na lista.
+  // Names in their own language: someone who cannot read the current one still recognises theirs.
   it('names each language in its own language', async () => {
     const { container, unmount } = await render(<LanguageSelect storageKey={ADMIN_LANGUAGE_KEY} />);
 
@@ -86,7 +86,7 @@ describe('the language dropdown', () => {
     await unmount();
   });
 
-  // Painel e site guardam a escolha em chaves separadas, como já acontece com o tema.
+  // Panel and site keep the choice under separate keys, as is already the case for the theme.
   it('keeps the panel and the site choices apart', async () => {
     const { container, unmount } = await render(
       <LanguageSelect storageKey={SHOWCASE_LANGUAGE_KEY} />,
@@ -116,7 +116,7 @@ describe('the showcase in Portuguese', () => {
     const text = container.textContent ?? '';
     expect(text).toContain('Histórias publicadas');
     expect(text).toContain('Histórias, abertas.');
-    // O conteúdo de quem escreveu continua como está - traduzir isso seria reescrever a obra.
+    // The author's content stays as it is - translating that would be rewriting the work.
     expect(text).toContain('O Vale Silencioso');
     await unmount();
   });

@@ -7,9 +7,9 @@ import { initI18n, SHOWCASE_LANGUAGE_KEY } from '../i18n';
 import { applyResolvedTheme, readThemePreference, resolveTheme } from '../theme/theme';
 import './showcase.css';
 
-// Antes da primeira pintura, para quem prefere escuro não levar um flash claro na cara.
+// Before the first paint, so whoever prefers dark does not get a flash of light in the face.
 applyResolvedTheme(resolveTheme(readThemePreference(SHOWCASE_THEME_KEY)));
-// Antes de renderizar, senão a primeira passagem sai com as chaves cruas na tela.
+// Before rendering, otherwise the first pass shows raw keys on screen.
 initI18n(SHOWCASE_LANGUAGE_KEY, 'showcase');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

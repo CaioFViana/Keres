@@ -1,49 +1,66 @@
 {
-  "language": {
-    "label": "Idioma"
-  },
-  "theme": {
-    "system": "Tema: Sistema",
-    "light": "Tema: Claro",
-    "dark": "Tema: Escuro"
-  },
-  "meta": {
-    "title": "Keres — Organize universos, conecte narrativas",
-    "description": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, servida pelo próprio servidor Keres."
-  },
-  "nav": {
-    "product": "Produto",
-    "universe": "Universo",
-    "platforms": "Plataformas",
-    "download": "Baixar",
-    "github": "GitHub",
-    "menu": "Menu"
-  },
-  "hero": {
-    "eyebrow": "Planejamento de histórias",
-    "title": "Organize universos, conecte narrativas e escreva em qualquer lugar.",
-    "lead": "O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras de mundo, notas e mídias num único espaço. O aplicativo continua funcionando sem internet. Um servidor só entra se você quiser sincronizar, colaborar ou publicar.",
-    "ctaDownload": "Baixar",
-    "ctaGithub": "Ver no GitHub",
-    "ctaFeatures": "Ver o que inclui"
-  },
-  "pillars": {
-    "offline": {
-      "title": "Offline-first de verdade",
-      "body": "Cada história vive num SQLite local. Você planeja no trem, no avião ou no sofá. Quando houver rede e um servidor, a sincronização envia as alterações e trata conflitos de versão."
-    },
-    "universe": {
-      "title": "O universo, não o manuscrito",
-      "body": "O Keres não é um editor de texto. Você escreve o capítulo onde preferir e registra aqui quem estava na cena, o que mudou de dono e qual regra do mundo isso respeita."
-    },
-    "anywhere": {
-      "title": "Celular, desktop e navegador",
-      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. No navegador, a API serve o cliente na raiz do servidor — só na origem daquele servidor."
+  "download": {
+    "title": "Baixe e comece",
+    "lead": "As builds oficiais saem nas GitHub Releases, junto com o Keres Server e a imagem Docker.",
+    "items": {
+      "releases": {
+        "title": "Cliente",
+        "body": "Desktop para Windows, macOS e Linux, e o Android. Abra a release mais recente e escolha o arquivo do seu sistema.",
+        "cta": "Abrir releases"
+      },
+      "server": {
+        "title": "Keres Server",
+        "body": "Zips para Windows x64, Linux x64 e macOS Apple Silicon. Na primeira execução o assistente pergunta banco, mídia e porta.",
+        "cta": "Baixar o servidor"
+      },
+      "docker": {
+        "title": "Imagem Docker",
+        "body": "ghcr.io/caiofviana/keres — use uma tag imutável em produção. O repositório traz um Compose de deploy.",
+        "cta": "Ver no GitHub"
+      },
+      "source": {
+        "title": "Código-fonte",
+        "body": "Monorepo aberto: cliente, API, painel, desktop e esta landing. Bun, TypeScript, testes no CI.",
+        "cta": "Abrir o repositório"
+      }
     }
   },
-  "product": {
-    "title": "Um lugar para a história inteira",
-    "lead": "Abra uma história e o menu lateral mostra cada tipo de elemento. Listas com busca, filtros e favoritos; fichas com relações; grafos quando o espaço ou as escolhas pedem um mapa."
+  "faq": {
+    "title": "Perguntas frequentes",
+    "items": {
+      "editor": {
+        "q": "O Keres substitui o meu editor de texto?",
+        "a": "Não. Ele organiza o universo da narrativa. O manuscrito, o roteiro ou a campanha continuam onde você já escreve."
+      },
+      "browser": {
+        "q": "Roda no navegador?",
+        "a": "Sim, no endereço do próprio servidor Keres (Docker ou Keres Server), na raiz. Esse cliente só conecta à API de onde a página foi carregada. Cadastrar outro servidor no browser voltaria a ser cross-origin: o SQLite web precisa de isolamento na mesma origem. No telemóvel e no desktop você registra qualquer URL. Histórias publicadas ficam em /showcase."
+      },
+      "offline": {
+        "q": "Preciso de internet?",
+        "a": "Não para planejar. O cliente guarda tudo no aparelho. Internet só entra para sincronizar, colaborar ou publicar num servidor."
+      },
+      "server": {
+        "q": "Preciso de um servidor?",
+        "a": "Não. Uma história pode viver só no aparelho. Um servidor entra quando você quer o mesmo universo no telemóvel e no PC, ou quando quer colaborar."
+      },
+      "languages": {
+        "q": "Em que idiomas o aplicativo está?",
+        "a": "Português e inglês, no cliente, na ajuda, no Keres Server e nesta página."
+      },
+      "collaborate": {
+        "q": "Dá para escrever a quatro mãos?",
+        "a": "Com um servidor: convide amigos, defina se leem ou editam, e use comentários nas fichas. Sem servidor, dá para trocar um pacote de importação/exportação."
+      },
+      "cost": {
+        "q": "Quanto custa?",
+        "a": "O Keres é software aberto. Você baixa o cliente e, se quiser, corre o próprio servidor. Um operador de servidor público pode aplicar limites de conta — isso é decisão de quem o mantém, não do aplicativo."
+      },
+      "showcase": {
+        "q": "Esta página publica histórias?",
+        "a": "Não. Esta é a landing do projeto. A vitrine de histórias publicadas é um site separado, servido por um Keres Server que alguém escolheu manter."
+      }
+    }
   },
   "features": {
     "universe": {
@@ -231,6 +248,48 @@
       }
     }
   },
+  "footer": {
+    "tagline": "Um companheiro de escrita para planejar histórias.",
+    "source": "Código aberto no GitHub",
+    "docs": "Documentação no repositório"
+  },
+  "hero": {
+    "eyebrow": "Planejamento de histórias",
+    "title": "Organize universos, conecte narrativas e escreva em qualquer lugar.",
+    "lead": "O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras de mundo, notas e mídias num único espaço. O aplicativo continua funcionando sem internet. Um servidor só entra se você quiser sincronizar, colaborar ou publicar.",
+    "ctaDownload": "Baixar",
+    "ctaGithub": "Ver no GitHub",
+    "ctaFeatures": "Ver o que inclui"
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "meta": {
+    "title": "Keres — Organize universos, conecte narrativas",
+    "description": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, servida pelo próprio servidor Keres."
+  },
+  "nav": {
+    "product": "Produto",
+    "universe": "Universo",
+    "platforms": "Plataformas",
+    "download": "Baixar",
+    "github": "GitHub",
+    "menu": "Menu"
+  },
+  "pillars": {
+    "offline": {
+      "title": "Offline-first de verdade",
+      "body": "Cada história vive num SQLite local. Você planeja no trem, no avião ou no sofá. Quando houver rede e um servidor, a sincronização envia as alterações e trata conflitos de versão."
+    },
+    "universe": {
+      "title": "O universo, não o manuscrito",
+      "body": "O Keres não é um editor de texto. Você escreve o capítulo onde preferir e registra aqui quem estava na cena, o que mudou de dono e qual regra do mundo isso respeita."
+    },
+    "anywhere": {
+      "title": "Celular, desktop e navegador",
+      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. No navegador, a API serve o cliente na raiz do servidor — só na origem daquele servidor."
+    }
+  },
   "platforms": {
     "title": "Onde o Keres corre",
     "lead": "Um cliente, várias formas de chegar até ele. Um servidor, quando você quiser uma.",
@@ -269,30 +328,56 @@
       }
     }
   },
-  "download": {
-    "title": "Baixe e comece",
-    "lead": "As builds oficiais saem nas GitHub Releases, junto com o Keres Server e a imagem Docker.",
+  "product": {
+    "title": "Um lugar para a história inteira",
+    "lead": "Abra uma história e o menu lateral mostra cada tipo de elemento. Listas com busca, filtros e favoritos; fichas com relações; grafos quando o espaço ou as escolhas pedem um mapa."
+  },
+  "showcase": {
+    "title": "Veja o app",
+    "lead": "Cada imagem abaixo é uma foto do Keres rodando, com uma das histórias de exemplo que vêm com o app aberta nele. Abra a mesma história e você vê as mesmas telas.",
+    "note": "Seis histórias de exemplo vêm com o app. Cada tela aqui é de uma delas, acompanha o idioma e o modo claro ou escuro desta página, e abre ampliada ao clicar.",
     "items": {
-      "releases": {
-        "title": "Cliente",
-        "body": "Desktop para Windows, macOS e Linux, e o Android. Abra a release mais recente e escolha o arquivo do seu sistema.",
-        "cta": "Abrir releases"
+      "narrative-elements": {
+        "title": "Capítulos e cenas",
+        "body": "A lista onde você passa a maior parte do tempo: os capítulos em ordem, as cenas dentro deles e o que ainda falta em cada uma."
       },
-      "server": {
-        "title": "Keres Server",
-        "body": "Zips para Windows x64, Linux x64 e macOS Apple Silicon. Na primeira execução o assistente pergunta banco, mídia e porta.",
-        "cta": "Baixar o servidor"
+      "story-map": {
+        "title": "Mapa da história",
+        "body": "Acompanhe todos os caminhos que o leitor pode seguir: onde a história se divide, onde ela volta a se juntar e como se chega a cada final."
       },
-      "docker": {
-        "title": "Imagem Docker",
-        "body": "ghcr.io/caiofviana/keres — use uma tag imutável em produção. O repositório traz um Compose de deploy.",
-        "cta": "Ver no GitHub"
+      "story-timeline": {
+        "title": "Como o tempo passa",
+        "body": "Quanto dura cada cena e quanto tempo escorre entre elas - minutos, dias ou anos."
       },
-      "source": {
-        "title": "Código-fonte",
-        "body": "Monorepo aberto: cliente, API, painel, desktop e esta landing. Bun, TypeScript, testes no CI.",
-        "cta": "Abrir o repositório"
+      "plot-matrix": {
+        "title": "As tramas pelas cenas",
+        "body": "Cada linha narrativa sobre as cenas em que ela aparece, com uma anotação dizendo o que aquela cena faz por ela."
+      },
+      "plot-coverage": {
+        "title": "Até onde vai cada trama",
+        "body": "Duas tramas podem cobrir o mesmo número de cenas e não ter nada a ver: uma atravessa o livro inteiro, a outra se esconde no último ato."
+      },
+      "character-list": {
+        "title": "Seu elenco",
+        "body": "Busque, filtre e ordene o elenco; abra um nome ali mesmo para ver o papel, a descrição e os laços, sem sair da lista."
+      },
+      "relation-map": {
+        "title": "Quem conhece quem",
+        "body": "O elenco como uma teia de laços - e os grupinhos que a sua história formou sem você perceber."
+      },
+      "location-map": {
+        "title": "O mapa do seu mundo",
+        "body": "Que lugares ficam dentro de outros lugares, e como se vai de um ao outro."
+      },
+      "dashboard": {
+        "title": "Como a história está",
+        "body": "Tudo o que você escreveu, contado, ao lado do que a análise encontrou - e do que mudou por último."
       }
+    },
+    "lightbox": {
+      "close": "Fechar",
+      "zoom": "Clique na imagem para ver em tamanho real.",
+      "shrink": "Clique de novo para a imagem caber na tela."
     }
   },
   "stack": {
@@ -304,46 +389,9 @@
     "admin": "Painel React servido pela API em /admin, para contas, planos e cadastro.",
     "shared": "Entidades, contratos Zod e paletas compartilhados entre os apps."
   },
-  "faq": {
-    "title": "Perguntas frequentes",
-    "items": {
-      "editor": {
-        "q": "O Keres substitui o meu editor de texto?",
-        "a": "Não. Ele organiza o universo da narrativa. O manuscrito, o roteiro ou a campanha continuam onde você já escreve."
-      },
-      "browser": {
-        "q": "Roda no navegador?",
-        "a": "Sim, no endereço do próprio servidor Keres (Docker ou Keres Server), na raiz. Esse cliente só conecta à API de onde a página foi carregada. Cadastrar outro servidor no browser voltaria a ser cross-origin: o SQLite web precisa de isolamento na mesma origem. No telemóvel e no desktop você registra qualquer URL. Histórias publicadas ficam em /showcase."
-      },
-      "offline": {
-        "q": "Preciso de internet?",
-        "a": "Não para planejar. O cliente guarda tudo no aparelho. Internet só entra para sincronizar, colaborar ou publicar num servidor."
-      },
-      "server": {
-        "q": "Preciso de um servidor?",
-        "a": "Não. Uma história pode viver só no aparelho. Um servidor entra quando você quer o mesmo universo no telemóvel e no PC, ou quando quer colaborar."
-      },
-      "languages": {
-        "q": "Em que idiomas o aplicativo está?",
-        "a": "Português e inglês, no cliente, na ajuda, no Keres Server e nesta página."
-      },
-      "collaborate": {
-        "q": "Dá para escrever a quatro mãos?",
-        "a": "Com um servidor: convide amigos, defina se leem ou editam, e use comentários nas fichas. Sem servidor, dá para trocar um pacote de importação/exportação."
-      },
-      "cost": {
-        "q": "Quanto custa?",
-        "a": "O Keres é software aberto. Você baixa o cliente e, se quiser, corre o próprio servidor. Um operador de servidor público pode aplicar limites de conta — isso é decisão de quem o mantém, não do aplicativo."
-      },
-      "showcase": {
-        "q": "Esta página publica histórias?",
-        "a": "Não. Esta é a landing do projeto. A vitrine de histórias publicadas é um site separado, servido por um Keres Server que alguém escolheu manter."
-      }
-    }
-  },
-  "footer": {
-    "tagline": "Um companheiro de escrita para planejar histórias.",
-    "source": "Código aberto no GitHub",
-    "docs": "Documentação no repositório"
+  "theme": {
+    "system": "Tema: Sistema",
+    "light": "Tema: Claro",
+    "dark": "Tema: Escuro"
   }
 }

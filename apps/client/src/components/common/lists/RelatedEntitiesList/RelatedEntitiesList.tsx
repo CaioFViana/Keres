@@ -26,9 +26,9 @@ interface RelatedEntitiesListProps {
  * (RelationManager/GenericRelationDisplay) instead of the plain bullet list this used to
  * be, so a note's/tag's related-entities section doesn't stand out as its own thing.
  *
- * Cada linha leva à entidade, como as de `SeeAlsoManager` - exceto para os tipos sem tela de
- * detalhe (`toNavigableEntityType` devolve `null`), que continuam sendo texto puro em vez de
- * um toque que não faz nada.
+ * Each row leads to the entity, like `SeeAlsoManager`'s - except for the types with no detail
+ * screen (`toNavigableEntityType` returns `null`), which stay as plain text instead of
+ * a tap that does nothing.
  */
 const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({
   title,

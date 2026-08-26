@@ -4,8 +4,8 @@ import React from 'react';
 const mockDrawerScreens: Array<Record<string, any>> = [];
 const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
 const mockResponsiveLayout = { isCompact: false, isWide: true, width: 1200 };
-// Objeto, e não booleano solto: `jest.mock` é içado para antes das atribuições, então a
-// factory precisa ler o valor na hora da chamada, não capturá-lo na definição.
+// An object, and not a loose boolean: `jest.mock` is hoisted above the assignments, so the
+// factory has to read the value at call time, not capture it at definition time.
 const mockHasRegisteredServer = { value: true };
 
 function mockDrawerNavigator({
@@ -215,8 +215,8 @@ describe('the publish entry', () => {
     });
   });
 
-  // A tela continua registrada - só o item do menu some, para uma navegação direta (ou o
-  // link da ajuda) não quebrar quando o último servidor é removido.
+  // The screen stays registered - only the menu item disappears, so that a direct navigation (or the
+  // help's link) does not break when the last server is removed.
   it('is hidden when no server is registered', async () => {
     mockHasRegisteredServer.value = false;
     await renderDrawer();

@@ -1,12 +1,12 @@
-import { ServerSelect } from '../db/schema';
+import type { ServerSelect } from '../db/schema';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 
 /**
- * Chamadas para as rotas `/story-permissions` do servidor vinculado a uma história -
- * gerenciamento de colaboradores, nunca guardado localmente (é o servidor quem sabe quem
- * tem acesso). Usado hoje só pela tela de Configurações da História, pro portão de
- * "desvincular do servidor" (só o dono, só sem colaboradores) e a lista que o torna possível.
+ * Calls to the `/story-permissions` routes of the server a story is linked to - collaborator
+ * management, never stored locally (the server is what knows who has access). Used today only by the
+ * Story Settings screen, for the "unlink from server" gate (owner only, only with no collaborators) and
+ * the list that makes it possible.
  */
 
 export interface StoryCollaborator {
@@ -25,7 +25,7 @@ function clientFor(server: ServerSelect) {
 }
 
 export const storyPermissionApi = {
-  /** Lança com `response.status === 403` quando quem chama não é o dono da história no servidor. */
+  /** It throws with `response.status === 403` when the caller is not the story's owner on the server. */
   async getCollaborators(server: ServerSelect, storyId: string): Promise<StoryCollaborator[]> {
     const response = await clientFor(server).get<StoryCollaborator[]>(
       `/story-permissions/story/${storyId}`,

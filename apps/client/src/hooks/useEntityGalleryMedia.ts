@@ -1,7 +1,7 @@
-import { GalleryOwnerEntity } from '@keres/shared';
+import type { GalleryOwnerEntity } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import { GallerySelect } from '../db/schema';
+import type { GallerySelect } from '../db/schema';
 import { importPickedMediaAssets } from '../services/galleryMediaImport';
 import { mediaFileService } from '../services/MediaFileService';
 import { createGalleryRelationService } from '../services/storymanagement/GalleryRelationService';
@@ -11,11 +11,11 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 /**
- * Mídias vinculadas a uma entidade (personagem, local, nota, cena ou item), com os meios
- * de adicionar uma nova e desvincular uma existente.
+ * The media linked to an entity (a character, location, note, scene or item), with the means
+ * of adding a new one and unlinking an existing one.
  *
- * Mesmo formato de `useEntityRelations` (tags/notas): o hook possui a busca, as
- * assinaturas de evento e as mutações, e a tela de detalhe só consome o resultado.
+ * The same shape as `useEntityRelations` (tags/notes): the hook owns the fetch, the
+ * event subscriptions and the mutations, and the detail screen only consumes the result.
  */
 export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: GalleryOwnerEntity) {
   const drizzleDb = useDrizzle();
@@ -70,7 +70,7 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     };
   }, [storyId, refresh]);
 
-  /** Abre o seletor, importa o que foi escolhido e já vincula tudo a esta entidade. */
+  /** Opens the picker, imports what was chosen and links it all to this entity straight away. */
   const addMedia = useCallback(async () => {
     if (!services || !storyId || !userId || !ownerId) {
       return null;
@@ -97,7 +97,7 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     }
   }, [services, storyId, userId, ownerId, ownerType, refresh]);
 
-  /** Remove só o vínculo com esta entidade; a mídia continua existindo na galeria. */
+  /** It removes only the link with this entity; the medium carries on existing in the gallery. */
   const removeMedia = useCallback(
     async (galleryId: string) => {
       if (!services || !storyId || !userId || !ownerId) {

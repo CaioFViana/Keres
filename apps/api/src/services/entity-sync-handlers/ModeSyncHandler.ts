@@ -1,10 +1,5 @@
-import {
-  CreateModeDataSchema,
-  CreateModeDataType,
-  CreateStoryUpdate,
-  PartialModeSchema,
-  UpdateStoryUpdate,
-} from '@keres/shared';
+import type { CreateModeDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateModeDataSchema, PartialModeSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, modes } from '../../db/schema';

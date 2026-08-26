@@ -9,16 +9,16 @@ import type { StoryStatsData } from '../../../../hooks/useStoryStats';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
-import { formatStatNumber, formatTierLabel } from '../../../../utils/statLadder';
+import { formatStatNumber, formatTierLabel } from '@keres/shared/graphs/statLadder';
 import { StatLadderBar } from '../StatLadderBar/StatLadderBar';
 import { resolveStatValue } from '../../../../utils/statValues';
 
 /**
- * Os valores de status de um personagem, por modo.
+ * A character's stat values, per mode.
  *
- * Um modo sem valor próprio herda o do modo normal: o campo mostra o valor herdado esmaecido e
- * só grava uma linha quando o autor digita, que é exatamente o ato de deixar de herdar. Limpar
- * o campo apaga a linha e devolve a herança.
+ * A mode with no value of its own inherits the normal mode's: the field shows the inherited value
+ * greyed out and only writes a row when the author types, which is exactly the act of no longer
+ * inheriting. Clearing the field deletes the row and gives the inheritance back.
  */
 interface CharacterStatValuesEditorProps {
   characterId: string;
@@ -64,8 +64,8 @@ export function CharacterStatValuesEditor({
         tabText: { color: colors.text, fontSize: 14 },
         tabTextActive: { color: colors.onPrimary, fontWeight: 'bold' },
         statBlock: { marginBottom: 16 },
-        // A partir de médio cada status vira um cartão: agrupa nome, campo e régua, e mantém a
-        // barra num comprimento legível em vez de esticada pela tela inteira.
+        // From medium up each stat becomes a card: it groups the name, the field and the ladder, and keeps the
+        // bar at a readable length instead of stretched across the whole screen.
         card: {
           borderColor: colors.border,
           borderWidth: 1,
@@ -76,8 +76,8 @@ export function CharacterStatValuesEditor({
         row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 },
         name: { color: colors.text, flex: 1, fontSize: 15 },
         cardName: { fontWeight: '600' },
-        // O rank do valor digitado, dito em texto: a régua mostra onde o ponto caiu, o selo diz
-        // o nome do degrau, que é o que escadas de pisos arbitrários escondem.
+        // The rank of the typed value, said in words: the ladder shows where the point landed, the badge gives
+        // the tier's name, which is what ladders with arbitrary steps hide.
         tierBadge: {
           minWidth: 38,
           paddingHorizontal: 8,
@@ -92,10 +92,10 @@ export function CharacterStatValuesEditor({
         tierBadgeText: { color: colors.text, fontSize: 14, fontWeight: '600', textAlign: 'center' },
         tierBadgeEmpty: { color: colors.textSecondary, fontWeight: 'normal' },
         input: { flex: 1 },
-        // Um campo numérico não precisa de meia tela; largura fixa deixa os cartões alinhados.
-        // `flex: 0` aqui não serve: no react-native-web ele vira o atalho CSS `flex: 0`, cujo
-        // `flex-basis: 0%` anula a largura e colapsa o campo. Grow/shrink explícitos preservam a
-        // base `auto`, e aí a largura vale nas duas plataformas.
+        // A numeric field does not need half a screen; a fixed width keeps the cards aligned.
+        // `flex: 0` is no good here: on react-native-web it becomes the CSS shorthand `flex: 0`, whose
+        // `flex-basis: 0%` cancels the width and collapses the field. Explicit grow/shrink preserve the
+        // `auto` basis, and then the width holds on both platforms.
         cardInput: { width: 104, flexGrow: 0, flexShrink: 0 },
         hint: { color: colors.textSecondary, fontSize: 12, marginBottom: 12 },
         empty: { color: colors.textSecondary, paddingVertical: 12 },
@@ -132,13 +132,13 @@ export function CharacterStatValuesEditor({
     const resolved = resolveStatValue(data.valueIndex, characterId, modeId, stat.id);
     const draft = drafts[key];
     const shown = draft ?? (resolved.inherited ? '' : (resolved.value?.toString() ?? ''));
-    // Herdado: o campo mostra vazio e o placeholder traz o número que está sendo herdado, que é
-    // exatamente o que digitar por cima substitui.
+    // Inherited: the field shows empty and the placeholder carries the number being inherited, which is
+    // exactly what typing over it replaces.
     const placeholder = resolved.inherited
       ? formatStatNumber(resolved.value)
       : t('stat_value_placeholder');
-    // A régua segue o que está sendo digitado, e não só o que já foi salvo: é o que responde
-    // "onde cai o 250 que acabei de escrever" sem precisar salvar para descobrir.
+    // The ladder follows what is being typed, not only what has been saved: it is what answers
+    // "where does the 250 I just wrote land" without having to save to find out.
     const typed = Number(shown);
     const previewValue = shown.trim() !== '' && Number.isFinite(typed) ? typed : resolved.value;
     const ladder = data.ladderOf(stat.id);

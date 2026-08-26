@@ -1,4 +1,4 @@
-import { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/Story';
 import { create } from 'zustand';
 
 interface StoryState {

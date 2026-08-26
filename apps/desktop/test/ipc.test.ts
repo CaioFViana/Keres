@@ -4,11 +4,10 @@ import * as path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Os 10 canais IPC são a única porta entre o renderer (que não tem acesso a disco) e a máquina
- * do usuário: os de `auth:` guardam os tokens no cofre do sistema, e os de `media:` escrevem
- * arquivos reais. O Electron é mockado, mas o sistema de arquivos não - os testes de mídia e
- * do cofre operam num diretório temporário de verdade, que é onde os erros de resolução de
- * caminho realmente aparecem.
+ * The 10 IPC channels are the only door between the renderer (which has no disk access) and the
+ * user's machine: the `auth:` ones keep tokens in the system vault, and the `media:` ones write
+ * real files. Electron is mocked, but the file system is not - the media and vault tests operate
+ * on a real temporary directory, which is where path-resolution errors actually show up.
  */
 const USER_DATA = path.join(os.tmpdir(), `keres-ipc-test-${process.pid}`);
 const MEDIA_ROOT = path.join(USER_DATA, 'media-storage');
@@ -32,8 +31,8 @@ vi.mock('electron', () => ({
     setName: vi.fn(),
     commandLine: { appendSwitch: vi.fn() },
     isPackaged: false,
-    // Nunca resolve: o callback de `whenReady` sobe janela e protocolo, nada disso é o alvo
-    // aqui. Os registradores de IPC são chamados diretamente pelo teste.
+    // Never resolves: the `whenReady` callback brings up the window and the protocol, and none of
+    // that is the target here. The IPC registrars are called directly by the test.
     whenReady: () => new Promise<void>(() => {}),
     getPath: () => USER_DATA,
     on: vi.fn(),
@@ -53,7 +52,7 @@ vi.mock('electron', () => ({
   session: { defaultSession: { clearCache: vi.fn(), clearCodeCaches: vi.fn() } },
 }));
 
-/** Renderer legítimo: só `app://app/...` é aceito, ver `isTrustedRendererUrl`. */
+/** A legitimate renderer: only `app://app/...` is accepted, see `isTrustedRendererUrl`. */
 const trustedEvent = { senderFrame: { url: 'app://app/' } };
 const untrustedEvent = { senderFrame: { url: 'https://exemplo.com/' } };
 
@@ -152,9 +151,9 @@ describe('auth channels', () => {
   });
 
   it('creates the userData directory on first write instead of failing with ENOENT', async () => {
-    // beforeEach cria USER_DATA como efeito colateral do mkdir de MEDIA_ROOT (que é um
-    // subdiretório dele) - remove só o USER_DATA de novo pra reproduzir o cenário real de
-    // primeira execução, onde o Electron ainda não criou esse diretório.
+    // beforeEach creates USER_DATA as a side effect of the MEDIA_ROOT mkdir (which is a subdirectory
+    // of it) - remove USER_DATA again to reproduce the real first-run scenario, where Electron has
+    // not created that directory yet.
     await fs.rm(USER_DATA, { recursive: true, force: true });
 
     await expect(invoke('auth:write', trustedEvent, 'server-1', TOKENS)).resolves.toBeUndefined();
@@ -173,11 +172,10 @@ describe('auth channels', () => {
   });
 
   /**
-   * Regressão: duas escritas concorrentes usavam o mesmo nome de arquivo temporário
-   * (`auth-vault.json.tmp`), então a segunda `rename` a rodar encontrava ENOENT - a primeira
-   * já tinha movido (consumido) o arquivo. Isso derrubava a escrita inteira com um erro não
-   * tratado, e o token nunca chegava a ser salvo de verdade - exatamente o que fazia
-   * requisições autenticadas seguintes falharem com 401 mesmo depois do login "ter dado certo".
+   * Regression: two concurrent writes used the same temporary file name (`auth-vault.json.tmp`),
+   * so the second `rename` to run hit ENOENT - the first had already moved (consumed) the file.
+   * That took down the whole write with an unhandled error, and the token was never really saved -
+   * exactly what made later authenticated requests fail with 401 even after a login that "worked".
    */
   it('survives concurrent writes to different servers without losing either one', async () => {
     await expect(

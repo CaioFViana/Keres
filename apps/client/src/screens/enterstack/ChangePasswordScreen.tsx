@@ -6,15 +6,16 @@ import {
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { ServerSelect } from '../../db/schema';
+import type { ServerSelect } from '../../db/schema';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { isOfflineError } from '../../services/apiClient';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
@@ -54,10 +55,10 @@ const ChangePasswordScreen = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
-  /** Mostrados só uma vez - depois disto só o hash de cada um existe no servidor. */
+  /** Shown only once - after this only each one's hash exists on the server. */
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
-  // 'recover' troca a senha com um recovery code em vez da senha atual - mesmo caminho de
-  // ServerRegistrationScreen, mas sem pedir usuário/endereço de novo: o servidor já é conhecido.
+  // 'recover' changes the password with a recovery code instead of the current password - the same path as
+  // ServerRegistrationScreen, but without asking for the username/address again: the server is already known.
   const [mode, setMode] = useState<'change' | 'recover'>('change');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [recovering, setRecovering] = useState(false);

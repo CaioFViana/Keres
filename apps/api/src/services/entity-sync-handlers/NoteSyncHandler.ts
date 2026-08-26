@@ -1,9 +1,5 @@
-import {
-  CreateNoteDataSchema,
-  CreateNoteDataType,
-  CreateStoryUpdate,
-  PartialNoteSchema,
-} from '@keres/shared';
+import type { CreateNoteDataType, CreateStoryUpdate } from '@keres/shared';
+import { CreateNoteDataSchema, PartialNoteSchema } from '@keres/shared';
 import { db } from '../../db';
 import { notes } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
@@ -56,9 +52,9 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  // `update` e `delete` vêm da base de propósito. Houve aqui um override que só repetia o
-  // que a base faz, mas sem `checkVersionConflict`, sem a checagem de `deleted_on_server` e
-  // sem honrar o `operationTime` do cliente - o resultado era que uma edição concorrente
-  // sobre esta entidade não gerava conflito nenhum e, quando a cláusula `where version = ...`
-  // não casava, a edição do usuário sumia sem erro e sem aviso.
+  // `update` and `delete` come from the base class on purpose. There used to be an override here that
+  // only repeated what the base does, but without `checkVersionConflict`, without the
+  // `deleted_on_server` check and without honouring the client's `operationTime` - the result was that
+  // a concurrent edit on this entity produced no conflict at all and, when the `where version = ...`
+  // clause did not match, the user's edit vanished with no error and no warning.
 }

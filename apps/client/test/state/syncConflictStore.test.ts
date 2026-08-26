@@ -30,10 +30,10 @@ afterEach(() => {
 });
 
 /**
- * A tela de conflito não se abre mais sozinha - um conflito trava a sincronização daquela
- * entidade, mas isso não justifica interromper o que o usuário está fazendo; o ponto de
- * entrada (banner no Dashboard) é quem decide quando abrir a revisão. `refresh` só recarrega
- * a lista.
+ * The conflict screen no longer opens by itself - a conflict blocks that entity's
+ * synchronization, but that does not justify interrupting what the user is doing; the entry
+ * point (a banner on the Dashboard) is what decides when to open the review. `refresh` only reloads
+ * the list.
  */
 describe('refresh', () => {
   it('loads the pending conflicts without opening the screen', async () => {

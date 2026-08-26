@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { LocationSelect } from '../../../../db/schema';
+import type { LocationSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -14,9 +14,11 @@ interface LocationPickerModalProps {
   candidates: LocationSelect[];
 }
 
-/** Picker genérico de Location, reaproveitado pelos 3 tipos de ação em LocationRelationManager
- *  (definir pai, adicionar filho, adicionar conexão) - só muda a lista de candidatos já filtrada
- *  pelo chamador (auto-referência/ciclo/já-conectado excluídos antes de chegar aqui). */
+/**
+ * A generic Location picker, reused by the 3 kinds of action in LocationRelationManager (set a parent,
+ * add a child, add a connection) - only the candidate list differs, already filtered by the caller
+ * (self-reference/cycle/already-connected excluded before reaching here).
+ */
 const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   isVisible,
   onClose,

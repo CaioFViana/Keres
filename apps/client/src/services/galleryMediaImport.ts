@@ -1,13 +1,13 @@
-import * as DocumentPicker from 'expo-document-picker';
+import type * as DocumentPicker from 'expo-document-picker';
 import { mediaFileService, UnsupportedMediaError } from './MediaFileService';
-import { GalleryService } from './storymanagement/GalleryService';
+import type { GalleryService } from './storymanagement/GalleryService';
 
 /**
- * Resultado de importar um lote de arquivos escolhidos pela pessoa.
+ * The result of importing a batch of files chosen by the person.
  *
- * `galleryIds` cobre tanto mídia nova quanto duplicata resolvida: quem chama e precisa
- * vincular a mídia a uma entidade (o caso do `useEntityGalleryMedia`) usa esta lista
- * inteira, já que uma duplicata ainda é uma mídia válida para vincular.
+ * `galleryIds` covers both new media and resolved duplicates: a caller that needs to
+ * link the medium to an entity (the `useEntityGalleryMedia` case) uses this whole
+ * list, since a duplicate is still a valid medium to link.
  */
 export interface ImportMediaSummary {
   added: number;
@@ -17,13 +17,13 @@ export interface ImportMediaSummary {
 }
 
 /**
- * Importa os arquivos escolhidos no seletor do sistema para a galeria da história.
+ * Imports the files chosen in the system picker into the story's gallery.
  *
- * Mídia já presente (mesmo hash) não vira um registro novo: o endereçamento por conteúdo
- * torna a duplicata detectável, e criar outra linha só encheria a galeria de cópias da
- * mesma imagem. Compartilhado entre a tela de galeria (importação avulsa) e o hook de
- * mídia por entidade (importação + vínculo), para as duas não divergirem na lógica de
- * dedupe.
+ * Media already present (the same hash) does not become a new record: content addressing
+ * makes the duplicate detectable, and creating another row would only fill the gallery with copies of the
+ * same image. Shared between the gallery screen (a standalone import) and the per-entity media
+ * hook (import + link), so the two do not diverge in their dedupe
+ * logic.
  */
 export async function importPickedMediaAssets(
   galleryService: GalleryService,
@@ -40,8 +40,8 @@ export async function importPickedMediaAssets(
 
       if (existing) {
         summary.duplicates += 1;
-        // O registro pode existir sem arquivo local (veio do servidor e ainda não
-        // baixou); nesse caso o arquivo que a pessoa acabou de escolher resolve isso.
+        // The record may exist without a local file (it came from the server and has not been
+        // downloaded yet); in that case the file the person has just chosen resolves it.
         if (!mediaFileService.exists(existing.localPath)) {
           await galleryService.setLocalFileState(existing.id, {
             localPath: imported.localPath,

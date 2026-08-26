@@ -7,12 +7,12 @@ import { createStatRelationService } from '../../src/services/storymanagement/St
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 /**
- * O que o cliente registra no log de operações ao mexer em valores de status.
+ * What the client records in the operation log when touching stat values.
  *
- * O push manda a versão *base* derivada do payload (`payload.version - 1`, ver
- * `SyncEngineService.deriveBaseVersion`), então um payload sem `version` numérico vira um
- * update/delete sem base - e o servidor recusa isso como `validation`, que é o conflito
- * genérico "os dados não são válidos" que aparece na tela.
+ * The push sends the *base* version derived from the payload (`payload.version - 1`, see
+ * `SyncEngineService.deriveBaseVersion`), so a payload with no numeric `version` becomes an
+ * update/delete with no base - and the server refuses that as `validation`, which is the generic "the
+ * data is not valid" conflict that shows up on screen.
  */
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const USER_ID = 'local-user';
@@ -31,7 +31,7 @@ async function operations() {
   });
 }
 
-/** A base que o push mandaria para esta operação. */
+/** The base the push would send for this operation. */
 function baseVersionOf(payload: string): number | undefined {
   const version = JSON.parse(payload)?.version;
   return typeof version === 'number' && version >= 1 ? version - 1 : undefined;
@@ -119,7 +119,7 @@ describe('the operation stream of stat values', () => {
   });
 
   it('never writes two live rows for the same character, mode and stat', async () => {
-    // Duas gravações disparadas em paralelo é o que um `onBlur` repetido produz na tela.
+    // Two writes fired in parallel is what a repeated `onBlur` produces on screen.
     await Promise.all([set(5), set(7)]);
 
     const live = (await database.db.query.statRelations.findMany()).filter((row) => !row.isDeleted);
@@ -146,13 +146,13 @@ describe('the operation stream of stat values', () => {
 });
 
 /**
- * Aparelhos que já rodaram a versão com a corrida ficaram com duas linhas vivas para o mesmo
- * campo, e o servidor recusa a segunda em toda sincronização. A primeira escrita depois da
- * correção precisa desfazer isso sozinha, senão o conflito volta para sempre.
+ * Devices that already ran the version with the race were left with two live rows for the same field,
+ * and the server refuses the second on every synchronization. The first write after the fix has to undo
+ * that by itself, otherwise the conflict comes back forever.
  */
 describe('repairing duplicates that already exist on the device', () => {
-  // ULID é ordenável por tempo de criação, e é dessa ordem que o serviço decide quem fica -
-  // ids inventados fora dessa ordem fariam o teste passar pelo motivo errado.
+  // A ULID is sortable by creation time, and it is that order the service uses to decide which one
+  // stays - ids invented outside that order would make the test pass for the wrong reason.
   const OLDER = '01AAAAAAAAAAAAAAAAAAAAAAAA';
   const NEWER = '01BBBBBBBBBBBBBBBBBBBBBBBB';
 

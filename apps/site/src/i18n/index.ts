@@ -13,9 +13,10 @@ function isSupported(value: string | null | undefined): value is SupportedLangua
 }
 
 /**
- * O idioma inicial: o que a pessoa escolheu antes; senão, o do navegador; senão, inglês.
+ * The initial language: whatever the reader chose before; failing that, the browser's; failing
+ * that, English.
  *
- * `navigator.language` vem como `pt-BR`/`en-US`, então só a primeira parte interessa.
+ * `navigator.language` arrives as `pt-BR`/`en-US`, so only the first part matters.
  */
 export function detectLanguage(storageKey: string): SupportedLanguage {
   const stored = typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey);

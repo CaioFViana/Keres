@@ -1,9 +1,12 @@
-import { Scene } from '@keres/shared';
+import type { Scene } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { chapters, SceneInsert, scenes, SceneSelect } from '../../db/schema';
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '../../db';
+import type { SceneInsert, SceneSelect } from '../../db/schema';
+import { chapters, scenes } from '../../db/schema';
+import type { Create } from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
@@ -65,6 +68,77 @@ export interface SceneService {
 
 export const createSceneService = (db: AppDrizzleClient): SceneService => {
   const serverService = createServerService(db);
+
+  /**
+   * A scene's index is 1..N **within the chapter**, with no holes - the same convention as the chapters,
+   * and the only one the API accepts when reordering (it refuses a reorder whose lowest index is not 1 or
+   * which does not end at N).
+   */
+  const nextIndexInChapter = async (storyId: string, chapterId: string): Promise<number> => {
+    const siblings = await db
+      .select({ index: scenes.index })
+      .from(scenes)
+      .where(
+        and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.chapterId, chapterId),
+          eq(scenes.isDeleted, false),
+        ),
+      )
+      .all();
+    return siblings.reduce((highest, scene) => Math.max(highest, scene.index), 0) + 1;
+  };
+
+  /**
+   * Renumbers a chapter's live scenes to 1..N, preserving the current order.
+   *
+   * Called when a scene leaves the chapter (deleted or moved): without it a hole is left in the
+   * numbering, and one hole is enough to make the next reorder a validation conflict on the server. It
+   * lives in the service, and not in the screen that moves the scene, because import and automatic
+   * correction come through here too.
+   */
+  const renumberChapterScenes = async (
+    storyId: string,
+    chapterId: string,
+    userIdToLog: string,
+  ): Promise<void> => {
+    const living = await db
+      .select({ id: scenes.id, index: scenes.index, createdAt: scenes.createdAt })
+      .from(scenes)
+      .where(
+        and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.chapterId, chapterId),
+          eq(scenes.isDeleted, false),
+        ),
+      )
+      .all();
+
+    const ordered = [...living].sort(
+      (a, b) =>
+        a.index - b.index ||
+        a.createdAt.getTime() - b.createdAt.getTime() ||
+        a.id.localeCompare(b.id),
+    );
+
+    for (const [position, scene] of ordered.entries()) {
+      const newIndex = position + 1;
+      if (scene.index === newIndex) continue;
+      const [updated] = await db
+        .update(scenes)
+        .set({ index: newIndex, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+        .where(eq(scenes.id, scene.id))
+        .returning({ version: scenes.version });
+      // One `update` per scene, rather than a chapter `reorder`: the operation has to stand on its own,
+      // without depending on the server having already applied the deletion or the chapter change that
+      // prompted it.
+      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Scene', scene.id, {
+        index: newIndex,
+        version: updated?.version,
+      });
+    }
+  };
+
   return {
     async getScenesByStoryId(
       storyId,
@@ -92,8 +166,8 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       }
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Scene não está descrita em `entityFieldMetadata`; sem o `?? []` um critério
-        // desconhecido derruba a consulta em vez de ser ignorado.
+        // Scene is not described in `entityFieldMetadata`; without the `?? []` an unknown criterion takes the
+        // query down instead of being ignored.
         const sceneMetadata = entityFieldMetadata['Scene'] ?? [];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
@@ -227,6 +301,20 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         sceneData,
       );
 
+      // Changing chapter means changing queue: the scene enters at the end of the new one and the hole it
+      // leaves in the old one is closed just below. Here, and not on the form screen, so that any path that
+      // moves a scene keeps both numberings intact.
+      const movedFromChapterId =
+        sceneData.chapterId && sceneData.chapterId !== originalScene.chapterId
+          ? originalScene.chapterId
+          : null;
+      if (movedFromChapterId) {
+        sceneData = {
+          ...sceneData,
+          index: await nextIndexInChapter(originalScene.storyId, sceneData.chapterId!),
+        };
+      }
+
       const potentialNewState = { ...originalScene, ...sceneData };
 
       const changes = getChangedFields(originalScene, potentialNewState);
@@ -266,6 +354,10 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         getChangedFields(originalScene, updatedScene),
       );
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+
+      if (movedFromChapterId) {
+        await renumberChapterScenes(updatedScene.storyId, movedFromChapterId, userIdToLog);
+      }
 
       return updatedScene;
     },
@@ -318,6 +410,8 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         },
       );
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+
+      await renumberChapterScenes(sceneToDelete.storyId, sceneToDelete.chapterId, userIdToLog);
     },
 
     async getAllByStoryId(storyId: string): Promise<SceneSelect[]> {

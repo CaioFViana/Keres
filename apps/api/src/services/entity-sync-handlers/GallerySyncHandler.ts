@@ -1,12 +1,14 @@
-import {
-  CreateGalleryDataSchema,
+import type {
   CreateGalleryDataType,
   CreateStoryUpdate,
   DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
+import {
+  CreateGalleryDataSchema,
   isSupportedMediaMimeType,
   mediaTypeForMimeType,
   PartialGallerySchema,
-  UpdateStoryUpdate,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
@@ -15,11 +17,11 @@ import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**
- * Sincroniza os *metadados* de uma mídia. Os bytes não passam por aqui: eles sobem e
- * descem pelas rotas `/media`, endereçados pelo `hash` que esta linha carrega.
+ * Synchronizes a media file's *metadata*. The bytes do not go through here: they are uploaded and
+ * downloaded through the `/media` routes, addressed by the `hash` this row carries.
  *
- * Não há validação de dono porque a mídia não tem dono - o vínculo com personagens,
- * locais, notas, cenas e itens vive em `GalleryRelationSyncHandler`.
+ * There is no owner validation because media has no owner - the link to characters, locations, notes,
+ * scenes and items lives in `GalleryRelationSyncHandler`.
  */
 export class GallerySyncHandler extends BaseSyncEntityHandler<
   typeof CreateGalleryDataSchema,
@@ -43,8 +45,8 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
   }
 
   /**
-   * Recusa formatos que o aplicativo não conseguiria exibir e `mediaType` incoerente com
-   * o `mimeType`. Deixar passar produziria mídia que sincroniza e depois não abre.
+   * Refuses formats the application could not display and a `mediaType` inconsistent with the
+   * `mimeType`. Letting them through would produce media that synchronizes and then fails to open.
    */
   private assertSupportedMedia(mimeType: string, mediaType: string): void {
     if (!isSupportedMediaMimeType(mimeType)) {
@@ -59,10 +61,10 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
   }
 
   /**
-   * Hash conhecido no storage global só pode ser ligado a esta história se ela já o
-   * referencia (inclusive via tombstone). Um hash ainda inexistente é mídia nova cujo
-   * upload virá depois. Sem isto, quem conhece o MD5 de um blob alheio cria uma Gallery
-   * aqui e baixa o arquivo pela rota de mídia.
+   * A hash known to global storage can only be linked to this story if the story already references it
+   * (via a tombstone included). A hash that does not exist yet is new media whose upload will come
+   * later. Without this, whoever knows the MD5 of somebody else's blob creates a Gallery here and
+   * downloads the file through the media route.
    */
   private async assertHashBindableToStory(storyId: string, hash: string): Promise<void> {
     const blobExists = await mediaStorageService.has(hash);
@@ -138,9 +140,9 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     currentEntity: any,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
-    // A linha vira tombstone acima, mas o hash pode ser usado por outra Gallery (mesma
-    // história ou outra, já que o armazenamento é dedupado globalmente) - só o blob deixa
-    // de ter dono quando nenhuma referência viva sobra.
+    // The row becomes a tombstone above, but the hash may be used by another Gallery (in the same story
+    // or another, since storage is deduplicated globally) - the blob only becomes ownerless when no live
+    // reference is left.
     await mediaStorageService.deleteBlobIfUnreferenced(currentEntity.hash);
   }
 }

@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
+import { useChapterNames } from '@/src/hooks/useChapterNames';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
@@ -18,9 +20,11 @@ interface RelatedScenesListProps {
   noItemsMessage: string;
   getDetails?: (scene: SceneSelect) => SceneDetail[];
   sortScenes?: (a: SceneSelect, b: SceneSelect) => number;
+  /** Off when the list already lives inside a chapter and repeating the name situates nothing. */
+  showChapter?: boolean;
 }
 
-/** Lista colapsável de cenas relacionadas a uma entidade, com navegação para o detalhe da cena. */
+/** A collapsible list of scenes related to an entity, with navigation to the scene's detail. */
 const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   scenes,
   matchesScene,
@@ -28,9 +32,12 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   noItemsMessage,
   getDetails,
   sortScenes,
+  showChapter = true,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const navigateToDetail = useNavigateToEntityDetail();
+  const chapterNameOf = useChapterNames(scenes);
 
   const relatedScenes = useMemo(
     () =>
@@ -59,6 +66,12 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
           <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
             {relatedScene.name}
           </Text>
+          {showChapter && chapterNameOf(relatedScene.chapterId) ? (
+            <RelationAttributeLine
+              label={t('chapter')}
+              value={chapterNameOf(relatedScene.chapterId) as string}
+            />
+          ) : null}
           {getDetails?.(scene).map((detail) => (
             <RelationAttributeLine key={detail.label} label={detail.label} value={detail.value} />
           ))}

@@ -18,54 +18,49 @@ import ScenePresenceList, {
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
-import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import { Location } from '@keres/shared/entities/Location'; // Import Location entity
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
+import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
+import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import type { RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { SceneSelect } from '../../db/schema'; // For available scenes
-import { CharacterSelect } from '../../db/schemas/characters';
+import type { SceneSelect } from '../../db/schema'; // For available scenes
+import type { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import {
-  CharacterRelationServiceInterface,
-  createCharacterRelationService,
-} from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
-import {
-  CharacterSceneServiceInterface,
-  createCharacterSceneService,
-} from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
+import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import {
-  createItemJourneyService,
-  ItemJourneyService,
-} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import {
-  createLocationService,
-  LocationService,
-} from '../../services/storymanagement/LocationService'; // Import LocationService
+import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '../../services/storymanagement/ItemService';
+import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import type { LocationService } from '../../services/storymanagement/LocationService';
+import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { type CharactersScreenNavigationProp } from './CharacterListScreen';
+import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { CharacterStatPanel } from '../../components/features/stats/CharacterStatPanel/CharacterStatPanel';
 import { ModeManager } from '../../components/features/stats/ModeManager/ModeManager';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { useStoryStore } from '../../state/storyStore';
-import type { StatNotation } from '../../utils/statLadder';
+import type { StatNotation } from '@keres/shared/graphs/statLadder';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -74,7 +69,7 @@ export type CharacterDetailScreenParamList = {
 
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
 
-/** A tela de detalhe nunca escreve; o manager exige os callbacks, então recebem uma no-op. */
+/** The detail screen never writes; the manager requires the callbacks, so they get a no-op. */
 const noopModeWrite = async () => {};
 
 const CharacterDetailScreen = () => {
@@ -82,6 +77,7 @@ const CharacterDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
+  const { openCharacter: openPresenceMatrix } = useOpenPresenceMatrixViewer();
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
   const { t } = useTranslation();
@@ -124,8 +120,8 @@ const CharacterDetailScreen = () => {
   const { canEdit } = useStoryRole(character?.storyId);
   const { selectedStory } = useStoryStore();
   const statSystemEnabled = !!selectedStory?.statSystem;
-  // Sempre carregado: modos existem mesmo com o sistema de status desligado, e é aqui que o
-  // leitor os consulta (criar e editar é no formulário).
+  // Always loaded: modes exist even with the stats system turned off, and this is where
+  // the reader consults them (creating and editing happens on the form).
   const statData = useStoryStats(character?.storyId);
   const characterModes = useMemo(
     () => statData.modes.filter((mode) => mode.characterId === characterId),
@@ -162,27 +158,12 @@ const CharacterDetailScreen = () => {
   // Move styles declaration to the top
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    mainTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
+    ...commonDetailStyleDefs(colors),
     subTitle: {
       fontSize: 20,
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 5,
     },
   });
 
@@ -529,16 +510,27 @@ const CharacterDetailScreen = () => {
   };
 
   const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, characterId, colors.text, canEdit],
+    () => (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {selectedStory?.type === 'linear' && (
+          <TouchableOpacity
+            onPress={() => openPresenceMatrix(characterId)}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="map-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
+        {canEdit && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CharacterForm', { characterId })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="pencil-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
+      </View>
+    ),
+    [navigation, characterId, colors.text, canEdit, openPresenceMatrix, selectedStory?.type],
   );
 
   useFocusEffect(

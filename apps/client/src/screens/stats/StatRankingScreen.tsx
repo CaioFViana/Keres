@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -10,20 +10,20 @@ import Select from '../../components/common/inputs/Select/Select';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { StatsStackParamList } from '../../navigation/StatsStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import type { StatNotation } from '../../utils/statLadder';
+import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import { buildStatRanking } from '../../utils/statRanking';
 
 type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;
 
 /**
- * A tier list: um status escolhido no topo e todo mundo da história ordenado por ele. Cada modo
- * conta como uma linha própria, para "Ilda" e "Ilda · Na tempestade" aparecerem lado a lado.
+ * The tier list: one stat chosen at the top and everybody in the story sorted by it. Each mode
+ * counts as a row of its own, so "Ilda" and "Ilda · In the storm" appear side by side.
  */
 const StatRankingScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -48,7 +48,7 @@ const StatRankingScreen = () => {
   );
 
   useEffect(() => {
-    // Sem escolha ainda, começa pelo primeiro eixo - a tela nunca abre vazia à toa.
+    // With nothing chosen yet, it starts with the first axis - the screen never opens empty for nothing.
     if (!statId && data.stats.length > 0) setStatId(data.stats[0]!.id);
   }, [data.stats, statId]);
 

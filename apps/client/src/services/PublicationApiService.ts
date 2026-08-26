@@ -1,5 +1,5 @@
 import type { PublicationLabelMode, ShowcaseVisibility, StoryPublication } from '@keres/shared';
-import { ServerSelect } from '../db/schemas/servers';
+import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 
@@ -12,11 +12,11 @@ export interface StoryShowcaseState {
 }
 
 /**
- * As rotas de publicação, faladas com um servidor específico.
+ * The publication routes, spoken to a specific server.
  *
- * Mesmo motivo de `FriendshipApiService` para não usar o `apiClient` compartilhado: aquele
- * aponta para um servidor só de cada vez (o último que a sincronização ou a história aberta
- * definiu), e a tela de publicação lista histórias de todos os servidores registrados.
+ * The same reason as `FriendshipApiService` for not using the shared `apiClient`: that one points at a
+ * single server at a time (the last one synchronization or the open story set), and the publication
+ * screen lists stories from every registered server.
  */
 export class PublicationApiService {
   private clientFor(server: ServerSelect) {
@@ -26,7 +26,7 @@ export class PublicationApiService {
     return client;
   }
 
-  /** Toda publicação de história que esta conta pode ler neste servidor - dela ou compartilhada. */
+  /** Every story publication this account can read on this server - its own or shared with it. */
   async listVisible(server: ServerSelect): Promise<StoryPublication[]> {
     const response = await this.clientFor(server).get('/stories/publications/mine');
     return response.data;
@@ -38,10 +38,10 @@ export class PublicationApiService {
   }
 
   /**
-   * `visibility` viaja junto da publicação de propósito: ela descreve como *esta* publicação
-   * deve ficar exposta, e o servidor a regrava em toda publicação. Uma chamada separada só
-   * quando há senha faria o caminho "publicar sem senha" não mexer em nada, deixando uma
-   * proteção anterior valendo sem ninguém pedir.
+   * `visibility` travels with the publication on purpose: it describes how *this* publication should be
+   * exposed, and the server rewrites it on every publication. A separate call only when there is a
+   * password would make the "publish without a password" path change nothing, leaving an earlier
+   * protection in force with nobody having asked for it.
    */
   async publish(
     server: ServerSelect,

@@ -4,6 +4,8 @@ export * from './entities/Chapter';
 export * from './entities/Character';
 export * from './entities/CharacterRelation';
 export * from './entities/CharacterScene';
+export * from './entities/Plot';
+export * from './entities/PlotScene';
 export * from './entities/Choice';
 export * from './entities/ChoiceCheck';
 export * from './entities/ChoiceCheckGroup';
@@ -44,6 +46,8 @@ export * from './schemas/storyExportMigrations';
 export * from './schemas/ChapterSchemas';
 export * from './schemas/CharacterRelationSchemas';
 export * from './schemas/CharacterSceneSchemas';
+export * from './schemas/PlotSchemas';
+export * from './schemas/PlotSceneSchemas';
 export * from './schemas/CharacterSchemas';
 export * from './schemas/ChoiceCheckGroupSchemas';
 export * from './schemas/ChoiceCheckSchemas';
@@ -78,6 +82,7 @@ export * from './metadata/recoverableEntityTypes';
 export * from './metadata/entityDisplayName';
 export * from './metadata/FriendStatus';
 export * from './metadata/AttributeType';
+export * from './metadata/AppRelease';
 export * from './metadata/StorySchemaEntityType';
 export * from './metadata/LocationRelationType';
 export * from './metadata/SeeAlsoEntityType';
@@ -91,3 +96,12 @@ export * from './utils/colorUtils';
 export * from './utils/storyZip';
 export * from './theme/ThemeColors';
 export * from './theme/palettes';
+
+// Domain rules that hold on both sides of synchronization: the client applies them before writing to
+// the operation log and the server applies them again on receipt. Each of them once existed
+// duplicated, and at least one had already diverged.
+export * from './rules/entityPair';
+export * from './rules/linearStoryScenes';
+export * from './rules/reorderIndices';
+export * from './rules/storyExportIntegrity';
+export * from './rules/storyOwnerFields';

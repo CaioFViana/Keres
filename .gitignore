@@ -31,3 +31,5 @@ apps/site/dist
 # Relatórios de cobertura, gerados por `bun run test:coverage` em cada workspace.
 coverage/
 coverage-integration/
+coverage-combined/
+coverage-sync/

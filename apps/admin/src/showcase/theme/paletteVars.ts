@@ -1,15 +1,15 @@
 import { themes, type ThemeColors } from '@keres/shared';
 
 /**
- * Ponte entre as paletas do app (objetos de tokens, feitos para `StyleSheet` do React Native)
- * e o CSS do site (custom properties).
+ * A bridge between the app's palettes (token objects, made for React Native's `StyleSheet`) and
+ * the site's CSS (custom properties).
  *
- * A tradução existe para a página de uma história poder ser pintada com a paleta que o autor
- * escolheu para ela dentro do Keres - é o mesmo `stories.theme`, agora que as paletas moram em
- * `@keres/shared` e não mais só no cliente.
+ * The translation exists so a story's page can be painted with the palette its author chose for it
+ * inside Keres - it is the same `stories.theme`, now that the palettes live in `@keres/shared` and
+ * no longer only in the client.
  */
 
-/** Prefixo próprio: não colide com as variáveis do painel admin, que têm outra origem. */
+/** Its own prefix: it does not collide with the admin panel's variables, which come from elsewhere. */
 const VAR_PREFIX = '--story';
 
 const TOKEN_TO_VAR: Array<[keyof ThemeColors, string]> = [
@@ -35,9 +35,9 @@ export function paletteExists(themeName: string | null | undefined): boolean {
 }
 
 /**
- * As variáveis CSS de uma paleta, no modo claro ou escuro. Cai no tema `default` quando a
- * história não tem tema, ou tem um que este build não conhece (pacote publicado por uma
- * versão mais nova do app).
+ * A palette's CSS variables, in light or dark mode. Falls back to the `default` theme when the
+ * story has no theme, or has one this build does not know (a package published by a newer version
+ * of the app).
  */
 export function paletteVars(
   themeName: string | null | undefined,
@@ -51,7 +51,7 @@ export function paletteVars(
   );
 }
 
-/** Nome de exibição de uma paleta, a partir da chave técnica (`seaOfStars` -> `Sea Of Stars`). */
+/** A palette's display name, from the technical key (`seaOfStars` -> `Sea Of Stars`). */
 export function paletteDisplayName(themeName: string | null | undefined): string {
   if (!paletteExists(themeName)) {
     return 'Default';

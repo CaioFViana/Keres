@@ -44,7 +44,7 @@ const ids = {
   galleryNoTitle: '',
 };
 
-/** Um id que não existe no banco, para exercitar o rótulo de fallback. */
+/** An id that does not exist in the database, to exercise the fallback label. */
 const MISSING_ID = '01JQMISSINGMISSINGMISSING';
 
 function deleted(
@@ -78,7 +78,7 @@ beforeEach(async () => {
   } as never);
   await db
     .insert(chapters)
-    .values({ id: ids.chapter, storyId: ids.story, name: 'Capítulo 1', index: 0 } as never);
+    .values({ id: ids.chapter, storyId: ids.story, name: 'Capítulo 1', index: 1 } as never);
   await db
     .insert(locations)
     .values({ id: ids.location, storyId: ids.story, name: 'O Porto' } as never);
@@ -89,7 +89,7 @@ beforeEach(async () => {
       chapterId: ids.chapter,
       locationId: ids.location,
       name: 'A chegada',
-      index: 0,
+      index: 1,
     },
     {
       id: ids.otherScene,
@@ -311,7 +311,7 @@ describe('enrichDeletedDisplayNames', () => {
     ]);
 
     expect(storyTitles.get(ids.story)).toBe('A Queda');
-    // Tipos sem composição mantêm o nome que já veio.
+    // Types with no composition keep the name they already came with.
     expect(names.get(`Chapter:${ids.chapter}`)).toBe('Capítulo 1');
   });
 
@@ -361,7 +361,7 @@ describe('enrichOperationLogNames', () => {
         entityId: newId(),
         storyId: ids.story,
         userId: ids.user,
-        // O registro já não existe; só o payload da operação carrega as pontas.
+        // The record no longer exists; only the operation's payload carries the ends.
         payload: { characterId: ids.characterB, sceneId: ids.otherScene },
       },
     ]);

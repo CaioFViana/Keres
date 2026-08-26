@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { HelpFieldRow } from '@/src/help/types';
+import type { HelpFieldRow } from '@/src/help/types';
 import { useTheme } from '@/src/theme';
 
 export function HelpFieldTable({ rows }: { rows: HelpFieldRow[] }) {

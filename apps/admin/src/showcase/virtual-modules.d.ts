@@ -1,7 +1,7 @@
 /**
- * A marca do Keres é gerada em tempo de build a partir do ícone do app de desktop, então não
- * existe arquivo em disco para o TypeScript resolver - o plugin `keresLogo` (vite.keresIcon.ts)
- * publica este módulo com a URL final da imagem.
+ * The Keres wordmark is generated at build time from the desktop app's icon, so there is no file
+ * on disk for TypeScript to resolve - the `keresLogo` plugin (vite.keresIcon.ts) publishes this
+ * module with the image's final URL.
  */
 declare module 'virtual:keres-logo' {
   const url: string;
@@ -9,8 +9,8 @@ declare module 'virtual:keres-logo' {
 }
 
 /**
- * Os desenhos dos ícones de avatar, recortados do pacote `ionicons` em tempo de build pelo
- * plugin `keresAvatarIcons` - o conteúdo interno de cada `<svg>`, indexado pelo nome do ícone.
+ * The avatar icons' artwork, cut out of the `ionicons` package at build time by the
+ * `keresAvatarIcons` plugin - the inner content of each `<svg>`, indexed by icon name.
  */
 declare module 'virtual:keres-avatar-icons' {
   const icons: Record<string, string>;

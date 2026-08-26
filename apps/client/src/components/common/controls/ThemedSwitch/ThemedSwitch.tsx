@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleProp, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Animated, Easing, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/src/theme';
-import { getContrastTextColor } from '@/src/utils/colorUtils';
+import { getContrastTextColor } from '@keres/shared';
 
 interface ThemedSwitchProps {
   value: boolean;
@@ -14,7 +15,7 @@ interface ThemedSwitchProps {
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-/** Switch acessível com cores controladas pelo tema, sem recorrer ao thumb nativo do Android. */
+/** An accessible switch with theme-controlled colours, without resorting to Android's native thumb. */
 const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
   value,
   onValueChange,

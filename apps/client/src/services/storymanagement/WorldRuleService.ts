@@ -1,10 +1,13 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient, WorldRuleInsert, worldRules, WorldRuleSelect } from '../../db';
+import type { SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { AppDrizzleClient, WorldRuleInsert, WorldRuleSelect } from '../../db';
+import { worldRules } from '../../db';
 import { tagRelations } from '../../db/schemas/tagRelations';
 import { tags } from '../../db/schemas/tags'; // Import tags schema
-import { WorldRuleWithTags } from '../../db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
-import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import type { WorldRuleWithTags } from '../../db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
+import type { Create } from '../../utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,

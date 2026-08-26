@@ -1,4 +1,4 @@
-import { ThemeColors } from '../../../../theme/ThemeColors';
+import type { ThemeColors } from '@keres/shared';
 
 /**
  * The collapsible-header + rounded-row look shared by every "related entities" section
@@ -18,9 +18,9 @@ export const relationSectionStyleDefs = (colors: ThemeColors) => ({
     paddingHorizontal: 15,
     backgroundColor: colors.surface,
     borderRadius: 8,
-    // Um pouco mais de espaço que antes: com vários atributos por item (nome + 2-3 linhas
-    // extras), 8px fazia itens consecutivos parecerem um bloco contínuo em vez de entradas
-    // separadas.
+    // A little more space than before: with several attributes per item (name + 2-3 extra
+    // lines), 8px made consecutive items look like one continuous block instead of separate
+    // entries.
     marginBottom: 12,
   },
   relationText: {
@@ -31,7 +31,7 @@ export const relationSectionStyleDefs = (colors: ThemeColors) => ({
   relationItemContent: {
     flex: 1,
   },
-  /** Nome do atributo dentro do conteúdo extra de um item (ex.: "Cena:", "Estado:"). */
+  /** The attribute's name inside an item's extra content (e.g. "Scene:", "State:"). */
   attributeLabel: {
     fontWeight: '700' as const,
     color: colors.text,

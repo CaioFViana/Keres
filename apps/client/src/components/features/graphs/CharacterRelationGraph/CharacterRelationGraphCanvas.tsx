@@ -2,19 +2,20 @@ import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path, Rect as SvgRect, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
-import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
+import type { PanZoomCanvasHandle } from '../../../../hooks/usePanZoomCanvas';
+import { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
-import {
+import type {
   CharacterRelationGraphLayout,
   RelationGraphNode,
-} from '../../../../utils/characterRelationGraphLayout';
+} from '@keres/shared/graphs/characterRelationGraphLayout';
 
 /**
- * Desenho interativo do mapa de relações entre personagens.
+ * The interactive drawing of the character relations map.
  *
- * Mesma arquitetura do mapa de história (`StoryGraphCanvas`), incluindo o pan/zoom
- * (`usePanZoomCanvas`, compartilhado entre os dois). As arestas aqui são só um segmento reto
- * - a relação não tem direção, então não há seta nem curva a desenhar.
+ * The same architecture as the story map (`StoryGraphCanvas`), including the pan/zoom
+ * (`usePanZoomCanvas`, shared between the two). The edges here are just a straight segment
+ * - the relation has no direction, so there is no arrow or curve to draw.
  */
 
 export type CharacterRelationGraphCanvasHandle = PanZoomCanvasHandle;

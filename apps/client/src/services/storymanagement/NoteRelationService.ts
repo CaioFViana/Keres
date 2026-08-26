@@ -1,9 +1,9 @@
-import {
+import type {
   NoteRelationEntities,
   NoteRelation as NoteRelationInterface,
 } from '@keres/shared/entities/Note';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';

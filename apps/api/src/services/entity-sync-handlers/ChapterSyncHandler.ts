@@ -1,14 +1,11 @@
-import {
+import type {
   ChapterReorderingStoryUpdate,
-  ChapterReorderingStoryUpdateSchema,
   CreateStoryUpdate,
   UpdateStoryUpdate,
-} from '@keres/shared'; // Corrected import
-import {
-  CreateChapterDataSchema,
-  CreateChapterDataType,
-  PartialChapterSchema,
-} from '@keres/shared/';
+} from '@keres/shared';
+import { ChapterReorderingStoryUpdateSchema, reorderIndicesProblem } from '@keres/shared';
+import type { CreateChapterDataType } from '@keres/shared/';
+import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
 import { db } from '../../db';
 import { chapters, scenes } from '../../db/schema'; // Import scenes table
@@ -104,21 +101,13 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
           );
         }
 
-        // Ensure new indices are unique and sequential (optional, but good for data integrity)
-        const newIndices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
-        if (new Set(newIndices).size !== newIndices.length) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Duplicate newIndex values found in reorder items.',
-          );
-        }
-        // Assuming indices start from 1 and are sequential without gaps. Adjust if model allows gaps or 0-indexing.
-        // The client should provide 1-based sequential indices for the new order.
-        if (Math.min(...newIndices) !== 1 || Math.max(...newIndices) !== newIndices.length) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: New indices must be sequential starting from 1 without gaps.',
-          );
+        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
+        // `buildReorderItems` from it, and this handler enforces the same thing.
+        const problem = reorderIndicesProblem(
+          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        );
+        if (problem) {
+          throw new SyncConflictError('validation', problem);
         }
 
         // 2. Batch Update Scene Indices

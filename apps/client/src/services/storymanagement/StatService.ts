@@ -1,8 +1,10 @@
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import { StatInsert, StatSelect, stats } from '../../db/schema';
-import { Create, prepareNewEntityData } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '../../db';
+import type { StatInsert, StatSelect } from '../../db/schema';
+import { stats } from '../../db/schema';
+import type { Create } from '../../utils/entityUtils';
+import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
@@ -36,9 +38,9 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
     and(eq(stats.storyId, storyId), eq(stats.isDeleted, false));
 
   /**
-   * O teto de eixos é do desenho, não da tela: passar de 12 deixa o radar ilegível, e o
-   * servidor recusa o excedente na sincronização. Barrar aqui transforma isso num erro de
-   * formulário imediato em vez de um conflito de sync opaco horas depois.
+   * The axis ceiling belongs to the drawing, not to the screen: going past 12 makes the radar unreadable,
+   * and the server refuses the surplus during synchronization. Blocking it here turns that into an
+   * immediate form error instead of an opaque sync conflict hours later.
    */
   const assertPrimaryLimit = async (storyId: string, excludeId?: string) => {
     const primaries = await db
@@ -152,8 +154,8 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
       if (changed.length === 0) return;
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      // Uma operação de update por linha, e não um 'reorder' de Story: o reorder do servidor é
-      // exclusivo de Chapter/Scene/StorySchemaField e recusaria um alvo desconhecido.
+      // One update operation per row, and not a Story 'reorder': the server's reorder is exclusive to
+      // Chapter/Scene/StorySchemaField and would refuse an unknown target.
       for (const stat of changed) {
         const [updated] = await db
           .update(stats)

@@ -2,7 +2,7 @@
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
+import { seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 let database: TestDatabase;

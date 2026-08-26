@@ -1,171 +1,179 @@
-# Plano de testes do Keres
+# Keres testing plan
 
-Plano usado para iniciar o planejamento de Ouroboros. Não atualizado no momento.
+The plan used to start planning Ouroboros. Not updated at present.
 
-## Objetivo
+## Goal
 
-Cobrir lógica e integração de dados sem acoplar os ambientes que o monorepo já usa:
-Expo/React Native, Elysia/PostgreSQL, Vite/React e Electron.
+To cover logic and data integration without coupling to the environments the monorepo already uses:
+Expo/React Native, Elysia/PostgreSQL, Vite/React and Electron.
 
-Fora de escopo por decisão explícita: renderização das 60 telas do client e das 5 páginas do
-admin. Custo alto e alta taxa de quebra por mudança visual - um teste que afirma que um
-`<Text>` mostra uma string quebra a cada ajuste de layout sem nunca pegar um bug.
+Out of scope by explicit decision: rendering the client's 60 screens and the admin's 5 pages.
+High cost and a high breakage rate on visual changes - a test asserting that a
+`<Text>` shows a string breaks on every layout adjustment without ever catching a bug.
 
-Os **hooks** (`src/hooks`, 21 arquivos) são a exceção deliberada: é onde mora a lógica das
-telas, e o `renderHook` da React Native Testing Library os exercita sem renderizar nada. Um
-bug ali afeta várias telas de uma vez.
+The **hooks** (`src/hooks`, 21 files) are the deliberate exception: it is where the screens' logic
+lives, and React Native Testing Library's `renderHook` exercises them without rendering anything. A
+bug there affects several screens at once.
 
-## Sobre testar componentes React Native
+## On testing React Native components
 
-A ferramenta é `@testing-library/react-native`, o que a [documentação do
-Expo](https://docs.expo.dev/develop/unit-testing/) recomenda junto com o `jest-expo` que este
-projeto já usa. Dois pontos que valem registro:
+The tool is `@testing-library/react-native`, which the [Expo
+documentation](https://docs.expo.dev/develop/unit-testing/) recommends together with the `jest-expo` this
+project already uses. Two points worth recording:
 
-- `react-test-renderer` **não** é alternativa: não suporta React 19, e o client está no 19.1.0.
-  A RNTL 14 usa o pacote `test-renderer` no lugar dele, e o traz como peer.
-- Na RNTL 14, `renderHook` devolve uma **Promise** (assim como `rerender` e `unmount`). Sem o
-  `await`, `result` vem `undefined` e todo teste falha com a mesma mensagem enganosa.
-- A própria Expo desaconselha snapshot para UI e aponta E2E (Maestro) no lugar. Se um dia as
-  telas precisarem de cobertura, o caminho é uma punhado de jornadas críticas ponta a ponta -
-  criar história, sincronizar, resolver conflito -, não teste por tela.
+- `react-test-renderer` is **not** an alternative: it does not support React 19, and the client is on 19.1.0.
+  RNTL 14 uses the `test-renderer` package in its place, and brings it in as a peer.
+- In RNTL 14, `renderHook` returns a **Promise** (as do `rerender` and `unmount`). Without the
+  `await`, `result` comes back `undefined` and every test fails with the same misleading message.
+- Expo itself advises against snapshots for UI and points at E2E (Maestro) instead. If the
+  screens ever need coverage, the way is a handful of critical end-to-end journeys -
+  create a story, synchronize, resolve a conflict -, not a test per screen.
 
-## Ferramentas
+## Tools
 
-| Área | Ferramenta principal | Escopo |
+| Area | Main tool | Scope |
 | --- | --- | --- |
-| `packages/shared` | Vitest | Schemas, migrações de exportação, metadados e utilitários puros. |
-| `apps/api` | Vitest | Utilitários, config e rotas Elysia; integração com Postgres descartável. |
-| `apps/admin` | Vitest | Camada de API (axios mockado). |
-| `apps/client` | Jest + `jest-expo` + RNTL | Utils, stores, services, banco de teste em `better-sqlite3` e hooks. |
-| `apps/desktop` | Vitest | Utilitários e IPC, com Electron mockado. |
+| `packages/shared` | Vitest | Schemas, export migrations, metadata and pure utilities. |
+| `apps/api` | Vitest | Utilities, config and Elysia routes; integration with a disposable Postgres. |
+| `apps/admin` | Vitest | The API layer (axios mocked). |
+| `apps/client` | Jest + `jest-expo` + RNTL | Utils, stores, services, a test database in `better-sqlite3` and hooks. |
+| `apps/desktop` | Vitest | Utilities and IPC, with Electron mocked. |
 
-O client fica em Jest de propósito: `jest-expo` é o preset oficial do SDK 54 e entrega o
-`transformIgnorePatterns` do código Flow/TS não transpilado do `react-native`, além dos mocks
-de todos os módulos nativos `expo-*`. Vitest não tem preset oficial de Expo/RN.
+The client stays on Jest on purpose: `jest-expo` is the SDK 54's official preset and provides the
+`transformIgnorePatterns` for `react-native`'s untranspiled Flow/TS code, besides the mocks
+of every native `expo-*` module. Vitest has no official Expo/RN preset.
 
-## Convenções
+## Conventions
 
-- Todo teste vive em `<workspace>/test/`, espelhando a estrutura de `src/`.
-- Testes que exigem infra externa terminam em `*.integration.test.ts` e ficam fora do comando
-  padrão; rodam por `bun run test:integration`.
+- Every test lives in `<workspace>/test/`, mirroring `src/`'s structure.
+- Tests requiring external infrastructure end in `*.integration.test.ts` and stay out of the default
+  command; they run through `bun run test:integration`.
 
-## Comandos
+## Commands
 
 ```bash
-bun run test:report       # tabela agregada: suítes, testes e cobertura de tudo
-bun run test              # todas as suítes unitárias, sem infra
-bun run test:integration  # suítes que exigem o Postgres descartável
-bun run test:all          # os dois acima
-bun run test:coverage     # só as unitárias, com relatório de cobertura
+bun run test:report       # an aggregated table: suites, tests and coverage for everything
+bun run test              # every unit suite, with no infrastructure
+bun run test:integration  # the suites requiring the disposable Postgres
+bun run test:all          # both of the above
+bun run test:coverage     # the unit ones only, with a coverage report
 ```
 
-`test:report` inclui a integração da API como linha própria. Sem o banco de pé, aquela linha
-aparece como indisponível e o relatório continua válido para o resto - falta de infra não é
-falha de código.
+`test:report` includes the API's integration as a row of its own. Without the database up, that row
+shows as unavailable and the report stays valid for the rest - missing infrastructure is not a
+code failure.
 
-Para as de integração, suba o banco antes:
+For the integration ones, bring the database up first:
 
 ```bash
 docker compose -f apps/api/docker-compose.test.yml up -d
 ```
 
-## Estado atual
+## Current state
 
-Concluído:
+Completed:
 
-1. Separação, na API, da criação da aplicação (`createApp()`) dos efeitos de bootstrap.
-2. Vitest configurado nos quatro workspaces, Jest Expo no client, layout de `test/`
-   padronizado e cobertura ligada em todos.
-3. Separação entre suítes unitárias e de integração, com `docker-compose.test.yml` e um job
-   próprio no CI.
-4. `ci.yml` rodando typecheck, lint e testes em todo push e PR; `release.yml` também roda os
-   testes antes de publicar.
-5. Varredura de lógica pura: utils do client, schemas/metadados do shared, utils e config da
-   API, resolução de caminhos do desktop.
-6. Unidades com test doubles: `createEntityStore` (a fábrica das 17 stores de entidade), a
-   camada de API do admin, os 10 canais IPC do desktop com Electron mockado, o `apiClient` do
-   client (cache de token por servidor, interceptors e refresh no 401) e `storyTypeConversion`.
+1. Separating, in the API, the application's creation (`createApp()`) from the bootstrap effects.
+2. Vitest configured in the four workspaces, Jest Expo in the client, a standardised `test/`
+   layout and coverage turned on everywhere.
+3. Separating unit and integration suites, with `docker-compose.test.yml` and a job
+   of its own in CI.
+4. `ci.yml` running typecheck, lint and tests on every push and PR; `release.yml` also runs the
+   tests before publishing.
+5. A sweep of pure logic: the client's utils, shared's schemas/metadata, the API's utils and config,
+   the desktop's path resolution.
+6. Units with test doubles: `createEntityStore` (the factory of the 17 entity stores), the
+   admin's API layer, the desktop's 10 IPC channels with Electron mocked, the client's `apiClient`
+   (the per-server token cache, interceptors and refresh on a 401) and `storyTypeConversion`.
 
-7. Integração da API contra o Postgres descartável: helpers de banco e de aplicação, e suítes
-   de rota para auth, user, story (export/import), sync, story permissions e admin - cada
-   rota protegida com o seu caso de 401 e, no painel, de 403.
+7. The API's integration against the disposable Postgres: database and application helpers, and route
+   suites for auth, user, story (export/import), sync, story permissions and admin - each
+   protected route with its 401 case and, in the panel, its 403.
 
-8. Banco de teste do client em `better-sqlite3` (`test/helpers/testDb.ts`), aplicando as
-   migrações de produção sem cópia, e as suítes sobre ele: `OperationLogService`, `syncUtils`
-   (numeração do log de operações e a guarda de história somente-leitura), os handlers de sync
-   que aplicam o pull no banco local, e `EntityService`.
-9. Ciclo de sincronização do `SyncEngineService` contra o banco de teste: pull incremental,
-   avanço do cursor, push do que está pendente e o que fica de fora dele.
+8. The client's test database in `better-sqlite3` (`test/helpers/testDb.ts`), applying the
+   production migrations with no copy, and the suites over it: `OperationLogService`, `syncUtils`
+   (the operation log's numbering and the read-only story guard), the sync handlers
+   that apply the pull to the local database, and `EntityService`.
+9. The `SyncEngineService`'s synchronization cycle against the test database: incremental pull,
+   cursor advance, pushing what is pending and what stays out of it.
 
-   A instância do Axios é privada, mas isso não exige mock de módulo nem mudança de desenho: o
-   Axios resolve o adapter na hora da requisição e cai em `axios.defaults.adapter` quando a
-   instância não tem um próprio, e `createKeresAxiosInstance()` nunca define um. Basta o teste
-   atribuir `axios.defaults.adapter` - vale inclusive para o singleton já construído, e os
-   interceptors continuam rodando.
-10. Rotas de friend (todo o ciclo de amizade e bloqueio) e de media (canal binário da galeria,
-    incluindo a checagem de que a história referencia o hash pedido). O upload usa
-    `test/helpers/bunShim.ts`, que supre as APIs do Bun que a camada de mídia usa e que não
-    existem em Node.
-11. `BaseSyncEntityHandler` contra banco real: controle de concorrência otimista, conflito de
-    entidade excluída no servidor, `operationTime`, soft delete idempotente, e as consultas
-    que alimentam o limite de plano e a tela de recuperação do admin.
-12. `StoryExportImportService`: remapeamento de ids (e a preservação deles no envio de uma
-    história local), reinício de versão e posse, recusa de pacote de formato futuro ou com
-    referência pendurada, e atomicidade - um import que falha no meio não deixa nada para trás.
+   The Axios instance is private, but that requires neither a module mock nor a design change: Axios
+   resolves the adapter at request time and falls back to `axios.defaults.adapter` when the
+   instance has none of its own, and `createKeresAxiosInstance()` never sets one. It is enough for the test
+   to assign `axios.defaults.adapter` - it works even for the already-constructed singleton, and the
+   interceptors carry on running.
+10. The friend routes (the whole friendship and blocking cycle) and the media ones (the gallery's binary channel,
+    including the check that the story references the requested hash). The upload uses
+    `test/helpers/bunShim.ts`, which supplies the Bun APIs the media layer uses and that do not
+    exist in Node.
+11. `BaseSyncEntityHandler` against a real database: optimistic concurrency control, the conflict of an
+    entity deleted on the server, `operationTime`, an idempotent soft delete, and the queries
+    that feed the plan limit and the admin's recovery screen.
+12. `StoryExportImportService`: id remapping (and preserving them when sending a
+    local story), version and ownership reset, refusing a package of a future format or with a
+    dangling reference, and atomicity - an import that fails halfway leaves nothing behind.
 
-13. Lógica pura restante do client, fechando a varredura: os dois geradores de SVG que faltavam,
-    `customAttributeFieldMetadata`, `documentTitle` e as tabelas de ícones.
+13. The client's remaining pure logic, closing the sweep: the two SVG generators that were missing,
+    `customAttributeFieldMetadata`, `documentTitle` and the icon tables.
 
-14. Stores avulsas e o resto da camada de credenciais e conflitos do client: `appAlert`,
+14. Standalone stores and the rest of the client's credential and conflict layer: `appAlert`,
     `connectivity`, `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`,
-    `AuthTokenManager`, `TokenVault`, `SyncConflictService` e `favoriteBehaviorUtils`.
+    `AuthTokenManager`, `TokenVault`, `SyncConflictService` and `favoriteBehaviorUtils`.
 
-15. `MediaSyncService`: a reconciliação de mídia, incluindo a deduplicação por hash, os dois
-    caminhos de download (disco no nativo, Axios na web) e a regra de nunca deixar uma falha
-    de transferência derrubar o ciclo.
+15. `MediaSyncService`: media reconciliation, including hash deduplication, the two
+    download paths (disk on native, Axios on the web) and the rule of never letting a transfer
+    failure bring the cycle down.
 
-16. `downloadAndImportStory` e `uploadNewStoryToServer`: a transferência de uma história
-    inteira entre aparelho e servidor, incluindo a preservação do id local e a migração da
-    identidade de favoritos e comentários para a conta do servidor.
+16. `downloadAndImportStory` and `uploadNewStoryToServer`: transferring a whole story
+    between device and server, including preserving the local id and migrating the
+    identity of favourites and comments to the server's account.
 
-17. Limiares de cobertura em cada workspace, calibrados nos valores medidos, com o CI rodando
-    as suítes *com* cobertura para que os pisos sejam de fato aplicados.
+17. Coverage thresholds in each workspace, calibrated on the measured values, with CI running
+    the suites *with* coverage so the floors are actually enforced.
 
-O roteiro está concluído. O que ficou deliberadamente fora de escopo continua fora: a
-renderização das telas e componentes React Native e das páginas do admin.
+The roadmap is complete. What was deliberately left out of scope stays out: the
+rendering of the React Native screens and components and of the admin's pages.
 
-## Limiares de cobertura
+## Coverage thresholds
 
-Cada workspace tem um piso em `coverage.thresholds` (Vitest) ou `coverageThreshold` (Jest),
-fixado um pouco abaixo do valor medido para absorver flutuação. `apps/api` tem dois conjuntos:
-um na config unitária e outro na de integração, medidos separadamente - a unitária cobre só o
-que roda sem banco, então o número dela é baixo por construção.
+Every workspace's floors have a single source of truth in
+`scripts/coverage-thresholds.json`; the `coverage.thresholds` (Vitest),
+`coverageThreshold` (Jest) and `test-report.mjs` configurations read that file. `apps/api` has two sets:
+one in the unit config and another in the integration one, measured separately - the unit one covers only
+what runs without a database, so its number is low by construction.
 
-A regra é de **ratchet**: quando a cobertura sobe, o piso sobe junto na mesma mudança. Cada
-piso mantém uma margem de 3 pontos percentuais abaixo da cobertura de referência, para absorver
-flutuações pequenas. Baixar além dessa margem é uma decisão consciente, não um atalho para fazer
-o CI passar - se a cobertura caiu, ou o teste que faltou não foi escrito, ou código coberto foi
-removido, e as duas situações merecem ser ditas na descrição do commit.
+The rule is a **ratchet**: when coverage rises, the floor rises with it in the same change. Each
+floor keeps a margin of 3 percentage points below the reference coverage, to absorb
+small fluctuations. Lowering it beyond that margin is a conscious decision, not a shortcut to make
+CI pass - if coverage fell, either the missing test was not written, or covered code was
+removed, and both situations deserve to be said in the commit's description.
 
-### O que a cobertura do client mede
+After generating LCOV with `bun run test:report`, `bun run coverage:update` recomputes the floors with
+that margin and **only raises them**. For a deliberate expansion of the measured scope, lowering requires
+the explicit command `bun run coverage:update -- --rebaseline`; even in that mode, it only lowers the
+metric whose floor is already above the measured coverage, preserving the others. A single workspace can be
+recomputed with `--project client` (or `shared`, `apiUnit`, `apiIntegration`, `apiCombined`,
+`admin`, `desktop`, `site`). That way, a drop is not silently accepted by an ordinary run.
 
-O `jest.config.js` precisa de `src` em `roots`, e não só `test`. Sem isso o Jest não varre
-`src/`, o `collectCoverageFrom` fica sem efeito, e o relatório mede apenas os arquivos que
-algum teste já importa - uma métrica que se autoconfirma. Foi assim por um tempo aqui: 136 dos
-377 arquivos, mostrando 42% onde o número real era 15%.
+### What the client's coverage measures
 
-`testMatch` ficou ancorado em `test/` justamente porque `roots` passou a incluir `src`; um glob
-solto sairia procurando teste dentro do código de produção.
+`jest.config.js` needs `src` in `roots`, and not only `test`. Without that Jest does not scan
+`src/`, `collectCoverageFrom` has no effect, and the report measures only the files that
+some test already imports - a self-confirming metric. That is how it was here for a while: 136 out of
+377 files, showing 42% where the real number was 15%.
 
-Os workspaces em Vitest não têm esse problema - o provider v8 já inclui os arquivos não
-tocados, e é por isso que schemas e páginas sem teste aparecem com 0% nos relatórios deles.
+`testMatch` was anchored at `test/` precisely because `roots` came to include `src`; a loose glob
+would go looking for tests inside the production code.
 
-Os pisos só valem se a suíte rodar com cobertura, e é por isso que o CI usa
-`bun run test:coverage` e `test:integration:coverage` no lugar dos comandos sem cobertura.
+The Vitest workspaces do not have that problem - the v8 provider already includes untouched
+files, and that is why schemas and pages with no test show as 0% in their reports.
 
-## Regras
+The floors only count if the suite runs with coverage, and that is why CI uses
+`bun run test:coverage` and `test:integration:coverage` instead of the commands without coverage.
 
-- O comando raiz deve executar todas as suítes sem iniciar servidores de desenvolvimento.
-- Testes de API nunca usam o banco de desenvolvimento.
-- Módulos nativos Expo e Electron são mockados em testes unitários.
-- Um formato de teste novo deve entrar no CI antes de se tornar obrigatório para releases.
+## Rules
+
+- The root command must run every suite without starting development servers.
+- API tests never use the development database.
+- Native Expo and Electron modules are mocked in unit tests.
+- A new test format must enter CI before becoming mandatory for releases.

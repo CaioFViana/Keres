@@ -1,17 +1,17 @@
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
- * Conflitos de sincronização aguardando decisão do usuário.
+ * Synchronization conflicts awaiting the user's decision.
  *
- * Um conflito é por *entidade*, não por operação: se o usuário editou o mesmo capítulo
- * cinco vezes offline e o servidor recusou a primeira dessas edições, as cinco estão na
- * mesma situação e apresentá-las separadamente só multiplicaria a decisão. Os ids das
- * operações envolvidas ficam em `localOperationIds`.
+ * A conflict is per *entity*, not per operation: if the user edited the same chapter five times offline
+ * and the server refused the first of those edits, all five are in the same situation and presenting
+ * them separately would only multiply the decision. The ids of the operations involved live in
+ * `localOperationIds`.
  *
- * A tabela é a razão de o cliente não perder mais o trabalho feito offline: enquanto o
- * conflito está `pending`, as operações locais correspondentes ficam marcadas em
- * `operation_logs.conflictState` e não são reenviadas nem descartadas.
+ * This table is the reason the client no longer loses work done offline: while the conflict is
+ * `pending`, the corresponding local operations stay marked in `operation_logs.conflictState` and are
+ * neither resent nor discarded.
  */
 export const syncConflicts = sqliteTable('sync_conflicts', {
   id: text('id').primaryKey(),
@@ -20,21 +20,21 @@ export const syncConflicts = sqliteTable('sync_conflicts', {
   entityId: text('entity_id').notNull(),
   /** Um dos valores de `SyncConflictReason` no pacote compartilhado. */
   reason: text('reason').notNull(),
-  /** O que o usuário fez localmente e que ainda não passou. */
+  /** What the user did locally and has not gone through yet. */
   localOperationType: text('local_operation_type', {
     enum: ['create', 'update', 'delete', 'reorder'],
   }).notNull(),
-  /** JSON: ids das linhas de `operation_logs` agrupadas neste conflito. */
+  /** JSON: the ids of the `operation_logs` rows grouped in this conflict. */
   localOperationIds: text('local_operation_ids').notNull(),
-  /** JSON: os valores que o usuário quer preservar. */
+  /** JSON: the values the user wants to keep. */
   localValues: text('local_values').notNull(),
   /** JSON: o estado da entidade no servidor, para o comparativo lado a lado. */
   serverValues: text('server_values'),
-  /** Versão base sobre a qual o usuário editou. */
+  /** The base version the user edited on top of. */
   clientVersion: integer('client_version'),
-  /** Versão que o servidor tem agora. */
+  /** The version the server holds now. */
   serverVersion: integer('server_version'),
-  /** Mensagem técnica de origem, para diagnóstico. A tela usa `reason`. */
+  /** The originating technical message, for diagnosis. The screen uses `reason`. */
   message: text('message'),
   status: text('status', { enum: ['pending', 'resolved', 'dismissed'] })
     .notNull()

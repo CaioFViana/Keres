@@ -4,7 +4,7 @@ import { characters } from './characters';
 import { modes } from './modes';
 import { stories } from './stories';
 
-/** Um eixo mensurável da história. Só os primários viram eixo do radar. */
+/** A measurable axis of the story. Only primary ones become radar axes. */
 export const stats = table('stats', {
   id: text('id').primaryKey(),
   storyId: text('story_id')
@@ -21,12 +21,12 @@ export const stats = table('stats', {
 });
 
 /**
- * Um degrau da escada de valores: o intervalo é `[minValue, minValue do próximo[`.
+ * A rung on the ladder of values: its range is `[minValue, the next one's minValue[`.
  *
- * `statId` nulo é a escada padrão da história. Sem índice único em (storyId, statId, minValue)
- * de propósito: no Postgres NULLs são distintos entre si, então a restrição não pegaria as
- * colisões da escada padrão - quem garante a unicidade é `StatStrengthSyncHandler`, que
- * levanta conflito de validação e deixa o cliente decidir.
+ * A null `statId` is the story's default ladder. Deliberately without a unique index on (storyId,
+ * statId, minValue): in Postgres NULLs are distinct from each other, so the constraint would not
+ * catch the default ladder's collisions - what guarantees uniqueness is `StatStrengthSyncHandler`,
+ * which raises a validation conflict and lets the client decide.
  */
 export const statStrengths = table(
   'stat_strengths',
@@ -49,7 +49,7 @@ export const statStrengths = table(
   }),
 );
 
-/** O valor de um stat para um personagem. `modeId` nulo é o modo normal. */
+/** A stat's value for a character. A null `modeId` is the normal mode. */
 export const statRelations = table(
   'stat_relations',
   {
@@ -72,7 +72,7 @@ export const statRelations = table(
     deletedAt: timestamp('deleted_at'),
   },
   (table) => ({
-    // Mesma razão do índice acima: `modeId` anulável impede um único de verdade aqui.
+    // Same reason as the index above: a nullable `modeId` prevents a real unique constraint here.
     ownerIdx: index('stat_relation_owner_idx').on(table.storyId, table.characterId, table.modeId),
   }),
 );

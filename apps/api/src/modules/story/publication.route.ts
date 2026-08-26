@@ -1,9 +1,9 @@
 import { Elysia, t } from 'elysia';
 import type { PublicationLabelMode, ShowcaseVisibility } from '@keres/shared';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { storyPublicationService } from '../../services/StoryPublicationService';
 
-/** Uma linha de `story_publications` como o dono a vê. */
+/** A `story_publications` row as its owner sees it. */
 const PublicationResponseSchema = t.Object({
   id: t.String(),
   storyId: t.String(),
@@ -18,14 +18,14 @@ const PublicationResponseSchema = t.Object({
 });
 
 /**
- * As rotas de publicação do lado do dono. Montadas dentro de `/stories` (ver
- * `story.route.ts`), separadas em arquivo próprio porque não têm nada a ver com o
- * create/export/import que já morava lá - só compartilham o prefixo.
+ * The owner-side publication routes. Mounted inside `/stories` (see `story.route.ts`), split into a
+ * file of their own because they have nothing to do with the create/export/import that already lived
+ * there - they only share the prefix.
  */
 export const publicationRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
-  // Mesmo caso de `friend.route.ts`: toda rota aqui exige exatamente a mesma coisa, um usuário
-  // autenticado. A dona-da-história é checada no serviço, que é quem sabe ler `stories.userId`.
+  // Same case as `friend.route.ts`: every route here requires exactly the same thing, an authenticated
+  // user. Story ownership is checked in the service, which is what knows how to read `stories.userId`.
   .derive(({ user, set }) => {
     if (!user?.userId) {
       set.status = 401;
@@ -61,9 +61,9 @@ export const publicationRoutes = new Elysia()
           t.Union([t.Literal('version'), t.Literal('date'), t.Literal('both')]),
         ),
         /**
-         * Enviada em toda publicação, e não só quando muda: é a escolha que a pessoa fez nesta
-         * publicação. Omitir equivale a `public`, então publicar sem pedir senha realmente
-         * torna a história pública, mesmo que uma publicação anterior tivesse senha.
+         * Sent on every publication, not only when it changes: it is the choice the person made for this
+         * publication. Omitting it is equivalent to `public`, so publishing without asking for a password
+         * really does make the story public, even if an earlier publication had one.
          */
         visibility: t.Optional(t.Union([t.Literal('public'), t.Literal('password')])),
         password: t.Optional(t.String({ minLength: 4, maxLength: 200 })),

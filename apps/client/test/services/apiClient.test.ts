@@ -9,6 +9,8 @@ jest.mock('../../src/state/connectivityStore', () => ({
 
 import { AxiosError, type AxiosRequestConfig } from 'axios';
 import {
+  apiBaseUrl,
+  apiUrl,
   clearAllServerAuthState,
   clearServerTokenCache,
   createKeresAxiosInstance,
@@ -23,9 +25,9 @@ const SERVER = { id: 'server-1', name: 'Casa', url: 'http://localhost:3000' } as
 type Reply = { status: number; data?: unknown } | { networkError: string } | { timeout: true };
 
 /**
- * Instância com um adapter roteirizado: cada requisição consome a próxima resposta da fila,
- * o que permite exercitar o fluxo real do axios (ordem dos interceptors, retry) em vez de
- * chamar os interceptors à mão.
+ * An instance with a scripted adapter: each request consumes the next response in the queue, which
+ * allows exercising axios's real flow (interceptor order, retry) instead of calling the interceptors by
+ * hand.
  */
 function buildInstance(replies: Reply[]) {
   const instance = createKeresAxiosInstance({ baseURL: SERVER.url });
@@ -120,6 +122,15 @@ describe('isOfflineError', () => {
     ['a number', 42],
   ])('does not treat %s as offline', (_label, value) => {
     expect(isOfflineError(value)).toBe(false);
+  });
+});
+
+describe('API URL contract', () => {
+  it('keeps the persisted address at the origin and mounts calls below /api', () => {
+    expect(apiBaseUrl('https://keres.example.com/')).toBe('https://keres.example.com/api');
+    expect(apiUrl('https://keres.example.com', '/auth/login')).toBe(
+      'https://keres.example.com/api/auth/login',
+    );
   });
 });
 
@@ -379,10 +390,10 @@ describe('token refresh on 401', () => {
   });
 
   it('does not loop forever when the retried request 401s again for a reason unrelated to the token', async () => {
-    // Ex.: PUT /user/password ou /user/recovery-codes com a senha atual errada - o token é
-    // válido (a renovação sempre funciona), mas o servidor recusa o conteúdo da requisição.
-    // Sem a marca de "já reenviada uma vez", cada 401 dispara outra renovação, que teria vida
-    // infinita: refreshAccessToken nunca falha aqui de propósito.
+    // E.g. PUT /user/password or /user/recovery-codes with the wrong current password - the token is valid
+    // (the refresh always works), but the server refuses the request's content. Without the "already resent
+    // once" mark, every 401 fires another refresh, which would loop forever: refreshAccessToken never fails
+    // here on purpose.
     updateServerTokenCache(SERVER.id, 'valido', 'refresh-1');
     const { instance } = buildInstance([
       { status: 401, data: { message: 'Current password is incorrect.' } },

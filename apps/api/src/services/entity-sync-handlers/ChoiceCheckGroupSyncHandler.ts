@@ -1,11 +1,10 @@
-import {
+import type {
   ChoiceCheckGroupType,
-  CreateChoiceCheckGroupDataSchema,
   CreateStoryUpdate,
   DeleteStoryUpdate,
-  PartialChoiceCheckGroupSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { CreateChoiceCheckGroupDataSchema, PartialChoiceCheckGroupSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choiceCheckGroups, choices } from '../../db/schema';

@@ -4,6 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // real require cycle (see db/index.ts's history for what that broke). A type-only import
 // erases at compile time and never touches the runtime require graph.
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 
 export type NavigableEntityType =
   | 'Character'
@@ -16,7 +17,8 @@ export type NavigableEntityType =
   | 'Chapter'
   | 'Note'
   | 'WorldRule'
-  | 'Mode';
+  | 'Mode'
+  | 'Plot';
 
 interface EntityRoute {
   stack: keyof MainSystemDrawerParamList;
@@ -26,22 +28,23 @@ interface EntityRoute {
 
 const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Character: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
-  Scene: { stack: 'ScenesStack', screen: 'SceneDetail', paramKey: 'sceneId' },
+  Scene: { stack: 'NarrativeElementsStack', screen: 'SceneDetail', paramKey: 'sceneId' },
   Location: { stack: 'LocationsStack', screen: 'LocationDetail', paramKey: 'locationId' },
   Item: { stack: 'ItemsStack', screen: 'ItemDetail', paramKey: 'itemId' },
   ItemJourney: {
-    stack: 'ItemJourneysStack',
+    stack: 'ItemsStack',
     screen: 'ItemJourneyDetail',
     paramKey: 'itemJourneyId',
   },
   Tag: { stack: 'TagsStack', screen: 'TagDetail', paramKey: 'tagId' },
-  Choice: { stack: 'ChoicesStack', screen: 'ChoiceDetail', paramKey: 'choiceId' },
-  Chapter: { stack: 'ChaptersStack', screen: 'ChapterDetail', paramKey: 'chapterId' },
+  Choice: { stack: 'NarrativeElementsStack', screen: 'ChoiceDetail', paramKey: 'choiceId' },
+  Chapter: { stack: 'NarrativeElementsStack', screen: 'ChapterDetail', paramKey: 'chapterId' },
   Note: { stack: 'NotesStack', screen: 'NoteDetail', paramKey: 'noteId' },
   WorldRule: { stack: 'WorldRulesStack', screen: 'WorldRuleDetail', paramKey: 'worldRuleId' },
-  // Modo não tem tela própria: a busca global devolve o id do personagem dono no lugar do id
-  // do modo, e abrir um resultado leva ao detalhe dele, onde os modos são listados.
+  // Mode has no screen of its own: the global search returns the owning character's id in place of the
+  // mode's id, and opening a result leads to that character's detail, where the modes are listed.
   Mode: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
+  Plot: { stack: 'PlotsStack', screen: 'PlotDetail', paramKey: 'plotId' },
 };
 
 /**
@@ -74,7 +77,11 @@ export function navigateToEntityDetail(
   drawerNavigation: DrawerNavigationProp<MainSystemDrawerParamList>,
   entityType: NavigableEntityType,
   entityId: string,
+  options?: { onReturn?: () => void },
 ): void {
+  if (options?.onReturn) {
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(options.onReturn);
+  }
   const route = ENTITY_ROUTES[entityType];
   (drawerNavigation.navigate as (name: string, params: unknown) => void)(route.stack, {
     screen: route.screen,

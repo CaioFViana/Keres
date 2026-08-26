@@ -15,8 +15,8 @@ afterEach(() => {
 });
 
 /**
- * O helper é a base de toda a Fase 4: se as migrações de produção pararem de aplicar sobre o
- * driver de teste, é aqui que isso precisa aparecer, e não espalhado por cada suíte.
+ * The helper is the foundation of the whole of Phase 4: if the production migrations stop applying on
+ * the test driver, this is where that has to show up, not scattered across every suite.
  */
 describe('createTestDatabase', () => {
   it('applies the production migrations', () => {
@@ -56,10 +56,10 @@ describe('createTestDatabase', () => {
 });
 
 /**
- * `db.transaction(async (tx) => {...})` roda em produção (expo-sqlite é async de verdade),
- * mas o wrapper nativo do better-sqlite3 rejeita qualquer callback que devolva uma Promise -
- * e chamar uma função `async` sempre devolve uma. Sem o patch em `createTestDatabase`, os dois
- * testes abaixo lançariam `TypeError: Transaction function cannot return a promise`.
+ * `db.transaction(async (tx) => {...})` runs in production (expo-sqlite is genuinely async), but
+ * better-sqlite3's native wrapper rejects any callback that returns a Promise - and calling an `async`
+ * function always returns one. Without the patch in `createTestDatabase`, the two tests below would
+ * throw `TypeError: Transaction function cannot return a promise`.
  */
 describe('async transactions against the test driver', () => {
   const row = (id: string) => ({

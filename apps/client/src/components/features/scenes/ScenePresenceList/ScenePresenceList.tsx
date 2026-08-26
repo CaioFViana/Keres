@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
+import { useChapterNames } from '@/src/hooks/useChapterNames';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
 import type { NavigableEntityType } from '@/src/utils/entityNavigation';
@@ -53,6 +54,7 @@ const ScenePresenceList = <TItem extends RelatedEntity>({
 }: ScenePresenceListProps<TItem>) => {
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
+  const chapterNameOf = useChapterNames(entries.flatMap((entry) => entry.scenes));
 
   const relations = useMemo(
     () =>
@@ -81,9 +83,16 @@ const ScenePresenceList = <TItem extends RelatedEntity>({
       renderItemExtraContent={(relation, item) => (
         <View>
           <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{item.name}</Text>
-          {relation.scenes.map((scene) => (
-            <RelationAttributeLine key={scene.id} label={sceneLabel} value={scene.name} />
-          ))}
+          {relation.scenes.map((scene) => {
+            const chapterName = chapterNameOf(scene.chapterId);
+            return (
+              <RelationAttributeLine
+                key={scene.id}
+                label={sceneLabel}
+                value={chapterName ? `${scene.name} (${chapterName})` : scene.name}
+              />
+            );
+          })}
         </View>
       )}
       title={title}

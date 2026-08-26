@@ -1,12 +1,9 @@
-import { AttributeType, explodeAttributeUsageValue, StorySchemaEntityType } from '@keres/shared';
+import type { AttributeType, StorySchemaEntityType } from '@keres/shared';
+import { explodeAttributeUsageValue } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
-import {
-  attributeValues,
-  AttributeValueInsert,
-  AttributeValueSelect,
-  storySchemaFields,
-} from '../../db/schema';
+import type { AppDrizzleClient } from '../../db';
+import type { AttributeValueInsert, AttributeValueSelect } from '../../db/schema';
+import { attributeValues, storySchemaFields } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
@@ -14,13 +11,17 @@ import { createServerService } from '../ServerService';
 
 export interface AttributeValueService {
   getValuesForEntity(entityId: string): Promise<AttributeValueSelect[]>;
-  /** Harvesta valores usados por outras entidades do mesmo campo, mesmo mecanismo de
-   *  `SuggestionService.getSuggestions` (contagem por valor, ordenado alfabeticamente) - só que
-   *  contra `attributeValues` em vez de uma coluna fixa, já que campos customizados não têm
-   *  coluna própria. Ver `SuggestionService`'s `custom:<fieldId>` branch, que chama isto. */
+  /**
+   * It harvests values used by other entities of the same field, the same mechanism as
+   * `SuggestionService.getSuggestions` (a count per value, sorted alphabetically) - only
+   * against `attributeValues` instead of a fixed column, since custom fields have no
+   * column of their own. See `SuggestionService`'s `custom:<fieldId>` branch, which calls this.
+   */
   getValueUsageCounts(fieldId: string): Promise<[string, number][]>;
-  /** Upsert em lote: cria/atualiza um valor por campo, ignora campos sem valor que ainda não
-   *  existiam (não cria uma linha vazia à toa). */
+  /**
+   * A batch upsert: it creates/updates one value per field, ignores fields with no value that did not
+   * exist yet (it does not create an empty row for nothing).
+   */
   saveValuesForEntity(
     currentUserId: string,
     storyId: string,

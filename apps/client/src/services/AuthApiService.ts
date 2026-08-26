@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient, { apiUrl } from './apiClient';
 
 export interface RecoveryCodeLoginResult {
   accessToken: string;
@@ -13,11 +13,11 @@ export type RedeemRecoveryCodeOutcome =
   | { success: false; reason: 'invalid_code' | 'server_error'; status?: number };
 
 /**
- * Troca um recovery code por uma sessão nova em `serverAddress` - usado tanto para entrar
- * numa conta pela primeira vez (`ServerRegistrationScreen`) quanto para trocar a senha de um
- * servidor já cadastrado sem saber a senha atual (`ChangePasswordScreen`). `validateStatus`
- * segue o mesmo padrão do resto do fluxo de auth: status não-2xx é lido aqui, não vira
- * exceção, para diferenciar "código inválido" (401) de qualquer outra falha do servidor.
+ * Exchanges a recovery code for a new session on `serverAddress` - used both for entering
+ * an account for the first time (`ServerRegistrationScreen`) and for changing the password of a
+ * server already registered without knowing the current password (`ChangePasswordScreen`). `validateStatus`
+ * follows the same pattern as the rest of the auth flow: a non-2xx status is read here, it does not become
+ * an exception, so as to tell "invalid code" (401) apart from any other server failure.
  */
 export async function redeemRecoveryCode(
   serverAddress: string,
@@ -26,7 +26,7 @@ export async function redeemRecoveryCode(
   newPassword: string,
 ): Promise<RedeemRecoveryCodeOutcome> {
   const response = await apiClient.post(
-    `${serverAddress}/auth/forgot-password`,
+    apiUrl(serverAddress, '/auth/forgot-password'),
     { username, recoveryCode: recoveryCode.trim(), newPassword },
     { timeout: 5000, validateStatus: () => true },
   );

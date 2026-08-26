@@ -3,7 +3,7 @@ import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { db } from '../../db';
 import { stories, storyTypeEnum } from '../../db/schema';
-import { JWTPayload } from '../../index';
+import type { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import {
@@ -158,10 +158,10 @@ export const storyRoutes = new Elysia()
     {
       body: FullStoryExportSchema, // Use the schema for validation
       query: t.Object({
-        // Presente quando um cliente está enviando uma história local (nunca sincronizada) pela
-        // primeira vez, pra preservar o mesmo ID nos dois lados - ver `importStory`, que rejeita
-        // se já existir uma história com este ID para o usuário. Ausente (padrão): gera um ID
-        // novo, usado ao baixar/duplicar uma história já existente em outro servidor.
+        // Present when a client is uploading a local (never synchronized) story for the first time, to
+        // preserve the same ID on both sides - see `importStory`, which rejects it if a story with this ID
+        // already exists for the user. Absent (the default): it generates a new ID, used when
+        // downloading/duplicating a story that already exists on another server.
         storyId: t.Optional(t.String()),
       }),
       response: t.Object({ storyId: t.String() }),

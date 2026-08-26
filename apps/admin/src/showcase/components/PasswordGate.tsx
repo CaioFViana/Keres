@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 /**
- * A porta de uma história publicada sem listagem, atrás de senha.
+ * The gate of a story published without listing, behind a password.
  *
- * A página não sabe nada sobre a história neste ponto - nem o título - porque o servidor não
- * conta: um link vazado sozinho não revela o que está do outro lado. O erro é sempre o mesmo,
- * exista a história ou não.
+ * At this point the page knows nothing about the story - not even the title - because the server
+ * does not tell: a leaked link on its own does not reveal what is on the other side. The error is
+ * always the same, whether the story exists or not.
  */
 export function PasswordGate({ onSubmit }: { onSubmit: (password: string) => Promise<void> }) {
   const { t } = useTranslation('showcase');
@@ -22,7 +22,7 @@ export function PasswordGate({ onSubmit }: { onSubmit: (password: string) => Pro
     try {
       await onSubmit(password);
     } catch (caught) {
-      // A mensagem do servidor não é traduzida; a local cobre o caso comum.
+      // The server's message is not translated; the local one covers the common case.
       setError(caught instanceof Error ? caught.message : t('gate.failed'));
     } finally {
       setBusy(false);

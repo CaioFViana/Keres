@@ -3,7 +3,10 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -16,7 +19,7 @@ import {
 } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import apiClient from '../../services/apiClient';
+import apiClient, { apiUrl } from '../../services/apiClient';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
@@ -73,11 +76,13 @@ const ServerRegistrationScreen = () => {
   const [serverName, setServerName] = useState('');
   const [loading, setLoading] = useState(true); // Changed to true to indicate loading initially
   const [error, setError] = useState<string | null>(null);
-  /** Códigos de recuperação recém-emitidos, mostrados uma única vez antes de sair da tela -
-   *  depois disto só o hash de cada um existe no servidor, não há como recuperá-los de novo. */
+  /**
+   * Freshly issued recovery codes, shown exactly once before leaving the screen - after this only each
+   * one's hash exists on the server, there is no way to recover them again.
+   */
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
 
-  // Só o HTML servido pela API (meta keres-hosted). Electron tem `keresAuth` e não entra.
+  // Only the HTML served by the API (the keres-hosted meta). Electron has `keresAuth` and does not enter.
   const hostedSameOrigin = usesHttpOnlyCookieSession();
   const lockedServerAddress = hostedSameOrigin ? hostedApiOrigin() : null;
 
@@ -180,13 +185,13 @@ const ServerRegistrationScreen = () => {
     let newAccessToken = existingTokens?.accessToken || '';
     let newRefreshToken = existingTokens?.refreshToken || '';
     let tokensChanged = false;
-    // Só existe na resposta de /auth/register - é a única vez que estes códigos aparecem
-    // em texto puro, então a tela precisa deles antes de sair (ver recoveryCodesToShow).
+    // It only exists in /auth/register's response - it is the one time these codes appear in plain text,
+    // so the screen needs them before leaving (see recoveryCodesToShow).
     let issuedRecoveryCodes: string[] | null = null;
 
     try {
       // 1. Server Check (/kerescheck) - always check if server is reachable
-      const keresCheckUrl = `${addressToSave}/kerescheck`;
+      const keresCheckUrl = apiUrl(addressToSave, '/kerescheck');
       const checkResponse = await apiClient.get(keresCheckUrl, {
         timeout: 5000,
         validateStatus: () => true,
@@ -217,7 +222,7 @@ const ServerRegistrationScreen = () => {
           return;
         }
 
-        const authUrl = `${addressToSave}${isRegistering ? '/auth/register' : '/auth/login'}`;
+        const authUrl = apiUrl(addressToSave, isRegistering ? '/auth/register' : '/auth/login');
         const authResponse = await apiClient.post(
           authUrl,
           { username, password },
@@ -299,7 +304,7 @@ const ServerRegistrationScreen = () => {
         entityEventEmitter.emit('server_connection_changed');
       }
       if (issuedRecoveryCodes) {
-        // Fica na tela mostrando os códigos - só sai quando a pessoa confirmar que salvou.
+        // It stays on the screen showing the codes - it only leaves once the person confirms they saved them.
         setRecoveryCodesToShow(issuedRecoveryCodes);
       } else {
         navigation.goBack();
@@ -333,9 +338,11 @@ const ServerRegistrationScreen = () => {
     setActiveServer,
   ]);
 
-  /** Restaura o acesso com um recovery code em vez da senha atual - ver plano da feature em
-   *  RecoveryCodeService (apps/api). Só existe pra conexão nova (`!serverId`): editar uma já
-   *  registrada usa o campo "Nova Senha" normal, que não precisa provar identidade de novo. */
+  /**
+   * Restores access with a recovery code instead of the current password - see the feature plan in
+   * RecoveryCodeService (apps/api). It only exists for a new connection (`!serverId`): editing an already
+   * registered one uses the ordinary "New Password" field, which does not need to prove identity again.
+   */
   const handleRecover = useCallback(async () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
     if (!addressToSave || !username.trim() || !recoveryCode.trim()) {
@@ -701,7 +708,7 @@ const ServerRegistrationScreen = () => {
       {serverId && (
         <Button
           onPress={handleDeleteServer}
-          style={[styles.registerButton, styles.deleteButton]}
+          style={[styles.registerButton, styles.deleteButton, { backgroundColor: colors.error }]}
           disabled={loading}
         >
           {t('delete_server')}
@@ -785,7 +792,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     marginTop: 10,
     marginBottom: 15,
-    backgroundColor: 'red', // Destructive color
+    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
   },
 });
 

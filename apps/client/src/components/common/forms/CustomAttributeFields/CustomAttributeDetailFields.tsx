@@ -1,10 +1,9 @@
+import type { CommentEntityType, StorySchemaEntityType } from '@keres/shared';
 import {
   AttributeType,
-  CommentEntityType,
   decodeAttributeValue,
   formatAttributeDateForDisplay,
   joinSuggestionListForDisplay,
-  StorySchemaEntityType,
 } from '@keres/shared';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,10 +40,10 @@ function formatValueForDisplay(
     return decoded ? t('common_yes') : t('common_no');
   }
   if (type === AttributeType.DATE) {
-    // Dia da semana + data por extenso no idioma do APP (nunca o do dispositivo), sempre igual
-    // em qualquer fuso - ver `attributeDateValue.ts`. A hora segue o formato 24h/AM-PM escolhido
-    // em Configurações. Valores de texto livre gravados antes do date picker existir não são
-    // canônicos: aparecem crus em vez de sumir.
+    // Day of the week + the date spelled out in the APP's language (never the device's), always identical
+    // in any time zone - see `attributeDateValue.ts`. The time follows the 24h/AM-PM format chosen in
+    // Settings. Free-text values saved before the date picker existed are not canonical: they show up raw
+    // instead of disappearing.
     return (
       formatAttributeDateForDisplay(String(decoded), language, use24HourTime) ?? String(decoded)
     );
@@ -53,10 +52,9 @@ function formatValueForDisplay(
 }
 
 /**
- * Renderiza os atributos customizados de um Story Schema na tela de detalhe, mesmo padrão
- * visual (`DetailField`) já usado pelos campos nativos - um único componente reaproveitado
- * pelos 7 tipos de entidade, na mesma posição em toda tela: depois dos campos nativos, antes de
- * galeria/relações.
+ * Renders a Story Schema's custom attributes on the detail screen, in the same visual pattern
+ * (`DetailField`) the native fields already use - a single component reused by all 7 entity types, in
+ * the same position on every screen: after the native fields, before the gallery/relations.
  */
 const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = ({
   storyId,
@@ -133,8 +131,9 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   return (
     <>
       {fields.map((field) => {
-        // Entidades que já existiam antes do campo ser criado não têm valor próprio - caem no
-        // defaultValue do campo (o mais honesto disponível) em vez de mostrar N/A à toa.
+        // Entities that already existed before the field was created have no value of their own - they fall
+        // back to the field's defaultValue (the most honest thing available) instead of showing N/A for
+        // nothing.
         const rawValue = values[field.id] ?? field.defaultValue ?? null;
         const decoded = decodeAttributeValue(field.type as AttributeType, rawValue);
         const isEntityReference = field.type === AttributeType.ENTITY;

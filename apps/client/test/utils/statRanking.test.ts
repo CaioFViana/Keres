@@ -1,4 +1,4 @@
-import type { StatTier } from '../../src/utils/statLadder';
+import type { StatTier } from '@keres/shared/graphs/statLadder';
 import { buildStatRanking, type StatRankingInput } from '../../src/utils/statRanking';
 import { indexStatValues } from '../../src/utils/statValues';
 
@@ -86,8 +86,8 @@ describe('buildStatRanking', () => {
   it('carries the tier and the number together, and the number alone', () => {
     const top = rank()[0]!.entries[0]!;
 
-    // O cabeçalho do grupo já diz o tier, então a linha pode mostrar só o número; fora de um
-    // grupo (notação numérica, ou o painel do personagem) o tier precisa vir junto.
+    // The group's header already gives the tier, so the row can show only the number; outside a
+    // group (numeric notation, or the character's panel) the tier has to come along.
     expect(top.display).toBe('A (480)');
     expect(top.valueDisplay).toBe('480');
   });

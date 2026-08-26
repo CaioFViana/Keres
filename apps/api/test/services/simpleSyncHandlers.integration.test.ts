@@ -6,6 +6,7 @@ import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/Chap
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
 import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyncHandler';
 import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
+import { PlotSyncHandler } from '../../src/services/entity-sync-handlers/PlotSyncHandler';
 import { SuggestionSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionSyncHandler';
 import { TagSyncHandler } from '../../src/services/entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
@@ -110,6 +111,14 @@ const cases: Array<
     { value: 'Érebo' },
     'value',
     'Érebo',
+  ],
+  [
+    'Plot',
+    () => new PlotSyncHandler(),
+    { name: 'Main plot', details: 'The central conflict.' },
+    { name: 'Revised plot' },
+    'name',
+    'Revised plot',
   ],
 ];
 

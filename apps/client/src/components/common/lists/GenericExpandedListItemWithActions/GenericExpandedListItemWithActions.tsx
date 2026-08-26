@@ -12,6 +12,9 @@ interface GenericExpandedListItemWithActionsProps<T extends { id: string; isFavo
   renderHeaderContent: (item: T) => React.ReactNode;
   renderExpandedContent: (item: T) => React.ReactNode;
   initialExpanded?: boolean;
+  isExpanded?: boolean;
+  onExpandedChange?: (isExpanded: boolean) => void;
+  density?: 'default' | 'nested';
 }
 
 const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?: boolean }>({
@@ -21,10 +24,22 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
   renderHeaderContent,
   renderExpandedContent,
   initialExpanded = false,
+  isExpanded: controlledIsExpanded,
+  onExpandedChange,
+  density = 'default',
 }: GenericExpandedListItemWithActionsProps<T>) => {
-  const [isOpen, setIsOpen] = useState(initialExpanded);
+  const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(initialExpanded);
+  const isOpen = controlledIsExpanded ?? uncontrolledIsOpen;
 
-  const toggleOpen = () => setIsOpen(!isOpen);
+  React.useEffect(() => {
+    if (controlledIsExpanded === undefined && initialExpanded) setUncontrolledIsOpen(true);
+  }, [controlledIsExpanded, initialExpanded]);
+
+  const toggleOpen = () => {
+    const nextIsOpen = !isOpen;
+    if (controlledIsExpanded === undefined) setUncontrolledIsOpen(nextIsOpen);
+    onExpandedChange?.(nextIsOpen);
+  };
 
   const rightActions = (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -45,6 +60,7 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
       isOpen={isOpen}
       onPress={toggleOpen}
       rightActions={rightActions}
+      density={density}
     />
   );
 };

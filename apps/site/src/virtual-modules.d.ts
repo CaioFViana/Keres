@@ -1,10 +1,13 @@
 /// <reference types="vite/client" />
 
 /**
- * A marca do Keres é gerada em tempo de build a partir do ícone do app de desktop, então
- * não existe arquivo em disco para o TypeScript resolver.
+ * The Keres wordmark is generated at build time from the desktop app's icon, so there is no
+ * file on disk for TypeScript to resolve.
  */
 declare module 'virtual:keres-logo' {
   const url: string;
   export default url;
 }
+
+/** `react-native-web` publishes no types; the showcase only uses its View and Text. */
+declare module 'react-native-web';

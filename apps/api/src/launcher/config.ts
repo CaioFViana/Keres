@@ -52,7 +52,7 @@ export function writeRestrictedJson(filePath: string, value: unknown): void {
     try {
       chmodSync(filePath, 0o600);
     } catch {
-      // Melhor gravar com permissão larga do que falhar o boot em FS estranhos.
+      // Better to write with broad permissions than to fail the boot on odd filesystems.
     }
   }
 }

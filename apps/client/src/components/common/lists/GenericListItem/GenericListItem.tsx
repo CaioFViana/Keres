@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedReaction,
   useAnimatedStyle,
@@ -15,9 +16,11 @@ interface GenericListItemProps {
   isOpen: boolean;
   onPress: () => void;
   rightActions?: React.ReactNode;
+  /** Items of a parent structure use less separation without losing the same behaviour. */
+  density?: 'default' | 'nested';
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const MeasurementContext = React.createContext(false);
 
 const GenericListItem: React.FC<GenericListItemProps> = ({
   headerContent,
@@ -25,8 +28,10 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
   isOpen,
   onPress,
   rightActions,
+  density = 'default',
 }) => {
   const { colors } = useTheme();
+  const isMeasuring = React.useContext(MeasurementContext);
   const animatedHeight = useSharedValue(0);
   const contentHeight = useSharedValue(0); // This should be a shared value
   const opacity = useSharedValue(isOpen ? 1 : 0);
@@ -82,6 +87,11 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
       borderColor: colors.border,
       borderWidth: 1,
     },
+    nestedContainer: {
+      marginVertical: 2,
+      borderRadius: 6,
+      backgroundColor: colors.surface,
+    },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -92,6 +102,14 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     headerRight: {
       flexDirection: 'row',
       alignItems: 'center',
+      zIndex: 1,
+    },
+    headerContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+    headerToggle: {
+      ...StyleSheet.absoluteFillObject,
     },
     dropdownArrow: {
       marginLeft: 10,
@@ -123,26 +141,45 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     [isOpen, animatedHeight, contentHeight],
   );
 
-  return (
-    <View style={styles.container}>
-      <AnimatedPressable onPress={onPress} style={[styles.header, animatedHeaderStyle]}>
-        {headerContent}
-        <View style={styles.headerRight}>
-          {rightActions}
-          <MaterialCommunityIcons
-            name={isOpen ? 'chevron-up' : 'chevron-down'}
-            size={24}
-            color={colors.textSecondary}
-            style={styles.dropdownArrow}
-          />
+  if (isMeasuring) {
+    return (
+      <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
+        <View style={styles.header}>
+          {headerContent}
+          <View style={styles.headerRight}>{rightActions}</View>
         </View>
-      </AnimatedPressable>
-
-      <View style={styles.measurementContent} pointerEvents="none">
-        <View style={styles.expandedContentInner} onLayout={onLayout}>
-          {expandedContent}
-        </View>
+        {isOpen && <View style={styles.expandedContentInner}>{expandedContent}</View>}
       </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
+      <Animated.View style={[styles.header, animatedHeaderStyle]}>
+        <Pressable onPress={onPress} style={styles.headerToggle} />
+        <View style={styles.headerContent} pointerEvents="none">
+          {headerContent}
+        </View>
+        <View style={styles.headerRight} pointerEvents="box-none">
+          {rightActions}
+          <View pointerEvents="none">
+            <MaterialCommunityIcons
+              name={isOpen ? 'chevron-up' : 'chevron-down'}
+              size={24}
+              color={colors.textSecondary}
+              style={styles.dropdownArrow}
+            />
+          </View>
+        </View>
+      </Animated.View>
+
+      <MeasurementContext.Provider value>
+        <View style={styles.measurementContent} pointerEvents="none">
+          <View style={styles.expandedContentInner} onLayout={onLayout}>
+            {expandedContent}
+          </View>
+        </View>
+      </MeasurementContext.Provider>
 
       <Animated.View style={[styles.animatedWrapper, animatedContainerStyle]}>
         <Animated.View style={animatedContentStyle}>

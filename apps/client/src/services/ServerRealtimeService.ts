@@ -1,7 +1,7 @@
-import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '../db';
+import type { ServerSelect } from '../db/schema';
 import { useStoryListStore } from '../state/storyListStore';
-import { createKeresAxiosInstance } from './apiClient';
+import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createPublicationService } from './PublicationService';
@@ -70,7 +70,7 @@ export class ServerRealtimeService {
       const { data } = await client.post<{ ticket: string }>('/auth/ws-ticket');
       if (this.stopped) return;
       const wsUrl =
-        this.server.url.replace(/^http/i, 'ws').replace(/\/$/, '') +
+        apiBaseUrl(this.server.url).replace(/^http/i, 'ws').replace(/\/$/, '') +
         `/ws/events?ticket=${encodeURIComponent(data.ticket)}`;
       const socket = new WebSocket(wsUrl);
       this.socket = socket;
@@ -82,11 +82,10 @@ export class ServerRealtimeService {
         console.log(`Realtime connected: ${this.server.name}`);
         if (this.storyId) {
           socket.send(JSON.stringify({ type: 'subscribe', storyId: this.storyId }));
-          // Mesmo motivo do refresh de friendships abaixo: eventos emitidos enquanto este
-          // cliente estava desconectado nunca são reentregues (o eventManager do servidor é
-          // em memória, não uma fila durável) - sem isto, uma história só voltava a
-          // sincronizar na próxima edição local, deixando o estado preso por tempo
-          // indefinido depois de uma queda de rede.
+          // The same reason as the friendships refresh below: events emitted while this client was disconnected
+          // are never redelivered (the server's eventManager is in memory, not a durable queue) - without this, a
+          // story only started synchronizing again on the next local edit, leaving state stuck for an indefinite
+          // time after a network drop.
           SyncEngineService.getInstance().requestSync('websocket');
         }
         // WebSocket events are intentionally ephemeral. Refresh once on every connection so
@@ -102,9 +101,9 @@ export class ServerRealtimeService {
               ),
             ),
         );
-        // Mesma razão, para publicações: quem esteve offline enquanto uma história que ele lê
-        // ganhou versão pública só descobre isso aqui - o aviso nasce da diferença com o
-        // espelho local, não do evento em si.
+        // The same reason, for publications: whoever was offline while a story they read gained a public
+        // version only finds out here - the notice comes from the difference against the local mirror, not from
+        // the event itself.
         this.track(
           createPublicationService(this.db)
             .syncPublicationsWithServer(this.server)
@@ -167,9 +166,10 @@ export class ServerRealtimeService {
           downloadedAny = true;
         }
       }
-      // Sem isto, uma história nova chegando por este evento (ex.: alguém te adicionou como
-      // colaborador) fica salva no banco local mas invisível em `StorySelectionScreen`, que lê
-      // `useStoryListStore` - a lista só reflete o banco quando algo pede um `fetchStories` novo.
+      // Without this, a new story arriving through this event (somebody adding you as a collaborator, say)
+      // is saved in the local database but invisible in `StorySelectionScreen`, which reads
+      // `useStoryListStore` - the list only reflects the database when something asks for a fresh
+      // `fetchStories`.
       if (downloadedAny) {
         await useStoryListStore.getState().fetchStories(createStoryService(this.db));
       }
@@ -181,7 +181,7 @@ export class ServerRealtimeService {
     this.retryTimer = setTimeout(async () => {
       this.retryTimer = null;
       try {
-        await fetch(`${this.server.url.replace(/\/$/, '')}/kerescheck`);
+        await fetch(apiUrl(this.server.url, '/kerescheck'));
       } catch {
         /* retry below */
       }

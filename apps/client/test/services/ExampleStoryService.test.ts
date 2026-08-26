@@ -4,8 +4,15 @@
 import { createExampleStoryService } from '../../src/services/storymanagement/ExampleStoryService';
 import { exampleStoryRegistry } from '../../src/exampleStories/generated/registry';
 import { reviveDates } from '../../src/utils/reviveDates';
-import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema } from '@keres/shared';
+import {
+  CURRENT_STORY_FORMAT_VERSION,
+  findStoryExportIntegrityViolations,
+  FullStoryExportSchema,
+} from '@keres/shared';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { statSync } from 'node:fs';
+import { join } from 'node:path';
+import { buildStoryAnalysisReport } from '../../src/utils/storyAnalysisChecks';
 
 let database: TestDatabase;
 
@@ -33,7 +40,7 @@ it('exposes the bundled example catalog and rejects an unknown slug-language pai
   errorSpy.mockRestore();
 });
 
-it('ships every public-domain example at format v4 with the current local features', () => {
+it('ships every public-domain example as a complete showcase of applicable features', () => {
   for (const entry of exampleStoryRegistry) {
     for (const language of entry.languages) {
       const parsed = FullStoryExportSchema.safeParse(reviveDates(language.story));
@@ -41,17 +48,297 @@ it('ships every public-domain example at format v4 with the current local featur
       expect(parsed.success).toBe(true);
       if (!parsed.success) continue;
 
-      expect(parsed.data.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
-      expect(parsed.data.comments).toHaveLength(1);
-      expect(parsed.data.seeAlsoRelations).toHaveLength(1);
-      expect(parsed.data.favorites).toHaveLength(1);
-      expect(parsed.data.choiceCheckGroups).toHaveLength(parsed.data.choices.length ? 1 : 0);
-      expect(parsed.data.choiceChecks).toHaveLength(parsed.data.choices.length ? 1 : 0);
-      expect(parsed.data.effects).toHaveLength(1);
-      expect(parsed.data.attributeValues).toHaveLength(4);
-      expect(parsed.data.locationRelations).toHaveLength(1);
+      // The schema keeps collections introduced in old versions optional in the type, even though the current
+      // format and these guards require all of them in the package.
+      const story = parsed.data as any;
+      expect(story.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
+      expect(story.chapters.length).toBeGreaterThanOrEqual(3);
+      expect(story.scenes.length).toBeGreaterThanOrEqual(12);
+      expect(
+        story.scenes.filter((scene: any) => scene.gapType && scene.durationType).length,
+      ).toBeGreaterThanOrEqual(Math.ceil(story.scenes.length * 0.8));
+      expect(story.characters.length).toBeGreaterThanOrEqual(6);
+      expect(story.characterScenes.length).toBeGreaterThanOrEqual(18);
+      expect(story.characterRelations.length).toBeGreaterThanOrEqual(6);
+      expect(story.locations.length).toBeGreaterThanOrEqual(5);
+      expect(story.locationRelations.length).toBeGreaterThanOrEqual(4);
+      expect(story.items.length).toBeGreaterThanOrEqual(3);
+      expect(story.itemJourneys.length).toBeGreaterThanOrEqual(9);
+      expect(story.worldRules.length).toBeGreaterThanOrEqual(3);
+      expect(story.notes.length).toBeGreaterThanOrEqual(3);
+      expect(story.noteRelations.length).toBeGreaterThanOrEqual(4);
+      expect(story.tags.length).toBeGreaterThanOrEqual(4);
+      expect(story.tagRelations.length).toBeGreaterThanOrEqual(10);
+      expect(story.comments.length).toBeGreaterThanOrEqual(4);
+      expect(story.seeAlsoRelations.length).toBeGreaterThanOrEqual(4);
+      expect(story.favorites.length).toBeGreaterThanOrEqual(3);
+      expect(story.storySchemaFields.length).toBeGreaterThanOrEqual(8);
+      expect(story.attributeValues.length).toBeGreaterThanOrEqual(12);
+      expect(story.stats.length).toBeGreaterThanOrEqual(5);
+      expect(story.statStrengths.length).toBeGreaterThanOrEqual(12);
+      expect(story.statRelations.length).toBeGreaterThanOrEqual(20);
+      expect(story.modes.length).toBeGreaterThanOrEqual(2);
+      expect(story.effects.length).toBeGreaterThanOrEqual(4);
+      expect(story.suggestions.length).toBeGreaterThanOrEqual(12);
+      expect(story.story.statSystem).toBe(true);
+
+      expect(new Set(story.effects.map((effect: any) => effect.effectType))).toEqual(
+        new Set(['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset']),
+      );
+      expect(new Set(story.storySchemaFields.map((field: any) => field.type))).toEqual(
+        new Set([
+          'text',
+          'long_text',
+          'number',
+          'boolean',
+          'date',
+          'suggestion',
+          'suggestion_list',
+          'entity',
+        ]),
+      );
+      expect(
+        new Set(story.locationRelations.map((relation: any) => relation.relationType)),
+      ).toEqual(new Set(['contains', 'connected_to']));
+      expect(new Set(story.comments.map((comment: any) => comment.criticality))).toEqual(
+        new Set([1, 3, 5]),
+      );
+
+      if (story.story.type === 'linear') {
+        expect(story.plots.length).toBeGreaterThanOrEqual(4);
+        expect(story.plotScenes.length).toBeGreaterThanOrEqual(14);
+        expect(
+          story.plots.some(
+            (plot: any) => !story.plotScenes.some((relation: any) => relation.plotId === plot.id),
+          ),
+        ).toBe(true);
+        expect(story.choices).toHaveLength(0);
+        expect(story.choiceCheckGroups).toHaveLength(0);
+        expect(story.choiceChecks).toHaveLength(0);
+      } else {
+        expect(story.plots).toHaveLength(0);
+        expect(story.plotScenes).toHaveLength(0);
+        expect(story.choices.length).toBeGreaterThanOrEqual(16);
+        expect(story.choiceCheckGroups.length).toBeGreaterThanOrEqual(4);
+        expect(story.choiceChecks.length).toBeGreaterThanOrEqual(6);
+        expect(new Set(story.choiceCheckGroups.map((group: any) => group.combinator))).toEqual(
+          new Set(['AND', 'OR']),
+        );
+        expect(new Set(story.choiceChecks.map((check: any) => check.type))).toEqual(
+          new Set(['sceneCount', 'inventory', 'trigger']),
+        );
+        expect(new Set(story.choiceChecks.map((check: any) => check.mode))).toEqual(
+          new Set(['enable', 'block']),
+        );
+      }
     }
   }
+});
+
+/**
+ * The counts asserted above say a package is *big* enough; they say nothing about whether its rows
+ * agree with one another. That is how the bundled examples came to ship duplicated character
+ * relations: every count passed, every row validated, and the graph drew the same pair twice.
+ *
+ * This runs the same rule both importers run, so a package that would be refused on the way in can
+ * never be published in the first place.
+ */
+it('ships no bundled example that contradicts itself', () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const violations = findStoryExportIntegrityViolations(
+        reviveDates(language.story) as { story: { id: string } },
+      );
+      expect({
+        example: `${entry.slug}/${language.language}`,
+        violations: violations.map((violation) => violation.message),
+      }).toEqual({ example: `${entry.slug}/${language.language}`, violations: [] });
+    }
+  }
+});
+
+it('keeps example ids valid, unique, referentially sound, bilingual, and bundle-sized', () => {
+  const ulid = /^[0-7][0-9A-HJKMNP-TV-Z]{25}$/;
+  const collectionNames = Object.keys(exampleStoryRegistry[0].languages[0].story as object).filter(
+    (key) =>
+      Array.isArray((exampleStoryRegistry[0].languages[0].story as Record<string, unknown>)[key]),
+  );
+
+  for (const entry of exampleStoryRegistry) {
+    const english = entry.languages.find((language) => language.language === 'en')?.story as Record<
+      string,
+      any
+    >;
+    const portuguese = entry.languages.find((language) => language.language === 'pt')
+      ?.story as Record<string, any>;
+    expect(english).toBeDefined();
+    expect(portuguese).toBeDefined();
+
+    for (const collection of collectionNames) {
+      expect(portuguese[collection].map((entity: { id: string }) => entity.id)).toEqual(
+        english[collection].map((entity: { id: string }) => entity.id),
+      );
+    }
+
+    for (const language of entry.languages) {
+      const story = language.story as Record<string, any>;
+      const rowIds = [
+        story.story.id,
+        ...collectionNames.flatMap((name) => story[name].map((row: { id: string }) => row.id)),
+      ];
+      expect(rowIds.every((value) => ulid.test(value))).toBe(true);
+      expect(new Set(rowIds).size).toBe(rowIds.length);
+      expect(
+        statSync(
+          join(
+            process.cwd(),
+            'src/exampleStories/content',
+            entry.slug,
+            `${language.language}.json`,
+          ),
+        ).size,
+      ).toBeLessThan(250 * 1024);
+
+      const ids = (name: string) => new Set(story[name].map((entity: { id: string }) => entity.id));
+      const sceneIds = ids('scenes');
+      const characterIds = ids('characters');
+      const locationIds = ids('locations');
+      const itemIds = ids('items');
+      const choiceIds = ids('choices');
+      const groupIds = ids('choiceCheckGroups');
+      const plotIds = ids('plots');
+      const fieldIds = ids('storySchemaFields');
+      expect(
+        story.scenes.every(
+          (scene: any) => ids('chapters').has(scene.chapterId) && locationIds.has(scene.locationId),
+        ),
+      ).toBe(true);
+      expect(
+        story.characterScenes.every(
+          (relation: any) =>
+            characterIds.has(relation.characterId) && sceneIds.has(relation.sceneId),
+        ),
+      ).toBe(true);
+      expect(
+        story.itemJourneys.every(
+          (journey: any) => itemIds.has(journey.itemId) && sceneIds.has(journey.sceneId),
+        ),
+      ).toBe(true);
+      expect(
+        story.choices.every(
+          (choice: any) => sceneIds.has(choice.sceneId) && sceneIds.has(choice.nextSceneId),
+        ),
+      ).toBe(true);
+      expect(story.choiceCheckGroups.every((group: any) => choiceIds.has(group.choiceId))).toBe(
+        true,
+      );
+      expect(
+        story.choiceChecks.every(
+          (check: any) =>
+            groupIds.has(check.groupId) && (!check.itemId || itemIds.has(check.itemId)),
+        ),
+      ).toBe(true);
+      expect(
+        story.plotScenes.every(
+          (relation: any) => plotIds.has(relation.plotId) && sceneIds.has(relation.sceneId),
+        ),
+      ).toBe(true);
+      expect(story.attributeValues.every((value: any) => fieldIds.has(value.fieldId))).toBe(true);
+    }
+  }
+});
+
+/**
+ * An example arriving 0-based would install a story the Analysis itself flags - and whose first reorder
+ * would become a synchronization conflict.
+ */
+it('numbers every bundled example the way the app does: chapters 1..N, scenes 1..M per chapter', () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const story = language.story as {
+        chapters: { id: string; index: number }[];
+        scenes: { chapterId: string; index: number }[];
+      };
+      const sequential = (indexes: number[]) =>
+        [...indexes].sort((a, b) => a - b).every((value, position) => value === position + 1);
+
+      expect(sequential(story.chapters.map((chapter) => chapter.index))).toBe(true);
+      for (const chapter of story.chapters) {
+        const indexes = story.scenes
+          .filter((scene) => scene.chapterId === chapter.id)
+          .map((scene) => scene.index);
+        expect(sequential(indexes)).toBe(true);
+      }
+    }
+  }
+});
+
+it('uses every bundled example as a clean story-analysis reference', async () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const story = language.story as Record<string, any>;
+      const findings = await buildStoryAnalysisReport({
+        storyType: story.story.type,
+        characters: story.characters,
+        characterScenes: story.characterScenes,
+        characterRelations: story.characterRelations,
+        locations: story.locations,
+        locationRelations: story.locationRelations,
+        scenes: story.scenes,
+        choices: story.choices,
+        choiceCheckGroups: story.choiceCheckGroups,
+        choiceChecks: story.choiceChecks,
+        effects: story.effects,
+        items: story.items,
+        itemJourneys: story.itemJourneys,
+        tags: story.tags,
+        tagRelations: story.tagRelations,
+        chapters: story.chapters,
+        notes: story.notes,
+        worldRules: story.worldRules,
+        storySchemaFields: story.storySchemaFields,
+        attributeValues: story.attributeValues,
+      });
+      expect({ example: `${entry.slug}/${language.language}`, findings }).toEqual({
+        example: `${entry.slug}/${language.language}`,
+        findings: [],
+      });
+    }
+  }
+});
+
+it('installs the plots of a linear example bound to the copy, not to the packaged ids', async () => {
+  const service = createExampleStoryService(database.db);
+
+  const installed = await service.installExampleStory(
+    '01ARZ3NDEKTSV4RRFFQ69G5FAY',
+    'cinderella',
+    'en',
+  );
+  expect(installed).toMatchObject({ status: 'installed' });
+  if (installed.status !== 'installed') return;
+
+  const packaged = exampleStoryRegistry
+    .find((entry) => entry.slug === 'cinderella')
+    ?.languages.find((entry) => entry.language === 'en')?.story as { plots: { id: string }[] };
+  const plots = await database.db.query.plots.findMany();
+  const relations = await database.db.query.plotScenes.findMany();
+  const sceneIds = new Set((await database.db.query.scenes.findMany()).map((scene) => scene.id));
+
+  expect(plots.length).toBe(packaged.plots.length);
+  expect(plots.every((plot) => plot.storyId === installed.storyId)).toBe(true);
+  // The package's ids must not survive the copy, otherwise installing twice collides.
+  expect(plots.some((plot) => packaged.plots.some((source) => source.id === plot.id))).toBe(false);
+
+  expect(relations.length).toBeGreaterThan(0);
+  expect(
+    relations.every(
+      (relation) =>
+        relation.storyId === installed.storyId &&
+        sceneIds.has(relation.sceneId) &&
+        plots.some((plot) => plot.id === relation.plotId),
+    ),
+  ).toBe(true);
 });
 
 it('installs the same bundled example as independent local copies', async () => {

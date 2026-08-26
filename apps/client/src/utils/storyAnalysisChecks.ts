@@ -1,13 +1,13 @@
 import { AttributeType, decodeAttributeValue, isValidAttributeDate } from '@keres/shared';
-import { NavigableEntityType } from './entityNavigation';
+import type { NavigableEntityType } from './entityNavigation';
 
 /**
- * Checagens estruturais de uma Story: não é busca, é achar o que um escritor dificilmente
- * notaria sozinho (um Character que nunca aparece em nenhuma Scene, uma Choice apontando pra
- * uma Scene que não existe mais, uma Scene sem caminho a partir do início). Puro de propósito,
- * como `storyGraphLayout.ts`/`locationGraphLayout.ts`: recebe listas já carregadas do banco e
- * devolve achados prontos, sem tocar em DB/React - permite testar cada checagem isolada e
- * reaproveitar o mesmo resultado tanto no resumo do dashboard quanto na tela de relatório.
+ * Structural checks on a Story: it is not search, it is finding what a writer would hardly notice on
+ * their own (a Character who never appears in any Scene, a Choice pointing at a Scene that no longer
+ * exists, a Scene with no path from the start). Pure on purpose, like
+ * `storyGraphLayout.ts`/`locationGraphLayout.ts`: it receives lists already loaded from the database and
+ * returns finished findings, without touching DB/React - which allows testing each check in isolation
+ * and reusing the same result in both the dashboard summary and the report screen.
  */
 
 export type StoryAnalysisCategory =
@@ -21,12 +21,12 @@ export type StoryAnalysisCategory =
 export type StoryAnalysisSeverity = 'warning' | 'error';
 
 export interface StoryAnalysisFinding {
-  /** Estável entre execuções - usado como key de lista, nunca exibido. */
+  /** Stable across runs - used as a list key, never displayed. */
   id: string;
   category: StoryAnalysisCategory;
   severity: StoryAnalysisSeverity;
   entityType: NavigableEntityType;
-  /** Vazio para o achado raro de história sem nenhuma Scene inicial - ver `checkSceneReachability`. */
+  /** Empty for the rare finding of a story with no starting Scene at all - see `checkSceneReachability`. */
   entityId: string;
   entityName: string;
   messageKey: string;
@@ -44,6 +44,16 @@ export interface AnalysisScene {
   locationId: string;
   isStart: boolean;
   isFinish: boolean;
+  chapterId: string;
+  /** Position within the chapter: 1..N, with no holes and no repeats. */
+  index: number;
+}
+
+export interface AnalysisChapter {
+  id: string;
+  name: string;
+  /** Position in the story: 1..N, under the same rule as the scenes. */
+  index: number;
 }
 
 export interface AnalysisChoice {
@@ -110,7 +120,7 @@ export interface StoryAnalysisInput {
   characterScenes: { characterId: string }[];
   characterRelations: { character1Id: string; character2Id: string }[];
   locations: AnalysisEntityRef[];
-  locationRelations: { locationAId: string; locationBId: string }[];
+  locationRelations: { locationAId: string; locationBId: string; relationType: string }[];
   scenes: AnalysisScene[];
   choices: AnalysisChoice[];
   choiceCheckGroups: AnalysisChoiceCheckGroup[];
@@ -120,7 +130,7 @@ export interface StoryAnalysisInput {
   itemJourneys: { itemId: string }[];
   tags: AnalysisEntityRef[];
   tagRelations: { tagId: string }[];
-  chapters: AnalysisEntityRef[];
+  chapters: AnalysisChapter[];
   notes: AnalysisEntityRef[];
   worldRules: AnalysisEntityRef[];
   storySchemaFields: AnalysisStorySchemaField[];
@@ -144,9 +154,11 @@ export class StoryAnalysisCancelledError extends Error {
   }
 }
 
-/** Devolve o controle pro event loop entre pedaços de trabalho pesado, sem depender de Worker
- *  (não dá pra ter um de verdade em RN mobile sem módulo nativo) nem de outra conexão de DB
- *  (o driver do drizzle é preso à thread principal) - ver plano da feature. */
+/**
+ * It gives control back to the event loop between chunks of heavy work, without depending on a Worker
+ * (a real one is impossible in RN mobile without a native module) or on another DB connection (drizzle's
+ * driver is tied to the main thread) - see the feature plan.
+ */
 const yieldToEventLoop = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 function throwIfAborted(signal?: AbortSignal): void {
@@ -154,30 +166,32 @@ function throwIfAborted(signal?: AbortSignal): void {
 }
 
 /**
- * Checagens rápidas, O(entidades) - seguras de rodar toda vez que a story muda (ex.: badge do
- * dashboard). Não inclui alcançabilidade nem satisfazibilidade de Choice: essas duas percorrem o
- * grafo de Scenes/Choices em rodadas de ponto fixo e ficam caras em histórias ramificadas
- * grandes, então só rodam sob demanda via `buildStoryAnalysisReport`.
+ * Fast checks, O(entities) - safe to run every time the story changes (the dashboard badge, say). They
+ * do not include Choice reachability or satisfiability: those two walk the Scenes/Choices graph in
+ * fixed-point rounds and get expensive on large branching stories, so they only run on demand through
+ * `buildStoryAnalysisReport`.
  */
 export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   return [
     ...checkCharacters(input),
     ...checkLocations(input),
+    ...checkDuplicateRelations(input),
     ...checkItems(input),
     ...checkTags(input),
     ...checkSceneFinishWithChoices(input),
-    // Integridade de Choice é O(choices), cabe aqui mesmo sendo "só ramificada" - dangling
-    // references são baratas de achar, diferente de alcançabilidade/satisfazibilidade.
+    ...(input.storyType === 'linear' ? checkNarrativeIndexes(input) : []),
+    // Choice integrity is O(choices) and fits here even though it is "branching only" - dangling references
+    // are cheap to find, unlike reachability/satisfiability.
     ...(input.storyType === 'branching' ? checkChoices(input) : []),
     ...checkStorySchema(input),
   ];
 }
 
 /**
- * Relatório completo: checagens rápidas + alcançabilidade/satisfazibilidade (que fazem sentido
- * só pra histórias ramificadas). A parte pesada (`checkChoiceSatisfiability`) cede o controle ao
- * event loop entre rodadas do ponto fixo e reporta progresso, então não trava a UI mesmo em
- * histórias grandes - ver plano da feature em `StoryAnalysisScreen.tsx`.
+ * The full report: the fast checks + reachability/satisfiability (which only make sense for branching
+ * stories). The heavy part (`checkChoiceSatisfiability`) yields control to the event loop between
+ * fixed-point rounds and reports progress, so it does not freeze the UI even on large stories - see the
+ * feature plan in `StoryAnalysisScreen.tsx`.
  */
 export async function buildStoryAnalysisReport(
   input: StoryAnalysisInput,
@@ -267,6 +281,73 @@ function checkLocations(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   return findings;
 }
 
+/**
+ * Two rows describing the same link.
+ *
+ * A relation between two characters exists once, in whichever order the two ids happen to be stored;
+ * two places are "contained in"/"connected to" one another once per type. `CharacterRelationService`
+ * has always refused a duplicate, and since migration 0015 the database refuses one too - but a story
+ * imported before that, or a package built elsewhere, can still be carrying them. They are reported
+ * as errors, not warnings: the server's PostgreSQL rejects them, so a story holding one cannot
+ * synchronize.
+ */
+function checkDuplicateRelations(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const findings: StoryAnalysisFinding[] = [];
+  const unorderedPair = (a: string, b: string) => (a <= b ? `${a} ${b}` : `${b} ${a}`);
+
+  const characterName = new Map(
+    input.characters.map((character) => [character.id, character.name]),
+  );
+  const seenCharacterPairs = new Set<string>();
+  for (const relation of input.characterRelations) {
+    const key = unorderedPair(relation.character1Id, relation.character2Id);
+    if (!seenCharacterPairs.has(key)) {
+      seenCharacterPairs.add(key);
+      continue;
+    }
+    const character = input.characters.find((candidate) => candidate.id === relation.character1Id);
+    if (!character) continue;
+    findings.push(
+      buildFinding(
+        'characters',
+        'error',
+        'Character',
+        character,
+        'analysis_duplicate_character_relation',
+        {
+          otherName: characterName.get(relation.character2Id) ?? relation.character2Id,
+        },
+      ),
+    );
+  }
+
+  const locationName = new Map(input.locations.map((location) => [location.id, location.name]));
+  const seenLocationPairs = new Set<string>();
+  for (const relation of input.locationRelations) {
+    const key = `${unorderedPair(relation.locationAId, relation.locationBId)}${relation.relationType}`;
+    if (!seenLocationPairs.has(key)) {
+      seenLocationPairs.add(key);
+      continue;
+    }
+    const location = input.locations.find((candidate) => candidate.id === relation.locationAId);
+    if (!location) continue;
+    findings.push(
+      buildFinding(
+        'locations',
+        'error',
+        'Location',
+        location,
+        'analysis_duplicate_location_relation',
+        {
+          otherName: locationName.get(relation.locationBId) ?? relation.locationBId,
+        },
+      ),
+    );
+  }
+
+  return findings;
+}
+
 function checkItems(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const usedItemIds = new Set(input.itemJourneys.map((j) => j.itemId));
   return input.items
@@ -282,11 +363,10 @@ function checkTags(input: StoryAnalysisInput): StoryAnalysisFinding[] {
 }
 
 /**
- * Alcança a partir da(s) Scene inicial(is) seguindo as Choices, e marca quem não foi
- * alcançado. Cobre os três jeitos que o pedido descreveu a mesma coisa ("inacessível",
- * "isolada", "sem caminho a partir da inicial") com uma única passada: a mensagem muda
- * conforme a Scene tenha ou não alguma Choice tocando nela (isolada de verdade vs. só fora do
- * alcance do início).
+ * It reaches out from the starting Scene(s) following the Choices, and marks whoever was not reached.
+ * It covers the three ways the request described the same thing ("inaccessible", "isolated", "no path
+ * from the start") in a single pass: the message changes depending on whether the Scene has any Choice
+ * touching it (genuinely isolated vs. merely out of the start's reach).
  */
 function checkSceneReachability(
   input: StoryAnalysisInput,
@@ -300,8 +380,8 @@ function checkSceneReachability(
     if (!sceneIds.has(choice.sceneId) || !sceneIds.has(choice.nextSceneId)) continue;
     touchedByChoice.add(choice.sceneId);
     touchedByChoice.add(choice.nextSceneId);
-    // Choice cujos checks provavelmente nunca serão satisfeitos não conta como aresta viva -
-    // uma Scene só alcançável por ela deve ser reportada como inacessível também.
+    // A Choice whose checks will probably never be satisfied does not count as a live edge - a Scene
+    // reachable only through it has to be reported as inaccessible too.
     if (unsatisfiableChoiceIds.has(choice.id)) continue;
     if (!outgoing.has(choice.sceneId)) outgoing.set(choice.sceneId, []);
     outgoing.get(choice.sceneId)!.push(choice.nextSceneId);
@@ -311,8 +391,8 @@ function checkSceneReachability(
 
   if (startIds.length === 0) {
     if (input.scenes.length === 0) return [];
-    // Sem Scene inicial não dá pra dizer o que é alcançável - reportar cada Scene como
-    // "inacessível" só inundaria o relatório escondendo o problema de verdade.
+    // With no starting Scene there is no way to say what is reachable - reporting every Scene as
+    // "inaccessible" would only flood the report and hide the real problem.
     return [
       {
         id: 'scenes:no_start_scene',
@@ -351,7 +431,7 @@ function checkSceneReachability(
     );
 }
 
-/** Scene marcada como final mas que ainda tem Choice saindo dela - contradição estrutural. */
+/** A Scene marked as final that still has a Choice leaving it - a structural contradiction. */
 function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const scenesWithOutgoingChoice = new Set(input.choices.map((c) => c.sceneId));
   return input.scenes
@@ -361,20 +441,77 @@ function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFi
     );
 }
 
+/** `null` when the list is already a contiguous 1..N; otherwise, what is wrong with it. */
+function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null {
+  if (indexes.length === 0) return null;
+  const sorted = [...indexes].sort((a, b) => a - b);
+  if (new Set(sorted).size !== sorted.length) return 'duplicate';
+  if (sorted[0] !== 1) return 'start';
+  return sorted.every((value, position) => value === position + 1) ? null : 'gap';
+}
+
 /**
- * Heurística estrutural (não simula estado exaustivamente - ver plano da feature) que decide
- * se uma Choice com Checks tem alguma chance de ficar disponível algum dia. Usa o nível do BFS
- * de alcançabilidade (a partir das Scenes iniciais) como aproximação de "antes/depois" pra
- * checks de inventory/trigger, e detecção de ciclo pra sceneCount > 1 (revisitável indefinidamente,
- * então N não importa uma vez que exista o ciclo). "lacks"/"unset" são sempre satisfazíveis por
- * padrão - não rastreamos "garantido e nunca desfeito" no v1, limitação documentada no plano.
+ * The numbering of chapters (1..N in the story) and of scenes (1..M within the chapter).
  *
- * Roda em ponto fixo: uma Choice inacessível pode tornar uma Scene inacessível, o que por sua
- * vez torna inacessível uma OUTRA Choice que exige aquela Scene (ex.: "Scene X visitada pelo
- * menos 1 vez"). Uma única passada não pega essa cascata - repete reconstruindo o grafo sem as
- * Choices já reprovadas até nenhuma rodada encontrar novidade. `unsatisfiableChoiceIds` só
- * cresce (nunca remove uma Choice já reprovada), o que garante parada em no máximo
- * `choices.length` rodadas mesmo se um check em modo `block` "melhorasse" com menos alcance.
+ * It is not fussiness: the API refuses a reorder whose indices do not form a contiguous 1..N, so a
+ * crooked numbering becomes a synchronization conflict the first time the person drags a scene
+ * somewhere else. A repeat is worse than a hole - two scenes with the same number leave the story's
+ * order undefined in the Reader, in the Matrix and in the conversion to branching.
+ *
+ * Linear stories only: that is where the indices' order is the reading order.
+ */
+function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const findings: StoryAnalysisFinding[] = [];
+
+  const chapterProblem = inspectIndexes(input.chapters.map((chapter) => chapter.index));
+  if (chapterProblem && input.chapters.length > 0) {
+    findings.push(
+      buildFinding(
+        'scenes',
+        'warning',
+        'Chapter',
+        input.chapters[0]!,
+        `analysis_chapter_index_${chapterProblem}`,
+      ),
+    );
+  }
+
+  for (const chapter of input.chapters) {
+    const chapterScenes = input.scenes.filter((scene) => scene.chapterId === chapter.id);
+    if (chapterScenes.length === 0) continue;
+    const sceneProblem = inspectIndexes(chapterScenes.map((scene) => scene.index));
+    if (!sceneProblem) continue;
+    findings.push(
+      buildFinding(
+        'scenes',
+        'warning',
+        'Chapter',
+        chapter,
+        `analysis_scene_index_${sceneProblem}`,
+        {
+          chapterName: chapter.name,
+        },
+      ),
+    );
+  }
+
+  return findings;
+}
+
+/**
+ * A structural heuristic (it does not simulate state exhaustively - see the feature plan) that decides
+ * whether a Choice with Checks has any chance of ever becoming available. It uses the reachability BFS's
+ * level (from the starting Scenes) as an approximation of "before/after" for inventory/trigger checks,
+ * and cycle detection for sceneCount > 1 (revisitable indefinitely, so N does not matter once the cycle
+ * exists). "lacks"/"unset" are always satisfiable by default - we do not track "guaranteed and never
+ * undone" in v1, a limitation documented in the plan.
+ *
+ * It runs to a fixed point: an unreachable Choice can make a Scene unreachable, which in turn makes
+ * ANOTHER Choice unreachable if it requires that Scene ("Scene X visited at least once", say). A single
+ * pass does not catch that cascade - it repeats, rebuilding the graph without the already-failed
+ * Choices, until a round finds nothing new. `unsatisfiableChoiceIds` only grows (it never removes an
+ * already-failed Choice), which guarantees termination in at most `choices.length` rounds even if a
+ * check in `block` mode were to "improve" with less reach.
  */
 async function checkChoiceSatisfiability(
   input: StoryAnalysisInput,
@@ -499,7 +636,7 @@ async function checkChoiceSatisfiability(
       const groups = groupsByChoice.get(choice.id);
       if (!groups || groups.length === 0) continue;
       const choiceLevel = levelByScene.get(choice.sceneId);
-      if (choiceLevel === undefined) continue; // já reportado por checkSceneReachability/checkChoices
+      if (choiceLevel === undefined) continue; // already reported by checkSceneReachability/checkChoices
 
       const satisfiable = groups.every((group) => {
         const checks = checksByGroup.get(group.id) ?? [];
@@ -518,8 +655,8 @@ async function checkChoiceSatisfiability(
     }
 
     onProgress?.({ fraction: Math.min(iterations / maxIterations, 1) });
-    // Cede o controle ao event loop a cada rodada - cada rodada é O(scenes + choices), então uma
-    // história grande ainda faz vários yields por segundo, mantendo a UI responsiva.
+    // It yields control to the event loop on every round - each round is O(scenes + choices), so a large
+    // story still yields several times a second, keeping the UI responsive.
     await yieldToEventLoop();
   }
 
@@ -568,10 +705,9 @@ const STORY_SCHEMA_ENTITY_TYPE_TO_NAVIGABLE: Record<string, NavigableEntityType>
 };
 
 /**
- * Atributos obrigatórios não preenchidos, e valores que não fazem sentido pro tipo declarado.
- * "Inválido" só é checado pra number/date - `decodeAttributeValue` faz boolean sempre virar um
- * valor válido (nunca detectável como inválido por design, ver `attributeValueCodec.ts`), e
- * texto livre não tem forma errada.
+ * Required attributes left empty, and values that make no sense for the declared type. "Invalid" is only
+ * checked for number/date - `decodeAttributeValue` makes a boolean always turn into a valid value (never
+ * detectable as invalid by design, see `attributeValueCodec.ts`), and free text has no wrong shape.
  */
 function checkStorySchema(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const findings: StoryAnalysisFinding[] = [];
@@ -640,8 +776,8 @@ function checkStorySchema(input: StoryAnalysisInput): StoryAnalysisFinding[] {
           ? decoded === null
           : field.type === AttributeType.DATE
             ? // `Date.parse` continua como segunda chance de propósito: só o formato canônico
-              // (`attributeDateValue.ts`) é aceito de primeira, mas valores de texto livre
-              // gravados antes do date picker existir não devem virar warning todos de uma vez.
+              // (`attributeDateValue.ts`) is accepted straight away, but free-text values saved before the date picker
+              // existed must not all turn into warnings at once.
               !isValidAttributeDate(raw) && Number.isNaN(Date.parse(raw))
             : false;
 

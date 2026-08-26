@@ -15,9 +15,9 @@ import { useWorldRuleStore } from '../../src/state/worldRuleStore';
 import { resetAllClientStores } from '../../src/state/resetAllClientStores';
 
 /**
- * Chamado quando o banco local é recriado (troca de conta, reset do app). Qualquer store que
- * fique com dado da base antiga passa a mostrar entidades de uma história que não existe mais,
- * ou pior, tenta escrever nelas através de um handle de banco já fechado.
+ * Called when the local database is recreated (an account change, an app reset). Any store left
+ * holding data from the old base starts showing entities of a story that no longer exists,
+ * or worse, tries to write to them through an already closed database handle.
  */
 describe('resetAllClientStores', () => {
   it('runs without a database configured', () => {

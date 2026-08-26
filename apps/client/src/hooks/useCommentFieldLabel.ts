@@ -6,10 +6,10 @@ import { useDrizzle } from '../db';
 import { storySchemaFields } from '../db/schema';
 
 /**
- * Resolve o rótulo amigável e traduzido de um campo de comentário: para campos nativos,
- * usa `entityFieldMetadata` (mesma fonte usada pela Busca Avançada); para atributos
- * customizados (`fieldId`), busca `StorySchemaField.name` (definido pelo usuário, sem
- * chave de tradução). Cai no `fieldKey`/`fieldId` cru só se nada for encontrado.
+ * Resolves a comment field's friendly, translated label: for native fields it uses
+ * `entityFieldMetadata` (the same source Advanced Search uses); for custom attributes (`fieldId`) it
+ * looks up `StorySchemaField.name` (defined by the user, with no translation key). It falls back to the
+ * raw `fieldKey`/`fieldId` only if nothing is found.
  */
 export function useCommentFieldLabel(
   entityType: string,

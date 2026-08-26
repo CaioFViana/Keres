@@ -9,14 +9,14 @@ import { registerUser, request, type TestUser } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
-// O empacotamento da publicação grava o .zip pelo backend local de blobs, que usa `Bun.write`.
+// Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();
 
 /**
- * Os .zip guardados para uma história, direto no disco do backend local de blobs.
+ * The .zip files stored for a story, straight from the local blob backend's disk.
  *
- * Um pacote sem linha correspondente é invisível para a API, então só olhando o armazenamento
- * dá para afirmar que uma publicação recusada não deixou lixo para trás.
+ * A package with no matching row is invisible to the API, so only by looking at storage can we assert
+ * that a refused publication left no litter behind.
  */
 async function storedPublicationFiles(storyId: string): Promise<string[]> {
   const directory = path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', storyId);
@@ -47,7 +47,7 @@ async function createStory(token: string, title = 'A Queda') {
   return data;
 }
 
-/** O servidor recusa publicar fora de sincronia, então o teste precisa do contador real. */
+/** The server refuses to publish out of sync, so the test needs the real counter. */
 async function serverOperationVersion(storyId: string): Promise<number> {
   const story = await db.query.stories.findFirst({
     where: (stories, { eq: equals }) => equals(stories.id, storyId),
@@ -98,7 +98,7 @@ describe('POST /stories/:storyId/publications', () => {
 
     const { status, data } = await request('POST', `/stories/${story.id}/publications`, {
       token: ana.token,
-      // Um contador à frente do servidor: é o que o app veria com operação local pendente.
+      // A counter ahead of the server's: it is what the app would see with a pending local operation.
       body: { operationVersion: (await serverOperationVersion(story.id)) + 1 },
     });
 
@@ -154,7 +154,7 @@ describe('POST /stories/:storyId/publications', () => {
       .from(storyPublications)
       .where(eq(storyPublications.storyId, story.id));
     expect(rows).toHaveLength(5);
-    // A primeira do dia não leva sufixo; a sexta empurrou justamente essa para fora.
+    // The day's first one carries no suffix; the sixth pushed exactly that one out.
     expect(rows.map((row) => row.label)).not.toContain(
       rows
         .map((row) => row.label)
@@ -309,9 +309,9 @@ describe('PUT /stories/:storyId/showcase', () => {
 });
 
 describe('publishing and visibility together', () => {
-  // A regressão que motivou isto: a visibilidade só era gravada por uma chamada separada, então
-  // publicar com o cadeado desligado não desfazia uma senha posta antes - a ação parecia não
-  // ter efeito nenhum.
+  // The regression that motivated this: visibility was only written by a separate call, so publishing
+  // with the padlock off did not undo a password set earlier - the action looked like it had no effect
+  // at all.
   it('publishing without a password makes a password-protected story public again', async () => {
     const story = await createStory(ana.token);
     await request('POST', `/stories/${story.id}/publications`, {
@@ -336,7 +336,7 @@ describe('publishing and visibility together', () => {
     const opened = await request('GET', `/stories/${story.id}/publications`, { token: ana.token });
     expect(opened.data.visibility).toBe('public');
     expect(opened.data.hasPassword).toBe(false);
-    // As duas versões continuam publicadas: mudar a visibilidade não apaga nada.
+    // Both versions stay published: changing visibility erases nothing.
     expect(opened.data.publications).toHaveLength(2);
   });
 
@@ -378,9 +378,9 @@ describe('publishing and visibility together', () => {
     expect(await storedPublicationFiles(story.id)).toHaveLength(rows.length);
   });
 
-  // Estas recusas acontecem antes de o pacote ser montado, então o que se garante aqui é que
-  // nenhuma delas grava arquivo. A falha *dentro* da transação (erro de banco), que é o caso
-  // que `runPublishTransaction` limpa, não é alcançável por HTTP.
+  // These refusals happen before the package is assembled, so what is guaranteed here is that none of
+  // them writes a file. A failure *inside* the transaction (a database error), which is the case
+  // `runPublishTransaction` cleans up, is not reachable over HTTP.
   it.each([
     ['out of sync', { offset: 1 }],
     ['password-protected with no password', { visibility: 'password' as const }],

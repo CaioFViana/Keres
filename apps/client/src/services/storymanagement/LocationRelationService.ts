@@ -1,6 +1,7 @@
 import { createULID } from '../../utils/entityUtils';
 import { and, eq, or, sql } from 'drizzle-orm';
-import { AppDrizzleClient, locationRelations, LocationRelationSelect } from '../../db';
+import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
+import { locationRelations } from '../../db';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
@@ -15,15 +16,21 @@ export interface LocationRelationService {
   ): Promise<LocationRelationSelect | undefined>;
   getChildRelations(storyId: string, locationId: string): Promise<LocationRelationSelect[]>;
   getConnectionRelations(storyId: string, locationId: string): Promise<LocationRelationSelect[]>;
-  /** Ancestrais de `locationId` (não inclui ele mesmo). Não-autoritativo: só reflete o que o
-   *  dispositivo já sincronizou, usado para excluir candidatos inválidos no picker de "Parent". */
+  /**
+   * `locationId`'s ancestors (it does not include itself). Non-authoritative: it only reflects what the
+   * device has already synchronized, used to exclude invalid candidates in the "Parent" picker.
+   */
   getAncestorIds(storyId: string, locationId: string): Promise<Set<string>>;
-  /** Descendentes de `locationId` (não inclui ele mesmo), usado para excluir candidatos
-   *  inválidos no picker de "Child Location" (não pode virar filho do próprio descendente). */
+  /**
+   * `locationId`'s descendants (it does not include itself), used to exclude invalid
+   * candidates in the "Child Location" picker (it cannot become a child of its own descendant).
+   */
   getDescendantIds(storyId: string, locationId: string): Promise<Set<string>>;
-  /** null para remover o pai atual. Faz a "troca" como duas operações: apaga a aresta antiga
-   *  (se houver) e cria a nova. Checagem de ciclo aqui é só para feedback rápido de UI - a
-   *  validação real (autoritativa) acontece no servidor, ver LocationRelationSyncHandler. */
+  /**
+   * null to remove the current parent. It does the "swap" as two operations: it deletes the old edge
+   * (if there is one) and creates the new one. The cycle check here is only for quick UI feedback - the
+   * real (authoritative) validation happens on the server, see LocationRelationSyncHandler.
+   */
   setParent(
     currentUserId: string,
     storyId: string,
@@ -239,7 +246,7 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
         return;
       }
 
-      // Checagem de ciclo não-autoritativa (só para feedback rápido de UI, ver docstring da interface).
+      // A non-authoritative cycle check (only for quick UI feedback, see the interface's docstring).
       const ancestorsOfNewParent = await walkAncestorIds(db, storyId, newParentId);
       if (ancestorsOfNewParent.has(childId)) {
         throw new Error(

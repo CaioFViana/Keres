@@ -213,6 +213,8 @@ const ItemDetailScreen = () => {
       {(() => {
         const commentableFieldProps = {
           storyId: item.storyId,
+          // Mentions of other entities in this one's text become links; it never links to itself.
+          mentionSourceId: item.id,
           canComment,
           isStoryOwner,
           currentUserId,

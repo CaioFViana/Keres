@@ -20,6 +20,7 @@ export const StoryCreateInputSchema = z.object({
   theme: z.string().nullable().optional(),
   normalizeSceneTiming: z.boolean().default(false),
   allowReaderComments: z.boolean().default(false),
+  autoLinkMentions: z.boolean().default(false),
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
 });
@@ -38,6 +39,7 @@ export const CreateStoryDataSchema = z.object({
   theme: z.string().nullable().optional(),
   normalizeSceneTiming: z.boolean().default(false),
   allowReaderComments: z.boolean().default(false),
+  autoLinkMentions: z.boolean().default(false),
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
 });

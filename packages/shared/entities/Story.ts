@@ -21,6 +21,11 @@ export interface Story {
   // Only relevant (and only shown in the UI) for stories linked to a server - local stories only
   // have the 'owner' role, so the reader/writer distinction does not exist for them.
   allowReaderComments: boolean;
+  /**
+   * When on, entity names found in this story's own text render as links to those entities.
+   * Purely a reading convenience: it renders and navigates, and never writes a relation.
+   */
+  autoLinkMentions: boolean;
   /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: boolean;
   /** How stat values are displayed. Only matters with `statSystem` on. */

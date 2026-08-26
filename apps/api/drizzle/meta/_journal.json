@@ -120,6 +120,13 @@
       "when": 1787510000000,
       "tag": "0016_add_plots",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787753458830,
+      "tag": "0017_auto_link_mentions",
+      "breakpoints": true
     }
   ]
 }

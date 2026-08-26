@@ -100,6 +100,8 @@
   "attribute_value_attributed_to_entity": "{{fieldname}}: {{value}} - attributed to {{entityname}} ({{entitytype}})",
   "author": "Author",
   "author_placeholder": "Enter the story's author",
+  "auto_link_mentions": "Link mentions automatically",
+  "auto_link_mentions_description": "Names of this story's elements found in its text become links. It only changes how text is read - nothing is saved.",
   "avatar_color": "Avatar Color",
   "avatar_icon": "Avatar Icon",
   "back_to_change_password": "Back",

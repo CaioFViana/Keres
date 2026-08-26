@@ -81,6 +81,8 @@ import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
 import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
 import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
 import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
+import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
+import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
@@ -480,8 +482,13 @@ const MainSystemNavigator = () => {
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
-    <>
+    <MentionMatcherProvider>
       <Drawer.Navigator
+        // Every screen is wrapped so a mention can open its target: `navigateToEntityDetail` needs
+        // the drawer's navigation object, which does not exist above the navigator.
+        screenLayout={({ children }) => (
+          <MentionNavigationProvider>{children}</MentionNavigationProvider>
+        )}
         // The showcase opens straight into the requested item; outside it, the story's dashboard, as always.
         initialRouteName={readShowcaseRequest()?.stack as keyof MainSystemDrawerParamList}
         defaultStatus={isWide ? 'open' : 'closed'}
@@ -899,7 +906,7 @@ const MainSystemNavigator = () => {
       </Drawer.Navigator>
       <GalleryMediaViewerOverlay />
       <PresenceMatrixViewerOverlay />
-    </>
+    </MentionMatcherProvider>
   );
 };
 

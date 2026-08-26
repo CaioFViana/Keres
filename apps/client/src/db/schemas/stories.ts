@@ -26,6 +26,8 @@ export const stories = sqliteTable('stories', {
   allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' })
     .notNull()
     .default(false),
+  /** Renders entity names found in the story's text as links. See `utils/entityMentions.ts`. */
+  autoLinkMentions: integer('auto_link_mentions', { mode: 'boolean' }).notNull().default(false),
   /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: integer('stat_system', { mode: 'boolean' }).notNull().default(false),
   /** 'letter' | 'number' - how stat values are displayed. */

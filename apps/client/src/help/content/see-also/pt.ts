@@ -37,6 +37,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'A relação aparece nos detalhes dos dois elementos e permite navegar entre eles. Desfazer o vínculo não exclui nenhum elemento, nota, etiqueta ou mídia.',
     },
+    {
+      type: 'heading',
+      level: 2,
+      text: 'Links automáticos não são a mesma coisa',
+    },
+    {
+      type: 'paragraph',
+      text: 'Uma história também pode ligar nomes de elementos onde quer que apareçam no seu texto, sem você marcar nada. Isso é um ajuste separado - Ligar menções automaticamente, nas Configurações da História - e muda apenas como o texto é lido: nada é gravado, e desligar devolve toda menção a texto simples.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'Veja também é um vínculo que você fez de propósito e que aparece nos dois perfis. Um link automático é o Keres notando um nome enquanto você lê, e ele some assim que o ajuste é desligado ou o nome muda.',
+    },
     { type: 'seeAlso', pages: ['notes', 'tags', 'gallery', 'character-relationships'] },
   ],
 };

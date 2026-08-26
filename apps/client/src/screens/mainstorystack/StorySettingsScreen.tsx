@@ -73,6 +73,7 @@ const StorySettingsScreen = () => {
   const [statSystem, setStatSystem] = useState(false);
   const [statNotation, setStatNotation] = useState<StatNotation>('letter');
   const [allowReaderComments, setAllowReaderComments] = useState(false);
+  const [autoLinkMentions, setAutoLinkMentions] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -119,6 +120,7 @@ const StorySettingsScreen = () => {
         setStatSystem(fetchedStory.statSystem);
         setStatNotation(fetchedStory.statNotation as StatNotation);
         setAllowReaderComments(fetchedStory.allowReaderComments);
+        setAutoLinkMentions(fetchedStory.autoLinkMentions);
         applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
@@ -252,6 +254,8 @@ const StorySettingsScreen = () => {
         extraNotes,
         theme,
         normalizeSceneTiming,
+        // A reading preference, not owner policy: a writer may turn it on or off.
+        autoLinkMentions,
         statSystem,
         statNotation,
         // `type` / `favoriteBehavior` / `allowReaderComments` are owner policy - a
@@ -705,6 +709,18 @@ const StorySettingsScreen = () => {
         <ThemedSwitch
           value={normalizeSceneTiming}
           onValueChange={setNormalizeSceneTiming}
+          disabled={!canEdit}
+        />
+      </View>
+
+      <View style={styles.switchContainer}>
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={[styles.label, { color: colors.text }]}>{t('auto_link_mentions')}</Text>
+          <Text style={{ color: colors.textSecondary }}>{t('auto_link_mentions_description')}</Text>
+        </View>
+        <ThemedSwitch
+          value={autoLinkMentions}
+          onValueChange={setAutoLinkMentions}
           disabled={!canEdit}
         />
       </View>

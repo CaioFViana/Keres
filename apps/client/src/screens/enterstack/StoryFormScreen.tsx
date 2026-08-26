@@ -152,6 +152,11 @@ const StoryFormScreen = () => {
           theme,
           normalizeSceneTiming: false,
           allowReaderComments: false,
+          // On for a new story, unlike the switches around it: linking mentions makes no judgement
+          // about the writer's work, it only saves a tap while reading. It is also invisible until
+          // the story has both entities and prose, so it cannot surprise anyone early. Existing
+          // stories stay off - see migration 0016.
+          autoLinkMentions: true,
           // The stats system is turned on later, in Story Settings: a new story
           // never comes into the world with it.
           statSystem: false,

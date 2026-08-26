@@ -537,6 +537,8 @@ const LocationDetailsScreen = () => {
       {(() => {
         const commentableFieldProps = {
           storyId: location.storyId,
+          // Mentions of other entities in this one's text become links; it never links to itself.
+          mentionSourceId: location.id,
           canComment,
           isStoryOwner,
           currentUserId,

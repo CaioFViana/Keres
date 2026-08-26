@@ -100,6 +100,8 @@
   "attribute_value_attributed_to_entity": "{{fieldname}}: {{value}} - atribuído a {{entityname}} ({{entitytype}})",
   "author": "Autor",
   "author_placeholder": "Digite o autor da história",
+  "auto_link_mentions": "Ligar menções automaticamente",
+  "auto_link_mentions_description": "Nomes dos elementos desta história encontrados no texto viram links. Muda apenas como o texto é lido - nada é gravado.",
   "avatar_color": "Cor do Avatar",
   "avatar_icon": "Ícone do Avatar",
   "back_to_change_password": "Voltar",

@@ -46,6 +46,8 @@ export const stories = table('stories', {
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
+  /** Renders entity names found in the story's text as links. See `entityMentions.ts` on the client. */
+  autoLinkMentions: boolean('auto_link_mentions').notNull().default(false),
   /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: boolean('stat_system').notNull().default(false),
   /** 'letter' | 'number' - how stat values are displayed. */

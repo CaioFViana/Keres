@@ -435,6 +435,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'theme',
       'normalizeSceneTiming',
       'allowReaderComments',
+      'autoLinkMentions',
       'statSystem',
       'statNotation',
       'createdAt',

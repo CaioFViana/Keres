@@ -11,6 +11,8 @@ interface CommentableDetailFieldProps {
   label: string;
   value: string;
   onPress?: () => void;
+  /** Passed through to `DetailField`, so the entity's own text does not link to itself. */
+  mentionSourceId?: string;
   comments: CommentSelect[];
   canComment: boolean;
   isStoryOwner: boolean;
@@ -34,6 +36,7 @@ interface CommentableDetailFieldProps {
  * in that case showing the button for nothing is not worth it, so it falls back to a plain `DetailField`.
  */
 const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
+  mentionSourceId,
   storyId,
   label,
   value,
@@ -51,7 +54,14 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   const hasComments = comments.length > 0;
 
   if (!hasComments && !canComment) {
-    return <DetailField label={label} value={value} onPress={onPress} />;
+    return (
+      <DetailField
+        label={label}
+        value={value}
+        onPress={onPress}
+        mentionSourceId={mentionSourceId}
+      />
+    );
   }
 
   const styles = StyleSheet.create({
@@ -71,7 +81,12 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   return (
     <View style={styles.row}>
       <View style={styles.field}>
-        <DetailField label={label} value={value} onPress={onPress} />
+        <DetailField
+          label={label}
+          value={value}
+          onPress={onPress}
+          mentionSourceId={mentionSourceId}
+        />
       </View>
       <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
         <Ionicons

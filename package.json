@@ -27,7 +27,7 @@
     "lint": "bun scripts/run-all.ts lint",
     "test": "bun scripts/run-all.ts test",
     "test:coverage": "bun scripts/run-all.ts test:coverage",
-    "test:integration": "bun run --cwd apps/api test:integration",
+    "test:integration": "bun run --cwd apps/api test:integration && bun run --cwd apps/api test:integration:sqlite",
     "test:report": "bun scripts/test-report.ts",
     "coverage:update": "bun scripts/coverage-update.ts",
     "locales:audit": "bun scripts/verify-translations.ts",

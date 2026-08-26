@@ -46,6 +46,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Um aviso não muda nada por conta própria. Corrigir o elemento atualiza cenas, escolhas, mapas e buscas que usam essa informação.',
     },
+    { type: 'heading', level: 2, text: 'O que o Keres relata, e o que ele deixa para você' },
+    {
+      type: 'paragraph',
+      text: 'Alguns achados são sobre a história estar quebrada: uma escolha apontando para uma cena que não existe mais, uma cena que nada alcança, uma numeração de capítulos que o app não consegue reordenar. Esses são sempre relatados.',
+    },
+    {
+      type: 'paragraph',
+      text: 'Outros são sobre elementos que existem sem serem usados em lugar nenhum - um local em nenhuma cena, um personagem sem relações, uma etiqueta sem uso. Se isso é problema é decisão sua, não do Keres: numa bíblia de mundo, um lugar onde ninguém foi ainda é simplesmente um lugar. Vêm desligados e são ligados em Relatar elementos não referenciados, nas Configurações da História.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'Um campo que você marcou como obrigatório continua sendo relatado quando vazio, independente desse ajuste: essa é uma regra que você definiu, não uma opinião do app.',
+    },
     { type: 'seeAlso', pages: ['scenes', 'choices', 'story-map', 'story-type'] },
   ],
 };

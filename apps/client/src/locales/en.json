@@ -258,6 +258,8 @@
   "common_no": "No",
   "common_search": "Search",
   "common_yes": "Yes",
+  "completeness_checks": "Report unreferenced elements",
+  "completeness_checks_description": "Story Analysis also lists elements that exist but are not used anywhere - a location in no scene, an unused tag. Broken references and numbering are always reported.",
   "confirm_new_password": "Confirm New Password",
   "confirm_new_password_placeholder": "Re-enter your new password",
   "conflict_apply_merge": "Apply my choices",

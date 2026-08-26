@@ -48,6 +48,8 @@ export const stories = table('stories', {
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
   /** Renders entity names found in the story's text as links. See `entityMentions.ts` on the client. */
   autoLinkMentions: boolean('auto_link_mentions').notNull().default(false),
+  /** Story Analysis also reports elements that are not referenced anywhere. Opinion, so opt-in. */
+  completenessChecks: boolean('completeness_checks').notNull().default(false),
   /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: boolean('stat_system').notNull().default(false),
   /** 'letter' | 'number' - how stat values are displayed. */

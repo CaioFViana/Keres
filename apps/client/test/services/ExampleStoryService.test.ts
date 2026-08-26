@@ -279,6 +279,10 @@ it('uses every bundled example as a clean story-analysis reference', async () =>
       const story = language.story as Record<string, any>;
       const findings = await buildStoryAnalysisReport({
         storyType: story.story.type,
+        // Deliberately on, unlike a real story's default: an example is the reference for a
+        // well-formed story, so an unused tag or a character in no scene is a defect *here* even
+        // though it is a legitimate choice in somebody's own bible. See EXAMPLE_STORIES_PLAN.md.
+        includeCompletenessChecks: true,
         characters: story.characters,
         characterScenes: story.characterScenes,
         characterRelations: story.characterRelations,

@@ -1,10 +1,14 @@
 import {
   buildStoryAnalysisReport,
+  COMPLETENESS_FINDING_KEYS,
   type StoryAnalysisInput,
 } from '../../src/utils/storyAnalysisChecks';
 
 const baseInput = (): StoryAnalysisInput => ({
   storyType: 'branching',
+  // The existing cases are all about integrity, which does not depend on the switch. The switch has
+  // its own describe block at the end of this file.
+  includeCompletenessChecks: false,
   characters: [{ id: 'character', name: 'Character' }],
   characterScenes: [],
   characterRelations: [],
@@ -133,7 +137,8 @@ describe('buildStoryAnalysisReport', () => {
   });
 
   it('finds unused entities and isolated scenes in a branching story', async () => {
-    const input = baseInput();
+    // Unused entities are completeness findings, so this case asks for them explicitly.
+    const input = { ...baseInput(), includeCompletenessChecks: true };
     input.scenes.push({
       id: 'isolated',
       name: 'Isolated',
@@ -560,5 +565,103 @@ describe('narrative index checks', () => {
         expect.objectContaining({ messageKey: 'analysis_scene_index_gap' }),
       ]),
     );
+  });
+});
+
+/**
+ * The line between integrity and opinion.
+ *
+ * The switch exists because a location in no scene is a defect in a novel's outline and a perfectly
+ * ordinary place in a world bible - Keres cannot know which, so it does not guess by default. What
+ * it must never stop reporting is a reference pointing at something that does not exist.
+ */
+describe('completeness checks', () => {
+  /** A story where every completeness check has something to complain about, and nothing is broken. */
+  const tidyButUnreferenced = (): StoryAnalysisInput => ({
+    ...baseInput(),
+    storyType: 'linear',
+    chapters: [{ id: 'chapter', name: 'Chapter', index: 1 }],
+    // The scene's own location is referenced by definition; the unused one is this second entry.
+    locations: [
+      { id: 'location', name: 'Location' },
+      { id: 'unvisited', name: 'Unvisited' },
+    ],
+  });
+
+  /** Which *kinds* of finding appear, not how many - two locations both lack connections. */
+  const keysOf = (findings: { messageKey: string }[]) =>
+    [...new Set(findings.map((f) => f.messageKey))].sort();
+
+  it('reports nothing about unreferenced elements when the switch is off', async () => {
+    const findings = await buildStoryAnalysisReport({
+      ...tidyButUnreferenced(),
+      includeCompletenessChecks: false,
+    });
+
+    expect(findings).toEqual([]);
+  });
+
+  it('reports every unreferenced element when the switch is on', async () => {
+    const findings = await buildStoryAnalysisReport({
+      ...tidyButUnreferenced(),
+      includeCompletenessChecks: true,
+    });
+
+    expect(keysOf(findings)).toEqual(
+      [
+        'analysis_character_no_relationships',
+        'analysis_character_no_scenes',
+        'analysis_item_unused',
+        'analysis_location_no_connections',
+        'analysis_location_unused',
+        'analysis_tag_unused',
+      ].sort(),
+    );
+  });
+
+  it('keeps reporting a broken reference with the switch off', async () => {
+    const findings = await buildStoryAnalysisReport({
+      ...tidyButUnreferenced(),
+      storyType: 'branching',
+      choices: [{ id: 'choice', text: 'Go', sceneId: 'start', nextSceneId: 'missing' }],
+    });
+
+    expect(keysOf(findings)).toContain('analysis_choice_dangling_next_scene');
+  });
+
+  it('keeps holding the writer to a field they marked required', async () => {
+    const findings = await buildStoryAnalysisReport({
+      ...tidyButUnreferenced(),
+      storySchemaFields: [
+        {
+          id: 'field',
+          entityType: 'Character',
+          name: 'Age',
+          type: 'text',
+          targetEntityType: null,
+          isRequired: true,
+        },
+      ],
+    });
+
+    expect(keysOf(findings)).toContain('analysis_attribute_required_missing');
+  });
+
+  it('never emits a completeness key that is missing from COMPLETENESS_FINDING_KEYS', async () => {
+    const withSwitch = await buildStoryAnalysisReport({
+      ...tidyButUnreferenced(),
+      includeCompletenessChecks: true,
+    });
+    const withoutSwitch = await buildStoryAnalysisReport({
+      ...tidyButUnreferenced(),
+      includeCompletenessChecks: false,
+    });
+
+    const gatedKeys = withSwitch
+      .map((finding) => finding.messageKey)
+      .filter((key) => !withoutSwitch.some((finding) => finding.messageKey === key));
+
+    // A new check that only appears with the switch on has to be classified, or this fails naming it.
+    expect([...new Set(gatedKeys)].sort()).toEqual([...COMPLETENESS_FINDING_KEYS].sort());
   });
 });

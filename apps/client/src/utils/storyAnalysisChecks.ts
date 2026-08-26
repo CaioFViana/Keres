@@ -20,6 +20,32 @@ export type StoryAnalysisCategory =
   | 'storySchema';
 export type StoryAnalysisSeverity = 'warning' | 'error';
 
+/**
+ * The findings that are an opinion about the writer's work rather than a defect in it.
+ *
+ * Everything else this module reports is integrity: a reference pointing at something that does not
+ * exist, a graph that cannot be traversed, a numbering the API will refuse to reorder. Those are
+ * true whatever the story is for, and whatever medium it serves.
+ *
+ * These six are not. An unused tag, a location in no scene, a character with no relationships - in a
+ * story bible each of those is simply something that exists in the world. Reporting them as problems
+ * is the app telling a writer their worldbuilding is wrong, so they are behind `completenessChecks`
+ * and off by default.
+ *
+ * `analysis_attribute_required_missing` deliberately stays out of this list: it fires because the
+ * *writer* marked the field required. Holding somebody to a rule they declared is not an opinion.
+ */
+export const COMPLETENESS_FINDING_KEYS = [
+  'analysis_character_no_scenes',
+  'analysis_character_no_relationships',
+  'analysis_location_unused',
+  'analysis_location_no_connections',
+  'analysis_item_unused',
+  'analysis_tag_unused',
+] as const;
+
+export type CompletenessFindingKey = (typeof COMPLETENESS_FINDING_KEYS)[number];
+
 export interface StoryAnalysisFinding {
   /** Stable across runs - used as a list key, never displayed. */
   id: string;
@@ -116,6 +142,8 @@ export interface AnalysisAttributeValue {
 
 export interface StoryAnalysisInput {
   storyType: 'linear' | 'branching';
+  /** `Story.completenessChecks`. Off means the six keys in `COMPLETENESS_FINDING_KEYS` never appear. */
+  includeCompletenessChecks: boolean;
   characters: AnalysisEntityRef[];
   characterScenes: { characterId: string }[];
   characterRelations: { character1Id: string; character2Id: string }[];
@@ -172,12 +200,20 @@ function throwIfAborted(signal?: AbortSignal): void {
  * `buildStoryAnalysisReport`.
  */
 export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  // The four gated checks emit nothing but `COMPLETENESS_FINDING_KEYS`, so the switch is the whole
+  // partition - there is no integrity finding hiding inside them that would be lost.
+  const completeness = input.includeCompletenessChecks
+    ? [
+        ...checkCharacters(input),
+        ...checkLocations(input),
+        ...checkItems(input),
+        ...checkTags(input),
+      ]
+    : [];
+
   return [
-    ...checkCharacters(input),
-    ...checkLocations(input),
+    ...completeness,
     ...checkDuplicateRelations(input),
-    ...checkItems(input),
-    ...checkTags(input),
     ...checkSceneFinishWithChoices(input),
     ...(input.storyType === 'linear' ? checkNarrativeIndexes(input) : []),
     // Choice integrity is O(choices) and fits here even though it is "branching only" - dangling references

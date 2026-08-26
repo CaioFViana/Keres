@@ -22,6 +22,12 @@ export interface Story {
   // have the 'owner' role, so the reader/writer distinction does not exist for them.
   allowReaderComments: boolean;
   /**
+   * When on, Story Analysis also reports elements that exist but are not referenced anywhere - a
+   * location in no scene, an unused tag. Off by default: whether an element has to be used is the
+   * writer's judgement, not the app's.
+   */
+  completenessChecks: boolean;
+  /**
    * When on, entity names found in this story's own text render as links to those entities.
    * Purely a reading convenience: it renders and navigates, and never writes a relation.
    */

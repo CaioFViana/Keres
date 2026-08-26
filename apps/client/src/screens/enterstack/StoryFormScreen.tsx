@@ -157,6 +157,9 @@ const StoryFormScreen = () => {
           // the story has both entities and prose, so it cannot surprise anyone early. Existing
           // stories stay off - see migration 0016.
           autoLinkMentions: true,
+          // Off, like every existing story: whether an element must be referenced somewhere is the
+          // writer's judgement. Story Analysis keeps reporting broken references either way.
+          completenessChecks: false,
           // The stats system is turned on later, in Story Settings: a new story
           // never comes into the world with it.
           statSystem: false,

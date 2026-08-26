@@ -206,6 +206,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
 
     return {
       storyType: story.type,
+      includeCompletenessChecks: story.completenessChecks,
       characters,
       characterScenes,
       characterRelations,

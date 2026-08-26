@@ -258,6 +258,8 @@
   "common_no": "Não",
   "common_search": "Pesquisar",
   "common_yes": "Sim",
+  "completeness_checks": "Relatar elementos não referenciados",
+  "completeness_checks_description": "A Análise da História também lista elementos que existem mas não são usados em lugar nenhum - um local em nenhuma cena, uma etiqueta sem uso. Referências quebradas e numeração são sempre relatadas.",
   "confirm_new_password": "Confirmar Nova Senha",
   "confirm_new_password_placeholder": "Digite novamente sua nova senha",
   "conflict_apply_merge": "Aplicar minhas escolhas",

@@ -410,6 +410,7 @@ describe('import of a package with one row of every kind', () => {
       return found;
     };
     const character = byName(after.characters, 'Ilda');
+    const otherCharacter = byName(after.characters, 'Bento');
     const location = byName(after.locations, 'O farol');
     const scene = byName(after.scenes, 'A maré sobe');
 
@@ -425,7 +426,7 @@ describe('import of a package with one row of every kind', () => {
     expect(after.effects[0].entityId).toBe(after.choices[0].id);
     expect(after.effects[0].itemId).toBe(after.items[0].id);
     expect(after.choiceChecks[0].itemId).toBe(after.items[0].id);
-    expect(after.itemJourneys[0].newCharacterOwnerId).toBe(byName(after.characters, 'Bento').id);
+    expect(after.itemJourneys[0].newCharacterOwnerId).toBe(otherCharacter.id);
     expect(after.statRelations.every((row: any) => row.storyId === importedId)).toBe(true);
     expect(after.locationRelations[0].locationAId).toBe(location.id);
 
@@ -448,7 +449,10 @@ describe('import of a package with one row of every kind', () => {
     expect(base?.characterId).toBe(character.id);
     expect(overridden?.modeId).toBe(mode.id);
     expect(overridden?.value).toBe(480);
-    expect(after.characterRelations[0].character1Id).toBe(character.id);
+    expect([
+      after.characterRelations[0].character1Id,
+      after.characterRelations[0].character2Id,
+    ]).toEqual([character.id, otherCharacter.id].sort());
     expect(after.characterScenes[0].characterId).toBe(character.id);
   });
 

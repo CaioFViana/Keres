@@ -4,6 +4,7 @@ import { db } from '../../src/db';
 import {
   attributeValues,
   chapterAnchors,
+  storyCalendars,
   chapters,
   characterRelations,
   characterScenes,
@@ -57,6 +58,7 @@ const id = {
   chapter: '',
   event: '',
   chapterAnchor: '',
+  storyCalendar: '',
   location: '',
   otherLocation: '',
   sceneA: '',
@@ -161,6 +163,30 @@ beforeEach(async () => {
     startOffsetUnit: 'years',
     endSceneId: id.sceneB,
     endPosition: 'end',
+  } as never);
+  // The only collection that references nothing: a calendar is a pure copy on import.
+  await db.insert(storyCalendars).values({
+    id: id.storyCalendar,
+    storyId,
+    name: 'Reckoning of the Realm',
+    isPrimary: true,
+    description: null,
+    definition: {
+      secondsPerMinute: 60,
+      minutesPerHour: 60,
+      hoursPerDay: 24,
+      daysPerWeek: 6,
+      weekdayNames: ['Sun', 'Moon', 'Ash', 'Oak', 'Iron', 'Rest'],
+      unitNames: { weeks: 'cycle' },
+      months: [
+        { name: 'Thaw', days: 30 },
+        { name: 'Harvest', days: 30 },
+      ],
+      eras: [{ name: 'Third Age', abbreviation: 'T.A.', startYear: 1 }],
+      moons: [{ name: 'Selene', periodDays: 29.5, referenceDay: 0 }],
+      seasons: [{ name: 'Cold', startDayOfYear: 1 }],
+    },
+    extraNotes: null,
   } as never);
   await db.insert(choices).values({
     id: id.choice,

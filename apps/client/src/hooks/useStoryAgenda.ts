@@ -1,0 +1,67 @@
+import { dayNumberForElapsed } from '@keres/shared';
+import { useMemo } from 'react';
+import { useStoryTimeline } from './useStoryTimeline';
+import { useStoryCalendar } from './useStoryCalendar';
+import { useStoryStore } from '@/src/state/storyStore';
+
+/** One thing that happens on a day: a scene of the spine, or an anchored event. */
+export interface AgendaEntry {
+  id: string;
+  name: string;
+  kind: 'scene' | 'event';
+  dayNumber: number;
+}
+
+/**
+ * What happens on each day of the story's calendar.
+ *
+ * Built on `useStoryTimeline` rather than on its own queries, and that is the point: the timeline
+ * has already resolved every scene's elapsed time and every event's anchor to a position on one
+ * measured axis. Converting those to day numbers is a change of unit, so the agenda cannot disagree
+ * with the drawing - which it would, sooner or later, if it walked the gaps a second time.
+ *
+ * Empty whenever the story has no calendar or no epoch: without both, nothing has an absolute day.
+ */
+export function useStoryAgenda() {
+  const story = useStoryStore((state) => state.selectedStory);
+  const { definition } = useStoryCalendar(story?.id);
+  const { layout, loading } = useStoryTimeline();
+
+  const entries = useMemo<AgendaEntry[]>(() => {
+    const epochDay = story?.timelineEpochDay;
+    if (!definition || epochDay === null || epochDay === undefined) return [];
+
+    const scenes = layout.rows
+      .filter((row) => row.elapsedSeconds !== undefined)
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        kind: 'scene' as const,
+        dayNumber: dayNumberForElapsed(definition, epochDay, row.elapsedSeconds ?? 0),
+      }));
+
+    /*
+     * An event lands on the day its first stretch begins.
+     *
+     * A band covering three months would otherwise fill three months of cells with the same name,
+     * which is noise: the agenda answers "what happens today", and an era that is merely still
+     * running is not news on any particular day.
+     */
+    const seen = new Set<string>();
+    const events = layout.eventSpans
+      .filter((span) => span.isEvent && !seen.has(span.id) && seen.add(span.id))
+      .map((span) => {
+        const row = layout.rows.find((candidate) => candidate.barStart >= span.start);
+        return {
+          id: span.id,
+          name: span.name,
+          kind: 'event' as const,
+          dayNumber: dayNumberForElapsed(definition, epochDay, row?.elapsedSeconds ?? 0),
+        };
+      });
+
+    return [...scenes, ...events].sort((a, b) => a.dayNumber - b.dayNumber);
+  }, [definition, layout, story?.timelineEpochDay]);
+
+  return { entries, loading };
+}

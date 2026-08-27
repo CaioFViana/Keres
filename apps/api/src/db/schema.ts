@@ -35,6 +35,7 @@ export * from './schema/tables/scenes';
 export * from './schema/tables/seeAlsoRelations';
 export * from './schema/tables/stats';
 export * from './schema/tables/stories';
+export * from './schema/tables/storyCalendars';
 export * from './schema/tables/storyPermissions';
 export * from './schema/tables/storyPublications';
 export * from './schema/tables/storyShowcaseEntries';

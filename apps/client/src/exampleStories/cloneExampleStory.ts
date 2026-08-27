@@ -37,6 +37,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.tagRelations);
   registerAll(example.suggestions);
   registerAll(example.chapterAnchors);
+  registerAll(example.storyCalendars);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
   registerAll(example.plots);
@@ -156,6 +157,10 @@ export function cloneExampleStoryForInstall(
       chapterId: remapId(anchor.chapterId),
       startSceneId: remapId(anchor.startSceneId),
       endSceneId: remapNullableId(anchor.endSceneId),
+    })),
+    storyCalendars: example.storyCalendars?.map((calendar) => ({
+      ...cloneEntity(calendar),
+      storyId,
     })),
     characterRelations: example.characterRelations.map((relation) => ({
       ...cloneEntity(relation),

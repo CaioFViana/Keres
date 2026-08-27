@@ -53,6 +53,7 @@ import { createLocationService } from '../../../services/storymanagement/Locatio
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';
+import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useTheme } from '../../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
 import { setDocumentTitle } from '../../../utils/documentTitle';
@@ -66,6 +67,7 @@ type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Sc
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
+  const { definition: calendar } = useStoryCalendar();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneDetail'>>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
@@ -644,11 +646,17 @@ const SceneDetailScreen = () => {
       />
       <DetailField
         label={t('gap')}
-        value={formatSceneGap(scene, t, selectedStory?.normalizeSceneTiming)}
+        value={formatSceneGap(scene, t, {
+          normalize: selectedStory?.normalizeSceneTiming,
+          calendar,
+        })}
       />
       <DetailField
         label={t('in_universe_duration')}
-        value={formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming)}
+        value={formatSceneUniverseDuration(scene, t, {
+          normalize: selectedStory?.normalizeSceneTiming,
+          calendar,
+        })}
       />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />

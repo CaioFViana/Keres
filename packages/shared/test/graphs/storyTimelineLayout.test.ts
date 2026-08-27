@@ -42,7 +42,7 @@ describe('story timeline layout', () => {
         scene('minutes', { duration: 10, durationType: 'minutes' }),
         scene('hours', { duration: 5, durationType: 'hours' }),
       ],
-      'proportional',
+      { scaleMode: 'proportional' },
     );
     const minutesWidth = Math.abs(layout.rows[0].barEnd - layout.rows[0].barStart);
     const hoursWidth = Math.abs(layout.rows[1].barEnd - layout.rows[1].barStart);

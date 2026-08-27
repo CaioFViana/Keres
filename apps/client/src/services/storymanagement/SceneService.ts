@@ -74,10 +74,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
    * and the only one the API accepts when reordering (it refuses a reorder whose lowest index is not 1 or
    * which does not end at N).
    */
-  const nextIndexInChapter = async (
-    storyId: string,
-    chapterId: string | null,
-  ): Promise<number> => {
+  const nextIndexInChapter = async (storyId: string, chapterId: string | null): Promise<number> => {
     const siblings = await db
       .select({ index: scenes.index })
       .from(scenes)

@@ -37,7 +37,13 @@ it('stores the URL, hashes it, and never asks for a local file', async () => {
   galleryService.createGallery.mockResolvedValue({ id: 'new-link' });
 
   await expect(
-    createGalleryLink(galleryService as never, 'story', 'user', 'https://notes.example/lore', 'Lore'),
+    createGalleryLink(
+      galleryService as never,
+      'story',
+      'user',
+      'https://notes.example/lore',
+      'Lore',
+    ),
   ).resolves.toEqual({ gallery: { id: 'new-link' }, duplicate: false });
 
   expect(galleryService.createGallery).toHaveBeenCalledWith(

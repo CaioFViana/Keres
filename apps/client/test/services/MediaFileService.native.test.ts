@@ -154,10 +154,16 @@ describe('MediaFileService on native storage', () => {
     expect(fsMock.calls.copied).toEqual([
       ['file://picked/map.png', 'file://documents/media/story/image-hash.png'],
     ]);
+    /*
+     * An extension the app knows nothing about. This used to be `notes.pdf`, which stopped being a
+     * rejection when the gallery started accepting documents - the assertion kept passing for the
+     * wrong reason until it did not, because the import got far enough to fail on a missing file
+     * and threw a plain `Error` instead.
+     */
     await expect(
       mediaFileService.importAsset('story', {
-        name: 'notes.pdf',
-        uri: 'file://picked/notes.pdf',
+        name: 'notes.sav',
+        uri: 'file://picked/notes.sav',
       } as any),
     ).rejects.toBeInstanceOf(UnsupportedMediaError);
   });

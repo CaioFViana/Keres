@@ -20,7 +20,9 @@ import type {
   StoryTimelineScaleMode,
   TimelineAnchoredContainer,
 } from '@keres/shared/graphs/storyTimelineLayout';
+import { dayNumberForElapsed, formatCalendarDate } from '@keres/shared';
 import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
+import { useStoryCalendar } from './useStoryCalendar';
 import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 
 /**
@@ -32,6 +34,7 @@ import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
  */
 export function useStoryTimeline() {
   const { t } = useTranslation();
+  const { definition: calendar, describeDay } = useStoryCalendar();
   const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
@@ -84,6 +87,22 @@ export function useStoryTimeline() {
     };
   }, [db, story]);
 
+  /*
+   * Elapsed time turned into an in-world date.
+   *
+   * `null` whenever either half is missing - a calendar with no epoch cannot say *when*, and an
+   * epoch with no calendar has nothing to write the date in. The timeline then shows what it always
+   * showed: gaps and durations, and no dates.
+   */
+  const dateForRow = useCallback(
+    (elapsedSeconds: number) => {
+      const epochDay = story?.timelineEpochDay;
+      if (!calendar || epochDay === null || epochDay === undefined) return null;
+      return formatCalendarDate(calendar, dayNumberForElapsed(calendar, epochDay, elapsedSeconds));
+    },
+    [calendar, story?.timelineEpochDay],
+  );
+
   const orderedScenes = useMemo(() => {
     const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
     const colorsByChapter = buildChapterColors(chapters);
@@ -109,11 +128,11 @@ export function useStoryTimeline() {
           hideGapBefore,
           chapterName: chapterById.get(scene.chapterId)?.name ?? t('common_na'),
           chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
-          gapLabel: formatSceneGap(scene, t),
-          durationLabel: formatSceneUniverseDuration(scene, t),
+          gapLabel: formatSceneGap(scene, t, { calendar }),
+          durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
         };
       });
-  }, [chapterIds, chapters, colors.border, scenes, t]);
+  }, [calendar, chapterIds, chapters, colors.border, scenes, t]);
   const chapterDurationLabels = useMemo(
     () =>
       new Map(
@@ -122,14 +141,15 @@ export function useStoryTimeline() {
           formatChapterUniverseDuration(
             orderedScenes.filter((scene) => scene.chapterId === chapter.id),
             t,
+            { calendar },
           ),
         ]),
       ),
-    [chapters, orderedScenes, t],
+    [calendar, chapters, orderedScenes, t],
   );
   const storyDurationLabel = useMemo(
-    () => formatChapterUniverseDuration(orderedScenes, t),
-    [orderedScenes, t],
+    () => formatChapterUniverseDuration(orderedScenes, t, { calendar }),
+    [calendar, orderedScenes, t],
   );
   const timelineScenes = useMemo(
     () =>
@@ -184,10 +204,10 @@ export function useStoryTimeline() {
           summary: scene.summary,
           gap: scene.gap,
           gapType: scene.gapType,
-          gapLabel: formatSceneGap(scene, t),
+          gapLabel: formatSceneGap(scene, t, { calendar }),
           duration: scene.duration,
           durationType: scene.durationType,
-          durationLabel: formatSceneUniverseDuration(scene, t),
+          durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
         }));
       return [
         {
@@ -201,10 +221,34 @@ export function useStoryTimeline() {
         },
       ];
     });
-  }, [anchors, chapters, colors.textSecondary, events, scenes, showEvents, t]);
+  }, [anchors, calendar, chapters, colors.textSecondary, events, scenes, showEvents, t]);
   const layout = useMemo(
-    () => buildStoryTimelineLayout(timelineScenes, scaleMode, anchoredContainers, eventPlacement),
-    [anchoredContainers, eventPlacement, scaleMode, timelineScenes],
+    () =>
+      buildStoryTimelineLayout(timelineScenes, {
+        scaleMode,
+        anchored: anchoredContainers,
+        placement: eventPlacement,
+        calendar,
+      }),
+    [anchoredContainers, calendar, eventPlacement, scaleMode, timelineScenes],
+  );
+
+  /** The same conversion as `dateForRow`, but returning the season and the moons with it. */
+  const describeSceneDay = useCallback(
+    (sceneId: string) => {
+      const row = layout.rows.find((candidate) => candidate.id === sceneId);
+      const epochDay = story?.timelineEpochDay;
+      if (
+        !calendar ||
+        row?.elapsedSeconds === undefined ||
+        epochDay === null ||
+        epochDay === undefined
+      ) {
+        return null;
+      }
+      return describeDay(dayNumberForElapsed(calendar, epochDay, row.elapsedSeconds));
+    },
+    [calendar, describeDay, layout, story?.timelineEpochDay],
   );
 
   const exportTimeline = useCallback(async () => {
@@ -267,6 +311,8 @@ export function useStoryTimeline() {
     showSceneNames,
     setShowSceneNames,
     layout,
+    dateForRow,
+    describeSceneDay,
     storyDurationLabel,
     exportTimeline,
   };

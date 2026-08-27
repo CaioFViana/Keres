@@ -116,6 +116,21 @@ const migrateV6ToV7: StoryExportMigration = {
   }),
 };
 
+/**
+ * V7 -> V8
+ *
+ * The story's own calendars. A package written before them has none, which is exactly right: it
+ * describes a story that counted time in the app's Gregorian approximations because there was
+ * nothing else to count it in.
+ */
+const migrateV7ToV8: StoryExportMigration = {
+  fromVersion: 7,
+  migrate: (data) => ({
+    ...data,
+    storyCalendars: Array.isArray(data?.storyCalendars) ? data.storyCalendars : [],
+  }),
+};
+
 const migrations: StoryExportMigration[] = [
   migrateV1ToV2,
   migrateV2ToV3,
@@ -123,6 +138,7 @@ const migrations: StoryExportMigration[] = [
   migrateV4ToV5,
   migrateV5ToV6,
   migrateV6ToV7,
+  migrateV7ToV8,
 ];
 
 /**

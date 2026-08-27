@@ -1,4 +1,13 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color' | 'entity';
+export type FieldType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  /** A date in the story's own calendar, held as a day number. See `AttributeType.STORY_DATE`. */
+  | 'story_date'
+  | 'id'
+  | 'color'
+  | 'entity';
 
 export interface EntityFieldMetadata {
   name: string; // The field name in the entity

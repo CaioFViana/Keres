@@ -51,6 +51,8 @@ const StoryTimelineScreen = () => {
     showSceneNames,
     setShowSceneNames,
     layout,
+    dateForRow,
+    describeSceneDay,
     storyDurationLabel,
     exportTimeline,
   } = timeline;
@@ -275,6 +277,7 @@ const StoryTimelineScreen = () => {
             setSelectedEventId(id);
           }}
           showSceneNames={showSceneNames}
+          dateForRow={dateForRow}
           storyDurationTitle={t('story_timeline_story_duration')}
           storyDurationLabel={storyDurationLabel}
         />
@@ -311,6 +314,7 @@ const StoryTimelineScreen = () => {
         onSelectScene={setSelectedSceneId}
         onSelectEvent={setSelectedEventId}
         onOpenEvent={(eventId) => navigation.navigate('ChapterDetail', { chapterId: eventId })}
+        describeSceneDay={describeSceneDay}
       />
     </View>
   );

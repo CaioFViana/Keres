@@ -12,6 +12,7 @@ import { useTheme } from '../../../../theme';
 import { buildCustomAttributeFieldMetadata } from '../../../../utils/customAttributeFieldMetadata';
 import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -165,6 +166,21 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                 value={value ? String(value) : null}
                 onChange={(newValue) => handleInputChange(field.name, newValue ?? undefined)}
                 placeholder={fieldLabel}
+              />
+            </View>
+          );
+        case 'story_date':
+          // The same composed control as the form. The filter matches the stored day number
+          // exactly, which is what picking a day in a calendar means.
+          return (
+            <View
+              key={field.name}
+              style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
+            >
+              {fieldLabelText}
+              <StoryDateInput
+                value={value ? String(value) : null}
+                onChange={(newValue) => handleInputChange(field.name, newValue ?? undefined)}
               />
             </View>
           );

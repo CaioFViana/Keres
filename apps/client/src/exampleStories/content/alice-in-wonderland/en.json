@@ -1285,6 +1285,7 @@
     }
   ],
   "chapterAnchors": [],
+  "storyCalendars": [],
   "characterScenes": [
     {
       "id": "688PWJDVTNEPW03RVSMEWPF67P",
@@ -2605,7 +2606,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 7,
+  "formatVersion": 8,
   "stats": [
     {
       "id": "7NYM3XF0FN7TFK8K1F5HPJ6FGF",

@@ -197,6 +197,20 @@
       "when": 1787854198056,
       "tag": "0027_flashy_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1787858295547,
+      "tag": "0028_sweet_dust",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1787860636195,
+      "tag": "0029_worthless_jack_murdock",
+      "breakpoints": true
     }
   ]
 }

@@ -61,7 +61,7 @@ describe('renderStoryTimelineSvg', () => {
         scene('one', { duration: 1, durationType: 'hours' }),
         scene('two', { gap: 1, gapType: 'hours', duration: 1, durationType: 'hours' }),
       ],
-      'proportional',
+      { scaleMode: 'proportional' },
     );
 
     const svg = renderStoryTimelineSvg(layout, options);
@@ -98,24 +98,26 @@ describe('renderStoryTimelineSvg with anchored containers', () => {
   ];
 
   it('draws a band and names it once per container', () => {
-    const layout = buildStoryTimelineLayout(scenes, 'compact', [
-      {
-        id: 'war',
-        name: 'The <War>',
-        color: '#ff0000',
-        isEvent: true,
-        stretches: [
-          {
-            start: { sceneId: 'one', position: 'start' },
-            end: { sceneId: 'one', position: 'end' },
-          },
-          {
-            start: { sceneId: 'two', position: 'start' },
-            end: { sceneId: 'two', position: 'end' },
-          },
-        ],
-      },
-    ]);
+    const layout = buildStoryTimelineLayout(scenes, {
+      anchored: [
+        {
+          id: 'war',
+          name: 'The <War>',
+          color: '#ff0000',
+          isEvent: true,
+          stretches: [
+            {
+              start: { sceneId: 'one', position: 'start' },
+              end: { sceneId: 'one', position: 'end' },
+            },
+            {
+              start: { sceneId: 'two', position: 'start' },
+              end: { sceneId: 'two', position: 'end' },
+            },
+          ],
+        },
+      ],
+    });
     const svg = renderStoryTimelineSvg(layout, anchoredOptions);
 
     expect(layout.eventSpans).toHaveLength(2);
@@ -126,20 +128,22 @@ describe('renderStoryTimelineSvg with anchored containers', () => {
 
   it('marks an anchored chapter apart from an event', () => {
     const asChapter = renderStoryTimelineSvg(
-      buildStoryTimelineLayout(scenes, 'compact', [
-        {
-          id: 'flashback',
-          name: 'Flashback',
-          color: '#00ff00',
-          isEvent: false,
-          stretches: [
-            {
-              start: { sceneId: 'one', position: 'start' },
-              end: { sceneId: 'two', position: 'end' },
-            },
-          ],
-        },
-      ]),
+      buildStoryTimelineLayout(scenes, {
+        anchored: [
+          {
+            id: 'flashback',
+            name: 'Flashback',
+            color: '#00ff00',
+            isEvent: false,
+            stretches: [
+              {
+                start: { sceneId: 'one', position: 'start' },
+                end: { sceneId: 'two', position: 'end' },
+              },
+            ],
+          },
+        ],
+      }),
       anchoredOptions,
     );
 
@@ -147,20 +151,22 @@ describe('renderStoryTimelineSvg with anchored containers', () => {
   });
 
   it('names the containers it could not place', () => {
-    const layout = buildStoryTimelineLayout(scenes, 'compact', [
-      {
-        id: 'elsewhere',
-        name: 'Elsewhere',
-        color: '#0000ff',
-        isEvent: true,
-        stretches: [
-          {
-            start: { sceneId: 'missing', position: 'start' },
-            end: { sceneId: 'missing', position: 'end' },
-          },
-        ],
-      },
-    ]);
+    const layout = buildStoryTimelineLayout(scenes, {
+      anchored: [
+        {
+          id: 'elsewhere',
+          name: 'Elsewhere',
+          color: '#0000ff',
+          isEvent: true,
+          stretches: [
+            {
+              start: { sceneId: 'missing', position: 'start' },
+              end: { sceneId: 'missing', position: 'end' },
+            },
+          ],
+        },
+      ],
+    });
     const svg = renderStoryTimelineSvg(layout, anchoredOptions);
 
     expect(svg).toContain('Not placed: Elsewhere');
@@ -169,16 +175,17 @@ describe('renderStoryTimelineSvg with anchored containers', () => {
   it('draws an instant as a marker and can name scenes on their bars', () => {
     const layout = buildStoryTimelineLayout(
       [scene('one', { index: 1, duration: 0, durationType: 'seconds' })],
-      'compact',
-      [
-        {
-          id: 'flash',
-          name: 'Flash',
-          color: '#ff0000',
-          isEvent: true,
-          stretches: [{ start: { sceneId: 'one', position: 'start' } }],
-        },
-      ],
+      {
+        anchored: [
+          {
+            id: 'flash',
+            name: 'Flash',
+            color: '#ff0000',
+            isEvent: true,
+            stretches: [{ start: { sceneId: 'one', position: 'start' } }],
+          },
+        ],
+      },
     );
     const svg = renderStoryTimelineSvg(layout, { ...anchoredOptions, showSceneNames: true });
 
@@ -189,21 +196,23 @@ describe('renderStoryTimelineSvg with anchored containers', () => {
   });
 
   it('pushes the scene rows below the bands', () => {
-    const plain = buildStoryTimelineLayout(scenes, 'compact');
-    const banded = buildStoryTimelineLayout(scenes, 'compact', [
-      {
-        id: 'war',
-        name: 'War',
-        color: '#ff0000',
-        isEvent: true,
-        stretches: [
-          {
-            start: { sceneId: 'one', position: 'start' },
-            end: { sceneId: 'two', position: 'end' },
-          },
-        ],
-      },
-    ]);
+    const plain = buildStoryTimelineLayout(scenes);
+    const banded = buildStoryTimelineLayout(scenes, {
+      anchored: [
+        {
+          id: 'war',
+          name: 'War',
+          color: '#ff0000',
+          isEvent: true,
+          stretches: [
+            {
+              start: { sceneId: 'one', position: 'start' },
+              end: { sceneId: 'two', position: 'end' },
+            },
+          ],
+        },
+      ],
+    });
 
     expect(banded.height).toBeGreaterThan(plain.height);
     expect(renderStoryTimelineSvg(banded, anchoredOptions)).toContain(`height="${banded.height}"`);

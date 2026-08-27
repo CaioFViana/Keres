@@ -53,6 +53,9 @@ import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import StoryAgendaScreen from '../screens/storycalendars/StoryAgendaScreen';
+import StoryCalendarFormScreen from '../screens/storycalendars/StoryCalendarFormScreen';
+import StoryCalendarListScreen from '../screens/storycalendars/StoryCalendarListScreen';
 import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteDetailScreen from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
@@ -110,7 +113,7 @@ export type MainSystemDrawerParamList = {
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
   Settings: undefined;
-  StorySettings: { storyId: string };
+  StorySettings: NavigatorScreenParams<StorySettingsStackParamList> | undefined;
   StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
@@ -138,6 +141,7 @@ const mainSystemStackRootScreens = new Set([
   'OperationLog',
   'CommentsList',
   'StorySchemaList',
+  'StorySettingsHome',
   'Suggestions',
   // The roots of the stacks the drawer opens directly: without them the header draws a back arrow on top
   // of the list itself, which is precisely the place there is no going back from.
@@ -397,6 +401,39 @@ const WorldRuleStackNavigator = () => {
       <WorldRulesStack.Screen name="WorldRuleDetail" component={WorldRuleDetailScreen} />
       <WorldRulesStack.Screen name="WorldRuleForm" component={WorldRuleFormScreen} />
     </WorldRulesStack.Navigator>
+  );
+};
+//#endregion
+//#region Story settings
+const StorySettingsStack = createNativeStackNavigator<StorySettingsStackParamList>();
+
+/**
+ * Story settings, and the calendars reached from it.
+ *
+ * A stack rather than the flat `Drawer.Screen` this used to be: a flat screen that navigates
+ * somewhere else leaves the header with no back arrow and the hardware back button pointing at the
+ * drawer, which is the same defect the pack screens had.
+ *
+ * The calendars live here rather than in a drawer entry of their own because they are set up once
+ * and consulted, and because the setting they supersede - `normalizeSceneTiming` - is on the screen
+ * above them.
+ */
+export type StorySettingsStackParamList = {
+  StorySettingsHome: { storyId?: string } | undefined;
+  StoryCalendarList: undefined;
+  StoryCalendarForm: { calendarId?: string };
+  StoryAgenda: undefined;
+};
+
+const StorySettingsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <StorySettingsStack.Navigator screenOptions={{ headerShown: false }}>
+      <StorySettingsStack.Screen name="StorySettingsHome" component={StorySettingsScreen} />
+      <StorySettingsStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
+      <StorySettingsStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
+      <StorySettingsStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
+    </StorySettingsStack.Navigator>
   );
 };
 //#endregion
@@ -838,8 +875,14 @@ const MainSystemNavigator = () => {
         />
         <Drawer.Screen
           name="StorySettings"
-          component={StorySettingsScreen}
+          component={StorySettingsStackNavigator}
           options={{ title: t('story_settings_title') }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('StorySettings', { screen: 'StorySettingsHome' });
+            },
+          })}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"

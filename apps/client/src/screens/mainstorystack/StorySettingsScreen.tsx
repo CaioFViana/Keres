@@ -5,16 +5,22 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import type { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Removed BackHandler
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  MainSystemDrawerParamList,
+  StorySettingsStackParamList,
+} from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
@@ -29,9 +35,15 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
-type StorySettingsScreenNavigationProp = DrawerNavigationProp<
-  MainSystemDrawerParamList,
-  'MainDashboard'
+/**
+ * The drawer, and the stack this screen now sits inside.
+ *
+ * It gained a stack when the calendars were added: a flat `Drawer.Screen` that navigates elsewhere
+ * leaves the header with no back arrow, which is the defect the pack screens had.
+ */
+type StorySettingsScreenNavigationProp = CompositeNavigationProp<
+  DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>,
+  NativeStackNavigationProp<StorySettingsStackParamList, 'StorySettingsHome'>
 >;
 
 const StorySettingsScreen = () => {
@@ -715,6 +727,21 @@ const StorySettingsScreen = () => {
           disabled={!canEdit}
         />
       </View>
+
+      {/*
+        The calendars sit directly under the setting they supersede: normalising with 60/60/24/7/12
+        is what a story does until it says how its own time is counted.
+      */}
+      <TouchableOpacity
+        style={styles.switchContainer}
+        onPress={() => navigation.navigate('StoryCalendarList')}
+      >
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={[styles.label, { color: colors.text }]}>{t('calendar_list_title')}</Text>
+          <Text style={{ color: colors.textSecondary }}>{t('calendar_settings_description')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
+      </TouchableOpacity>
 
       <View style={styles.switchContainer}>
         <View style={{ flex: 1, marginRight: 12 }}>

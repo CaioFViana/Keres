@@ -11,6 +11,8 @@ function mapAttributeTypeToFieldType(type: string): FieldType {
       return 'boolean';
     case AttributeType.DATE:
       return 'date';
+    case AttributeType.STORY_DATE:
+      return 'story_date';
     case AttributeType.ENTITY:
       return 'entity';
     default:

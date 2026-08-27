@@ -165,6 +165,7 @@ describe('a story created from a shipped pack', () => {
     favoriteBehavior: 'individual' as const,
     extraNotes: null,
     theme: null,
+    timelineEpochDay: null,
     normalizeSceneTiming: false,
     allowReaderComments: false,
     autoLinkMentions: true,

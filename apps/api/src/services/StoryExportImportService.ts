@@ -84,6 +84,10 @@ export class StoryExportImportService {
       where: (chapterAnchors, { eq, and }) =>
         and(eq(chapterAnchors.storyId, storyId), eq(chapterAnchors.isDeleted, false)),
     });
+    const storyCalendars = await db.query.storyCalendars.findMany({
+      where: (storyCalendars, { eq, and }) =>
+        and(eq(storyCalendars.storyId, storyId), eq(storyCalendars.isDeleted, false)),
+    });
 
     const characterRelations = await db.query.characterRelations.findMany({
       where: (characterRelations, { eq, and }) =>
@@ -198,6 +202,7 @@ export class StoryExportImportService {
         tags,
         suggestions,
         chapterAnchors,
+        storyCalendars,
         characterRelations,
         characterScenes,
         plots,
@@ -647,6 +652,28 @@ export class StoryExportImportService {
       });
       if (newChapterAnchorsData.length > 0) {
         await tx.insert(dbSchema.chapterAnchors).values(newChapterAnchorsData);
+      }
+
+      /*
+       * --- StoryCalendars ---
+       *
+       * Nothing to remap: a calendar references no other row. It is the only collection here that
+       * is a pure copy, which is the same property that makes it safe to carry in a pack.
+       */
+      const newStoryCalendarsData = (validatedFullStory.storyCalendars ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          createdAt: new Date(original.createdAt),
+          updatedAt: new Date(original.updatedAt),
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newStoryCalendarsData.length > 0) {
+        await tx.insert(dbSchema.storyCalendars).values(newStoryCalendarsData);
       }
 
       // --- CharacterRelations ---

@@ -17,6 +17,8 @@ export interface Story {
   favoriteBehavior: FavoriteBehavior;
   extraNotes: string | null;
   theme: string | null;
+  /** The day the first scene falls on, or `null` when the story states no absolute date. */
+  timelineEpochDay: number | null;
   normalizeSceneTiming: boolean;
   // Only relevant (and only shown in the UI) for stories linked to a server - local stories only
   // have the 'owner' role, so the reader/writer distinction does not exist for them.

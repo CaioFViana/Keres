@@ -235,6 +235,18 @@ jest.mock('../../src/screens/narrative-elements/scenes/SceneFormScreen', () => (
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/storycalendars/StoryAgendaScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storycalendars/StoryCalendarListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storycalendars/StoryCalendarFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/timeline/StoryTimelineScreen', () => ({
   __esModule: true,
   default: () => null,

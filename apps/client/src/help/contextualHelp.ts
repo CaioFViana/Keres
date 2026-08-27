@@ -91,6 +91,11 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   OperationLogDetail: 'activity-log',
   StoryAnalysis: 'story-analysis',
   StorySettings: 'story-settings',
+  StorySettingsHome: 'story-settings',
+  // The calendars are set up from the settings screen and documented with it.
+  StoryCalendarList: 'story-settings',
+  StoryCalendarForm: 'story-settings',
+  StoryAgenda: 'story-settings',
   StatList: 'stats',
   StatForm: 'stats',
   StatLadder: 'stats',

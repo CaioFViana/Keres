@@ -1,6 +1,7 @@
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,19 @@ interface Props {
   onSelectScene: (id: string | null) => void;
   onSelectEvent: (id: string | null) => void;
   onOpenEvent: (id: string) => void;
+  /**
+   * The in-world day a scene falls on, or `null` when the story cannot say.
+   *
+   * Computed by `useStoryTimeline`, which is where the layout's elapsed time and the story's epoch
+   * both live. Passed in rather than derived here so the sheet stays a rendering of what it is
+   * given.
+   */
+  describeSceneDay?: (sceneId: string) => {
+    date: string;
+    weekday: string | null;
+    season: string | null;
+    moons: { name: string; phase: number }[];
+  } | null;
 }
 
 /**
@@ -31,9 +45,13 @@ const StoryTimelineSheets: React.FC<Props> = ({
   onSelectScene,
   onSelectEvent,
   onOpenEvent,
+  describeSceneDay,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { definition: calendar } = useStoryCalendar();
+  const dayOfSelectedScene = selectedSceneId ? (describeSceneDay?.(selectedSceneId) ?? null) : null;
+
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? null;
   const selectedChapter =
     chapters.find((chapter) => chapter.id === selectedScene?.chapterId) ??
@@ -77,13 +95,28 @@ const StoryTimelineSheets: React.FC<Props> = ({
           subtitle={{ text: selectedChapter?.name ?? '' }}
           badges={[
             {
-              label: `${t('story_timeline_gap')}: ${formatSceneGap(selectedScene, t)}`,
+              label: `${t('story_timeline_gap')}: ${formatSceneGap(selectedScene, t, { calendar })}`,
               color: colors.textSecondary,
             },
             {
-              label: `${t('story_timeline_duration')}: ${formatSceneUniverseDuration(selectedScene, t)}`,
+              label: `${t('story_timeline_duration')}: ${formatSceneUniverseDuration(selectedScene, t, { calendar })}`,
               color: colors.primary,
             },
+            ...(dayOfSelectedScene
+              ? [
+                  { label: dayOfSelectedScene.date, color: colors.primary },
+                  ...(dayOfSelectedScene.weekday
+                    ? [{ label: dayOfSelectedScene.weekday, color: colors.textSecondary }]
+                    : []),
+                  ...(dayOfSelectedScene.season
+                    ? [{ label: dayOfSelectedScene.season, color: colors.textSecondary }]
+                    : []),
+                  ...dayOfSelectedScene.moons.map((moon) => ({
+                    label: `${moon.name}: ${t(`moon_phase_${moon.phase}`)}`,
+                    color: colors.textSecondary,
+                  })),
+                ]
+              : []),
           ]}
           sections={[{ title: t('summary'), description: selectedScene.summary || t('common_na') }]}
           actionLabel={t('close')}
@@ -139,7 +172,7 @@ const StoryTimelineSheets: React.FC<Props> = ({
                 id: scene.id,
                 icon: 'film-outline' as const,
                 label: scene.name,
-                detail: formatSceneUniverseDuration(scene, t),
+                detail: formatSceneUniverseDuration(scene, t, { calendar }),
                 onPress: () => {
                   onSelectEvent(null);
                   onSelectScene(scene.id);

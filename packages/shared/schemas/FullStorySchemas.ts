@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ChapterSchema } from './ChapterSchemas'; // Adjusted path
 import { CharacterSchema } from './CharacterSchemas'; // Adjusted path
 import { ChapterAnchorSchema } from './ChapterAnchorSchemas';
+import { StoryCalendarSchema } from './StoryCalendarSchemas';
 import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjusted path
 import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
 import { PlotSchema } from './PlotSchemas';
@@ -50,6 +51,8 @@ export const FullStoryExportSchema = z.object({
   characterRelations: z.array(CharacterRelationSchema),
   // Introduced in format V7; earlier migrations provide an empty list.
   chapterAnchors: z.array(ChapterAnchorSchema).optional(),
+  // Introduced in format V8; earlier migrations provide an empty list.
+  storyCalendars: z.array(StoryCalendarSchema).optional(),
   characterScenes: z.array(CharacterSceneSchema),
   // Introduced in format V6; earlier migrations provide empty lists.
   plots: z.array(PlotSchema).optional(),

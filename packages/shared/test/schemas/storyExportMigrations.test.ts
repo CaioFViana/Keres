@@ -7,6 +7,8 @@ const EMPTY_V5_COLLECTIONS = { stats: [], statStrengths: [], statRelations: [], 
 const EMPTY_V6_COLLECTIONS = { plots: [], plotScenes: [] };
 /** V6 -> V7 materialises the story's chronology, which no earlier package could have stated. */
 const EMPTY_V7_COLLECTIONS = { chapterAnchors: [] };
+/** V7 -> V8 materialises the story's own calendars, for the same reason. */
+const EMPTY_V8_COLLECTIONS = { storyCalendars: [] };
 
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {
@@ -67,6 +69,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,
+      ...EMPTY_V8_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -93,6 +96,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,
+      ...EMPTY_V8_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -139,6 +143,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,
+      ...EMPTY_V8_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });

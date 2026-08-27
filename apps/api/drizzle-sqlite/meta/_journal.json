@@ -120,6 +120,20 @@
       "when": 1787854192773,
       "tag": "0016_fancy_ironclad",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1787858293693,
+      "tag": "0017_swift_venus",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1787860634272,
+      "tag": "0018_icy_felicia_hardy",
+      "breakpoints": true
     }
   ]
 }

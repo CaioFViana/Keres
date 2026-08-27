@@ -55,6 +55,7 @@ import {
   attributeValues,
   chapters,
   chapterAnchors,
+  storyCalendars,
   characterRelations,
   characters,
   characterScenes,
@@ -141,6 +142,7 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(favorites).where(eq(favorites.storyId, storyId)).run();
   await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
   await tx.delete(chapterAnchors).where(eq(chapterAnchors.storyId, storyId)).run();
+  await tx.delete(storyCalendars).where(eq(storyCalendars.storyId, storyId)).run();
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
   await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
@@ -1162,6 +1164,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyTagRelations,
         storySuggestions,
         storyChapterAnchors,
+        storyOwnCalendars,
         storyCharacterRelations,
         storyCharacterScenes,
         storyGalleryItems,
@@ -1196,6 +1199,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.tagRelations.findMany({ where: belongsToStory(tagRelations) }),
         db.query.suggestions.findMany({ where: belongsToStory(suggestions) }),
         db.query.chapterAnchors.findMany({ where: belongsToStory(chapterAnchors) }),
+        db.query.storyCalendars.findMany({ where: belongsToStory(storyCalendars) }),
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
         db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
         db.query.galleries.findMany({ where: belongsToStory(galleries) }),
@@ -1237,6 +1241,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           tagRelations: storyTagRelations,
           suggestions: storySuggestions,
           chapterAnchors: storyChapterAnchors,
+          storyCalendars: storyOwnCalendars,
           characterRelations: storyCharacterRelations,
           characterScenes: storyCharacterScenes,
           galleryItems: storyGalleryItems,
@@ -1518,6 +1523,25 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
          * `migrateStoryExport` fills in the empty list rather than leaving it undefined - the
          * `?? []` here is for a caller that skipped the migration.
          */
+        /*
+         * The story's calendars. Nothing to remap - a calendar references no other row, which is
+         * the same property that makes it safe to carry between stories at all.
+         */
+        for (const calendar of fullStoryData.storyCalendars ?? []) {
+          await tx
+            .insert(storyCalendars)
+            .values({
+              ...calendar,
+              storyId: calendar.storyId,
+              createdAt: new Date(calendar.createdAt),
+              updatedAt: new Date(),
+              version: calendar.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
         for (const anchor of fullStoryData.chapterAnchors ?? []) {
           await tx
             .insert(chapterAnchors)

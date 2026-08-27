@@ -23,7 +23,7 @@
  * migration in `storyExportMigrations.ts`. An older Keres refuses a package from a newer format
  * rather than guessing at it.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 7;
+export const CURRENT_STORY_FORMAT_VERSION = 8;
 
 /**
  * Version of the synchronization protocol: what client and server exchange, and the rules each end

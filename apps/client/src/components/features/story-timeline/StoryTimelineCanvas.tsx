@@ -19,6 +19,8 @@ interface Props {
   onPressScene: (id: string) => void;
   onPressEvent?: (id: string) => void;
   showSceneNames?: boolean;
+  /** Turns a row's elapsed time into a date, when the story has a calendar and an epoch. */
+  dateForRow?: (elapsedSeconds: number) => string | null;
   storyDurationLabel: string;
   storyDurationTitle: string;
 }
@@ -29,7 +31,15 @@ const CAPTION_LIFT = 9;
 
 const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
   (
-    { layout, onPressScene, onPressEvent, showSceneNames, storyDurationLabel, storyDurationTitle },
+    {
+      layout,
+      onPressScene,
+      onPressEvent,
+      showSceneNames,
+      dateForRow,
+      storyDurationLabel,
+      storyDurationTitle,
+    },
     ref,
   ) => {
     const { colors } = useTheme();
@@ -84,6 +94,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             justifyContent: 'center',
           },
           rowTitle: { fontSize: 12, fontWeight: '700' },
+          rowDate: { fontSize: 9, marginTop: 1, color: colors.textSecondary },
           chapter: { fontSize: 9, marginTop: 2 },
           band: { position: 'absolute', borderWidth: 0.5 },
           eventBand: { position: 'absolute', borderRadius: 4, borderWidth: 1 },
@@ -106,7 +117,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
           gapText: { position: 'absolute', fontSize: 9, textAlign: 'center' },
           sequence: { position: 'absolute', fontSize: 9, textAlign: 'center' },
         }),
-      [],
+      [colors.textSecondary],
     );
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
@@ -298,6 +309,12 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                 <Text numberOfLines={1} style={[styles.chapter, { color: row.chapterColor }]}>
                   {row.chapterName}
                 </Text>
+                {/* The in-world date, when the story has said where on its calendar it opens. */}
+                {row.elapsedSeconds !== undefined && dateForRow?.(row.elapsedSeconds) ? (
+                  <Text numberOfLines={1} style={styles.rowDate}>
+                    {dateForRow(row.elapsedSeconds)}
+                  </Text>
+                ) : null}
               </View>
               {row.sequence > 0 && (
                 <Text

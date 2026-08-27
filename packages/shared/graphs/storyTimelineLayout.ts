@@ -1,4 +1,10 @@
 import { SCENE_POSITION_FRACTION, type ScenePosition } from '../metadata/ScenePosition';
+import type { CalendarDefinitionType } from '../schemas/StoryCalendarSchemas';
+import {
+  calendarSecondsPerDay,
+  calendarUnitDays,
+  FALLBACK_SECONDS_PER_DAY,
+} from '../utils/storyCalendar';
 
 /**
  * A pure layout for the narrative timeline. The order of the scenes never changes; the horizontal
@@ -51,18 +57,6 @@ const UNIT_RANK: Record<string, number> = {
  * original value is never altered and stays explicit in the label. An eon is worth a billion years
  * visually, letting fictional worlds use the unit without breaking the drawing.
  */
-const VISUAL_SECONDS_PER_UNIT: Record<string, number> = {
-  seconds: 1,
-  minutes: 60,
-  hours: 60 * 60,
-  days: 24 * 60 * 60,
-  weeks: 7 * 24 * 60 * 60,
-  months: 30.4375 * 24 * 60 * 60,
-  years: 365.25 * 24 * 60 * 60,
-  millennia: 1000 * 365.25 * 24 * 60 * 60,
-  eons: 1_000_000_000 * 365.25 * 24 * 60 * 60,
-};
-
 export interface StoryTimelineSegment {
   value: number;
   unit: string;
@@ -72,6 +66,13 @@ export interface StoryTimelineSegment {
 export type StoryTimelineRowKind = 'scene' | 'event' | 'event-scene';
 
 export interface StoryTimelineRow {
+  /**
+   * Story time from the first scene to this one, in the calendar's own seconds.
+   *
+   * Present only on spine rows, and only what the layout already computed to place them. With an
+   * epoch it becomes a date; without one it is the number nothing asks for.
+   */
+  elapsedSeconds?: number;
   id: string;
   chapterId: string;
   sequence: number;
@@ -211,8 +212,13 @@ function segment(
  * difference between minutes, hours and days clearly visible. There is no artificial ceiling: the
  * chart grows horizontally and can be explored by pan/zoom.
  */
-function compactLength(value: number, unit: string, minimum: number): number {
-  const seconds = Math.abs(value) * (VISUAL_SECONDS_PER_UNIT[unit] ?? 1);
+function compactLength(
+  value: number,
+  unit: string,
+  minimum: number,
+  unitSeconds: Record<string, number>,
+): number {
+  const seconds = Math.abs(value) * (unitSeconds[unit] ?? 1);
   const logarithm = Math.log1p(seconds);
   return minimum + logarithm * logarithm * (minimum === MIN_GAP_WIDTH ? 1.1 : 1.85);
 }
@@ -220,27 +226,23 @@ function compactLength(value: number, unit: string, minimum: number): number {
 const PROPORTIONAL_PIXELS_PER_HOUR = 30;
 const PROPORTIONAL_MAX_WIDTH = 100_000;
 
-function timingSeconds(value: number, unit: string): number {
-  return Math.abs(value) * (VISUAL_SECONDS_PER_UNIT[unit] ?? 1);
+function timingSeconds(value: number, unit: string, unitSeconds: Record<string, number>): number {
+  return Math.abs(value) * (unitSeconds[unit] ?? 1);
 }
 
-function formatRulerSeconds(seconds: number): string {
+function formatRulerSeconds(seconds: number, unitSeconds: Record<string, number>): string {
   const absolute = Math.abs(seconds);
   const sign = seconds < 0 ? '−' : '';
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.eons)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.eons)} e`;
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.millennia)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.millennia)} ky`;
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.years)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.years)}y`;
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.months)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.months)}mo`;
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.days)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.days)}d`;
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.hours)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.hours)}h`;
-  if (absolute >= VISUAL_SECONDS_PER_UNIT.minutes)
-    return `${sign}${Math.round(absolute / VISUAL_SECONDS_PER_UNIT.minutes)}m`;
+  if (absolute >= unitSeconds.eons) return `${sign}${Math.round(absolute / unitSeconds.eons)} e`;
+  if (absolute >= unitSeconds.millennia)
+    return `${sign}${Math.round(absolute / unitSeconds.millennia)} ky`;
+  if (absolute >= unitSeconds.years) return `${sign}${Math.round(absolute / unitSeconds.years)}y`;
+  if (absolute >= unitSeconds.months)
+    return `${sign}${Math.round(absolute / unitSeconds.months)}mo`;
+  if (absolute >= unitSeconds.days) return `${sign}${Math.round(absolute / unitSeconds.days)}d`;
+  if (absolute >= unitSeconds.hours) return `${sign}${Math.round(absolute / unitSeconds.hours)}h`;
+  if (absolute >= unitSeconds.minutes)
+    return `${sign}${Math.round(absolute / unitSeconds.minutes)}m`;
   return `${sign}${Math.round(absolute)}s`;
 }
 
@@ -249,6 +251,7 @@ function buildRulerTicks(
   maxSeconds: number,
   originX: number,
   pixelsPerSecond: number,
+  unitSeconds: Record<string, number>,
 ): StoryTimelineRulerTick[] {
   const minimumStepPixels = 115;
   const baseSteps = [
@@ -273,7 +276,10 @@ function buildRulerTicks(
   const first = Math.ceil(minSeconds / step) * step;
   const ticks: StoryTimelineRulerTick[] = [];
   for (let value = first; value <= maxSeconds + step * 0.001; value += step) {
-    ticks.push({ x: originX + value * pixelsPerSecond, label: formatRulerSeconds(value) });
+    ticks.push({
+      x: originX + value * pixelsPerSecond,
+      label: formatRulerSeconds(value, unitSeconds),
+    });
   }
   return ticks;
 }
@@ -379,12 +385,43 @@ function insertInlineEventRows(
  * up no space: without the preceding scene drawn, showing it would suggest a continuity the
  * selection does not contain.
  */
+/**
+ * Everything the drawing needs beyond the scenes themselves.
+ *
+ * An options object rather than four positional arguments: three of these are configuration with
+ * defaults, and the fourth to be added would have been the fifth parameter of a function whose
+ * call sites already read as a row of unlabelled literals.
+ */
+export interface StoryTimelineLayoutOptions {
+  scaleMode?: StoryTimelineScaleMode;
+  anchored?: TimelineAnchoredContainer[];
+  placement?: StoryTimelineEventPlacement;
+  /**
+   * The story's own calendar, or `null` for the Gregorian averages the app has always used.
+   *
+   * It affects *widths only*. The axis is relative - every segment on it is converted through the
+   * same chain - so a story that redefines its year draws an identical picture and differs only in
+   * what the tick labels say.
+   */
+  calendar?: CalendarDefinitionType | null;
+}
+
 export function buildStoryTimelineLayout(
   scenes: StoryTimelineScene[],
-  scaleMode: StoryTimelineScaleMode = 'compact',
-  anchored: TimelineAnchoredContainer[] = [],
-  placement: StoryTimelineEventPlacement = 'overlay',
+  options: StoryTimelineLayoutOptions = {},
 ): StoryTimelineLayout {
+  const { scaleMode = 'compact', anchored = [], placement = 'overlay', calendar = null } = options;
+  /*
+   * The scale table, derived per call instead of being a module constant.
+   *
+   * With no calendar it reproduces the Gregorian averages the timeline was always drawn with, so an
+   * existing story's picture is unchanged to the pixel.
+   */
+  const unitDays = calendarUnitDays(calendar);
+  const secondsPerDay = calendar ? calendarSecondsPerDay(calendar) : FALLBACK_SECONDS_PER_DAY;
+  const unitSeconds: Record<string, number> = Object.fromEntries(
+    Object.entries(unitDays).map(([unit, days]) => [unit, (days as number) * secondsPerDay]),
+  );
   const visibleSegments = scenes.flatMap((scene, index) => {
     const segments = [] as { value: number; unit: string; minimum: number }[];
     if (index > 0 && !scene.hideGapBefore) {
@@ -397,7 +434,7 @@ export function buildStoryTimelineLayout(
     return segments;
   });
   const totalSeconds = visibleSegments.reduce(
-    (total, timing) => total + timingSeconds(timing.value, timing.unit),
+    (total, timing) => total + timingSeconds(timing.value, timing.unit, unitSeconds),
     0,
   );
   const proportionalPixelsPerSecond =
@@ -406,12 +443,13 @@ export function buildStoryTimelineLayout(
       : PROPORTIONAL_PIXELS_PER_HOUR / 3600;
   const segmentLength = (value: number, unit: string, minimum: number) =>
     scaleMode === 'proportional'
-      ? timingSeconds(value, unit) * proportionalPixelsPerSecond
-      : compactLength(value, unit, minimum);
+      ? timingSeconds(value, unit, unitSeconds) * proportionalPixelsPerSecond
+      : compactLength(value, unit, minimum, unitSeconds);
   const hasProportionalScaleWarning =
     scaleMode === 'proportional' &&
     visibleSegments.some(
-      (timing) => timingSeconds(timing.value, timing.unit) * proportionalPixelsPerSecond < 4,
+      (timing) =>
+        timingSeconds(timing.value, timing.unit, unitSeconds) * proportionalPixelsPerSecond < 4,
     );
   let cursor = TIMELINE_PADDING + TIMELINE_LABEL_WIDTH;
   let timeCursor = 0;
@@ -428,7 +466,7 @@ export function buildStoryTimelineLayout(
     const gapStart = cursor;
     if (gap) {
       cursor += Math.sign(gap.value) * segmentLength(Math.abs(gap.value), gap.unit, MIN_GAP_WIDTH);
-      timeCursor += gap.value * (VISUAL_SECONDS_PER_UNIT[gap.unit] ?? 1);
+      timeCursor += gap.value * (unitSeconds[gap.unit] ?? 1);
     }
     const gapEnd = cursor;
     const barStart = cursor;
@@ -438,7 +476,7 @@ export function buildStoryTimelineLayout(
       cursor +=
         Math.sign(duration.value) *
         segmentLength(Math.abs(duration.value), duration.unit, MIN_DURATION_WIDTH);
-      timeCursor += duration.value * (VISUAL_SECONDS_PER_UNIT[duration.unit] ?? 1);
+      timeCursor += duration.value * (unitSeconds[duration.unit] ?? 1);
     } else if (!duration && scaleMode === 'compact') cursor += MIN_DURATION_WIDTH;
     const barEnd = cursor;
     minSeconds = Math.min(minSeconds, timeStart, timeCursor);
@@ -457,6 +495,7 @@ export function buildStoryTimelineLayout(
       barEnd,
       kind: 'scene' as const,
       instant,
+      elapsedSeconds: timeStart,
       ...(gap ? { gapStart, gapEnd, gap } : {}),
       ...(duration && duration.value !== 0 ? { duration } : {}),
     };
@@ -649,6 +688,7 @@ export function buildStoryTimelineLayout(
           maxSeconds,
           TIMELINE_PADDING + TIMELINE_LABEL_WIDTH + shift,
           proportionalPixelsPerSecond,
+          unitSeconds,
         )
       : [];
   return {

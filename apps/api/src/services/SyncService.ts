@@ -30,6 +30,7 @@ import { TierLimitExceededError, tierEnforcementService } from './TierEnforcemen
 import { AttributeValueSyncHandler } from './entity-sync-handlers/AttributeValueSyncHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { ChapterAnchorSyncHandler } from './entity-sync-handlers/ChapterAnchorSyncHandler';
+import { StoryCalendarSyncHandler } from './entity-sync-handlers/StoryCalendarSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
@@ -93,6 +94,7 @@ export class SyncService {
     this.registerEntityHandler(new EffectSyncHandler());
     this.registerEntityHandler(new CharacterSceneSyncHandler());
     this.registerEntityHandler(new ChapterAnchorSyncHandler());
+    this.registerEntityHandler(new StoryCalendarSyncHandler());
     this.registerEntityHandler(new CharacterRelationSyncHandler());
     this.registerEntityHandler(new ItemSyncHandler());
     this.registerEntityHandler(new ItemJourneySyncHandler());

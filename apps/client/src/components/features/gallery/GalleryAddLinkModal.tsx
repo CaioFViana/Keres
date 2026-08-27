@@ -56,7 +56,12 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
   });
 
   return (
-    <ResponsiveModal visible={visible} onClose={onCancel} contentStyle={styles.sheet} maxHeight="86%">
+    <ResponsiveModal
+      visible={visible}
+      onClose={onCancel}
+      contentStyle={styles.sheet}
+      maxHeight="86%"
+    >
       <Text style={styles.title}>{t('gallery_add_link_title')}</Text>
       <Text style={styles.hint}>{t('gallery_add_link_hint')}</Text>
       <View style={styles.field}>

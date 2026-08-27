@@ -133,7 +133,13 @@ const GalleryListScreen = () => {
       }
       setImporting(true);
       try {
-        const result = await createGalleryLink(createGalleryService(db), storyId, userId, url, title);
+        const result = await createGalleryLink(
+          createGalleryService(db),
+          storyId,
+          userId,
+          url,
+          title,
+        );
         if (!result) {
           showNotification(t('gallery_link_invalid'), 'warning');
           return;

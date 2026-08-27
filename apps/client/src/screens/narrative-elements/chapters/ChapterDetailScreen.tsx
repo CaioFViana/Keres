@@ -29,6 +29,7 @@ import { createLocationService } from '@/src/services/storymanagement/LocationSe
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
@@ -86,6 +87,7 @@ const ChapterDetailScreen = () => {
 
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
   const { canEdit } = useStoryRole(chapter?.storyId);
+  const { definition: calendar } = useStoryCalendar();
   const {
     commentsByField,
     canComment,
@@ -395,7 +397,10 @@ const ChapterDetailScreen = () => {
           if (hasSceneUniverseDuration(scene)) {
             details.push({
               label: t('in_universe_duration'),
-              value: formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming),
+              value: formatSceneUniverseDuration(scene, t, {
+                normalize: selectedStory?.normalizeSceneTiming,
+                calendar,
+              }),
             });
           }
           const locationName = allLocations.find(

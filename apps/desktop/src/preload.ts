@@ -16,8 +16,7 @@ contextBridge.exposeInMainWorld('keresMedia', {
   deleteDirectory: (relativePath: string): Promise<void> =>
     ipcRenderer.invoke('media:delete-directory', relativePath),
   listAllFiles: (): Promise<string[]> => ipcRenderer.invoke('media:list-all'),
-  openInOs: (relativePath: string): Promise<void> =>
-    ipcRenderer.invoke('media:open', relativePath),
+  openInOs: (relativePath: string): Promise<void> => ipcRenderer.invoke('media:open', relativePath),
 });
 
 contextBridge.exposeInMainWorld('keresAuth', {

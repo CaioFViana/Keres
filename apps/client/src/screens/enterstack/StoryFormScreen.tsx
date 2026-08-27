@@ -164,6 +164,7 @@ const StoryFormScreen = () => {
           favoriteBehavior,
           extraNotes,
           theme,
+          timelineEpochDay: null,
           normalizeSceneTiming: false,
           allowReaderComments: false,
           // On for a new story, unlike the switches around it: linking mentions makes no judgement

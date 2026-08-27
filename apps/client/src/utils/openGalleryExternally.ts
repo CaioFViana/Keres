@@ -1,10 +1,6 @@
 import { Linking } from 'react-native';
 import type { GallerySelect } from '../db/schemas/galleries';
-import {
-  DESKTOP_MEDIA_URI_PREFIX,
-  openInOs,
-  resolveBlobUri,
-} from '../services/webMediaStore';
+import { DESKTOP_MEDIA_URI_PREFIX, openInOs, resolveBlobUri } from '../services/webMediaStore';
 
 /**
  * Opens a gallery link or document outside Keres.

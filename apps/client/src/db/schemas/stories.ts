@@ -18,6 +18,15 @@ export const stories = sqliteTable('stories', {
     .default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
+  /**
+   * The day number the story's first scene falls on, in whatever calendar is primary.
+   *
+   * Absent means the story states no absolute date, which is the default: without it the timeline
+   * shows elapsed time and no dates at all. It lives on the story rather than on a calendar because
+   * "the story opens on this day" is a fact about the narrative, and it has to stay the same when
+   * the reader switches which calendar they are reading in.
+   */
+  timelineEpochDay: integer('timeline_epoch_day'),
   normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' })
     .notNull()
     .default(false),

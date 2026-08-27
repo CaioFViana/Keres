@@ -29,7 +29,7 @@ import { SyncConflictError } from './entity-sync-handlers/BaseSyncEntityHandler'
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { AttributeValueSyncHandler } from './entity-sync-handlers/AttributeValueSyncHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
-import { ChapterRelationSyncHandler } from './entity-sync-handlers/ChapterRelationSyncHandler';
+import { ChapterAnchorSyncHandler } from './entity-sync-handlers/ChapterAnchorSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
@@ -92,7 +92,7 @@ export class SyncService {
     this.registerEntityHandler(new ChoiceCheckSyncHandler());
     this.registerEntityHandler(new EffectSyncHandler());
     this.registerEntityHandler(new CharacterSceneSyncHandler());
-    this.registerEntityHandler(new ChapterRelationSyncHandler());
+    this.registerEntityHandler(new ChapterAnchorSyncHandler());
     this.registerEntityHandler(new CharacterRelationSyncHandler());
     this.registerEntityHandler(new ItemSyncHandler());
     this.registerEntityHandler(new ItemJourneySyncHandler());

@@ -665,3 +665,113 @@ describe('completeness checks', () => {
     expect([...new Set(gatedKeys)].sort()).toEqual([...COMPLETENESS_FINDING_KEYS].sort());
   });
 });
+
+/**
+ * Anchors that run backwards.
+ *
+ * This replaced a cycle check, and the difference is worth stating: interval relations could
+ * contradict each other in a loop, so the old check searched for one. A stretch is two points on a
+ * single axis - the only way it can be wrong is by ending before it starts, which happens when the
+ * writer picks the two scenes the wrong way round and which nothing else in the app would notice.
+ */
+describe('anchors that run backwards', () => {
+  const anchoredInput = (
+    anchors: NonNullable<StoryAnalysisInput['chapterAnchors']>,
+  ): StoryAnalysisInput => ({
+    ...baseInput(),
+    chapters: [
+      { id: 'one', name: 'Chapter One', index: 1 },
+      { id: 'two', name: 'Chapter Two', index: 2 },
+      { id: 'event', name: 'The War', index: 1 },
+    ],
+    scenes: [
+      {
+        id: 'a',
+        name: 'A',
+        locationId: 'location',
+        isStart: true,
+        isFinish: false,
+        chapterId: 'one',
+        index: 1,
+      },
+      {
+        id: 'b',
+        name: 'B',
+        locationId: 'location',
+        isStart: false,
+        isFinish: true,
+        chapterId: 'one',
+        index: 2,
+      },
+      {
+        id: 'c',
+        name: 'C',
+        locationId: 'location',
+        isStart: false,
+        isFinish: true,
+        chapterId: 'two',
+        index: 1,
+      },
+    ],
+    chapterAnchors: anchors,
+  });
+
+  const anchor = (overrides = {}) => ({
+    chapterId: 'event',
+    order: 1,
+    startSceneId: 'a',
+    startPosition: 'start',
+    endSceneId: 'c',
+    endPosition: 'end',
+    ...overrides,
+  });
+
+  const keys = async (input: StoryAnalysisInput) =>
+    (await buildStoryAnalysisReport(input)).map((finding) => finding.messageKey);
+
+  it('says nothing about a stretch that runs forwards', async () => {
+    expect(await keys(anchoredInput([anchor()]))).not.toContain('analysis_anchor_backwards');
+  });
+
+  it('reports a stretch whose scenes are in the wrong order', async () => {
+    const found = await keys(anchoredInput([anchor({ startSceneId: 'c', endSceneId: 'a' })]));
+
+    expect(found).toContain('analysis_anchor_backwards');
+  });
+
+  it('compares by container first, so a later chapter loses to an earlier one', async () => {
+    // Scene 'c' is scene 1 of chapter two; 'b' is scene 2 of chapter one. Read by scene number
+    // alone this looks forwards, and it is not.
+    const found = await keys(anchoredInput([anchor({ startSceneId: 'c', endSceneId: 'b' })]));
+
+    expect(found).toContain('analysis_anchor_backwards');
+  });
+
+  it('separates two points inside the same scene by where in it they fall', async () => {
+    const backwards = await keys(
+      anchoredInput([
+        anchor({ startSceneId: 'b', startPosition: 'end', endSceneId: 'b', endPosition: 'start' }),
+      ]),
+    );
+    const forwards = await keys(
+      anchoredInput([
+        anchor({ startSceneId: 'b', startPosition: 'start', endSceneId: 'b', endPosition: 'end' }),
+      ]),
+    );
+
+    expect(backwards).toContain('analysis_anchor_backwards');
+    expect(forwards).not.toContain('analysis_anchor_backwards');
+  });
+
+  it('stays quiet about a scene it was not given, which is not its business to report', async () => {
+    const found = await keys(anchoredInput([anchor({ startSceneId: 'missing' })]));
+
+    expect(found).not.toContain('analysis_anchor_backwards');
+  });
+
+  it('stays quiet when no anchors were passed at all', async () => {
+    const found = await keys({ ...baseInput(), chapterAnchors: undefined });
+
+    expect(found).not.toContain('analysis_anchor_backwards');
+  });
+});

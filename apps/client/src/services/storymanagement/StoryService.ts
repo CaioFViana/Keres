@@ -54,7 +54,7 @@ import type {
 import {
   attributeValues,
   chapters,
-  chapterRelations,
+  chapterAnchors,
   characterRelations,
   characters,
   characterScenes,
@@ -140,7 +140,7 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(comments).where(eq(comments.storyId, storyId)).run();
   await tx.delete(favorites).where(eq(favorites.storyId, storyId)).run();
   await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
-  await tx.delete(chapterRelations).where(eq(chapterRelations.storyId, storyId)).run();
+  await tx.delete(chapterAnchors).where(eq(chapterAnchors.storyId, storyId)).run();
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
   await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
@@ -1161,7 +1161,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyTags,
         storyTagRelations,
         storySuggestions,
-        storyChapterRelations,
+        storyChapterAnchors,
         storyCharacterRelations,
         storyCharacterScenes,
         storyGalleryItems,
@@ -1195,7 +1195,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.tags.findMany({ where: belongsToStory(tags) }),
         db.query.tagRelations.findMany({ where: belongsToStory(tagRelations) }),
         db.query.suggestions.findMany({ where: belongsToStory(suggestions) }),
-        db.query.chapterRelations.findMany({ where: belongsToStory(chapterRelations) }),
+        db.query.chapterAnchors.findMany({ where: belongsToStory(chapterAnchors) }),
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
         db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
         db.query.galleries.findMany({ where: belongsToStory(galleries) }),
@@ -1236,7 +1236,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           tags: storyTags,
           tagRelations: storyTagRelations,
           suggestions: storySuggestions,
-          chapterRelations: storyChapterRelations,
+          chapterAnchors: storyChapterAnchors,
           characterRelations: storyCharacterRelations,
           characterScenes: storyCharacterScenes,
           galleryItems: storyGalleryItems,
@@ -1514,19 +1514,19 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         }
 
         /*
-         * Chronology relations. Optional in the package: one written before format V7 has none,
-         * and `migrateStoryExport` fills in the empty list rather than leaving it undefined - the
+         * Timeline anchors. Optional in the package: one written before format V7 has none, and
+         * `migrateStoryExport` fills in the empty list rather than leaving it undefined - the
          * `?? []` here is for a caller that skipped the migration.
          */
-        for (const chapterRelation of fullStoryData.chapterRelations ?? []) {
+        for (const anchor of fullStoryData.chapterAnchors ?? []) {
           await tx
-            .insert(chapterRelations)
+            .insert(chapterAnchors)
             .values({
-              ...chapterRelation,
-              storyId: chapterRelation.storyId,
-              createdAt: new Date(chapterRelation.createdAt),
+              ...anchor,
+              storyId: anchor.storyId,
+              createdAt: new Date(anchor.createdAt),
               updatedAt: new Date(),
-              version: chapterRelation.version,
+              version: anchor.version,
               isDeleted: false,
               deletedAt: null,
             })

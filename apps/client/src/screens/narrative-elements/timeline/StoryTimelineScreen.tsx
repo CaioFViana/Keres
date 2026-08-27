@@ -8,6 +8,8 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useDrizzle } from '@/src/db';
+import type { ChapterAnchorSelect } from '@/src/db/schema';
+import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { useNotificationStore } from '@/src/state/notificationStore';
@@ -20,7 +22,10 @@ import {
 } from '@/src/utils/sceneTiming';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
-import type { StoryTimelineScaleMode } from '@keres/shared/graphs/storyTimelineLayout';
+import type {
+  StoryTimelineScaleMode,
+  TimelineAnchoredContainer,
+} from '@keres/shared/graphs/storyTimelineLayout';
 import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
@@ -51,6 +56,9 @@ const StoryTimelineScreen = () => {
   const [chapterIds, setChapterIds] = useState<string[]>([]);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [scaleMode, setScaleMode] = useState<StoryTimelineScaleMode>('compact');
+  const [events, setEvents] = useState<ChapterSelect[]>([]);
+  const [anchors, setAnchors] = useState<ChapterAnchorSelect[]>([]);
+  const [showEvents, setShowEvents] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -69,17 +77,21 @@ const StoryTimelineScreen = () => {
     (async () => {
       setLoading(true);
       try {
-        const [loadedChapters, loadedScenes] = await Promise.all([
+        const [loadedChapters, loadedEvents, loadedScenes, loadedAnchors] = await Promise.all([
           /*
-           * Chapters only, and deliberately: this is the *narrative* timeline, which is the spine.
-           * Events have no place on it - their order is chronology, drawn on its own screen. The
-           * scene filter below keys on this list, so passing `null` here would not merely add
-           * lanes, it would interleave two independent numberings into one axis.
+           * Chapters and events are fetched apart, and the axis is still built from chapters alone.
+           * The two have independent numberings, so interleaving them into one spine would be
+           * meaningless. Events reach the drawing the other way round: as bands placed by their
+           * anchors, above the scenes rather than among them.
            */
-          createChapterService(db).getAllByStoryId(story.id),
+          createChapterService(db).getAllByStoryId(story.id, 'chapter'),
+          createChapterService(db).getAllByStoryId(story.id, 'event'),
           createSceneService(db).getAllByStoryId(story.id),
+          createChapterAnchorService(db).getAnchorsForStory(story.id),
         ]);
         if (cancelled) return;
+        setEvents(loadedEvents.filter((event) => !event.isDeleted));
+        setAnchors(loadedAnchors);
         const visibleChapters = loadedChapters
           .filter((chapter) => !chapter.isDeleted)
           .sort((a, b) => a.index - b.index);
@@ -148,9 +160,53 @@ const StoryTimelineScreen = () => {
       })),
     [chapterDurationLabels, orderedScenes],
   );
+  /*
+   * The anchored containers, in the order the writer would look for them.
+   *
+   * Both kinds can be anchored: an event because it has no chapter number at all, and a chapter
+   * because a flashback happens at a different time from when it is told. A container with no
+   * anchor is simply not here - it has made no claim about when it happens.
+   */
+  const anchoredContainers = useMemo<TimelineAnchoredContainer[]>(() => {
+    if (!showEvents) return [];
+    const containers = [...events, ...chapters];
+    const colorsByChapter = buildChapterColors(chapters);
+    const eventColors = buildChapterColors(events);
+    return containers.flatMap((container) => {
+      const stretches = anchors
+        .filter((anchor) => anchor.chapterId === container.id)
+        .sort((a, b) => a.order - b.order)
+        .map((anchor) => ({
+          start: {
+            sceneId: anchor.startSceneId,
+            position: anchor.startPosition,
+            offset: anchor.startOffset,
+            offsetUnit: anchor.startOffsetUnit,
+          },
+          end: {
+            sceneId: anchor.endSceneId,
+            position: anchor.endPosition,
+            offset: anchor.endOffset,
+            offsetUnit: anchor.endOffsetUnit,
+          },
+        }));
+      if (stretches.length === 0) return [];
+      const isEvent = container.type === 'event';
+      return [
+        {
+          id: container.id,
+          name: container.name,
+          color:
+            (isEvent ? eventColors : colorsByChapter).get(container.id) ?? colors.textSecondary,
+          isEvent,
+          stretches,
+        },
+      ];
+    });
+  }, [anchors, chapters, colors.textSecondary, events, showEvents]);
   const layout = useMemo(
-    () => buildStoryTimelineLayout(timelineScenes, scaleMode),
-    [scaleMode, timelineScenes],
+    () => buildStoryTimelineLayout(timelineScenes, scaleMode, anchoredContainers),
+    [anchoredContainers, scaleMode, timelineScenes],
   );
   useEffect(() => {
     canvas.current?.fitToScreen();
@@ -173,6 +229,7 @@ const StoryTimelineScreen = () => {
             scaleMode === 'compact'
               ? t('story_timeline_compressed')
               : t('story_timeline_proportional_legend'),
+          unanchored: t('story_timeline_unanchored'),
         },
         storyDuration: { title: t('story_timeline_story_duration'), value: storyDurationLabel },
         colors: {
@@ -320,7 +377,32 @@ const StoryTimelineScreen = () => {
             </TouchableOpacity>
           );
         })}
+        <TouchableOpacity
+          onPress={() => setShowEvents((shown) => !shown)}
+          style={[
+            styles.scaleModeButton,
+            // A different axis from the scale, so it is fenced off inside the same control.
+            { borderLeftWidth: 1, borderLeftColor: colors.border },
+            showEvents && { backgroundColor: colors.primaryContainer },
+          ]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showEvents }}
+        >
+          <Text
+            style={[
+              styles.scaleModeText,
+              { color: showEvents ? colors.onPrimaryContainer : colors.textSecondary },
+            ]}
+          >
+            {t('story_timeline_show_events')}
+          </Text>
+        </TouchableOpacity>
       </View>
+      {showEvents && layout.unanchoredNames.length > 0 && (
+        <Text style={[styles.warning, { color: colors.textSecondary }]}>
+          {t('story_timeline_unanchored')}: {layout.unanchoredNames.join(', ')}
+        </Text>
+      )}
       {layout.hasProportionalScaleWarning && (
         <Text style={styles.warning}>{t('story_timeline_proportional_warning')}</Text>
       )}

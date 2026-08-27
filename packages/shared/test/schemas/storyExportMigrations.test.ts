@@ -6,7 +6,7 @@ import { migrateStoryExport, StoryExportVersionError } from '../../schemas/story
 const EMPTY_V5_COLLECTIONS = { stats: [], statStrengths: [], statRelations: [], modes: [] };
 const EMPTY_V6_COLLECTIONS = { plots: [], plotScenes: [] };
 /** V6 -> V7 materialises the story's chronology, which no earlier package could have stated. */
-const EMPTY_V7_COLLECTIONS = { chapterRelations: [] };
+const EMPTY_V7_COLLECTIONS = { chapterAnchors: [] };
 
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {

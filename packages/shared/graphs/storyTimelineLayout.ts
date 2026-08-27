@@ -1,3 +1,5 @@
+import { SCENE_POSITION_FRACTION, type ScenePosition } from '../metadata/ScenePosition';
+
 /**
  * A pure layout for the narrative timeline. The order of the scenes never changes; the horizontal
  * axis only gives a compacted sense of duration. That avoids pretending that months, years and eons
@@ -27,6 +29,8 @@ export const TIMELINE_LABEL_WIDTH = 196;
 export const TIMELINE_LABEL_PADDING = 12;
 export const TIMELINE_HEADER_HEIGHT = 82;
 export const TIMELINE_ROW_HEIGHT = 58;
+/** Vertical room one band of anchored containers takes above the scenes. */
+export const TIMELINE_EVENT_LANE_HEIGHT = 24;
 const MIN_DURATION_WIDTH = 26;
 const MIN_GAP_WIDTH = 10;
 
@@ -81,6 +85,50 @@ export interface StoryTimelineRow {
   duration?: StoryTimelineSegment;
 }
 
+/** One end of a stretch, as the layout receives it. See `ChapterAnchorSchemas.ts`. */
+export interface TimelineAnchorPoint {
+  sceneId: string;
+  position: ScenePosition;
+  /** Negative is before the anchor. */
+  offset?: number | null;
+  offsetUnit?: string | null;
+}
+
+export interface TimelineAnchorStretch {
+  start: TimelineAnchorPoint;
+  end: TimelineAnchorPoint;
+}
+
+/**
+ * A container placed against the timeline rather than living on it.
+ *
+ * An event is the usual case: it has no chapter number, and where it sits comes from what it was
+ * anchored to. A chapter may be anchored too, which is how a flashback says when it happened as
+ * opposed to when it is told.
+ */
+export interface TimelineAnchoredContainer {
+  id: string;
+  name: string;
+  color: string;
+  isEvent: boolean;
+  stretches: TimelineAnchorStretch[];
+}
+
+/** A container drawn as a band across the scenes it covers. */
+export interface StoryTimelineEventSpan {
+  id: string;
+  name: string;
+  color: string;
+  isEvent: boolean;
+  /** Which stretch of that container this is, for one that pauses and resumes. */
+  stretchIndex: number;
+  start: number;
+  end: number;
+  lane: number;
+  /** No scene it was anchored to is on screen, so there is nothing to draw it against. */
+  unresolved?: boolean;
+}
+
 export interface StoryTimelineChapterSpan {
   id: string;
   name: string;
@@ -99,6 +147,16 @@ export interface StoryTimelineRulerTick {
 export interface StoryTimelineLayout {
   rows: StoryTimelineRow[];
   chapters: StoryTimelineChapterSpan[];
+  /** Containers anchored to the scenes, drawn in bands above them. */
+  eventSpans: StoryTimelineEventSpan[];
+  eventLaneCount: number;
+  /**
+   * Containers whose anchors name no scene that is on screen.
+   *
+   * Listed rather than dropped: an anchor pointing at a scene the reader filtered out is still a
+   * statement the writer made, and silently omitting it would read as the app having lost it.
+   */
+  unanchoredNames: string[];
   rulerTicks: StoryTimelineRulerTick[];
   headerHeight: number;
   chapterLaneCount: number;
@@ -200,6 +258,7 @@ function buildRulerTicks(
 export function buildStoryTimelineLayout(
   scenes: StoryTimelineScene[],
   scaleMode: StoryTimelineScaleMode = 'compact',
+  anchored: TimelineAnchoredContainer[] = [],
 ): StoryTimelineLayout {
   const visibleSegments = scenes.flatMap((scene, index) => {
     const segments = [] as { value: number; unit: string; minimum: number }[];
@@ -287,6 +346,106 @@ export function buildStoryTimelineLayout(
     });
     maxX += shift;
   }
+  /*
+   * Anchors resolved to pixels, here and not earlier: this is the only place that knows the scale.
+   *
+   * A point is a place inside a scene plus a distance from it. The place interpolates across the
+   * scene's own bar - the timeline already measured it - and the distance is converted with exactly
+   * the same scale the scene bars used, so "three hundred years before the first scene" lands as far
+   * to the left as three hundred years is wide anywhere else on the drawing.
+   */
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+  const resolvePoint = (point: TimelineAnchorPoint): number | undefined => {
+    const row = rowById.get(point.sceneId);
+    if (!row) return undefined;
+
+    const base =
+      row.barStart + (row.barEnd - row.barStart) * (SCENE_POSITION_FRACTION[point.position] ?? 0);
+    if (!point.offset || !point.offsetUnit) return base;
+    return (
+      base + Math.sign(point.offset) * segmentLength(Math.abs(point.offset), point.offsetUnit, 0)
+    );
+  };
+
+  const eventSpans: StoryTimelineEventSpan[] = [];
+  const unanchoredNames: string[] = [];
+  for (const container of anchored) {
+    const resolved = container.stretches.flatMap((stretch, stretchIndex) => {
+      const from = resolvePoint(stretch.start);
+      const to = resolvePoint(stretch.end);
+      if (from === undefined || to === undefined) return [];
+      return [
+        {
+          id: container.id,
+          name: container.name,
+          color: container.color,
+          isEvent: container.isEvent,
+          stretchIndex,
+          // Sorted, so a stretch stated back to front still draws as a band rather than as nothing.
+          start: Math.min(from, to),
+          end: Math.max(from, to),
+          lane: 0,
+        },
+      ];
+    });
+    if (resolved.length === 0) unanchoredNames.push(container.name);
+    eventSpans.push(...resolved);
+  }
+
+  /*
+   * Lane packing, the same as the chapter spans below: a band drops to the next lane only when it
+   * would sit on top of one already there. Every stretch of one container shares its lane, or a war
+   * that pauses would read as two different wars.
+   */
+  eventSpans.sort((a, b) => a.start - b.start || a.end - b.end);
+  const eventLaneEnds: number[] = [];
+  const laneOfContainer = new Map<string, number>();
+  for (const span of eventSpans) {
+    const own = laneOfContainer.get(span.id);
+    if (own !== undefined) {
+      span.lane = own;
+      eventLaneEnds[own] = Math.max(eventLaneEnds[own] ?? span.end, span.end);
+      continue;
+    }
+    let lane = eventLaneEnds.findIndex((end) => end <= span.start);
+    if (lane === -1) {
+      lane = eventLaneEnds.length;
+      eventLaneEnds.push(span.end);
+    } else {
+      eventLaneEnds[lane] = span.end;
+    }
+    span.lane = lane;
+    laneOfContainer.set(span.id, lane);
+  }
+  const eventLaneCount = eventLaneEnds.length;
+
+  /*
+   * Anchors can reach outside the scenes, so the drawing has to move again to hold them.
+   *
+   * A second correction rather than a wider first one: the ghost anchor is measured from a scene bar,
+   * and the bars do not exist until the first shift has run. Without this, "three hundred years before
+   * the first scene" resolved to a negative x and was drawn underneath the label column.
+   */
+  const anchorMinX = eventSpans.reduce((left, span) => Math.min(left, span.start), minX);
+  const anchorShift =
+    anchorMinX < TIMELINE_PADDING + TIMELINE_LABEL_WIDTH
+      ? TIMELINE_PADDING + TIMELINE_LABEL_WIDTH - anchorMinX
+      : 0;
+  if (anchorShift) {
+    rows.forEach((row) => {
+      row.barStart += anchorShift;
+      row.barEnd += anchorShift;
+      if (row.gapStart !== undefined) row.gapStart += anchorShift;
+      if (row.gapEnd !== undefined) row.gapEnd += anchorShift;
+    });
+    eventSpans.forEach((span) => {
+      span.start += anchorShift;
+      span.end += anchorShift;
+    });
+    maxX += anchorShift;
+  }
+  for (const span of eventSpans) maxX = Math.max(maxX, span.end);
+
   const chapters = new Map<string, StoryTimelineChapterSpan>();
   rows.forEach((row) => {
     const start = Math.min(
@@ -318,6 +477,7 @@ export function buildStoryTimelineLayout(
       });
     }
   });
+
   const chapterSpans = [...chapters.values()];
   const laneEnds: number[] = [];
   for (const chapter of chapterSpans) {
@@ -347,9 +507,17 @@ export function buildStoryTimelineLayout(
   return {
     rows,
     chapters: chapterSpans,
+    eventSpans,
+    eventLaneCount,
+    unanchoredNames,
     rulerTicks,
     width: Math.max(620, Math.ceil(maxX + TIMELINE_PADDING)),
-    height: TIMELINE_PADDING * 2 + headerHeight + rows.length * TIMELINE_ROW_HEIGHT,
+    // The event bands sit above the scenes, so each lane adds to the header rather than the body.
+    height:
+      TIMELINE_PADDING * 2 +
+      headerHeight +
+      eventLaneCount * TIMELINE_EVENT_LANE_HEIGHT +
+      rows.length * TIMELINE_ROW_HEIGHT,
     scaleMode,
     hasProportionalScaleWarning,
     headerHeight,

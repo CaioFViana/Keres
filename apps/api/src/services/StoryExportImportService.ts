@@ -80,9 +80,9 @@ export class StoryExportImportService {
       where: (suggestions, { eq, and }) =>
         and(eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false)),
     });
-    const chapterRelations = await db.query.chapterRelations.findMany({
-      where: (chapterRelations, { eq, and }) =>
-        and(eq(chapterRelations.storyId, storyId), eq(chapterRelations.isDeleted, false)),
+    const chapterAnchors = await db.query.chapterAnchors.findMany({
+      where: (chapterAnchors, { eq, and }) =>
+        and(eq(chapterAnchors.storyId, storyId), eq(chapterAnchors.isDeleted, false)),
     });
 
     const characterRelations = await db.query.characterRelations.findMany({
@@ -197,7 +197,7 @@ export class StoryExportImportService {
         notes,
         tags,
         suggestions,
-        chapterRelations,
+        chapterAnchors,
         characterRelations,
         characterScenes,
         plots,
@@ -617,38 +617,37 @@ export class StoryExportImportService {
       }
 
       /*
-       * --- ChapterRelations ---
+       * --- ChapterAnchors ---
        *
-       * The ids are **not** sorted here, unlike the character relations below: `before` and
-       * `during` are directional, so the two columns are a sequence and sorting them would reverse
-       * half the statements the package carries. Uniqueness is on the unordered pair and is
-       * guaranteed by what was exported - one live row per pair - rather than by reordering.
+       * Three ids to remap rather than two: the container being placed and the two scenes it is
+       * measured from. A scene missing from the map is a broken package and still refuses - an
+       * anchor with nothing to measure from has no position at all.
        */
-      const newChapterRelationsData = (validatedFullStory.chapterRelations ?? []).map(
-        (original) => {
-          const newId = nextId(original.id);
-          idMap.set(original.id, newId);
-          const mappedChapter1 = idMap.get(original.chapter1Id);
-          const mappedChapter2 = idMap.get(original.chapter2Id);
-          if (!mappedChapter1 || !mappedChapter2) {
-            throw new Error(
-              `Import Error: a container referenced by chapter relation ${original.id} was not found in the ID map.`,
-            );
-          }
-          return {
-            ...original,
-            id: newId,
-            storyId: targetStoryId,
-            chapter1Id: mappedChapter1,
-            chapter2Id: mappedChapter2,
-            createdAt: new Date(original.createdAt),
-            updatedAt: new Date(original.updatedAt),
-            deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
-          };
-        },
-      );
-      if (newChapterRelationsData.length > 0) {
-        await tx.insert(dbSchema.chapterRelations).values(newChapterRelationsData);
+      const newChapterAnchorsData = (validatedFullStory.chapterAnchors ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        const mappedChapter = idMap.get(original.chapterId);
+        const mappedStart = idMap.get(original.startSceneId);
+        const mappedEnd = idMap.get(original.endSceneId);
+        if (!mappedChapter || !mappedStart || !mappedEnd) {
+          throw new Error(
+            `Import Error: a row referenced by chapter anchor ${original.id} was not found in the ID map.`,
+          );
+        }
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          chapterId: mappedChapter,
+          startSceneId: mappedStart,
+          endSceneId: mappedEnd,
+          createdAt: new Date(original.createdAt),
+          updatedAt: new Date(original.updatedAt),
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newChapterAnchorsData.length > 0) {
+        await tx.insert(dbSchema.chapterAnchors).values(newChapterAnchorsData);
       }
 
       // --- CharacterRelations ---

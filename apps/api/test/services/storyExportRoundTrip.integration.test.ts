@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   attributeValues,
-  chapterRelations,
+  chapterAnchors,
   chapters,
   characterRelations,
   characterScenes,
@@ -56,7 +56,7 @@ const id = {
   story: '',
   chapter: '',
   event: '',
-  chapterRelation: '',
+  chapterAnchor: '',
   location: '',
   otherLocation: '',
   sceneA: '',
@@ -118,13 +118,7 @@ beforeEach(async () => {
     // An event, so the package carries both kinds of container and a chronology between them.
     { id: id.event, storyId, name: 'A guerra de trezentos anos', index: 1, type: 'event' },
   ] as never);
-  await db.insert(chapterRelations).values({
-    id: id.chapterRelation,
-    storyId,
-    chapter1Id: id.event,
-    chapter2Id: id.chapter,
-    relationType: 'before',
-  } as never);
+
   await db.insert(locations).values([
     { id: id.location, storyId, name: 'O farol' },
     { id: id.otherLocation, storyId, name: 'A enseada' },
@@ -155,6 +149,19 @@ beforeEach(async () => {
       index: 2,
     },
   ] as never);
+  // The event is placed against the spine, which is what the anchor is for.
+  await db.insert(chapterAnchors).values({
+    id: id.chapterAnchor,
+    storyId,
+    chapterId: id.event,
+    order: 1,
+    startSceneId: id.sceneA,
+    startPosition: 'start',
+    startOffset: -300,
+    startOffsetUnit: 'years',
+    endSceneId: id.sceneB,
+    endPosition: 'end',
+  } as never);
   await db.insert(choices).values({
     id: id.choice,
     storyId,

@@ -36,7 +36,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.tags);
   registerAll(example.tagRelations);
   registerAll(example.suggestions);
-  registerAll(example.chapterRelations);
+  registerAll(example.chapterAnchors);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
   registerAll(example.plots);
@@ -150,11 +150,12 @@ export function cloneExampleStoryForInstall(
       storyId,
       type: remapSuggestionType(suggestion.type),
     })),
-    chapterRelations: example.chapterRelations?.map((relation) => ({
-      ...cloneEntity(relation),
+    chapterAnchors: example.chapterAnchors?.map((anchor) => ({
+      ...cloneEntity(anchor),
       storyId,
-      chapter1Id: remapId(relation.chapter1Id),
-      chapter2Id: remapId(relation.chapter2Id),
+      chapterId: remapId(anchor.chapterId),
+      startSceneId: remapId(anchor.startSceneId),
+      endSceneId: remapId(anchor.endSceneId),
     })),
     characterRelations: example.characterRelations.map((relation) => ({
       ...cloneEntity(relation),

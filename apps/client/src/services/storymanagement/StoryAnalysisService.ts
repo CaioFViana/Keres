@@ -60,7 +60,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       tags,
       tagRelations,
       chapters,
-      chapterRelations,
+      chapterAnchors,
       notes,
       worldRules,
       storySchemaFields,
@@ -183,16 +183,16 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         .where(belongsToStory(schema.chapters)),
       db
         .select({
-          chapter1Id: schema.chapterRelations.chapter1Id,
-          chapter2Id: schema.chapterRelations.chapter2Id,
-          relationType: schema.chapterRelations.relationType,
+          chapterId: schema.chapterAnchors.chapterId,
+          order: schema.chapterAnchors.order,
+          startSceneId: schema.chapterAnchors.startSceneId,
+          startPosition: schema.chapterAnchors.startPosition,
+          endSceneId: schema.chapterAnchors.endSceneId,
+          endPosition: schema.chapterAnchors.endPosition,
         })
-        .from(schema.chapterRelations)
+        .from(schema.chapterAnchors)
         .where(
-          and(
-            belongsToStory(schema.chapterRelations),
-            eq(schema.chapterRelations.isDeleted, false),
-          ),
+          and(belongsToStory(schema.chapterAnchors), eq(schema.chapterAnchors.isDeleted, false)),
         ),
       db
         .select({ id: schema.notes.id, name: schema.notes.title })
@@ -245,7 +245,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       tags,
       tagRelations,
       chapters,
-      chapterRelations,
+      chapterAnchors,
       notes,
       worldRules,
       storySchemaFields,

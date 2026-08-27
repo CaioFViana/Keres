@@ -5,7 +5,7 @@ export * from './schema/enums';
 export * from './schema/tables/apiLogs';
 export * from './schema/tables/attributeValues';
 export * from './schema/tables/chapters';
-export * from './schema/tables/chapterRelations';
+export * from './schema/tables/chapterAnchors';
 export * from './schema/tables/characterRelations';
 export * from './schema/tables/characters';
 export * from './schema/tables/characterScenes';

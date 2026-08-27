@@ -155,8 +155,21 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
-  ChapterRelation: {
-    documented: ['chapter1Id', 'chapter2Id', 'relationType', 'createdAt', 'updatedAt'],
+  ChapterAnchor: {
+    documented: [
+      'chapterId',
+      'order',
+      'startSceneId',
+      'startPosition',
+      'startOffset',
+      'startOffsetUnit',
+      'endSceneId',
+      'endPosition',
+      'endOffset',
+      'endOffsetUnit',
+      'createdAt',
+      'updatedAt',
+    ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   CharacterRelation: {

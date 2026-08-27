@@ -7,6 +7,7 @@ import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useTheme } from '@/src/theme';
 import type { StoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import {
+  TIMELINE_EVENT_LANE_HEIGHT,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
@@ -27,7 +28,10 @@ const CAPTION_LIFT = 9;
 const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
   ({ layout, onPressScene, storyDurationLabel, storyDurationTitle }, ref) => {
     const { colors } = useTheme();
-    const startY = TIMELINE_PADDING + layout.headerHeight;
+    // Anchored containers get their own strip between the header and the scenes, so the scene rows
+    // start below it. The header chrome stays where it was, measured from the top of that strip.
+    const headerBaseY = TIMELINE_PADDING + layout.headerHeight;
+    const startY = headerBaseY + layout.eventLaneCount * TIMELINE_EVENT_LANE_HEIGHT;
     // The whole band answers to the finger, not only the label and the bar: on a proportional
     // scale a short scene is a couple of points wide and there is nothing to aim at. Hit-tested
     // here rather than covered with touch targets, which would eat the pinch (see `onTap`).
@@ -59,6 +63,8 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
           rowTitle: { fontSize: 12, fontWeight: '700' },
           chapter: { fontSize: 9, marginTop: 2 },
           band: { position: 'absolute', borderWidth: 0.5 },
+          eventBand: { position: 'absolute', borderRadius: 4, borderWidth: 1 },
+          eventLabel: { position: 'absolute', fontSize: 10, fontWeight: '700' },
           caption: { position: 'absolute', fontSize: 10 },
           bar: {
             position: 'absolute',
@@ -75,6 +81,53 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     );
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
+        {/*
+          Anchored containers, drawn as bands across the scenes they cover. A dashed outline is a
+          chapter placed somewhere other than where it is told; a solid one is an event. Only the
+          first stretch carries the name - the others are the same container resuming.
+        */}
+        {layout.eventSpans.map((span) => {
+          const top = headerBaseY + span.lane * TIMELINE_EVENT_LANE_HEIGHT;
+          const width = Math.max(4, span.end - span.start);
+          const label = span.name.length <= 28 ? span.name : `${span.name.slice(0, 27)}…`;
+          const fitsInside = width > label.length * 6;
+          return (
+            <React.Fragment key={`span-${span.id}-${span.stretchIndex}`}>
+              <View
+                style={[
+                  styles.eventBand,
+                  {
+                    left: span.start,
+                    top: top + 3,
+                    width,
+                    height: TIMELINE_EVENT_LANE_HEIGHT - 8,
+                    backgroundColor: span.color,
+                    opacity: span.isEvent ? 0.34 : 0.18,
+                    borderColor: span.color,
+                    borderStyle: span.isEvent ? 'solid' : 'dashed',
+                  },
+                ]}
+              />
+              {span.stretchIndex === 0 && (
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.eventLabel,
+                    {
+                      left: fitsInside ? span.start : span.end + 6,
+                      top: top + TIMELINE_EVENT_LANE_HEIGHT / 2 - CAPTION_LIFT,
+                      width: fitsInside ? width : label.length * 7,
+                      textAlign: fitsInside ? 'center' : 'left',
+                      color: span.color,
+                    },
+                  ]}
+                >
+                  {label}
+                </Text>
+              )}
+            </React.Fragment>
+          );
+        })}
         {layout.rows.map((row, index) => {
           const y = startY + index * TIMELINE_ROW_HEIGHT;
           const centerY = y + TIMELINE_ROW_HEIGHT / 2;
@@ -110,7 +163,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
           <>
             <CanvasLine
               left={TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}
-              top={startY - 10}
+              top={headerBaseY - 10}
               length={layout.width - TIMELINE_PADDING * 2 - TIMELINE_LABEL_WIDTH}
               thickness={1}
               color={colors.border}
@@ -120,7 +173,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                 <CanvasLine
                   vertical
                   left={tick.x}
-                  top={startY - 15}
+                  top={headerBaseY - 15}
                   length={10}
                   thickness={1}
                   color={colors.textSecondary}
@@ -131,7 +184,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                     styles.caption,
                     {
                       left: tick.x - 40,
-                      top: startY - 20 - CAPTION_LIFT,
+                      top: headerBaseY - 20 - CAPTION_LIFT,
                       width: 80,
                       textAlign: 'center',
                       color: colors.textSecondary,
@@ -151,7 +204,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                 styles.caption,
                 {
                   left: TIMELINE_PADDING + TIMELINE_LABEL_PADDING,
-                  top: startY - 20 - layout.chapterLaneCount * 18 - CAPTION_LIFT,
+                  top: headerBaseY - 20 - layout.chapterLaneCount * 18 - CAPTION_LIFT,
                   width: layout.width - TIMELINE_PADDING * 2,
                   color: colors.textSecondary,
                 },
@@ -163,7 +216,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
               <React.Fragment key={chapter.id}>
                 <CanvasLine
                   left={chapter.start}
-                  top={startY - 11.5 - chapter.lane * 18}
+                  top={headerBaseY - 11.5 - chapter.lane * 18}
                   length={chapter.end - chapter.start}
                   thickness={3}
                   color={chapter.color}
@@ -175,7 +228,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                       styles.caption,
                       {
                         left: chapter.start,
-                        top: startY - 20 - chapter.lane * 18 - CAPTION_LIFT,
+                        top: headerBaseY - 20 - chapter.lane * 18 - CAPTION_LIFT,
                         width: Math.max(40, chapter.end - chapter.start),
                         textAlign: 'center',
                         color: chapter.color,

@@ -1,0 +1,53 @@
+import type { ScenePosition } from '@keres/shared';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+
+/**
+ * One stretch of story time a container occupies, anchored to the scenes that bound it.
+ *
+ * The story timeline already measures every scene from its own `duration` and `gap`, so a container
+ * pinned to two scenes has an exact position without anybody inventing a coordinate. An offset
+ * places what happened outside the reach of those scenes - "three hundred years before the first
+ * one" - with a negative offset meaning *before*, the convention `Scene.gap` already uses.
+ *
+ * More than one row per container is how something discontinuous is said: a war that pauses and
+ * resumes is two stretches, which no single interval could express.
+ */
+export const chapterAnchors = sqliteTable(
+  'chapter_anchors',
+  {
+    id: text('id').primaryKey(),
+    storyId: text('story_id').notNull(),
+    chapterId: text('chapter_id').notNull(),
+    order: integer('order').notNull().default(1),
+
+    startSceneId: text('start_scene_id').notNull(),
+    startPosition: text('start_position').$type<ScenePosition>().notNull().default('start'),
+    startOffset: integer('start_offset'),
+    startOffsetUnit: text('start_offset_unit'),
+
+    endSceneId: text('end_scene_id').notNull(),
+    endPosition: text('end_position').$type<ScenePosition>().notNull().default('end'),
+    endOffset: integer('end_offset'),
+    endOffsetUnit: text('end_offset_unit'),
+
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+    version: integer('version').notNull(),
+    isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+    deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+  },
+  /*
+   * One live stretch per position, so re-stating the same one replaces rather than piles up. The
+   * order is what distinguishes a second stretch of the same container from a duplicate of the
+   * first.
+   */
+  (table) => [
+    uniqueIndex('chapter_anchor_order_unique')
+      .on(table.storyId, table.chapterId, table.order)
+      .where(sql`${table.isDeleted} = 0`),
+  ],
+);
+export type ChapterAnchorInsert = InferInsertModel<typeof chapterAnchors>;
+export type ChapterAnchorSelect = InferSelectModel<typeof chapterAnchors>;

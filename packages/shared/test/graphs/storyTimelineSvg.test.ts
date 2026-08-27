@@ -86,3 +86,104 @@ describe('renderStoryTimelineSvg', () => {
     expect(svg).not.toContain('fill="#fff"');
   });
 });
+
+describe('renderStoryTimelineSvg with anchored containers', () => {
+  const anchoredOptions = {
+    ...options,
+    labels: { ...options.labels, unanchored: 'Not placed' },
+  };
+  const scenes = [
+    scene('one', { index: 1, duration: 1, durationType: 'hours' }),
+    scene('two', { index: 2, duration: 1, durationType: 'hours' }),
+  ];
+
+  it('draws a band and names it once per container', () => {
+    const layout = buildStoryTimelineLayout(scenes, 'compact', [
+      {
+        id: 'war',
+        name: 'The <War>',
+        color: '#ff0000',
+        isEvent: true,
+        stretches: [
+          {
+            start: { sceneId: 'one', position: 'start' },
+            end: { sceneId: 'one', position: 'end' },
+          },
+          {
+            start: { sceneId: 'two', position: 'start' },
+            end: { sceneId: 'two', position: 'end' },
+          },
+        ],
+      },
+    ]);
+    const svg = renderStoryTimelineSvg(layout, anchoredOptions);
+
+    expect(layout.eventSpans).toHaveLength(2);
+    // Two bands, one name: the second stretch is the same war resuming.
+    expect(svg.match(/The &lt;War&gt;/g)).toHaveLength(1);
+    expect(svg).toContain('fill="#ff0000"');
+  });
+
+  it('marks an anchored chapter apart from an event', () => {
+    const asChapter = renderStoryTimelineSvg(
+      buildStoryTimelineLayout(scenes, 'compact', [
+        {
+          id: 'flashback',
+          name: 'Flashback',
+          color: '#00ff00',
+          isEvent: false,
+          stretches: [
+            {
+              start: { sceneId: 'one', position: 'start' },
+              end: { sceneId: 'two', position: 'end' },
+            },
+          ],
+        },
+      ]),
+      anchoredOptions,
+    );
+
+    expect(asChapter).toContain('stroke-dasharray="4 3"');
+  });
+
+  it('names the containers it could not place', () => {
+    const layout = buildStoryTimelineLayout(scenes, 'compact', [
+      {
+        id: 'elsewhere',
+        name: 'Elsewhere',
+        color: '#0000ff',
+        isEvent: true,
+        stretches: [
+          {
+            start: { sceneId: 'missing', position: 'start' },
+            end: { sceneId: 'missing', position: 'end' },
+          },
+        ],
+      },
+    ]);
+    const svg = renderStoryTimelineSvg(layout, anchoredOptions);
+
+    expect(svg).toContain('Not placed: Elsewhere');
+  });
+
+  it('pushes the scene rows below the bands', () => {
+    const plain = buildStoryTimelineLayout(scenes, 'compact');
+    const banded = buildStoryTimelineLayout(scenes, 'compact', [
+      {
+        id: 'war',
+        name: 'War',
+        color: '#ff0000',
+        isEvent: true,
+        stretches: [
+          {
+            start: { sceneId: 'one', position: 'start' },
+            end: { sceneId: 'two', position: 'end' },
+          },
+        ],
+      },
+    ]);
+
+    expect(banded.height).toBeGreaterThan(plain.height);
+    expect(renderStoryTimelineSvg(banded, anchoredOptions)).toContain(`height="${banded.height}"`);
+  });
+});

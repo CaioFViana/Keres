@@ -23,7 +23,7 @@ Everything in this plan follows from separating two things the schema currently 
 | Axis | Question it answers | Where it lives |
 | --- | --- | --- |
 | **Narrative order** | In what order is this *told*? | `chapters.index`, the numbered spine |
-| **Chronology** | In what order did this *happen*? | `chapterRelations`, §5 |
+| **Chronology** | *When* did this happen? | `chapterAnchors`, §5 |
 
 A story tells its middle first; the events behind it still happened in one sequence. A single
 counter cannot carry both, which is why the feature is not merely "a chapter without a number".
@@ -66,7 +66,7 @@ the comment at the top of [`db/schemas/packs.ts`](../apps/client/src/db/schemas/
 comes out the other way for the same reason. A pack is not a story wearing a disguise; **an Event
 genuinely is a chapter that is not numbered.**
 
-That decision pays off again in §5: because Events *are* chapters, the chronology relation needs no
+That decision pays off again in §5: because Events *are* chapters, the anchor table needs no
 polymorphism at all.
 
 ### 3.3 The operation log keeps storing `Chapter`
@@ -102,7 +102,7 @@ chapters, as today.
 ### 4.1 An Event's index is list order and nothing more
 
 `chapters.index` is `notNull`, so an Event carries a value whether or not it means anything. With
-chronology living in the relation (§5), what it means is **the order the writer wants to see them
+chronology living in the anchors (§5), what it means is **the order the writer wants to see them
 on screen** — nothing about when they happened.
 
 That is a real thing to want (an eras list read top to bottom the way its author arranged it) and it
@@ -119,67 +119,93 @@ Two things this feature does *not* need, because they already exist:
 
 ---
 
-## 5. `ChapterRelation` — the chronology
+## 5. `ChapterAnchor` — when a container happens
 
 The one new entity in this plan, and the reason Events ship complete rather than as a container with
 an ordering that over-claims.
 
-### 5.1 Why a relation and not a column
+**This section was rewritten.** It first specified `ChapterRelation`: qualitative interval relations
+between two containers (`before`, `during`, `overlaps`, `simultaneous`), modelled on
+`CharacterRelation`. That model was built, drawn, and rejected in review. §5.1 records why, because
+the reason is the argument for what replaced it.
 
-An ordered list always answers "which came first", including when the honest answer is *unknown*,
-*simultaneous*, or *one contains the other*. A war that spans chapters 3 to 7 has no expressible
-position in a total order. The vocabulary needed is intervals, and Keres already has a shape for
-that: `CharacterRelation`, `LocationRelation`, `SeeAlsoRelation`.
+### 5.1 Why the relation model failed
 
-### 5.2 It relates chapters, not events
+Interval relations say how two things sit *relative to each other*. They never say **when**.
 
-Both endpoints are rows in `chapters`. Because an Event is a chapter, one FK type covers every case:
+A writer who states "the war overlaps chapter 3" has not said whether it starts in the first
+paragraph or the last. Drawing it therefore required inventing a position, which is how the graph
+ended up with tiers and bands that looked authoritative while asserting things the writer never
+said. Three further problems were structural rather than cosmetic:
 
-| Pair | Meaning |
+- **No place to pause.** A war fought, paused, and resumed is one interval or three relations that
+  cannot be told apart from three separate wars.
+- **`during` and `overlaps` are indistinguishable to a reader.** The question was asked directly in
+  review, and the honest answer was that the difference only shows up in the layout code.
+- **Contradiction was possible and had to be hunted.** Cycles across transitive statements needed a
+  dedicated integrity check (the old §7.2).
+
+The timeline screen already places scenes on a real measured axis. Everything needed to say *when*
+was there; the relation model simply refused to use it.
+
+### 5.2 A stretch, stated against the scenes
+
+An anchor is one stretch of story time: **from a moment to a moment**, where a moment is a scene, a
+place inside that scene, and optionally a distance from it.
+
+| The writer says | The row |
 | --- | --- |
-| event ↔ event | "The war was before the peace" |
-| event ↔ chapter | "The war ended before chapter 4" — the anchor to the spine |
-| chapter ↔ chapter | "Chapter 7 happened before chapter 2" — a flashback, inexpressible today |
+| "from the start of scene 3 to the end of scene 7" | one anchor, no offsets |
+| "it happens during the middle of chapter 4's second scene" | one anchor, both points that scene |
+| "the war pauses and resumes" | two anchors, `order` 1 and 2 |
+| "300 years before the first scene" | one anchor, `startOffset: -300`, `startOffsetUnit: 'years'` |
 
-The third row is a capability nobody asked for and nothing has to be built to get: restricting the
-FK to events only would be *more* work for *less*. A linear story whose telling order differs from
-its chronology is the ordinary case in fiction, and today the app has nowhere to record it.
+The last row is the *ghost anchor*: the case no scene can express, because it is outside everything
+the story shows. A negative offset means before, which follows the convention `Scene.gap` already
+set. The layout converts it with the same scale the scene bars use, so three hundred years is as
+wide there as three hundred years is anywhere else on the drawing.
 
-**Naming.** `ChapterRelation` follows `CharacterRelation` / `LocationRelation` — X-Relation where X
-is the related entity type — and stays honest about its endpoints. `EventRelation` would name the
-motivation while lying about the columns.
+Both kinds of container can be anchored. An event because it has no chapter number at all; a
+chapter because a flashback happens at a different time from when it is told — the capability the
+old §5.2 also wanted, kept.
 
 ### 5.3 Shape
 
 ```ts
-export const chapterRelations = sqliteTable('chapter_relations', {
+export const chapterAnchors = sqliteTable('chapter_anchors', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  chapter1Id: text('chapter1_id').notNull(),
-  chapter2Id: text('chapter2_id').notNull(),
-  relationType: text('relation_type').notNull(),
+  chapterId: text('chapter_id').notNull(),
+  order: integer('order').notNull().default(1),
+  startSceneId: text('start_scene_id').notNull(),
+  startPosition: text('start_position').notNull().default('start'),
+  startOffset: integer('start_offset'),
+  startOffsetUnit: text('start_offset_unit'),
+  endSceneId: text('end_scene_id').notNull(),
+  endPosition: text('end_position').notNull().default('end'),
+  endOffset: integer('end_offset'),
+  endOffsetUnit: text('end_offset_unit'),
   // ...the usual sync columns
 });
 ```
 
-Modelled on `characterRelations`, including its unique index over `MIN`/`MAX` of the pair. That index
-does real work here: **one statement per pair** means "A before B" and "B before A" cannot both
-exist, so direct contradictions are impossible by construction. Only transitive ones remain (§7.2).
+Unique on `(storyId, chapterId, order)` — plain columns, so unlike the relation model's
+`MIN`/`MAX` pair index, drizzle-kit emits it correctly and it needs no hand-written migration.
 
-### 5.4 Relation types
+`ScenePosition` is `start | middle | end`, with fractions 0 / 0.5 / 1. Three values and not a
+percentage on purpose: a writer knows which third of a scene something happens in, and does not know
+that it is 38%. The fraction interpolates across the scene's measured bar.
 
-Following `LOCATION_RELATION_TYPES`, which already distinguishes a directional kind from a
-bidirectional one:
+### 5.4 What absence means, and what cannot go wrong
 
-| Type | Direction | Meaning |
-| --- | --- | --- |
-| `before` | directional | 1 ends before 2 begins |
-| `during` | directional | 1 happens inside 2's span |
-| `overlaps` | unordered | they share time, neither contains the other |
-| `simultaneous` | unordered | the same time |
+No anchor means *it happens when it is told*. That is the ordinary case, it is the default, and it
+costs nothing to leave alone — an important difference from the relation model, where saying nothing
+and saying "unordered" looked the same.
 
-Absence is meaningful and is the default: no relation means *unstated*, not *unordered*. That is the
-whole point of choosing a relation over a list.
+Contradiction is nearly designed out. Two anchors on one container are two stretches, not a
+disagreement, so there are no cycles to hunt and the old §7.2 check is gone. One failure remains:
+a stretch that **ends before it begins**, which is what a writer produces by picking the two scenes
+the wrong way round. `checkAnchorsRunForwards` reports exactly that (§7.2).
 
 ---
 
@@ -196,8 +222,9 @@ Three operations, and all of them go through the log:
 nothing about when it happened. `event → chapter` must ask, because the numbered spine has no natural
 slot for a new arrival and every position is an assertion about the telling.
 
-Existing `chapterRelations` survive a toggle untouched: they relate chapter rows, and the row is
-still there. A chapter that becomes an event keeps whatever chronology it had.
+Existing `chapterAnchors` survive a toggle untouched: they point at the container row, and the row
+is still there. A chapter that becomes an event keeps whatever placement it had — which is exactly
+right, since an anchor says *when* and the toggle changes only *how it is listed*.
 
 For **branching** stories the position question is close to meaningless (the order of chapters is not
 the order of reading), but the invariant still requires a contiguous index, so the same insert
@@ -229,14 +256,19 @@ the same phase as the column.
 It is the same class as the export bug the testing roadmap uses as its reference case: the data is
 right, the validation went stale.
 
-### 7.2 A new integrity check: contradictory chronology
+### 7.2 A new integrity check: anchors that run backwards
 
-The pair-unique index makes direct contradictions impossible, but transitive ones are enterable:
-A before B, B before C, C before A. That is a cycle in the relation graph and a real integrity
-finding — the writer has stated something that cannot be true.
+The anchor model retired the cycle search this section originally specified. Two anchors on one
+container are two stretches rather than a disagreement, so there is no relation graph to contradict
+and nothing to hang on.
 
-Detection is a cycle search over the directional relations (`before`, `during`), which belongs beside
-the existing checks. The layout in §8 must also **degrade rather than hang** when one exists.
+What remains is a stretch that **ends before it begins** — the writer picked the two scenes the wrong
+way round, and nothing else in the app would notice. `checkAnchorsRunForwards` compares the two
+scenes by container index, then scene index, then position fraction, which is the same ordering the
+timeline draws. It is an integrity finding: no arrangement of the story satisfies it.
+
+A scene the analysis was not given is skipped rather than reported — that is a filtered view, not a
+defect in the story.
 
 ### 7.3 What analysis should not do
 
@@ -254,14 +286,17 @@ it mean containers?
   a novel with one flashback.
 - **The narrative timeline** shows an Event by name — "The Three Hundred Year War" — instead of
   manufacturing "Chapter 4: ...".
-- **A historical timeline**, new: a `layout` + `svg` pair in
-  [`packages/shared/graphs/`](../packages/shared/graphs/) beside the ten that exist. It reads the
-  **relation graph**, not the index: a topological layering of the directional relations, with
-  `during` / `overlaps` widening a band rather than ordering it, and scene durations giving span. It
-  must handle a partial order (most pairs unrelated) and survive a cycle (§7.2).
+- **The timeline draws both**, and this replaced the separate historical-timeline screen the section
+  originally called for. Once an anchor states *when* against the same measured axis the scenes are
+  already on, a second canvas has nothing extra to say: `buildStoryTimelineLayout` takes the anchored
+  containers, resolves each stretch to pixels, packs them into lanes above the scene rows, and the
+  screen gains an **Events** toggle beside the scale control.
 
-  Drawing both axes on one canvas would re-create exactly the conflation this feature removes. Two
-  axes, two drawings.
+  The earlier argument for two drawings — "drawing both axes on one canvas re-creates the conflation
+  this feature removes" — was answered by the model change rather than overruled. The conflation it
+  feared was *interleaving two numberings into one order*. Bands do not do that: the axis stays the
+  chapters', and an anchored container is drawn against it rather than inserted into it. The user
+  asked for one screen, and by then the model made it the simpler thing to build.
 
 - **Sort by chronology**, once §5 exists: the chapter list gains a "timeline" sort that reads the
   relation graph instead of the index — the story rearranged into the order things happened. It is a
@@ -394,8 +429,8 @@ real SQLite database with the production migrations applied.
 | **1** (**done**) | The protocol gate (§10): `SyncProtocol.ts`, `/kerescheck`, the request header, the 426 on `/sync`, the registration check | Incompatible peers refuse each other, loudly and early |
 | **2** (**done**) | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, and the Story Analysis fix (§7.1) | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
 | **3** (**done**) | The combined list grouped events-first, the hourglass, the kind switch at creation, the conversion modal, reordering scoped per kind | A writer can make one |
-| **4** (**done**) | `ChapterRelation`: table, schemas, both sync handlers, service, export format V7, the chronology section on the chapter screen, the cycle check (§7.2) | Chronology is recordable |
-| **5** (**done**) | The chronology layout + svg in `packages/shared/graphs/`, the chronology screen with SVG export, the presence-matrix events filter | Chronology is visible |
+| **4** (**done**, **rebuilt**) | `ChapterAnchor`: table, schemas, both sync handlers, service, export format V7, the "When does this happen?" section on the chapter screen, `checkAnchorsRunForwards` (§7.2) | When a container happens is recordable |
+| **5** (**done**, **rebuilt**) | Anchor resolution and event lanes in `storyTimelineLayout` + `storyTimelineSvg`, the Events toggle on the timeline screen, the presence-matrix events filter | When a container happens is visible, on the screen that already draws time |
 | **6** (**done**) | `Scene.locationId` nullable, the protocol raised to 2 (§10.3), the narrative timeline confirmed spine-only, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |
 
 Phase 0 is not optional and does not depend on the rest. Phase 1 gates Phase 6 specifically: nulls
@@ -410,12 +445,15 @@ is a visible bug in every story that uses the feature.
 1. **The toggle's conflict story.** Two devices toggling different containers in the same story
    produce reorders in two scopes whose combination has never been exercised. This is the reason
    Phase 0 exists, and the single thing most likely to be got wrong.
-2. **`ChapterRelation` is a new entity inside sync.** Unlike `packs`, which sits outside the engine
+2. **`ChapterAnchor` is a new entity inside sync.** Unlike `packs`, which sits outside the engine
    entirely, this needs a client handler, an API handler, an operation-log entity type, conflict
    behaviour and three migrations. It is the largest single piece of work in the plan, and the reason
    it has a phase to itself.
-3. **The chronology graph can be contradicted, and the layout must not hang.** §7.2 detects cycles;
-   the renderer has to survive one that has not been fixed yet.
+3. ~~**The chronology graph can be contradicted, and the layout must not hang.**~~ Retired with the
+   relation model: a stretch cannot participate in a cycle, so there is nothing for the layout to
+   hang on. What replaced it is smaller — a stretch anchored to a scene the reader has filtered out.
+   The layout lists those by name (`unanchoredNames`) rather than dropping them, because an anchor
+   the writer stated and the app silently omits reads as lost data.
 4. **An old client that already holds a newer story.** The gate stops new damage; it does not undo a
    story already pulled. The client is in beta and older clients are already drifting out of
    compatibility, which is the argument for accepting this rather than building a migration path.
@@ -429,7 +467,7 @@ is a visible bug in every story that uses the feature.
 
 ## 14. Pending: the example stories
 
-The six bundled examples were bumped to format V7 and declare `chapterRelations: []`. They are valid
+The six bundled examples were bumped to format V7 and declare `chapterAnchors: []`. They are valid
 packages, and it is true of them - a story written before chronology existed states none. But the
 guard over them is named *"ships every public-domain example as a complete showcase of applicable
 features"*, and on that promise they now fall short: nothing in the catalogue demonstrates an event

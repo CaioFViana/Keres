@@ -104,15 +104,15 @@ const migrateV5ToV6: StoryExportMigration = {
 /**
  * V6 -> V7
  *
- * Chronology relations between containers, which are what makes an event more than a chapter
- * without a number. A package written before them simply has none - the story it describes had no
- * way to state one.
+ * Where each container sits on the story's timeline, which is what makes an event more than a
+ * chapter without a number. A package written before them simply has none - the story it describes
+ * had no way to say when anything happened.
  */
 const migrateV6ToV7: StoryExportMigration = {
   fromVersion: 6,
   migrate: (data) => ({
     ...data,
-    chapterRelations: Array.isArray(data?.chapterRelations) ? data.chapterRelations : [],
+    chapterAnchors: Array.isArray(data?.chapterAnchors) ? data.chapterAnchors : [],
   }),
 };
 

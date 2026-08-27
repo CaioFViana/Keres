@@ -24,6 +24,8 @@ import migration_20 from './0019_pack_visibility';
 import migration_21 from './0020_closed_timeslip';
 import migration_22 from './0021_steep_young_avengers';
 import migration_23 from './0022_petite_peter_parker';
+import migration_24 from './0023_milky_morgan_stark';
+import migration_25 from './0024_damp_veda';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -49,6 +51,8 @@ const migrations = [
   { id: 21, name: '0020_closed_timeslip', run: migration_21 },
   { id: 22, name: '0021_steep_young_avengers', run: migration_22 },
   { id: 23, name: '0022_petite_peter_parker', run: migration_23 },
+  { id: 24, name: '0023_milky_morgan_stark', run: migration_24 },
+  { id: 25, name: '0024_damp_veda', run: migration_25 },
 ];
 
 export default migrations;

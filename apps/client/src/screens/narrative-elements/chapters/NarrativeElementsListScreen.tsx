@@ -586,19 +586,6 @@ const NarrativeElementsListScreen = () => {
                 <Ionicons name="bar-chart-outline" size={26} color={colors.text} />
               </TouchableOpacity>
             )}
-            {/*
-              The chronology, beside the narrative timeline and never instead of it: they are two
-              axes and the pairing is the point. Shown for a branching story too - the order things
-              happened is a question worth asking there as well, and arguably more so.
-            */}
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Chronology')}
-              style={styles.headerButton}
-              accessibilityLabel={t('chronology_screen_title')}
-              testID="open-chronology"
-            >
-              <Ionicons name="hourglass-outline" size={26} color={colors.text} />
-            </TouchableOpacity>
             {canEdit && (
               <TouchableOpacity onPress={handleReorderPress} style={styles.headerButton}>
                 <Ionicons name="swap-vertical" size={26} color={colors.text} />

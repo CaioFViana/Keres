@@ -35,7 +35,7 @@ export const CURRENT_STORY_FORMAT_VERSION = 7;
  *
  * **2** - `Scene.locationId` became nullable. A client on 1 declares `location_id TEXT NOT NULL`
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
- * retry loop with no way out from inside the app. `ChapterRelation` and the container `type` column
+ * retry loop with no way out from inside the app. `ChapterAnchor` and the container `type` column
  * arrived in the same release; those an older peer merely ignores, but the null it cannot survive.
  */
 export const SYNC_PROTOCOL_VERSION = 2;

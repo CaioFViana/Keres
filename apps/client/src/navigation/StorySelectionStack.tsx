@@ -254,6 +254,10 @@ const StorySelectionNavigator = () => {
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
+  const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
+    ({ color, size }: { color: string; size: number }) => (
+      <Ionicons name={name} color={color} size={size} />
+    );
 
   return (
     <Drawer.Navigator
@@ -361,6 +365,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('story_selection_title'),
           drawerLabel: t('story_selection_title'),
+          drawerIcon: drawerIcon('book-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -375,6 +380,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('manage_servers'),
           drawerLabel: t('manage_servers'),
+          drawerIcon: drawerIcon('server-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -389,6 +395,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('manage_friendships'),
           drawerLabel: t('manage_friendships'),
+          drawerIcon: drawerIcon('people-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -408,6 +415,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('import_export_title'),
           drawerLabel: t('import_export_title'),
+          drawerIcon: drawerIcon('swap-horizontal-outline'),
         }}
       />
       {/*
@@ -422,6 +430,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('publish_story_title'),
           drawerLabel: t('publish_story_title'),
+          drawerIcon: drawerIcon('cloud-upload-outline'),
           drawerItemStyle: {
             height: hasServers ? undefined : 0,
             overflow: 'hidden',
@@ -443,6 +452,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('packs_title'),
           drawerLabel: t('packs_title'),
+          drawerIcon: drawerIcon('archive-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -458,6 +468,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('examples_title'),
           drawerLabel: t('examples_title'),
+          drawerIcon: drawerIcon('flask-outline'),
         }}
       />
       <Drawer.Screen
@@ -466,6 +477,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('story_devices_title'),
           drawerLabel: t('story_devices_title'),
+          drawerIcon: drawerIcon('bulb-outline'),
           // The screen stays registered when the setting is off so a direct navigation
           // or a help link does not break; only the menu item disappears.
           drawerItemStyle: {
@@ -483,7 +495,11 @@ const StorySelectionNavigator = () => {
       <Drawer.Screen
         name="HelpDrawer"
         component={HelpStackNavigator}
-        options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+        options={{
+          title: t('help_title'),
+          drawerLabel: t('help_title'),
+          drawerIcon: drawerIcon('help-circle-outline'),
+        }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
             e.preventDefault();
@@ -497,6 +513,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('settings_title'),
           drawerLabel: t('settings_title'),
+          drawerIcon: drawerIcon('settings-outline'),
         }}
       />
     </Drawer.Navigator>

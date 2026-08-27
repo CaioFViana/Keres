@@ -24,19 +24,15 @@ import ResizableDrawerContent, {
 import { screenHelpPage } from '../help/contextualHelp';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import type { ChapterDetailScreenParamList } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
-import ChapterDetailScreen from '../screens/narrative-elements/chapters/ChapterDetailScreen';
-import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
-import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
+import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
+import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import type { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
-import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
-import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
-import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
+import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
@@ -53,7 +49,28 @@ import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
-import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import type { ChapterDetailScreenParamList } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import ChapterDetailScreen from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
+import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
+import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
+import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
+import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
+import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
+import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
+import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
+import NoteDetailScreen from '../screens/notes/NoteDetailScreen';
+import NoteFormScreen from '../screens/notes/NoteFormScreen';
+import NotesScreen from '../screens/notes/NoteListScreen';
+import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
+import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
+import PlotDetailScreen from '../screens/plots/PlotDetailScreen';
+import PlotFormScreen from '../screens/plots/PlotFormScreen';
+import PlotListScreen from '../screens/plots/PlotListScreen';
+import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
+import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
+import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
 import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
 import StatFormScreen from '../screens/stats/StatFormScreen';
 import StatLadderScreen from '../screens/stats/StatLadderScreen';
@@ -62,15 +79,6 @@ import StatRankingScreen from '../screens/stats/StatRankingScreen';
 import StoryAgendaScreen from '../screens/storycalendars/StoryAgendaScreen';
 import StoryCalendarFormScreen from '../screens/storycalendars/StoryCalendarFormScreen';
 import StoryCalendarListScreen from '../screens/storycalendars/StoryCalendarListScreen';
-import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
-import NoteDetailScreen from '../screens/notes/NoteDetailScreen';
-import NoteFormScreen from '../screens/notes/NoteFormScreen';
-import NotesScreen from '../screens/notes/NoteListScreen';
-import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
-import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
-import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
-import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
-import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
@@ -83,15 +91,7 @@ import type { WorldRuleDetailScreenParamList } from '../screens/worldrules/World
 import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
-import PlotListScreen from '../screens/plots/PlotListScreen';
-import PlotDetailScreen from '../screens/plots/PlotDetailScreen';
-import PlotFormScreen from '../screens/plots/PlotFormScreen';
-import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
-import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
-import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
 import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
-import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
-import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
@@ -481,6 +481,11 @@ const CustomizationStackNavigator = () => {
 /// Main Drawer
 type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
 
+const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
+  ({ color, size }: { color: string; size: number }) => (
+    <Ionicons name={name} color={color} size={size} />
+  );
+
 const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
   const { colors } = useTheme();
   return (
@@ -623,6 +628,7 @@ const MainSystemNavigator = () => {
           component={MainDashboardScreen}
           options={{
             title: selectedStory?.title || t('dashboard_title'),
+            drawerIcon: drawerIcon('home-outline'),
             // The current story has to stand out from the drawer's other entries, which are only navigation -
             // without this, the story's name gets lost in the list as if it were just another item like
             // "Characters" or "Locations".
@@ -646,6 +652,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('global_search_title'),
             drawerLabel: t('global_search_title'),
+            drawerIcon: drawerIcon('search-outline'),
           }}
         />
         <Drawer.Screen
@@ -654,6 +661,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('characters_title'),
             drawerLabel: t('characters_title'),
+            drawerIcon: drawerIcon('people-outline'),
           }}
           listeners={({ navigation }) => ({
             // The Drawer's default behaviour, when an item is tapped, restores the nested state exactly as it was
@@ -674,6 +682,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('narrative_elements_title'),
             drawerLabel: t('narrative_elements_title'),
+            drawerIcon: drawerIcon('book-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -686,7 +695,11 @@ const MainSystemNavigator = () => {
           <Drawer.Screen
             name="PlotsStack"
             component={PlotsStackNavigator}
-            options={{ title: t('plots_title'), drawerLabel: t('plots_title') }}
+            options={{
+              title: t('plots_title'),
+              drawerLabel: t('plots_title'),
+              drawerIcon: drawerIcon('git-branch-outline'),
+            }}
             listeners={({ navigation }) => ({
               drawerItemPress: (e) => {
                 e.preventDefault();
@@ -701,6 +714,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('locations_title'),
             drawerLabel: t('locations_title'),
+            drawerIcon: drawerIcon('map-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -715,6 +729,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('items_title'),
             drawerLabel: t('items_title'),
+            drawerIcon: drawerIcon('cube-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -729,6 +744,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('tags_title'),
             drawerLabel: t('tags_title'),
+            drawerIcon: drawerIcon('pricetag-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -743,6 +759,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('world_rules_title'),
             drawerLabel: t('world_rules_title'),
+            drawerIcon: drawerIcon('globe-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -757,6 +774,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('notes_title'),
             drawerLabel: t('notes_title'),
+            drawerIcon: drawerIcon('document-text-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -771,6 +789,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('gallery_title'),
             drawerLabel: t('gallery_title'),
+            drawerIcon: drawerIcon('images-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -785,6 +804,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('customization_title'),
             drawerLabel: t('customization_title'),
+            drawerIcon: drawerIcon('color-wand-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -799,6 +819,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('comments_title'),
             drawerLabel: t('comments_title'),
+            drawerIcon: drawerIcon('chatbubbles-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -813,6 +834,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('operation_logs_title'),
             drawerLabel: t('operation_logs_title'),
+            drawerIcon: drawerIcon('time-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -824,12 +846,7 @@ const MainSystemNavigator = () => {
         <Drawer.Screen
           name="StoryAnalysis"
           component={StoryAnalysisScreen}
-          options={{ title: t('story_analysis_title') }}
-        />
-        <Drawer.Screen
-          name="StorySettings"
-          component={StorySettingsScreen}
-          options={{ title: t('story_settings_title') }}
+          options={{ title: t('story_analysis_title'), drawerIcon: drawerIcon('analytics-outline') }}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"
@@ -837,6 +854,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('story_devices_title'),
             drawerLabel: t('story_devices_title'),
+            drawerIcon: drawerIcon('bulb-outline'),
             // The screen stays registered when the setting is off so a direct navigation or a help link does not
             // break; only the menu item disappears.
             drawerItemStyle: {
@@ -854,7 +872,11 @@ const MainSystemNavigator = () => {
         <Drawer.Screen
           name="HelpDrawer"
           component={HelpStackNavigator}
-          options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+          options={{
+            title: t('help_title'),
+            drawerLabel: t('help_title'),
+            drawerIcon: drawerIcon('help-circle-outline'),
+          }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
@@ -863,10 +885,16 @@ const MainSystemNavigator = () => {
           })}
         />
         <Drawer.Screen
+          name="StorySettings"
+          component={StorySettingsScreen}
+          options={{ title: t('story_settings_title'), drawerIcon: drawerIcon('settings-outline') }}
+        />
+        <Drawer.Screen
           name="StorySelection"
           component={() => <View />} // A dummy component, as it won't be displayed
           options={{
             title: t('story_selection_title'),
+            drawerIcon: drawerIcon('exit-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {

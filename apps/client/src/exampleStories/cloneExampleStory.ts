@@ -100,7 +100,7 @@ export function cloneExampleStoryForInstall(
     scenes: example.scenes.map((scene) => ({
       ...cloneEntity(scene),
       storyId,
-      chapterId: remapId(scene.chapterId),
+      chapterId: remapNullableId(scene.chapterId),
       // A scene may have no place at all; there is then nothing to remap.
       locationId: scene.locationId ? remapId(scene.locationId) : null,
     })),

@@ -12,9 +12,7 @@ export const scenes = table('scenes', {
   storyId: text('story_id')
     .notNull()
     .references(() => stories.id),
-  chapterId: text('chapter_id')
-    .notNull()
-    .references(() => chapters.id),
+  chapterId: text('chapter_id').references(() => chapters.id),
   /** Nullable: a scene may happen nowhere in particular. See `SceneSchemas.ts`. */
   locationId: text('location_id').references(() => locations.id),
   name: text('name').notNull(),

@@ -56,7 +56,10 @@ export function useChapterAnchors(
     const byId = new Map(containers.filter((one) => !one.isDeleted).map((one) => [one.id, one]));
     setScenes(
       loadedScenes
-        .filter((scene) => !scene.isDeleted && byId.has(scene.chapterId))
+        .filter(
+          (scene): scene is typeof scene & { chapterId: string } =>
+            !scene.isDeleted && Boolean(scene.chapterId && byId.has(scene.chapterId)),
+        )
         .sort(
           (a, b) =>
             (byId.get(a.chapterId)?.index ?? 0) - (byId.get(b.chapterId)?.index ?? 0) ||

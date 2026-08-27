@@ -452,10 +452,6 @@ const SceneFormScreen = () => {
       AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
-    if (!chapterId) {
-      AppAlert.alert(t('error'), t('chapter_required'));
-      return;
-    }
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;
@@ -823,9 +819,13 @@ const SceneFormScreen = () => {
         options={chapterOptions}
         value={chapterId}
         onValueChange={setChapterId}
-        placeholder={t('select_chapter')}
+        placeholder={t('select_chapter_optional')}
         multiple={false}
+        allowDeselect
       />
+      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+        {t('scene_chapter_optional_hint')}
+      </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('location')}</Text>
       {/*

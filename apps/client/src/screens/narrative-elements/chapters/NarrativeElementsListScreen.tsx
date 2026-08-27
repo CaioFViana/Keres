@@ -33,6 +33,7 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { setDocumentTitle } from '../../../utils/documentTitle';
+import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -52,8 +53,11 @@ const matchesSceneQuery = (scene: SceneSelect, query: string) =>
 const matchesChoiceQuery = (choice: ChoiceSelect, query: string) =>
   [choice.text, choice.notes].some((value) => value?.toLocaleLowerCase().includes(query));
 
+const sceneBelongsToGroup = (scene: SceneSelect, groupId: string) =>
+  isUnchapteredGroup(groupId) ? !scene.chapterId : scene.chapterId === groupId;
+
 const scenesShownForChapter = (chapterId: string, allScenes: SceneSelect[], query: string) => {
-  const chapterScenes = allScenes.filter((scene) => scene.chapterId === chapterId);
+  const chapterScenes = allScenes.filter((scene) => sceneBelongsToGroup(scene, chapterId));
   if (!query) return chapterScenes;
   const matchingScenes = chapterScenes.filter((scene) => matchesSceneQuery(scene, query));
   return matchingScenes.length > 0 ? matchingScenes : chapterScenes;
@@ -295,7 +299,10 @@ const NarrativeElementsListScreen = () => {
     [navigation],
   );
   const handleAddScene = useCallback(
-    (chapterId: string) => navigation.navigate('SceneForm', { chapterId }),
+    (chapterId: string) =>
+      navigation.navigate('SceneForm', {
+        chapterId: isUnchapteredGroup(chapterId) ? undefined : chapterId,
+      }),
     [navigation],
   );
   const handleToggleSceneFavorite = useCallback(
@@ -366,7 +373,7 @@ const NarrativeElementsListScreen = () => {
       );
     });
     const direction = sortDirection === 'desc' ? -1 : 1;
-    return [...filtered]
+    const sorted = [...filtered]
       .sort((a, b) => {
         const by =
           activeSort === 'name'
@@ -382,6 +389,53 @@ const NarrativeElementsListScreen = () => {
         ...chapter,
         isFavorite: chapter.isFavorite,
       }));
+
+    const unchapteredScenes = scenesWithFavoriteState.filter((scene) => !scene.chapterId);
+    const unchapteredHasFavorite = unchapteredScenes.some((scene) => scene.isFavorite);
+    const unchapteredPassesFavorite =
+      favoriteFilterState === 'all' ||
+      (favoriteFilterState === 'favorite' && unchapteredHasFavorite) ||
+      (favoriteFilterState === 'not-favorite' && !unchapteredHasFavorite);
+    const unchapteredPassesAdvanced =
+      !advancedMatches || unchapteredScenes.some((scene) => advancedMatches.sceneIds.has(scene.id));
+    const unchapteredPassesTags =
+      activeTagIds.length === 0 ||
+      unchapteredScenes.some((scene) =>
+        (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
+      );
+    const unchapteredPassesQuery =
+      !query || unchapteredScenes.some((scene) => matchesSceneQuery(scene, query));
+    const showEmptyUnchaptered =
+      canEdit &&
+      !query &&
+      !advancedMatches &&
+      activeTagIds.length === 0 &&
+      favoriteFilterState === 'all';
+    if (
+      (unchapteredScenes.length > 0 &&
+        unchapteredPassesFavorite &&
+        unchapteredPassesAdvanced &&
+        unchapteredPassesTags &&
+        unchapteredPassesQuery) ||
+      (showEmptyUnchaptered && unchapteredScenes.length === 0 && storyId)
+    ) {
+      sorted.push({
+        id: UNCHAPTERED_GROUP_ID,
+        storyId: unchapteredScenes[0]?.storyId ?? storyId ?? '',
+        name: t('unchaptered_scenes'),
+        index: Number.MAX_SAFE_INTEGER,
+        type: 'chapter',
+        summary: null,
+        extraNotes: null,
+        isFavorite: false,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      });
+    }
+    return sorted;
   }, [
     activeSort,
     activeTagIds,
@@ -394,13 +448,16 @@ const NarrativeElementsListScreen = () => {
     sortDirection,
     tagsByChapterId,
     tagsBySceneId,
+    t,
+    canEdit,
+    storyId,
   ]);
 
   const memoizedChapterListItem = useCallback(
     ({ item }: { item: ChapterSelect }) => {
       const query = searchQuery.trim().toLocaleLowerCase();
-      const allChapterScenes = scenesWithFavoriteState.filter(
-        (scene) => scene.chapterId === item.id,
+      const allChapterScenes = scenesWithFavoriteState.filter((scene) =>
+        sceneBelongsToGroup(scene, item.id),
       );
       const queryScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
       const choiceMatchedSceneIds = new Set(
@@ -434,7 +491,7 @@ const NarrativeElementsListScreen = () => {
           : filteredByFavorite;
       const hasSceneMatch = query
         ? scenesWithFavoriteState.some(
-            (scene) => scene.chapterId === item.id && matchesSceneQuery(scene, query),
+            (scene) => sceneBelongsToGroup(scene, item.id) && matchesSceneQuery(scene, query),
           ) || choiceMatchedSceneIds.size > 0
         : chapterScenes.length !== allChapterScenes.length;
 
@@ -456,6 +513,9 @@ const NarrativeElementsListScreen = () => {
               onToggleFavorite={handleToggleSceneFavorite}
               onAddScene={() => handleAddScene(item.id)}
               onReorderScenes={() => setReorderChapterId(item.id)}
+              unchaptered={isUnchapteredGroup(item.id)}
+              sortBy={activeSort}
+              sortDirection={sortDirection}
               expandedSceneIds={expandedSceneIds}
               onSceneExpandedChange={onSceneExpandedChange}
               tagsBySceneId={tagsBySceneId}
@@ -475,6 +535,8 @@ const NarrativeElementsListScreen = () => {
       handleToggleFavorite,
       handleToggleSceneFavorite,
       handleViewDetails,
+      activeSort,
+      sortDirection,
       scenesWithFavoriteState,
       selectedStory?.type,
       searchQuery,

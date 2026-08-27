@@ -109,8 +109,10 @@ const PlotMatrixScreen = () => {
     const matrixScenes = scenes.map((scene) => ({
       id: scene.id,
       name: scene.name,
-      chapterName: chapterName.get(scene.chapterId) ?? '',
-      chapterColor: chapterColors.get(scene.chapterId) ?? colors.border,
+      chapterName: scene.chapterId ? (chapterName.get(scene.chapterId) ?? '') : '',
+      chapterColor: scene.chapterId
+        ? (chapterColors.get(scene.chapterId) ?? colors.border)
+        : colors.border,
     }));
     const rows: PresenceMatrixRow[] = selectedIds
       .map((plotId) => plots.find((plot) => plot.id === plotId))
@@ -310,7 +312,9 @@ const PlotMatrixScreen = () => {
       {selectedScene && (
         <GraphNodeSheet
           title={selectedScene.name}
-          subtitle={{ text: chapterNameOf(selectedScene.chapterId) ?? '' }}
+          subtitle={{
+            text: chapterNameOf(selectedScene.chapterId) ?? t('unchaptered_scenes'),
+          }}
           sections={[
             { title: t('summary'), description: selectedScene.summary || t('common_na') },
             {

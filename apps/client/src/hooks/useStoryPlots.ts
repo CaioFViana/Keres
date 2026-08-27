@@ -26,7 +26,7 @@ export interface StoryPlotsData {
   relationsOf: (plotId: string) => PlotSceneSelect[];
   sceneById: (sceneId: string) => SceneSelect | undefined;
   /** A scene's chapter name: it is what situates the scene outside its own chapter's list. */
-  chapterNameOf: (chapterId: string) => string | undefined;
+  chapterNameOf: (chapterId: string | null | undefined) => string | undefined;
   plotById: (plotId: string) => PlotSelect | undefined;
   /** Covered scenes / the story's active scenes, with the percentage rounded. */
   coverageOf: (plotId: string) => { covered: number; total: number; percentage: number };
@@ -102,7 +102,8 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
       relations,
       relationsOf: (plotId: string) => byPlot.get(plotId) ?? [],
       sceneById: (sceneId: string) => scenesById.get(sceneId),
-      chapterNameOf: (chapterId: string) => chapterNames.get(chapterId),
+      chapterNameOf: (chapterId: string | null | undefined) =>
+        chapterId ? chapterNames.get(chapterId) : undefined,
       plotById: (plotId: string) => plotsById.get(plotId),
       coverageOf: (plotId: string) => {
         const covered = byPlot.get(plotId)?.length ?? 0;

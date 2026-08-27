@@ -254,7 +254,7 @@ const SceneDetailScreen = () => {
       !sceneServiceRef.current ||
       !selectedStory?.id ||
       !sceneId ||
-      !chapter?.id ||
+      !scene ||
       selectedStory.type !== 'linear'
     ) {
       setPreviousScene(undefined);
@@ -265,7 +265,7 @@ const SceneDetailScreen = () => {
       const { previousScene, nextScene } = await sceneServiceRef.current.getPreviousNextScenes(
         selectedStory.id,
         sceneId,
-        chapter.id,
+        scene.chapterId,
       );
       setPreviousScene(previousScene);
       setNextScene(nextScene);
@@ -274,7 +274,7 @@ const SceneDetailScreen = () => {
       setPreviousScene(undefined);
       setNextScene(undefined);
     }
-  }, [selectedStory?.id, sceneId, chapter?.id, selectedStory?.type]);
+  }, [selectedStory?.id, sceneId, scene, selectedStory?.type]);
 
   const fetchChoicesForScene = useCallback(async () => {
     if (
@@ -616,12 +616,14 @@ const SceneDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      {chapter && (
+      {chapter ? (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
           {chapter.name}
         </Text>
-      )}
+      ) : scene && !scene.chapterId ? (
+        <Text style={[styles.subTitle, { fontStyle: 'italic' }]}>{t('unchaptered_scenes')}</Text>
+      ) : null}
       <TagList tags={sceneTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
         storyId={scene.storyId}

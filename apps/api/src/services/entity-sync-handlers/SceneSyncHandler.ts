@@ -33,21 +33,23 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
    */
   private async validateRelatedEntities(
     storyId: string,
-    chapterId: string,
+    chapterId: string | null | undefined,
     locationId: string | null | undefined,
   ): Promise<void> {
-    const chapter = await db.query.chapters.findFirst({
-      where: and(
-        eq(chapters.id, chapterId),
-        eq(chapters.storyId, storyId),
-        eq(chapters.isDeleted, false),
-      ),
-    });
-    if (!chapter) {
-      throw new SyncConflictError(
-        'referenced_entity_deleted',
-        `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
-      );
+    if (chapterId) {
+      const chapter = await db.query.chapters.findFirst({
+        where: and(
+          eq(chapters.id, chapterId),
+          eq(chapters.storyId, storyId),
+          eq(chapters.isDeleted, false),
+        ),
+      });
+      if (!chapter) {
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
+          `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
+        );
+      }
     }
 
     if (!locationId) return;
@@ -144,11 +146,13 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    // If chapterId or locationId are being updated, validate them
-    if (validatedChanges.chapterId || validatedChanges.locationId !== undefined) {
-      const newChapterId = validatedChanges.chapterId || currentEntity.chapterId;
-      // `?? `, not `|| `: clearing the place sends `null`, which the second would silently replace
-      // with whatever was there before - the one edit this branch exists to validate.
+    if (validatedChanges.chapterId !== undefined || validatedChanges.locationId !== undefined) {
+      // `??` not `||`: clearing chapter or place sends `null`, which `||` would replace with the
+      // previous value and skip the validation this branch exists for.
+      const newChapterId =
+        validatedChanges.chapterId !== undefined
+          ? validatedChanges.chapterId
+          : currentEntity.chapterId;
       const newLocationId = validatedChanges.locationId ?? currentEntity.locationId;
       await this.validateRelatedEntities(storyId, newChapterId, newLocationId);
     }

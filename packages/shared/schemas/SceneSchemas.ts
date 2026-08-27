@@ -13,7 +13,11 @@ const SceneTimingValueSchema = z
 export const SceneSchema = z.object({
   id: z.string(),
   storyId: z.string(),
-  chapterId: z.string(),
+  /**
+   * Which container this scene is told in. Null is a fragment: it exists, it is listed under
+   * "Unchaptered", and it does not occupy a slot in any chapter's 1..N.
+   */
+  chapterId: z.string().nullable(),
   /**
    * Where the scene happens, when it happens anywhere in particular.
    *

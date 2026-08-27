@@ -1,7 +1,7 @@
 import type { Scene } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { SceneInsert, SceneSelect } from '../../db/schema';
 import { chapters, scenes } from '../../db/schema';
@@ -62,7 +62,7 @@ export interface SceneService {
   getPreviousNextScenes(
     storyId: string,
     currentSceneId: string,
-    chapterId: string,
+    chapterId: string | null,
   ): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }>;
 }
 
@@ -74,14 +74,17 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
    * and the only one the API accepts when reordering (it refuses a reorder whose lowest index is not 1 or
    * which does not end at N).
    */
-  const nextIndexInChapter = async (storyId: string, chapterId: string): Promise<number> => {
+  const nextIndexInChapter = async (
+    storyId: string,
+    chapterId: string | null,
+  ): Promise<number> => {
     const siblings = await db
       .select({ index: scenes.index })
       .from(scenes)
       .where(
         and(
           eq(scenes.storyId, storyId),
-          eq(scenes.chapterId, chapterId),
+          chapterId ? eq(scenes.chapterId, chapterId) : isNull(scenes.chapterId),
           eq(scenes.isDeleted, false),
         ),
       )
@@ -99,9 +102,10 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
    */
   const renumberChapterScenes = async (
     storyId: string,
-    chapterId: string,
+    chapterId: string | null,
     userIdToLog: string,
   ): Promise<void> => {
+    if (!chapterId) return;
     const living = await db
       .select({ id: scenes.id, index: scenes.index, createdAt: scenes.createdAt })
       .from(scenes)
@@ -304,14 +308,13 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       // Changing chapter means changing queue: the scene enters at the end of the new one and the hole it
       // leaves in the old one is closed just below. Here, and not on the form screen, so that any path that
       // moves a scene keeps both numberings intact.
-      const movedFromChapterId =
-        sceneData.chapterId && sceneData.chapterId !== originalScene.chapterId
-          ? originalScene.chapterId
-          : null;
-      if (movedFromChapterId) {
+      const chapterChanging =
+        sceneData.chapterId !== undefined && sceneData.chapterId !== originalScene.chapterId;
+      const movedFromChapterId = chapterChanging ? originalScene.chapterId : null;
+      if (chapterChanging && sceneData.chapterId) {
         sceneData = {
           ...sceneData,
-          index: await nextIndexInChapter(originalScene.storyId, sceneData.chapterId!),
+          index: await nextIndexInChapter(originalScene.storyId, sceneData.chapterId),
         };
       }
 
@@ -532,15 +535,15 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     async getPreviousNextScenes(
       storyId: string,
       currentSceneId: string,
-      chapterId: string,
+      chapterId: string | null,
     ): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }> {
       const allScenesInChapter = await db.query.scenes.findMany({
         where: and(
           eq(scenes.storyId, storyId),
-          eq(scenes.chapterId, chapterId),
+          chapterId ? eq(scenes.chapterId, chapterId) : isNull(scenes.chapterId),
           eq(scenes.isDeleted, false),
         ),
-        orderBy: asc(scenes.index),
+        orderBy: chapterId ? asc(scenes.index) : asc(scenes.name),
       });
 
       const currentSceneIndex = allScenesInChapter.findIndex(

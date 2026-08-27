@@ -27,6 +27,7 @@ import migration_23 from './0022_petite_peter_parker';
 import migration_24 from './0023_milky_morgan_stark';
 import migration_25 from './0024_damp_veda';
 import migration_26 from './0025_stiff_stature';
+import migration_27 from './0026_married_gladiator';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -55,6 +56,7 @@ const migrations = [
   { id: 24, name: '0023_milky_morgan_stark', run: migration_24 },
   { id: 25, name: '0024_damp_veda', run: migration_25 },
   { id: 26, name: '0025_stiff_stature', run: migration_26 },
+  { id: 27, name: '0026_married_gladiator', run: migration_27 },
 ];
 
 export default migrations;

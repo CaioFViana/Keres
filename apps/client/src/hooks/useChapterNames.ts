@@ -14,7 +14,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  */
 export function useChapterNames(
   scenes: Pick<SceneSelect, 'storyId'>[],
-): (chapterId: string) => string | undefined {
+): (chapterId: string | null | undefined) => string | undefined {
   const drizzleDb = useDrizzle();
   const storyId = scenes[0]?.storyId;
   const [names, setNames] = useState<Map<string, string>>(new Map());
@@ -39,5 +39,8 @@ export function useChapterNames(
     return () => entityEventEmitter.off('chapter_changed', reload);
   }, [reload]);
 
-  return useCallback((chapterId: string) => names.get(chapterId), [names]);
+  return useCallback(
+    (chapterId: string | null | undefined) => (chapterId ? names.get(chapterId) : undefined),
+    [names],
+  );
 }

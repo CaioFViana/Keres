@@ -41,9 +41,10 @@ export function orderItemJourneysByNarrative<T extends OrderableItemJourney>(
 
   const orderKey = (journey: T): [number, number, number, number] => {
     const scene = sceneById.get(journey.sceneId);
-    const chapterIndex = scene
-      ? (chapterIndexById.get(scene.chapterId) ?? Number.MAX_SAFE_INTEGER)
-      : Number.MAX_SAFE_INTEGER;
+    const chapterIndex =
+      scene?.chapterId != null
+        ? (chapterIndexById.get(scene.chapterId) ?? Number.MAX_SAFE_INTEGER)
+        : Number.MAX_SAFE_INTEGER;
     const sceneIndex = scene?.index ?? Number.MAX_SAFE_INTEGER;
     // An unknown scene (a loose reference) falls to the end, along with the rest of what did not resolve.
     const layer =

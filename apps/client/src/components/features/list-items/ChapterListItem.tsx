@@ -9,6 +9,7 @@ import GenericExpandedListItemWithActions from '@/src/components/common/lists/Ge
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
+import { isUnchapteredGroup } from '@/src/utils/narrativeSceneOrder';
 
 interface ChapterListItemProps {
   chapter: ChapterSelect;
@@ -45,7 +46,17 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
    * one visual difference between the two kinds, which are otherwise the same container.
    */
   const renderHeaderContent = (chap: ChapterSelect) =>
-    chap.type === 'event' ? (
+    isUnchapteredGroup(chap.id) ? (
+      <View style={styles.headerLeft}>
+        <Text
+          style={[styles.name, { fontStyle: 'italic', color: colors.textSecondary }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {chap.name}
+        </Text>
+      </View>
+    ) : chap.type === 'event' ? (
       <View style={styles.headerLeft}>
         <Ionicons
           name="hourglass-outline"
@@ -88,8 +99,8 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
   return (
     <GenericExpandedListItemWithActions
       item={chapter}
-      onToggleFavorite={onToggleFavorite}
-      onViewDetails={onViewDetails}
+      onToggleFavorite={isUnchapteredGroup(chapter.id) ? undefined : onToggleFavorite}
+      onViewDetails={isUnchapteredGroup(chapter.id) ? undefined : onViewDetails}
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
       initialExpanded={initialExpanded}

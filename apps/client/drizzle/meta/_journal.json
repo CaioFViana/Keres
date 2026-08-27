@@ -183,6 +183,13 @@
       "when": 1787845795608,
       "tag": "0025_stiff_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1787849085819,
+      "tag": "0026_married_gladiator",
+      "breakpoints": true
     }
   ]
 }

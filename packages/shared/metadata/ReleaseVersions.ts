@@ -37,8 +37,12 @@ export const CURRENT_STORY_FORMAT_VERSION = 7;
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
  * retry loop with no way out from inside the app. `ChapterAnchor` and the container `type` column
  * arrived in the same release; those an older peer merely ignores, but the null it cannot survive.
+ *
+ * **3** - `Scene.chapterId` became nullable. A protocol-2 client still declares
+ * `chapter_id TEXT NOT NULL`, so a fragment (a scene with no chapter) cannot be pulled. Same
+ * wedge as locationId, same answer.
  */
-export const SYNC_PROTOCOL_VERSION = 2;
+export const SYNC_PROTOCOL_VERSION = 3;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -47,8 +51,7 @@ export const SYNC_PROTOCOL_VERSION = 2;
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
  *
- * Raised to **2** with the line above, deliberately and not by momentum: there is no way to serve a
- * protocol-1 client safely once a scene can have no place. Nothing the server could send it would
- * be both truthful and insertable.
+ * Raised to **3** with the line above: a protocol-2 client cannot insert a scene that has no
+ * chapter, and lying by stuffing fragments into a numbered chapter would put them on the spine.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 2;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 3;

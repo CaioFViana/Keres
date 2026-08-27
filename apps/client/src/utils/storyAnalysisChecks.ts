@@ -75,8 +75,8 @@ export interface AnalysisScene {
   locationId: string | null;
   isStart: boolean;
   isFinish: boolean;
-  chapterId: string;
-  /** Position within the chapter: 1..N, with no holes and no repeats. */
+  chapterId: string | null;
+  /** Position within the chapter: 1..N, with no holes and no repeats. Null-chapter scenes skip this. */
   index: number;
 }
 
@@ -539,7 +539,10 @@ function checkAnchorsRunForwards(input: StoryAnalysisInput): StoryAnalysisFindin
   const positionOf = new Map(
     input.scenes.map((scene) => [
       scene.id,
-      [chapterIndex.get(scene.chapterId) ?? 0, scene.index] as const,
+      [
+        scene.chapterId ? (chapterIndex.get(scene.chapterId) ?? 0) : Number.MAX_SAFE_INTEGER,
+        scene.index,
+      ] as const,
     ]),
   );
   const fraction: Record<string, number> = { start: 0, middle: 0.5, end: 1 };

@@ -201,7 +201,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
 
           {orderedJourneys.map((journey) => {
             const scene = sceneById.get(journey.sceneId);
-            const chapter = scene ? chapterById.get(scene.chapterId) : undefined;
+            const chapter = scene?.chapterId ? chapterById.get(scene.chapterId) : undefined;
             const newOwner = journey.newCharacterOwnerId
               ? characterById.get(journey.newCharacterOwnerId)
               : undefined;

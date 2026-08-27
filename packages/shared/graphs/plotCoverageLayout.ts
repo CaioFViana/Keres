@@ -38,7 +38,7 @@ export interface PlotCoverageInput {
   plots: { id: string; name: string }[];
   chapters: CoverageChapter[];
   /** The story's active scenes, each with its chapter, in narrative order. */
-  scenes: { id: string; chapterId: string }[];
+  scenes: { id: string; chapterId: string | null }[];
   /** Live plot-scene relations. */
   relations: { plotId: string; sceneId: string }[];
 }
@@ -57,7 +57,7 @@ export function buildPlotCoverage(input: PlotCoverageInput): PlotCoverageEntry[]
     const coveredScenes = input.relations
       .filter((relation) => relation.plotId === plot.id)
       .map((relation) => chapterOfScene.get(relation.sceneId))
-      .filter((chapterId): chapterId is string => chapterId !== undefined);
+      .filter((chapterId): chapterId is string => Boolean(chapterId));
 
     const perChapter = new Map<string, number>();
     for (const chapterId of coveredScenes) {

@@ -49,22 +49,18 @@ school's ontology into every story in the app?** A freeform canvas adds capabili
 These are present-tense constraints, verified in the code. Under §1 they matter more than anything
 in the gap list, because they affect every user and cannot be opted out of.
 
-### 2.1 Every scene must have a location and a chapter
+### 2.1 ~~Every scene must have a location and a chapter~~ (location done; chapter now optional)
 
-`Scene.locationId` and `Scene.chapterId` are `string`, not `string | null`, in the shared entity and
-`.notNull()` in both database schemas. The client schema carries the assumption written down as a
-comment:
+`Scene.locationId` is `string | null` — a scene may happen nowhere in particular. That constraint
+from the first draft of this document is gone.
 
-```ts
-locationId: text('location_id').notNull(), // Assuming locationId is always present
-```
+`Scene.chapterId` is also `string | null`. A fragment, a study, a design note with scenes no longer
+has to invent a numbered chapter. Unchaptered scenes sit in a list bucket at the end ("Unchaptered" /
+"Sem capítulo"), sorted alphabetically by default (they have no 1..N of their own) and following the
+list's sort-by otherwise. They do not occupy the narrative spine, cannot be reordered as a chapter
+would, and are not offered as timeline anchors.
 
-A dream sequence, an abstract interlude, a framing poem, a character study, a design note — each is
-forced to invent a location. For a dictionary meant to serve any medium, this is the single most
-limiting thing in the model, and making `locationId` nullable is a small change.
-
-The chapter requirement is heavier (scene `index` is 1..N *within* the chapter), but the same
-question applies: must a fragment belong to a chapter before it can exist?
+What remains of this item is lighter: the *labels* are still Chapter/Scene (see §2.5).
 
 ### 2.2 A story must be linear or branching
 
@@ -73,36 +69,27 @@ order at all — a setting, a reference wiki, a campaign world — must still de
 narrative shapes it does not have. `Plot` compounds this: plots exist only in linear stories, so
 choosing "branching" removes a whole organizing tool.
 
-### 2.3 The timeline assumes the story is an ordered sequence of scenes
+### 2.3 ~~The timeline assumes the story is an ordered sequence of scenes~~ (Events exist)
 
-The timeline is *derived* from chapter → scene order. There is no `Event` entity independent of
-`Scene`. So world history that is not a scene — a war three centuries before chapter one, a
-character's birth, a treaty — has nowhere to live except as prose in a note. For a world bible, this
-is a structural gap, not a missing convenience.
+The timeline's **axis** is still the numbered spine (chapter → scene order). That is intentional:
+narrative order and chronology are two questions.
 
-### 2.4 Story Analysis already carries opinions
+What this section originally asked for is in the product: a container that is not a numbered chapter.
+`chapters.type` is `'chapter' | 'event'`. An Event holds scenes without a spine number; `chapterAnchors`
+place it against the spine (or measure it from the scenes it contains, or mark it as an instant).
+World history that is not "Chapter 4" has a home. Unchaptered scenes (§2.1) are the remaining
+fragments that do not even join an Event.
 
-`storyAnalysisChecks.ts` mixes two kinds of finding, and only one of them is medium-neutral:
+### 2.4 Story Analysis opinions are opt-in
 
-| Genuinely structural (true in any medium) | Opinionated (a judgement about the writer's work) |
-| --- | --- |
-| `analysis_choice_dangling_next_scene` | `analysis_character_no_scenes` |
-| `analysis_choice_dangling_scene` | `analysis_character_no_relationships` |
-| `analysis_scene_unreachable` | `analysis_location_unused` |
-| `analysis_no_start_scene` | `analysis_location_no_connections` |
-| `analysis_choice_never_satisfiable` | `analysis_item_unused` |
-| `analysis_scene_finish_with_choices` | `analysis_tag_unused` |
-| `analysis_attribute_*` (schema violations) | |
+The partition in `storyAnalysisChecks.ts` is written down and enforced. The six opinionated keys
+(`analysis_character_no_scenes`, `analysis_character_no_relationships`, `analysis_location_unused`,
+`analysis_location_no_connections`, `analysis_item_unused`, `analysis_tag_unused`) live in
+`COMPLETENESS_FINDING_KEYS` and fire only when `Story.completenessChecks` is on — **off by default**.
 
-The left column is integrity: a reference points at something that does not exist, or the graph
-cannot be traversed. The right column tells the writer their worldbuilding is wrong. A location that
-appears in no scene is not a defect in a story bible — it is a place that exists in the world.
-
-Under §1 this is where prescription is already leaking in. The options are to demote the right
-column to an opt-in category, or to reframe those findings as neutral inventory ("not yet
-referenced") rather than problems. **This boundary should be written down before Story Analysis
-grows**, because it is exactly where a craft-checking feature would enter and quietly turn Keres
-into an opinionated tool.
+Integrity findings (dangling choices, unreachable scenes, unsatisfiable checks, schema violations
+the writer declared, crooked 1..N numbering) stay always on. That is the boundary §5.1 asked to
+write before the checks multiplied. Keep it: craft checks must not become warnings.
 
 ### 2.5 The vocabulary is prose-shaped
 
@@ -148,17 +135,17 @@ Ranked by how well they add capability without imposing an ontology.
 | # | Gap | Typical of | Fit with §1 | Status in Keres |
 | --- | --- | --- | --- | --- |
 | 1 | **Freeform canvas / corkboard with dragging** | Scrivener, Plottr, Milanote, Campfire | **Excellent** — the least prescriptive surface that exists. Imposes no structure; works for panels, quests, encounters or scenes alike. | Graphs are auto-laid-out and view-only; the LocationGraph plan says "no visual editing" explicitly. |
-| 2 | **`Event` decoupled from `Scene`** | Aeon Timeline, World Anvil | **Excellent** — removes the constraint in §2.3 rather than adding a rule. | Absent. |
-| 3 | **Mention-based auto-linking and backlinks** | Obsidian, World Anvil (`[[…]]`) | **Excellent** — this is literally how a dictionary works. Additive, ignorable. | `SeeAlsoRelation` is explicit, mutual and manual. Typing a name in a field links nothing; there is no "mentioned in" panel. |
+| 2 | **`Event` decoupled from `Scene`** | Aeon Timeline, World Anvil | **Excellent** — removes the constraint in §2.3 rather than adding a rule. | **Shipped.** Not a new table: `chapters.type = 'event'` plus `chapterAnchors`. Scenes still live in a container; the container is no longer forced onto the spine. |
+| 3 | **Mention-based auto-linking and backlinks** | Obsidian, World Anvil (`[[…]]`) | **Excellent** — this is literally how a dictionary works. Additive, ignorable. | **Forward links shipped** (`Story.autoLinkMentions`): names in text become tappable, nothing is persisted. `SeeAlsoRelation` stays manual. **No "mentioned in" panel** (backlinks). |
 | 4 | **Custom in-world calendars** | World Anvil, Kanka, Fantasy Calendar | **Good** — describes a world, prescribes no narrative. | `AttributeType.DATE` is a deliberately floating civil date; scene timing reaches "eras". No custom months, leap rules or in-world arithmetic. |
 | 5 | **Image maps with pinned locations** | World Anvil, LegendKeeper, Kanka | **Good** — pure description, medium-agnostic. | There is a location *graph* (`contains` / `connected_to`) and a Gallery, but no map image with coordinates. |
 | 6 | **Research and reference items** — URLs, PDFs, clippings | Scrivener (Research), Milanote | **Good** — a dictionary that cannot hold a reference is odd. | `MEDIA_TYPES` is exactly `['image', 'video', 'audio']`. No link entity, no document entity. |
 | 7 | **Family trees / genealogy** | Kanka, World Anvil, Family Echo | **Good** — descriptive; optional per story. | `CharacterRelation` is a typed unordered pair drawn radially; no generation or descent semantics. |
 | 8 | **Series above Story** | LivingWriter, Campfire, World Anvil | **Good** — a shared dictionary across works is the premise scaled up. | `Story` is the top container. Sharing a character across two works means export/import, which clones with new ids. |
 | 9 | ~~**Generators** — names, tables, dice~~ | Kanka, World Anvil | **Cut** — ships one list shared by every user; see §5.4. | Absent. |
-| 10 | **Prebuilt entity-sheet templates** | Campfire, World Anvil | **Neutral if opt-in** — see §5.2. | `StorySchemaField` is a better mechanism than most competitors ship; no ready-made sets exist. |
+| 10 | **Prebuilt entity-sheet templates** | Campfire, World Anvil | **Neutral if opt-in** — see §5.2. | Packs at creation (§5.4). Shipped: Comic, Novel craft, Tabletop stats. |
 | 11 | **Guided questionnaires** — character interviews, thesauri | Bibisco, One Stop for Writers | **Careful** — helpful as prompts, prescriptive if they become required fields. | Mechanism exists (Suggestions, custom attributes); content does not. |
-| 12 | **Structure templates** (Save the Cat, 3-act, Story Circle) | Plottr | **Only as seeds** — see §5.2. | 55 device pages exist as *reading material* only. |
+| 12 | **Structure templates** (Save the Cat, 3-act, Story Circle) | Plottr | **Only as seeds** — see §5.2. | 54 device pages exist as *reading material* only. |
 | 13 | **AI assistance** | Sudowrite, Novelcrafter, Campfire | **Conflicts** — an AI that suggests is an AI with an opinion about your story. | Absent. Offline-first and self-hosting already make this read as a stance. |
 | 14 | **Real-time co-editing** — live cursors | Ellipsus, Google Docs | **Neutral** — orthogonal to the premise. | Asynchronous collaboration with OCC, conflict resolution, roles and field-anchored comments; no live presence. |
 | 15 | **Scene craft fields** — POV, goal/conflict/outcome, value shift | Fictionary, Save the Cat method | **Conflicts as native fields** — see §5.2. | Absent as columns; expressible today as custom attributes. |
@@ -167,17 +154,22 @@ Ranked by how well they add capability without imposing an ontology.
 
 ## 5. Recommendations
 
-### 5.1 Do the constraint removals first
+### 5.1 Constraint removals — what landed, what is left
 
 Nothing in §4 is worth as much as §2, because §2 affects every user and cannot be opted out of.
 
-1. **Make `Scene.locationId` nullable** (§2.1). Smallest change, largest philosophical return. The
-   assumption is already flagged in a comment in the schema.
-2. **Write down the Story Analysis boundary** (§2.4) — structural findings versus opinions, and a
-   rule that craft checks never become warnings. Cheap now, expensive after the checks multiply.
-3. **A per-story vocabulary layer** (§2.5) — the most direct expression of "any medium" available,
-   with no new entity and no change to the graph.
-4. **Reconsider the `linear | branching` binary** (§2.2), including whether `Plot` must stay
+**Done**
+
+1. **`Scene.locationId` nullable** (§2.1).
+2. **Story Analysis boundary** (§2.4) — `completenessChecks`, off by default.
+3. **`Event` as a container that is not a numbered chapter** (§2.3 / §4 #2) — type column, not a new table.
+4. **`Scene.chapterId` nullable** (§2.1) — fragments listed under Unchaptered; not on the spine.
+
+**Still open**
+
+5. **A per-story vocabulary layer** (§2.5) — the most direct expression of "any medium" available,
+   with no new entity and no change to the graph. The Comic pack adds fields; it does not rename Chapter → Page.
+6. **Reconsider the `linear | branching` binary** (§2.2), including whether `Plot` must stay
    linear-only. A world bible with no narrative order has no honest option today.
 
 ### 5.2 What changed from the earlier draft of this document
@@ -212,19 +204,19 @@ within each tier, cheapest and most aligned first.
 
 | # | Item | Ref | Cost |
 | ---: | --- | --- | --- |
-| 1 | Make `Scene.locationId` nullable | §2.1 | Very low |
-| 2 | Write down the Story Analysis boundary — structural vs. opinion | §2.4 | Very low |
+| 1 | ~~Make `Scene.locationId` nullable~~ | §2.1 | **Done** |
+| 2 | ~~Write down the Story Analysis boundary — structural vs. opinion~~ | §2.4 | **Done** |
 | 3 | Per-story vocabulary layer (Chapter → "Issue", Scene → "Page", …) | §2.5 | Low |
 | 4 | Reconsider `linear \| branching`, and `Plot` being linear-only | §2.2 | Medium — needs design first |
-| 5 | Reconsider the chapter requirement on `Scene` | §2.1 | Medium/high — scene numbering is scoped to the chapter |
+| 5 | ~~Reconsider the chapter requirement on `Scene`~~ | §2.1 | **Done** — unchaptered bucket; index unused |
 
 **Tier B — add capability without imposing an ontology**
 
 | # | Item | Ref | Cost |
 | ---: | --- | --- | --- |
 | 6 | Freeform canvas / corkboard with dragging | §4 #1 | Medium |
-| 7 | `Event` decoupled from `Scene` — also removes §2.3 | §4 #2 | High — new entity |
-| 8 | Mention auto-linking and backlinks | §4 #3 | Medium |
+| 7 | ~~`Event` decoupled from `Scene`~~ | §4 #2 | **Done** — `type` on `chapters` + anchors, not a new table |
+| 8 | Mention auto-linking ~~and backlinks~~ | §4 #3 | Forward links **done**; backlinks still open |
 | 9 | Family trees / genealogy | §4 #7 | Medium — may reuse `CharacterRelation` with a directional type |
 | 10 | Research and reference items (URLs, PDFs) | §4 #6 | Medium/high |
 | 11 | Custom in-world calendars | §4 #4 | High — new entity |
@@ -246,8 +238,8 @@ within each tier, cheapest and most aligned first.
 | 20 | AI assistance | §4 #13 | Conflicts — worth stating publicly as a stance rather than leaving as a silent gap |
 | — | ~~Native scene craft fields~~ | §5.2 | **Withdrawn** — ships as #14 instead |
 
-**Suggested first batch:** 1, 2, 3 and 6. Three are constraint removals, the fourth is the least
-prescriptive feature available, and none of them creates an entity.
+**Suggested next batch:** 3 (vocabulary) and 6 (corkboard). The original first batch's constraint
+removals have landed; these two are still the cheapest remaining items that add no entity.
 
 ### 5.4 Story packs
 
@@ -319,19 +311,19 @@ content in two languages, and tests across all of it.
 
 | Item | New entity? | Relative cost |
 | --- | --- | --- |
-| Nullable `locationId` | No — one column, one migration each side | **Very low** |
-| Analysis boundary | No — categorisation plus documentation | **Very low** |
+| Nullable `locationId` | No — one column, one migration each side | **Done** |
+| Analysis boundary | No — categorisation plus documentation | **Done** |
+| Nullable `chapterId` | No — one column; list bucket; numbering skipped | **Done** |
 | Vocabulary layer | No — a label map on `Story` | **Low** |
-| Structure templates | No — generates existing entities | **Low** |
-| Custom-attribute packs | No — uses `StorySchemaField` | **Low** |
+| Structure templates | No — generates existing entities | **Low** (packs ship skeletons) |
+| Custom-attribute packs | No — uses `StorySchemaField` | **Done** (mechanism + three shipped packs) |
 | Freeform canvas | No — coordinates on existing rows | **Medium** |
-| Mention linking + backlinks | Possibly none — derivable from text scanning | **Medium** |
-| `Event` | **Yes** | **High** |
+| Mention linking + backlinks | Possibly none — derivable from text scanning | Forward **done**; backlinks open |
+| `Event` | **No** — discriminator on `chapters`, plus `chapterAnchors` | **Done** (cheaper than a new table) |
 | Custom calendars | **Yes** | **High** |
 | Image maps | **Yes** (or Gallery extension) | **High** |
 
-Priorities 1, 2, 3 and 6 are cheap enough to do together. `Event` and calendars deserve their own
-plan in `docs/finished_planning/`, not an opportunistic start.
+Calendars still deserve their own plan. Vocabulary and corkboard do not.
 
 ---
 
@@ -354,18 +346,18 @@ Recorded so these are not traded away by accident:
 - **Presence matrix and plot coverage** charts.
 - **Public Showcase** — publishing a read-only story bible to the web.
 - **Field-anchored comments** with five criticality levels and a cross-entity list.
-- **55 story-device pages** in Portuguese and English, alongside a full help catalogue.
+- **54 story-device pages** in Portuguese and English, alongside a full help catalogue.
+- **Story packs** at creation (no `packId` on the story): Comic, Novel craft, Tabletop stats.
 
 ---
 
 ## 8. Open questions
 
-- Is the chapter requirement (§2.1) defensible, given that scene `index` is scoped to the chapter?
-  If a scene may exist without one, the numbering rule needs an answer first.
 - Does `Story.type` need a third value, or should `Plot` simply stop being linear-only (§2.2)?
-- Should the opinionated Story Analysis findings (§2.4) be demoted to opt-in, or reworded as neutral
-  inventory? Either resolves the leak; they differ in how much the existing feature changes.
 - Is the AI absence (§4 #13) worth stating publicly as a product stance? Under §1 it is a
   consequence of the premise, not an omission.
 - Does "any medium" extend to the Showcase — should a published bible be presentable as something
   other than a story (a setting, a campaign)?
+- Unchaptered scenes are off the spine and cannot be timeline anchors. Is that enough, or should a
+  fragment be pin-able the way an Event is?
+- Backlinks ("mentioned in") were deferred when auto-linking shipped. Still worth a panel?

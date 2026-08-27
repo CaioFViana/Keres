@@ -180,7 +180,9 @@ const PresenceMatrixViewerContent: React.FC<{
      */
     const kindRank = (chapterId: string) => (byChapter.get(chapterId)?.type === 'event' ? 1 : 0);
     return [...scenes]
-      .filter((scene) => byChapter.has(scene.chapterId))
+      .filter((scene): scene is typeof scene & { chapterId: string } =>
+        Boolean(scene.chapterId && byChapter.has(scene.chapterId)),
+      )
       .sort(
         (a, b) =>
           kindRank(a.chapterId) - kindRank(b.chapterId) ||

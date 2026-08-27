@@ -89,7 +89,9 @@ export function useStoryTimeline() {
     const colorsByChapter = buildChapterColors(chapters);
     let previousChapterIndex: number | undefined;
     return scenes
-      .filter((scene) => chapterIds.includes(scene.chapterId))
+      .filter((scene): scene is typeof scene & { chapterId: string } =>
+        Boolean(scene.chapterId && chapterIds.includes(scene.chapterId)),
+      )
       .sort(
         (a, b) =>
           (chapterById.get(a.chapterId)?.index ?? 0) - (chapterById.get(b.chapterId)?.index ?? 0) ||

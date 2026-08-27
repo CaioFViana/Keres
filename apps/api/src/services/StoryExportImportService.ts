@@ -396,8 +396,8 @@ export class StoryExportImportService {
       const newScenesData = validatedFullStory.scenes.map((original) => {
         const newId = nextId(original.id);
         idMap.set(original.id, newId);
-        const mappedChapterId = idMap.get(original.chapterId);
-        if (!mappedChapterId) {
+        const mappedChapterId = original.chapterId ? idMap.get(original.chapterId) : null;
+        if (original.chapterId && !mappedChapterId) {
           throw new Error(
             `Import Error: Chapter ID ${original.chapterId} not found in ID map for scene ${original.id}.`,
           );
@@ -416,7 +416,7 @@ export class StoryExportImportService {
           ...original,
           id: newId,
           storyId: targetStoryId,
-          chapterId: mappedChapterId,
+          chapterId: mappedChapterId ?? null,
           locationId: mappedLocationId, // Use strictly mapped locationId
           version: 1,
           createdAt: now,

@@ -1,0 +1,1 @@
+ALTER TABLE `galleries` ADD `source_url` text;

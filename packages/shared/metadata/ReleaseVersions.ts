@@ -33,16 +33,16 @@ export const CURRENT_STORY_FORMAT_VERSION = 7;
  * payload, a column that starts arriving null, a rule the server begins to enforce. Most releases
  * do not touch it, which is the whole reason it is separate from the app's version.
  *
+ * These two numbers move **only in an official release**, never in ordinary development. Schema
+ * work on this branch (nullable `Scene.chapterId`, Gallery `document`/`link` + `sourceUrl`) waits
+ * for that bump; raising them here would cut off peers and invalidate example stories mid-cycle.
+ *
  * **2** - `Scene.locationId` became nullable. A client on 1 declares `location_id TEXT NOT NULL`
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
  * retry loop with no way out from inside the app. `ChapterAnchor` and the container `type` column
  * arrived in the same release; those an older peer merely ignores, but the null it cannot survive.
- *
- * **3** - `Scene.chapterId` became nullable. A protocol-2 client still declares
- * `chapter_id TEXT NOT NULL`, so a fragment (a scene with no chapter) cannot be pulled. Same
- * wedge as locationId, same answer.
  */
-export const SYNC_PROTOCOL_VERSION = 3;
+export const SYNC_PROTOCOL_VERSION = 2;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -51,7 +51,6 @@ export const SYNC_PROTOCOL_VERSION = 3;
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
  *
- * Raised to **3** with the line above: a protocol-2 client cannot insert a scene that has no
- * chapter, and lying by stuffing fragments into a numbered chapter would put them on the spine.
+ * Raised to **2** with the lines above.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 3;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 2;

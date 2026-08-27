@@ -22,12 +22,14 @@ export const galleries = table(
     storyId: text('story_id')
       .notNull()
       .references(() => stories.id),
-    mediaType: text('media_type').notNull(), // 'image' | 'video' | 'audio'
+    mediaType: text('media_type').notNull(), // 'image' | 'video' | 'audio' | 'document' | 'link'
     mimeType: text('mime_type').notNull(),
     fileName: text('file_name').notNull(),
-    /** Content checksum; it ties this row to the corresponding blob. */
+    /** Content checksum; it ties this row to the corresponding blob. Links hash the URL, not bytes. */
     hash: text('hash').notNull(),
     sizeBytes: integer('size_bytes').notNull().default(0),
+    /** External URL for `mediaType: 'link'`. Never fetched by the server. */
+    sourceUrl: text('source_url'),
     title: text('title'),
     isFavorite: boolean('is_favorite').notNull().default(false),
     extraNotes: text('extra_notes'),

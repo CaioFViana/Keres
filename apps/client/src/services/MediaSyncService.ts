@@ -1,4 +1,4 @@
-import type { MediaBlobStatusResponseType } from '@keres/shared';
+import { galleryHasFile, type MediaBlobStatusResponseType } from '@keres/shared';
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
 import type { AppDrizzleClient } from '../db';
@@ -73,7 +73,9 @@ export class MediaSyncService {
     storyId: string,
     summary: MediaSyncSummary,
   ): Promise<void> {
-    const pending = await this.galleryService.getPendingUploads(storyId);
+    const pending = (await this.galleryService.getPendingUploads(storyId)).filter((media) =>
+      galleryHasFile(media.mediaType),
+    );
     if (pending.length === 0) {
       return;
     }
@@ -156,7 +158,9 @@ export class MediaSyncService {
     storyId: string,
     summary: MediaSyncSummary,
   ): Promise<void> {
-    const pending = await this.galleryService.getPendingDownloads(storyId);
+    const pending = (await this.galleryService.getPendingDownloads(storyId)).filter((media) =>
+      galleryHasFile(media.mediaType),
+    );
     if (pending.length === 0) {
       return;
     }

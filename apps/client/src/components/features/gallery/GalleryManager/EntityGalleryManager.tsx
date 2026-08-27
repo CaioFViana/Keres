@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -16,7 +16,9 @@ import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
 import { useResolvedMediaUri } from '../../../../hooks/useResolvedMediaUri';
 import { useNotificationStore } from '../../../../state/notificationStore';
 import { useTheme } from '../../../../theme';
-import { MEDIA_TYPE_ICONS } from '@/src/components/features/list-items/GalleryGridItem';
+import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
+import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGalleryAddKind';
+import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 
 interface EntityGalleryManagerProps {
   ownerId: string | undefined;
@@ -77,7 +79,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
       ) : (
         <View style={styles.thumbFallback}>
           <Ionicons
-            name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+            name={iconForGalleryMedia(mediaType, item.mimeType)}
             size={28}
             color={textSecondaryColor}
           />
@@ -120,28 +122,41 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
-  const { media, importing, addMedia, removeMedia } = useEntityGalleryMedia(ownerId, ownerType);
+  const { media, importing, addPlayableMedia, addDocuments, addLink, removeMedia } =
+    useEntityGalleryMedia(ownerId, ownerType);
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
 
-  const handleAdd = useCallback(async () => {
-    try {
-      const summary = await addMedia();
-      if (!summary) {
-        return;
+  const notifyImport = useCallback(
+    async (run: () => Promise<{ added: number; duplicates: number; rejected: number } | null>) => {
+      try {
+        const summary = await run();
+        if (!summary) {
+          return;
+        }
+        if (summary.added > 0 || summary.duplicates > 0) {
+          showNotification(
+            t('media_linked_to_entity', { count: summary.added + summary.duplicates }),
+            'success',
+          );
+        }
+        if (summary.rejected > 0) {
+          showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
+        }
+      } catch (err) {
+        console.error('Failed to add media to entity:', err);
+        showNotification(t('media_picker_failed'), 'error');
       }
-      if (summary.added > 0 || summary.duplicates > 0) {
-        showNotification(
-          t('media_linked_to_entity', { count: summary.added + summary.duplicates }),
-          'success',
-        );
-      }
-      if (summary.rejected > 0) {
-        showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
-      }
-    } catch (err) {
-      console.error('Failed to add media to entity:', err);
-      showNotification(t('media_picker_failed'), 'error');
-    }
-  }, [addMedia, showNotification, t]);
+    },
+    [showNotification, t],
+  );
+
+  const handleAdd = useCallback(() => {
+    promptGalleryAddKind(t, (kind) => {
+      if (kind === 'playable') void notifyImport(addPlayableMedia);
+      else if (kind === 'document') void notifyImport(addDocuments);
+      else setLinkModalVisible(true);
+    });
+  }, [addDocuments, addPlayableMedia, notifyImport, t]);
 
   const handleRemove = useCallback(
     (galleryId: string) => {
@@ -259,6 +274,14 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
         {media.map(renderThumb)}
       </ScrollView>
       {media.length === 0 && <Text style={styles.emptyText}>{t('no_media_linked')}</Text>}
+      <GalleryAddLinkModal
+        visible={linkModalVisible}
+        onCancel={() => setLinkModalVisible(false)}
+        onConfirm={(url, title) => {
+          setLinkModalVisible(false);
+          void notifyImport(() => addLink(url, title));
+        }}
+      />
     </View>
   );
 };

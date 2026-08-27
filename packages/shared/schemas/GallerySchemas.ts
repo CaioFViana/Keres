@@ -9,13 +9,24 @@ import { z } from 'zod';
 export const GALLERY_OWNER_ENTITIES = ['Character', 'Location', 'Note', 'Scene', 'Item'] as const;
 export type GalleryOwnerEntity = (typeof GALLERY_OWNER_ENTITIES)[number];
 
-export const MEDIA_TYPES = ['image', 'video', 'audio'] as const;
+/** Image/video/audio play inside Keres. Documents and links are catalogued and opened outside. */
+export const PLAYABLE_MEDIA_TYPES = ['image', 'video', 'audio'] as const;
+export type PlayableMediaType = (typeof PLAYABLE_MEDIA_TYPES)[number];
+
+export const MEDIA_TYPES = [...PLAYABLE_MEDIA_TYPES, 'document', 'link'] as const;
 export type MediaType = (typeof MEDIA_TYPES)[number];
 
+export function isPlayableMediaType(type: string | null | undefined): type is PlayableMediaType {
+  return type === 'image' || type === 'video' || type === 'audio';
+}
+
+export function galleryHasFile(type: string | null | undefined): boolean {
+  return type !== 'link';
+}
+
 /**
- * Accepted formats, restricted to what Expo/React Native can display or play without transcoding.
- * Accepting more than this would only produce media that uploads, synchronizes and then fails to
- * open on the device.
+ * Accepted formats. Playable types are restricted to what Expo can display without transcoding.
+ * Documents are stored as files and handed to the OS; links have no bytes.
  */
 export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = {
   image: [
@@ -38,14 +49,39 @@ export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = 
     'audio/flac',
     'audio/3gpp',
   ],
+  document: [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.oasis.opendocument.text',
+    'application/rtf',
+    'text/rtf',
+    'text/plain',
+    'text/markdown',
+    'text/csv',
+    'text/html',
+    'application/epub+zip',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/json',
+  ],
+  link: ['text/uri-list'],
 } as const;
 
 export const ALL_SUPPORTED_MEDIA_MIME_TYPES: readonly string[] = MEDIA_TYPES.flatMap(
   (type) => SUPPORTED_MEDIA_MIME_TYPES[type],
 );
 
-/** Filtro para o seletor de arquivos: `['image/*', 'video/*', 'audio/*']`. */
-export const MEDIA_PICKER_MIME_FILTERS: readonly string[] = MEDIA_TYPES.map((type) => `${type}/*`);
+/** Filtro para o seletor de ficheiros reproduzíveis: `['image/*', 'video/*', 'audio/*']`. */
+export const MEDIA_PICKER_MIME_FILTERS: readonly string[] = PLAYABLE_MEDIA_TYPES.map(
+  (type) => `${type}/*`,
+);
+
+export const DOCUMENT_PICKER_MIME_FILTERS: readonly string[] = [
+  ...SUPPORTED_MEDIA_MIME_TYPES.document,
+];
 
 /** Extensions used to name the local file when the mime type does not bring one. */
 export const MEDIA_MIME_TYPE_EXTENSIONS: Record<string, string> = {
@@ -61,6 +97,23 @@ export const MEDIA_MIME_TYPE_EXTENSIONS: Record<string, string> = {
   'video/webm': 'webm',
   'video/x-m4v': 'm4v',
   'video/3gpp': '3gp',
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.oasis.opendocument.text': 'odt',
+  'application/rtf': 'rtf',
+  'text/rtf': 'rtf',
+  'text/plain': 'txt',
+  'text/markdown': 'md',
+  'text/csv': 'csv',
+  'text/html': 'html',
+  'application/epub+zip': 'epub',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-powerpoint': 'pptx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'application/json': 'json',
+  'text/uri-list': 'url',
   'audio/mpeg': 'mp3',
   'audio/mp4': 'm4a',
   'audio/aac': 'aac',
@@ -97,6 +150,22 @@ export function extensionForMimeType(mimeType: string | null | undefined): strin
 }
 
 /**
+ * An http(s) URL Keres will store and open outside the app. Anything else is rejected so a
+ * `javascript:` bookmark cannot hide in the gallery.
+ */
+export function normalizeGalleryLink(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Hash of the file's content, in hexadecimal.
  *
  * It is MD5 because that is the only digest `expo-file-system` computes natively - doing SHA-256 in
@@ -126,6 +195,11 @@ export const GallerySchema = z.object({
   fileName: z.string().min(1),
   hash: MediaHashSchema,
   sizeBytes: z.number().int().min(0),
+  /**
+   * An external URL, only for `mediaType: 'link'`. Keres stores it and opens it outside the app;
+   * it never fetches or embeds the page.
+   */
+  sourceUrl: z.string().url().nullable().optional(),
   title: z.string().nullable(),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
@@ -148,6 +222,7 @@ export const CreateGalleryDataSchema = GallerySchema.omit({
   isFavorite: z.boolean().default(false),
   title: z.string().nullable().default(null),
   extraNotes: z.string().nullable().default(null),
+  sourceUrl: z.string().url().nullable().default(null),
 });
 
 export const PartialGallerySchema = CreateGalleryDataSchema.partial();

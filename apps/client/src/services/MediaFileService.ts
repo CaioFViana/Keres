@@ -1,5 +1,6 @@
 import type { MediaType } from '@keres/shared';
 import {
+  DOCUMENT_PICKER_MIME_FILTERS,
   extensionForMimeType,
   MEDIA_PICKER_MIME_FILTERS,
   isSupportedMediaMimeType,
@@ -102,6 +103,22 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
     ogg: 'audio/ogg',
     flac: 'audio/flac',
     '3gp': 'video/3gpp',
+    pdf: 'application/pdf',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    odt: 'application/vnd.oasis.opendocument.text',
+    rtf: 'application/rtf',
+    txt: 'text/plain',
+    md: 'text/markdown',
+    csv: 'text/csv',
+    html: 'text/html',
+    htm: 'text/html',
+    epub: 'application/epub+zip',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    json: 'application/json',
   };
 
   return byExtension[extension];
@@ -193,6 +210,19 @@ export const mediaFileService = {
   async pick(): Promise<DocumentPicker.DocumentPickerAsset[] | null> {
     const result = await DocumentPicker.getDocumentAsync({
       type: [...MEDIA_PICKER_MIME_FILTERS],
+      copyToCacheDirectory: true,
+      multiple: true,
+    });
+
+    if (result.canceled || !result.assets || result.assets.length === 0) {
+      return null;
+    }
+    return result.assets;
+  },
+
+  async pickDocuments(): Promise<DocumentPicker.DocumentPickerAsset[] | null> {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [...DOCUMENT_PICKER_MIME_FILTERS],
       copyToCacheDirectory: true,
       multiple: true,
     });

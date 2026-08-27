@@ -7,6 +7,7 @@ import {
   existsSync,
   hydrate,
   md5Hex,
+  openInOs,
   readBytes,
   writeBytes,
 } from '../../src/services/webMediaStore';
@@ -15,6 +16,7 @@ const bridge = {
   deleteDirectory: jest.fn(),
   deleteFile: jest.fn(),
   listAllFiles: jest.fn(),
+  openInOs: jest.fn(),
   readBytes: jest.fn(),
   writeBytes: jest.fn(),
 };
@@ -42,4 +44,10 @@ it('hydrates desktop paths and keeps its synchronous cache in step with writes a
   expect(existsSync('media/story/already.png')).toBe(false);
   expect(bridge.deleteDirectory).toHaveBeenCalledWith('media/story');
   expect(md5Hex(new Uint8Array([97]))).toBe('0cc175b9c0f1b6a831c399e269772661');
+});
+
+it('asks Electron to open a stored file with the OS', async () => {
+  bridge.openInOs.mockResolvedValue(undefined);
+  await expect(openInOs('media/story/notes.pdf')).resolves.toBe(true);
+  expect(bridge.openInOs).toHaveBeenCalledWith('media/story/notes.pdf');
 });

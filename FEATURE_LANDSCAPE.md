@@ -139,7 +139,7 @@ Ranked by how well they add capability without imposing an ontology.
 | 3 | **Mention-based auto-linking and backlinks** | Obsidian, World Anvil (`[[…]]`) | **Excellent** — this is literally how a dictionary works. Additive, ignorable. | **Forward links shipped** (`Story.autoLinkMentions`): names in text become tappable, nothing is persisted. `SeeAlsoRelation` stays manual. **No "mentioned in" panel** (backlinks). |
 | 4 | **Custom in-world calendars** | World Anvil, Kanka, Fantasy Calendar | **Good** — describes a world, prescribes no narrative. | `AttributeType.DATE` is a deliberately floating civil date; scene timing reaches "eras". No custom months, leap rules or in-world arithmetic. |
 | 5 | **Image maps with pinned locations** | World Anvil, LegendKeeper, Kanka | **Good** — pure description, medium-agnostic. | There is a location *graph* (`contains` / `connected_to`) and a Gallery, but no map image with coordinates. |
-| 6 | **Research and reference items** — URLs, PDFs, clippings | Scrivener (Research), Milanote | **Good** — a dictionary that cannot hold a reference is odd. | `MEDIA_TYPES` is exactly `['image', 'video', 'audio']`. No link entity, no document entity. |
+| 6 | **Research and reference items** — URLs, PDFs, clippings | Scrivener (Research), Milanote | **Good** — a dictionary that cannot hold a reference is odd. | **Shipped as Gallery types**, not a new entity. `link` stores an http(s) URL (`sourceUrl`) and never fetches it; it opens outside Keres. `document` is a hashed file shown as type icon + name; no in-app viewer. Image/video/audio still play inside. |
 | 7 | **Family trees / genealogy** | Kanka, World Anvil, Family Echo | **Good** — descriptive; optional per story. | `CharacterRelation` is a typed unordered pair drawn radially; no generation or descent semantics. |
 | 8 | **Series above Story** | LivingWriter, Campfire, World Anvil | **Good** — a shared dictionary across works is the premise scaled up. | `Story` is the top container. Sharing a character across two works means export/import, which clones with new ids. |
 | 9 | ~~**Generators** — names, tables, dice~~ | Kanka, World Anvil | **Cut** — ships one list shared by every user; see §5.4. | Absent. |
@@ -218,7 +218,7 @@ within each tier, cheapest and most aligned first.
 | 7 | ~~`Event` decoupled from `Scene`~~ | §4 #2 | **Done** — `type` on `chapters` + anchors, not a new table |
 | 8 | Mention auto-linking ~~and backlinks~~ | §4 #3 | Forward links **done**; backlinks still open |
 | 9 | Family trees / genealogy | §4 #7 | Medium — may reuse `CharacterRelation` with a directional type |
-| 10 | Research and reference items (URLs, PDFs) | §4 #6 | Medium/high |
+| 10 | ~~Research and reference items (URLs, PDFs)~~ | §4 #6 | **Done** — Gallery `document` and `link` |
 | 11 | Custom in-world calendars | §4 #4 | High — new entity |
 | 12 | Image maps with pinned locations | §4 #5 | High |
 | 13 | Series above `Story` | §4 #8 | High — touches every story-scoped query |

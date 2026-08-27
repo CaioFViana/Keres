@@ -1,0 +1,1 @@
+ALTER TABLE "galleries" ADD COLUMN "source_url" text;

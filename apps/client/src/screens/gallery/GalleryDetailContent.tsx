@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { MediaType } from '@keres/shared';
+import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,12 +36,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
-
-const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap> = {
-  image: 'image-outline',
-  video: 'videocam-outline',
-  audio: 'musical-notes-outline',
-};
+import { openGalleryExternally } from '../../utils/openGalleryExternally';
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '—';
@@ -354,6 +350,20 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasLocalVideo = mediaType === 'video' && !!resolvedUri;
   const hasLocalAudio = mediaType === 'audio' && !!resolvedUri;
+  const canOpenLink = mediaType === 'link' && !!media.sourceUrl;
+  const canOpenDocument = mediaType === 'document' && !!media.localPath;
+
+  const handleOpenOutside = async () => {
+    try {
+      const opened = await openGalleryExternally(media);
+      if (!opened) {
+        showNotification(t('gallery_open_outside_failed'), 'warning');
+      }
+    } catch (openError) {
+      console.log('Failed to open gallery item outside Keres:', openError);
+      showNotification(t('gallery_open_outside_failed'), 'error');
+    }
+  };
 
   return (
     <>
@@ -378,19 +388,30 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
               ) : hasLocalAudio ? (
                 <AudioPreviewPlayer key={media.hash} uri={resolvedUri as string} />
               ) : (
-                <View style={{ alignItems: 'center' }}>
+                <View style={{ alignItems: 'center', paddingHorizontal: 16 }}>
                   <Ionicons
-                    name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+                    name={iconForGalleryMedia(mediaType, media.mimeType)}
                     size={64}
                     color={colors.textSecondary}
                   />
                   <Text style={styles.placeholderText}>
-                    {media.downloadState === 'pending'
-                      ? t('media_downloading')
-                      : mediaType === 'image'
-                        ? t('media_file_unavailable')
-                        : t('media_preview_unavailable')}
+                    {mediaType === 'link'
+                      ? media.sourceUrl
+                      : media.downloadState === 'pending'
+                        ? t('media_downloading')
+                        : mediaType === 'document'
+                          ? media.fileName
+                          : mediaType === 'image'
+                            ? t('media_file_unavailable')
+                            : t('media_preview_unavailable')}
                   </Text>
+                  {(canOpenLink || canOpenDocument) && (
+                    <View style={{ marginTop: 12, width: '100%' }}>
+                      <Button onPress={() => void handleOpenOutside()}>
+                        {t('gallery_open_outside')}
+                      </Button>
+                    </View>
+                  )}
                 </View>
               )}
             </View>

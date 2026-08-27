@@ -1,8 +1,9 @@
-import type {
-  CreateStoryUpdate,
-  DeleteStoryUpdate,
-  Gallery,
-  UpdateStoryUpdate,
+import {
+  galleryHasFile,
+  type CreateStoryUpdate,
+  type DeleteStoryUpdate,
+  type Gallery,
+  type UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -15,8 +16,9 @@ import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
  *
  * The file does not come through here. Media created on another device arrives with
  * `downloadState: 'pending'` and no `localPath`; it is `MediaSyncService` that later fetches the bytes
- * by hash. That is why the local columns are never read from the remote payload - they describe this
- * device, and the server has nothing to say about them.
+ * by hash. A `link` has no bytes at all, so it is already `downloaded`. That is why the local
+ * columns are never read from the remote payload - they describe this device, and the server has
+ * nothing to say about them.
  */
 export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Gallery';
@@ -51,9 +53,10 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
       updatedAt: new Date(data.updatedAt),
       deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
       // It arrived from outside: the bytes are not on this device yet, and there is nothing to upload.
+      // A link is the exception — the URL is the whole medium.
       localPath: null,
       uploadState: 'uploaded',
-      downloadState: 'pending',
+      downloadState: galleryHasFile(data.mediaType) ? 'pending' : 'downloaded',
     });
     console.log(`Applied create for Gallery ${update.id} in story ${storyId}`);
   }
@@ -73,6 +76,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     // download.
     const existing = await this.getById(update.id);
     const hashChanged = !!changes.hash && !!existing && changes.hash !== existing.hash;
+    const mediaType = changes.mediaType ?? existing?.mediaType;
 
     await this.db
       .update(schema.galleries)
@@ -82,7 +86,11 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
         createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
         ...(hashChanged
-          ? { localPath: null, downloadState: 'pending', uploadState: 'uploaded' }
+          ? {
+              localPath: null,
+              downloadState: galleryHasFile(mediaType) ? 'pending' : 'downloaded',
+              uploadState: 'uploaded',
+            }
           : {}),
       })
       .where(eq(schema.galleries.id, update.id));

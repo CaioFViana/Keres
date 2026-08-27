@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
+import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGalleryAddKind';
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '../../db';
 import type { GallerySelect } from '../../db/schemas/galleries';
@@ -21,6 +23,7 @@ import type {
   GalleryStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
+import { createGalleryLink } from '../../services/galleryLink';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -47,6 +50,7 @@ const GalleryListScreen = () => {
 
   /** Importing media is file I/O, not instantaneous; without this the screen would look frozen. */
   const [importing, setImporting] = useState(false);
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
 
   const {
     items: galleries,
@@ -81,42 +85,82 @@ const GalleryListScreen = () => {
    * makes the duplicate detectable, and creating another row would only fill the gallery with copies of
    * the same image.
    */
-  const handleAddMedia = useCallback(async () => {
-    if (!storyId || !userId) {
-      showNotification(t('no_story_selected'), 'warning');
-      return;
-    }
+  const importFromPicker = useCallback(
+    async (picker: () => Promise<Awaited<ReturnType<typeof mediaFileService.pick>>>) => {
+      if (!storyId || !userId) {
+        showNotification(t('no_story_selected'), 'warning');
+        return;
+      }
 
-    let assets;
-    try {
-      assets = await mediaFileService.pick();
-    } catch (pickError) {
-      console.log('Media picker failed:', pickError);
-      showNotification(t('media_picker_failed'), 'error');
-      return;
-    }
+      let assets;
+      try {
+        assets = await picker();
+      } catch (pickError) {
+        console.log('Media picker failed:', pickError);
+        showNotification(t('media_picker_failed'), 'error');
+        return;
+      }
 
-    if (!assets) {
-      return;
-    }
+      if (!assets) {
+        return;
+      }
 
-    setImporting(true);
-    const galleryService = createGalleryService(db);
-    const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
-    setImporting(false);
+      setImporting(true);
+      const galleryService = createGalleryService(db);
+      const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
+      setImporting(false);
 
-    if (summary.added > 0) {
-      showNotification(t('media_added_successfully', { count: summary.added }), 'success');
-    }
-    if (summary.duplicates > 0) {
-      showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
-    }
-    if (summary.rejected > 0) {
-      showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
-    }
+      if (summary.added > 0) {
+        showNotification(t('media_added_successfully', { count: summary.added }), 'success');
+      }
+      if (summary.duplicates > 0) {
+        showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
+      }
+      if (summary.rejected > 0) {
+        showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
+      }
 
-    await refetch();
-  }, [storyId, userId, db, showNotification, t, refetch]);
+      await refetch();
+    },
+    [storyId, userId, db, showNotification, t, refetch],
+  );
+
+  const handleAddLink = useCallback(
+    async (url: string, title: string | null) => {
+      if (!storyId || !userId) {
+        showNotification(t('no_story_selected'), 'warning');
+        return;
+      }
+      setImporting(true);
+      try {
+        const result = await createGalleryLink(createGalleryService(db), storyId, userId, url, title);
+        if (!result) {
+          showNotification(t('gallery_link_invalid'), 'warning');
+          return;
+        }
+        if (result.duplicate) {
+          showNotification(t('media_already_in_gallery', { count: 1 }), 'info');
+        } else {
+          showNotification(t('media_added_successfully', { count: 1 }), 'success');
+        }
+        await refetch();
+      } catch (linkError) {
+        console.log('Failed to add gallery link:', linkError);
+        showNotification(t('media_save_failed'), 'error');
+      } finally {
+        setImporting(false);
+      }
+    },
+    [storyId, userId, db, showNotification, t, refetch],
+  );
+
+  const handleAddMedia = useCallback(() => {
+    promptGalleryAddKind(t, (kind) => {
+      if (kind === 'playable') void importFromPicker(() => mediaFileService.pick());
+      else if (kind === 'document') void importFromPicker(() => mediaFileService.pickDocuments());
+      else setLinkModalVisible(true);
+    });
+  }, [importFromPicker, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -198,6 +242,14 @@ const GalleryListScreen = () => {
 
   return (
     <View style={styles.container}>
+      <GalleryAddLinkModal
+        visible={linkModalVisible}
+        onCancel={() => setLinkModalVisible(false)}
+        onConfirm={(url, title) => {
+          setLinkModalVisible(false);
+          void handleAddLink(url, title);
+        }}
+      />
       <GenericFilterSortList
         key={`gallery-columns-${numColumns}`}
         data={galleries}

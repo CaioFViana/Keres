@@ -23,12 +23,28 @@ it('uses the supported picker configuration and distinguishes cancellation from 
     expect.objectContaining({ copyToCacheDirectory: true, multiple: true }),
   );
 
-  const error = new UnsupportedMediaError('application/pdf', 'mapa.pdf');
+  const error = new UnsupportedMediaError('application/zip', 'mapa.zip');
   expect(error).toEqual(
     expect.objectContaining({
-      mimeType: 'application/pdf',
-      fileName: 'mapa.pdf',
+      mimeType: 'application/zip',
+      fileName: 'mapa.zip',
       name: 'UnsupportedMediaError',
+    }),
+  );
+});
+
+it('opens a separate picker for documents', async () => {
+  getDocumentAsync.mockResolvedValueOnce({ canceled: true });
+  await expect(mediaFileService.pickDocuments()).resolves.toBeNull();
+
+  const asset = { name: 'notes.pdf', uri: 'file://notes.pdf' } as any;
+  getDocumentAsync.mockResolvedValueOnce({ canceled: false, assets: [asset] });
+  await expect(mediaFileService.pickDocuments()).resolves.toEqual([asset]);
+  expect(getDocumentAsync).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      copyToCacheDirectory: true,
+      multiple: true,
+      type: expect.arrayContaining(['application/pdf']),
     }),
   );
 });

@@ -4,6 +4,7 @@ import type { ChapterAnchorSelect } from '@/src/db/schema';
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { useStoryStore } from '@/src/state/storyStore';
 
 export type ChapterAnchorRow = ChapterAnchorSelect;
 
@@ -38,6 +39,7 @@ export function useChapterAnchors(
   currentUserId: string | null,
 ) {
   const db = useDrizzle();
+  const storyType = useStoryStore((state) => state.selectedStory?.type);
   const [anchors, setAnchors] = useState<ChapterAnchorRow[]>([]);
   const [scenes, setScenes] = useState<AnchorSceneChoice[]>([]);
   const [hasContents, setHasContents] = useState(false);
@@ -60,12 +62,17 @@ export function useChapterAnchors(
             (byId.get(a.chapterId)?.index ?? 0) - (byId.get(b.chapterId)?.index ?? 0) ||
             a.index - b.index,
         )
-        .map((scene) => ({
-          id: scene.id,
-          label: `${byId.get(scene.chapterId)?.name ?? ''} · ${scene.name}`,
-        })),
+        .map((scene) => {
+          const chapter = byId.get(scene.chapterId);
+          const chapterLabel =
+            storyType === 'linear' && chapter
+              ? `${chapter.index}. ${chapter.name}`
+              : (chapter?.name ?? '');
+          const sceneLabel = storyType === 'linear' ? `${scene.index}. ${scene.name}` : scene.name;
+          return { id: scene.id, label: `${chapterLabel} · ${sceneLabel}` };
+        }),
     );
-  }, [chapterId, db, storyId]);
+  }, [chapterId, db, storyId, storyType]);
 
   useEffect(() => {
     void reload();

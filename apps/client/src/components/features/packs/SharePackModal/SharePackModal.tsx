@@ -81,7 +81,13 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
     formGroup: { marginBottom: 15 },
     label: { fontSize: 16, color: colors.text, marginBottom: 5 },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttonContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+    buttonWrapper: { width: '47%' },
   });
 
   return (
@@ -123,14 +129,18 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
       </View>
 
       <View style={styles.buttonContainer}>
-        <Button onPress={onCancel}>{t('cancel')}</Button>
-        <Button
-          onPress={() => serverId && onConfirm(serverId, visibility)}
-          disabled={!serverId}
-          testID="confirm-share-pack"
-        >
-          {t('packs_share_confirm')}
-        </Button>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={onCancel}>{t('cancel')}</Button>
+        </View>
+        <View style={styles.buttonWrapper}>
+          <Button
+            onPress={() => serverId && onConfirm(serverId, visibility)}
+            disabled={!serverId}
+            testID="confirm-share-pack"
+          >
+            {t('packs_share_confirm')}
+          </Button>
+        </View>
       </View>
     </ResponsiveModal>
   );

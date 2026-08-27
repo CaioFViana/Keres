@@ -4,6 +4,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import type { ScenePosition } from '@keres/shared';
 import { SCENE_POSITIONS } from '@keres/shared';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -71,6 +72,7 @@ const AnchorEditModal: React.FC<Props> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { isCompact } = useResponsiveLayout();
+  const commonInputStyles = getCommonInputStyles(colors);
   const [draft, setDraft] = useState<AnchorDraft>(emptyDraft);
   const [mode, setMode] = useState<AnchorMode>('open');
   const [startAmount, setStartAmount] = useState('');
@@ -148,8 +150,14 @@ const AnchorEditModal: React.FC<Props> = ({
       paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 24,
+      // ResponsiveModal clips rounded surfaces; focus borders on inputs need to paint into padding.
+      overflow: 'visible',
     },
-    keyboardContent: { paddingBottom: 12 },
+    keyboardContent: {
+      paddingBottom: 12,
+      paddingHorizontal: 2,
+      paddingVertical: 2,
+    },
     handle: {
       alignSelf: 'center',
       width: 42,
@@ -188,7 +196,19 @@ const AnchorEditModal: React.FC<Props> = ({
       alignItems: 'center',
     },
     modeText: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
-    formGroup: { marginBottom: 16 },
+    formGroup: {
+      marginBottom: 16,
+      paddingHorizontal: 2,
+      paddingVertical: 2,
+    },
+    timingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 8,
+    },
+    numberWidthInput: { width: '30%' },
+    unitField: { flex: 1 },
     label: { fontSize: 16, color: colors.text, marginBottom: 6 },
     positions: {
       flexDirection: 'row',
@@ -211,7 +231,13 @@ const AnchorEditModal: React.FC<Props> = ({
       overflow: 'hidden',
     },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 },
-    buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16 },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 16,
+      paddingHorizontal: '3%',
+    },
+    buttonWrapper: { width: '47%' },
   });
 
   const patch = (changes: Partial<AnchorDraft>) =>
@@ -267,34 +293,39 @@ const AnchorEditModal: React.FC<Props> = ({
         </TouchableOpacity>
         {shown && (
           <View style={styles.distanceBlock}>
-            <TextInput
-              placeholder={t('anchor_offset_placeholder')}
-              value={amount}
-              onChangeText={(text) => {
-                if (text && !/^\d*$/.test(text)) return;
-                setAmount(text);
-                const value = signed(text, before);
-                patch(
-                  edge === 'start'
-                    ? { startOffset: value, startOffsetUnit: value === null ? null : unit }
-                    : { endOffset: value, endOffsetUnit: value === null ? null : unit },
-                );
-              }}
-              keyboardType="number-pad"
-            />
-            <Select
-              options={unitOptions}
-              value={unit}
-              onValueChange={(value) =>
-                patch(
-                  edge === 'start'
-                    ? { startOffsetUnit: value, startOffset: signed(amount, before) }
-                    : { endOffsetUnit: value, endOffset: signed(amount, before) },
-                )
-              }
-              placeholder={t('anchor_offset_unit_placeholder')}
-              multiple={false}
-            />
+            <View style={styles.timingRow}>
+              <TextInput
+                placeholder={t('anchor_offset_placeholder')}
+                value={amount}
+                onChangeText={(text) => {
+                  if (text && !/^\d*$/.test(text)) return;
+                  setAmount(text);
+                  const value = signed(text, before);
+                  patch(
+                    edge === 'start'
+                      ? { startOffset: value, startOffsetUnit: value === null ? null : unit }
+                      : { endOffset: value, endOffsetUnit: value === null ? null : unit },
+                  );
+                }}
+                keyboardType="number-pad"
+                style={[commonInputStyles.input, styles.numberWidthInput]}
+              />
+              <View style={styles.unitField}>
+                <Select
+                  options={unitOptions}
+                  value={unit}
+                  onValueChange={(value) =>
+                    patch(
+                      edge === 'start'
+                        ? { startOffsetUnit: value, startOffset: signed(amount, before) }
+                        : { endOffsetUnit: value, endOffset: signed(amount, before) },
+                    )
+                  }
+                  placeholder={t('anchor_offset_unit_placeholder')}
+                  multiple={false}
+                />
+              </View>
+            </View>
             <View style={styles.directionRow}>
               {([true, false] as const).map((negative) => {
                 const selected = before === negative;
@@ -426,26 +457,30 @@ const AnchorEditModal: React.FC<Props> = ({
         {renderPoint('start')}
         {mode === 'closed' && renderPoint('end')}
         <View style={styles.buttons}>
-          <Button onPress={onCancel}>{t('cancel')}</Button>
-          <Button
-            onPress={() =>
-              onConfirm(
-                mode === 'open'
-                  ? {
-                      ...draft,
-                      endSceneId: null,
-                      endPosition: null,
-                      endOffset: null,
-                      endOffsetUnit: null,
-                    }
-                  : draft,
-              )
-            }
-            disabled={!complete}
-            testID="confirm-anchor"
-          >
-            {t('save')}
-          </Button>
+          <View style={styles.buttonWrapper}>
+            <Button onPress={onCancel}>{t('cancel')}</Button>
+          </View>
+          <View style={styles.buttonWrapper}>
+            <Button
+              onPress={() =>
+                onConfirm(
+                  mode === 'open'
+                    ? {
+                        ...draft,
+                        endSceneId: null,
+                        endPosition: null,
+                        endOffset: null,
+                        endOffsetUnit: null,
+                      }
+                    : draft,
+                )
+              }
+              disabled={!complete}
+              testID="confirm-anchor"
+            >
+              {t('save')}
+            </Button>
+          </View>
         </View>
       </KeyboardAwareScreen>
     </ResponsiveModal>

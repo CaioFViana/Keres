@@ -7,6 +7,7 @@ import CustomAttributeFields, {
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -399,6 +400,17 @@ const ChapterFormScreen = () => {
             onSelectionChange={handleTagSelectionChange}
             placeholder={t('select_tags_for_chapter')}
             label={t('chapter_tags')}
+          />
+        </View>
+      )}
+
+      {currentChapterId && selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <AnchorManager
+            storyId={selectedStory.id}
+            chapterId={currentChapterId}
+            currentUserId={userId}
+            editable={true}
           />
         </View>
       )}

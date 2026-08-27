@@ -61,7 +61,13 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
     formGroup: { marginBottom: 15 },
     label: { fontSize: 16, color: colors.text, marginBottom: 5 },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttonContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+    buttonWrapper: { width: '47%' },
   });
 
   /**
@@ -106,18 +112,22 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
       )}
 
       <View style={styles.buttonContainer}>
-        <Button onPress={onCancel}>{t('cancel')}</Button>
-        <Button
-          onPress={() =>
-            onConfirm(
-              becomingChapter ? 'chapter' : 'event',
-              becomingChapter ? Number(position) : undefined,
-            )
-          }
-          testID="confirm-convert-container"
-        >
-          {t('save')}
-        </Button>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={onCancel}>{t('cancel')}</Button>
+        </View>
+        <View style={styles.buttonWrapper}>
+          <Button
+            onPress={() =>
+              onConfirm(
+                becomingChapter ? 'chapter' : 'event',
+                becomingChapter ? Number(position) : undefined,
+              )
+            }
+            testID="confirm-convert-container"
+          >
+            {t('save')}
+          </Button>
+        </View>
       </View>
     </ResponsiveModal>
   );

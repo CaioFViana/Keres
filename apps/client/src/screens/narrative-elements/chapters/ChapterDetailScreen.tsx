@@ -380,7 +380,7 @@ const ChapterDetailScreen = () => {
         storyId={chapter.storyId}
         chapterId={chapterId}
         currentUserId={currentUserId}
-        editable={canEdit}
+        editable={false}
       />
 
       <RelatedScenesList

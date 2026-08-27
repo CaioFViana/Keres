@@ -135,9 +135,11 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     },
     buttonContainer: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
+      justifyContent: 'space-between',
       marginTop: 20,
+      paddingHorizontal: '3%',
     },
+    buttonWrapper: { width: '47%' },
     characterPickerModalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
@@ -210,8 +212,12 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <Button onPress={onClose}>{t('cancel')}</Button>
-        <Button onPress={handleSave}>{t('save_changes')}</Button>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={onClose}>{t('cancel')}</Button>
+        </View>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={handleSave}>{t('save_changes')}</Button>
+        </View>
       </View>
       <ResponsiveModal
         visible={showCharacterPicker}

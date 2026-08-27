@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { AttributeType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import {
@@ -639,6 +640,235 @@ describe('reorder conflicts', () => {
   });
 });
 
+/**
+ * Reordering the story's own collections.
+ *
+ * `applyReorderToLocalDb` fans out to three different tables from one operation shape, and which one
+ * it writes to is decided by `entity` plus `reorderTarget`. Scene reorders are covered above; these
+ * are the two branches nothing exercised, and they are the ones the Events feature edits - it adds a
+ * fourth target sharing this code (see `docs/events_feature_plan.md` section 4).
+ */
+describe('story-level reorder conflicts', () => {
+  const seedChapters = async () =>
+    database.db.insert(schema.chapters).values([
+      {
+        id: 'chapter-a',
+        storyId: STORY_ID,
+        name: 'A',
+        // Seeded in the *local* order, which is the reverse of what the server sends below: a test
+        // seeded in the server's order would pass without a single row being written.
+        index: 2,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'chapter-b',
+        storyId: STORY_ID,
+        name: 'B',
+        index: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+
+  const field = (id: string, name: string, order: number) => ({
+    id,
+    storyId: STORY_ID,
+    entityType: 'Character' as const,
+    name,
+    key: name.toLowerCase(),
+    description: null,
+    type: AttributeType.TEXT,
+    targetEntityType: null,
+    isRequired: false,
+    defaultValue: null,
+    order,
+    createdAt: NOW,
+    updatedAt: NOW,
+    version: 1,
+    isDeleted: false,
+  });
+
+  const seedFields = async () =>
+    database.db
+      .insert(schema.storySchemaFields)
+      .values([field('field-a', 'A', 1), field('field-b', 'B', 0)]);
+
+  const seedStoryReorderConflict = async (
+    serverItems: { id: string; newIndex: number }[],
+    payloadExtras: Record<string, unknown> = {},
+  ) => {
+    const total = serverItems.length;
+    // The local order is the server's, inverted - so every row has to move for the resolution to
+    // be doing anything.
+    const localItems = serverItems.map((item) => ({
+      id: item.id,
+      newIndex: total + 1 - item.newIndex,
+    }));
+    const opId = await seedOperation('op-story-reorder', {
+      operationType: 'reorder',
+      entityType: 'Story',
+      entityId: STORY_ID,
+      payload: JSON.stringify({ reorderItems: localItems, version: 1, ...payloadExtras }),
+    });
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Story',
+      entityId: STORY_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: [opId],
+      localValues: { reorderItems: localItems, ...payloadExtras },
+      serverValues: { reorderItems: serverItems, ...payloadExtras },
+      clientVersion: 1,
+      serverVersion: 2,
+    });
+    return opId;
+  };
+
+  const chapterIndexes = async () => {
+    const rows = await database.db.query.chapters.findMany();
+    return Object.fromEntries(rows.map((row) => [row.id, row.index]));
+  };
+
+  it('applies the server chapter order and abandons the local one', async () => {
+    await seedChapters();
+    const opId = await seedStoryReorderConflict([
+      { id: 'chapter-a', newIndex: 1 },
+      { id: 'chapter-b', newIndex: 2 },
+    ]);
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    // Both rows moved: they were seeded at a:2 / b:1.
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 1, 'chapter-b': 2 });
+    expect((await readOperation(opId))!.conflictState).toBe('abandoned');
+  });
+
+  /** Keeping mine writes nothing locally: the pending reorder is simply rebased and resent. */
+  it('leaves the chapter order alone when the local one is kept', async () => {
+    await seedChapters();
+    const opId = await seedStoryReorderConflict([
+      { id: 'chapter-a', newIndex: 1 },
+      { id: 'chapter-b', newIndex: 2 },
+    ]);
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepLocal(pending.id);
+
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+    const op = await readOperation(opId);
+    expect(op!.conflictState).toBeNull();
+    expect(JSON.parse(op!.payload).version).toBe(3);
+  });
+
+  /**
+   * Attribute order is stored **zero-based** while a reorder item is one-based, so this branch
+   * subtracts one. Getting it wrong shifts every custom attribute on every form by one position, and
+   * nothing else in the system would notice.
+   */
+  it('writes attribute order zero-based, one below the reorder index', async () => {
+    await seedFields();
+    await seedStoryReorderConflict(
+      [
+        { id: 'field-a', newIndex: 1 },
+        { id: 'field-b', newIndex: 2 },
+      ],
+      { reorderTarget: 'StorySchemaField', schemaEntityType: 'Character' },
+    );
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    const rows = await database.db.query.storySchemaFields.findMany();
+    expect(Object.fromEntries(rows.map((row) => [row.id, row.order]))).toEqual({
+      'field-a': 0,
+      'field-b': 1,
+    });
+  });
+
+  /** The reorder target decides the table; a schema-field reorder must not touch the chapters. */
+  it('does not touch the chapters when the target is the schema fields', async () => {
+    await seedChapters();
+    await seedFields();
+    await seedStoryReorderConflict(
+      [
+        { id: 'field-a', newIndex: 2 },
+        { id: 'field-b', newIndex: 1 },
+      ],
+      { reorderTarget: 'StorySchemaField', schemaEntityType: 'Character' },
+    );
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+  });
+
+  it('does nothing at all when the server sent no items', async () => {
+    await seedChapters();
+    await seedOperation('op-empty', {
+      operationType: 'reorder',
+      entityType: 'Story',
+      entityId: STORY_ID,
+      payload: JSON.stringify({ reorderItems: [], version: 1 }),
+    });
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Story',
+      entityId: STORY_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: ['op-empty'],
+      localValues: { reorderItems: [] },
+      serverValues: { reorderItems: [] },
+      clientVersion: 1,
+      serverVersion: 2,
+    });
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+  });
+});
+
+/**
+ * The resolution actually written to the row.
+ *
+ * The review sheet reads this column back, and so does anybody auditing what was decided months
+ * later. `merge`, `restore` and `discard` are asserted where they are produced; these are the two
+ * plain ones, which nothing named until now.
+ */
+describe('the recorded resolution', () => {
+  it('records keeping the local value as keep_local', async () => {
+    await seedCharacter();
+    await service.recordConflict(baseConflict());
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepLocal(pending.id);
+
+    const [row] = await database.db.query.syncConflicts.findMany();
+    expect(row).toMatchObject({ status: 'resolved', resolution: 'keep_local' });
+  });
+
+  it('records accepting the server value as keep_server', async () => {
+    await seedCharacter();
+    await service.recordConflict(baseConflict());
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    const [row] = await database.db.query.syncConflicts.findMany();
+    expect(row).toMatchObject({ status: 'resolved', resolution: 'keep_server' });
+  });
+});
+
 describe('dismissConflict', () => {
   it('takes the conflict off the pending list', async () => {
     await service.recordConflict(baseConflict());
@@ -702,6 +932,59 @@ describe('findContestedFields', () => {
 
   it('reports nothing when the two sides agree', () => {
     expect(findContestedFields({ name: 'Igual' }, { name: 'Igual' })).toEqual([]);
+  });
+
+  /**
+   * A date survives the round trip through the operation log as a string, so the two sides of a
+   * comparison are rarely the same shape. Comparing them as written would mark an untouched date as
+   * disputed and put a field in front of the user that nobody edited.
+   */
+  it('reads a Date and its own serialization as the same instant', () => {
+    const instant = new Date('2026-08-10T12:00:00.000Z');
+
+    expect(findContestedFields({ when: instant }, { when: instant.toISOString() })).toEqual([]);
+    expect(findContestedFields({ when: instant }, { when: '2026-08-11T12:00:00.000Z' })).toEqual([
+      'when',
+    ]);
+  });
+
+  it('treats a missing date and a present one as disputed', () => {
+    const instant = new Date('2026-08-10T12:00:00.000Z');
+    expect(findContestedFields({ when: instant }, { when: null })).toEqual(['when']);
+  });
+
+  /**
+   * `reorderItems` is the case that matters: an array is never `===` itself across a JSON round trip,
+   * so a shallow comparison would report every reorder as a disagreement about its own contents.
+   */
+  it('compares arrays and objects by their contents', () => {
+    const items = [{ id: 'a', newIndex: 1 }];
+
+    expect(findContestedFields({ reorderItems: items }, { reorderItems: [...items] })).toEqual([]);
+    expect(
+      findContestedFields({ reorderItems: items }, { reorderItems: [{ id: 'a', newIndex: 2 }] }),
+    ).toEqual(['reorderItems']);
+  });
+});
+
+/**
+ * An entity type with no local table.
+ *
+ * `getEntityTable` returns nothing for a type this client does not store, which happens when a newer
+ * server sends an entity this build has never heard of. Resolving must be a no-op with a log line,
+ * never a crash: the conflict screen is the last place a writer should meet an exception.
+ */
+describe('an entity this client does not store', () => {
+  it('resolves without writing anything and without throwing', async () => {
+    await service.recordConflict(
+      baseConflict({ entityType: 'SomethingFromTheFuture', entityId: 'x-1' }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await expect(service.resolveKeepLocal(pending.id)).resolves.toBeUndefined();
+
+    const [row] = await database.db.query.syncConflicts.findMany();
+    expect(row).toMatchObject({ status: 'resolved', resolution: 'keep_local' });
   });
 });
 

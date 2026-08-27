@@ -1,3 +1,4 @@
+import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { describeStoryIntegrityViolations, findStoryExportIntegrityErrors } from '@keres/shared';
 import { applyNarrative } from './lib/applyExampleNarrative';
 import { exampleStoryNarratives } from './lib/exampleStoryNarrative';
@@ -602,7 +603,9 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
 
   return {
     ...source,
-    formatVersion: 6,
+    // The constant, not a literal: pinned by hand it silently falls behind the format, and the
+    // guard in `ExampleStoryService.test.ts` only catches that after the packages are stale.
+    formatVersion: CURRENT_STORY_FORMAT_VERSION,
     serverLastOperationVersion: 0,
     story: {
       ...source.story,

@@ -71,6 +71,13 @@
       "when": 1787790938956,
       "tag": "0009_fat_hiroim",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1787793495347,
+      "tag": "0010_luxuriant_la_nuit",
+      "breakpoints": true
     }
   ]
 }

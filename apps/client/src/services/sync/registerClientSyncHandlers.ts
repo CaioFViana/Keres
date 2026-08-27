@@ -1,6 +1,7 @@
 import { AttributeValueClientSyncHandler } from '../entity-sync-handlers/AttributeValueClientSyncHandler';
 import { ChapterClientSyncHandler } from '../entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from '../entity-sync-handlers/CharacterClientSyncHandler';
+import { ChapterRelationClientSyncHandler } from '../entity-sync-handlers/ChapterRelationClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from '../entity-sync-handlers/CharacterRelationClientSyncHandler';
 import { CharacterSceneClientSyncHandler } from '../entity-sync-handlers/CharacterSceneClientSyncHandler';
 import { ChoiceCheckClientSyncHandler } from '../entity-sync-handlers/ChoiceCheckClientSyncHandler';
@@ -43,6 +44,7 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new NoteClientSyncHandler(),
     new NoteRelationClientSyncHandler(),
     new WorldRuleClientSyncHandler(),
+    new ChapterRelationClientSyncHandler(),
     new CharacterRelationClientSyncHandler(),
     new LocationClientSyncHandler(),
     new LocationRelationClientSyncHandler(),

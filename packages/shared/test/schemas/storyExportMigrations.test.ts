@@ -5,6 +5,8 @@ import { migrateStoryExport, StoryExportVersionError } from '../../schemas/story
 /** The collections the V4 -> V5 migration materialises as empty. */
 const EMPTY_V5_COLLECTIONS = { stats: [], statStrengths: [], statRelations: [], modes: [] };
 const EMPTY_V6_COLLECTIONS = { plots: [], plotScenes: [] };
+/** V6 -> V7 materialises the story's chronology, which no earlier package could have stated. */
+const EMPTY_V7_COLLECTIONS = { chapterRelations: [] };
 
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {
@@ -64,6 +66,7 @@ describe('migrateStoryExport', () => {
       effects: [],
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
+      ...EMPTY_V7_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -89,6 +92,7 @@ describe('migrateStoryExport', () => {
       effects: [],
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
+      ...EMPTY_V7_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -134,6 +138,7 @@ describe('migrateStoryExport', () => {
       story: { ...v4Export.story, statSystem: false, statNotation: 'letter' },
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
+      ...EMPTY_V7_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });

@@ -1079,6 +1079,7 @@
       "relationType": "Confundida com ela"
     }
   ],
+  "chapterRelations": [],
   "characterScenes": [
     {
       "id": "57JV5ASFENV9YP88VN0XWA3K6B",
@@ -2191,7 +2192,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 7,
   "stats": [
     {
       "id": "2JJF4PBQY4WHGDMB4TRCBEZ75D",

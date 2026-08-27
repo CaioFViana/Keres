@@ -22,6 +22,7 @@ import migration_18 from './0017_completeness_checks';
 import migration_19 from './0018_packs';
 import migration_20 from './0019_pack_visibility';
 import migration_21 from './0020_closed_timeslip';
+import migration_22 from './0021_steep_young_avengers';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -45,6 +46,7 @@ const migrations = [
   { id: 19, name: '0018_packs', run: migration_19 },
   { id: 20, name: '0019_pack_visibility', run: migration_20 },
   { id: 21, name: '0020_closed_timeslip', run: migration_21 },
+  { id: 22, name: '0021_steep_young_avengers', run: migration_22 },
 ];
 
 export default migrations;

@@ -42,6 +42,7 @@
   "analysis_choice_dangling_next_scene": "Points to a scene that no longer exists.",
   "analysis_choice_dangling_scene": "Belongs to a scene that no longer exists.",
   "analysis_choice_never_satisfiable": "This choice's checks can never be satisfied - it is effectively unreachable.",
+  "analysis_chronology_cycle": "The chronology contradicts itself: {{names}} are stated to happen before one another in a loop, which no sequence of events can satisfy.",
   "analysis_duplicate_character_relation": "Has more than one relationship recorded with {{otherName}}.",
   "analysis_duplicate_location_relation": "Has more than one connection of the same type recorded with {{otherName}}.",
   "analysis_fix_indexes_button": "Fix numbering",

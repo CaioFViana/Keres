@@ -1079,6 +1079,7 @@
       "relationType": "Acordou e a encontrou"
     }
   ],
+  "chapterRelations": [],
   "characterScenes": [
     {
       "id": "22YH93Q889FVK580AY1DSH5KP6",
@@ -2158,7 +2159,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 7,
   "stats": [
     {
       "id": "6ZVGMD560WVB2V67079KD7CFAE",

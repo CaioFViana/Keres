@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   attributeValues,
+  chapterRelations,
   chapters,
   characterRelations,
   characterScenes,
@@ -54,6 +55,8 @@ const IMPORTER = newId();
 const id = {
   story: '',
   chapter: '',
+  event: '',
+  chapterRelation: '',
   location: '',
   otherLocation: '',
   sceneA: '',
@@ -110,9 +113,18 @@ beforeEach(async () => {
     statNotation: 'letter',
   } as never);
 
-  await db
-    .insert(chapters)
-    .values({ id: id.chapter, storyId, name: 'Primeira noite', index: 1 } as never);
+  await db.insert(chapters).values([
+    { id: id.chapter, storyId, name: 'Primeira noite', index: 1 },
+    // An event, so the package carries both kinds of container and a chronology between them.
+    { id: id.event, storyId, name: 'A guerra de trezentos anos', index: 1, type: 'event' },
+  ] as never);
+  await db.insert(chapterRelations).values({
+    id: id.chapterRelation,
+    storyId,
+    chapter1Id: id.event,
+    chapter2Id: id.chapter,
+    relationType: 'before',
+  } as never);
   await db.insert(locations).values([
     { id: id.location, storyId, name: 'O farol' },
     { id: id.otherLocation, storyId, name: 'A enseada' },

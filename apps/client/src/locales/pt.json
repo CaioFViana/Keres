@@ -42,6 +42,7 @@
   "analysis_choice_dangling_next_scene": "Aponta para uma cena que não existe mais.",
   "analysis_choice_dangling_scene": "Pertence a uma cena que não existe mais.",
   "analysis_choice_never_satisfiable": "Os checks desta escolha nunca podem ser satisfeitos - ela é, na prática, inacessível.",
+  "analysis_chronology_cycle": "A cronologia se contradiz: {{names}} são declarados como acontecendo antes uns dos outros em círculo, o que nenhuma sequência de eventos satisfaz.",
   "analysis_duplicate_character_relation": "Tem mais de um relacionamento registrado com {{otherName}}.",
   "analysis_duplicate_location_relation": "Tem mais de uma conexão do mesmo tipo registrada com {{otherName}}.",
   "analysis_fix_indexes_button": "Acertar numeração",

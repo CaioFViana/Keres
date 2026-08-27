@@ -5,4 +5,4 @@
  * It is only bumped manually when an official release changes the exported package's format - not on
  * every commit/build.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 6;
+export const CURRENT_STORY_FORMAT_VERSION = 7;

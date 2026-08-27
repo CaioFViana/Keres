@@ -1184,6 +1184,7 @@
       "relationType": "Pretendente"
     }
   ],
+  "chapterRelations": [],
   "characterScenes": [
     {
       "id": "0KK0D2H822NB0243A0VXA2GHRQ",
@@ -2439,7 +2440,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 7,
   "stats": [
     {
       "id": "5RE90XMEW0CDRTM0J3CRTDR5KY",

@@ -2,6 +2,7 @@ import {
   AttributeType,
   type ChapterType,
   decodeAttributeValue,
+  isDirectionalChapterRelation,
   isValidAttributeDate,
 } from '@keres/shared';
 import type { NavigableEntityType } from './entityNavigation';
@@ -78,6 +79,13 @@ export interface AnalysisScene {
   chapterId: string;
   /** Position within the chapter: 1..N, with no holes and no repeats. */
   index: number;
+}
+
+/** One statement of chronology, as the analysis reads it. */
+export interface AnalysisChapterRelation {
+  chapter1Id: string;
+  chapter2Id: string;
+  relationType: string;
 }
 
 export interface AnalysisChapter {
@@ -170,6 +178,8 @@ export interface StoryAnalysisInput {
   tags: AnalysisEntityRef[];
   tagRelations: { tagId: string }[];
   chapters: AnalysisChapter[];
+  /** Optional so a caller predating chronology keeps working; absent means none stated. */
+  chapterRelations?: AnalysisChapterRelation[];
   notes: AnalysisEntityRef[];
   worldRules: AnalysisEntityRef[];
   storySchemaFields: AnalysisStorySchemaField[];
@@ -225,6 +235,7 @@ export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): Stor
   return [
     ...completeness,
     ...checkDuplicateRelations(input),
+    ...checkChronologyCycles(input),
     ...checkSceneFinishWithChoices(input),
     ...(input.storyType === 'linear' ? checkNarrativeIndexes(input) : []),
     // Choice integrity is O(choices) and fits here even though it is "branching only" - dangling references
@@ -495,6 +506,83 @@ function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null
   if (new Set(sorted).size !== sorted.length) return 'duplicate';
   if (sorted[0] !== 1) return 'start';
   return sorted.every((value, position) => value === position + 1) ? null : 'gap';
+}
+
+/**
+ * Chronology that contradicts itself.
+ *
+ * One statement per pair is guaranteed by the table, so "A before B" and "B before A" cannot both
+ * exist - a direct contradiction is unstorable. What remains is the transitive kind: A before B,
+ * B before C, C before A. That is a cycle in the directional relations, and it says the writer has
+ * stated something that cannot be true of any sequence of events.
+ *
+ * Only the directional types form edges. `overlaps` and `simultaneous` are unordered - two things
+ * sharing time contradicts nothing, however many of them there are.
+ *
+ * It is an integrity finding rather than an opinion: this is not a matter of taste about how a
+ * story should be arranged, it is an assertion that no arrangement satisfies.
+ */
+function checkChronologyCycles(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const relations = (input.chapterRelations ?? []).filter((relation) =>
+    isDirectionalChapterRelation(relation.relationType),
+  );
+  if (relations.length === 0) return [];
+
+  const edges = new Map<string, string[]>();
+  for (const relation of relations) {
+    const from = edges.get(relation.chapter1Id) ?? [];
+    from.push(relation.chapter2Id);
+    edges.set(relation.chapter1Id, from);
+  }
+
+  /*
+   * Iterative depth-first search with an explicit stack.
+   *
+   * Recursion would be the obvious shape and is the wrong one here: a writer can state a long
+   * chain, and a deep story would blow the JavaScript stack on a screen whose whole purpose is to
+   * report problems calmly.
+   */
+  const state = new Map<string, 'visiting' | 'done'>();
+  const cycleMembers = new Set<string>();
+
+  for (const start of edges.keys()) {
+    if (state.get(start)) continue;
+    const stack: { node: string; nextEdge: number }[] = [{ node: start, nextEdge: 0 }];
+    state.set(start, 'visiting');
+
+    while (stack.length > 0) {
+      const frame = stack[stack.length - 1]!;
+      const neighbours = edges.get(frame.node) ?? [];
+      if (frame.nextEdge >= neighbours.length) {
+        state.set(frame.node, 'done');
+        stack.pop();
+        continue;
+      }
+      const next = neighbours[frame.nextEdge++]!;
+      const seen = state.get(next);
+      if (seen === 'visiting') {
+        // Everything still on the stack from `next` onwards is part of the cycle.
+        const from = stack.findIndex((entry) => entry.node === next);
+        for (const entry of stack.slice(from === -1 ? 0 : from)) cycleMembers.add(entry.node);
+        cycleMembers.add(next);
+      } else if (!seen) {
+        state.set(next, 'visiting');
+        stack.push({ node: next, nextEdge: 0 });
+      }
+    }
+  }
+
+  if (cycleMembers.size === 0) return [];
+
+  const named = input.chapters.filter((chapter) => cycleMembers.has(chapter.id));
+  const anchor = named[0] ?? input.chapters[0];
+  if (!anchor) return [];
+
+  return [
+    buildFinding('scenes', 'warning', 'Chapter', anchor, 'analysis_chronology_cycle', {
+      names: named.map((chapter) => chapter.name).join(', '),
+    }),
+  ];
 }
 
 /**

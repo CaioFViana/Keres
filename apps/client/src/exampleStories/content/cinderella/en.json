@@ -1091,6 +1091,7 @@
       "relationType": "In love"
     }
   ],
+  "chapterRelations": [],
   "characterScenes": [
     {
       "id": "50S7EB7ZRT4YFHNSTPEK87TYVV",
@@ -2280,7 +2281,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 7,
   "stats": [
     {
       "id": "3RKMCE7M176WMZ9M36KZVYZA2D",

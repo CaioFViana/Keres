@@ -1296,6 +1296,7 @@
       "relationType": "Observada em segredo"
     }
   ],
+  "chapterRelations": [],
   "characterScenes": [
     {
       "id": "7F7G8HHZBG7R0XE5TCHNR212N0",
@@ -2660,7 +2661,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 7,
   "stats": [
     {
       "id": "3BTX03KBYDNT42RERRB6BBW4YE",

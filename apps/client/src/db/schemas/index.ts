@@ -1,5 +1,6 @@
 export * from './attributeValues';
 export * from './chapters';
+export * from './chapterRelations';
 export * from './characterRelations';
 export * from './characters';
 export * from './characterScenes';

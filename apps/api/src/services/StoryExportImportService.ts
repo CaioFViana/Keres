@@ -80,6 +80,11 @@ export class StoryExportImportService {
       where: (suggestions, { eq, and }) =>
         and(eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false)),
     });
+    const chapterRelations = await db.query.chapterRelations.findMany({
+      where: (chapterRelations, { eq, and }) =>
+        and(eq(chapterRelations.storyId, storyId), eq(chapterRelations.isDeleted, false)),
+    });
+
     const characterRelations = await db.query.characterRelations.findMany({
       where: (characterRelations, { eq, and }) =>
         and(eq(characterRelations.storyId, storyId), eq(characterRelations.isDeleted, false)),
@@ -192,6 +197,7 @@ export class StoryExportImportService {
         notes,
         tags,
         suggestions,
+        chapterRelations,
         characterRelations,
         characterScenes,
         plots,
@@ -604,6 +610,41 @@ export class StoryExportImportService {
       });
       if (newSuggestionsData.length > 0) {
         await tx.insert(dbSchema.suggestions).values(newSuggestionsData);
+      }
+
+      /*
+       * --- ChapterRelations ---
+       *
+       * The ids are **not** sorted here, unlike the character relations below: `before` and
+       * `during` are directional, so the two columns are a sequence and sorting them would reverse
+       * half the statements the package carries. Uniqueness is on the unordered pair and is
+       * guaranteed by what was exported - one live row per pair - rather than by reordering.
+       */
+      const newChapterRelationsData = (validatedFullStory.chapterRelations ?? []).map(
+        (original) => {
+          const newId = nextId(original.id);
+          idMap.set(original.id, newId);
+          const mappedChapter1 = idMap.get(original.chapter1Id);
+          const mappedChapter2 = idMap.get(original.chapter2Id);
+          if (!mappedChapter1 || !mappedChapter2) {
+            throw new Error(
+              `Import Error: a container referenced by chapter relation ${original.id} was not found in the ID map.`,
+            );
+          }
+          return {
+            ...original,
+            id: newId,
+            storyId: targetStoryId,
+            chapter1Id: mappedChapter1,
+            chapter2Id: mappedChapter2,
+            createdAt: new Date(original.createdAt),
+            updatedAt: new Date(original.updatedAt),
+            deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+          };
+        },
+      );
+      if (newChapterRelationsData.length > 0) {
+        await tx.insert(dbSchema.chapterRelations).values(newChapterRelationsData);
       }
 
       // --- CharacterRelations ---

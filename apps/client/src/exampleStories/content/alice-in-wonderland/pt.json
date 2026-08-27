@@ -1284,6 +1284,7 @@
       "relationType": "Acusadora"
     }
   ],
+  "chapterRelations": [],
   "characterScenes": [
     {
       "id": "688PWJDVTNEPW03RVSMEWPF67P",
@@ -2604,7 +2605,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 7,
   "stats": [
     {
       "id": "7NYM3XF0FN7TFK8K1F5HPJ6FGF",

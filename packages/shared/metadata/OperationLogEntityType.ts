@@ -7,6 +7,7 @@ export enum OperationLogEntityType {
   Tag = 'Tag',
   User = 'User',
   Chapter = 'Chapter',
+  ChapterRelation = 'ChapterRelation',
   Scene = 'Scene',
   Choice = 'Choice',
   Gallery = 'Gallery',

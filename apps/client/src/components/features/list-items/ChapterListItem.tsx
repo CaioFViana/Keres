@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text, View } from 'react-native';
 import type { ChapterSelect, TagSelect } from '../../../db/schema';
@@ -36,13 +37,34 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
 
   const styles = createReferenceListItemStyles(colors);
 
-  const renderHeaderContent = (chap: ChapterSelect) => (
-    <ListItemTitle
-      text={`${chap.index}. ${chap.name}`}
-      headerLeftStyle={styles.headerLeft}
-      nameStyle={styles.name}
-    />
-  );
+  /**
+   * An event carries no number.
+   *
+   * Its index is only the order the writer arranged the list in, never a position in the story, so
+   * printing it would say something the data does not mean. The hourglass takes that place - the
+   * one visual difference between the two kinds, which are otherwise the same container.
+   */
+  const renderHeaderContent = (chap: ChapterSelect) =>
+    chap.type === 'event' ? (
+      <View style={styles.headerLeft}>
+        <Ionicons
+          name="hourglass-outline"
+          size={16}
+          color={colors.textSecondary}
+          style={{ marginRight: 6 }}
+          testID={`event-marker-${chap.id}`}
+        />
+        <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
+          {chap.name}
+        </Text>
+      </View>
+    ) : (
+      <ListItemTitle
+        text={`${chap.index}. ${chap.name}`}
+        headerLeftStyle={styles.headerLeft}
+        nameStyle={styles.name}
+      />
+    );
 
   const renderExpandedContent = (chap: ChapterSelect) => (
     <View>

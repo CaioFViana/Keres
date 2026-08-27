@@ -63,6 +63,25 @@ export interface ChapterService {
     newOrder: { id: string; newIndex: number }[],
     type?: ChapterType,
   ): Promise<void>;
+  /**
+   * Moves a container between the two kinds.
+   *
+   * Three operations, in this order and all through the log: the row changes kind, the space it
+   * left closes its gap, and the space it joined renumbers around it. The order is not cosmetic -
+   * the server filters each reorder by kind, so it can only match the arrival against the target
+   * space after the kind change has been applied.
+   *
+   * `position` is the 1-based slot in the target space, and only `event -> chapter` should ask for
+   * one: the narrative spine has no natural place for a new arrival, so every position is an
+   * assertion about the telling. Going the other way appends, because the event list is display
+   * order and appending claims nothing about when it happened.
+   */
+  convertChapterType(
+    currentUserId: string,
+    chapterId: string,
+    targetType: ChapterType,
+    position?: number,
+  ): Promise<void>;
 }
 
 export const createChapterService = (db: AppDrizzleClient): ChapterService => {
@@ -144,27 +163,37 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         .where(and(...finalConditions))
         .$dynamic();
 
+      /**
+       * A combined list is grouped, events first, whatever the sort.
+       *
+       * Not decoration: the two kinds number independently, so chapter 1 and event 1 both exist and
+       * a flat sort by index interleaves them into nonsense. Grouping first makes each block read as
+       * its own sequence, which is what they are.
+       */
+      const groupByKind =
+        type === null ? [sql`CASE WHEN ${chapters.type} = 'event' THEN 0 ELSE 1 END`] : [];
+
       if (sortBy) {
         const orderBy = sortDirection === 'desc' ? desc : asc;
         switch (sortBy) {
           case 'name':
-            query = query.orderBy(orderBy(chapters.name));
+            query = query.orderBy(...groupByKind, orderBy(chapters.name));
             break;
           case 'index':
-            query = query.orderBy(orderBy(chapters.index));
+            query = query.orderBy(...groupByKind, orderBy(chapters.index));
             break;
           case 'createdAt':
-            query = query.orderBy(orderBy(chapters.createdAt));
+            query = query.orderBy(...groupByKind, orderBy(chapters.createdAt));
             break;
           case 'updatedAt':
-            query = query.orderBy(orderBy(chapters.updatedAt));
+            query = query.orderBy(...groupByKind, orderBy(chapters.updatedAt));
             break;
           default:
             console.warn(`Unknown sortBy field: ${sortBy}`);
             break;
         }
       } else {
-        query = query.orderBy(asc(chapters.index)); // Default sort by index
+        query = query.orderBy(...groupByKind, asc(chapters.index)); // Default sort by index
       }
 
       return query.all();
@@ -357,7 +386,10 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
               type === null ? undefined : eq(chapters.type, type),
             ),
           )
-          .orderBy(asc(chapters.index))
+          .orderBy(
+            ...(type === null ? [sql`CASE WHEN ${chapters.type} = 'event' THEN 0 ELSE 1 END`] : []),
+            asc(chapters.index),
+          )
           .all();
         return allChapters;
       } catch (error) {
@@ -412,6 +444,111 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         version: story?.version,
       });
       entityEventEmitter.emit('chapter_changed', storyId, 'reorder');
+    },
+
+    async convertChapterType(currentUserId, chapterId, targetType, position) {
+      const chapter = await db.query.chapters.findFirst({
+        where: and(eq(chapters.id, chapterId), eq(chapters.isDeleted, false)),
+      });
+      if (!chapter) throw new Error(`Chapter with ID ${chapterId} not found for conversion.`);
+      if (chapter.type === targetType) return;
+
+      const storyId = chapter.storyId;
+      await assertStoryIsWritable(db, storyId);
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+      const liveOf = async (type: ChapterType) =>
+        db
+          .select({ id: chapters.id, index: chapters.index })
+          .from(chapters)
+          .where(
+            and(
+              eq(chapters.storyId, storyId),
+              eq(chapters.type, type),
+              eq(chapters.isDeleted, false),
+            ),
+          )
+          .orderBy(asc(chapters.index))
+          .all();
+
+      const sourceRemaining = (await liveOf(chapter.type)).filter((row) => row.id !== chapterId);
+      const targetExisting = await liveOf(targetType);
+
+      // Clamped rather than refused: an out-of-range slot is a caller bug, and landing at the end
+      // is a result the writer can see and fix, unlike an exception on a screen.
+      const slot = Math.min(
+        Math.max(position ?? targetExisting.length + 1, 1),
+        targetExisting.length + 1,
+      );
+      const targetOrder = [
+        ...targetExisting.slice(0, slot - 1),
+        { id: chapterId, index: 0 },
+        ...targetExisting.slice(slot - 1),
+      ];
+
+      const renumber = (rows: { id: string }[]) =>
+        rows.map((row, position2) => ({ id: row.id, newIndex: position2 + 1 }));
+      const sourceOrder = renumber(sourceRemaining);
+      const arrivedOrder = renumber(targetOrder);
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(chapters)
+          .set({
+            type: targetType,
+            index: slot,
+            updatedAt: new Date(),
+            version: sql`${chapters.version} + 1`,
+          })
+          .where(eq(chapters.id, chapterId));
+
+        for (const item of [...sourceOrder, ...arrivedOrder]) {
+          if (item.id === chapterId) continue;
+          await tx
+            .update(chapters)
+            .set({
+              index: item.newIndex,
+              updatedAt: new Date(),
+              version: sql`${chapters.version} + 1`,
+            })
+            .where(eq(chapters.id, item.id));
+        }
+      });
+
+      const updatedChapter = await db.query.chapters.findFirst({
+        where: eq(chapters.id, chapterId),
+      });
+      // The kind change goes first: the server matches each reorder against one kind, so it can
+      // only find the arrival in the target space once this has been applied.
+      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Chapter', chapterId, {
+        type: targetType,
+        version: updatedChapter?.version,
+      });
+
+      const bumpStory = async () => {
+        const [story] = await db
+          .update(stories)
+          .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
+          .where(eq(stories.id, storyId))
+          .returning({ version: stories.version });
+        return story?.version;
+      };
+
+      // An empty space needs no reorder: the server would refuse a payload of nothing to compare.
+      if (sourceOrder.length > 0) {
+        await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
+          reorderItems: sourceOrder,
+          ...(chapter.type === 'event' ? { reorderTarget: 'Event' as const } : {}),
+          version: await bumpStory(),
+        });
+      }
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
+        reorderItems: arrivedOrder,
+        ...(targetType === 'event' ? { reorderTarget: 'Event' as const } : {}),
+        version: await bumpStory(),
+      });
+
+      entityEventEmitter.emit('chapter_changed', storyId, chapterId);
     },
   };
 };

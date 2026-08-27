@@ -186,6 +186,126 @@ describe('reordering chapters', () => {
   });
 });
 
+/**
+ * The conversion, replayed against the server exactly as the client records it.
+ *
+ * `ChapterService.convertChapterType` writes three operations - the kind change, then a reorder for
+ * each space - and their order is load-bearing. The server matches a reorder against one kind, so
+ * applied before the kind change it would look for the arrival among containers it does not yet
+ * consider part of that space and refuse the whole thing as a validation error the writer has no way
+ * to resolve. This pushes the real sequence and asserts the server takes all three.
+ */
+describe('converting a chapter into an event', () => {
+  const convert = (
+    id: string,
+    targetType: 'chapter' | 'event',
+    sourceOrder: { id: string; newIndex: number }[],
+    targetOrder: { id: string; newIndex: number }[],
+    sourceTarget?: 'Event',
+    goingTo?: 'Event',
+  ) =>
+    request('POST', `/sync/${storyId}`, {
+      token: ana.token,
+      body: [
+        {
+          clientOperationId: newId(),
+          type: 'update',
+          entity: 'Chapter',
+          id,
+          changes: { type: targetType, version: 1 },
+        },
+        {
+          clientOperationId: newId(),
+          type: 'reorder',
+          entity: 'Story',
+          id: storyId,
+          reorderItems: sourceOrder,
+          version: 1,
+          ...(sourceTarget ? { reorderTarget: sourceTarget } : {}),
+        },
+        {
+          clientOperationId: newId(),
+          type: 'reorder',
+          entity: 'Story',
+          id: storyId,
+          reorderItems: targetOrder,
+          version: 2,
+          ...(goingTo ? { reorderTarget: goingTo } : {}),
+        },
+      ],
+    });
+
+  it('takes the whole sequence without a conflict', async () => {
+    const { data } = await convert(
+      chapterB,
+      'event',
+      [{ id: chapterA, newIndex: 1 }],
+      [
+        { id: eventA, newIndex: 1 },
+        { id: eventB, newIndex: 2 },
+        { id: chapterB, newIndex: 3 },
+      ],
+      undefined,
+      'Event',
+    );
+
+    expect(data.conflicts ?? []).toEqual([]);
+    expect(await indexesOf('chapter')).toEqual({ [chapterA]: 1 });
+    expect(await indexesOf('event')).toEqual({ [eventA]: 1, [eventB]: 2, [chapterB]: 3 });
+  });
+
+  /**
+   * The same three operations with the kind change last. The server has no way to know they were
+   * meant together, so the reorder naming the event space is judged against the events as they
+   * still are - and the arrival is not one of them.
+   */
+  it('refuses the target reorder when the kind change has not been applied yet', async () => {
+    const { data } = await request('POST', `/sync/${storyId}`, {
+      token: ana.token,
+      body: [
+        {
+          clientOperationId: newId(),
+          type: 'reorder',
+          entity: 'Story',
+          id: storyId,
+          reorderItems: [
+            { id: eventA, newIndex: 1 },
+            { id: eventB, newIndex: 2 },
+            { id: chapterB, newIndex: 3 },
+          ],
+          version: 1,
+          reorderTarget: 'Event',
+        },
+      ],
+    });
+
+    expect(data.conflicts?.[0]).toMatchObject({ reason: 'validation' });
+  });
+
+  it('takes the sequence going back the other way', async () => {
+    const { data } = await convert(
+      eventA,
+      'chapter',
+      [{ id: eventB, newIndex: 1 }],
+      [
+        { id: chapterA, newIndex: 1 },
+        { id: eventA, newIndex: 2 },
+        { id: chapterB, newIndex: 3 },
+      ],
+      'Event',
+      undefined,
+    );
+
+    expect(data.conflicts ?? []).toEqual([]);
+    expect(await indexesOf('event')).toEqual({ [eventB]: 1 });
+    expect(await indexesOf('chapter')).toEqual({
+      [chapterA]: 1,
+      [eventA]: 2,
+      [chapterB]: 3,
+    });
+  });
+});
+
 describe('the column itself', () => {
   it('defaults a container to being a chapter', async () => {
     const id = newId();

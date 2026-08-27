@@ -17,7 +17,9 @@ import ChapterListItem from '@/src/components/features/list-items/ChapterListIte
 import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
 import { useDrizzle } from '../../../db';
+import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
+import { AppAlert } from '../../../utils/AppAlert';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../../hooks/useStoryRole';
@@ -111,7 +113,8 @@ const NarrativeElementsListScreen = () => {
   // Reordering isn't part of the shared list wiring, so it comes straight from the store.
   const reorderChapters = useChapterStore((state) => state.reorderChapters);
 
-  const [isReorderModalVisible, setIsReorderModalVisible] = useState(false);
+  /** Which space the reorder modal is editing - the two are numbered independently. */
+  const [reorderingType, setReorderingType] = useState<ChapterType | null>(null);
   const [outlineChapters, setOutlineChapters] = useState<ChapterSelect[]>([]);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
@@ -125,7 +128,8 @@ const NarrativeElementsListScreen = () => {
   const loadOutline = useCallback(async () => {
     if (!storyId) return;
     const [loadedChapters, loadedScenes, loadedChoices] = await Promise.all([
-      createChapterService(db).getAllByStoryId(storyId),
+      // Both kinds: the outline is the story's containers, and the service groups them.
+      createChapterService(db).getAllByStoryId(storyId, null),
       createSceneService(db).getAllByStoryId(storyId),
       createChoiceService(db).getAllByStoryId(storyId),
     ]);
@@ -508,16 +512,42 @@ const NarrativeElementsListScreen = () => {
     );
   }, [scenesWithFavoriteState, searchQuery, visibleChapters]);
 
+  /**
+   * Reordering asks which space when both exist.
+   *
+   * Chapters and events are numbered independently, so one drag list cannot hold both: the server
+   * validates each 1..N on its own and a mixed payload is a validation error whichever kind it is
+   * judged against. With only one kind present there is nothing to ask.
+   */
   const handleReorderPress = useCallback(() => {
-    setIsReorderModalVisible(true);
-  }, []);
+    const hasEvents = outlineChapters.some((chapter) => chapter.type === 'event');
+    const hasChapters = outlineChapters.some((chapter) => chapter.type !== 'event');
+
+    if (!hasEvents) return setReorderingType('chapter');
+    if (!hasChapters) return setReorderingType('event');
+
+    AppAlert.alert(t('chapter_reorder_which'), '', [
+      { text: t('chapter_reorder_chapters'), onPress: () => setReorderingType('chapter') },
+      { text: t('chapter_reorder_events'), onPress: () => setReorderingType('event') },
+      { text: t('cancel'), style: 'cancel' },
+    ]);
+  }, [outlineChapters, t]);
 
   const handleReorderConfirm = useCallback(
     async (newOrder: { id: string; newIndex: number }[]) => {
-      await reorderChapters(newOrder);
-      setIsReorderModalVisible(false);
+      await reorderChapters(newOrder, reorderingType ?? 'chapter');
+      setReorderingType(null);
     },
-    [reorderChapters],
+    [reorderChapters, reorderingType],
+  );
+
+  /** Only one space at a time reaches the drag list, for the reason above. */
+  const reorderableContainers = useMemo(
+    () =>
+      reorderingType === null
+        ? []
+        : outlineChapters.filter((chapter) => (chapter.type ?? 'chapter') === reorderingType),
+    [outlineChapters, reorderingType],
   );
 
   const styles = StyleSheet.create({
@@ -628,9 +658,9 @@ const NarrativeElementsListScreen = () => {
         )}
       />
       <ChapterReorderModal
-        isVisible={isReorderModalVisible}
-        onClose={() => setIsReorderModalVisible(false)}
-        chapters={outlineChapters}
+        isVisible={reorderingType !== null}
+        onClose={() => setReorderingType(null)}
+        chapters={reorderableContainers}
         onReorderConfirm={handleReorderConfirm}
       />
       <SceneReorderModal

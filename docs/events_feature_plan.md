@@ -386,7 +386,7 @@ real SQLite database with the production migrations applied.
 | **0** | `ChapterService` + the reorder conflict cells covered (roadmap Phase 1B, scoped to chapters) | The invariant this feature edits is verified before it is edited |
 | **1** (**done**) | The protocol gate (§10): `SyncProtocol.ts`, `/kerescheck`, the request header, the 426 on `/sync`, the registration check | Incompatible peers refuse each other, loudly and early |
 | **2** (**done**) | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, and the Story Analysis fix (§7.1) | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
-| **3** | The lists, the icon, the sort option, the toggle, mention routing | A writer can make one |
+| **3** (**done**) | The combined list grouped events-first, the hourglass, the kind switch at creation, the conversion modal, reordering scoped per kind | A writer can make one |
 | **4** | `ChapterRelation`: table, schemas, both sync handlers, service, the relation UI, the cycle check (§7.2) | Chronology is recordable |
 | **5** | The historical timeline (layout + svg), the presence-matrix filter | Chronology is visible |
 | **6** | `Scene.locationId` nullable, **bump `SYNC_PROTOCOL_VERSION` and `MIN_SUPPORTED_SYNC_PROTOCOL` (§10.3)**, the narrative timeline reading Events by name, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |

@@ -350,6 +350,31 @@ describe('events and chapters as separate spaces', () => {
     expect(both).toHaveLength(4);
   });
 
+  /**
+   * The combined list is grouped, events first.
+   *
+   * The two kinds number independently, so chapter 1 and event 1 both exist and a flat sort by
+   * index would interleave them into nonsense. Grouping makes each block read as the sequence it
+   * actually is.
+   */
+  it('puts the events first and keeps each block in its own order', async () => {
+    const both = await chapterService().getAllByStoryId(TEST_STORY_ID, null);
+    expect(both.map((row) => row.id)).toEqual(['event-1', 'event-2', 'chapter-1', 'chapter-2']);
+  });
+
+  it('groups the searchable listing the same way', async () => {
+    const both = await chapterService().getChaptersByStoryId(
+      TEST_STORY_ID,
+      undefined,
+      'index',
+      'asc',
+      undefined,
+      undefined,
+      null,
+    );
+    expect(both.map((row) => row.id)).toEqual(['event-1', 'event-2', 'chapter-1', 'chapter-2']);
+  });
+
   it('filters the searchable listing the same way', async () => {
     const chaptersOnly = await chapterService().getChaptersByStoryId(TEST_STORY_ID);
     const eventsOnly = await chapterService().getChaptersByStoryId(
@@ -439,6 +464,220 @@ describe('events and chapters as separate spaces', () => {
     ]);
 
     expect(payloadOf(await lastOperation()).reorderTarget).toBeUndefined();
+  });
+});
+
+/**
+ * Moving a container between the two kinds.
+ *
+ * The delicate part of the whole feature: one row changes kind, and *both* index spaces have to end
+ * up contiguous, because the server refuses a reorder that is not. Three operations carry that, and
+ * the order between them is load-bearing - the server matches each reorder against one kind, so it
+ * can only find the arrival in the target space after the kind change has been applied.
+ */
+describe('converting between chapter and event', () => {
+  const typesAndIndexes = async () => {
+    const rows = await database.db
+      .select({
+        id: schema.chapters.id,
+        type: schema.chapters.type,
+        index: schema.chapters.index,
+      })
+      .from(schema.chapters)
+      .where(eq(schema.chapters.isDeleted, false))
+      .all();
+    return Object.fromEntries(rows.map((row) => [row.id, `${row.type}:${row.index}`]));
+  };
+
+  const operationsSince = async (before: number) => (await operations()).slice(before);
+
+  beforeEach(async () => {
+    await seedChapter('chapter-1', 1);
+    await seedChapter('chapter-2', 2);
+    await seedChapter('chapter-3', 3);
+    await seedChapter('event-1', 1, { type: 'event' });
+    await seedChapter('event-2', 2, { type: 'event' });
+  });
+
+  it('closes the gap in the space it left', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-2', 'event');
+
+    const state = await typesAndIndexes();
+    expect(state['chapter-1']).toBe('chapter:1');
+    expect(state['chapter-3']).toBe('chapter:2');
+  });
+
+  /** Appending claims nothing about when it happened, which is why this direction asks nothing. */
+  it('appends to the end of the event list', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-2', 'event');
+
+    const state = await typesAndIndexes();
+    expect(state['chapter-2']).toBe('event:3');
+    expect(state['event-1']).toBe('event:1');
+    expect(state['event-2']).toBe('event:2');
+  });
+
+  it('inserts at the position asked for, pushing the rest down', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-1', 'chapter', 2);
+
+    const state = await typesAndIndexes();
+    expect(state['chapter-1']).toBe('chapter:1');
+    expect(state['event-1']).toBe('chapter:2');
+    expect(state['chapter-2']).toBe('chapter:3');
+    expect(state['chapter-3']).toBe('chapter:4');
+    // And the space it left closed up.
+    expect(state['event-2']).toBe('event:1');
+  });
+
+  it('inserts at the front when asked for the first slot', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-1', 'chapter', 1);
+    expect((await typesAndIndexes())['event-1']).toBe('chapter:1');
+  });
+
+  /** Both spaces contiguous from 1 is the invariant the server enforces; neither may be left broken. */
+  it('leaves both spaces contiguous from 1', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-1', 'event', 1);
+
+    const chaptersNow = await chapterService().getAllByStoryId(TEST_STORY_ID);
+    const eventsNow = await chapterService().getAllByStoryId(TEST_STORY_ID, 'event');
+    expect(chaptersNow.map((row) => row.index)).toEqual([1, 2]);
+    expect(eventsNow.map((row) => row.index)).toEqual([1, 2, 3]);
+  });
+
+  /**
+   * The kind change is recorded first. Applied the other way round, the server would look for the
+   * arrival among containers it does not yet consider part of that space, and refuse the reorder as
+   * a validation error the writer cannot resolve.
+   */
+  it('records the kind change before the reorders', async () => {
+    const before = (await operations()).length;
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-2', 'event');
+
+    const recorded = await operationsSince(before);
+    expect(recorded.map((operation) => operation.operationType)).toEqual([
+      'update',
+      'reorder',
+      'reorder',
+    ]);
+    expect(recorded[0]).toMatchObject({ entityType: 'Chapter', entityId: 'chapter-2' });
+    expect(payloadOf(recorded[0]).type).toBe('event');
+  });
+
+  it('names each space in its own reorder', async () => {
+    const before = (await operations()).length;
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-2', 'event');
+
+    const [, sourceReorder, targetReorder] = await operationsSince(before);
+    // The space it left is the chapters, which carry no target - that is what the operation always
+    // meant, and an older server reads it exactly as it always did.
+    expect(payloadOf(sourceReorder).reorderTarget).toBeUndefined();
+    expect(payloadOf(targetReorder).reorderTarget).toBe('Event');
+  });
+
+  it('names the spaces the other way round going back', async () => {
+    const before = (await operations()).length;
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-1', 'chapter', 1);
+
+    const [, sourceReorder, targetReorder] = await operationsSince(before);
+    expect(payloadOf(sourceReorder).reorderTarget).toBe('Event');
+    expect(payloadOf(targetReorder).reorderTarget).toBeUndefined();
+  });
+
+  /**
+   * The server compares a reorder against the whole space and refuses a short list, so a reorder of
+   * nothing would be refused rather than ignored.
+   */
+  it('records no reorder for a space it emptied', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-1', 'chapter');
+    const before = (await operations()).length;
+
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-2', 'chapter');
+
+    const recorded = await operationsSince(before);
+    expect(recorded.map((operation) => operation.operationType)).toEqual(['update', 'reorder']);
+    expect(payloadOf(recorded[1]).reorderTarget).toBeUndefined();
+  });
+
+  it('carries every member of a space in its reorder', async () => {
+    const before = (await operations()).length;
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-2', 'event');
+
+    const [, sourceReorder, targetReorder] = await operationsSince(before);
+    expect(payloadOf(sourceReorder).reorderItems).toEqual([
+      { id: 'chapter-1', newIndex: 1 },
+      { id: 'chapter-3', newIndex: 2 },
+    ]);
+    expect(payloadOf(targetReorder).reorderItems).toEqual([
+      { id: 'event-1', newIndex: 1 },
+      { id: 'event-2', newIndex: 2 },
+      { id: 'chapter-2', newIndex: 3 },
+    ]);
+  });
+
+  it('does nothing at all when it is already that kind', async () => {
+    const before = (await operations()).length;
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-1', 'chapter');
+
+    expect((await operations()).length).toBe(before);
+    expect((await typesAndIndexes())['chapter-1']).toBe('chapter:1');
+  });
+
+  it('refuses a container that is not there', async () => {
+    await expect(
+      chapterService().convertChapterType(TEST_USER_ID, 'ghost', 'event'),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  /** A slot past the end is a caller bug; landing at the end is visible and fixable, unlike a crash. */
+  it('clamps a position past the end instead of throwing', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-1', 'chapter', 99);
+    expect((await typesAndIndexes())['event-1']).toBe('chapter:4');
+  });
+
+  it('clamps a position below the first slot', async () => {
+    await chapterService().convertChapterType(TEST_USER_ID, 'event-1', 'chapter', 0);
+    expect((await typesAndIndexes())['event-1']).toBe('chapter:1');
+  });
+
+  it('refuses to convert anything in a read-only story', async () => {
+    await database.db
+      .update(schema.stories)
+      .set({ serverId: 'server-1', myRole: 'reader' })
+      .where(eq(schema.stories.id, TEST_STORY_ID));
+
+    await expect(
+      chapterService().convertChapterType(TEST_USER_ID, 'chapter-1', 'event'),
+    ).rejects.toThrow();
+  });
+
+  /** Scenes belong to the container, not to its kind: converting must not disturb them. */
+  it('leaves the scenes inside it alone', async () => {
+    await database.db.insert(schema.locations).values({
+      id: 'location-1',
+      storyId: TEST_STORY_ID,
+      name: 'The harbour',
+      ...entityBase,
+      deletedAt: null,
+    });
+    await database.db.insert(schema.scenes).values({
+      id: 'scene-1',
+      storyId: TEST_STORY_ID,
+      chapterId: 'chapter-2',
+      locationId: 'location-1',
+      name: 'The arrival',
+      index: 1,
+      isStart: false,
+      isFinish: false,
+      ...entityBase,
+      deletedAt: null,
+    });
+
+    await chapterService().convertChapterType(TEST_USER_ID, 'chapter-2', 'event');
+
+    const scene = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-1'),
+    });
+    expect(scene).toMatchObject({ chapterId: 'chapter-2', index: 1, version: 1 });
   });
 });
 

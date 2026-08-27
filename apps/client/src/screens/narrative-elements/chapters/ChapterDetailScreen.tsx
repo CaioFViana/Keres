@@ -8,9 +8,12 @@ import {
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import ConvertContainerModal from '@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { ChapterType } from '@keres/shared';
+import { AppAlert } from '@/src/utils/AppAlert';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -19,6 +22,7 @@ import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { useChapterStore } from '@/src/state/chapterStore';
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
@@ -226,17 +230,57 @@ const ChapterDetailScreen = () => {
     }
   }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 
+  const [isConvertVisible, setIsConvertVisible] = useState(false);
+  const [spine, setSpine] = useState<{ id: string; name: string }[]>([]);
+  const convertChapterType = useChapterStore((state) => state.convertChapterType);
+
+  /** The spine as it stands, so the modal can offer the slots a returning chapter may take. */
+  useEffect(() => {
+    if (!isConvertVisible || !chapter) return;
+    createChapterService(drizzleDb)
+      .getAllByStoryId(chapter.storyId, 'chapter')
+      .then((rows) =>
+        setSpine(
+          rows.filter((row) => row.id !== chapterId).map((row) => ({ id: row.id, name: row.name })),
+        ),
+      )
+      .catch((error) => console.error('ChapterDetailScreen: failed to read the spine.', error));
+  }, [isConvertVisible, chapter, chapterId, drizzleDb]);
+
   const renderHeaderRight = useCallback(
     () =>
       canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/*
+            Changing the kind is not an edit to a field: it moves the container between two index
+            spaces and renumbers both. It sits beside the pencil rather than inside the form for
+            that reason - see `ChapterService.convertChapterType`.
+          */}
+          <TouchableOpacity
+            onPress={() => setIsConvertVisible(true)}
+            style={{ marginRight: 15 }}
+            accessibilityLabel={
+              chapter?.type === 'event'
+                ? t('chapter_convert_to_chapter')
+                : t('chapter_convert_to_event')
+            }
+            testID="convert-container"
+          >
+            <Ionicons
+              name={chapter?.type === 'event' ? 'book-outline' : 'hourglass-outline'}
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="pencil-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
       ) : null,
-    [navigation, chapterId, colors.text, canEdit],
+    [navigation, chapterId, colors.text, canEdit, chapter?.type, t],
   );
 
   useFocusEffect(
@@ -384,6 +428,25 @@ const ChapterDetailScreen = () => {
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>
+
+      <ConvertContainerModal
+        visible={isConvertVisible}
+        name={chapter.name}
+        currentType={chapter.type}
+        chapterNames={spine}
+        onCancel={() => setIsConvertVisible(false)}
+        onConfirm={async (targetType: ChapterType, position?: number) => {
+          setIsConvertVisible(false);
+          try {
+            await convertChapterType(chapterId, targetType, position);
+          } catch (error) {
+            // The store swallows and records the error; without this the writer sees the modal
+            // close and nothing else happen, which reads as the app ignoring them.
+            console.error('ChapterDetailScreen: failed to convert the container.', error);
+            AppAlert.alert(t('error'), t('chapter_convert_failed'));
+          }
+        }}
+      />
     </ScrollView>
   );
 };

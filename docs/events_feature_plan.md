@@ -306,29 +306,54 @@ the empty-spine case needs auditing before it is offered.
 
 ---
 
-## 10. Compatibility: the version gate
+## 10. Compatibility: the protocol gate
 
-Keres releases the client and the server together from one constant
-([`AppRelease.ts`](../packages/shared/metadata/AppRelease.ts)), and the policy is that **patch
-versions within a minor are compatible and minors are not**.
+**Done.** Implemented ahead of the rest, because Phase 6 cannot ship without it.
 
-The plumbing exists and is unused: `GET /kerescheck` returns `{ version }`
-([`api.ts:89`](../apps/api/src/api.ts)); `ServerRegistrationScreen` calls it and checks only that the
-field is a string; `ServerManagementScreen` pings it and **displays** the version. Nothing compares
-it.
+### 10.1 The protocol is not the release
 
-Add the comparison in two places, and the second one protects data:
+Compatibility is decided by `SYNC_PROTOCOL_VERSION`, a number of its own in
+[`packages/shared/metadata/SyncProtocol.ts`](../packages/shared/metadata/SyncProtocol.ts), modelled
+on `CURRENT_STORY_FORMAT_VERSION`. Gating on `major.minor` would have refused 1.5 against 1.6 even
+when nothing between them changed how a story travels — and most releases do not touch the wire.
 
-1. **Registration** — refuse a server whose `major.minor` differs, naming both versions.
-2. **Sync** — refuse a cycle against a mismatched server. Registration alone is not enough: a server
-   is upgraded long after it was added.
+Both ends declare a **range**, not a single number:
 
-This gates §12's last phase specifically. `Scene.locationId` becomes nullable there — the §5.1 top
-recommendation of the landscape, and the schema already confesses it with
-`locationId: text('location_id').notNull(), // Assuming locationId is always present`. A 1.5 client's
-table declares `location_id TEXT NOT NULL`; a pull delivering a null fails the insert and wedges that
-story's sync in a retry loop with no way out from inside the app. An Event reaching a 1.5 client is
-merely ugly by comparison.
+| Constant | Meaning |
+| --- | --- |
+| `SYNC_PROTOCOL_VERSION` | what this build speaks |
+| `MIN_SUPPORTED_SYNC_PROTOCOL` | the oldest it still understands |
+
+A peer is served when its version falls inside the range. Raising the minimum is the release where
+old peers are cut off, and it should be a decision rather than a side effect.
+
+### 10.2 Where it is enforced
+
+| Where | What happens |
+| --- | --- |
+| `GET /kerescheck` | Publishes `{ version, syncProtocol: { current, minSupported } }`. `version` stays first and unchanged — every existing client reads it |
+| Every client request | Announces `x-keres-sync-protocol` from the Axios request interceptor, so no call site can forget |
+| `POST /sync/*`, `GET /sync/*` | **426 Upgrade Required** when the announced protocol is absent or outside the range |
+| Server registration | Refuses a server whose published range excludes this build, before the account exists |
+
+The server half is the one that protects anybody: the client half lives in the client, and an old
+client does not have it. The gate runs **before** authentication, so a mismatched client is never
+told "unauthorized" for a version problem.
+
+Only `/sync` is gated. A mismatched client must still reach `/kerescheck` to learn why, and log in so
+the app can say something better than nothing.
+
+### 10.3 The gate is inert until somebody bumps the number
+
+`SYNC_PROTOCOL_VERSION` is **1**, and every build that has ever announced one announces 1. The gate
+therefore refuses only builds predating it — which is correct and is the point, but it means **the
+Events work has to bump it itself**. Phase 6 is where that happens, and §12 says so.
+
+Bump it in the release that makes `Scene.locationId` nullable, and raise `MIN_SUPPORTED_SYNC_PROTOCOL`
+to match: a 1.5 client's table declares `location_id TEXT NOT NULL`, so a pull carrying a null fails
+the insert and wedges that story's sync in a retry loop with no way out from inside the app. Events
+reaching an old client are merely ugly by comparison — shown as numbered chapters, with reorders
+refused — which is why they can ship at protocol 1 and the nullable column cannot.
 
 ---
 
@@ -355,15 +380,16 @@ real SQLite database with the production migrations applied.
 | Phase | Scope | Ends with |
 | --- | --- | --- |
 | **0** | `ChapterService` + the reorder conflict cells covered (roadmap Phase 1B, scoped to chapters) | The invariant this feature edits is verified before it is edited |
-| **1** | The version gate (§10), registration and sync | 1.5 and 1.6 refuse each other, loudly and early |
+| **1** (**done**) | The protocol gate (§10): `SyncProtocol.ts`, `/kerescheck`, the request header, the 426 on `/sync`, the registration check | Incompatible peers refuse each other, loudly and early |
 | **2** | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, **and the Story Analysis fix (§7.1)** | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
 | **3** | The lists, the icon, the sort option, the toggle, mention routing | A writer can make one |
 | **4** | `ChapterRelation`: table, schemas, both sync handlers, service, the relation UI, the cycle check (§7.2) | Chronology is recordable |
 | **5** | The historical timeline (layout + svg), the presence-matrix filter | Chronology is visible |
-| **6** | `Scene.locationId` nullable, the narrative timeline reading Events by name, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |
+| **6** | `Scene.locationId` nullable, **bump `SYNC_PROTOCOL_VERSION` and `MIN_SUPPORTED_SYNC_PROTOCOL` (§10.3)**, the narrative timeline reading Events by name, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |
 
 Phase 0 is not optional and does not depend on the rest. Phase 1 gates Phase 6 specifically: nulls
-must not reach a 1.5 client. Phase 2 must not ship without §7.1 — the column without the analysis fix
+must not reach an older client, and the gate only starts refusing anybody when Phase 6 bumps the
+protocol number. Phase 2 must not ship without §7.1 — the column without the analysis fix
 is a visible bug in every story that uses the feature.
 
 ---
@@ -379,10 +405,13 @@ is a visible bug in every story that uses the feature.
    it has a phase to itself.
 3. **The chronology graph can be contradicted, and the layout must not hang.** §7.2 detects cycles;
    the renderer has to survive one that has not been fixed yet.
-4. **A 1.5 client that already holds a 1.6 story.** The gate stops new damage; it does not undo a
+4. **An old client that already holds a newer story.** The gate stops new damage; it does not undo a
    story already pulled. The client is in beta and older clients are already drifting out of
    compatibility, which is the argument for accepting this rather than building a migration path.
-5. **Every existing chapter check needs a decision** (§7.3). The ones nobody revisits will quietly
+5. **Forgetting to bump the protocol** (§10.3). The gate is machinery, not a decision: it refuses
+   exactly what the number says to refuse. Shipping the nullable column without raising it would
+   leave the failure it was built to prevent fully in place, and nothing would complain.
+6. **Every existing chapter check needs a decision** (§7.3). The ones nobody revisits will quietly
    start counting eras as chapters.
 
 ---

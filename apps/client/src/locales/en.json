@@ -1277,6 +1277,7 @@
   "server_unreachable": "Server unreachable. Working offline",
   "server_updated_successfully": "Server updated successfully!",
   "server_url_already_registered": "This server URL is already registered. Each server can only be added once.",
+  "server_version_mismatch": "This server runs Keres {{serverVersion}} and this app is {{appVersion}}. They do not speak the same synchronization protocol - update whichever is behind.",
   "service_not_initialized": "Service not initialized.",
   "set_parent": "Set Parent",
   "settings_title": "App Settings",

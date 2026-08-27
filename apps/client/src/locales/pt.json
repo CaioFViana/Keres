@@ -1277,6 +1277,7 @@
   "server_unreachable": "Servidor inalcançável. Trabalhando offline",
   "server_updated_successfully": "Servidor atualizado com sucesso!",
   "server_url_already_registered": "Esta URL de servidor já está registrada. Cada servidor só pode ser adicionado uma vez.",
+  "server_version_mismatch": "Este servidor roda o Keres {{serverVersion}} e este aplicativo é {{appVersion}}. Eles não falam o mesmo protocolo de sincronização - atualize o que estiver atrasado.",
   "service_not_initialized": "Serviço não inicializado.",
   "set_parent": "Definir Pai",
   "settings_title": "Configurações do Aplicativo",

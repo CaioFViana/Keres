@@ -1,4 +1,5 @@
 import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import { SYNC_PROTOCOL_HEADER, SYNC_PROTOCOL_VERSION } from '@keres/shared';
 import { AxiosError, create as createAxios, isAxiosError } from 'axios';
 import { Platform } from 'react-native';
 import type { ServerSelect } from '../db/schema'; // Import ServerSelect
@@ -184,6 +185,16 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
   // Request interceptor to add any necessary headers (e.g., auth tokens)
   instance.interceptors.request.use(
     (config) => {
+      /**
+       * Every request announces which synchronization protocol this build speaks.
+       *
+       * The protocol and the release move independently: most versions do not touch the wire, and
+       * gating on the release would refuse peers that understand each other perfectly. Set here
+       * rather than at the call sites because the server gates on its *absence* too - one forgetful
+       * call site would be indistinguishable from an old app. Harmless to a server that ignores it.
+       */
+      config.headers[SYNC_PROTOCOL_HEADER] = String(SYNC_PROTOCOL_VERSION);
+
       const accessToken =
         (currentServer && serverTokenCache.get(currentServer.id)?.jwtToken) || null;
       if (

@@ -18,6 +18,14 @@ export const VERSIONED_JSON_FILES = [
 ];
 export const APP_JSON_FILE = 'apps/client/app.json';
 export const APP_RELEASE_FILE = 'packages/shared/metadata/AppRelease.ts';
+/**
+ * The compatibility numbers, which this module deliberately does **not** write.
+ *
+ * `setAppRelease` rewrites `AppRelease.ts` whole from a template, so anything kept there would be
+ * erased at the next release. These are bumped by a person who knows whether the format or the wire
+ * actually changed; `release-check` reads them out so the question gets asked.
+ */
+export const RELEASE_VERSIONS_FILE = 'packages/shared/metadata/ReleaseVersions.ts';
 
 export function assertSemver(version: string | undefined): asserts version is string {
   if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {

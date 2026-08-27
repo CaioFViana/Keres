@@ -87,6 +87,7 @@ export * from './metadata/FriendStatus';
 export * from './metadata/AttributeType';
 export * from './metadata/AppRelease';
 export * from './metadata/ChapterRelationType';
+export * from './metadata/ReleaseVersions';
 export * from './metadata/ChapterType';
 export * from './metadata/SyncProtocol';
 export * from './metadata/StorySchemaEntityType';

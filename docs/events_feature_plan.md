@@ -387,7 +387,7 @@ real SQLite database with the production migrations applied.
 | **1** (**done**) | The protocol gate (§10): `SyncProtocol.ts`, `/kerescheck`, the request header, the 426 on `/sync`, the registration check | Incompatible peers refuse each other, loudly and early |
 | **2** (**done**) | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, and the Story Analysis fix (§7.1) | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
 | **3** (**done**) | The combined list grouped events-first, the hourglass, the kind switch at creation, the conversion modal, reordering scoped per kind | A writer can make one |
-| **4** | `ChapterRelation`: table, schemas, both sync handlers, service, the relation UI, the cycle check (§7.2) | Chronology is recordable |
+| **4** (**done**) | `ChapterRelation`: table, schemas, both sync handlers, service, export format V7, the chronology section on the chapter screen, the cycle check (§7.2) | Chronology is recordable |
 | **5** | The historical timeline (layout + svg), the presence-matrix filter | Chronology is visible |
 | **6** | `Scene.locationId` nullable, **bump `SYNC_PROTOCOL_VERSION` and `MIN_SUPPORTED_SYNC_PROTOCOL` (§10.3)**, the narrative timeline reading Events by name, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |
 
@@ -420,7 +420,26 @@ is a visible bug in every story that uses the feature.
 
 ---
 
-## 14. Deliberately out of scope
+## 14. Pending: the example stories
+
+The six bundled examples were bumped to format V7 and declare `chapterRelations: []`. They are valid
+packages, and it is true of them - a story written before chronology existed states none. But the
+guard over them is named *"ships every public-domain example as a complete showcase of applicable
+features"*, and on that promise they now fall short: nothing in the catalogue demonstrates an event
+or a relation between two of them.
+
+Closing it is **content work**, not code: each example needs at least one era or off-spine happening
+that belongs to its source material, and a chronology relating it to the spine. Alice's Wonderland
+has a before-the-fall; Cinderella has the years between the mother's death and the ball; the
+Little Mermaid has whatever the sea witch did to the last one who asked. Inventing those is a
+decision about the adaptations, so it waits for somebody to make it.
+
+Until then the feature ships undemonstrated, which is a real cost: the examples are how a new writer
+finds out a feature exists at all.
+
+---
+
+## 15. Deliberately out of scope
 
 - **Nested Events.** An era containing eras turns the list into a tree and the chronology into a
   forest. The relation's `during` type already expresses containment without a hierarchy.

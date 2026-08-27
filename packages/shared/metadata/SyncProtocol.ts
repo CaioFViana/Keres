@@ -17,17 +17,13 @@
  * "may I answer this client?".
  */
 
-/** What this build speaks. */
-export const SYNC_PROTOCOL_VERSION = 1;
+import { MIN_SUPPORTED_SYNC_PROTOCOL, SYNC_PROTOCOL_VERSION } from './ReleaseVersions';
 
 /**
- * The oldest protocol this build still understands.
- *
- * Equal to the current version means "this release talks only to its own kind". Lower means older
- * peers are still served - which is the normal state, and why 1.5 and 1.6 can both work if nothing
- * between them touched the wire.
+ * The numbers live in `ReleaseVersions.ts`, with the other constants a release bumps by hand; they
+ * are re-exported here because this is the module that says what they mean and how they are read.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 1;
+export { MIN_SUPPORTED_SYNC_PROTOCOL, SYNC_PROTOCOL_VERSION };
 
 /** What each end publishes about itself: `/kerescheck` on the server, a header on the client. */
 export interface SyncProtocolRange {

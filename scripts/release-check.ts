@@ -5,6 +5,7 @@ import { repoRoot, run } from './lib/packages';
 import {
   APP_JSON_FILE,
   APP_RELEASE_FILE,
+  RELEASE_VERSIONS_FILE,
   assertSemver,
   readJson,
   readReleaseVersion,
@@ -60,6 +61,30 @@ function verifyReleaseVersions(): void {
   console.log(`Versions aligned at ${rootVersion}.`);
 }
 
+/**
+ * The numbers a release bumps by hand.
+ *
+ * They cannot be checked *against* anything - only a person knows whether this release changed the
+ * export format or the wire - so this step reads them out and asks. The failure it exists to catch
+ * is the silent one: shipping a schema change without bumping the protocol leaves the version gate
+ * refusing nobody, and shipping an export change without bumping the format leaves older Keres
+ * importing a package it cannot read.
+ */
+function reportReleaseVersions(): void {
+  const source = readFileSync(join(repoRoot, RELEASE_VERSIONS_FILE), 'utf8');
+  const read = (name: string) =>
+    new RegExp(`export const ${name} = (\\d+);`).exec(source)?.[1] ?? '<missing>';
+
+  console.log(`  Story export format: ${read('CURRENT_STORY_FORMAT_VERSION')}`);
+  console.log(
+    `  Sync protocol: ${read('SYNC_PROTOCOL_VERSION')} (oldest served: ${read('MIN_SUPPORTED_SYNC_PROTOCOL')})`,
+  );
+  console.log(
+    '  Bump these in `packages/shared/metadata/ReleaseVersions.ts` if this release changed the\n' +
+      '  export package or what travels over sync. Nothing else will notice if you do not.',
+  );
+}
+
 function verifyCleanWorktree(): void {
   const status = spawnSync('git', ['status', '--porcelain'], { cwd: repoRoot, encoding: 'utf8' });
   if (status.error) throw status.error;
@@ -92,6 +117,7 @@ const steps: Step[] = [
     execute: () => {
       verifyReleaseFileReadable();
       verifyReleaseVersions();
+      reportReleaseVersions();
     },
   },
   ...(ci ? [] : [{ title: 'Worktree', execute: verifyCleanWorktree }]),

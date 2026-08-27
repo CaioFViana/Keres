@@ -8,6 +8,9 @@ import {
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import ChronologyManager, {
+  type ChronologyRelationView,
+} from '@/src/components/features/chapters/ChronologyManager/ChronologyManager';
 import ConvertContainerModal from '@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
@@ -21,8 +24,10 @@ import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { createChapterRelationService } from '@/src/services/storymanagement/ChapterRelationService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { useChapterStore } from '@/src/state/chapterStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
@@ -230,9 +235,38 @@ const ChapterDetailScreen = () => {
     }
   }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 
+  const { userId } = useUserSettingsStore();
+  const [chronology, setChronology] = useState<ChronologyRelationView[]>([]);
+  const [containers, setContainers] = useState<
+    { id: string; name: string; type: 'chapter' | 'event' }[]
+  >([]);
   const [isConvertVisible, setIsConvertVisible] = useState(false);
   const [spine, setSpine] = useState<{ id: string; name: string }[]>([]);
   const convertChapterType = useChapterStore((state) => state.convertChapterType);
+
+  /**
+   * The story's chronology and every container in it.
+   *
+   * Read here rather than in the manager because the manager is presentational - it names the other
+   * end of each statement from a list it is given, and knows nothing about the database.
+   */
+  const loadChronology = useCallback(async () => {
+    if (!chapter) return;
+    try {
+      const [relations, allContainers] = await Promise.all([
+        createChapterRelationService(drizzleDb).getRelationsForStory(chapter.storyId),
+        createChapterService(drizzleDb).getAllByStoryId(chapter.storyId, null),
+      ]);
+      setChronology(relations);
+      setContainers(allContainers.map((row) => ({ id: row.id, name: row.name, type: row.type })));
+    } catch (error) {
+      console.error('ChapterDetailScreen: failed to read the chronology.', error);
+    }
+  }, [chapter, drizzleDb]);
+
+  useEffect(() => {
+    void loadChronology();
+  }, [loadChronology]);
 
   /** The spine as it stands, so the modal can offer the slots a returning chapter may take. */
   useEffect(() => {
@@ -408,6 +442,45 @@ const ChapterDetailScreen = () => {
         currentStoryId={selectedStory?.id || ''}
         currentEntityId={chapterId}
         currentEntityType="Chapter"
+      />
+
+      <ChronologyManager
+        relations={chronology}
+        containers={containers}
+        currentChapterId={chapterId}
+        editable={canEdit}
+        onSave={async (targetId, relationType, relationId) => {
+          try {
+            const service = createChapterRelationService(drizzleDb);
+            if (relationId) {
+              await service.updateRelation(userId ?? '', relationId, {
+                chapter1Id: chapterId,
+                chapter2Id: targetId,
+                relationType,
+              });
+            } else {
+              await service.createRelation(userId ?? '', {
+                storyId: chapter.storyId,
+                chapter1Id: chapterId,
+                chapter2Id: targetId,
+                relationType,
+              });
+            }
+            await loadChronology();
+          } catch (error) {
+            console.error('ChapterDetailScreen: failed to save the chronology.', error);
+            AppAlert.alert(t('error'), t('chronology_failed'));
+          }
+        }}
+        onDelete={async (relationId) => {
+          try {
+            await createChapterRelationService(drizzleDb).deleteRelation(userId ?? '', relationId);
+            await loadChronology();
+          } catch (error) {
+            console.error('ChapterDetailScreen: failed to remove the chronology.', error);
+            AppAlert.alert(t('error'), t('chronology_failed'));
+          }
+        }}
       />
 
       <SeeAlsoManager

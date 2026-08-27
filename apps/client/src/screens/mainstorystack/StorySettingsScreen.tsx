@@ -64,9 +64,15 @@ const StorySettingsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      // Direct Drawer screen (no nested Stack), so this is its own leaf-level title -
-      // navigation.setOptions() here is correct, not navigation.getParent()?.setOptions().
-      navigation.setOptions({ title: t('story_settings_title') });
+      /*
+       * The drawer's title, not this screen's.
+       *
+       * This used to be a leaf `Drawer.Screen` and `setOptions` was right. It is now the first
+       * screen of a stack, so `setOptions` sets options nobody draws - the header belongs to the
+       * drawer above. It went unnoticed because the title it was setting was the same one the
+       * drawer already had; the calendars, which set a different one, are what made it matter.
+       */
+      navigation.getParent()?.setOptions({ title: t('story_settings_title') });
       setDocumentTitle(t('story_settings_title'));
     }, [navigation, t]),
   );

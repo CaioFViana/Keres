@@ -1,7 +1,7 @@
 import type { CalendarDefinitionType } from '@keres/shared';
 import { calendarDaysPerYear, CalendarDefinitionSchema } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,9 +61,15 @@ const StoryCalendarFormScreen = () => {
   const [saving, setSaving] = useState(false);
   const [weekdayText, setWeekdayText] = useState('');
 
-  useEffect(() => {
-    setDocumentTitle(t(calendarId ? 'calendar_edit_title' : 'calendar_new_title'));
-  }, [calendarId, t]);
+  useFocusEffect(
+    useCallback(() => {
+      const title = t(calendarId ? 'calendar_edit_title' : 'calendar_new_title');
+      // The drawer owns the header, so the title has to be set on the parent - see
+      // `StorySettingsScreen` for what happens when it is not.
+      navigation.getParent()?.setOptions({ title });
+      setDocumentTitle(title);
+    }, [calendarId, navigation, t]),
+  );
 
   useEffect(() => {
     if (!calendarId) return;

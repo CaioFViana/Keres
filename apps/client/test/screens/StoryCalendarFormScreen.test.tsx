@@ -40,11 +40,21 @@ jest.mock('react-i18next', () => {
 
 const mockGoBack = jest.fn();
 const mockRouteParams: { value: { calendarId?: string } | undefined } = { value: undefined };
-jest.mock('@react-navigation/native', () => ({
-  __esModule: true,
-  useNavigation: () => ({ goBack: mockGoBack }),
-  useRoute: () => ({ params: mockRouteParams.value }),
-}));
+const mockSetParentOptions = jest.fn();
+jest.mock('@react-navigation/native', () => {
+  const actualReact = jest.requireActual('react') as typeof import('react');
+  return {
+    __esModule: true,
+    // The screen sets the drawer's header title on focus, so the double has to carry a parent.
+    useNavigation: () => ({
+      goBack: mockGoBack,
+      getParent: () => ({ setOptions: mockSetParentOptions }),
+    }),
+    useRoute: () => ({ params: mockRouteParams.value }),
+    useFocusEffect: (callback: () => void | (() => void)) =>
+      actualReact.useEffect(callback, [callback]),
+  };
+});
 
 jest.mock('../../src/db', () => {
   const db = {};
@@ -117,6 +127,12 @@ describe('opening the calendar form', () => {
     // Two blank months: what a writer is handed before naming anything.
     expect(screen.getByText('calendar_months')).toBeTruthy();
     expect(screen.getByText('calendar_name')).toBeTruthy();
+  });
+
+  it('names itself in the header, which the drawer above it draws', async () => {
+    await render(<StoryCalendarFormScreen />);
+
+    expect(mockSetParentOptions).toHaveBeenCalledWith({ title: 'calendar_new_title' });
   });
 
   it('starts with a year the writer can already see the length of', async () => {

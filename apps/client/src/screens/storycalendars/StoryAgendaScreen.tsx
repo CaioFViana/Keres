@@ -41,8 +41,11 @@ const StoryAgendaScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      // The drawer owns the header, so the title has to be set on the parent - see
+      // `StorySettingsScreen` for what happens when it is not.
+      navigation.getParent()?.setOptions({ title: t('agenda_title') });
       setDocumentTitle(t('agenda_title'));
-    }, [t]),
+    }, [navigation, t]),
   );
 
   // Opens on the month holding the first thing that happens, not on year one.

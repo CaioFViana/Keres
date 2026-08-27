@@ -11,6 +11,8 @@ import appSettings_en from '../content/app-settings/en';
 import appSettings_pt from '../content/app-settings/pt';
 import branchingBasics_en from '../content/branching-basics/en';
 import branchingBasics_pt from '../content/branching-basics/pt';
+import calendars_en from '../content/calendars/en';
+import calendars_pt from '../content/calendars/pt';
 import changePassword_en from '../content/change-password/en';
 import changePassword_pt from '../content/change-password/pt';
 import chapters_en from '../content/chapters/en';
@@ -128,6 +130,7 @@ export type GeneratedHelpPageId =
   | 'add-server'
   | 'app-settings'
   | 'branching-basics'
+  | 'calendars'
   | 'change-password'
   | 'chapters'
   | 'character-modes'
@@ -204,6 +207,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'branching-basics': {
     en: branchingBasics_en,
     pt: branchingBasics_pt,
+  },
+  calendars: {
+    en: calendars_en,
+    pt: calendars_pt,
   },
   'change-password': {
     en: changePassword_en,

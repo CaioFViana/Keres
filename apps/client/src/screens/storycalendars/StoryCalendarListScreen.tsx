@@ -68,9 +68,12 @@ const StoryCalendarListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      // The drawer owns the header, so the title has to be set on the parent - see
+      // `StorySettingsScreen` for what happens when it is not.
+      navigation.getParent()?.setOptions({ title: t('calendar_list_title') });
       setDocumentTitle(t('calendar_list_title'));
       void reload();
-    }, [reload, t]),
+    }, [navigation, reload, t]),
   );
 
   const promote = useCallback(

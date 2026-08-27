@@ -2,7 +2,8 @@ export interface Scene {
   id: string;
   storyId: string;
   chapterId: string;
-  locationId: string;
+  /** Null when the scene happens nowhere in particular - an era, a rumour, a war. */
+  locationId: string | null;
   name: string;
   index: number;
   summary: string | null;

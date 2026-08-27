@@ -235,6 +235,10 @@ jest.mock('../../src/screens/narrative-elements/scenes/SceneFormScreen', () => (
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/narrative-elements/chapters/ChronologyScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/timeline/StoryTimelineScreen', () => ({
   __esModule: true,
   default: () => null,

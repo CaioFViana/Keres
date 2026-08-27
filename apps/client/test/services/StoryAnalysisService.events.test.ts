@@ -193,3 +193,42 @@ describe('a branching story', () => {
     expect(await sceneFindings()).toEqual([]);
   });
 });
+
+/**
+ * A world bible: a story of no chapters and nothing but events.
+ *
+ * `FEATURE_LANDSCAPE.md` section 2.2 records that a world bible with no narrative order had no
+ * honest option in Keres. An empty spine is now one - so the checks that measure the spine have to
+ * stay quiet about it rather than reporting a story with no chapters as a story with a problem.
+ *
+ * This is the audit that section 9 of the events plan asked for, at the layer where it can be run.
+ */
+describe('a story with an empty spine', () => {
+  beforeEach(async () => {
+    await seedContainer('era-1', 1, 'event');
+    await seedContainer('era-2', 2, 'event');
+    await seedScene('scene-a', 'era-1', 1);
+    await seedScene('scene-b', 'era-1', 2);
+    await seedScene('scene-c', 'era-2', 1);
+  });
+
+  it('reports no numbering problem for chapters it does not have', async () => {
+    expect(await indexFindings()).toEqual([]);
+  });
+
+  it('still checks the scenes inside the eras', async () => {
+    expect(await sceneFindings()).toEqual([]);
+  });
+
+  it('catches a hole inside an era even with no chapters at all', async () => {
+    await seedScene('scene-d', 'era-2', 9);
+    expect(await sceneFindings()).not.toEqual([]);
+  });
+
+  /** The report has to come back at all - an empty spine must not throw somewhere downstream. */
+  it('produces a report rather than failing', async () => {
+    const report = await createStoryAnalysisService(database.db).analyzeStoryCheap(TEST_STORY_ID);
+    expect(report.generatedAt).toBeInstanceOf(Date);
+    expect(Array.isArray(report.findings)).toBe(true);
+  });
+});

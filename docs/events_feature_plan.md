@@ -304,9 +304,16 @@ Events answer it without adding a third value: a story of **zero chapters and N 
 bible. Empty spine, chronology of its own, scenes with durations, characters and locations attached
 as usual.
 
-This was not in the original notes and may be the largest thing the feature unlocks. It is stated
-here as a **hypothesis to verify, not a promise**: several places assume `chapters[0]` exists, and
-the empty-spine case needs auditing before it is offered.
+This was not in the original notes and may be the largest thing the feature unlocks.
+
+**Audited.** The single `chapters[0]` in the codebase was already guarded, and the analysis over a
+story of no chapters and nothing but events is covered in
+`StoryAnalysisService.events.test.ts`: no numbering finding for a spine that does not exist, scenes
+inside the eras still checked, and a report that comes back rather than throwing.
+
+Two things remain untested rather than unknown, and both are screens: the narrative timeline is
+empty for such a story (correct - there is no spine to draw), and the container list shows only
+events. Neither has a suite yet, which is Phase 5 of `TESTING_ROADMAP.md`.
 
 ---
 
@@ -388,8 +395,8 @@ real SQLite database with the production migrations applied.
 | **2** (**done**) | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, and the Story Analysis fix (§7.1) | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
 | **3** (**done**) | The combined list grouped events-first, the hourglass, the kind switch at creation, the conversion modal, reordering scoped per kind | A writer can make one |
 | **4** (**done**) | `ChapterRelation`: table, schemas, both sync handlers, service, export format V7, the chronology section on the chapter screen, the cycle check (§7.2) | Chronology is recordable |
-| **5** | The historical timeline (layout + svg), the presence-matrix filter | Chronology is visible |
-| **6** | `Scene.locationId` nullable, **bump `SYNC_PROTOCOL_VERSION` and `MIN_SUPPORTED_SYNC_PROTOCOL` (§10.3)**, the narrative timeline reading Events by name, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |
+| **5** (**done**) | The chronology layout + svg in `packages/shared/graphs/`, the chronology screen with SVG export, the presence-matrix events filter | Chronology is visible |
+| **6** (**done**) | `Scene.locationId` nullable, the protocol raised to 2 (§10.3), the narrative timeline confirmed spine-only, the world-bible audit (§9) | The constraint in §2 of the landscape is retired |
 
 Phase 0 is not optional and does not depend on the rest. Phase 1 gates Phase 6 specifically: nulls
 must not reach an older client, and the gate only starts refusing anybody when Phase 6 bumps the

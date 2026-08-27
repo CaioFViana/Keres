@@ -73,7 +73,7 @@ export interface AnalysisEntityRef {
 export interface AnalysisScene {
   id: string;
   name: string;
-  locationId: string;
+  locationId: string | null;
   isStart: boolean;
   isFinish: boolean;
   chapterId: string;
@@ -310,7 +310,14 @@ function checkCharacters(input: StoryAnalysisInput): StoryAnalysisFinding[] {
 
 function checkLocations(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const findings: StoryAnalysisFinding[] = [];
-  const usedLocationIds = new Set(input.scenes.map((s) => s.locationId));
+  /*
+   * A scene with no place uses no location, which is different from using one that is missing.
+   * Filtering here rather than letting `null` into the set keeps "unused location" meaning what it
+   * says.
+   */
+  const usedLocationIds = new Set(
+    input.scenes.map((scene) => scene.locationId).filter((id): id is string => id !== null),
+  );
   const connectedLocationIds = new Set<string>();
   for (const relation of input.locationRelations) {
     connectedLocationIds.add(relation.locationAId);

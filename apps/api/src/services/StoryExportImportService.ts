@@ -402,8 +402,12 @@ export class StoryExportImportService {
             `Import Error: Chapter ID ${original.chapterId} not found in ID map for scene ${original.id}.`,
           );
         }
-        const mappedLocationId = idMap.get(original.locationId); // Strict mapping
-        if (!mappedLocationId) {
+        /*
+         * A scene may have no place at all, which is not the same as naming one that is missing.
+         * The first is nothing to map; the second is a broken package and still refuses.
+         */
+        const mappedLocationId = original.locationId ? idMap.get(original.locationId) : null;
+        if (original.locationId && !mappedLocationId) {
           throw new Error(
             `Import Error: Location ID ${original.locationId} not found in ID map for scene ${original.id}.`,
           );

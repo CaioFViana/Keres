@@ -139,3 +139,35 @@ describe('what is deliberately not gated', () => {
     expect(status).toBe(200);
   });
 });
+
+/**
+ * The gate is only worth anything once a release bumps the number.
+ *
+ * At protocol 1 it refused nobody but builds predating the header, which is correct and also inert.
+ * Making `Scene.locationId` nullable is what gave it teeth: a client on 1 declares
+ * `location_id TEXT NOT NULL` locally, so a pull carrying a null fails the insert and wedges that
+ * story with no way out from inside the app.
+ *
+ * These hold the *shape* of that rather than the number, so raising it again does not make them
+ * lie - what must stay true is that a peer below the minimum is turned away.
+ */
+describe('once the protocol has moved on', () => {
+  it('refuses every protocol below the oldest supported', async () => {
+    for (let protocol = 1; protocol < MIN_SUPPORTED_SYNC_PROTOCOL; protocol += 1) {
+      expect({ protocol, status: (await pull(String(protocol))).status }).toEqual({
+        protocol,
+        status: 426,
+      });
+    }
+  });
+
+  /** The whole point of the range: a build that speaks the current one is served. */
+  it('serves the current protocol', async () => {
+    expect((await pull(String(SYNC_PROTOCOL_VERSION))).status).not.toBe(426);
+  });
+
+  it('publishes the range it will actually serve', async () => {
+    const { data } = await request('GET', '/kerescheck');
+    expect(data.syncProtocol.minSupported).toBeLessThanOrEqual(data.syncProtocol.current);
+  });
+});

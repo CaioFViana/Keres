@@ -14,7 +14,14 @@ export const SceneSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   chapterId: z.string(),
-  locationId: z.string(),
+  /**
+   * Where the scene happens, when it happens anywhere in particular.
+   *
+   * Nullable since format V7: an era, a war, a rumour heard in three cities is a scene with no
+   * single place, and requiring one was Keres deciding something about the story on the writer's
+   * behalf - see `FEATURE_LANDSCAPE.md` section 2.1.
+   */
+  locationId: z.string().nullable(),
   name: z.string(),
   index: z.number(),
   summary: z.string().nullable(),

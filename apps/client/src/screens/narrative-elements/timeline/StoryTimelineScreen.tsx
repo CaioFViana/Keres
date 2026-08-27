@@ -70,6 +70,12 @@ const StoryTimelineScreen = () => {
       setLoading(true);
       try {
         const [loadedChapters, loadedScenes] = await Promise.all([
+          /*
+           * Chapters only, and deliberately: this is the *narrative* timeline, which is the spine.
+           * Events have no place on it - their order is chronology, drawn on its own screen. The
+           * scene filter below keys on this list, so passing `null` here would not merely add
+           * lanes, it would interleave two independent numberings into one axis.
+           */
           createChapterService(db).getAllByStoryId(story.id),
           createSceneService(db).getAllByStoryId(story.id),
         ]);

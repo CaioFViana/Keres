@@ -78,6 +78,13 @@
       "when": 1787793495347,
       "tag": "0010_luxuriant_la_nuit",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1787836108093,
+      "tag": "0011_shiny_guardian",
+      "breakpoints": true
     }
   ]
 }

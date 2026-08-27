@@ -61,6 +61,7 @@ import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetail
 import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
 import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
 import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
+import ChronologyScreen from '../screens/narrative-elements/chapters/ChronologyScreen';
 import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
@@ -235,6 +236,7 @@ export type NarrativeElementsStackParamList = {
   ChoiceForm: { choiceId?: string; sceneId?: string };
   ChoiceView: undefined;
   StoryTimeline: undefined;
+  Chronology: undefined;
 };
 
 const NarrativeElementsStackNavigator = () => {
@@ -256,6 +258,7 @@ const NarrativeElementsStackNavigator = () => {
       <NarrativeElementsStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
       <NarrativeElementsStack.Screen name="ChoiceView" component={ChoiceViewScreen} />
       <NarrativeElementsStack.Screen name="StoryTimeline" component={StoryTimelineScreen} />
+      <NarrativeElementsStack.Screen name="Chronology" component={ChronologyScreen} />
     </NarrativeElementsStack.Navigator>
   );
 };

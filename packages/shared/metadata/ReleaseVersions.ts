@@ -32,8 +32,13 @@ export const CURRENT_STORY_FORMAT_VERSION = 7;
  * Bump it when a release changes something an older peer would get wrong - a new entity in the
  * payload, a column that starts arriving null, a rule the server begins to enforce. Most releases
  * do not touch it, which is the whole reason it is separate from the app's version.
+ *
+ * **2** - `Scene.locationId` became nullable. A client on 1 declares `location_id TEXT NOT NULL`
+ * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
+ * retry loop with no way out from inside the app. `ChapterRelation` and the container `type` column
+ * arrived in the same release; those an older peer merely ignores, but the null it cannot survive.
  */
-export const SYNC_PROTOCOL_VERSION = 1;
+export const SYNC_PROTOCOL_VERSION = 2;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -41,5 +46,9 @@ export const SYNC_PROTOCOL_VERSION = 1;
  * Raise it only in the release that stops being able to serve the older shape: that is the moment
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
+ *
+ * Raised to **2** with the line above, deliberately and not by momentum: there is no way to serve a
+ * protocol-1 client safely once a scene can have no place. Nothing the server could send it would
+ * be both truthful and insertable.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 1;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 2;

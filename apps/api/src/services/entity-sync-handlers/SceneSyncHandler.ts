@@ -24,10 +24,17 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
+  /**
+   * `locationId` is nullable: a scene may happen nowhere in particular.
+   *
+   * Absent is accepted; **named but missing is not** - the second means the package or the client
+   * is referring to a location this story does not have, which is the failure this check exists
+   * for. Collapsing the two would let a broken reference through as "no place".
+   */
   private async validateRelatedEntities(
     storyId: string,
     chapterId: string,
-    locationId: string,
+    locationId: string | null | undefined,
   ): Promise<void> {
     const chapter = await db.query.chapters.findFirst({
       where: and(
@@ -42,6 +49,8 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
         `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
+
+    if (!locationId) return;
 
     const location = await db.query.locations.findFirst({
       where: and(
@@ -136,9 +145,11 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // If chapterId or locationId are being updated, validate them
-    if (validatedChanges.chapterId || validatedChanges.locationId) {
+    if (validatedChanges.chapterId || validatedChanges.locationId !== undefined) {
       const newChapterId = validatedChanges.chapterId || currentEntity.chapterId;
-      const newLocationId = validatedChanges.locationId || currentEntity.locationId;
+      // `?? `, not `|| `: clearing the place sends `null`, which the second would silently replace
+      // with whatever was there before - the one edit this branch exists to validate.
+      const newLocationId = validatedChanges.locationId ?? currentEntity.locationId;
       await this.validateRelatedEntities(storyId, newChapterId, newLocationId);
     }
 

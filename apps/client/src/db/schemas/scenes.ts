@@ -5,7 +5,8 @@ export const scenes = sqliteTable('scenes', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
   chapterId: text('chapter_id').notNull(),
-  locationId: text('location_id').notNull(), // Assuming locationId is always present
+  /** Nullable: a scene may happen nowhere in particular. See `SceneSchemas.ts`. */
+  locationId: text('location_id'),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),

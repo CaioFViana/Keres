@@ -43,6 +43,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   ChoiceForm: 'choices',
   ChoiceView: 'choices',
   StoryTimeline: 'scene-timing',
+  Chronology: 'scene-timing',
   PlotsStack: 'plots',
   Plots: 'plots',
   PlotDetail: 'plots',

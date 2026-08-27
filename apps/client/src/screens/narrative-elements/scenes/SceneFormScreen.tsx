@@ -456,11 +456,6 @@ const SceneFormScreen = () => {
       AppAlert.alert(t('error'), t('chapter_required'));
       return;
     }
-    if (!locationId) {
-      // Validate locationId
-      AppAlert.alert(t('error'), t('location_required'));
-      return;
-    }
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;
@@ -833,13 +828,22 @@ const SceneFormScreen = () => {
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('location')}</Text>
+      {/*
+        Optional since 1.6. An era, a war, a rumour heard in three cities is a scene with no single
+        place, and requiring one was Keres deciding something about the story on the writer's
+        behalf. `allowDeselect` is what lets them take it back off.
+      */}
       <Select
         options={locationOptions}
         value={locationId}
         onValueChange={setLocationId}
-        placeholder={t('select_location')}
+        placeholder={t('select_location_optional')}
         multiple={false}
+        allowDeselect
       />
+      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+        {t('scene_location_optional_hint')}
+      </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
       <TextInput

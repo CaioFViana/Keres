@@ -57,7 +57,7 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
 };
 
 const SuggestionsScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();

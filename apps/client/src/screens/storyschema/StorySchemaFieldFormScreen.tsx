@@ -78,7 +78,7 @@ const StorySchemaFieldFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({
+      navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_attribute_title') : t('create_attribute_title'),
       });
     }, [navigation, isEditing, t]),

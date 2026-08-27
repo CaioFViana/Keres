@@ -37,7 +37,7 @@ type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 const StorySchemaListScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   useDocumentTitle(t('story_schema_management_title'));
   const { colors } = useTheme();

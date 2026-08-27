@@ -11,7 +11,7 @@ import type { StatSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
+import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { createStatService } from '../../services/storymanagement/StatService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -21,11 +21,11 @@ import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 
-type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
+type StatListNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatList'>;
 
 /** The root of the "Stats" menu: the registered axes, and the shortcuts to the ladder, the comparison and the ranking. */
 const StatListScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   useDocumentTitle(t('stats_title'));
   const { colors } = useTheme();

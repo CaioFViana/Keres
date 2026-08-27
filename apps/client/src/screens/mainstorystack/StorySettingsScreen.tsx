@@ -8,8 +8,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Removed BackHandler
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
@@ -716,21 +715,6 @@ const StorySettingsScreen = () => {
           disabled={!canEdit}
         />
       </View>
-
-      {/*
-        The calendars sit directly under the setting they supersede: normalising with 60/60/24/7/12
-        is what a story does until it says how its own time is counted.
-      */}
-      <TouchableOpacity
-        style={styles.switchContainer}
-        onPress={() => navigation.navigate('CustomizationStack', { screen: 'StoryCalendarList' })}
-      >
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('calendar_list_title')}</Text>
-          <Text style={{ color: colors.textSecondary }}>{t('calendar_settings_description')}</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
-      </TouchableOpacity>
 
       <View style={styles.switchContainer}>
         <View style={{ flex: 1, marginRight: 12 }}>

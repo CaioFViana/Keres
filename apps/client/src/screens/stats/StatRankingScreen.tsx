@@ -9,8 +9,7 @@ import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSw
 import Select from '../../components/common/inputs/Select/Select';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
+import type { CustomizationStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -19,7 +18,7 @@ import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import { buildStatRanking } from '../../utils/statRanking';
 
-type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;
+type StatRankingNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatRanking'>;
 
 /**
  * The tier list: one stat chosen at the top and everybody in the story sorted by it. Each mode
@@ -30,7 +29,7 @@ const StatRankingScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatRankingNavigationProp>();
-  const route = useRoute<RouteProp<StatsStackParamList, 'StatRanking'>>();
+  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatRanking'>>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const notation = (selectedStory?.statNotation ?? 'letter') as StatNotation;

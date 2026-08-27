@@ -11,8 +11,7 @@ import { StatRadarChart } from '../../components/features/stats/StatRadarChart/S
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
+import type { CustomizationStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -29,7 +28,7 @@ import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
 import { resolveStatValue } from '../../utils/statValues';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
-  StatsStackParamList,
+  CustomizationStackParamList,
   'StatComparison'
 >;
 
@@ -56,7 +55,7 @@ const StatComparisonScreen = () => {
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<StatComparisonNavigationProp>();
-  const route = useRoute<RouteProp<StatsStackParamList, 'StatComparison'>>();
+  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatComparison'>>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const notation = (selectedStory?.statNotation ?? 'letter') as StatNotation;

@@ -12,7 +12,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
+import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { createStatService } from '../../services/storymanagement/StatService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -21,14 +21,14 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
-type StatFormNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatForm'>;
+type StatFormNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatForm'>;
 
 const StatFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatFormNavigationProp>();
-  const route = useRoute<RouteProp<StatsStackParamList, 'StatForm'>>();
+  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatForm'>>();
   const statId = route.params?.statId;
   const isEditing = !!statId;
   const drizzleDb = useDrizzle();

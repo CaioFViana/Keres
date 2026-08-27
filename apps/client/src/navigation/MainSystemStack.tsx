@@ -143,10 +143,8 @@ const mainSystemStackRootScreens = new Set([
   'OperationLog',
   'CommentsList',
   'CustomizationIndex',
-  'Suggestions',
   // The roots of the stacks the drawer opens directly: without them the header draws a back arrow on top
   // of the list itself, which is precisely the place there is no going back from.
-  'StatList',
   'HelpIndex',
   'DeviceIndex',
 ]);

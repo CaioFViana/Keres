@@ -53,6 +53,12 @@ import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
+import StatFormScreen from '../screens/stats/StatFormScreen';
+import StatLadderScreen from '../screens/stats/StatLadderScreen';
+import StatListScreen from '../screens/stats/StatListScreen';
+import StatRankingScreen from '../screens/stats/StatRankingScreen';
 import StoryAgendaScreen from '../screens/storycalendars/StoryAgendaScreen';
 import StoryCalendarFormScreen from '../screens/storycalendars/StoryCalendarFormScreen';
 import StoryCalendarListScreen from '../screens/storycalendars/StoryCalendarListScreen';
@@ -92,8 +98,6 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
-import type { StatsStackParamList } from './StatsStack';
-import StatsStackNavigator from './StatsStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
 
@@ -113,14 +117,12 @@ export type MainSystemDrawerParamList = {
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
   Settings: undefined;
-  StorySettings: NavigatorScreenParams<StorySettingsStackParamList> | undefined;
+  StorySettings: { storyId: string };
   StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
-  StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
-  SuggestionsStack: NavigatorScreenParams<SuggestionsStackParamList> | undefined;
+  CustomizationStack: NavigatorScreenParams<CustomizationStackParamList> | undefined;
   StorySelection: undefined;
-  StatsDrawer: NavigatorScreenParams<StatsStackParamList>;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
@@ -140,8 +142,7 @@ const mainSystemStackRootScreens = new Set([
   'Plots',
   'OperationLog',
   'CommentsList',
-  'StorySchemaList',
-  'StorySettingsHome',
+  'CustomizationIndex',
   'Suggestions',
   // The roots of the stacks the drawer opens directly: without them the header draws a back arrow on top
   // of the list itself, which is precisely the place there is no going back from.
@@ -151,22 +152,6 @@ const mainSystemStackRootScreens = new Set([
 ]);
 
 //#region Suggestions
-const SuggestionsStack = createNativeStackNavigator<SuggestionsStackParamList>();
-
-export type SuggestionsStackParamList = {
-  Suggestions: undefined;
-  SuggestionUsage: { type: string; value: string };
-};
-
-const SuggestionsStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <SuggestionsStack.Navigator screenOptions={{ headerShown: false }}>
-      <SuggestionsStack.Screen name="Suggestions" component={SuggestionsScreen} />
-      <SuggestionsStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
-    </SuggestionsStack.Navigator>
-  );
-};
 //#endregion
 //#region Plots
 const PlotsStack = createNativeStackNavigator<PlotsStackParamList>();
@@ -404,39 +389,6 @@ const WorldRuleStackNavigator = () => {
   );
 };
 //#endregion
-//#region Story settings
-const StorySettingsStack = createNativeStackNavigator<StorySettingsStackParamList>();
-
-/**
- * Story settings, and the calendars reached from it.
- *
- * A stack rather than the flat `Drawer.Screen` this used to be: a flat screen that navigates
- * somewhere else leaves the header with no back arrow and the hardware back button pointing at the
- * drawer, which is the same defect the pack screens had.
- *
- * The calendars live here rather than in a drawer entry of their own because they are set up once
- * and consulted, and because the setting they supersede - `normalizeSceneTiming` - is on the screen
- * above them.
- */
-export type StorySettingsStackParamList = {
-  StorySettingsHome: { storyId?: string } | undefined;
-  StoryCalendarList: undefined;
-  StoryCalendarForm: { calendarId?: string };
-  StoryAgenda: undefined;
-};
-
-const StorySettingsStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <StorySettingsStack.Navigator screenOptions={{ headerShown: false }}>
-      <StorySettingsStack.Screen name="StorySettingsHome" component={StorySettingsScreen} />
-      <StorySettingsStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
-      <StorySettingsStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
-      <StorySettingsStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
-    </StorySettingsStack.Navigator>
-  );
-};
-//#endregion
 //#region Operationlog
 const OperationLogStack = createNativeStackNavigator<OperationLogStackParamList>();
 
@@ -472,22 +424,58 @@ const CommentsStackNavigator = () => {
   );
 };
 //#endregion
-//#region Story Schema
+//#region Customization
 
-const StorySchemaStack = createNativeStackNavigator<StorySchemaStackParamList>();
+const CustomizationStack = createNativeStackNavigator<CustomizationStackParamList>();
 
-export type StorySchemaStackParamList = {
+/**
+ * Everything a writer shapes once and then works inside: the story's calendars, its custom fields,
+ * its suggestion catalogues and its stat system.
+ *
+ * These were four drawer entries. Each was reached rarely and each sat between things reached
+ * constantly, so the drawer read as a list of everything rather than a list of places to write.
+ * They are one stack rather than four nested ones because a nested navigator per area would put a
+ * second back stack between the index and the screens for no gain - the areas share no state and
+ * never navigate into each other.
+ */
+export type CustomizationStackParamList = {
+  CustomizationIndex: undefined;
+  StoryCalendarList: undefined;
+  StoryCalendarForm: { calendarId?: string };
+  StoryAgenda: undefined;
   StorySchemaList: undefined;
   StorySchemaFieldForm: { entityType: StorySchemaEntityType; fieldId?: string };
+  Suggestions: undefined;
+  SuggestionUsage: { type: string; value: string };
+  StatList: undefined;
+  StatForm: { statId?: string } | undefined;
+  /** An absent `statId` = the story's default ladder. */
+  StatLadder: { statId?: string } | undefined;
+  StatComparison: { characterId?: string; modeId?: string } | undefined;
+  StatRanking: { statId?: string } | undefined;
 };
 
-const StorySchemaStackNavigator = () => {
+const CustomizationStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <StorySchemaStack.Navigator screenOptions={{ headerShown: false }}>
-      <StorySchemaStack.Screen name="StorySchemaList" component={StorySchemaListScreen} />
-      <StorySchemaStack.Screen name="StorySchemaFieldForm" component={StorySchemaFieldFormScreen} />
-    </StorySchemaStack.Navigator>
+    <CustomizationStack.Navigator screenOptions={{ headerShown: false }}>
+      <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
+      <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
+      <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
+      <CustomizationStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
+      <CustomizationStack.Screen name="StorySchemaList" component={StorySchemaListScreen} />
+      <CustomizationStack.Screen
+        name="StorySchemaFieldForm"
+        component={StorySchemaFieldFormScreen}
+      />
+      <CustomizationStack.Screen name="Suggestions" component={SuggestionsScreen} />
+      <CustomizationStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
+      <CustomizationStack.Screen name="StatList" component={StatListScreen} />
+      <CustomizationStack.Screen name="StatForm" component={StatFormScreen} />
+      <CustomizationStack.Screen name="StatLadder" component={StatLadderScreen} />
+      <CustomizationStack.Screen name="StatComparison" component={StatComparisonScreen} />
+      <CustomizationStack.Screen name="StatRanking" component={StatRankingScreen} />
+    </CustomizationStack.Navigator>
   );
 };
 //#endregion
@@ -794,49 +782,16 @@ const MainSystemNavigator = () => {
           })}
         />
         <Drawer.Screen
-          name="StorySchemaStack"
-          component={StorySchemaStackNavigator}
+          name="CustomizationStack"
+          component={CustomizationStackNavigator}
           options={{
-            title: t('story_schema_management_title'),
-            drawerLabel: t('story_schema_management_title'),
+            title: t('customization_title'),
+            drawerLabel: t('customization_title'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
-              navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="SuggestionsStack"
-          component={SuggestionsStackNavigator}
-          options={{
-            title: t('standard_suggestions_title'),
-            drawerLabel: t('standard_suggestions_title'),
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('SuggestionsStack', { screen: 'Suggestions' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="StatsDrawer"
-          component={StatsStackNavigator}
-          options={{
-            title: t('stats_title'),
-            drawerLabel: t('stats_title'),
-            // The stack stays registered; only the menu item disappears when the system is turned off.
-            drawerItemStyle: {
-              height: selectedStory?.statSystem ? undefined : 0,
-              overflow: 'hidden',
-            },
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StatsDrawer', { screen: 'StatList' });
+              navigation.navigate('CustomizationStack', { screen: 'CustomizationIndex' });
             },
           })}
         />
@@ -875,14 +830,8 @@ const MainSystemNavigator = () => {
         />
         <Drawer.Screen
           name="StorySettings"
-          component={StorySettingsStackNavigator}
+          component={StorySettingsScreen}
           options={{ title: t('story_settings_title') }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StorySettings', { screen: 'StorySettingsHome' });
-            },
-          })}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"

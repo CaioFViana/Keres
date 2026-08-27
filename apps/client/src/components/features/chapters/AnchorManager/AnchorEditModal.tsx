@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -237,7 +238,6 @@ const AnchorEditModal: React.FC<Props> = ({
       marginTop: 16,
       paddingHorizontal: '3%',
     },
-    buttonWrapper: { width: '47%' },
   });
 
   const patch = (changes: Partial<AnchorDraft>) =>
@@ -456,32 +456,28 @@ const AnchorEditModal: React.FC<Props> = ({
         )}
         {renderPoint('start')}
         {mode === 'closed' && renderPoint('end')}
-        <View style={styles.buttons}>
-          <View style={styles.buttonWrapper}>
-            <Button onPress={onCancel}>{t('cancel')}</Button>
-          </View>
-          <View style={styles.buttonWrapper}>
-            <Button
-              onPress={() =>
-                onConfirm(
-                  mode === 'open'
-                    ? {
-                        ...draft,
-                        endSceneId: null,
-                        endPosition: null,
-                        endOffset: null,
-                        endOffsetUnit: null,
-                      }
-                    : draft,
-                )
-              }
-              disabled={!complete}
-              testID="confirm-anchor"
-            >
-              {t('save')}
-            </Button>
-          </View>
-        </View>
+        <FormActions>
+          <Button onPress={onCancel}>{t('cancel')}</Button>
+          <Button
+            onPress={() =>
+              onConfirm(
+                mode === 'open'
+                  ? {
+                      ...draft,
+                      endSceneId: null,
+                      endPosition: null,
+                      endOffset: null,
+                      endOffsetUnit: null,
+                    }
+                  : draft,
+              )
+            }
+            disabled={!complete}
+            testID="confirm-anchor"
+          >
+            {t('save')}
+          </Button>
+        </FormActions>
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );

@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -347,19 +348,20 @@ const StoryFormScreen = () => {
         </>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
-        {storyId ? t('update_story') : t('create_story')}
-      </Button>
-
-      {storyId && (
-        <Button
-          onPress={handleDelete}
-          style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
-          disabled={!canManageStoryPolicy}
-        >
-          {t('delete_story_title')}
+      <FormActions stackOnCompact>
+        <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
+          {storyId ? t('update_story') : t('create_story')}
         </Button>
-      )}
+        {storyId && (
+          <Button
+            onPress={handleDelete}
+            style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
+            disabled={!canManageStoryPolicy}
+          >
+            {t('delete_story_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

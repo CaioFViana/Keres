@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Ionicons } from '@expo/vector-icons';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
@@ -139,7 +140,6 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
       marginTop: 20,
       paddingHorizontal: '3%',
     },
-    buttonWrapper: { width: '47%' },
     characterPickerModalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
@@ -211,14 +211,10 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
         </View>
       </ScrollView>
 
-      <View style={styles.buttonContainer}>
-        <View style={styles.buttonWrapper}>
-          <Button onPress={onClose}>{t('cancel')}</Button>
-        </View>
-        <View style={styles.buttonWrapper}>
-          <Button onPress={handleSave}>{t('save_changes')}</Button>
-        </View>
-      </View>
+      <FormActions>
+        <Button onPress={onClose}>{t('cancel')}</Button>
+        <Button onPress={handleSave}>{t('save_changes')}</Button>
+      </FormActions>
       <ResponsiveModal
         visible={showCharacterPicker}
         onClose={() => setShowCharacterPicker(false)}

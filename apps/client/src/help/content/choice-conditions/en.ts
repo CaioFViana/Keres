@@ -21,7 +21,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › Choices and create or edit a choice in a branching story.',
+        'Open Story menu › Narrative Elements and open a choice in a branching story.',
         'Save the choice first. The Conditions section appears once it exists.',
         'Tap Add condition group. Within a group, choose All (AND) to require every condition or Any (OR) to accept one of them.',
         'Tap Add condition and choose its Type: Scene visits, Inventory, or Marker. Fill in the scene and visit count, the item and whether it must be present or absent, or the marker name and state.',

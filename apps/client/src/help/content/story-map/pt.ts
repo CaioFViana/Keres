@@ -21,7 +21,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Escolhas e toque no ícone de mapa no cabeçalho.',
+        'Abra Menu da história › Elementos narrativos e toque no ícone de mapa no cabeçalho.',
         'Arraste e aproxime ou afaste o diagrama. Use o botão de enquadrar para trazer o mapa inteiro de volta à tela.',
         'Use a legenda: a borda de Cena inicial marca onde o caminho começa; a de Cena final marca seu encerramento; linhas tracejadas indicam retornos de caminho.',
         'Toque em uma cena para ver resumo, tempo, efeitos e escolhas de entrada ou saída. Toque em uma ligação apresentada ali para ir à cena correspondente.',

@@ -80,8 +80,13 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   CharacterRelationView: 'character-relationships',
   StorySchemaStack: 'custom-attributes',
   StorySchemaList: 'custom-attributes',
+  /*
+   * The index lists four areas, so there is no single page it belongs to. Custom attributes is the
+   * one it is most often opened for, and the page links on to the other three.
+   */
+  CustomizationIndex: 'custom-attributes',
+  CustomizationStack: 'custom-attributes',
   StorySchemaFieldForm: 'custom-attributes',
-  SuggestionsStack: 'suggestions',
   Suggestions: 'suggestions',
   SuggestionUsage: 'suggestions',
   CommentsStack: 'comments',
@@ -91,7 +96,6 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   OperationLogDetail: 'activity-log',
   StoryAnalysis: 'story-analysis',
   StorySettings: 'story-settings',
-  StorySettingsHome: 'story-settings',
   StoryCalendarList: 'calendars',
   StoryCalendarForm: 'calendars',
   StoryAgenda: 'calendars',

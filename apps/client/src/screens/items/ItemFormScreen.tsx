@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -422,14 +423,16 @@ const ItemFormScreen = () => {
         </View>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton}>
-        {t('save_item')}
-      </Button>
-      {isEditing && (
-        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-          {t('delete_item_title')}
+      <FormActions stackOnCompact>
+        <Button onPress={handleSave} style={styles.saveButton}>
+          {t('save_item')}
         </Button>
-      )}
+        {isEditing && (
+          <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+            {t('delete_item_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

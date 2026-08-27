@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'The key begins rusted with Lia. In the “Market” Scene, a journey records New character owner: Omar and New state: repaired.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Item journeys', '+'] },
+    { type: 'path', segments: ['Story menu', 'Items', 'Item journeys', '+'] },
     {
       type: 'steps',
       items: [

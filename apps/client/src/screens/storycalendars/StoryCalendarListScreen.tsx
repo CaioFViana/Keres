@@ -26,7 +26,7 @@ import { createStoryService } from '@/src/services/storymanagement/StoryService'
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
-import type { StorySettingsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 
 /**
  * The story's calendars.
@@ -46,7 +46,7 @@ const StoryCalendarListScreen = () => {
   const { userId: currentUserId } = useUserSettingsStore();
   const notify = useNotificationStore((state) => state.showNotification);
   const navigation =
-    useNavigation<NativeStackNavigationProp<StorySettingsStackParamList, 'StoryCalendarList'>>();
+    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryCalendarList'>>();
   const { calendars, primary, reload } = useStoryCalendar(story?.id);
   const [busy, setBusy] = useState(false);
   /*

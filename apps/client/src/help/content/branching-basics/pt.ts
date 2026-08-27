@@ -22,7 +22,7 @@ const page: HelpPage = {
       items: [
         'Ao criar a história, escolha o Tipo Ramificada. Para uma história existente, abra Menu da história › Configurações da história e altere o tipo, quando a conversão for permitida.',
         'Crie as cenas que representam os momentos da narrativa. Marque uma Cena inicial para indicar por onde um caminho começa.',
-        'No Menu da história, abra Escolhas e crie uma escolha: selecione a Cena de origem, escreva o texto que será apresentado e escolha a Cena de destino.',
+        'No Menu da história, abra Elementos narrativos e crie uma escolha: selecione a Cena de origem, escreva o texto que será apresentado e escolha a Cena de destino.',
         'Abra o Mapa da história para conferir os caminhos. Use a Análise da história para encontrar cenas sem ligação ou caminhos que não podem ser alcançados.',
         'Quando o caminho depender do que aconteceu antes, adicione condições e efeitos na escolha ou na cena.',
       ],

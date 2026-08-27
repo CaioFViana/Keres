@@ -5,9 +5,7 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import type { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { CompositeNavigationProp } from '@react-navigation/native';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,10 +15,7 @@ import type { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type {
-  MainSystemDrawerParamList,
-  StorySettingsStackParamList,
-} from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
@@ -35,15 +30,9 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
-/**
- * The drawer, and the stack this screen now sits inside.
- *
- * It gained a stack when the calendars were added: a flat `Drawer.Screen` that navigates elsewhere
- * leaves the header with no back arrow, which is the defect the pack screens had.
- */
-type StorySettingsScreenNavigationProp = CompositeNavigationProp<
-  DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>,
-  NativeStackNavigationProp<StorySettingsStackParamList, 'StorySettingsHome'>
+type StorySettingsScreenNavigationProp = DrawerNavigationProp<
+  MainSystemDrawerParamList,
+  'MainDashboard'
 >;
 
 const StorySettingsScreen = () => {
@@ -64,15 +53,9 @@ const StorySettingsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      /*
-       * The drawer's title, not this screen's.
-       *
-       * This used to be a leaf `Drawer.Screen` and `setOptions` was right. It is now the first
-       * screen of a stack, so `setOptions` sets options nobody draws - the header belongs to the
-       * drawer above. It went unnoticed because the title it was setting was the same one the
-       * drawer already had; the calendars, which set a different one, are what made it matter.
-       */
-      navigation.getParent()?.setOptions({ title: t('story_settings_title') });
+      // A leaf `Drawer.Screen` again, now that the calendars have their own drawer entry - so this
+      // is its own title, not the parent's.
+      navigation.setOptions({ title: t('story_settings_title') });
       setDocumentTitle(t('story_settings_title'));
     }, [navigation, t]),
   );
@@ -740,7 +723,7 @@ const StorySettingsScreen = () => {
       */}
       <TouchableOpacity
         style={styles.switchContainer}
-        onPress={() => navigation.navigate('StoryCalendarList')}
+        onPress={() => navigation.navigate('CustomizationStack', { screen: 'StoryCalendarList' })}
       >
         <View style={{ flex: 1, marginRight: 12 }}>
           <Text style={[styles.label, { color: colors.text }]}>{t('calendar_list_title')}</Text>

@@ -763,7 +763,7 @@ const CharacterDetailScreen = () => {
             data={statData}
             notation={(selectedStory?.statNotation ?? 'letter') as StatNotation}
             onCompare={(modeId) =>
-              navigation.navigate('StatsDrawer', {
+              navigation.navigate('CustomizationStack', {
                 screen: 'StatComparison',
                 params: { characterId, modeId: modeId ?? undefined },
               })

@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'In the chapter “The Journey”, the scene “Leaving the station” takes place at Central Station, brings together Lia and Omar, and uses the key as an important item. You can open and revise each piece of information without duplicating its description.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Chapters or Scenes'] },
+    { type: 'path', segments: ['Story menu', 'Narrative Elements'] },
     {
       type: 'steps',
       items: [

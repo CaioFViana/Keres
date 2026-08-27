@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Select from '@/src/components/common/inputs/Select/Select';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -67,7 +68,6 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
       marginTop: 20,
       paddingHorizontal: '3%',
     },
-    buttonWrapper: { width: '47%' },
   });
 
   /**
@@ -111,24 +111,20 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
         </View>
       )}
 
-      <View style={styles.buttonContainer}>
-        <View style={styles.buttonWrapper}>
-          <Button onPress={onCancel}>{t('cancel')}</Button>
-        </View>
-        <View style={styles.buttonWrapper}>
-          <Button
-            onPress={() =>
-              onConfirm(
-                becomingChapter ? 'chapter' : 'event',
-                becomingChapter ? Number(position) : undefined,
-              )
-            }
-            testID="confirm-convert-container"
-          >
-            {t('save')}
-          </Button>
-        </View>
-      </View>
+      <FormActions>
+        <Button onPress={onCancel}>{t('cancel')}</Button>
+        <Button
+          onPress={() =>
+            onConfirm(
+              becomingChapter ? 'chapter' : 'event',
+              becomingChapter ? Number(position) : undefined,
+            )
+          }
+          testID="confirm-convert-container"
+        >
+          {t('save')}
+        </Button>
+      </FormActions>
     </ResponsiveModal>
   );
 };

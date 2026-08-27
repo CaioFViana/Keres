@@ -17,7 +17,7 @@ const page: HelpPage = {
       text: 'O prólogo pode ser o primeiro capítulo lido ou apenas para o autor se organizar, mesmo que mostre um acontecimento de vinte anos antes do começo da história. A Ordem registra leitura ou a cronologia do mundo.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Capítulos', '+'] },
+    { type: 'path', segments: ['Menu da história', 'Elementos narrativos', '+'] },
     {
       type: 'steps',
       items: [

@@ -30,11 +30,11 @@ const page: HelpPage = {
       text: 'Your world has ten months of thirty days and a six-day week. You write that down as a calendar, and say the first scene happens on the 1st of Thaw, year 3019 of the Third Age. From then on the timeline reads "14 Harvest, 3019 T.A." beside each scene, and a gap of "2 months" counts sixty days rather than sixty-one.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story settings', 'Calendars'] },
+    { type: 'path', segments: ['Story menu', 'Customization', 'Calendars'] },
     {
       type: 'steps',
       items: [
-        'Open Story settings and choose Calendars.',
+        'Open Customization from the story menu and choose Calendars. You can also reach it from Story settings, beside the option it supersedes.',
         'Choose New calendar and give it a name.',
         'Add your months, each with a name and how many days it has. The year is however long they add up to — the screen tells you the total as you type.',
         'Say how many days a week has. Naming the days is optional; leave it empty or name every one of them.',

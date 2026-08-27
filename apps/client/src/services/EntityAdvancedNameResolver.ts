@@ -3,6 +3,8 @@ import { and, eq } from 'drizzle-orm';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
 import {
+  chapterAnchors,
+  chapters,
   characters,
   choiceCheckGroups,
   choiceChecks,
@@ -15,6 +17,8 @@ import {
   statRelations,
   stats,
   statStrengths,
+  scenes,
+  storyCalendars,
   storySchemaFields,
 } from '../db/schemas';
 import { resolveRelationEntityName } from './EntityIdentifierResolver';
@@ -238,6 +242,41 @@ export async function resolveAdvancedEntityName(
         })}: ${statRelation.value}`;
       }
       translatedEntityType = t('stat_relation');
+      break;
+
+    /*
+     * A stretch names the container it places and the scene it starts from, because neither alone
+     * identifies it: a container can have several stretches, and a scene can anchor several
+     * containers.
+     */
+    case OperationLogEntityType.ChapterAnchor:
+      const anchor = await db.query.chapterAnchors.findFirst({
+        where: and(eq(chapterAnchors.id, entityId), eq(chapterAnchors.isDeleted, false)),
+        columns: { chapterId: true, startSceneId: true },
+      });
+      if (anchor) {
+        const anchoredContainer = await db.query.chapters.findFirst({
+          where: and(eq(chapters.id, anchor.chapterId), eq(chapters.isDeleted, false)),
+          columns: { name: true },
+        });
+        const anchorScene = await db.query.scenes.findFirst({
+          where: and(eq(scenes.id, anchor.startSceneId), eq(scenes.isDeleted, false)),
+          columns: { name: true },
+        });
+        entitySpecificName = `${anchoredContainer?.name || t('unknown_chapter')} · ${
+          anchorScene?.name || t('unknown_scene')
+        }`;
+      }
+      translatedEntityType = t('chapter_anchor');
+      break;
+
+    case OperationLogEntityType.StoryCalendar:
+      const calendar = await db.query.storyCalendars.findFirst({
+        where: and(eq(storyCalendars.id, entityId), eq(storyCalendars.isDeleted, false)),
+        columns: { name: true },
+      });
+      entitySpecificName = calendar?.name;
+      translatedEntityType = t('calendar');
       break;
 
     default:

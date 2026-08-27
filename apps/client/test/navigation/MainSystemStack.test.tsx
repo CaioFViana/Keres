@@ -235,6 +235,30 @@ jest.mock('../../src/screens/narrative-elements/scenes/SceneFormScreen', () => (
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/stats/StatListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatLadderScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatComparisonScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatRankingScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/customization/CustomizationIndexScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/storycalendars/StoryAgendaScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -334,7 +358,8 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(21);
+  // Three entries (story schema, suggestions, stats) became one: the Customization drawer.
+  expect(mockDrawerScreens).toHaveLength(19);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -361,10 +386,9 @@ it.each([
   ['WorldRulesStack', 'WorldRules'],
   ['NotesStack', 'Notes'],
   ['GalleryStack', 'GalleryList'],
-  ['StorySchemaStack', 'StorySchemaList'],
+  ['CustomizationStack', 'CustomizationIndex'],
   ['CommentsStack', 'CommentsList'],
   ['OperationLogStack', 'OperationLog'],
-  ['StatsDrawer', 'StatList'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {

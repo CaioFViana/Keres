@@ -28,7 +28,7 @@ const page: HelpPage = {
       text: 'Em vez de digitar “Navegadora” com grafias diferentes em cada ficha, salve esse valor como sugestão de ocupação. Para cores, armas ou outros vocabulários que não são um campo nativo, crie uma lista nomeada e copie valores para as listas que devem compartilhá-los.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Sugestões'] },
+    { type: 'path', segments: ['Menu da história', 'Personalização', 'Sugestões Padrões'] },
     {
       type: 'steps',
       items: [

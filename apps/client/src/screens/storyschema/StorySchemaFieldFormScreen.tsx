@@ -22,7 +22,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import type { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
+import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -36,11 +36,11 @@ import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
 type StorySchemaFieldFormScreenRouteProp = RouteProp<
-  StorySchemaStackParamList,
+  CustomizationStackParamList,
   'StorySchemaFieldForm'
 >;
 type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<
-  StorySchemaStackParamList,
+  CustomizationStackParamList,
   'StorySchemaFieldForm'
 >;
 

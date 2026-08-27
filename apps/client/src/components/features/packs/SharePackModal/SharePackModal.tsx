@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Select from '@/src/components/common/inputs/Select/Select';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -87,7 +88,6 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
       marginTop: 20,
       paddingHorizontal: '3%',
     },
-    buttonWrapper: { width: '47%' },
   });
 
   return (
@@ -128,20 +128,16 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
         <Text style={styles.hint}>{t('packs_visibility_message')}</Text>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <View style={styles.buttonWrapper}>
-          <Button onPress={onCancel}>{t('cancel')}</Button>
-        </View>
-        <View style={styles.buttonWrapper}>
-          <Button
-            onPress={() => serverId && onConfirm(serverId, visibility)}
-            disabled={!serverId}
-            testID="confirm-share-pack"
-          >
-            {t('packs_share_confirm')}
-          </Button>
-        </View>
-      </View>
+      <FormActions>
+        <Button onPress={onCancel}>{t('cancel')}</Button>
+        <Button
+          onPress={() => serverId && onConfirm(serverId, visibility)}
+          disabled={!serverId}
+          testID="confirm-share-pack"
+        >
+          {t('packs_share_confirm')}
+        </Button>
+      </FormActions>
     </ResponsiveModal>
   );
 };

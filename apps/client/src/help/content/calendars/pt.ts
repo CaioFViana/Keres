@@ -30,11 +30,11 @@ const page: HelpPage = {
       text: 'Seu mundo tem dez meses de trinta dias e uma semana de seis dias. Você registra isso como calendário e diz que a primeira cena acontece em 1 de Degelo, ano 3019 da Terceira Era. Daí em diante a linha do tempo mostra "14 de Colheita, 3019 T.E." ao lado de cada cena, e um intervalo de "2 meses" conta sessenta dias, não sessenta e um.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Configurações da história', 'Calendários'] },
+    { type: 'path', segments: ['Menu da história', 'Personalização', 'Calendários'] },
     {
       type: 'steps',
       items: [
-        'Abra as Configurações da história e escolha Calendários.',
+        'Abra Personalização no menu da história e escolha Calendários. Também dá para chegar lá pelas Configurações da história, ao lado da opção que ele substitui.',
         'Escolha Novo calendário e dê um nome a ele.',
         'Adicione os meses, cada um com nome e quantidade de dias. O ano tem o tamanho que a soma deles der — a tela mostra o total conforme você digita.',
         'Informe quantos dias tem a semana. Nomear os dias é opcional: deixe vazio ou nomeie todos.',

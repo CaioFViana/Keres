@@ -20,7 +20,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type {
   MainSystemDrawerParamList,
-  SuggestionsStackParamList,
+  CustomizationStackParamList,
 } from '../../navigation/MainSystemStack';
 import type { SuggestionUsage } from '../../services/storymanagement/SuggestionService';
 import {
@@ -59,7 +59,7 @@ const SuggestionUsageScreen = () => {
   const navigation = useNavigation<any>();
   useBackButtonHandler({ showWebBackButton: true, onBack: () => navigation.goBack() });
   const route = useRoute<any>();
-  const { type, value } = route.params as SuggestionsStackParamList['SuggestionUsage'];
+  const { type, value } = route.params as CustomizationStackParamList['SuggestionUsage'];
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const { userId } = useUserSettingsStore();
   const { canEdit } = useStoryRole(storyId);
@@ -188,7 +188,7 @@ const SuggestionUsageScreen = () => {
     if (usage.entityType === 'CharacterRelation') return;
     navigateToEntityDetail(drawerNavigation, usage.entityType as GlobalSearchEntityType, usage.id, {
       onReturn: () =>
-        drawerNavigation.navigate('SuggestionsStack', {
+        drawerNavigation.navigate('CustomizationStack', {
           screen: 'SuggestionUsage',
           params: { type, value },
         }),
@@ -241,7 +241,7 @@ const SuggestionUsageScreen = () => {
                               onReturn: () =>
                                 (
                                   navigation.getParent() as DrawerNavigationProp<MainSystemDrawerParamList>
-                                ).navigate('SuggestionsStack', {
+                                ).navigate('CustomizationStack', {
                                   screen: 'SuggestionUsage',
                                   params: { type, value },
                                 }),

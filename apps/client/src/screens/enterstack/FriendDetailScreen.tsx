@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import {
@@ -236,7 +237,7 @@ const FriendDetailScreen = () => {
 
       <View style={styles.actionsContainer}>
         {isPendingReceived && (
-          <>
+          <FormActions stackOnCompact>
             <Button
               onPress={() => handleAccept(friendship.id, friendship.serverId)}
               style={styles.actionButton}
@@ -255,7 +256,7 @@ const FriendDetailScreen = () => {
             >
               {t('blacklist_confirmation_title')}
             </Button>
-          </>
+          </FormActions>
         )}
 
         {isPendingSent && (
@@ -268,7 +269,7 @@ const FriendDetailScreen = () => {
         )}
 
         {isFriend && (
-          <>
+          <FormActions stackOnCompact>
             <Button
               onPress={() => handleUnfriend(friendship.id, friendship.serverId)}
               style={[styles.actionButton, styles.destructiveButton]}
@@ -281,7 +282,7 @@ const FriendDetailScreen = () => {
             >
               {t('blacklist_confirmation_title')}
             </Button>
-          </>
+          </FormActions>
         )}
 
         {isBlacklisted && isBlockedByMe && (

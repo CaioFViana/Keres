@@ -200,10 +200,7 @@ const MainDashboardScreen = () => {
         <TouchableOpacity
           onPress={() => {
             if (selectedStory?.id) {
-              navigation.navigate('StorySettings', {
-                screen: 'StorySettingsHome',
-                params: { storyId: selectedStory.id },
-              });
+              navigation.navigate('StorySettings', { storyId: selectedStory.id });
             } else {
               showNotification(t('no_story_selected_for_settings'), 'warning'); // New translation key
             }

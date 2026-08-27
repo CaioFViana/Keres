@@ -21,7 +21,10 @@ const page: HelpPage = {
       text: 'Com a escada F começando em 0, C em 50 e A em 400, um personagem com 100 de Força está dentro de C, a um terço do caminho até A. Quem passa do último tier é desenhado na faixa tracejada fora do gráfico.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Configurações', 'Sistema de status'] },
+    {
+      type: 'path',
+      segments: ['Menu da história', 'Configurações da História', 'Sistema de status'],
+    },
     {
       type: 'steps',
       items: [

@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import type { CalendarDefinitionType } from '@keres/shared';
 import { calendarDaysPerYear, CalendarDefinitionSchema } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
@@ -14,7 +15,7 @@ import CalendarRowList from '@/src/components/features/calendars/CalendarRowList
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
-import type { StorySettingsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useNotificationStore } from '@/src/state/notificationStore';
@@ -38,9 +39,9 @@ const StoryCalendarFormScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
-  const route = useRoute<RouteProp<StorySettingsStackParamList, 'StoryCalendarForm'>>();
+  const route = useRoute<RouteProp<CustomizationStackParamList, 'StoryCalendarForm'>>();
   const navigation =
-    useNavigation<NativeStackNavigationProp<StorySettingsStackParamList, 'StoryCalendarForm'>>();
+    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryCalendarForm'>>();
   const calendarId = route.params?.calendarId;
   const story = useStoryStore((state) => state.selectedStory);
   const { canEdit } = useStoryRole(story?.id);
@@ -320,7 +321,7 @@ const StoryCalendarFormScreen = () => {
       {problem ? <Text style={styles.error}>{problem}</Text> : null}
 
       {canEdit && (
-        <View style={styles.buttons}>
+        <FormActions>
           <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
           <Button
             onPress={save}
@@ -329,7 +330,7 @@ const StoryCalendarFormScreen = () => {
           >
             {t('save')}
           </Button>
-        </View>
+        </FormActions>
       )}
     </KeyboardAwareScreen>
   );

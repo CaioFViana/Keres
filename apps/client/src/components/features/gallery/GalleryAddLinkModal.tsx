@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -52,7 +53,6 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
       marginTop: 8,
       paddingHorizontal: '3%',
     },
-    buttonWrapper: { width: '47%' },
   });
 
   return (
@@ -85,19 +85,15 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
           style={commonInputStyles.input}
         />
       </View>
-      <View style={styles.buttons}>
-        <View style={styles.buttonWrapper}>
-          <Button onPress={onCancel}>{t('cancel')}</Button>
-        </View>
-        <View style={styles.buttonWrapper}>
-          <Button
-            disabled={!normalized}
-            onPress={() => normalized && onConfirm(normalized, title.trim() || null)}
-          >
-            {t('save')}
-          </Button>
-        </View>
-      </View>
+      <FormActions>
+        <Button onPress={onCancel}>{t('cancel')}</Button>
+        <Button
+          disabled={!normalized}
+          onPress={() => normalized && onConfirm(normalized, title.trim() || null)}
+        >
+          {t('save')}
+        </Button>
+      </FormActions>
     </ResponsiveModal>
   );
 };

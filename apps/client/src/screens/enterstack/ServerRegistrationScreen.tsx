@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { APP_RELEASE, canTalkToServer } from '@keres/shared';
@@ -710,31 +711,34 @@ const ServerRegistrationScreen = () => {
         </>
       )}
 
-      <Button
-        onPress={mode === 'recover' ? handleRecover : handleSave}
-        style={styles.registerButton}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={colors.onPrimary} />
-        ) : serverId ? (
-          t('update_server')
-        ) : mode === 'recover' ? (
-          t('reset_password_button')
-        ) : mode === 'register' ? (
-          t('create_account')
-        ) : (
-          t('register_server')
-        )}
-      </Button>
-
-      {serverId && (
+      {serverId ? (
+        <FormActions stackOnCompact>
+          <Button onPress={handleSave} disabled={loading}>
+            {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
+          </Button>
+          <Button
+            onPress={handleDeleteServer}
+            style={{ backgroundColor: colors.error }}
+            disabled={loading}
+          >
+            {t('delete_server')}
+          </Button>
+        </FormActions>
+      ) : (
         <Button
-          onPress={handleDeleteServer}
-          style={[styles.registerButton, styles.deleteButton, { backgroundColor: colors.error }]}
+          onPress={mode === 'recover' ? handleRecover : handleSave}
+          style={styles.registerButton}
           disabled={loading}
         >
-          {t('delete_server')}
+          {loading ? (
+            <ActivityIndicator color={colors.onPrimary} />
+          ) : mode === 'recover' ? (
+            t('reset_password_button')
+          ) : mode === 'register' ? (
+            t('create_account')
+          ) : (
+            t('register_server')
+          )}
         </Button>
       )}
 

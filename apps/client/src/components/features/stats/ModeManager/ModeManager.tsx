@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../../common/controls/Button/Button';
+import FormActions from '../../../common/controls/FormActions/FormActions';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
 import TextInput from '../../../common/inputs/TextInput/TextInput';
 import type { ModeSelect } from '../../../../db/schema';
@@ -159,10 +160,18 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
             multiline
             style={commonInputStyles.input}
           />
-          <Button onPress={handleSubmit} disabled={saving} style={styles.saveButton}>
-            {editingId ? t('save') : t('modes_add')}
-          </Button>
-          {editingId ? <Button onPress={reset}>{t('cancel')}</Button> : null}
+          {editingId ? (
+            <FormActions>
+              <Button onPress={handleSubmit} disabled={saving}>
+                {t('save')}
+              </Button>
+              <Button onPress={reset}>{t('cancel')}</Button>
+            </FormActions>
+          ) : (
+            <Button onPress={handleSubmit} disabled={saving} style={styles.saveButton}>
+              {t('modes_add')}
+            </Button>
+          )}
         </View>
       ) : null}
     </CollapsibleCard>

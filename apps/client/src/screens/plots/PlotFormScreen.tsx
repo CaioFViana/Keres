@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { RouteProp } from '@react-navigation/native';
@@ -176,13 +177,16 @@ const PlotFormScreen = () => {
         multiline
       />
 
-      <Button onPress={handleSave} style={styles.saveButton}>
-        {isEditing ? t('save_changes') : t('create_plot')}
-      </Button>
-
-      {isEditing && (
-        <Button onPress={handleDelete} style={styles.deleteButton}>
-          {t('delete_plot_title')}
+      {isEditing ? (
+        <FormActions stackOnCompact>
+          <Button onPress={handleSave}>{t('save_changes')}</Button>
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
+            {t('delete_plot_title')}
+          </Button>
+        </FormActions>
+      ) : (
+        <Button onPress={handleSave} style={styles.saveButton}>
+          {t('create_plot')}
         </Button>
       )}
     </KeyboardAwareScreen>

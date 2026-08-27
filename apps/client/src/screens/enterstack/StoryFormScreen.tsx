@@ -348,14 +348,14 @@ const StoryFormScreen = () => {
         </>
       )}
 
-      <FormActions stackOnCompact>
-        <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave} disabled={!canEdit}>
           {storyId ? t('update_story') : t('create_story')}
         </Button>
         {storyId && (
           <Button
             onPress={handleDelete}
-            style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
+            style={{ backgroundColor: colors.error }}
             disabled={!canManageStoryPolicy}
           >
             {t('delete_story_title')}

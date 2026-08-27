@@ -423,12 +423,12 @@ const ItemFormScreen = () => {
         </View>
       )}
 
-      <FormActions stackOnCompact>
-        <Button onPress={handleSave} style={styles.saveButton}>
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>
           {t('save_item')}
         </Button>
         {isEditing && (
-          <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_item_title')}
           </Button>
         )}

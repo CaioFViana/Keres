@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
+import FormActions from '../../components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import Select from '../../components/common/inputs/Select/Select';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
@@ -298,14 +299,14 @@ const PackFormScreen = () => {
           style={commonInputStyles.input}
         />
 
-        <View style={styles.actions}>
+        <FormActions stackOnCompact style={{ marginTop: 20 }}>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">
             {packId ? t('packs_reextract') : t('save')}
           </Button>
           <Button onPress={() => navigation.goBack()} style={styles.cancelButton}>
             {t('cancel')}
           </Button>
-        </View>
+        </FormActions>
       </>
     </KeyboardAwareScreen>
   );

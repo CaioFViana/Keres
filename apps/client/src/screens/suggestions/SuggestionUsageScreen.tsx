@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
@@ -303,7 +304,7 @@ const SuggestionUsageScreen = () => {
               : t('suggestion_rename_usages_warning')}
           </Text>
         )}
-        <View style={stylesForScreen.modalActions}>
+        <FormActions>
           <Button onPress={() => setRenaming(false)}>{t('cancel')}</Button>
           <Button
             onPress={saveRename}
@@ -311,7 +312,7 @@ const SuggestionUsageScreen = () => {
           >
             {t('save')}
           </Button>
-        </View>
+        </FormActions>
       </ResponsiveModal>
     </View>
   );

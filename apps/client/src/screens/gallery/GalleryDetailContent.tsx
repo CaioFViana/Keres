@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   ScreenError,
@@ -502,14 +503,14 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
             <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
 
             {canEdit && (
-              <View style={styles.actions}>
+              <FormActions stackOnCompact style={{ marginTop: 25 }}>
                 <Button onPress={handleSave} disabled={saving}>
                   {saving ? t('saving') : t('save_changes')}
                 </Button>
                 <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
                   {t('delete')}
                 </Button>
-              </View>
+              </FormActions>
             )}
           </View>
         </View>

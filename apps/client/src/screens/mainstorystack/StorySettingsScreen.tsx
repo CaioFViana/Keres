@@ -1,4 +1,5 @@
 import { Button, Select } from '@/src/components/common';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -902,17 +903,18 @@ const StorySettingsScreen = () => {
         </>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
-        {t('update_story')}
-      </Button>
-
-      <Button
-        onPress={handleDelete}
-        style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
-        disabled={!canManageStoryPolicy}
-      >
-        {t('delete_story_title')}
-      </Button>
+      <FormActions stackOnCompact>
+        <Button onPress={handleSave} disabled={!canEdit}>
+          {t('update_story')}
+        </Button>
+        <Button
+          onPress={handleDelete}
+          style={{ backgroundColor: colors.error }}
+          disabled={!canManageStoryPolicy}
+        >
+          {t('delete_story_title')}
+        </Button>
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

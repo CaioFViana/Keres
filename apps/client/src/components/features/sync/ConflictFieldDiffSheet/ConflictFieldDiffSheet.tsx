@@ -8,6 +8,7 @@ import type { PendingConflict } from '../../../../services/SyncConflictService';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 /** De qual lado vem o valor escolhido para um campo em disputa. */
@@ -128,7 +129,6 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      marginTop: 8,
     },
     secondaryButtonText: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
   });
@@ -192,14 +192,14 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
           );
         })}
 
-        <View style={styles.footer}>
+        <FormActions stackOnCompact style={styles.footer}>
           <Button onPress={handleKeepMine} disabled={isResolving}>
             {keepMineLabel}
           </Button>
           <Button onPress={handleKeepServer} disabled={isResolving} style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>{t('conflict_keep_server')}</Text>
           </Button>
-        </View>
+        </FormActions>
       </ScrollView>
     </ResponsiveModal>
   );

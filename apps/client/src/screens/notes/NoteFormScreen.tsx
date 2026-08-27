@@ -306,12 +306,12 @@ const NoteFormScreen = () => {
         />
       </View>
 
-      <FormActions stackOnCompact>
-        <Button onPress={handleSave} style={styles.saveButton}>
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>
           {isEditing ? t('save_changes') : t('create_note')}
         </Button>
         {isEditing && (
-          <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_note_title')}
           </Button>
         )}

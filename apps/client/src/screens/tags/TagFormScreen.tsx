@@ -224,12 +224,12 @@ const TagFormScreen = () => {
         multiline
       />
 
-      <FormActions stackOnCompact>
-        <Button onPress={handleSave} style={styles.saveButton}>
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>
           {isEditing ? t('save_changes') : t('create_tag')}
         </Button>
         {isEditing && (
-          <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_tag_title')}
           </Button>
         )}

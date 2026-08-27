@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
@@ -506,10 +507,10 @@ const SuggestionsScreen = () => {
           placeholder={t('suggestion_list_name_placeholder')}
           style={commonInputStyles.input}
         />
-        <View style={styles.modalActions}>
+        <FormActions>
           <Button onPress={() => setCreatingList(false)}>{t('cancel')}</Button>
           <Button onPress={createList}>{t('add')}</Button>
-        </View>
+        </FormActions>
       </ResponsiveModal>
       <ResponsiveModal
         visible={renamingList}
@@ -523,10 +524,10 @@ const SuggestionsScreen = () => {
           placeholder={t('suggestion_list_name_placeholder')}
           style={commonInputStyles.input}
         />
-        <View style={styles.modalActions}>
+        <FormActions>
           <Button onPress={() => setRenamingList(false)}>{t('cancel')}</Button>
           <Button onPress={renameList}>{t('save')}</Button>
-        </View>
+        </FormActions>
       </ResponsiveModal>
       <ResponsiveModal
         visible={copying}
@@ -550,10 +551,10 @@ const SuggestionsScreen = () => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-        <View style={styles.modalActions}>
+        <FormActions>
           <Button onPress={() => setCopying(false)}>{t('cancel')}</Button>
           <Button onPress={copyToSelected}>{t('suggestion_copy_confirm')}</Button>
-        </View>
+        </FormActions>
       </ResponsiveModal>
     </>
   );

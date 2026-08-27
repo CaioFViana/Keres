@@ -1,4 +1,9 @@
-import { AttributeType, decodeAttributeValue, isValidAttributeDate } from '@keres/shared';
+import {
+  AttributeType,
+  type ChapterType,
+  decodeAttributeValue,
+  isValidAttributeDate,
+} from '@keres/shared';
 import type { NavigableEntityType } from './entityNavigation';
 
 /**
@@ -78,8 +83,14 @@ export interface AnalysisScene {
 export interface AnalysisChapter {
   id: string;
   name: string;
-  /** Position in the story: 1..N, under the same rule as the scenes. */
+  /** Position within its own kind: 1..N, under the same rule as the scenes. */
   index: number;
+  /**
+   * Chapter or event. The two keep separate 1..N spaces in the same table, so the numbering check
+   * has to partition them - see `checkNarrativeIndexes`. Optional because every caller predating
+   * events means the spine.
+   */
+  type?: ChapterType;
 }
 
 export interface AnalysisChoice {
@@ -499,19 +510,32 @@ function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null
 function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const findings: StoryAnalysisFinding[] = [];
 
-  const chapterProblem = inspectIndexes(input.chapters.map((chapter) => chapter.index));
-  if (chapterProblem && input.chapters.length > 0) {
+  /**
+   * Only the spine is checked for being the story's 1..N.
+   *
+   * Events sit in the same collection with a numbering of their own, so measuring the two together
+   * hands this `[1, 2, 3, 1, 2]` and accuses every story containing an event of corrupted
+   * numbering - an integrity finding, which the gentler mode does not silence.
+   */
+  const spine = input.chapters.filter((chapter) => (chapter.type ?? 'chapter') === 'chapter');
+  const chapterProblem = inspectIndexes(spine.map((chapter) => chapter.index));
+  if (chapterProblem && spine.length > 0) {
     findings.push(
       buildFinding(
         'scenes',
         'warning',
         'Chapter',
-        input.chapters[0]!,
+        spine[0]!,
         `analysis_chapter_index_${chapterProblem}`,
       ),
     );
   }
 
+  /**
+   * Scenes are checked inside **every** container, events included. How a war began, the war and
+   * its aftermath are three scenes in an order that matters exactly as much as any chapter's - and
+   * the API refuses a crooked reorder there for the same reason.
+   */
   for (const chapter of input.chapters) {
     const chapterScenes = input.scenes.filter((scene) => scene.chapterId === chapter.id);
     if (chapterScenes.length === 0) continue;

@@ -21,6 +21,7 @@ import migration_17 from './0016_auto_link_mentions';
 import migration_18 from './0017_completeness_checks';
 import migration_19 from './0018_packs';
 import migration_20 from './0019_pack_visibility';
+import migration_21 from './0020_closed_timeslip';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -43,6 +44,7 @@ const migrations = [
   { id: 18, name: '0017_completeness_checks', run: migration_18 },
   { id: 19, name: '0018_packs', run: migration_19 },
   { id: 20, name: '0019_pack_visibility', run: migration_20 },
+  { id: 21, name: '0020_closed_timeslip', run: migration_21 },
 ];
 
 export default migrations;

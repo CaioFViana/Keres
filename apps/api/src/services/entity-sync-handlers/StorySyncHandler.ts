@@ -4,6 +4,7 @@ import type {
   StoryReorderingStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import type { ChapterType } from '@keres/shared';
 import {
   CreateStoryDataSchema,
   PartialStorySchema,
@@ -145,11 +146,23 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
         return;
       }
 
+      /**
+       * Chapters and events share the `chapters` table and each owns an independent 1..N space.
+       *
+       * The scope has to reach the query, not just the validation: a payload listing every event is
+       * complete for the events and short for the chapters, so a handler that looked at the whole
+       * table would call one of the two a validation error whichever way it was sent. Absent means
+       * chapters, which is what this operation meant before events existed.
+       */
+      const reorderedType: ChapterType =
+        validatedReorderUpdate.reorderTarget === 'Event' ? 'event' : 'chapter';
+
       await db.transaction(async (tx) => {
-        // 1. Validate reorderItems against actual chapters in the story
+        // 1. Validate reorderItems against the containers of this kind in the story
         const existingChapters = await tx.query.chapters.findMany({
           where: and(
             eq(chapters.storyId, validatedReorderUpdate.id!),
+            eq(chapters.type, reorderedType),
             eq(chapters.isDeleted, false),
           ),
           columns: {
@@ -171,7 +184,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
         ) {
           throw new SyncConflictError(
             'validation',
-            'Validation Error: Reorder items do not match current chapters in story or contain invalid chapter IDs.',
+            `Validation Error: Reorder items do not match the current ${reorderedType}s in the story or contain invalid IDs.`,
           );
         }
 

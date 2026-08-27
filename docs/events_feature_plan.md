@@ -219,8 +219,12 @@ chapter of the story. With two index spaces, a story with 3 chapters and 2 event
 Every story containing an Event would be accused of corrupted numbering. This is an **integrity**
 finding, not an opinion, so the "less harsh analysis" toggle does not silence it.
 
-The fix is to filter: the chapter check sees `type = 'chapter'`, and a parallel check validates the
-event list's own 1..M. This is not optional and belongs in the same phase as the column.
+The fix partitions **inside the check**, not in the query. Filtering events out of the analysis
+input would also stop checking the numbering of the scenes *within* them - how a war began, the war
+and its aftermath are as ordered as any chapter's scenes, and the API refuses a crooked reorder
+there for the same reason. So the service feeds both kinds with their `type`, the spine check reads
+only the chapters, and the scene check reads every container. This is not optional and belongs in
+the same phase as the column.
 
 It is the same class as the export bug the testing roadmap uses as its reference case: the data is
 right, the validation went stale.
@@ -381,7 +385,7 @@ real SQLite database with the production migrations applied.
 | --- | --- | --- |
 | **0** | `ChapterService` + the reorder conflict cells covered (roadmap Phase 1B, scoped to chapters) | The invariant this feature edits is verified before it is edited |
 | **1** (**done**) | The protocol gate (§10): `SyncProtocol.ts`, `/kerescheck`, the request header, the 426 on `/sync`, the registration check | Incompatible peers refuse each other, loudly and early |
-| **2** | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, **and the Story Analysis fix (§7.1)** | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
+| **2** (**done**) | The `type` column, `reorderTarget: 'Event'`, the API branch, the service, and the Story Analysis fix (§7.1) | An Event exists, syncs, reorders in its own space, and does not trip a false integrity finding |
 | **3** | The lists, the icon, the sort option, the toggle, mention routing | A writer can make one |
 | **4** | `ChapterRelation`: table, schemas, both sync handlers, service, the relation UI, the cycle check (§7.2) | Chronology is recordable |
 | **5** | The historical timeline (layout + svg), the presence-matrix filter | Chronology is visible |

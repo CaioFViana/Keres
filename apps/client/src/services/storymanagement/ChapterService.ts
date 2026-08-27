@@ -1,3 +1,4 @@
+import type { ChapterType } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
@@ -32,6 +33,8 @@ export interface ChapterService {
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
+    /** Chapters unless asked otherwise; `null` returns both kinds in one list. */
+    type?: ChapterType | null,
   ): Promise<ChapterSelect[]>;
   getById(chapterId: string): Promise<ChapterSelect | undefined>;
   createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect>;
@@ -46,11 +49,19 @@ export interface ChapterService {
     >,
   ): Promise<ChapterSelect>;
   deleteChapter(currentUserId: string, chapterId: string): Promise<void>;
-  getAllByStoryId(storyId: string): Promise<ChapterSelect[]>;
+  getAllByStoryId(storyId: string, type?: ChapterType | null): Promise<ChapterSelect[]>;
+  /**
+   * Reorders one kind of container.
+   *
+   * Chapters and events keep separate 1..N spaces inside the same table, so the operation carries
+   * which one it means - the server filters on it before checking that the payload is complete and
+   * contiguous, and a reorder that named the wrong kind would look like a short list to it.
+   */
   reorderChapters(
     currentUserId: string,
     storyId: string,
     newOrder: { id: string; newIndex: number }[],
+    type?: ChapterType,
   ): Promise<void>;
 }
 
@@ -64,11 +75,18 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       sortDirection,
       favoriteFilterState,
       advancedSearchCriteria,
+      type = 'chapter',
     ): Promise<ChapterSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(chapters.storyId, storyId) as SQL<boolean>,
         eq(chapters.isDeleted, false) as SQL<boolean>,
       ];
+
+      // `null` is an explicit "both kinds", which the drawer's combined list asks for. The default
+      // is chapters, so every existing caller keeps meaning the narrative spine.
+      if (type !== null) {
+        conditions.push(eq(chapters.type, type) as SQL<boolean>);
+      }
 
       if (searchTerm) {
         conditions.push(
@@ -320,7 +338,10 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       entityEventEmitter.emit('chapter_changed', updatedChapter.storyId, updatedChapter.id);
     },
 
-    async getAllByStoryId(storyId: string): Promise<ChapterSelect[]> {
+    async getAllByStoryId(
+      storyId: string,
+      type: ChapterType | null = 'chapter',
+    ): Promise<ChapterSelect[]> {
       if (!storyId) {
         console.error('getAllByStoryId: storyId is required.');
         return [];
@@ -329,7 +350,13 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         const allChapters = await db
           .select()
           .from(chapters)
-          .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
+          .where(
+            and(
+              eq(chapters.storyId, storyId),
+              eq(chapters.isDeleted, false),
+              type === null ? undefined : eq(chapters.type, type),
+            ),
+          )
           .orderBy(asc(chapters.index))
           .all();
         return allChapters;
@@ -343,6 +370,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       currentUserId: string,
       storyId: string,
       newOrder: { id: string; newIndex: number }[],
+      type: ChapterType = 'chapter',
     ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
@@ -378,6 +406,9 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
 
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
         reorderItems: newOrder.map((item) => ({ id: item.id, newIndex: item.newIndex })),
+        // Absent for chapters, which is what this operation meant before events existed - an old
+        // server reads such a payload exactly as it always did.
+        ...(type === 'event' ? { reorderTarget: 'Event' as const } : {}),
         version: story?.version,
       });
       entityEventEmitter.emit('chapter_changed', storyId, 'reorder');

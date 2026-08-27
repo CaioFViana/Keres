@@ -317,6 +317,131 @@ describe('reordering chapters', () => {
   });
 });
 
+/**
+ * Events share this table with chapters and keep an index space of their own.
+ *
+ * The two indices mean different things - a chapter's is the order the story is *told* in, an
+ * event's is only the order the writer arranged the list in - so they are numbered independently and
+ * the server validates each 1..N on its own. Everything here is about that separation holding at
+ * every seam: reads, reorders, and the operation the reorder writes.
+ */
+describe('events and chapters as separate spaces', () => {
+  beforeEach(async () => {
+    await seedChapter('chapter-1', 1);
+    await seedChapter('chapter-2', 2);
+    await seedChapter('event-1', 1, { name: 'The Three Hundred Year War', type: 'event' });
+    await seedChapter('event-2', 2, { name: 'Twenty Years of Peace', type: 'event' });
+  });
+
+  /** Every existing caller means the narrative spine, so that is what it keeps getting. */
+  it('reads chapters by default', async () => {
+    const all = await chapterService().getAllByStoryId(TEST_STORY_ID);
+    expect(all.map((row) => row.id)).toEqual(['chapter-1', 'chapter-2']);
+  });
+
+  it('reads events when asked for them', async () => {
+    const events = await chapterService().getAllByStoryId(TEST_STORY_ID, 'event');
+    expect(events.map((row) => row.id)).toEqual(['event-1', 'event-2']);
+  });
+
+  /** The drawer shows one list; `null` is the explicit "both kinds" that asks for it. */
+  it('reads both kinds when the type is null', async () => {
+    const both = await chapterService().getAllByStoryId(TEST_STORY_ID, null);
+    expect(both).toHaveLength(4);
+  });
+
+  it('filters the searchable listing the same way', async () => {
+    const chaptersOnly = await chapterService().getChaptersByStoryId(TEST_STORY_ID);
+    const eventsOnly = await chapterService().getChaptersByStoryId(
+      TEST_STORY_ID,
+      undefined,
+      null,
+      'asc',
+      undefined,
+      undefined,
+      'event',
+    );
+
+    expect(chaptersOnly.map((row) => row.id)).toEqual(['chapter-1', 'chapter-2']);
+    expect(eventsOnly.map((row) => row.id)).toEqual(['event-1', 'event-2']);
+  });
+
+  it('gives a new container the chapter type unless told otherwise', async () => {
+    const created = await chapterService().createChapter(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      name: 'Plain',
+      index: 3,
+    });
+    expect(created.type).toBe('chapter');
+  });
+
+  it('creates an event when asked', async () => {
+    const created = await chapterService().createChapter(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      name: 'An era',
+      index: 3,
+      type: 'event',
+    });
+    expect(created.type).toBe('event');
+  });
+
+  /** The two spaces share numbers without colliding: both start at 1. */
+  it('lets both kinds hold the same index', async () => {
+    const chapters = await chapterService().getAllByStoryId(TEST_STORY_ID);
+    const events = await chapterService().getAllByStoryId(TEST_STORY_ID, 'event');
+    expect(chapters.map((row) => row.index)).toEqual([1, 2]);
+    expect(events.map((row) => row.index)).toEqual([1, 2]);
+  });
+
+  it('reorders events without touching the chapters', async () => {
+    await chapterService().reorderChapters(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      [
+        { id: 'event-2', newIndex: 1 },
+        { id: 'event-1', newIndex: 2 },
+      ],
+      'event',
+    );
+
+    const chapters = await chapterService().getAllByStoryId(TEST_STORY_ID);
+    const events = await chapterService().getAllByStoryId(TEST_STORY_ID, 'event');
+    expect(chapters.map((row) => `${row.id}:${row.index}`)).toEqual(['chapter-1:1', 'chapter-2:2']);
+    expect(events.map((row) => `${row.id}:${row.index}`)).toEqual(['event-2:1', 'event-1:2']);
+  });
+
+  /**
+   * The operation has to name the space, or the server validates the payload against the wrong set
+   * and calls a complete list of events a short list of chapters.
+   */
+  it('names the event space in the operation it records', async () => {
+    await chapterService().reorderChapters(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      [
+        { id: 'event-2', newIndex: 1 },
+        { id: 'event-1', newIndex: 2 },
+      ],
+      'event',
+    );
+
+    expect(payloadOf(await lastOperation()).reorderTarget).toBe('Event');
+  });
+
+  /**
+   * A chapter reorder carries no target at all. That is not tidiness: it is what the operation
+   * looked like before events existed, so an older server reads it exactly as it always did.
+   */
+  it('leaves the target out for a chapter reorder', async () => {
+    await chapterService().reorderChapters(TEST_USER_ID, TEST_STORY_ID, [
+      { id: 'chapter-2', newIndex: 1 },
+      { id: 'chapter-1', newIndex: 2 },
+    ]);
+
+    expect(payloadOf(await lastOperation()).reorderTarget).toBeUndefined();
+  });
+});
+
 describe('reading chapters', () => {
   beforeEach(async () => {
     await seedChapter('chapter-1', 1, { name: 'The Harbour', isFavorite: true });

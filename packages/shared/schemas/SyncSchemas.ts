@@ -148,7 +148,15 @@ export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   entity: z.literal('Story'), // Entity to which reorderItems belong
   id: UlidSchema, // ID of the Story whose chapters are being reordered
   reorderItems: z.array(ReorderItemSchema), // Array of chapter IDs and their new indices
-  reorderTarget: z.literal('StorySchemaField').optional(),
+  /**
+   * Which of the story's collections is being reordered.
+   *
+   * Absent means its chapters, which is what this operation meant before anything else shared it.
+   * Each target owns an independent 1..N space inside its table - `StorySchemaField` has one per
+   * entity type, and `Event` has one of its own inside `chapters`, because a chapter's index is
+   * narrative order and an event's is not.
+   */
+  reorderTarget: z.enum(['StorySchemaField', 'Event']).optional(),
   // The closed set, and not `z.string()`: the column stores exactly these values, and an unknown type
   // would only produce a query that finds nothing - silently.
   schemaEntityType: z.enum(STORY_SCHEMA_ENTITY_TYPES).optional(),

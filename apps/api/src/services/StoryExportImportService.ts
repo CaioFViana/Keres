@@ -619,17 +619,16 @@ export class StoryExportImportService {
       /*
        * --- ChapterAnchors ---
        *
-       * Three ids to remap rather than two: the container being placed and the two scenes it is
-       * measured from. A scene missing from the map is a broken package and still refuses - an
-       * anchor with nothing to measure from has no position at all.
+       * The container and the start scene always remap. The end scene is optional: an open stretch
+       * has none. A start scene missing from the map is a broken package and still refuses.
        */
       const newChapterAnchorsData = (validatedFullStory.chapterAnchors ?? []).map((original) => {
         const newId = nextId(original.id);
         idMap.set(original.id, newId);
         const mappedChapter = idMap.get(original.chapterId);
         const mappedStart = idMap.get(original.startSceneId);
-        const mappedEnd = idMap.get(original.endSceneId);
-        if (!mappedChapter || !mappedStart || !mappedEnd) {
+        const mappedEnd = original.endSceneId ? idMap.get(original.endSceneId) : null;
+        if (!mappedChapter || !mappedStart || (original.endSceneId && !mappedEnd)) {
           throw new Error(
             `Import Error: a row referenced by chapter anchor ${original.id} was not found in the ID map.`,
           );
@@ -640,7 +639,7 @@ export class StoryExportImportService {
           storyId: targetStoryId,
           chapterId: mappedChapter,
           startSceneId: mappedStart,
-          endSceneId: mappedEnd,
+          endSceneId: mappedEnd ?? null,
           createdAt: new Date(original.createdAt),
           updatedAt: new Date(original.updatedAt),
           deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,

@@ -166,6 +166,28 @@ describe('renderStoryTimelineSvg with anchored containers', () => {
     expect(svg).toContain('Not placed: Elsewhere');
   });
 
+  it('draws an instant as a marker and can name scenes on their bars', () => {
+    const layout = buildStoryTimelineLayout(
+      [scene('one', { index: 1, duration: 0, durationType: 'seconds' })],
+      'compact',
+      [
+        {
+          id: 'flash',
+          name: 'Flash',
+          color: '#ff0000',
+          isEvent: true,
+          stretches: [{ start: { sceneId: 'one', position: 'start' } }],
+        },
+      ],
+    );
+    const svg = renderStoryTimelineSvg(layout, { ...anchoredOptions, showSceneNames: true });
+
+    expect(layout.rows[0].instant).toBe(true);
+    expect(layout.eventSpans[0].instant).toBe(true);
+    expect(svg).toContain('<polygon');
+    expect(svg).toContain('1. Scene one');
+  });
+
   it('pushes the scene rows below the bands', () => {
     const plain = buildStoryTimelineLayout(scenes, 'compact');
     const banded = buildStoryTimelineLayout(scenes, 'compact', [

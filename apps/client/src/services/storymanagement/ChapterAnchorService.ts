@@ -16,9 +16,9 @@ import { createServerService } from '../ServerService';
 /**
  * When a container happens, said against the story's own timeline.
  *
- * One row is one stretch, from a moment to a moment, each moment being a scene plus a place inside
- * it plus a distance from there. A container that pauses and resumes has more than one row - which
- * is the thing an interval relation could not express at all, and the reason this replaced it.
+ * One row is one stretch. The start is always a moment on the spine. The end is optional: without
+ * it, the container lasts as long as the scenes it contains. A container that pauses and resumes has
+ * more than one *closed* stretch - an open stretch cannot share a container with another.
  *
  * There is deliberately no ordering rule between the stretches of one container: `order` is which
  * stretch it is, and the timeline works out where they land. A writer who states them out of
@@ -40,8 +40,8 @@ export interface ChapterAnchorService {
       startPosition: ScenePosition;
       startOffset: number | null;
       startOffsetUnit: string | null;
-      endSceneId: string;
-      endPosition: ScenePosition;
+      endSceneId: string | null;
+      endPosition: ScenePosition | null;
       endOffset: number | null;
       endOffsetUnit: string | null;
     }>,
@@ -56,6 +56,25 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
 
   const liveOf = (chapterId: string) =>
     and(eq(chapterAnchors.chapterId, chapterId), eq(chapterAnchors.isDeleted, false));
+
+  const assertOpenStretchRule = async (
+    chapterId: string,
+    endSceneId: string | null | undefined,
+    excludeId?: string,
+  ) => {
+    const live = await db.select().from(chapterAnchors).where(liveOf(chapterId)).all();
+    const others = live.filter((row) => row.id !== excludeId);
+    const hasOpen = others.some((row) => !row.endSceneId);
+    if (!endSceneId) {
+      if (others.length > 0) {
+        throw new Error('An open stretch must be the only stretch on its container.');
+      }
+      return;
+    }
+    if (hasOpen) {
+      throw new Error('An open stretch cannot share a container with another stretch.');
+    }
+  };
 
   return {
     async getAnchorsForStory(storyId) {
@@ -87,6 +106,7 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
 
     async createAnchor(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
+      await assertOpenStretchRule(data.chapterId, data.endSceneId ?? null);
 
       const anchor = prepareNewEntityData<ChapterAnchorInsert>(data);
       const result = await db.insert(chapterAnchors).values(anchor).returning().get();
@@ -116,6 +136,9 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
       });
       if (!original) throw new Error(`ChapterAnchor with ID ${anchorId} not found for update.`);
       await assertStoryIsWritable(db, original.storyId);
+      if ('endSceneId' in changes) {
+        await assertOpenStretchRule(original.chapterId, changes.endSceneId, original.id);
+      }
 
       const changed = getChangedFields(original, { ...original, ...changes });
       delete changed.version;

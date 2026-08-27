@@ -69,6 +69,8 @@ export interface StoryTimelineSegment {
   label: string;
 }
 
+export type StoryTimelineRowKind = 'scene' | 'event' | 'event-scene';
+
 export interface StoryTimelineRow {
   id: string;
   chapterId: string;
@@ -83,6 +85,9 @@ export interface StoryTimelineRow {
   gapEnd?: number;
   gap?: StoryTimelineSegment;
   duration?: StoryTimelineSegment;
+  kind: StoryTimelineRowKind;
+  /** Duration was stated as zero, or an open event has nothing to measure: a marker, not a bar. */
+  instant?: boolean;
 }
 
 /** One end of a stretch, as the layout receives it. See `ChapterAnchorSchemas.ts`. */
@@ -96,7 +101,22 @@ export interface TimelineAnchorPoint {
 
 export interface TimelineAnchorStretch {
   start: TimelineAnchorPoint;
-  end: TimelineAnchorPoint;
+  /** Absent: the stretch lasts as long as `TimelineAnchoredContainer.scenes`. */
+  end?: TimelineAnchorPoint | null;
+}
+
+/** A scene that lives inside an event, used only to measure an open stretch. */
+export interface TimelineContainerScene {
+  id: string;
+  name: string;
+  index: number;
+  summary?: string | null;
+  gap?: number | null;
+  gapType?: string | null;
+  gapLabel?: string;
+  duration?: number | null;
+  durationType?: string | null;
+  durationLabel?: string;
 }
 
 /**
@@ -112,6 +132,8 @@ export interface TimelineAnchoredContainer {
   color: string;
   isEvent: boolean;
   stretches: TimelineAnchorStretch[];
+  /** The container's own scenes. Only consulted when a stretch has no end. */
+  scenes?: TimelineContainerScene[];
 }
 
 /** A container drawn as a band across the scenes it covers. */
@@ -125,8 +147,11 @@ export interface StoryTimelineEventSpan {
   start: number;
   end: number;
   lane: number;
+  instant?: boolean;
   /** No scene it was anchored to is on screen, so there is nothing to draw it against. */
   unresolved?: boolean;
+  /** Scene rows laid out along an open stretch; used by inline placement. */
+  childRows?: StoryTimelineRow[];
 }
 
 export interface StoryTimelineChapterSpan {
@@ -168,13 +193,16 @@ export interface StoryTimelineLayout {
 }
 
 export type StoryTimelineScaleMode = 'compact' | 'proportional';
+/** Overlay: bands above the spine. Inline: events as rows among the chapters they fall between. */
+export type StoryTimelineEventPlacement = 'overlay' | 'inline';
 
 function segment(
   value: number | null | undefined,
   unit: string | null | undefined,
   label?: string,
 ) {
-  if (!value || !Number.isFinite(value) || !unit || UNIT_RANK[unit] === undefined) return undefined;
+  if (value == null || !Number.isFinite(value) || !unit || UNIT_RANK[unit] === undefined)
+    return undefined;
   return { value, unit, label: label || `${value} ${unit}` };
 }
 
@@ -250,6 +278,102 @@ function buildRulerTicks(
   return ticks;
 }
 
+function shiftRow(row: StoryTimelineRow, amount: number) {
+  row.barStart += amount;
+  row.barEnd += amount;
+  if (row.gapStart !== undefined) row.gapStart += amount;
+  if (row.gapEnd !== undefined) row.gapEnd += amount;
+}
+
+function measureContained(
+  container: TimelineAnchoredContainer,
+  startX: number,
+  scaleMode: StoryTimelineScaleMode,
+  segmentLength: (value: number, unit: string, minimum: number) => number,
+): { endX: number; instant: boolean; childRows: StoryTimelineRow[] } {
+  const contained = [...(container.scenes ?? [])].sort((a, b) => a.index - b.index);
+  if (contained.length === 0) return { endX: startX, instant: true, childRows: [] };
+
+  let cursor = startX;
+  const childRows: StoryTimelineRow[] = [];
+  contained.forEach((scene, index) => {
+    const gap = index === 0 ? undefined : segment(scene.gap, scene.gapType, scene.gapLabel);
+    const gapStart = cursor;
+    if (gap)
+      cursor += Math.sign(gap.value) * segmentLength(Math.abs(gap.value), gap.unit, MIN_GAP_WIDTH);
+    const gapEnd = cursor;
+    const duration = segment(scene.duration, scene.durationType, scene.durationLabel);
+    const barStart = cursor;
+    const instant = duration?.value === 0;
+    if (duration && duration.value !== 0) {
+      cursor +=
+        Math.sign(duration.value) *
+        segmentLength(Math.abs(duration.value), duration.unit, MIN_DURATION_WIDTH);
+    } else if (!duration && scaleMode === 'compact') {
+      cursor += MIN_DURATION_WIDTH;
+    }
+    childRows.push({
+      id: scene.id,
+      chapterId: container.id,
+      sequence: index + 1,
+      name: scene.name,
+      chapterName: container.name,
+      chapterColor: container.color,
+      summary: scene.summary,
+      barStart,
+      barEnd: cursor,
+      kind: 'event-scene',
+      instant,
+      ...(gap ? { gapStart, gapEnd, gap } : {}),
+      ...(duration && duration.value !== 0 ? { duration } : {}),
+    });
+  });
+  return { endX: cursor, instant: cursor === startX, childRows };
+}
+
+function insertInlineEventRows(
+  spine: StoryTimelineRow[],
+  eventSpans: StoryTimelineEventSpan[],
+): StoryTimelineRow[] {
+  const events = eventSpans
+    .filter((span) => span.isEvent && span.stretchIndex === 0)
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+  const grouped = new Map<number, StoryTimelineRow[][]>();
+  for (const span of events) {
+    let afterIndex = -1;
+    for (let i = 0; i < spine.length; i++) {
+      if (spine[i].barStart <= span.start) afterIndex = i;
+    }
+    const block =
+      span.childRows && span.childRows.length > 0
+        ? span.childRows
+        : [
+            {
+              id: span.id,
+              chapterId: span.id,
+              sequence: 0,
+              name: span.name,
+              chapterName: span.name,
+              chapterColor: span.color,
+              barStart: span.start,
+              barEnd: span.end,
+              kind: 'event' as const,
+              instant: span.instant,
+            },
+          ];
+    const list = grouped.get(afterIndex) ?? [];
+    list.push(block);
+    grouped.set(afterIndex, list);
+  }
+  const out: StoryTimelineRow[] = [];
+  for (const block of grouped.get(-1) ?? []) out.push(...block);
+  for (let i = 0; i < spine.length; i++) {
+    out.push(spine[i]);
+    for (const block of grouped.get(i) ?? []) out.push(...block);
+  }
+  return out;
+}
+
 /**
  * Builds a timeline for already-ordered scenes. The selection's first gap is prior context and takes
  * up no space: without the preceding scene drawn, showing it would suggest a continuity the
@@ -259,15 +383,17 @@ export function buildStoryTimelineLayout(
   scenes: StoryTimelineScene[],
   scaleMode: StoryTimelineScaleMode = 'compact',
   anchored: TimelineAnchoredContainer[] = [],
+  placement: StoryTimelineEventPlacement = 'overlay',
 ): StoryTimelineLayout {
   const visibleSegments = scenes.flatMap((scene, index) => {
     const segments = [] as { value: number; unit: string; minimum: number }[];
     if (index > 0 && !scene.hideGapBefore) {
       const gap = segment(scene.gap, scene.gapType);
-      if (gap) segments.push({ ...gap, minimum: MIN_GAP_WIDTH });
+      if (gap && gap.value !== 0) segments.push({ ...gap, minimum: MIN_GAP_WIDTH });
     }
     const duration = segment(scene.duration, scene.durationType);
-    if (duration) segments.push({ ...duration, minimum: MIN_DURATION_WIDTH });
+    if (duration && duration.value !== 0)
+      segments.push({ ...duration, minimum: MIN_DURATION_WIDTH });
     return segments;
   });
   const totalSeconds = visibleSegments.reduce(
@@ -301,18 +427,19 @@ export function buildStoryTimelineLayout(
     const duration = segment(scene.duration, scene.durationType, scene.durationLabel);
     const gapStart = cursor;
     if (gap) {
-      cursor += Math.sign(gap.value) * segmentLength(gap.value, gap.unit, MIN_GAP_WIDTH);
+      cursor += Math.sign(gap.value) * segmentLength(Math.abs(gap.value), gap.unit, MIN_GAP_WIDTH);
       timeCursor += gap.value * (VISUAL_SECONDS_PER_UNIT[gap.unit] ?? 1);
     }
     const gapEnd = cursor;
     const barStart = cursor;
     const timeStart = timeCursor;
-    if (duration) {
+    const instant = duration?.value === 0;
+    if (duration && duration.value !== 0) {
       cursor +=
         Math.sign(duration.value) *
-        segmentLength(duration.value, duration.unit, MIN_DURATION_WIDTH);
+        segmentLength(Math.abs(duration.value), duration.unit, MIN_DURATION_WIDTH);
       timeCursor += duration.value * (VISUAL_SECONDS_PER_UNIT[duration.unit] ?? 1);
-    } else if (scaleMode === 'compact') cursor += MIN_DURATION_WIDTH;
+    } else if (!duration && scaleMode === 'compact') cursor += MIN_DURATION_WIDTH;
     const barEnd = cursor;
     minSeconds = Math.min(minSeconds, timeStart, timeCursor);
     maxSeconds = Math.max(maxSeconds, timeStart, timeCursor);
@@ -328,8 +455,10 @@ export function buildStoryTimelineLayout(
       summary: scene.summary,
       barStart,
       barEnd,
+      kind: 'scene' as const,
+      instant,
       ...(gap ? { gapStart, gapEnd, gap } : {}),
-      ...(duration ? { duration } : {}),
+      ...(duration && duration.value !== 0 ? { duration } : {}),
     };
   });
 
@@ -338,12 +467,7 @@ export function buildStoryTimelineLayout(
       ? TIMELINE_PADDING + TIMELINE_LABEL_WIDTH - minX
       : 0;
   if (shift) {
-    rows.forEach((row) => {
-      row.barStart += shift;
-      row.barEnd += shift;
-      if (row.gapStart !== undefined) row.gapStart += shift;
-      if (row.gapEnd !== undefined) row.gapEnd += shift;
-    });
+    rows.forEach((row) => shiftRow(row, shift));
     maxX += shift;
   }
   /*
@@ -372,8 +496,26 @@ export function buildStoryTimelineLayout(
   for (const container of anchored) {
     const resolved = container.stretches.flatMap((stretch, stretchIndex) => {
       const from = resolvePoint(stretch.start);
+      if (from === undefined) return [];
+      if (!stretch.end) {
+        const measured = measureContained(container, from, scaleMode, segmentLength);
+        return [
+          {
+            id: container.id,
+            name: container.name,
+            color: container.color,
+            isEvent: container.isEvent,
+            stretchIndex,
+            start: Math.min(from, measured.endX),
+            end: Math.max(from, measured.endX),
+            lane: 0,
+            instant: measured.instant,
+            childRows: measured.childRows,
+          },
+        ];
+      }
       const to = resolvePoint(stretch.end);
-      if (from === undefined || to === undefined) return [];
+      if (to === undefined) return [];
       return [
         {
           id: container.id,
@@ -385,6 +527,7 @@ export function buildStoryTimelineLayout(
           start: Math.min(from, to),
           end: Math.max(from, to),
           lane: 0,
+          instant: from === to,
         },
       ];
     });
@@ -396,11 +539,16 @@ export function buildStoryTimelineLayout(
    * Lane packing, the same as the chapter spans below: a band drops to the next lane only when it
    * would sit on top of one already there. Every stretch of one container shares its lane, or a war
    * that pauses would read as two different wars.
+   *
+   * Inline placement draws events as rows, so only anchored chapters (dashed overlays) consume lanes
+   * there. Overlay placement packs every band.
    */
-  eventSpans.sort((a, b) => a.start - b.start || a.end - b.end);
+  const overlaySpans =
+    placement === 'inline' ? eventSpans.filter((span) => !span.isEvent) : eventSpans;
+  overlaySpans.sort((a, b) => a.start - b.start || a.end - b.end);
   const eventLaneEnds: number[] = [];
   const laneOfContainer = new Map<string, number>();
-  for (const span of eventSpans) {
+  for (const span of overlaySpans) {
     const own = laneOfContainer.get(span.id);
     if (own !== undefined) {
       span.lane = own;
@@ -432,22 +580,21 @@ export function buildStoryTimelineLayout(
       ? TIMELINE_PADDING + TIMELINE_LABEL_WIDTH - anchorMinX
       : 0;
   if (anchorShift) {
-    rows.forEach((row) => {
-      row.barStart += anchorShift;
-      row.barEnd += anchorShift;
-      if (row.gapStart !== undefined) row.gapStart += anchorShift;
-      if (row.gapEnd !== undefined) row.gapEnd += anchorShift;
-    });
+    rows.forEach((row) => shiftRow(row, anchorShift));
     eventSpans.forEach((span) => {
       span.start += anchorShift;
       span.end += anchorShift;
+      span.childRows?.forEach((child) => shiftRow(child, anchorShift));
     });
     maxX += anchorShift;
   }
   for (const span of eventSpans) maxX = Math.max(maxX, span.end);
 
+  const laidRows = placement === 'inline' ? insertInlineEventRows(rows, eventSpans) : rows;
+
   const chapters = new Map<string, StoryTimelineChapterSpan>();
-  rows.forEach((row) => {
+  laidRows.forEach((row) => {
+    if (row.kind !== 'scene') return;
     const start = Math.min(
       row.gapStart ?? row.barStart,
       row.gapEnd ?? row.barStart,
@@ -505,19 +652,19 @@ export function buildStoryTimelineLayout(
         )
       : [];
   return {
-    rows,
+    rows: laidRows,
     chapters: chapterSpans,
-    eventSpans,
+    eventSpans: overlaySpans,
     eventLaneCount,
     unanchoredNames,
     rulerTicks,
     width: Math.max(620, Math.ceil(maxX + TIMELINE_PADDING)),
-    // The event bands sit above the scenes, so each lane adds to the header rather than the body.
+    // Overlay bands sit above the scenes; inline events occupy body rows instead.
     height:
       TIMELINE_PADDING * 2 +
       headerHeight +
       eventLaneCount * TIMELINE_EVENT_LANE_HEIGHT +
-      rows.length * TIMELINE_ROW_HEIGHT,
+      laidRows.length * TIMELINE_ROW_HEIGHT,
     scaleMode,
     hasProportionalScaleWarning,
     headerHeight,

@@ -176,6 +176,13 @@
       "when": 1787839919686,
       "tag": "0024_damp_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1787845795608,
+      "tag": "0025_stiff_stature",
+      "breakpoints": true
     }
   ]
 }

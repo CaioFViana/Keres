@@ -12,6 +12,8 @@ interface StoryTimelineSvgOptions {
   subtitle: string;
   labels: { gap: string; duration: string; compressed: string; unanchored?: string };
   storyDuration: { title: string; value: string };
+  /** Write the scene name next to its number, so a pan across a wide bar still names it. */
+  showSceneNames?: boolean;
   colors: {
     background: string;
     surface: string;
@@ -69,16 +71,22 @@ export function renderStoryTimelineSvg(
    */
   layout.eventSpans.forEach((span) => {
     const y = bandsY + span.lane * TIMELINE_EVENT_LANE_HEIGHT;
-    const width = Math.max(4, span.end - span.start);
-    body.push(
-      `<rect x="${span.start}" y="${y + 3}" width="${width}" height="${TIMELINE_EVENT_LANE_HEIGHT - 8}" rx="4" fill="${span.color}" fill-opacity="${span.isEvent ? 0.34 : 0.18}" stroke="${span.color}" stroke-width="1" ${span.isEvent ? '' : 'stroke-dasharray="4 3"'}/>`,
-    );
+    const midY = y + TIMELINE_EVENT_LANE_HEIGHT / 2;
+    if (span.instant) {
+      body.push(diamond(span.start, midY, 6, span.color));
+    } else {
+      const width = Math.max(4, span.end - span.start);
+      body.push(
+        `<rect x="${span.start}" y="${y + 3}" width="${width}" height="${TIMELINE_EVENT_LANE_HEIGHT - 8}" rx="4" fill="${span.color}" fill-opacity="${span.isEvent ? 0.34 : 0.18}" stroke="${span.color}" stroke-width="1" ${span.isEvent ? '' : 'stroke-dasharray="4 3"'}/>`,
+      );
+    }
     // Only the first stretch is named; the rest are the same container resuming.
     if (span.stretchIndex > 0) return;
     const label = truncate(span.name, 28);
-    const fitsInside = width > label.length * 6;
+    const width = Math.max(span.instant ? 0 : 4, span.end - span.start);
+    const fitsInside = !span.instant && width > label.length * 6;
     body.push(
-      `<text x="${fitsInside ? span.start + width / 2 : span.end + 6}" y="${y + TIMELINE_EVENT_LANE_HEIGHT / 2 + 2}" font-size="10" font-weight="bold" text-anchor="${fitsInside ? 'middle' : 'start'}" fill="${span.color}">${escapeXml(label)}</text>`,
+      `<text x="${fitsInside ? span.start + width / 2 : span.end + 6}" y="${midY + 2}" font-size="10" font-weight="bold" text-anchor="${fitsInside ? 'middle' : 'start'}" fill="${span.color}">${escapeXml(label)}</text>`,
     );
   });
   layout.rows.forEach((row, index) => {
@@ -104,17 +112,23 @@ export function renderStoryTimelineSvg(
           `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_WIDTH - 8}" y="${centerY + 4}" font-size="9" text-anchor="end" fill="${row.chapterColor}">${escapeXml(chapterLabel)}</text>`,
         ];
       })(),
-      `<text x="${row.barStart}" y="${y + 13}" font-size="9" text-anchor="middle" fill="${options.colors.textSecondary}">${row.sequence}</text>`,
+      row.sequence > 0
+        ? `<text x="${row.barStart}" y="${y + 13}" font-size="9" text-anchor="${options.showSceneNames ? 'start' : 'middle'}" fill="${options.colors.textSecondary}">${escapeXml(barCaption(row, options.showSceneNames))}</text>`
+        : '',
     );
     if (row.gapStart !== undefined && row.gapEnd !== undefined) {
       body.push(
         `<line x1="${row.gapStart}" y1="${centerY}" x2="${row.gapEnd}" y2="${centerY}" stroke="${row.chapterColor}" stroke-width="1.6" stroke-dasharray="5 4"/>`,
       );
     }
-    body.push(
-      `<rect x="${barX}" y="${centerY - 10}" width="${barWidth}" height="20" rx="5" fill="${row.chapterColor}" fill-opacity="0.82"/>`,
-    );
-    if (row.duration)
+    if (row.instant) {
+      body.push(diamond(row.barStart, centerY, 7, row.chapterColor));
+    } else {
+      body.push(
+        `<rect x="${barX}" y="${centerY - 10}" width="${barWidth}" height="20" rx="5" fill="${row.chapterColor}" fill-opacity="0.82"/>`,
+      );
+    }
+    if (row.duration && !row.instant)
       body.push(
         `<text x="${barX + barWidth / 2}" y="${centerY + 4}" font-size="9" text-anchor="middle" fill="#fff">${escapeXml(row.duration.label)}</text>`,
       );
@@ -134,6 +148,16 @@ export function renderStoryTimelineSvg(
       `<text x="${TIMELINE_PADDING}" y="${layout.height - TIMELINE_PADDING / 2}" font-size="9" fill="${options.colors.textSecondary}">${escapeXml(options.labels.unanchored)}: ${escapeXml(layout.unanchoredNames.join(', '))}</text>`,
     );
   return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" font-family="Helvetica, Arial, sans-serif"><title>${escapeXml(options.title)}</title>${body.join('')}</svg>`;
+}
+
+function barCaption(row: StoryTimelineLayout['rows'][number], withName?: boolean) {
+  if (row.sequence <= 0) return '';
+  if (!withName) return String(row.sequence);
+  return truncate(`${row.sequence}. ${row.name}`, 36);
+}
+
+function diamond(x: number, y: number, size: number, color: string) {
+  return `<polygon points="${x},${y - size} ${x + size},${y} ${x},${y + size} ${x - size},${y}" fill="${color}"/>`;
 }
 
 function truncate(value: string, max: number) {

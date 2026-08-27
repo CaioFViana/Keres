@@ -4,9 +4,10 @@ import { SCENE_POSITIONS } from '../metadata/ScenePosition';
 /**
  * When a container happens, said against the story's own timeline.
  *
- * One row is one **stretch**: from a moment to a moment. A container that pauses and resumes has
- * more than one - "the war runs from scene 3 to scene 9, then again from scene 14 to the end" is two
- * rows, which no interval relation can express at all.
+ * One row is one **stretch**. The start is always a moment on the spine. The end is optional: when
+ * it is present, the stretch is that interval; when it is absent, the container lasts as long as the
+ * scenes it contains. A container that pauses and resumes has more than one closed stretch - an open
+ * stretch cannot share a container with another, because the contents would have no way to split.
  *
  * ## Why scenes
  *
@@ -51,8 +52,8 @@ export const ChapterAnchorSchema = z.object({
   startOffset: z.number().int().nullable(),
   startOffsetUnit: z.string().nullable(),
 
-  endSceneId: z.string(),
-  endPosition: z.enum(SCENE_POSITIONS),
+  endSceneId: z.string().nullable(),
+  endPosition: z.enum(SCENE_POSITIONS).nullable(),
   endOffset: z.number().int().nullable(),
   endOffsetUnit: z.string().nullable(),
 
@@ -74,7 +75,8 @@ export const CreateChapterAnchorDataSchema = ChapterAnchorSchema.omit({
 }).extend({
   order: z.number().int().min(1).default(1),
   startPosition: z.enum(SCENE_POSITIONS).default('start'),
-  endPosition: z.enum(SCENE_POSITIONS).default('end'),
+  endSceneId: z.string().nullable().default(null),
+  endPosition: z.enum(SCENE_POSITIONS).nullable().default(null),
   startOffset: z.number().int().nullable().default(null),
   startOffsetUnit: z.string().nullable().default(null),
   endOffset: z.number().int().nullable().default(null),

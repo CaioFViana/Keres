@@ -86,8 +86,8 @@ export interface AnalysisChapterAnchor {
   order: number;
   startSceneId: string;
   startPosition: string;
-  endSceneId: string;
-  endPosition: string;
+  endSceneId: string | null;
+  endPosition: string | null;
 }
 
 export interface AnalysisChapter {
@@ -546,6 +546,8 @@ function checkAnchorsRunForwards(input: StoryAnalysisInput): StoryAnalysisFindin
 
   const findings: StoryAnalysisFinding[] = [];
   for (const anchor of anchors) {
+    // An open stretch has no end to run backwards of: it is measured from the container's contents.
+    if (!anchor.endSceneId || !anchor.endPosition) continue;
     const from = positionOf.get(anchor.startSceneId);
     const to = positionOf.get(anchor.endSceneId);
     // A scene the analysis was not given is not this check's business to report.

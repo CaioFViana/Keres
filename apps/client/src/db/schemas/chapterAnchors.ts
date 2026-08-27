@@ -4,15 +4,15 @@ import { sql } from 'drizzle-orm';
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
- * One stretch of story time a container occupies, anchored to the scenes that bound it.
+ * One stretch of story time a container occupies, anchored to the spine.
  *
- * The story timeline already measures every scene from its own `duration` and `gap`, so a container
- * pinned to two scenes has an exact position without anybody inventing a coordinate. An offset
- * places what happened outside the reach of those scenes - "three hundred years before the first
- * one" - with a negative offset meaning *before*, the convention `Scene.gap` already uses.
+ * The start is always a moment on a scene. The end is optional: when present, the stretch is that
+ * interval; when absent, the container lasts as long as the scenes it contains. An offset places
+ * what happened outside the reach of those scenes - "three hundred years before the first one" -
+ * with a negative offset meaning *before*, the convention `Scene.gap` already uses.
  *
  * More than one row per container is how something discontinuous is said: a war that pauses and
- * resumes is two stretches, which no single interval could express.
+ * resumes is two *closed* stretches. An open stretch cannot share a container with another.
  */
 export const chapterAnchors = sqliteTable(
   'chapter_anchors',
@@ -27,8 +27,8 @@ export const chapterAnchors = sqliteTable(
     startOffset: integer('start_offset'),
     startOffsetUnit: text('start_offset_unit'),
 
-    endSceneId: text('end_scene_id').notNull(),
-    endPosition: text('end_position').$type<ScenePosition>().notNull().default('end'),
+    endSceneId: text('end_scene_id'),
+    endPosition: text('end_position').$type<ScenePosition>(),
     endOffset: integer('end_offset'),
     endOffsetUnit: text('end_offset_unit'),
 

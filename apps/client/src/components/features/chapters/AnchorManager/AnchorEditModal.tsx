@@ -1,7 +1,9 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import type { ScenePosition } from '@keres/shared';
 import { SCENE_POSITIONS } from '@keres/shared';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -10,12 +12,11 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 
 /**
- * One stretch of story time: from a moment to a moment.
+ * One stretch of story time: from a moment, and optionally to a moment.
  *
- * A moment is deliberately small to state - a scene, a place inside it, and optionally a distance
- * from there. The scene is the part the writer already knows; everything else has a default that
- * reads correctly if left alone. The distance exists for the thing no scene can express: an event
- * that happened long before anything the story shows.
+ * The start is required. The end is a mode: either another moment on the spine, or the container's
+ * own scenes measuring how long it lasts. A distance from the chosen scene is hidden until the
+ * writer asks for it - most stretches sit on the story, not centuries away from it.
  */
 
 export interface AnchorDraft {
@@ -24,7 +25,7 @@ export interface AnchorDraft {
   startOffset: number | null;
   startOffsetUnit: string | null;
   endSceneId: string | null;
-  endPosition: ScenePosition;
+  endPosition: ScenePosition | null;
   endOffset: number | null;
   endOffsetUnit: string | null;
 }
@@ -34,11 +35,15 @@ export interface AnchorSceneOption {
   label: string;
 }
 
+type AnchorMode = 'closed' | 'open';
+
 interface Props {
   visible: boolean;
-  /** Empty when adding; the current values when editing. */
   initial?: AnchorDraft;
   scenes: AnchorSceneOption[];
+  hasContents: boolean;
+  /** An open stretch cannot share a container with another. */
+  allowOpenStretch: boolean;
   onCancel: () => void;
   onConfirm: (draft: AnchorDraft) => void;
 }
@@ -49,30 +54,40 @@ const emptyDraft = (): AnchorDraft => ({
   startOffset: null,
   startOffsetUnit: null,
   endSceneId: null,
-  endPosition: 'end',
+  endPosition: null,
   endOffset: null,
   endOffsetUnit: null,
 });
 
-const AnchorEditModal: React.FC<Props> = ({ visible, initial, scenes, onCancel, onConfirm }) => {
+const AnchorEditModal: React.FC<Props> = ({
+  visible,
+  initial,
+  scenes,
+  hasContents,
+  allowOpenStretch,
+  onCancel,
+  onConfirm,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { isCompact } = useResponsiveLayout();
   const [draft, setDraft] = useState<AnchorDraft>(emptyDraft);
-  /*
-   * The offset is kept as typed text as well as a number.
-   *
-   * Its sign is not something the writer types: they pick "before" or "after", and a half-finished
-   * entry would otherwise round-trip through `Number` into a 0 that reads as "at that moment".
-   */
+  const [mode, setMode] = useState<AnchorMode>('open');
   const [startAmount, setStartAmount] = useState('');
   const [endAmount, setEndAmount] = useState('');
+  const [showStartDistance, setShowStartDistance] = useState(false);
+  const [showEndDistance, setShowEndDistance] = useState(false);
 
   useEffect(() => {
     const next = initial ?? emptyDraft();
     setDraft(next);
     setStartAmount(next.startOffset ? String(Math.abs(next.startOffset)) : '');
     setEndAmount(next.endOffset ? String(Math.abs(next.endOffset)) : '');
-  }, [initial, visible]);
+    const closed = Boolean(next.endSceneId);
+    setMode(closed || !allowOpenStretch ? 'closed' : 'open');
+    setShowStartDistance(Boolean(next.startOffset));
+    setShowEndDistance(Boolean(next.endOffset));
+  }, [allowOpenStretch, initial, visible]);
 
   const unitOptions = useMemo(
     () =>
@@ -85,19 +100,96 @@ const AnchorEditModal: React.FC<Props> = ({ visible, initial, scenes, onCancel, 
     () => scenes.map((scene) => ({ label: scene.label, value: scene.id })),
     [scenes],
   );
+  const sceneName = (id: string | null) =>
+    scenes.find((scene) => scene.id === id)?.label ?? t('common_na');
+
+  const describePoint = (
+    sceneId: string | null,
+    position: ScenePosition | null,
+    offset: number | null,
+    offsetUnit: string | null,
+  ) => {
+    if (!sceneId) return t('anchor_scene_placeholder');
+    const at = t('anchor_point_at', {
+      position: t(`scene_position_${position ?? 'start'}`),
+      scene: sceneName(sceneId),
+    });
+    if (!offset || !offsetUnit) return at;
+    return t('anchor_point_offset', {
+      amount: Math.abs(offset),
+      unit: t(offsetUnit),
+      direction: t(offset < 0 ? 'anchor_direction_before' : 'anchor_direction_after'),
+      at,
+    });
+  };
+
+  const preview = (() => {
+    const from = describePoint(
+      draft.startSceneId,
+      draft.startPosition,
+      draft.startOffset,
+      draft.startOffsetUnit,
+    );
+    if (mode === 'open') {
+      return t(hasContents ? 'anchor_sentence_open' : 'anchor_sentence_instant', { from });
+    }
+    if (!draft.endSceneId) return t('anchor_sentence_need_end', { from });
+    return t('anchor_sentence', {
+      from,
+      to: describePoint(draft.endSceneId, draft.endPosition, draft.endOffset, draft.endOffsetUnit),
+    });
+  })();
 
   const styles = StyleSheet.create({
-    modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 24,
+    },
+    keyboardContent: { paddingBottom: 12 },
+    handle: {
+      alignSelf: 'center',
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginBottom: 14,
+    },
     title: {
       fontSize: 20,
       fontWeight: 'bold',
       color: colors.text,
-      marginBottom: 6,
+      marginBottom: 8,
       textAlign: 'center',
     },
-    subtitle: { fontSize: 13, color: colors.textSecondary, marginBottom: 18, textAlign: 'center' },
-    group: { marginBottom: 18 },
-    label: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 6 },
+    preview: {
+      fontSize: 14,
+      color: colors.text,
+      lineHeight: 20,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    modes: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      overflow: 'hidden',
+      marginBottom: 18,
+    },
+    mode: {
+      flexGrow: 1,
+      flexShrink: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 8,
+      alignItems: 'center',
+    },
+    modeText: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
+    formGroup: { marginBottom: 16 },
+    label: { fontSize: 16, color: colors.text, marginBottom: 6 },
     positions: {
       flexDirection: 'row',
       borderWidth: 1,
@@ -106,34 +198,143 @@ const AnchorEditModal: React.FC<Props> = ({ visible, initial, scenes, onCancel, 
       overflow: 'hidden',
       marginTop: 8,
     },
-    position: { flexGrow: 1, flexShrink: 1, paddingVertical: 8, alignItems: 'center' },
+    position: { flexGrow: 1, flexShrink: 1, paddingVertical: 10, alignItems: 'center' },
     positionText: { fontSize: 13, fontWeight: '700' },
-    offsetRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-    amount: { width: 70, marginBottom: 0 },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 },
+    distanceToggle: { marginTop: 10, paddingVertical: 6 },
+    distanceToggleText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+    distanceBlock: { marginTop: 8, gap: 8 },
+    directionRow: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 },
+    buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16 },
   });
 
-  const renderPoint = (edge: 'start' | 'end') => {
-    const sceneId = edge === 'start' ? draft.startSceneId : draft.endSceneId;
-    const position = edge === 'start' ? draft.startPosition : draft.endPosition;
+  const patch = (changes: Partial<AnchorDraft>) =>
+    setDraft((current) => ({ ...current, ...changes }));
+
+  const signed = (text: string, negative: boolean) => {
+    const magnitude = Number(text);
+    if (!text || Number.isNaN(magnitude) || magnitude === 0) return null;
+    return negative ? -Math.abs(magnitude) : Math.abs(magnitude);
+  };
+
+  const setModeTo = (next: AnchorMode) => {
+    if (next === 'open' && !allowOpenStretch) return;
+    setMode(next);
+    if (next === 'open') {
+      patch({
+        endSceneId: null,
+        endPosition: null,
+        endOffset: null,
+        endOffsetUnit: null,
+      });
+      setEndAmount('');
+      setShowEndDistance(false);
+      return;
+    }
+    if (!draft.endSceneId) {
+      patch({
+        endSceneId: draft.startSceneId,
+        endPosition: 'end',
+      });
+    }
+  };
+
+  const renderDistance = (edge: 'start' | 'end') => {
     const unit = edge === 'start' ? draft.startOffsetUnit : draft.endOffsetUnit;
     const offset = edge === 'start' ? draft.startOffset : draft.endOffset;
     const amount = edge === 'start' ? startAmount : endAmount;
     const setAmount = edge === 'start' ? setStartAmount : setEndAmount;
-    // Nothing stated yet is "after": a fresh offset counts forwards unless the writer says otherwise.
     const before = (offset ?? 0) < 0;
-
-    const patch = (changes: Partial<AnchorDraft>) =>
-      setDraft((current) => ({ ...current, ...changes }));
-    const signed = (text: string, negative: boolean) => {
-      const magnitude = Number(text);
-      if (!text || Number.isNaN(magnitude) || magnitude === 0) return null;
-      return negative ? -Math.abs(magnitude) : Math.abs(magnitude);
-    };
+    const shown = edge === 'start' ? showStartDistance : showEndDistance;
+    const setShown = edge === 'start' ? setShowStartDistance : setShowEndDistance;
 
     return (
-      <View style={styles.group}>
+      <>
+        <TouchableOpacity
+          style={styles.distanceToggle}
+          onPress={() => setShown((value) => !value)}
+          accessibilityRole="button"
+        >
+          <Text style={styles.distanceToggleText}>
+            {shown ? t('anchor_hide_distance') : t('anchor_show_distance')}
+          </Text>
+        </TouchableOpacity>
+        {shown && (
+          <View style={styles.distanceBlock}>
+            <TextInput
+              placeholder={t('anchor_offset_placeholder')}
+              value={amount}
+              onChangeText={(text) => {
+                if (text && !/^\d*$/.test(text)) return;
+                setAmount(text);
+                const value = signed(text, before);
+                patch(
+                  edge === 'start'
+                    ? { startOffset: value, startOffsetUnit: value === null ? null : unit }
+                    : { endOffset: value, endOffsetUnit: value === null ? null : unit },
+                );
+              }}
+              keyboardType="number-pad"
+            />
+            <Select
+              options={unitOptions}
+              value={unit}
+              onValueChange={(value) =>
+                patch(
+                  edge === 'start'
+                    ? { startOffsetUnit: value, startOffset: signed(amount, before) }
+                    : { endOffsetUnit: value, endOffset: signed(amount, before) },
+                )
+              }
+              placeholder={t('anchor_offset_unit_placeholder')}
+              multiple={false}
+            />
+            <View style={styles.directionRow}>
+              {([true, false] as const).map((negative) => {
+                const selected = before === negative;
+                return (
+                  <TouchableOpacity
+                    key={String(negative)}
+                    style={[
+                      styles.position,
+                      selected && { backgroundColor: colors.primaryContainer },
+                    ]}
+                    onPress={() => {
+                      const value = signed(amount, negative);
+                      patch(edge === 'start' ? { startOffset: value } : { endOffset: value });
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.positionText,
+                        { color: selected ? colors.onPrimaryContainer : colors.textSecondary },
+                      ]}
+                    >
+                      {t(negative ? 'anchor_direction_before' : 'anchor_direction_after')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={styles.hint}>{t('anchor_offset_hint')}</Text>
+          </View>
+        )}
+      </>
+    );
+  };
+
+  const renderPoint = (edge: 'start' | 'end') => {
+    const sceneId = edge === 'start' ? draft.startSceneId : draft.endSceneId;
+    const position = edge === 'start' ? draft.startPosition : (draft.endPosition ?? 'end');
+
+    return (
+      <View style={styles.formGroup}>
         <Text style={styles.label}>{t(edge === 'start' ? 'anchor_starts' : 'anchor_ends')}</Text>
         <Select
           options={sceneOptions}
@@ -167,77 +368,86 @@ const AnchorEditModal: React.FC<Props> = ({ visible, initial, scenes, onCancel, 
             );
           })}
         </View>
-        <View style={styles.offsetRow}>
-          <TextInput
-            placeholder={t('anchor_offset_placeholder')}
-            value={amount}
-            onChangeText={(text) => {
-              if (text && !/^\d*$/.test(text)) return;
-              setAmount(text);
-              const value = signed(text, before);
-              patch(
-                edge === 'start'
-                  ? { startOffset: value, startOffsetUnit: value === null ? null : unit }
-                  : { endOffset: value, endOffsetUnit: value === null ? null : unit },
-              );
-            }}
-            keyboardType="number-pad"
-            style={styles.amount}
-          />
-          <View style={{ flexGrow: 1, flexShrink: 1 }}>
-            <Select
-              options={unitOptions}
-              value={unit}
-              onValueChange={(value) =>
-                patch(
-                  edge === 'start'
-                    ? { startOffsetUnit: value, startOffset: signed(amount, before) }
-                    : { endOffsetUnit: value, endOffset: signed(amount, before) },
-                )
-              }
-              placeholder={t('anchor_offset_unit_placeholder')}
-              multiple={false}
-            />
-          </View>
-          <TouchableOpacity
-            onPress={() => {
-              const value = signed(amount, !before);
-              patch(edge === 'start' ? { startOffset: value } : { endOffset: value });
-            }}
-            style={[
-              styles.position,
-              { flexGrow: 0, paddingHorizontal: 12, backgroundColor: colors.primaryContainer },
-            ]}
-          >
-            <Text style={[styles.positionText, { color: colors.onPrimaryContainer }]}>
-              {t(before ? 'anchor_direction_before' : 'anchor_direction_after')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {renderDistance(edge)}
       </View>
     );
   };
 
-  const complete = Boolean(draft.startSceneId && draft.endSceneId);
+  const complete = Boolean(draft.startSceneId) && (mode === 'open' || Boolean(draft.endSceneId));
 
   return (
     <ResponsiveModal
       visible={visible}
       onClose={onCancel}
-      contentStyle={styles.modalContent}
+      placement="adaptive"
+      contentStyle={styles.sheet}
       maxHeight="86%"
+      keyboardAvoiding={false}
     >
-      <Text style={styles.title}>{t('anchor_modal_title')}</Text>
-      <Text style={styles.subtitle}>{t('anchor_modal_subtitle')}</Text>
-      {renderPoint('start')}
-      {renderPoint('end')}
-      <Text style={styles.hint}>{t('anchor_offset_hint')}</Text>
-      <View style={styles.buttons}>
-        <Button onPress={onCancel}>{t('cancel')}</Button>
-        <Button onPress={() => onConfirm(draft)} disabled={!complete} testID="confirm-anchor">
-          {t('save')}
-        </Button>
-      </View>
+      <KeyboardAwareScreen
+        contentContainerStyle={styles.keyboardContent}
+        keyboardVerticalOffset={0}
+      >
+        {isCompact && <View style={styles.handle} />}
+        <Text style={styles.title}>{t('anchor_modal_title')}</Text>
+        <Text style={styles.preview}>{preview}</Text>
+        <View style={styles.modes}>
+          {(['open', 'closed'] as const).map((option) => {
+            const selected = mode === option;
+            const disabled = option === 'open' && !allowOpenStretch;
+            return (
+              <TouchableOpacity
+                key={option}
+                disabled={disabled}
+                onPress={() => setModeTo(option)}
+                style={[
+                  styles.mode,
+                  selected && { backgroundColor: colors.primaryContainer },
+                  disabled && { opacity: 0.45 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.modeText,
+                    { color: selected ? colors.onPrimaryContainer : colors.textSecondary },
+                  ]}
+                >
+                  {t(option === 'open' ? 'anchor_mode_open' : 'anchor_mode_closed')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {mode === 'open' && (
+          <Text style={[styles.hint, { marginBottom: 12 }]}>
+            {hasContents ? t('anchor_mode_open_hint') : t('anchor_mode_open_empty_hint')}
+          </Text>
+        )}
+        {renderPoint('start')}
+        {mode === 'closed' && renderPoint('end')}
+        <View style={styles.buttons}>
+          <Button onPress={onCancel}>{t('cancel')}</Button>
+          <Button
+            onPress={() =>
+              onConfirm(
+                mode === 'open'
+                  ? {
+                      ...draft,
+                      endSceneId: null,
+                      endPosition: null,
+                      endOffset: null,
+                      endOffsetUnit: null,
+                    }
+                  : draft,
+              )
+            }
+            disabled={!complete}
+            testID="confirm-anchor"
+          >
+            {t('save')}
+          </Button>
+        </View>
+      </KeyboardAwareScreen>
     </ResponsiveModal>
   );
 };

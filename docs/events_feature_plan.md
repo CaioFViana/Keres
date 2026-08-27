@@ -157,8 +157,10 @@ place inside that scene, and optionally a distance from it.
 | --- | --- |
 | "from the start of scene 3 to the end of scene 7" | one anchor, no offsets |
 | "it happens during the middle of chapter 4's second scene" | one anchor, both points that scene |
-| "the war pauses and resumes" | two anchors, `order` 1 and 2 |
+| "the war pauses and resumes" | two *closed* anchors, `order` 1 and 2 |
 | "300 years before the first scene" | one anchor, `startOffset: -300`, `startOffsetUnit: 'years'` |
+| "it starts here and lasts as long as its scenes" | one anchor, no `endSceneId` |
+| "it is a single moment" | one open anchor and no scenes (or a scene whose duration is 0) |
 
 The last row is the *ghost anchor*: the case no scene can express, because it is outside everything
 the story shows. A negative offset means before, which follows the convention `Scene.gap` already
@@ -181,8 +183,8 @@ export const chapterAnchors = sqliteTable('chapter_anchors', {
   startPosition: text('start_position').notNull().default('start'),
   startOffset: integer('start_offset'),
   startOffsetUnit: text('start_offset_unit'),
-  endSceneId: text('end_scene_id').notNull(),
-  endPosition: text('end_position').notNull().default('end'),
+  endSceneId: text('end_scene_id'), // optional: measured from the container's own scenes
+  endPosition: text('end_position'),
   endOffset: integer('end_offset'),
   endOffsetUnit: text('end_offset_unit'),
   // ...the usual sync columns

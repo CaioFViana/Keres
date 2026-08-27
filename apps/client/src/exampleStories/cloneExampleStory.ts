@@ -155,7 +155,7 @@ export function cloneExampleStoryForInstall(
       storyId,
       chapterId: remapId(anchor.chapterId),
       startSceneId: remapId(anchor.startSceneId),
-      endSceneId: remapId(anchor.endSceneId),
+      endSceneId: remapNullableId(anchor.endSceneId),
     })),
     characterRelations: example.characterRelations.map((relation) => ({
       ...cloneEntity(relation),

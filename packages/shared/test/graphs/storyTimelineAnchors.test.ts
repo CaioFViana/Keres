@@ -162,4 +162,103 @@ describe('anchored containers on the story timeline', () => {
     expect(layout.eventLaneCount).toBe(0);
     expect(layout.unanchoredNames).toEqual([]);
   });
+
+  describe('open stretches', () => {
+    it("lasts as long as the container's own scenes, on the same scale as the spine", () => {
+      const layout = buildStoryTimelineLayout(threeScenes, 'compact', [
+        {
+          ...container('war', [{ start: point('a', 'start') }]),
+          scenes: [
+            { id: 'battle-1', name: 'Battle 1', index: 1, duration: 1, durationType: 'hours' },
+            { id: 'battle-2', name: 'Battle 2', index: 2, duration: 1, durationType: 'hours' },
+          ],
+        },
+      ]);
+
+      const [span] = layout.eventSpans;
+      const hour = layout.rows[0].barEnd - layout.rows[0].barStart;
+      expect(span.start).toBeCloseTo(layout.rows[0].barStart, 5);
+      expect(span.end - span.start).toBeCloseTo(hour * 2, 5);
+      expect(span.instant).toBeFalsy();
+    });
+
+    it('is an instant when the container has no scenes', () => {
+      const layout = buildStoryTimelineLayout(threeScenes, 'compact', [
+        container('flash', [{ start: point('b', 'middle') }]),
+      ]);
+
+      const [span] = layout.eventSpans;
+      expect(span.start).toBe(span.end);
+      expect(span.instant).toBe(true);
+    });
+  });
+
+  describe('instants on the spine', () => {
+    it('draws a zero-duration scene as a marker, not as a minimum-width bar', () => {
+      const layout = buildStoryTimelineLayout(
+        [
+          scene('beat', 0, { duration: 0, durationType: 'seconds' }),
+          scene('after', 1, { duration: 1, durationType: 'hours' }),
+        ],
+        'compact',
+      );
+
+      expect(layout.rows[0].instant).toBe(true);
+      expect(layout.rows[0].barEnd).toBe(layout.rows[0].barStart);
+      expect(layout.rows[1].instant).toBeFalsy();
+      expect(layout.rows[1].barEnd).toBeGreaterThan(layout.rows[1].barStart);
+    });
+  });
+
+  describe('inline placement', () => {
+    it('inserts an event as rows among the spine instead of overlay bands', () => {
+      const overlay = buildStoryTimelineLayout(threeScenes, 'compact', [
+        container('between', [{ start: point('b', 'end'), end: point('c', 'start') }]),
+      ]);
+      const inline = buildStoryTimelineLayout(
+        threeScenes,
+        'compact',
+        [container('between', [{ start: point('b', 'end'), end: point('c', 'start') }])],
+        'inline',
+      );
+
+      expect(overlay.eventLaneCount).toBe(1);
+      expect(inline.eventLaneCount).toBe(0);
+      expect(inline.eventSpans).toEqual([]);
+      expect(inline.rows.some((row) => row.kind === 'event' && row.id === 'between')).toBe(true);
+      expect(inline.rows.filter((row) => row.kind === 'scene')).toHaveLength(3);
+    });
+
+    it('expands a measured event into its own scene rows, without duplicating an anchored chapter', () => {
+      const inline = buildStoryTimelineLayout(
+        threeScenes,
+        'compact',
+        [
+          {
+            ...container('war', [{ start: point('a', 'start') }]),
+            scenes: [
+              { id: 'battle-1', name: 'Battle 1', index: 1, duration: 1, durationType: 'hours' },
+            ],
+          },
+          {
+            ...container('flashback', [{ start: point('a', 'start') }], false),
+            scenes: threeScenes.map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              index: entry.index,
+              duration: 1,
+              durationType: 'hours',
+            })),
+          },
+        ],
+        'inline',
+      );
+
+      expect(inline.rows.filter((row) => row.kind === 'event-scene').map((row) => row.id)).toEqual([
+        'battle-1',
+      ]);
+      expect(inline.rows.filter((row) => row.kind === 'scene')).toHaveLength(3);
+      expect(inline.eventSpans.some((span) => span.id === 'flashback')).toBe(true);
+    });
+  });
 });

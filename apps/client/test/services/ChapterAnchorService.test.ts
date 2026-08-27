@@ -118,6 +118,38 @@ describe('creating an anchor', () => {
     expect(payloadOf(operation)).toMatchObject({ chapterId: EVENT, startSceneId: 'scene-a' });
   });
 
+  it('stores an open stretch with no end, so the container can last as long as its scenes', async () => {
+    const created = await service().createAnchor(
+      TEST_USER_ID,
+      anchorValues({ endSceneId: null, endPosition: null }),
+    );
+
+    expect(created.endSceneId).toBeNull();
+    expect(created.endPosition).toBeNull();
+  });
+
+  it('refuses a second stretch while one is still open', async () => {
+    await service().createAnchor(
+      TEST_USER_ID,
+      anchorValues({ endSceneId: null, endPosition: null }),
+    );
+
+    await expect(service().createAnchor(TEST_USER_ID, anchorValues({ order: 2 }))).rejects.toThrow(
+      'open stretch',
+    );
+  });
+
+  it('refuses to open a stretch on a container that already has another', async () => {
+    await service().createAnchor(TEST_USER_ID, anchorValues({ order: 1 }));
+
+    await expect(
+      service().createAnchor(
+        TEST_USER_ID,
+        anchorValues({ order: 2, endSceneId: null, endPosition: null }),
+      ),
+    ).rejects.toThrow('only stretch');
+  });
+
   it("keeps a ghost anchor's negative offset, which is what makes it before", async () => {
     const created = await service().createAnchor(
       TEST_USER_ID,

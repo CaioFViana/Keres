@@ -8,10 +8,9 @@ import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandle
 /**
  * Where a container sits on the story's timeline.
  *
- * Every anchor names three rows that must exist: the container being placed and the two scenes it is
- * measured from. A stretch pointing at a deleted scene has no position at all, so it is refused
- * rather than stored - the drawing would otherwise have to guess, and guessing is what this model
- * replaced.
+ * Every anchor names the container being placed and the start scene it is measured from. The end
+ * scene is optional: an open stretch lasts as long as the container's own scenes. A stretch pointing
+ * at a deleted scene has no position at all, so it is refused rather than stored.
  */
 export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
   typeof CreateChapterAnchorDataSchema,
@@ -66,7 +65,7 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
 
     await this.assertExists(storyId, 'Container', data.chapterId, 'chapter');
     await this.assertExists(storyId, 'Start scene', data.startSceneId, 'scene');
-    await this.assertExists(storyId, 'End scene', data.endSceneId, 'scene');
+    await this.assertExists(storyId, 'End scene', data.endSceneId ?? undefined, 'scene');
 
     await db.insert(chapterAnchors).values({
       id: update.id!,
@@ -90,7 +89,7 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
 
     await this.assertExists(storyId, 'Container', changes.chapterId, 'chapter');
     await this.assertExists(storyId, 'Start scene', changes.startSceneId, 'scene');
-    await this.assertExists(storyId, 'End scene', changes.endSceneId, 'scene');
+    await this.assertExists(storyId, 'End scene', changes.endSceneId ?? undefined, 'scene');
 
     await super.update(userId, storyId, update, currentEntity);
   }

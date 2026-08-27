@@ -20,7 +20,7 @@ export interface ChapterAnchorInput {
   startOffset: number | null;
   startOffsetUnit: string | null;
   endSceneId: string | null;
-  endPosition: 'start' | 'middle' | 'end';
+  endPosition: 'start' | 'middle' | 'end' | null;
   endOffset: number | null;
   endOffsetUnit: string | null;
 }
@@ -40,6 +40,7 @@ export function useChapterAnchors(
   const db = useDrizzle();
   const [anchors, setAnchors] = useState<ChapterAnchorRow[]>([]);
   const [scenes, setScenes] = useState<AnchorSceneChoice[]>([]);
+  const [hasContents, setHasContents] = useState(false);
 
   const reload = useCallback(async () => {
     const [loadedAnchors, loadedScenes, containers] = await Promise.all([
@@ -48,6 +49,7 @@ export function useChapterAnchors(
       createChapterService(db).getAllByStoryId(storyId, 'chapter'),
     ]);
     setAnchors(loadedAnchors);
+    setHasContents(loadedScenes.some((scene) => !scene.isDeleted && scene.chapterId === chapterId));
 
     const byId = new Map(containers.filter((one) => !one.isDeleted).map((one) => [one.id, one]));
     setScenes(
@@ -71,7 +73,7 @@ export function useChapterAnchors(
 
   const save = useCallback(
     async (input: ChapterAnchorInput, anchorId: string | null) => {
-      if (!currentUserId || !input.startSceneId || !input.endSceneId) return;
+      if (!currentUserId || !input.startSceneId) return;
       const service = createChapterAnchorService(db);
       const values = {
         startSceneId: input.startSceneId,
@@ -110,5 +112,5 @@ export function useChapterAnchors(
     [scenes],
   );
 
-  return { anchors, scenes, sceneNames, save, remove, reload };
+  return { anchors, scenes, sceneNames, hasContents, save, remove, reload };
 }

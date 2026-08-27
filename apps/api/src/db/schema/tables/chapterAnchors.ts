@@ -5,14 +5,15 @@ import { scenes } from './scenes';
 import { stories } from './stories';
 
 /**
- * One stretch of story time a container occupies, anchored to the scenes that bound it.
+ * One stretch of story time a container occupies, anchored to the spine.
  *
- * The story timeline already measures every scene, so a container pinned to two of them has an exact
- * position without anybody inventing a coordinate. A negative offset means *before* the anchor,
- * which is how something outside the reach of the story's scenes is placed - "three hundred years
- * before the first one" - and follows the convention `Scene.gap` already uses.
+ * The start is always a moment on a scene. The end is optional: when present, the stretch is that
+ * interval; when absent, the container lasts as long as the scenes it contains. A negative offset
+ * means *before* the anchor, which is how something outside the reach of the story's scenes is
+ * placed - "three hundred years before the first one" - and follows the convention `Scene.gap`
+ * already uses.
  *
- * More than one row per container says it pauses and resumes.
+ * More than one row per container says it pauses and resumes, and those stretches must be closed.
  */
 export const chapterAnchors = table(
   'chapter_anchors',
@@ -33,10 +34,8 @@ export const chapterAnchors = table(
     startOffset: integer('start_offset'),
     startOffsetUnit: text('start_offset_unit'),
 
-    endSceneId: text('end_scene_id')
-      .notNull()
-      .references(() => scenes.id),
-    endPosition: text('end_position').$type<ScenePosition>().notNull().default('end'),
+    endSceneId: text('end_scene_id').references(() => scenes.id),
+    endPosition: text('end_position').$type<ScenePosition>(),
     endOffset: integer('end_offset'),
     endOffsetUnit: text('end_offset_unit'),
 

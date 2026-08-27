@@ -6,9 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useDrizzle } from '@/src/db';
-import type { ChapterAnchorSelect } from '@/src/db/schema';
+import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
@@ -23,6 +22,7 @@ import {
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
 import type {
+  StoryTimelineEventPlacement,
   StoryTimelineScaleMode,
   TimelineAnchoredContainer,
 } from '@keres/shared/graphs/storyTimelineLayout';
@@ -55,7 +55,10 @@ const StoryTimelineScreen = () => {
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [chapterIds, setChapterIds] = useState<string[]>([]);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [scaleMode, setScaleMode] = useState<StoryTimelineScaleMode>('compact');
+  const [eventPlacement, setEventPlacement] = useState<StoryTimelineEventPlacement>('overlay');
+  const [showSceneNames, setShowSceneNames] = useState(false);
   const [events, setEvents] = useState<ChapterSelect[]>([]);
   const [anchors, setAnchors] = useState<ChapterAnchorSelect[]>([]);
   const [showEvents, setShowEvents] = useState(true);
@@ -183,15 +186,33 @@ const StoryTimelineScreen = () => {
             offset: anchor.startOffset,
             offsetUnit: anchor.startOffsetUnit,
           },
-          end: {
-            sceneId: anchor.endSceneId,
-            position: anchor.endPosition,
-            offset: anchor.endOffset,
-            offsetUnit: anchor.endOffsetUnit,
-          },
+          end:
+            anchor.endSceneId && anchor.endPosition
+              ? {
+                  sceneId: anchor.endSceneId,
+                  position: anchor.endPosition,
+                  offset: anchor.endOffset,
+                  offsetUnit: anchor.endOffsetUnit,
+                }
+              : null,
         }));
       if (stretches.length === 0) return [];
       const isEvent = container.type === 'event';
+      const contained = scenes
+        .filter((scene) => scene.chapterId === container.id)
+        .sort((a, b) => a.index - b.index)
+        .map((scene) => ({
+          id: scene.id,
+          name: scene.name,
+          index: scene.index,
+          summary: scene.summary,
+          gap: scene.gap,
+          gapType: scene.gapType,
+          gapLabel: formatSceneGap(scene, t),
+          duration: scene.duration,
+          durationType: scene.durationType,
+          durationLabel: formatSceneUniverseDuration(scene, t),
+        }));
       return [
         {
           id: container.id,
@@ -200,20 +221,51 @@ const StoryTimelineScreen = () => {
             (isEvent ? eventColors : colorsByChapter).get(container.id) ?? colors.textSecondary,
           isEvent,
           stretches,
+          scenes: contained,
         },
       ];
     });
-  }, [anchors, chapters, colors.textSecondary, events, showEvents]);
+  }, [anchors, chapters, colors.textSecondary, events, scenes, showEvents, t]);
   const layout = useMemo(
-    () => buildStoryTimelineLayout(timelineScenes, scaleMode, anchoredContainers),
-    [anchoredContainers, scaleMode, timelineScenes],
+    () => buildStoryTimelineLayout(timelineScenes, scaleMode, anchoredContainers, eventPlacement),
+    [anchoredContainers, eventPlacement, scaleMode, timelineScenes],
   );
   useEffect(() => {
     canvas.current?.fitToScreen();
-  }, [scaleMode]);
+  }, [eventPlacement, scaleMode]);
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? null;
   const selectedChapter =
-    chapters.find((chapter) => chapter.id === selectedScene?.chapterId) ?? null;
+    chapters.find((chapter) => chapter.id === selectedScene?.chapterId) ??
+    events.find((event) => event.id === selectedScene?.chapterId) ??
+    null;
+  const selectedEvent = events.find((event) => event.id === selectedEventId) ?? null;
+  const selectedEventAnchors = anchors
+    .filter((anchor) => anchor.chapterId === selectedEventId)
+    .sort((a, b) => a.order - b.order);
+  const selectedEventScenes = scenes
+    .filter((scene) => scene.chapterId === selectedEventId)
+    .sort((a, b) => a.index - b.index);
+  const sceneLabel = (sceneId: string) =>
+    scenes.find((scene) => scene.id === sceneId)?.name ?? t('common_na');
+  const describeAnchorPoint = (
+    sceneId: string | null,
+    position: string | null,
+    offset: number | null,
+    offsetUnit: string | null,
+  ) => {
+    if (!sceneId) return t('common_na');
+    const at = t('anchor_point_at', {
+      position: t(`scene_position_${position ?? 'start'}`),
+      scene: sceneLabel(sceneId),
+    });
+    if (!offset || !offsetUnit) return at;
+    return t('anchor_point_offset', {
+      amount: Math.abs(offset),
+      unit: t(offsetUnit),
+      direction: t(offset < 0 ? 'anchor_direction_before' : 'anchor_direction_after'),
+      at,
+    });
+  };
 
   const exportTimeline = useCallback(async () => {
     if (!story || !layout.rows.length) return;
@@ -231,6 +283,7 @@ const StoryTimelineScreen = () => {
               : t('story_timeline_proportional_legend'),
           unanchored: t('story_timeline_unanchored'),
         },
+        showSceneNames,
         storyDuration: { title: t('story_timeline_story_duration'), value: storyDurationLabel },
         colors: {
           background: colors.background,
@@ -253,7 +306,7 @@ const StoryTimelineScreen = () => {
     } finally {
       setSaving(false);
     }
-  }, [colors, layout, notify, scaleMode, story, storyDurationLabel, t]);
+  }, [colors, layout, notify, scaleMode, showSceneNames, story, storyDurationLabel, t]);
 
   const styles = useMemo(
     () =>
@@ -397,6 +450,51 @@ const StoryTimelineScreen = () => {
             {t('story_timeline_show_events')}
           </Text>
         </TouchableOpacity>
+        {showEvents && (
+          <TouchableOpacity
+            onPress={() =>
+              setEventPlacement((current) => (current === 'overlay' ? 'inline' : 'overlay'))
+            }
+            style={[
+              styles.scaleModeButton,
+              { borderLeftWidth: 1, borderLeftColor: colors.border },
+              eventPlacement === 'inline' && { backgroundColor: colors.primaryContainer },
+            ]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: eventPlacement === 'inline' }}
+          >
+            <Text
+              style={[
+                styles.scaleModeText,
+                {
+                  color:
+                    eventPlacement === 'inline' ? colors.onPrimaryContainer : colors.textSecondary,
+                },
+              ]}
+            >
+              {t('story_timeline_events_inline')}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={() => setShowSceneNames((shown) => !shown)}
+          style={[
+            styles.scaleModeButton,
+            { borderLeftWidth: 1, borderLeftColor: colors.border },
+            showSceneNames && { backgroundColor: colors.primaryContainer },
+          ]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showSceneNames }}
+        >
+          <Text
+            style={[
+              styles.scaleModeText,
+              { color: showSceneNames ? colors.onPrimaryContainer : colors.textSecondary },
+            ]}
+          >
+            {t('story_timeline_show_names')}
+          </Text>
+        </TouchableOpacity>
       </View>
       {showEvents && layout.unanchoredNames.length > 0 && (
         <Text style={[styles.warning, { color: colors.textSecondary }]}>
@@ -410,7 +508,15 @@ const StoryTimelineScreen = () => {
         <StoryTimelineCanvas
           ref={canvas}
           layout={layout}
-          onPressScene={setSelectedSceneId}
+          onPressScene={(id) => {
+            setSelectedEventId(null);
+            setSelectedSceneId(id);
+          }}
+          onPressEvent={(id) => {
+            setSelectedSceneId(null);
+            setSelectedEventId(id);
+          }}
+          showSceneNames={showSceneNames}
           storyDurationTitle={t('story_timeline_story_duration')}
           storyDurationLabel={storyDurationLabel}
         />
@@ -455,6 +561,72 @@ const StoryTimelineScreen = () => {
           actionLabel={t('close')}
           onAction={() => setSelectedSceneId(null)}
           onClose={() => setSelectedSceneId(null)}
+        />
+      )}
+      {selectedEvent && (
+        <GraphNodeSheet
+          title={selectedEvent.name}
+          subtitle={{ text: t('story_timeline_event') }}
+          sections={[
+            {
+              title: t('anchor_section_title'),
+              description:
+                selectedEventAnchors
+                  .map((anchor) =>
+                    anchor.endSceneId
+                      ? t('anchor_sentence', {
+                          from: describeAnchorPoint(
+                            anchor.startSceneId,
+                            anchor.startPosition,
+                            anchor.startOffset,
+                            anchor.startOffsetUnit,
+                          ),
+                          to: describeAnchorPoint(
+                            anchor.endSceneId,
+                            anchor.endPosition,
+                            anchor.endOffset,
+                            anchor.endOffsetUnit,
+                          ),
+                        })
+                      : t(
+                          selectedEventScenes.length > 0
+                            ? 'anchor_sentence_open'
+                            : 'anchor_sentence_instant',
+                          {
+                            from: describeAnchorPoint(
+                              anchor.startSceneId,
+                              anchor.startPosition,
+                              anchor.startOffset,
+                              anchor.startOffsetUnit,
+                            ),
+                          },
+                        ),
+                  )
+                  .join('\n') || t('anchor_empty'),
+            },
+            {
+              title: t('scenes_title'),
+              emptyMessage: t('story_timeline_event_no_scenes'),
+              items: selectedEventScenes.map((scene) => ({
+                id: scene.id,
+                icon: 'film-outline' as const,
+                label: scene.name,
+                detail: formatSceneUniverseDuration(scene, t),
+                onPress: () => {
+                  setSelectedEventId(null);
+                  setSelectedSceneId(scene.id);
+                },
+              })),
+            },
+            { title: t('summary'), description: selectedEvent.summary || t('common_na') },
+          ]}
+          actionLabel={t('story_timeline_open_event')}
+          onAction={() => {
+            const eventId = selectedEvent.id;
+            setSelectedEventId(null);
+            navigation.navigate('ChapterDetail', { chapterId: eventId });
+          }}
+          onClose={() => setSelectedEventId(null)}
         />
       )}
     </View>

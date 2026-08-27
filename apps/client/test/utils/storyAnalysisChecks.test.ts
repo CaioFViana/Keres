@@ -774,4 +774,12 @@ describe('anchors that run backwards', () => {
 
     expect(found).not.toContain('analysis_anchor_backwards');
   });
+
+  it('stays quiet about an open stretch, which has no end to run backwards of', async () => {
+    const found = await keys(
+      anchoredInput([anchor({ endSceneId: null, endPosition: null })]),
+    );
+
+    expect(found).not.toContain('analysis_anchor_backwards');
+  });
 });

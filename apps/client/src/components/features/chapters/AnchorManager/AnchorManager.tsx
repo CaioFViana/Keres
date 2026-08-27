@@ -39,6 +39,7 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
     anchors,
     scenes,
     sceneNames,
+    hasContents,
     save: persist,
     remove: erase,
   } = useChapterAnchors(storyId, chapterId, currentUserId);
@@ -132,20 +133,29 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
               <Text style={styles.order}>{t('anchor_stretch', { order: anchor.order })}</Text>
             )}
             <Text style={styles.sentence}>
-              {t('anchor_sentence', {
-                from: describePoint(
-                  anchor.startSceneId,
-                  anchor.startPosition,
-                  anchor.startOffset,
-                  anchor.startOffsetUnit,
-                ),
-                to: describePoint(
-                  anchor.endSceneId,
-                  anchor.endPosition,
-                  anchor.endOffset,
-                  anchor.endOffsetUnit,
-                ),
-              })}
+              {anchor.endSceneId
+                ? t('anchor_sentence', {
+                    from: describePoint(
+                      anchor.startSceneId,
+                      anchor.startPosition,
+                      anchor.startOffset,
+                      anchor.startOffsetUnit,
+                    ),
+                    to: describePoint(
+                      anchor.endSceneId,
+                      anchor.endPosition ?? 'end',
+                      anchor.endOffset,
+                      anchor.endOffsetUnit,
+                    ),
+                  })
+                : t(hasContents ? 'anchor_sentence_open' : 'anchor_sentence_instant', {
+                    from: describePoint(
+                      anchor.startSceneId,
+                      anchor.startPosition,
+                      anchor.startOffset,
+                      anchor.startOffsetUnit,
+                    ),
+                  })}
             </Text>
           </View>
           {editable && (
@@ -177,7 +187,7 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
           )}
         </View>
       ))}
-      {editable && (
+      {editable && !anchors.some((anchor) => !anchor.endSceneId) && (
         <TouchableOpacity style={styles.add} onPress={() => setEditing({ id: null })}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={styles.addText}>{t('anchor_add')}</Text>
@@ -187,6 +197,8 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
         visible={editing !== null}
         initial={editing?.draft}
         scenes={scenes}
+        hasContents={hasContents}
+        allowOpenStretch={anchors.filter((anchor) => anchor.id !== editing?.id).length === 0}
         onCancel={() => setEditing(null)}
         onConfirm={save}
       />

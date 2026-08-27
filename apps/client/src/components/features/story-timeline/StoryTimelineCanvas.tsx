@@ -17,6 +17,8 @@ import {
 interface Props {
   layout: StoryTimelineLayout;
   onPressScene: (id: string) => void;
+  onPressEvent?: (id: string) => void;
+  showSceneNames?: boolean;
   storyDurationLabel: string;
   storyDurationTitle: string;
 }
@@ -26,7 +28,10 @@ export type StoryTimelineCanvasHandle = PanZoomCanvasHandle;
 const CAPTION_LIFT = 9;
 
 const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
-  ({ layout, onPressScene, storyDurationLabel, storyDurationTitle }, ref) => {
+  (
+    { layout, onPressScene, onPressEvent, showSceneNames, storyDurationLabel, storyDurationTitle },
+    ref,
+  ) => {
     const { colors } = useTheme();
     // Anchored containers get their own strip between the header and the scenes, so the scene rows
     // start below it. The header chrome stays where it was, measured from the top of that strip.
@@ -37,11 +42,29 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     // here rather than covered with touch targets, which would eat the pinch (see `onTap`).
     const handleTap = useCallback(
       (point: { x: number; y: number }) => {
+        if (onPressEvent && point.y < startY) {
+          const hit = [...layout.eventSpans].reverse().find((span) => {
+            const top = headerBaseY + span.lane * TIMELINE_EVENT_LANE_HEIGHT;
+            const pad = span.instant ? 10 : 0;
+            return (
+              point.y >= top &&
+              point.y <= top + TIMELINE_EVENT_LANE_HEIGHT &&
+              point.x >= span.start - pad &&
+              point.x <= span.end + pad
+            );
+          });
+          if (hit) {
+            onPressEvent(hit.id);
+            return;
+          }
+        }
         const index = Math.floor((point.y - startY) / TIMELINE_ROW_HEIGHT);
         const row = index >= 0 ? layout.rows[index] : undefined;
-        if (row) onPressScene(row.id);
+        if (!row) return;
+        if (row.kind === 'event') onPressEvent?.(row.chapterId);
+        else onPressScene(row.id);
       },
-      [layout.rows, onPressScene, startY],
+      [headerBaseY, layout.eventSpans, layout.rows, onPressEvent, onPressScene, startY],
     );
     const panZoom = usePanZoomCanvas(ref, layout, {
       minScale: 0.08,
@@ -65,6 +88,12 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
           band: { position: 'absolute', borderWidth: 0.5 },
           eventBand: { position: 'absolute', borderRadius: 4, borderWidth: 1 },
           eventLabel: { position: 'absolute', fontSize: 10, fontWeight: '700' },
+          diamond: {
+            position: 'absolute',
+            width: 12,
+            height: 12,
+            transform: [{ rotate: '45deg' }],
+          },
           caption: { position: 'absolute', fontSize: 10 },
           bar: {
             position: 'absolute',
@@ -88,26 +117,39 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
         */}
         {layout.eventSpans.map((span) => {
           const top = headerBaseY + span.lane * TIMELINE_EVENT_LANE_HEIGHT;
-          const width = Math.max(4, span.end - span.start);
+          const width = Math.max(span.instant ? 0 : 4, span.end - span.start);
           const label = span.name.length <= 28 ? span.name : `${span.name.slice(0, 27)}…`;
-          const fitsInside = width > label.length * 6;
+          const fitsInside = !span.instant && width > label.length * 6;
           return (
             <React.Fragment key={`span-${span.id}-${span.stretchIndex}`}>
-              <View
-                style={[
-                  styles.eventBand,
-                  {
-                    left: span.start,
-                    top: top + 3,
-                    width,
-                    height: TIMELINE_EVENT_LANE_HEIGHT - 8,
-                    backgroundColor: span.color,
-                    opacity: span.isEvent ? 0.34 : 0.18,
-                    borderColor: span.color,
-                    borderStyle: span.isEvent ? 'solid' : 'dashed',
-                  },
-                ]}
-              />
+              {span.instant ? (
+                <View
+                  style={[
+                    styles.diamond,
+                    {
+                      left: span.start - 6,
+                      top: top + TIMELINE_EVENT_LANE_HEIGHT / 2 - 6,
+                      backgroundColor: span.color,
+                    },
+                  ]}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.eventBand,
+                    {
+                      left: span.start,
+                      top: top + 3,
+                      width,
+                      height: TIMELINE_EVENT_LANE_HEIGHT - 8,
+                      backgroundColor: span.color,
+                      opacity: span.isEvent ? 0.34 : 0.18,
+                      borderColor: span.color,
+                      borderStyle: span.isEvent ? 'solid' : 'dashed',
+                    },
+                  ]}
+                />
+              )}
               {span.stretchIndex === 0 && (
                 <Text
                   numberOfLines={1}
@@ -257,20 +299,24 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                   {row.chapterName}
                 </Text>
               </View>
-              <Text
-                style={[
-                  styles.sequence,
-                  {
-                    left: row.barStart - 12,
-                    top: y + 3,
-                    width: 24,
-                    color: colors.textSecondary,
-                    pointerEvents: 'none',
-                  },
-                ]}
-              >
-                {row.sequence}
-              </Text>
+              {row.sequence > 0 && (
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.sequence,
+                    {
+                      left: showSceneNames ? row.barStart + 2 : row.barStart - 12,
+                      top: y + 3,
+                      width: showSceneNames ? 220 : 24,
+                      textAlign: showSceneNames ? 'left' : 'center',
+                      color: colors.textSecondary,
+                      pointerEvents: 'none',
+                    },
+                  ]}
+                >
+                  {showSceneNames ? `${row.sequence}. ${row.name}` : row.sequence}
+                </Text>
+              )}
               {row.gap && row.gapStart !== undefined && row.gapEnd !== undefined && (
                 <Text
                   numberOfLines={1}
@@ -288,24 +334,38 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                   {row.gap.label}
                 </Text>
               )}
-              <View
-                pointerEvents="none"
-                style={[
-                  styles.bar,
-                  {
-                    left: barLeft,
-                    top: centerY - 11,
-                    width: barWidth,
-                    backgroundColor: row.chapterColor,
-                  },
-                ]}
-              >
-                {row.duration && (
-                  <Text numberOfLines={1} style={styles.barText}>
-                    {row.duration.label}
-                  </Text>
-                )}
-              </View>
+              {row.instant ? (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.diamond,
+                    {
+                      left: row.barStart - 6,
+                      top: centerY - 6,
+                      backgroundColor: row.chapterColor,
+                    },
+                  ]}
+                />
+              ) : (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.bar,
+                    {
+                      left: barLeft,
+                      top: centerY - 11,
+                      width: barWidth,
+                      backgroundColor: row.chapterColor,
+                    },
+                  ]}
+                >
+                  {row.duration && (
+                    <Text numberOfLines={1} style={styles.barText}>
+                      {row.duration.label}
+                    </Text>
+                  )}
+                </View>
+              )}
             </React.Fragment>
           );
         })}

@@ -10,8 +10,9 @@ export interface ChapterAnchor {
   startPosition: ScenePosition;
   startOffset: number | null;
   startOffsetUnit: string | null;
-  endSceneId: string;
-  endPosition: ScenePosition;
+  /** Absent when the stretch is measured from the container's own scenes. */
+  endSceneId: string | null;
+  endPosition: ScenePosition | null;
   endOffset: number | null;
   endOffsetUnit: string | null;
   createdAt: Date;

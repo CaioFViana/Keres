@@ -10,6 +10,7 @@ import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
 import {
   attributeValues,
+  boards,
   chapters,
   characterRelations,
   characters,
@@ -70,6 +71,18 @@ export class EntityService {
     let entitySpecificName: string | undefined;
 
     switch (entityType) {
+      case OperationLogEntityType.Board:
+        const board = await db.query.boards.findFirst({
+          where: and(
+            eq(boards.id, entityId),
+            eq(boards.storyId, storyId),
+            eq(boards.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
+        entitySpecificName = board?.name;
+        translatedEntityType = t('board');
+        break;
       case OperationLogEntityType.Story:
         const story = await db.query.stories.findFirst({
           where: and(eq(stories.id, entityId), eq(stories.isDeleted, false)),

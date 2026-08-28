@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
 import {
+  boards,
   chapters,
   characterRelations,
   characters,
@@ -29,6 +30,7 @@ import {
 } from '../db/schemas';
 
 const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
+  board: OperationLogEntityType.Board,
   chapter: OperationLogEntityType.Chapter,
   character: OperationLogEntityType.Character,
   choice: OperationLogEntityType.Choice,
@@ -74,6 +76,18 @@ export async function resolveRelationEntityName(
   let type: string | undefined;
 
   switch (relationType) {
+    case OperationLogEntityType.Board:
+      const board = await db.query.boards.findFirst({
+        where: and(
+          eq(boards.id, relationId),
+          eq(boards.storyId, storyId),
+          eq(boards.isDeleted, false),
+        ),
+        columns: { name: true },
+      });
+      name = board?.name;
+      type = t('board');
+      break;
     case OperationLogEntityType.Story:
       const story = await db.query.stories.findFirst({
         where: and(

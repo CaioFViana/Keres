@@ -12,12 +12,15 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { getCommonCardStyles } from '../../../theme/commonStyles';
 import { useTheme } from '../../../theme';
 import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
+import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 
 interface Props {
   node: BoardNodeType;
   title: string;
   typeLabel: string;
   ghost: boolean;
+  /** Light summary of the entity behind the pin, when it is an entity pin. */
+  summary?: BoardEntitySummary | null;
   content: BoardContentType;
   nodeTitles: Record<string, string>;
   canEdit: boolean;
@@ -32,6 +35,7 @@ const BoardNodeSheet: React.FC<Props> = ({
   title,
   typeLabel,
   ghost,
+  summary,
   content,
   nodeTitles,
   canEdit,
@@ -134,6 +138,7 @@ const BoardNodeSheet: React.FC<Props> = ({
         },
         itemText: { flex: 1, color: colors.text, fontSize: 13 },
         itemMeta: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
+        summaryText: { color: colors.text, fontSize: 13, lineHeight: 19 },
         field: {
           marginBottom: 10,
           paddingHorizontal: 2,
@@ -246,6 +251,19 @@ const BoardNodeSheet: React.FC<Props> = ({
               />
             </View>
           </>
+        )}
+
+        {node.kind === 'entity' && summary && (
+          <View style={cardStyles.cardContainer}>
+            <Text style={[cardStyles.cardText, styles.cardTitle]}>
+              {t('board_entity_summary')}
+            </Text>
+            {summary.details ? (
+              <Text style={styles.summaryText}>{summary.details}</Text>
+            ) : (
+              <Text style={styles.hint}>{t('common_na')}</Text>
+            )}
+          </View>
         )}
 
         <View style={cardStyles.cardContainer}>

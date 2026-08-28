@@ -167,6 +167,7 @@
   "board_edge_label": "Label (optional)",
   "board_edges": "Connections",
   "board_edges_empty": "No connections yet.",
+  "board_entity_summary": "Summary",
   "board_export": "Export board as image",
   "board_export_failed": "Failed to export the board.",
   "board_export_subtitle": "{{story}} · {{pinCount}} pins, {{edgeCount}} connections",

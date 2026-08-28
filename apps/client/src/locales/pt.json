@@ -167,6 +167,7 @@
   "board_edge_label": "Texto (opcional)",
   "board_edges": "Ligações",
   "board_edges_empty": "Ainda sem ligações.",
+  "board_entity_summary": "Resumo",
   "board_export": "Exportar o board como imagem",
   "board_export_failed": "Não foi possível exportar o board.",
   "board_export_subtitle": "{{story}} · {{pinCount}} pins, {{edgeCount}} ligações",

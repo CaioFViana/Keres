@@ -42,6 +42,7 @@ import type {
 } from '../../utils/boardLayout';
 import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
 import { renderBoardSvg } from '../../utils/boardSvg';
+import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
@@ -85,6 +86,8 @@ const BoardCanvasScreen = () => {
   const [exporting, setExporting] = useState(false);
   /** Media of the story's galleries, keyed by gallery id - lets Gallery pins show their image. */
   const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
+  /** Light summary of the selected entity pin, loaded when the sheet opens. */
+  const [selectedSummary, setSelectedSummary] = useState<BoardEntitySummary | null>(null);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
@@ -163,6 +166,23 @@ const BoardCanvasScreen = () => {
       cancelled = true;
     };
   }, [db, storyId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSelectedSummary(null);
+    if (!selected || selected.kind !== 'entity') return;
+    (async () => {
+      const summary = await loadBoardEntitySummary(
+        db,
+        selected.entityType as BoardPinEntity,
+        selected.entityId,
+      );
+      if (!cancelled) setSelectedSummary(summary);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [db, selected]);
 
   const save = useCallback(async () => {
     if (!userId || !board) return;
@@ -478,6 +498,7 @@ const BoardCanvasScreen = () => {
           title={titles[selected.id]?.title ?? selected.id}
           typeLabel={titles[selected.id]?.typeLabel ?? ''}
           ghost={!!titles[selected.id]?.ghost}
+          summary={selectedSummary}
           content={content}
           nodeTitles={nodeTitles}
           canEdit={canEdit}

@@ -15,6 +15,7 @@ export const ENTITY_SIMPLE_DISPLAY_NAME_FIELD: Readonly<Record<string, string>> 
   Mode: 'name',
   StatStrength: 'label',
   Story: 'title',
+  Board: 'name',
   Note: 'title',
   WorldRule: 'title',
   Choice: 'text',

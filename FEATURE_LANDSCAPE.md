@@ -134,7 +134,7 @@ Ranked by how well they add capability without imposing an ontology.
 
 | # | Gap | Typical of | Fit with §1 | Status in Keres |
 | --- | --- | --- | --- | --- |
-| 1 | **Freeform canvas / corkboard with dragging** | Scrivener, Plottr, Milanote, Campfire | **Excellent** — the least prescriptive surface that exists. Imposes no structure; works for panels, quests, encounters or scenes alike. | Graphs are auto-laid-out and view-only; the LocationGraph plan says "no visual editing" explicitly. |
+| 1 | **Freeform canvas / corkboard with dragging** | Scrivener, Plottr, Milanote, Campfire | **Excellent** — the least prescriptive surface that exists. Imposes no structure; works for panels, quests, encounters or scenes alike. | **Shipped as Boards.** A story-scoped `boards` row holds a JSON drawing (entity pins, free notes, board-only arrows). Auto-layout graphs stay view-only. |
 | 2 | **`Event` decoupled from `Scene`** | Aeon Timeline, World Anvil | **Excellent** — removes the constraint in §2.3 rather than adding a rule. | **Shipped.** Not a new table: `chapters.type = 'event'` plus `chapterAnchors`. Scenes still live in a container; the container is no longer forced onto the spine. |
 | 3 | **Mention-based auto-linking and backlinks** | Obsidian, World Anvil (`[[…]]`) | **Excellent** — this is literally how a dictionary works. Additive, ignorable. | **Forward links shipped** (`Story.autoLinkMentions`): names in text become tappable, nothing is persisted. `SeeAlsoRelation` stays manual. **No "mentioned in" panel** (backlinks). |
 | 4 | **Custom in-world calendars** | World Anvil, Kanka, Fantasy Calendar | **Good** — describes a world, prescribes no narrative. | `AttributeType.DATE` is a deliberately floating civil date; scene timing reaches "eras". No custom months, leap rules or in-world arithmetic. |
@@ -214,7 +214,7 @@ within each tier, cheapest and most aligned first.
 
 | # | Item | Ref | Cost |
 | ---: | --- | --- | --- |
-| 6 | Freeform canvas / corkboard with dragging | §4 #1 | Medium |
+| 6 | ~~Freeform canvas / corkboard with dragging~~ | §4 #1 | **Done** — Boards (JSON drawing, explicit save, ghosts on delete) |
 | 7 | ~~`Event` decoupled from `Scene`~~ | §4 #2 | **Done** — `type` on `chapters` + anchors, not a new table |
 | 8 | Mention auto-linking ~~and backlinks~~ | §4 #3 | Forward links **done**; backlinks still open |
 | 9 | Family trees / genealogy | §4 #7 | Medium — may reuse `CharacterRelation` with a directional type |
@@ -238,7 +238,7 @@ within each tier, cheapest and most aligned first.
 | 20 | AI assistance | §4 #13 | Conflicts — worth stating publicly as a stance rather than leaving as a silent gap |
 | — | ~~Native scene craft fields~~ | §5.2 | **Withdrawn** — ships as #14 instead |
 
-**Suggested next batch:** 3 (vocabulary) and 6 (corkboard). The original first batch's constraint
+**Suggested next batch:** 3 (vocabulary). The original first batch's constraint
 removals have landed; these two are still the cheapest remaining items that add no entity.
 
 ### 5.4 Story packs
@@ -317,13 +317,13 @@ content in two languages, and tests across all of it.
 | Vocabulary layer | No — a label map on `Story` | **Low** |
 | Structure templates | No — generates existing entities | **Low** (packs ship skeletons) |
 | Custom-attribute packs | No — uses `StorySchemaField` | **Done** (mechanism + three shipped packs) |
-| Freeform canvas | No — coordinates on existing rows | **Medium** |
+| Freeform canvas | **Yes** — `boards` row with JSON drawing | **Done** |
 | Mention linking + backlinks | Possibly none — derivable from text scanning | Forward **done**; backlinks open |
 | `Event` | **No** — discriminator on `chapters`, plus `chapterAnchors` | **Done** (cheaper than a new table) |
 | Custom calendars | **Yes** | **High** |
 | Image maps | **Yes** (or Gallery extension) | **High** |
 
-Calendars still deserve their own plan. Vocabulary and corkboard do not.
+Image maps still deserve their own plan. Vocabulary is the cheapest remaining Tier A item.
 
 ---
 

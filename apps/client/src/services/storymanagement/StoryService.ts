@@ -55,6 +55,7 @@ import {
   attributeValues,
   chapters,
   chapterAnchors,
+  boards,
   storyCalendars,
   characterRelations,
   characters,
@@ -143,6 +144,7 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
   await tx.delete(chapterAnchors).where(eq(chapterAnchors.storyId, storyId)).run();
   await tx.delete(storyCalendars).where(eq(storyCalendars.storyId, storyId)).run();
+  await tx.delete(boards).where(eq(boards.storyId, storyId)).run();
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
   await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
@@ -1165,6 +1167,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storySuggestions,
         storyChapterAnchors,
         storyOwnCalendars,
+        storyBoards,
         storyCharacterRelations,
         storyCharacterScenes,
         storyGalleryItems,
@@ -1200,6 +1203,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.suggestions.findMany({ where: belongsToStory(suggestions) }),
         db.query.chapterAnchors.findMany({ where: belongsToStory(chapterAnchors) }),
         db.query.storyCalendars.findMany({ where: belongsToStory(storyCalendars) }),
+        db.query.boards.findMany({ where: belongsToStory(boards) }),
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
         db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
         db.query.galleries.findMany({ where: belongsToStory(galleries) }),
@@ -1242,6 +1246,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           suggestions: storySuggestions,
           chapterAnchors: storyChapterAnchors,
           storyCalendars: storyOwnCalendars,
+          storyBoards,
           characterRelations: storyCharacterRelations,
           characterScenes: storyCharacterScenes,
           galleryItems: storyGalleryItems,
@@ -1536,6 +1541,25 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               createdAt: new Date(calendar.createdAt),
               updatedAt: new Date(),
               version: calendar.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
+        /*
+         * Boards. `content.entityId` has already been remapped by cloneStoryForLocalImport.
+         * Ghost pins (an id that was never in the package) stay as they were.
+         */
+        for (const board of fullStoryData.storyBoards ?? []) {
+          await tx
+            .insert(boards)
+            .values({
+              ...board,
+              storyId: board.storyId,
+              createdAt: new Date(board.createdAt),
+              updatedAt: new Date(),
+              version: board.version,
               isDeleted: false,
               deletedAt: null,
             })

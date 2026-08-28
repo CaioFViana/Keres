@@ -5,10 +5,14 @@ import { useTheme } from '../../../../theme';
 
 type PanZoomCanvasResult = ReturnType<typeof usePanZoomCanvas>;
 
-interface GraphCanvasFrameProps extends PanZoomCanvasResult {
+interface GraphCanvasFrameProps {
   width: number;
   height: number;
   children: React.ReactNode;
+  containerRef: PanZoomCanvasResult['containerRef'];
+  handleLayout: PanZoomCanvasResult['handleLayout'];
+  panHandlers: PanZoomCanvasResult['panHandlers'];
+  animatedTransform: PanZoomCanvasResult['animatedTransform'];
 }
 
 /**

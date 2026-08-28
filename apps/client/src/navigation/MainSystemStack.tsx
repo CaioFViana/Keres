@@ -33,6 +33,8 @@ import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
 import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
+import BoardListScreen from '../screens/boards/BoardListScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
@@ -116,6 +118,7 @@ export type MainSystemDrawerParamList = {
   PlotsStack: NavigatorScreenParams<PlotsStackParamList> | undefined;
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
+  BoardsStack: NavigatorScreenParams<BoardStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
   StoryAnalysis: { storyId: string };
@@ -136,6 +139,7 @@ const mainSystemStackRootScreens = new Set([
   'ItemJourneys',
   'Locations',
   'GalleryList',
+  'BoardList',
   'Tags',
   'Notes',
   'WorldRules',
@@ -321,6 +325,25 @@ const GalleryStackNavigator = () => {
       <GalleryStack.Screen name="GalleryList" component={GalleryListScreen} />
       <GalleryStack.Screen name="GalleryDetail" component={GalleryDetailScreen} />
     </GalleryStack.Navigator>
+  );
+};
+//#endregion
+//#region Boards
+
+const BoardsStack = createNativeStackNavigator<BoardStackParamList>();
+
+export type BoardStackParamList = {
+  BoardList: undefined;
+  BoardCanvas: { boardId: string };
+};
+
+const BoardsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <BoardsStack.Navigator screenOptions={{ headerShown: false }}>
+      <BoardsStack.Screen name="BoardList" component={BoardListScreen} />
+      <BoardsStack.Screen name="BoardCanvas" component={BoardCanvasScreen} />
+    </BoardsStack.Navigator>
   );
 };
 //#endregion
@@ -795,6 +818,21 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('GalleryStack', { screen: 'GalleryList' });
+            },
+          })}
+        />
+        <Drawer.Screen
+          name="BoardsStack"
+          component={BoardsStackNavigator}
+          options={{
+            title: t('boards_title'),
+            drawerLabel: t('boards_title'),
+            drawerIcon: drawerIcon('easel-outline'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('BoardsStack', { screen: 'BoardList' });
             },
           })}
         />

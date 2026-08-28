@@ -9,6 +9,8 @@ import addServer_en from '../content/add-server/en';
 import addServer_pt from '../content/add-server/pt';
 import appSettings_en from '../content/app-settings/en';
 import appSettings_pt from '../content/app-settings/pt';
+import boards_en from '../content/boards/en';
+import boards_pt from '../content/boards/pt';
 import branchingBasics_en from '../content/branching-basics/en';
 import branchingBasics_pt from '../content/branching-basics/pt';
 import calendars_en from '../content/calendars/en';
@@ -129,6 +131,7 @@ export type GeneratedHelpPageId =
   | 'activity-log'
   | 'add-server'
   | 'app-settings'
+  | 'boards'
   | 'branching-basics'
   | 'calendars'
   | 'change-password'
@@ -203,6 +206,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'app-settings': {
     en: appSettings_en,
     pt: appSettings_pt,
+  },
+  boards: {
+    en: boards_en,
+    pt: boards_pt,
   },
   'branching-basics': {
     en: branchingBasics_en,

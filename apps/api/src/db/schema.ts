@@ -4,6 +4,7 @@ export * from './schema/enums';
 // Tables
 export * from './schema/tables/apiLogs';
 export * from './schema/tables/attributeValues';
+export * from './schema/tables/boards';
 export * from './schema/tables/chapters';
 export * from './schema/tables/chapterAnchors';
 export * from './schema/tables/characterRelations';

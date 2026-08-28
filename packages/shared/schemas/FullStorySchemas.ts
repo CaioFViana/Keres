@@ -3,6 +3,7 @@ import { ChapterSchema } from './ChapterSchemas'; // Adjusted path
 import { CharacterSchema } from './CharacterSchemas'; // Adjusted path
 import { ChapterAnchorSchema } from './ChapterAnchorSchemas';
 import { StoryCalendarSchema } from './StoryCalendarSchemas';
+import { BoardSchema } from './BoardSchemas';
 import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjusted path
 import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
 import { PlotSchema } from './PlotSchemas';
@@ -53,6 +54,8 @@ export const FullStoryExportSchema = z.object({
   chapterAnchors: z.array(ChapterAnchorSchema).optional(),
   // Introduced in format V8; earlier migrations provide an empty list.
   storyCalendars: z.array(StoryCalendarSchema).optional(),
+  // Optional so packages from before Boards remain importable (format bump waits for release).
+  storyBoards: z.array(BoardSchema).optional(),
   characterScenes: z.array(CharacterSceneSchema),
   // Introduced in format V6; earlier migrations provide empty lists.
   plots: z.array(PlotSchema).optional(),

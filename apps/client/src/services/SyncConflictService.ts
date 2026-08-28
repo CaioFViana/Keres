@@ -3,6 +3,7 @@ import type {
   StoryReorderingStoryUpdate,
   SyncConflictReason,
 } from '@keres/shared';
+import { BoardContentSchema } from '@keres/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
@@ -10,6 +11,7 @@ import type { OperationLogSelect, SyncConflictSelect } from '../db/schema';
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
+import { createBoardService } from './storymanagement/BoardService';
 
 /**
  * Fields that never enter a conflict comparison: they are bookkeeping metadata, they change on every
@@ -74,6 +76,15 @@ export interface SyncConflictService {
   resolveKeepLocal(conflictId: string, chosenValues?: Record<string, any>): Promise<void>;
   /** Accepts what the server has and discards the pending local operations. */
   resolveKeepServer(conflictId: string): Promise<void>;
+  /**
+   * Saves the local Board drawing as a new board, then accepts the server's on the original.
+   * The create happens first: if it fails, the local work is still there.
+   */
+  resolveKeepServerAndCloneBoard(
+    conflictId: string,
+    currentUserId: string,
+    cloneName: string,
+  ): Promise<void>;
   /** Gets the conflict out of the way without resolving it; the local operations stay blocked. */
   dismissConflict(conflictId: string): Promise<void>;
 }
@@ -331,7 +342,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       .where(eq((table as any).id, entityId));
   };
 
-  return {
+  const api: SyncConflictService = {
     async recordConflict(input: RecordConflictInput): Promise<void> {
       await blockOperations(input.localOperationIds);
 
@@ -588,6 +599,29 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       entityEventEmitter.emit('operation_log_updated', conflict.storyId);
     },
 
+    async resolveKeepServerAndCloneBoard(
+      conflictId: string,
+      currentUserId: string,
+      cloneName: string,
+    ): Promise<void> {
+      const conflict = await getConflict(conflictId);
+      if (!conflict || conflict.entityType !== 'Board') {
+        throw new Error('Board clone is only available for a Board content conflict.');
+      }
+      const original = await db.query.boards.findFirst({
+        where: eq(schema.boards.id, conflict.entityId),
+      });
+      const rawContent = conflict.localValues.content ?? original?.content;
+      const content = BoardContentSchema.parse(rawContent ?? { nodes: [], edges: [] });
+      await createBoardService(db).createBoard(currentUserId, {
+        storyId: conflict.storyId,
+        name: cloneName.slice(0, 120),
+        description: original?.description ?? null,
+        content,
+      });
+      await api.resolveKeepServer(conflictId);
+    },
+
     async dismissConflict(conflictId: string): Promise<void> {
       const conflict = await getConflict(conflictId);
       // Without this, dismissing just hides the conflict from the pending list while its
@@ -606,4 +640,5 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       }
     },
   };
+  return api;
 };

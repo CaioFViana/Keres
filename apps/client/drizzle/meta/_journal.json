@@ -211,6 +211,13 @@
       "when": 1787860636195,
       "tag": "0029_worthless_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1787875471210,
+      "tag": "0030_eminent_guardsmen",
+      "breakpoints": true
     }
   ]
 }

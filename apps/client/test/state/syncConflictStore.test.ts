@@ -5,6 +5,7 @@ const mockService = {
   getPendingConflicts: jest.fn(async () => [] as { id: string }[]),
   resolveKeepLocal: jest.fn(async () => undefined),
   resolveKeepServer: jest.fn(async () => undefined),
+  resolveKeepServerAndCloneBoard: jest.fn(async () => undefined),
   dismissConflict: jest.fn(async () => undefined),
 };
 jest.mock('../../src/services/SyncConflictService', () => ({

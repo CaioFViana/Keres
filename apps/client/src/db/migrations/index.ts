@@ -31,6 +31,7 @@ import migration_27 from './0026_married_gladiator';
 import migration_28 from './0027_flashy_shape';
 import migration_29 from './0028_sweet_dust';
 import migration_30 from './0029_worthless_jack_murdock';
+import migration_31 from './0030_eminent_guardsmen';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -63,6 +64,7 @@ const migrations = [
   { id: 28, name: '0027_flashy_shape', run: migration_28 },
   { id: 29, name: '0028_sweet_dust', run: migration_29 },
   { id: 30, name: '0029_worthless_jack_murdock', run: migration_30 },
+  { id: 31, name: '0030_eminent_guardsmen', run: migration_31 },
 ];
 
 export default migrations;

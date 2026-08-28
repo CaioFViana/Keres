@@ -10,6 +10,7 @@ interface ConflictRowProps {
   isResolving: boolean;
   onKeepMine: () => void;
   onKeepServer: () => void;
+  onCloneBoard?: () => void;
   onOpenDiff: () => void;
 }
 
@@ -25,6 +26,7 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
   isResolving,
   onKeepMine,
   onKeepServer,
+  onCloneBoard,
   onOpenDiff,
 }) => {
   const { colors } = useTheme();
@@ -80,6 +82,16 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
           >
             <Ionicons name="cloud-download-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
+          {summary.offerBoardClone && onCloneBoard && (
+            <TouchableOpacity
+              onPress={onCloneBoard}
+              disabled={isResolving}
+              style={styles.actionButton}
+              accessibilityLabel={t('conflict_clone_board')}
+            >
+              <Ionicons name="copy-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <TouchableOpacity onPress={onOpenDiff} disabled={isResolving} style={styles.actionButton}>

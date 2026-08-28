@@ -68,6 +68,7 @@ export const fieldSources: Record<string, string[]> = {
     'linkedEntities',
     'isFavorite',
   ],
+  boards: ['name', 'description'],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],
   plots: ['name', 'details', 'note'],
   'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
@@ -85,6 +86,7 @@ export const entityMetadataHelpPages = {
   ItemJourney: 'item-journeys',
   Chapter: 'chapters',
   Scene: 'scenes',
+  Board: 'boards',
   Choice: 'choices',
   Mode: 'character-modes',
   Plot: 'plots',
@@ -129,6 +131,10 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'isDeleted',
       'deletedAt',
     ],
+  },
+  Board: {
+    documented: ['name', 'description', 'content', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   Chapter: {
     documented: ['name', 'index', 'summary', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],

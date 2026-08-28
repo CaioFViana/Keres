@@ -92,6 +92,10 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
+  Board: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
+  ],
   Plot: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
     { name: 'details', label: 'field_details', type: 'string', isSearchable: true },

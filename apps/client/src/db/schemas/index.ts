@@ -1,4 +1,5 @@
 export * from './attributeValues';
+export * from './boards';
 export * from './chapters';
 export * from './chapterAnchors';
 export * from './characterRelations';

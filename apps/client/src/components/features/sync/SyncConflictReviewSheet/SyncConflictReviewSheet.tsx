@@ -13,6 +13,7 @@ import {
   createEntitySnapshotResolver,
 } from '../../../../services/EntityNameBatchResolver';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
+import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import ConflictFieldDiffSheet from '../ConflictFieldDiffSheet/ConflictFieldDiffSheet';
@@ -39,6 +40,8 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
   const isResolving = useSyncConflictStore((state) => state.isResolving);
   const keepLocal = useSyncConflictStore((state) => state.keepLocal);
   const keepServer = useSyncConflictStore((state) => state.keepServer);
+  const keepServerAndCloneBoard = useSyncConflictStore((state) => state.keepServerAndCloneBoard);
+  const userId = useUserSettingsStore((state) => state.userId);
   const selectedConflictId = useSyncConflictStore((state) => state.selectedConflictId);
   const selectConflict = useSyncConflictStore((state) => state.selectConflict);
   const clearSelection = useSyncConflictStore((state) => state.clearSelection);
@@ -164,6 +167,17 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
                 isResolving={isResolving}
                 onKeepMine={() => keepLocal(db, item.id)}
                 onKeepServer={() => keepServer(db, item.id)}
+                onCloneBoard={
+                  item.offerBoardClone && userId
+                    ? () =>
+                        keepServerAndCloneBoard(
+                          db,
+                          item.id,
+                          userId,
+                          t('board_copy_name', { name: item.title }),
+                        )
+                    : undefined
+                }
                 onOpenDiff={() => selectConflict(item.id)}
               />
             )}

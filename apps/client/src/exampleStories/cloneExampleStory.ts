@@ -1,4 +1,8 @@
-import { FullStoryExportSchema, type FullStoryExportType } from '@keres/shared';
+import {
+  FullStoryExportSchema,
+  remapBoardContent,
+  type FullStoryExportType,
+} from '@keres/shared';
 import { createULID } from '../utils/entityUtils';
 
 type EntityWithId = { id: string };
@@ -38,6 +42,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.suggestions);
   registerAll(example.chapterAnchors);
   registerAll(example.storyCalendars);
+  registerAll(example.storyBoards);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
   registerAll(example.plots);
@@ -161,6 +166,11 @@ export function cloneExampleStoryForInstall(
     storyCalendars: example.storyCalendars?.map((calendar) => ({
       ...cloneEntity(calendar),
       storyId,
+    })),
+    storyBoards: example.storyBoards?.map((board) => ({
+      ...cloneEntity(board),
+      storyId,
+      content: remapBoardContent(board.content, remapId),
     })),
     characterRelations: example.characterRelations.map((relation) => ({
       ...cloneEntity(relation),

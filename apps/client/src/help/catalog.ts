@@ -55,6 +55,7 @@ export const helpSections: HelpSection[] = [
       'notes',
       'tags',
       'gallery',
+      'boards',
       'favorites',
     ],
   },

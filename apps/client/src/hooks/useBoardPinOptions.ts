@@ -1,0 +1,143 @@
+import { and, eq } from 'drizzle-orm';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useDrizzle } from '../db';
+import { chapters, galleries } from '../db/schema';
+import { loadEntityOptions } from '../utils/entityOptions';
+
+export interface BoardPinOption {
+  entityType: 'Character' | 'Location' | 'Note' | 'Scene' | 'Item' | 'Gallery' | 'Chapter';
+  entityId: string;
+  label: string;
+  group: 'character' | 'location' | 'note' | 'scene' | 'item' | 'gallery' | 'chapter' | 'event';
+}
+
+export function encodeBoardPinValue(entityType: string, entityId: string): string {
+  return `${entityType}:${entityId}`;
+}
+
+export function decodeBoardPinValue(value: string): { entityType: string; entityId: string } | null {
+  const separator = value.indexOf(':');
+  if (separator < 0) return null;
+  return { entityType: value.slice(0, separator), entityId: value.slice(separator + 1) };
+}
+
+/**
+ * Entities that can be pinned on a board. Events are stored as Chapter; the picker splits them.
+ */
+export function useBoardPinOptions(storyId: string | undefined) {
+  const db = useDrizzle();
+  const { t } = useTranslation();
+  const [options, setOptions] = useState<BoardPinOption[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!storyId) {
+      setOptions([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const [character, location, note, scene, item, galleryRows, chapterRows] = await Promise.all([
+        loadEntityOptions(db, storyId, 'Character'),
+        loadEntityOptions(db, storyId, 'Location'),
+        loadEntityOptions(db, storyId, 'Note'),
+        loadEntityOptions(db, storyId, 'Scene'),
+        loadEntityOptions(db, storyId, 'Item'),
+        db
+          .select()
+          .from(galleries)
+          .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)))
+          .all(),
+        db
+          .select()
+          .from(chapters)
+          .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
+          .all(),
+      ]);
+
+      const next: BoardPinOption[] = [
+        ...character.map((row) => ({
+          entityType: 'Character' as const,
+          entityId: row.id,
+          label: row.name,
+          group: 'character' as const,
+        })),
+        ...location.map((row) => ({
+          entityType: 'Location' as const,
+          entityId: row.id,
+          label: row.name,
+          group: 'location' as const,
+        })),
+        ...note.map((row) => ({
+          entityType: 'Note' as const,
+          entityId: row.id,
+          label: row.name,
+          group: 'note' as const,
+        })),
+        ...scene.map((row) => ({
+          entityType: 'Scene' as const,
+          entityId: row.id,
+          label: row.name,
+          group: 'scene' as const,
+        })),
+        ...item.map((row) => ({
+          entityType: 'Item' as const,
+          entityId: row.id,
+          label: row.name,
+          group: 'item' as const,
+        })),
+        ...galleryRows.map((row) => ({
+          entityType: 'Gallery' as const,
+          entityId: row.id,
+          label: row.title || row.fileName,
+          group: 'gallery' as const,
+        })),
+        ...chapterRows.map((row) => ({
+          entityType: 'Chapter' as const,
+          entityId: row.id,
+          label: row.name,
+          group: row.type === 'event' ? ('event' as const) : ('chapter' as const),
+        })),
+      ];
+      setOptions(next);
+    } catch (error) {
+      console.log('useBoardPinOptions: failed to load pin candidates.', error);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [db, storyId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const groupedOptions: MultiSelectGroup[] = useMemo(() => {
+    const groups: { key: BoardPinOption['group']; label: string }[] = [
+      { key: 'character', label: t('character_plural') },
+      { key: 'location', label: t('location_plural') },
+      { key: 'scene', label: t('scene_plural') },
+      { key: 'chapter', label: t('chapter_plural') },
+      { key: 'event', label: t('event_plural') },
+      { key: 'item', label: t('item_plural') },
+      { key: 'note', label: t('note_plural') },
+      { key: 'gallery', label: t('gallery') },
+    ];
+    return groups
+      .map((group) => ({
+        key: group.key,
+        label: group.label,
+        options: options
+          .filter((option) => option.group === group.key)
+          .map((option) => ({
+            label: option.label,
+            value: encodeBoardPinValue(option.entityType, option.entityId),
+          })),
+      }))
+      .filter((group) => group.options.length > 0);
+  }, [options, t]);
+
+  return { options, groupedOptions, loading, reload: load };
+}

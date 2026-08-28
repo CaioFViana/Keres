@@ -2,6 +2,7 @@ import type { FullStoryExportType } from '@keres/shared';
 import {
   AttributeType,
   CURRENT_STORY_FORMAT_VERSION,
+  remapBoardContent,
   describeStoryIntegrityViolations,
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
@@ -87,6 +88,10 @@ export class StoryExportImportService {
     const storyCalendars = await db.query.storyCalendars.findMany({
       where: (storyCalendars, { eq, and }) =>
         and(eq(storyCalendars.storyId, storyId), eq(storyCalendars.isDeleted, false)),
+    });
+    const storyBoards = await db.query.boards.findMany({
+      where: (boards, { eq, and }) =>
+        and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)),
     });
 
     const characterRelations = await db.query.characterRelations.findMany({
@@ -203,6 +208,7 @@ export class StoryExportImportService {
         suggestions,
         chapterAnchors,
         storyCalendars,
+        storyBoards,
         characterRelations,
         characterScenes,
         plots,
@@ -825,6 +831,27 @@ export class StoryExportImportService {
           };
         });
         await tx.insert(dbSchema.items).values(newItemsData);
+      }
+
+      /*
+       * Boards after every pinnable entity is in the id map (characters, locations, notes,
+       * scenes, items, galleries, chapters). Ghost pins — ids that never appear — stay unmapped.
+       */
+      const newStoryBoardsData = (validatedFullStory.storyBoards ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          content: remapBoardContent(original.content, (id) => idMap.get(id) ?? id),
+          createdAt: new Date(original.createdAt),
+          updatedAt: new Date(original.updatedAt),
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newStoryBoardsData.length > 0) {
+        await tx.insert(dbSchema.boards).values(newStoryBoardsData);
       }
 
       // --- ChoiceCheckGroups (Optional, map choice ID) ---

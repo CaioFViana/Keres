@@ -134,6 +134,13 @@
       "when": 1787860634272,
       "tag": "0018_icy_felicia_hardy",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1787875469311,
+      "tag": "0019_modern_warhawk",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   attributeValues,
+  boards,
   chapterAnchors,
   storyCalendars,
   chapters,
@@ -59,6 +60,7 @@ const id = {
   event: '',
   chapterAnchor: '',
   storyCalendar: '',
+  board: '',
   location: '',
   otherLocation: '',
   sceneA: '',
@@ -202,6 +204,43 @@ beforeEach(async () => {
     { id: id.characterA, storyId, name: 'Ilda' },
     { id: id.characterB, storyId, name: 'Bento' },
   ] as never);
+  // Pins live inside `content`; import must rewrite entityId after the character is remapped.
+  await db.insert(boards).values({
+    id: id.board,
+    storyId,
+    name: 'The lantern watch',
+    description: 'Who holds the light',
+    content: {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity',
+          x: 40,
+          y: 20,
+          entityType: 'Character',
+          entityId: id.characterA,
+          labelAtPin: '',
+        },
+        {
+          id: '01HJKMNP',
+          kind: 'note',
+          x: 200,
+          y: 20,
+          title: 'The wick',
+          body: 'Needs oil.',
+        },
+      ],
+      edges: [
+        {
+          id: '01QRSTVW',
+          from: '01ABCDEF',
+          to: '01HJKMNP',
+          directed: true,
+          label: 'tends',
+        },
+      ],
+    },
+  } as never);
   await db.insert(items).values({ id: id.item, storyId, name: 'A lanterna' } as never);
   await db.insert(choiceChecks).values({
     id: id.check,
@@ -389,6 +428,7 @@ async function childrenOf(storyId: string) {
     statStrengths: await rows(statStrengths),
     statRelations: await rows(statRelations),
     modes: await rows(modes),
+    storyBoards: await rows(boards),
   };
 }
 
@@ -499,6 +539,12 @@ describe('import of a package with one row of every kind', () => {
       after.characterRelations[0].character2Id,
     ]).toEqual([character.id, otherCharacter.id].sort());
     expect(after.characterScenes[0].characterId).toBe(character.id);
+
+    const boardPin = after.storyBoards[0].content.nodes.find(
+      (node: { kind: string }) => node.kind === 'entity',
+    );
+    expect(boardPin.entityId).toBe(character.id);
+    expect(boardPin.id).toBe('01ABCDEF');
   });
 
   it('keeps every original id when the client asks to preserve them', async () => {
@@ -522,6 +568,11 @@ describe('import of a package with one row of every kind', () => {
     expect(after.galleryRelations[0].ownerId).toBe(id.location);
     expect(after.seeAlsoRelations[0].entityBId).toBe(id.location);
     expect(after.itemJourneys[0].newCharacterOwnerId).toBe(id.characterB);
+    expect(after.storyBoards[0].id).toBe(id.board);
+    expect(
+      after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
+        .entityId,
+    ).toBe(id.characterA);
   });
 
   it('makes the importer the owner of the favorites and the comments', async () => {

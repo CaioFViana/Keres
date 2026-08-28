@@ -10,6 +10,7 @@ import * as schema from '../db/schema';
  * import the chapters table statically without repeating that switch in every path.
  */
 export const ENTITY_TABLES = {
+  Board: schema.boards,
   Chapter: schema.chapters,
   Character: schema.characters,
   ChapterAnchor: schema.chapterAnchors,

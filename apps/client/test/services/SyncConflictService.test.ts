@@ -1032,3 +1032,67 @@ describe('mergeLocalOperationPayloads', () => {
     expect(mergeLocalOperationPayloads([])).toEqual({});
   });
 });
+
+describe('resolveKeepServerAndCloneBoard', () => {
+  it('creates a copy with the local drawing, then keeps the server row', async () => {
+    await database.db.insert(schema.boards).values({
+      id: 'board-1',
+      storyId: STORY_ID,
+      name: 'Royal family',
+      description: null,
+      content: { nodes: [], edges: [] },
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+      isDeleted: false,
+    });
+    const operationId = await seedOperation('op-board', {
+      entityType: 'Board',
+      entityId: 'board-1',
+      payload: JSON.stringify({
+        content: {
+          nodes: [
+            { id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null },
+          ],
+          edges: [],
+        },
+      }),
+    });
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'Board',
+        entityId: 'board-1',
+        localOperationIds: [operationId],
+        localValues: {
+          content: {
+            nodes: [{ id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null }],
+            edges: [],
+          },
+        },
+        serverValues: { name: 'Royal family', content: { nodes: [], edges: [] }, version: 3 },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Royal family (copy)');
+
+    const rows = await database.db.query.boards.findMany({
+      where: eq(schema.boards.storyId, STORY_ID),
+    });
+    const copy = rows.find((row) => row.id !== 'board-1');
+    const original = rows.find((row) => row.id === 'board-1');
+    expect(copy).toMatchObject({
+      name: 'Royal family (copy)',
+      content: {
+        nodes: [{ id: '01ABCDEF', kind: 'note', title: 'Mine' }],
+        edges: [],
+      },
+    });
+    expect(original).toMatchObject({
+      name: 'Royal family',
+      content: { nodes: [], edges: [] },
+      version: 3,
+    });
+  });
+});

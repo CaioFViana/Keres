@@ -72,6 +72,12 @@ export function usePanZoomCanvas(
   /** In a ref so that changing the handler does not rebuild the `PanResponder` mid-gesture. */
   const onTap = useRef(options.onTap);
   onTap.current = options.onTap;
+  /**
+   * A child (a board pin) that is dragging must keep the responder. Capture would steal the
+   * gesture as soon as the finger moved past DRAG_THRESHOLD, and the pin would never move.
+   * Two-finger pinch still belongs to the canvas even then.
+   */
+  const childDragging = useRef(false);
 
   const viewport = useRef({ width: 0, height: 0 });
   /** The canvas's corner within the window, to convert the pinch's focus into local coordinates. */
@@ -202,9 +208,11 @@ export function usePanZoomCanvas(
         // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
         // `onTap` all start here, instead of the gesture being dropped for want of an owner.
         onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponderCapture: (event, gestureState) =>
-          event.nativeEvent.touches.length > 1 ||
-          Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD,
+        onMoveShouldSetPanResponderCapture: (event, gestureState) => {
+          if (event.nativeEvent.touches.length > 1) return true;
+          if (childDragging.current) return false;
+          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+        },
 
         onPanResponderGrant: (event) => {
           gesture.current = {
@@ -284,5 +292,9 @@ export function usePanZoomCanvas(
       { translateY: animatedY },
       { scale: animatedScale },
     ],
+    setChildDragging: (dragging: boolean) => {
+      childDragging.current = dragging;
+    },
+    getTransform: () => ({ ...transform.current }),
   };
 }

@@ -218,6 +218,13 @@
       "when": 1787860633017,
       "tag": "0030_unique_trauma",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1787875468066,
+      "tag": "0031_lethal_rictor",
+      "breakpoints": true
     }
   ]
 }

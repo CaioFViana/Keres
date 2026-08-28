@@ -6,8 +6,46 @@ export const BOARD_NODE_HEIGHT = 86;
 export const BOARD_NOTE_WIDTH = 220;
 export const BOARD_NOTE_HEIGHT = 200;
 export const BOARD_NOTE_BODY_MAX_LINES = 10;
+/** Gallery pins with a renderable image become a bigger card that includes it. */
+export const BOARD_GALLERY_WIDTH = 220;
+export const BOARD_GALLERY_HEIGHT = 200;
+/** Height of the image area inside a gallery card. */
+export const BOARD_GALLERY_IMAGE_HEIGHT = 128;
 export const BOARD_CANVAS_PADDING = 240;
 export const BOARD_CANVAS_MIN = 720;
+
+/**
+ * The part of a gallery pin the board needs to render: an image uses the file itself, a video uses
+ * its extracted frame; anything else has no picture and stays an icon card.
+ */
+export interface BoardGalleryMedia {
+  mediaType: string;
+  localPath: string | null;
+  thumbnailPath: string | null;
+}
+export type BoardGalleryMediaById = Record<string, BoardGalleryMedia>;
+
+/** Whether a gallery pin has a picture to show (an image file, or a video's extracted frame). */
+export function galleryHasImage(media: BoardGalleryMedia | null | undefined): boolean {
+  if (!media) return false;
+  if (media.mediaType === 'image') return !!media.localPath;
+  if (media.mediaType === 'video') return !!media.thumbnailPath;
+  return false;
+}
+
+/** The entity a pin refers to - `undefined` for notes, which have no entity behind them. */
+export function nodeEntityId(node: BoardNodeType): string | undefined {
+  return node.kind === 'entity' ? node.entityId : undefined;
+}
+
+/** The gallery media behind a node, when it is a Gallery pin. */
+export function galleryMediaForNode(
+  node: BoardNodeType,
+  galleryMediaById?: BoardGalleryMediaById,
+): BoardGalleryMedia | null | undefined {
+  const entityId = nodeEntityId(node);
+  return entityId ? galleryMediaById?.[entityId] : undefined;
+}
 
 /** Approximate width of a character at 11px - only to size a note's body line. */
 const NOTE_CHAR_WIDTH = 6.2;
@@ -91,17 +129,29 @@ export function noteSizeFor(title: string, body: string | null): { width: number
   return { width, height };
 }
 
-/** Size of a node's card: notes grow with their text, entity pins stay at the standard size. */
-export function boardNodeSize(node: BoardNodeType): { width: number; height: number } {
-  return node.kind === 'note'
-    ? noteSizeFor(node.title, node.body)
-    : { width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT };
+/** Size of a node's card: notes grow with their text, gallery pins with a picture grow to include it. */
+export function boardNodeSize(
+  node: BoardNodeType,
+  galleryMedia?: BoardGalleryMedia | null,
+): { width: number; height: number } {
+  if (node.kind === 'note') {
+    return noteSizeFor(node.title, node.body);
+  }
+  if (
+    node.kind === 'entity' &&
+    node.entityType === 'Gallery' &&
+    galleryHasImage(galleryMedia)
+  ) {
+    return { width: BOARD_GALLERY_WIDTH, height: BOARD_GALLERY_HEIGHT };
+  }
+  return { width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT };
 }
 
 export function boardCanvasSize(
   nodes: BoardNodeType[],
   minWidth = BOARD_CANVAS_MIN,
   minHeight = BOARD_CANVAS_MIN,
+  galleryMediaById?: BoardGalleryMediaById,
 ): { width: number; height: number } {
   if (nodes.length === 0) {
     return { width: minWidth, height: minHeight };
@@ -109,7 +159,7 @@ export function boardCanvasSize(
   let maxX = 0;
   let maxY = 0;
   for (const node of nodes) {
-    const size = boardNodeSize(node);
+    const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
     maxX = Math.max(maxX, node.x + size.width);
     maxY = Math.max(maxY, node.y + size.height);
   }
@@ -132,6 +182,7 @@ export function normalizeBoardCanvas(
   nodes: BoardNodeType[],
   minWidth = BOARD_CANVAS_MIN,
   minHeight = BOARD_CANVAS_MIN,
+  galleryMediaById?: BoardGalleryMediaById,
 ): { offsetX: number; offsetY: number; width: number; height: number } {
   if (nodes.length === 0) {
     return { offsetX: 0, offsetY: 0, width: minWidth, height: minHeight };
@@ -141,7 +192,7 @@ export function normalizeBoardCanvas(
   let maxX = Number.NEGATIVE_INFINITY;
   let maxY = Number.NEGATIVE_INFINITY;
   for (const node of nodes) {
-    const size = boardNodeSize(node);
+    const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
     minX = Math.min(minX, node.x);
     minY = Math.min(minY, node.y);
     maxX = Math.max(maxX, node.x + size.width);

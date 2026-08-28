@@ -376,7 +376,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         contentStyle={styles.modalContent}
         maxHeight={Math.min(screenHeight * 0.75, 720)}
       >
-        <View>
+        <View style={{ flexShrink: 1 }}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderTitleRow}>
               {activeGroup && effectiveGroups.length > 1 && (
@@ -385,7 +385,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                 </TouchableOpacity>
               )}
               <Text style={styles.modalTitle} numberOfLines={1}>
-                {activeGroup ? activeGroup.label : label || t('select_tags')}
+                {activeGroup ? activeGroup.label : label || placeholder || t('select_tags')}
               </Text>
             </View>
             <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
@@ -404,7 +404,10 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
             />
           )}
 
-          <ScrollView keyboardShouldPersistTaps="handled">
+          <ScrollView
+            style={{ flexShrink: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
             {showGroupPicker ? (
               effectiveGroups.map((group) => {
                 const selectedCount = group.options.filter((option) =>

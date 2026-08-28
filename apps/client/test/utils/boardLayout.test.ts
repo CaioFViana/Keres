@@ -9,6 +9,8 @@ import {
   wrapNoteBody,
   BOARD_CANVAS_MIN,
   BOARD_CANVAS_PADDING,
+  BOARD_GALLERY_HEIGHT,
+  BOARD_GALLERY_WIDTH,
   BOARD_NODE_HEIGHT,
   BOARD_NODE_WIDTH,
   BOARD_NOTE_HEIGHT,
@@ -45,6 +47,30 @@ it('sizes entity pins at the standard size', () => {
   };
 
   expect(boardNodeSize(entity)).toEqual({ width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT });
+});
+
+it('grows a Gallery pin with an image into a bigger card', () => {
+  const gallery = {
+    id: 'g',
+    kind: 'entity' as const,
+    x: 0,
+    y: 0,
+    entityType: 'Gallery' as const,
+    entityId: 'gal-1',
+    labelAtPin: 'Capa',
+  };
+  const withImage = { mediaType: 'image', localPath: 'file:///a.png', thumbnailPath: null };
+  const withoutImage = { mediaType: 'document', localPath: null, thumbnailPath: null };
+
+  expect(boardNodeSize(gallery, withImage)).toEqual({
+    width: BOARD_GALLERY_WIDTH,
+    height: BOARD_GALLERY_HEIGHT,
+  });
+  expect(boardNodeSize(gallery, withoutImage)).toEqual({
+    width: BOARD_NODE_WIDTH,
+    height: BOARD_NODE_HEIGHT,
+  });
+  expect(boardNodeSize(gallery)).toEqual({ width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT });
 });
 
 it('keeps a note with no body at the standard pin size', () => {

@@ -6,7 +6,7 @@ import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
-import { boardCanvasSize } from '../../../utils/boardLayout';
+import { boardCanvasSize, type BoardGalleryMediaById } from '../../../utils/boardLayout';
 import BoardNodeView from './BoardNode';
 
 export type BoardCanvasHandle = PanZoomCanvasHandle;
@@ -22,14 +22,16 @@ interface Props {
   content: BoardContentType;
   titles: Record<string, BoardPinTitle>;
   selectedNodeId: string | null;
+  /** Media of the story's galleries - lets Gallery pins show their image. */
+  galleryMediaById?: BoardGalleryMediaById;
   onSelectNode: (node: BoardNodeType) => void;
   onMoveNode: (nodeId: string, x: number, y: number) => void;
 }
 
 const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
-  ({ content, titles, selectedNodeId, onSelectNode, onMoveNode }, ref) => {
+  ({ content, titles, selectedNodeId, galleryMediaById, onSelectNode, onMoveNode }, ref) => {
     const { colors } = useTheme();
-    const size = boardCanvasSize(content.nodes);
+    const size = boardCanvasSize(content.nodes, undefined, undefined, galleryMediaById);
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;
@@ -43,7 +45,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         const from = nodesById.get(edge.from);
         const to = nodesById.get(edge.to);
         if (!from || !to) return null;
-        return boardEdgeGeometry(from, to, edge);
+        return boardEdgeGeometry(from, to, edge, galleryMediaById);
       })
       .filter((edge): edge is NonNullable<typeof edge> => edge !== null);
 
@@ -66,6 +68,11 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               ghost={meta?.ghost}
               selected={selectedNodeId === node.id}
               scale={scale}
+              galleryMedia={
+                node.kind === 'entity' && node.entityType === 'Gallery'
+                  ? galleryMediaById?.[node.entityId]
+                  : undefined
+              }
               onSelect={() => onSelectNode(node)}
               onMove={(x, y) => onMoveNode(node.id, x, y)}
               onDragStart={() => setChildDragging(true)}

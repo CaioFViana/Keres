@@ -1,5 +1,5 @@
 import type { BoardEdgeType, BoardNodeType } from '@keres/shared';
-import { boardNodeSize } from './boardLayout';
+import { boardNodeSize, galleryMediaForNode, type BoardGalleryMediaById } from './boardLayout';
 
 const ARROW_SIZE = 12;
 
@@ -8,8 +8,9 @@ export function nodeBorderPoint(
   node: BoardNodeType,
   towardX: number,
   towardY: number,
+  galleryMediaById?: BoardGalleryMediaById,
 ): { x: number; y: number } {
-  const size = boardNodeSize(node);
+  const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
   const cx = node.x + size.width / 2;
   const cy = node.y + size.height / 2;
   const vx = towardX - cx;
@@ -22,9 +23,14 @@ export function nodeBorderPoint(
   return { x: cx + vx * scale, y: cy + vy * scale };
 }
 
-export function boardEdgeGeometry(from: BoardNodeType, to: BoardNodeType, edge: BoardEdgeType) {
-  const fromSize = boardNodeSize(from);
-  const toSize = boardNodeSize(to);
+export function boardEdgeGeometry(
+  from: BoardNodeType,
+  to: BoardNodeType,
+  edge: BoardEdgeType,
+  galleryMediaById?: BoardGalleryMediaById,
+) {
+  const fromSize = boardNodeSize(from, galleryMediaForNode(from, galleryMediaById));
+  const toSize = boardNodeSize(to, galleryMediaForNode(to, galleryMediaById));
   const fromCenter = { x: from.x + fromSize.width / 2, y: from.y + fromSize.height / 2 };
   const toCenter = { x: to.x + toSize.width / 2, y: to.y + toSize.height / 2 };
   const start = nodeBorderPoint(from, toCenter.x, toCenter.y);

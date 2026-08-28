@@ -132,6 +132,22 @@ describe('MultiSelectPill flat mode (options)', () => {
 
     expect(onSelectionChange).not.toHaveBeenCalled();
   });
+
+  it('uses the placeholder as the modal title instead of the generic "Select Tags"', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={[]}
+        onSelectionChange={jest.fn()}
+        placeholder="Choose tags"
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+
+    expect(screen.queryByText('Select Tags')).toBeNull();
+    expect(screen.getAllByText('Choose tags').length).toBeGreaterThan(0);
+  });
 });
 
 /**

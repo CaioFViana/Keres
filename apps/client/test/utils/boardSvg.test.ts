@@ -185,3 +185,61 @@ it('keeps a short note at the standard width', () => {
   expect(svg).toContain(`width="${BOARD_NODE_WIDTH}"`);
   expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
 });
+
+it('grows a Gallery pin with an image into a bigger card with a picture placeholder', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity' as const,
+          x: 40,
+          y: 40,
+          entityType: 'Gallery',
+          entityId: 'gal-1',
+          labelAtPin: 'Capa',
+        },
+      ],
+      edges: [],
+    },
+    {
+      ...options,
+      galleryMediaById: {
+        'gal-1': { mediaType: 'image', localPath: 'file:///a.png', thumbnailPath: null },
+      },
+    },
+  );
+
+  expect(svg).toContain(`width="${BOARD_NOTE_WIDTH}"`);
+  // The standalone SVG does not embed the bytes - a picture placeholder marks the image area.
+  expect(svg).toContain('<circle');
+});
+
+it('keeps a Gallery pin without an image at the standard size', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity' as const,
+          x: 40,
+          y: 40,
+          entityType: 'Gallery',
+          entityId: 'gal-1',
+          labelAtPin: 'Contrato',
+        },
+      ],
+      edges: [],
+    },
+    {
+      ...options,
+      galleryMediaById: {
+        'gal-1': { mediaType: 'document', localPath: null, thumbnailPath: null },
+      },
+    },
+  );
+
+  expect(svg).toContain(`width="${BOARD_NODE_WIDTH}"`);
+  expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
+  expect(svg).not.toContain('<circle');
+});

@@ -28,12 +28,17 @@ import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
 import { createBoardService } from '../../services/storymanagement/BoardService';
+import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useBoardDraftStore } from '../../state/boardDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { nextStaggeredPosition } from '../../utils/boardLayout';
+import type {
+  BoardGalleryMedia,
+  BoardGalleryMediaById,
+} from '../../utils/boardLayout';
 import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
 import { renderBoardSvg } from '../../utils/boardSvg';
 import { setDocumentTitle } from '../../utils/documentTitle';
@@ -67,6 +72,8 @@ const BoardCanvasScreen = () => {
     Record<string, { label: string; group: BoardPinOption['group'] }>
   >({});
   const [exporting, setExporting] = useState(false);
+  /** Media of the story's galleries, keyed by gallery id - lets Gallery pins show their image. */
+  const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
@@ -120,6 +127,30 @@ const BoardCanvasScreen = () => {
     }
     setLivePins(next);
   }, [options]);
+
+  useEffect(() => {
+    if (!storyId) {
+      setGalleryMediaById({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const rows = await createGalleryService(db).getGalleriesByStoryId(storyId);
+      if (cancelled) return;
+      const next: Record<string, BoardGalleryMedia> = {};
+      for (const row of rows) {
+        next[row.id] = {
+          mediaType: row.mediaType,
+          localPath: row.localPath,
+          thumbnailPath: row.thumbnailPath ?? null,
+        };
+      }
+      setGalleryMediaById(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [db, storyId]);
 
   const save = useCallback(async () => {
     if (!userId || !board) return;
@@ -251,6 +282,7 @@ const BoardCanvasScreen = () => {
           border: colors.border,
         },
         titles,
+        galleryMediaById,
       });
       const result = await deliverSvgMap(
         svg,
@@ -270,7 +302,7 @@ const BoardCanvasScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [board?.name, colors, content, selectedStory, showNotification, t, titles]);
+  }, [board?.name, colors, content, galleryMediaById, selectedStory, showNotification, t, titles]);
 
   const nodeTitles = useMemo(() => {
     const map: Record<string, string> = {};
@@ -393,6 +425,7 @@ const BoardCanvasScreen = () => {
         content={content}
         titles={titles}
         selectedNodeId={selected?.id ?? null}
+        galleryMediaById={galleryMediaById}
         onSelectNode={setSelected}
         onMoveNode={(id, x, y) =>
           setContent((current) => ({

@@ -1,10 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance, type BoardNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import { Image, PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
+import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { boardPinAppearanceType } from '../../../utils/boardPinAppearance';
-import { boardNodeSize, BOARD_NOTE_BODY_MAX_LINES } from '../../../utils/boardLayout';
+import {
+  boardNodeSize,
+  galleryHasImage,
+  BOARD_GALLERY_IMAGE_HEIGHT,
+  BOARD_NOTE_BODY_MAX_LINES,
+  type BoardGalleryMedia,
+} from '../../../utils/boardLayout';
 
 const DRAG_THRESHOLD = 5;
 
@@ -16,6 +23,8 @@ interface Props {
   ghost?: boolean;
   selected: boolean;
   scale: number;
+  /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
+  galleryMedia?: BoardGalleryMedia | null;
   onSelect: () => void;
   onMove: (x: number, y: number) => void;
   onDragStart: () => void;
@@ -30,6 +39,7 @@ const BoardNodeView: React.FC<Props> = ({
   ghost,
   selected,
   scale,
+  galleryMedia,
   onSelect,
   onMove,
   onDragStart,
@@ -105,7 +115,16 @@ const BoardNodeView: React.FC<Props> = ({
 
   if (!dragging.current) origin.current = { x: node.x, y: node.y };
 
-  const size = boardNodeSize(node);
+  const hasGalleryImage =
+    node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia);
+  const galleryImagePath =
+    hasGalleryImage && galleryMedia
+      ? galleryMedia.mediaType === 'image'
+        ? galleryMedia.localPath
+        : galleryMedia.thumbnailPath
+      : null;
+  const resolvedGalleryUri = useResolvedMediaUri(galleryImagePath);
+  const size = boardNodeSize(node, galleryMedia);
 
   const styles = useMemo(
     () =>
@@ -124,12 +143,18 @@ const BoardNodeView: React.FC<Props> = ({
           paddingLeft: 12,
           paddingRight: 8,
           paddingVertical: 8,
-          justifyContent: 'center',
+          justifyContent: hasGalleryImage ? 'flex-start' : 'center',
           overflow: 'hidden',
           ...(Platform.OS === 'web'
             ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
             : {}),
         },
+        galleryImage: {
+          width: '100%',
+          height: BOARD_GALLERY_IMAGE_HEIGHT,
+          backgroundColor: colors.surface,
+        },
+        galleryInfo: { paddingTop: 8 },
         stripe: {
           position: 'absolute',
           left: 0,
@@ -142,7 +167,7 @@ const BoardNodeView: React.FC<Props> = ({
         typeLabel: { fontSize: 10, fontWeight: '600', marginTop: 3, textTransform: 'uppercase' },
         body: { fontSize: 11, color: colors.text, marginTop: 6, lineHeight: 14 },
       }),
-    [colors, ghost, node, selected, size],
+    [colors, ghost, hasGalleryImage, node, selected, size],
   );
 
   const appearance = getEntityAppearance(
@@ -154,31 +179,58 @@ const BoardNodeView: React.FC<Props> = ({
 
   return (
     <View style={styles.node} {...pan.panHandlers}>
-      <View style={[styles.stripe, { backgroundColor: accent }]} pointerEvents="none" />
-      <View pointerEvents="none">
-        <View style={styles.row}>
-          <Ionicons name={icon} size={16} color={accent} />
-          <Text style={styles.title} numberOfLines={1} selectable={false}>
-            {title}
-          </Text>
-        </View>
-        <Text
-          style={[styles.typeLabel, { color: ghost ? colors.error : colors.textSecondary }]}
-          numberOfLines={1}
-          selectable={false}
-        >
-          {typeLabel}
-        </Text>
-        {node.kind === 'note' && !!node.body && (
-          <Text
-            style={styles.body}
-            numberOfLines={BOARD_NOTE_BODY_MAX_LINES}
-            selectable={false}
-          >
-            {node.body}
-          </Text>
-        )}
-      </View>
+      {hasGalleryImage ? (
+        <>
+          <Image
+            source={resolvedGalleryUri ? { uri: resolvedGalleryUri } : undefined}
+            style={styles.galleryImage}
+            resizeMode="cover"
+          />
+          <View style={styles.galleryInfo} pointerEvents="none">
+            <View style={styles.row}>
+              <Ionicons name={icon} size={16} color={accent} />
+              <Text style={styles.title} numberOfLines={1} selectable={false}>
+                {title}
+              </Text>
+            </View>
+            <Text
+              style={[styles.typeLabel, { color: ghost ? colors.error : colors.textSecondary }]}
+              numberOfLines={1}
+              selectable={false}
+            >
+              {typeLabel}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={[styles.stripe, { backgroundColor: accent }]} pointerEvents="none" />
+          <View pointerEvents="none">
+            <View style={styles.row}>
+              <Ionicons name={icon} size={16} color={accent} />
+              <Text style={styles.title} numberOfLines={1} selectable={false}>
+                {title}
+              </Text>
+            </View>
+            <Text
+              style={[styles.typeLabel, { color: ghost ? colors.error : colors.textSecondary }]}
+              numberOfLines={1}
+              selectable={false}
+            >
+              {typeLabel}
+            </Text>
+            {node.kind === 'note' && !!node.body && (
+              <Text
+                style={styles.body}
+                numberOfLines={BOARD_NOTE_BODY_MAX_LINES}
+                selectable={false}
+              >
+                {node.body}
+              </Text>
+            )}
+          </View>
+        </>
+      )}
     </View>
   );
 };

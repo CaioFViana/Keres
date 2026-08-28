@@ -9,6 +9,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { getCommonCardStyles } from '../../../theme/commonStyles';
 import { useTheme } from '../../../theme';
 import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
 
@@ -64,6 +65,8 @@ const BoardNodeSheet: React.FC<Props> = ({
     value: item.id,
   }));
 
+  const cardStyles = useMemo(() => getCommonCardStyles(colors), [colors]);
+  const noteDirty = node.kind === 'note' && (noteTitle !== noteTitleFromNode || noteBody !== noteBodyFromNode);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -92,6 +95,8 @@ const BoardNodeSheet: React.FC<Props> = ({
         },
         header: { flexDirection: 'row', alignItems: 'flex-start' },
         headerText: { flex: 1, marginRight: 12 },
+        headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+        saveButton: { paddingVertical: 8, paddingHorizontal: 14 },
         title: { fontSize: 19, fontWeight: 'bold', color: colors.text },
         typeLine: {
           fontSize: 13,
@@ -116,6 +121,7 @@ const BoardNodeSheet: React.FC<Props> = ({
           marginBottom: 8,
           textTransform: 'uppercase',
         },
+        cardTitle: { marginBottom: 10 },
         item: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -124,6 +130,7 @@ const BoardNodeSheet: React.FC<Props> = ({
           borderColor: colors.border,
           padding: 10,
           marginBottom: 6,
+          backgroundColor: colors.surface,
         },
         itemText: { flex: 1, color: colors.text, fontSize: 13 },
         itemMeta: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
@@ -139,8 +146,8 @@ const BoardNodeSheet: React.FC<Props> = ({
           marginBottom: 10,
         },
         hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
-        remove: { marginTop: 22, alignItems: 'center', paddingVertical: 10 },
-        removeText: { color: colors.error, fontSize: 15, fontWeight: '600' },
+        addButton: { marginTop: 4 },
+        removeButton: { marginTop: 16, backgroundColor: colors.error },
       }),
     [colors],
   );
@@ -194,9 +201,20 @@ const BoardNodeSheet: React.FC<Props> = ({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.typeLine}>{typeLabel || t(typeKey)}</Text>
         </View>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {node.kind === 'note' && canEdit && (
+            <Button
+              disabled={!noteDirty}
+              onPress={() => onChangeNote(noteTitle, noteBody.trim() || null)}
+              style={styles.saveButton}
+            >
+              {t('save')}
+            </Button>
+          )}
+          <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
       {ghost && <Text style={styles.ghost}>{t('board_deleted_entity')}</Text>}
 
@@ -226,73 +244,71 @@ const BoardNodeSheet: React.FC<Props> = ({
                 multiline
               />
             </View>
-            <Button onPress={() => onChangeNote(noteTitle, noteBody.trim() || null)}>
-              {t('save')}
-            </Button>
           </>
         )}
 
-        <Text style={styles.section}>{t('board_edges')}</Text>
-        {edges.length === 0 ? (
-          <Text style={styles.hint}>{t('board_edges_empty')}</Text>
-        ) : (
-          edges.map((edge) => {
-            const outgoing = edge.from === node.id;
-            const otherId = outgoing ? edge.to : edge.from;
-            const arrow = edge.directed ? (outgoing ? '→' : '←') : '—';
-            return (
-              <View key={edge.id} style={styles.item}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemText}>
-                    {arrow} {nodeTitles[otherId] ?? otherId}
-                  </Text>
-                  {!!edge.label && <Text style={styles.itemMeta}>{edge.label}</Text>}
+        <View style={cardStyles.cardContainer}>
+          <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('board_edges')}</Text>
+          {edges.length === 0 ? (
+            <Text style={styles.hint}>{t('board_edges_empty')}</Text>
+          ) : (
+            edges.map((edge) => {
+              const outgoing = edge.from === node.id;
+              const otherId = outgoing ? edge.to : edge.from;
+              const arrow = edge.directed ? (outgoing ? '→' : '←') : '—';
+              return (
+                <View key={edge.id} style={styles.item}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.itemText}>
+                      {arrow} {nodeTitles[otherId] ?? otherId}
+                    </Text>
+                    {!!edge.label && <Text style={styles.itemMeta}>{edge.label}</Text>}
+                  </View>
+                  {canEdit && (
+                    <TouchableOpacity
+                      onPress={() => removeEdge(edge.id)}
+                      accessibilityLabel={t('delete')}
+                    >
+                      <Ionicons name="close-circle" size={18} color={colors.error} />
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {canEdit && (
-                  <TouchableOpacity
-                    onPress={() => removeEdge(edge.id)}
-                    accessibilityLabel={t('delete')}
-                  >
-                    <Ionicons name="close-circle" size={18} color={colors.error} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })
-        )}
+              );
+            })
+          )}
 
-        {canEdit && others.length > 0 && (
-          <>
-            <Text style={styles.section}>{t('board_connect')}</Text>
-            <Text style={styles.hint}>{t('board_connect_hint')}</Text>
-            <MultiSelectPill
-              options={connectOptions}
-              selectedValues={connectTo ? [connectTo] : []}
-              onSelectionChange={(values) => setConnectTo(values[0] ?? null)}
-              singleSelect
-              placeholder={t('board_connect_pick')}
-            />
-            <View style={styles.switchRow}>
-              <Text style={{ color: colors.text }}>{t('board_edge_directed')}</Text>
-              <ThemedSwitch value={directed} onValueChange={setDirected} />
-            </View>
-            <View style={styles.field}>
-              <TextInput
-                value={edgeLabel}
-                onChangeText={setEdgeLabel}
-                placeholder={t('board_edge_label')}
+          {canEdit && others.length > 0 && (
+            <>
+              <Text style={styles.hint}>{t('board_connect_hint')}</Text>
+              <MultiSelectPill
+                options={connectOptions}
+                selectedValues={connectTo ? [connectTo] : []}
+                onSelectionChange={(values) => setConnectTo(values[0] ?? null)}
+                singleSelect
+                placeholder={t('board_connect_pick')}
               />
-            </View>
-            <Button disabled={!connectTo} onPress={addEdge}>
-              {t('board_add_edge')}
-            </Button>
-          </>
-        )}
+              <View style={styles.switchRow}>
+                <Text style={{ color: colors.text }}>{t('board_edge_directed')}</Text>
+                <ThemedSwitch value={directed} onValueChange={setDirected} />
+              </View>
+              <View style={styles.field}>
+                <TextInput
+                  value={edgeLabel}
+                  onChangeText={setEdgeLabel}
+                  placeholder={t('board_edge_label')}
+                />
+              </View>
+              <Button disabled={!connectTo} onPress={addEdge} style={styles.addButton}>
+                {t('board_add_edge')}
+              </Button>
+            </>
+          )}
+        </View>
 
         {canEdit && (
-          <TouchableOpacity style={styles.remove} onPress={removeNode}>
-            <Text style={styles.removeText}>{t('board_remove_node')}</Text>
-          </TouchableOpacity>
+          <Button onPress={removeNode} style={styles.removeButton}>
+            {t('board_remove_node')}
+          </Button>
         )}
       </ScrollView>
     </ResponsiveModal>

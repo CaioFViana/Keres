@@ -5,6 +5,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+import { useBoardDraftStore } from '../../src/state/boardDraftStore';
 import { useChapterStore } from '../../src/state/chapterStore';
 import { useCharacterStore } from '../../src/state/characterStore';
 import { useConnectivityStore } from '../../src/state/connectivityStore';
@@ -74,6 +75,19 @@ describe('resetAllClientStores', () => {
       conflicts: [],
       selectedConflictId: null,
     });
+  });
+
+  it('drops an unsaved board drawing', () => {
+    useBoardDraftStore.getState().remember({
+      boardId: 'board-1',
+      storyId: 'story-1',
+      content: { nodes: [], edges: [] },
+      savedContent: { nodes: [], edges: [] },
+    });
+
+    resetAllClientStores();
+
+    expect(useBoardDraftStore.getState().draft).toBeNull();
   });
 
   it('is safe to call twice', () => {

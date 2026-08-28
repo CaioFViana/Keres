@@ -1,3 +1,4 @@
+import { useBoardDraftStore } from './boardDraftStore';
 import { useChapterStore } from './chapterStore';
 import { useCharacterStore } from './characterStore';
 import { useConnectivityStore } from './connectivityStore';
@@ -21,6 +22,7 @@ export function resetAllClientStores(): void {
   useStoryListStore.getState().setStories([]);
   useSummaryStore.getState().clearSummary();
   useSyncConflictStore.getState().reset();
+  useBoardDraftStore.getState().reset();
   useConnectivityStore.getState().reset();
   useNotificationStore.getState().clearAll();
   useGalleryMediaViewerStore.getState().close();

@@ -89,6 +89,15 @@ export function buildStoryTimelineFileName(storyTitle: string, now: Date = new D
   return `${slugify(storyTitle)}-linha-do-tempo-${now.toISOString().slice(0, 10)}.svg`;
 }
 
+/** The board drawing's image file. */
+export function buildBoardMapFileName(
+  storyTitle: string,
+  boardName: string,
+  now: Date = new Date(),
+): string {
+  return `${slugify(storyTitle)}-${slugify(boardName)}-${now.toISOString().slice(0, 10)}.svg`;
+}
+
 /** The result of trying to deliver the file to the user. */
 export interface ExportDeliveryResult {
   /** `false` when the platform offers no way at all of sharing a file. */

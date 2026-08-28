@@ -24,7 +24,7 @@ const page: HelpPage = {
         'Add existing entities from the picker. The same entity can be pinned more than once.',
         'Add a note for something that is not an entity yet.',
         'Drag a pin to move it. Tap it to connect it to another pin on this board, or to open the entity.',
-        'Save explicitly. Revert restores the last saved drawing. Leaving with unsaved changes asks first.',
+        'Save explicitly. Revert restores the last saved drawing. Opening an entity keeps the unsaved drawing in memory until you save, close the app, or open another board.',
       ],
     },
     {
@@ -57,7 +57,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Boards do not change the story map, the location graph, or character relations. Arrows on a board stay on that board. Saving writes one update for the whole drawing, so two people editing the same board resolve it as keep-mine, keep-theirs, or a copy — the drawings are not merged.',
+      text: 'Boards do not change the story map, the location graph, or character relations. Arrows on a board stay on that board. Opening a pinned entity keeps the unsaved drawing in memory until you save, close the app, or open another board. Saving writes one update for the whole drawing, so two people editing the same board resolve it as keep-mine, keep-theirs, or a copy — the drawings are not merged.',
     },
   ],
 };

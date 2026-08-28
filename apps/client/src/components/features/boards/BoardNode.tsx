@@ -3,6 +3,7 @@ import type { BoardNodeType, BoardPinEntity } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
+import { boardPinAccent } from '../../../utils/boardPinAppearance';
 import { BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from '../../../utils/boardLayout';
 
 const PIN_ICONS: Record<BoardPinEntity, keyof typeof Ionicons.glyphMap> = {
@@ -20,7 +21,7 @@ const DRAG_THRESHOLD = 5;
 interface Props {
   node: BoardNodeType;
   title: string;
-  subtitle?: string;
+  typeLabel: string;
   ghost?: boolean;
   selected: boolean;
   scale: number;
@@ -33,7 +34,7 @@ interface Props {
 const BoardNodeView: React.FC<Props> = ({
   node,
   title,
-  subtitle,
+  typeLabel,
   ghost,
   selected,
   scale,
@@ -126,18 +127,31 @@ const BoardNodeView: React.FC<Props> = ({
           borderColor: selected ? colors.primary : colors.border,
           backgroundColor: node.kind === 'note' ? colors.primaryContainer : colors.surface,
           opacity: ghost ? 0.7 : 1,
-          paddingHorizontal: 8,
+          paddingLeft: 12,
+          paddingRight: 8,
           paddingVertical: 8,
           justifyContent: 'center',
+          overflow: 'hidden',
           ...(Platform.OS === 'web'
             ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
             : {}),
         },
+        stripe: {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 5,
+          backgroundColor: boardPinAccent(
+            node.kind,
+            node.kind === 'entity' ? node.entityType : undefined,
+          ),
+        },
         row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
         title: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.text },
-        subtitle: { fontSize: 10, color: colors.textSecondary, marginTop: 3 },
+        typeLabel: { fontSize: 10, fontWeight: '600', marginTop: 3, textTransform: 'uppercase' },
       }),
-    [colors, ghost, node.kind, node.x, node.y, selected],
+    [colors, ghost, node, selected],
   );
 
   const icon =
@@ -145,17 +159,29 @@ const BoardNodeView: React.FC<Props> = ({
 
   return (
     <View style={styles.node} {...pan.panHandlers}>
-      <View style={styles.row} pointerEvents="none">
-        <Ionicons name={icon} size={16} color={colors.textSecondary} />
-        <Text style={styles.title} numberOfLines={2} selectable={false}>
-          {title}
+      <View style={styles.stripe} pointerEvents="none" />
+      <View pointerEvents="none">
+        <View style={styles.row}>
+          <Ionicons
+            name={icon}
+            size={16}
+            color={boardPinAccent(node.kind, node.kind === 'entity' ? node.entityType : undefined)}
+          />
+          <Text style={styles.title} numberOfLines={1} selectable={false}>
+            {title}
+          </Text>
+        </View>
+        <Text
+          style={[
+            styles.typeLabel,
+            { color: ghost ? colors.error : colors.textSecondary },
+          ]}
+          numberOfLines={1}
+          selectable={false}
+        >
+          {typeLabel}
         </Text>
       </View>
-      {!!subtitle && (
-        <Text style={styles.subtitle} numberOfLines={1} selectable={false}>
-          {subtitle}
-        </Text>
-      )}
     </View>
   );
 };

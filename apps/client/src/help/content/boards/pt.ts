@@ -24,7 +24,7 @@ const page: HelpPage = {
         'Adicione entidades existentes pelo seletor. A mesma entidade pode ser pincada mais de uma vez.',
         'Adicione uma nota para o que ainda não é entidade.',
         'Arraste um pin para o mover. Toque para ligá-lo a outro pin deste board, ou para abrir a entidade.',
-        'Guarde de propósito. Reverter restaura o último desenho guardado. Sair com alterações pergunta antes.',
+        'Guarde de propósito. Reverter restaura o último desenho guardado. Abrir uma entidade mantém o desenho por guardar na memória até guardar, fechar a app, ou abrir outro board.',
       ],
     },
     {
@@ -57,7 +57,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Boards não alteram o mapa da história, o de locais nem as relações de personagem. As setas ficam no board. Guardar grava um único update do desenho inteiro; se duas pessoas editarem o mesmo board, escolhe-se o seu, o delas, ou uma cópia — os desenhos não se fundem.',
+      text: 'Boards não alteram o mapa da história, o de locais nem as relações de personagem. As setas ficam no board. Abrir uma entidade pincada mantém o desenho por guardar na memória até guardar, fechar a app, ou abrir outro board. Guardar grava um único update do desenho inteiro; se duas pessoas editarem o mesmo board, escolhe-se o seu, o delas, ou uma cópia — os desenhos não se fundem.',
     },
   ],
 };

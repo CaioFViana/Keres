@@ -1,7 +1,7 @@
 import type { BoardContentType, BoardNodeType } from '@keres/shared';
 
 export const BOARD_NODE_WIDTH = 148;
-export const BOARD_NODE_HEIGHT = 76;
+export const BOARD_NODE_HEIGHT = 86;
 export const BOARD_CANVAS_PADDING = 240;
 export const BOARD_CANVAS_MIN = 720;
 

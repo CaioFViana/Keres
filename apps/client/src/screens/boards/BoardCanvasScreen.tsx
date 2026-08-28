@@ -19,6 +19,7 @@ import {
 import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
 import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
 import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -27,13 +28,16 @@ import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
 import { createBoardService } from '../../services/storymanagement/BoardService';
+import { useBoardDraftStore } from '../../state/boardDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { AppAlert } from '../../utils/AppAlert';
 import { nextStaggeredPosition } from '../../utils/boardLayout';
+import { boardPinTypeKey } from '../../utils/boardPinAppearance';
+import { renderBoardSvg } from '../../utils/boardSvg';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
 
@@ -43,7 +47,8 @@ const BoardCanvasScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<BoardStackParamList, 'BoardCanvas'>>();
   const { boardId } = useRoute<RouteProp<BoardStackParamList, 'BoardCanvas'>>().params;
   const db = useDrizzle();
-  const storyId = useStoryStore((state) => state.selectedStory?.id);
+  const selectedStory = useStoryStore((state) => state.selectedStory);
+  const storyId = selectedStory?.id;
   const { canEdit } = useStoryRole(storyId);
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
@@ -59,29 +64,17 @@ const BoardCanvasScreen = () => {
   const [selected, setSelected] = useState<BoardNodeType | null>(null);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
   const [liveNames, setLiveNames] = useState<Record<string, string>>({});
+  const [exporting, setExporting] = useState(false);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
-  const leave = useCallback(
-    (go: () => void) => {
-      if (!dirty) {
-        go();
-        return;
-      }
-      AppAlert.alert(t('board_unsaved_title'), t('board_unsaved_message'), [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('board_discard'), style: 'destructive', onPress: go },
-      ]);
-    },
-    [dirty, t],
-  );
-
   useBackButtonHandler({
     showWebBackButton: true,
-    onBack: () => leave(() => navigation.goBack()),
+    onBack: () => navigation.goBack(),
   });
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const row = await createBoardService(db).getById(boardId);
       if (!row || row.isDeleted) {
@@ -89,9 +82,19 @@ const BoardCanvasScreen = () => {
         setBoard(null);
         return;
       }
+      const draft = useBoardDraftStore.getState().draft;
+      if (draft && (draft.boardId !== boardId || draft.storyId !== storyId)) {
+        useBoardDraftStore.getState().clear();
+      }
+      const keep = useBoardDraftStore.getState().draft;
       setBoard(row);
-      setContent(row.content);
-      setSavedContent(row.content);
+      if (keep && keep.boardId === boardId && keep.storyId === storyId) {
+        setContent(keep.content);
+        setSavedContent(row.content);
+      } else {
+        setContent(row.content);
+        setSavedContent(row.content);
+      }
       setError(null);
     } catch (loadError) {
       console.log('BoardCanvasScreen: failed to load board.', loadError);
@@ -99,7 +102,7 @@ const BoardCanvasScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [boardId, db, t]);
+  }, [boardId, db, storyId, t]);
 
   useEffect(() => {
     void load();
@@ -129,6 +132,16 @@ const BoardCanvasScreen = () => {
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
+
+  useEffect(() => {
+    if (!storyId || !board || board.id !== boardId) return;
+    useBoardDraftStore.getState().remember({
+      boardId: board.id,
+      storyId,
+      content,
+      savedContent,
+    });
+  }, [board, boardId, content, savedContent, storyId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -160,19 +173,66 @@ const BoardCanvasScreen = () => {
   );
 
   const titles = useMemo(() => {
-    const map: Record<string, { title: string; subtitle?: string; ghost?: boolean }> = {};
+    const map: Record<string, { title: string; typeLabel: string; ghost?: boolean }> = {};
     for (const node of content.nodes) {
+      const typeLabel = t(
+        boardPinTypeKey(node.kind, node.kind === 'entity' ? node.entityType : undefined),
+      );
       if (node.kind === 'note') {
-        map[node.id] = { title: node.title.trim() || t('board_note') };
+        map[node.id] = { title: node.title.trim() || t('board_note'), typeLabel };
         continue;
       }
       const live = liveNames[`${node.entityType}:${node.entityId}`];
       map[node.id] = live
-        ? { title: live }
-        : { title: node.labelAtPin || t('board_deleted_entity'), ghost: true, subtitle: t('board_deleted_entity') };
+        ? { title: live, typeLabel }
+        : {
+            title: node.labelAtPin || t('board_deleted_entity'),
+            typeLabel: `${typeLabel} · ${t('board_deleted_entity')}`,
+            ghost: true,
+          };
     }
     return map;
   }, [content.nodes, liveNames, t]);
+
+  const handleExport = useCallback(async () => {
+    if (!selectedStory) return;
+    setExporting(true);
+    try {
+      const svg = renderBoardSvg(content, {
+        title: board?.name ?? t('boards_title'),
+        subtitle: t('board_export_subtitle', {
+          story: selectedStory.title,
+          pinCount: content.nodes.length,
+          edgeCount: content.edges.length,
+        }),
+        colors: {
+          background: colors.background,
+          surface: colors.surface,
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          border: colors.border,
+        },
+        titles,
+      });
+      const result = await deliverSvgMap(
+        svg,
+        buildBoardMapFileName(selectedStory.title, board?.name ?? 'board'),
+      );
+      if (result.delivered) {
+        showNotification(t('board_export_success', { fileName: result.fileName }), 'success');
+      } else {
+        showNotification(
+          t('story_map_export_no_share_target', { path: result.uri ?? result.fileName }),
+          'warning',
+        );
+      }
+    } catch (exportError) {
+      console.log('BoardCanvasScreen: failed to export board.', exportError);
+      showNotification(t('board_export_failed'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [board?.name, colors, content, selectedStory, showNotification, t, titles]);
 
   const nodeTitles = useMemo(() => {
     const map: Record<string, string> = {};
@@ -297,10 +357,19 @@ const BoardCanvasScreen = () => {
           }))
         }
       />
+      <GraphCanvasControls
+        onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
+        onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
+        onFit={() => canvasRef.current?.fitToScreen()}
+        onExport={() => void handleExport()}
+        exporting={exporting}
+        exportLabel={t('board_export')}
+      />
       {selected && (
         <BoardNodeSheet
           node={content.nodes.find((node) => node.id === selected.id) ?? selected}
           title={titles[selected.id]?.title ?? selected.id}
+          typeLabel={titles[selected.id]?.typeLabel ?? ''}
           ghost={!!titles[selected.id]?.ghost}
           content={content}
           nodeTitles={nodeTitles}

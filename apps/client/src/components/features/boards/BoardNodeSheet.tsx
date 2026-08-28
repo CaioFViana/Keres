@@ -1,18 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardContentType, BoardNodeType } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
+import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
 
 interface Props {
   node: BoardNodeType;
   title: string;
+  typeLabel: string;
   ghost: boolean;
   content: BoardContentType;
   nodeTitles: Record<string, string>;
@@ -26,6 +29,7 @@ interface Props {
 const BoardNodeSheet: React.FC<Props> = ({
   node,
   title,
+  typeLabel,
   ghost,
   content,
   nodeTitles,
@@ -38,13 +42,25 @@ const BoardNodeSheet: React.FC<Props> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [connectTo, setConnectTo] = useState<string | null>(null);
-  const [directed, setDirected] = useState(false);
+  const [directed, setDirected] = useState(true);
   const [edgeLabel, setEdgeLabel] = useState('');
   const [noteTitle, setNoteTitle] = useState(node.kind === 'note' ? node.title : '');
   const [noteBody, setNoteBody] = useState(node.kind === 'note' ? (node.body ?? '') : '');
 
+  useEffect(() => {
+    setConnectTo(null);
+    setDirected(true);
+    setEdgeLabel('');
+    setNoteTitle(node.kind === 'note' ? node.title : '');
+    setNoteBody(node.kind === 'note' ? (node.body ?? '') : '');
+  }, [node.id]);
+
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
   const others = content.nodes.filter((item) => item.id !== node.id);
+  const connectOptions = others.map((item) => ({
+    label: nodeTitles[item.id] ?? item.id,
+    value: item.id,
+  }));
 
   const styles = useMemo(
     () =>
@@ -67,13 +83,29 @@ const BoardNodeSheet: React.FC<Props> = ({
           marginBottom: 14,
         },
         header: { flexDirection: 'row', alignItems: 'flex-start' },
-        title: { flex: 1, fontSize: 19, fontWeight: 'bold', color: colors.text, marginRight: 12 },
+        headerText: { flex: 1, marginRight: 12 },
+        title: { fontSize: 19, fontWeight: 'bold', color: colors.text },
+        typeLine: {
+          fontSize: 13,
+          color: colors.textSecondary,
+          marginTop: 2,
+          textTransform: 'uppercase',
+          fontWeight: '600',
+        },
+        ghost: { color: colors.error, marginTop: 8, fontSize: 13 },
+        openRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: 12,
+          paddingVertical: 8,
+        },
+        openText: { color: colors.primary, fontSize: 15, fontWeight: '600', marginLeft: 6 },
         section: {
           fontSize: 13,
           fontWeight: 'bold',
           color: colors.text,
-          marginTop: 16,
-          marginBottom: 6,
+          marginTop: 18,
+          marginBottom: 8,
           textTransform: 'uppercase',
         },
         item: {
@@ -86,7 +118,7 @@ const BoardNodeSheet: React.FC<Props> = ({
           marginBottom: 6,
         },
         itemText: { flex: 1, color: colors.text, fontSize: 13 },
-        ghost: { color: colors.error, marginTop: 8, fontSize: 13 },
+        itemMeta: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
         field: { marginBottom: 10 },
         switchRow: {
           flexDirection: 'row',
@@ -94,7 +126,9 @@ const BoardNodeSheet: React.FC<Props> = ({
           justifyContent: 'space-between',
           marginBottom: 10,
         },
-        actions: { marginTop: 16, gap: 8 },
+        hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
+        remove: { marginTop: 22, alignItems: 'center', paddingVertical: 10 },
+        removeText: { color: colors.error, fontSize: 15, fontWeight: '600' },
       }),
     [colors],
   );
@@ -135,19 +169,34 @@ const BoardNodeSheet: React.FC<Props> = ({
     });
     setConnectTo(null);
     setEdgeLabel('');
-    setDirected(false);
+    setDirected(true);
   };
+
+  const typeKey = boardPinTypeKey(
+    node.kind,
+    node.kind === 'entity' ? node.entityType : undefined,
+  );
 
   return (
     <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
       <View style={styles.handle} />
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.typeLine}>{typeLabel || t(typeKey)}</Text>
+        </View>
         <TouchableOpacity onPress={onClose}>
           <Ionicons name="close" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
       {ghost && <Text style={styles.ghost}>{t('board_deleted_entity')}</Text>}
+
+      {node.kind === 'entity' && !ghost && (
+        <TouchableOpacity style={styles.openRow} onPress={onOpenEntity}>
+          <Ionicons name="open-outline" size={18} color={colors.primary} />
+          <Text style={styles.openText}>{t('board_open_entity')}</Text>
+        </TouchableOpacity>
+      )}
 
       <ScrollView>
         {node.kind === 'note' && canEdit && (
@@ -172,23 +221,22 @@ const BoardNodeSheet: React.FC<Props> = ({
 
         <Text style={styles.section}>{t('board_edges')}</Text>
         {edges.length === 0 ? (
-          <Text style={{ color: colors.textSecondary }}>{t('board_edges_empty')}</Text>
+          <Text style={styles.hint}>{t('board_edges_empty')}</Text>
         ) : (
           edges.map((edge) => {
-            const otherId = edge.from === node.id ? edge.to : edge.from;
-            const arrow = edge.directed
-              ? edge.from === node.id
-                ? '→'
-                : '←'
-              : '—';
+            const outgoing = edge.from === node.id;
+            const otherId = outgoing ? edge.to : edge.from;
+            const arrow = edge.directed ? (outgoing ? '→' : '←') : '—';
             return (
               <View key={edge.id} style={styles.item}>
-                <Text style={styles.itemText}>
-                  {arrow} {nodeTitles[otherId] ?? otherId}
-                  {edge.label ? ` · ${edge.label}` : ''}
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemText}>
+                    {arrow} {nodeTitles[otherId] ?? otherId}
+                  </Text>
+                  {!!edge.label && <Text style={styles.itemMeta}>{edge.label}</Text>}
+                </View>
                 {canEdit && (
-                  <TouchableOpacity onPress={() => removeEdge(edge.id)}>
+                  <TouchableOpacity onPress={() => removeEdge(edge.id)} accessibilityLabel={t('delete')}>
                     <Ionicons name="close-circle" size={18} color={colors.error} />
                   </TouchableOpacity>
                 )}
@@ -200,18 +248,14 @@ const BoardNodeSheet: React.FC<Props> = ({
         {canEdit && others.length > 0 && (
           <>
             <Text style={styles.section}>{t('board_connect')}</Text>
-            {others.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.item,
-                  connectTo === item.id && { borderColor: colors.primary, borderWidth: 2 },
-                ]}
-                onPress={() => setConnectTo(item.id)}
-              >
-                <Text style={styles.itemText}>{nodeTitles[item.id] ?? item.id}</Text>
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.hint}>{t('board_connect_hint')}</Text>
+            <MultiSelectPill
+              options={connectOptions}
+              selectedValues={connectTo ? [connectTo] : []}
+              onSelectionChange={(values) => setConnectTo(values[0] ?? null)}
+              singleSelect
+              placeholder={t('board_connect_pick')}
+            />
             <View style={styles.switchRow}>
               <Text style={{ color: colors.text }}>{t('board_edge_directed')}</Text>
               <ThemedSwitch value={directed} onValueChange={setDirected} />
@@ -229,14 +273,11 @@ const BoardNodeSheet: React.FC<Props> = ({
           </>
         )}
 
-        <View style={styles.actions}>
-          {node.kind === 'entity' && !ghost && (
-            <Button onPress={onOpenEntity}>{t('board_open_entity')}</Button>
-          )}
-          {canEdit && (
-            <Button onPress={removeNode}>{t('board_remove_node')}</Button>
-          )}
-        </View>
+        {canEdit && (
+          <TouchableOpacity style={styles.remove} onPress={removeNode}>
+            <Text style={styles.removeText}>{t('board_remove_node')}</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </ResponsiveModal>
   );

@@ -11,9 +11,15 @@ import BoardNodeView from './BoardNode';
 
 export type BoardCanvasHandle = PanZoomCanvasHandle;
 
+export interface BoardPinTitle {
+  title: string;
+  typeLabel: string;
+  ghost?: boolean;
+}
+
 interface Props {
   content: BoardContentType;
-  titles: Record<string, { title: string; subtitle?: string; ghost?: boolean }>;
+  titles: Record<string, BoardPinTitle>;
   selectedNodeId: string | null;
   onSelectNode: (node: BoardNodeType) => void;
   onMoveNode: (nodeId: string, x: number, y: number) => void;
@@ -47,6 +53,24 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
+        {content.nodes.map((node) => {
+          const meta = titles[node.id];
+          return (
+            <BoardNodeView
+              key={node.id}
+              node={node}
+              title={meta?.title ?? node.kind}
+              typeLabel={meta?.typeLabel ?? node.kind}
+              ghost={meta?.ghost}
+              selected={selectedNodeId === node.id}
+              scale={scale}
+              onSelect={() => onSelectNode(node)}
+              onMove={(x, y) => onMoveNode(node.id, x, y)}
+              onDragStart={() => setChildDragging(true)}
+              onDragEnd={() => setChildDragging(false)}
+            />
+          );
+        })}
         <Svg
           width={size.width}
           height={size.height}
@@ -58,13 +82,11 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               <Path
                 d={edge.path}
                 fill="none"
-                stroke={colors.textSecondary}
-                strokeWidth={1.6}
-                strokeOpacity={0.75}
+                stroke={colors.text}
+                strokeWidth={edge.directed ? 2 : 1.6}
+                strokeOpacity={0.85}
               />
-              {edge.directed && (
-                <Polygon points={edge.arrow.points} fill={colors.textSecondary} fillOpacity={0.75} />
-              )}
+              {edge.directed && <Polygon points={edge.arrow.points} fill={colors.text} />}
               {!!edge.label && (
                 <SvgText
                   x={edge.labelX}
@@ -79,24 +101,6 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
             </React.Fragment>
           ))}
         </Svg>
-        {content.nodes.map((node) => {
-          const meta = titles[node.id];
-          return (
-            <BoardNodeView
-              key={node.id}
-              node={node}
-              title={meta?.title ?? node.kind}
-              subtitle={meta?.subtitle}
-              ghost={meta?.ghost}
-              selected={selectedNodeId === node.id}
-              scale={scale}
-              onSelect={() => onSelectNode(node)}
-              onMove={(x, y) => onMoveNode(node.id, x, y)}
-              onDragStart={() => setChildDragging(true)}
-              onDragEnd={() => setChildDragging(false)}
-            />
-          );
-        })}
       </GraphCanvasFrame>
     );
   },

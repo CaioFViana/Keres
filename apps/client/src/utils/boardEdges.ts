@@ -1,5 +1,5 @@
 import type { BoardEdgeType, BoardNodeType } from '@keres/shared';
-import { BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from './boardLayout';
+import { boardNodeSize } from './boardLayout';
 
 const ARROW_SIZE = 12;
 
@@ -9,21 +9,24 @@ export function nodeBorderPoint(
   towardX: number,
   towardY: number,
 ): { x: number; y: number } {
-  const cx = node.x + BOARD_NODE_WIDTH / 2;
-  const cy = node.y + BOARD_NODE_HEIGHT / 2;
+  const size = boardNodeSize(node);
+  const cx = node.x + size.width / 2;
+  const cy = node.y + size.height / 2;
   const vx = towardX - cx;
   const vy = towardY - cy;
   if (vx === 0 && vy === 0) return { x: cx, y: cy };
   const scale = Math.min(
-    vx === 0 ? Number.POSITIVE_INFINITY : BOARD_NODE_WIDTH / 2 / Math.abs(vx),
-    vy === 0 ? Number.POSITIVE_INFINITY : BOARD_NODE_HEIGHT / 2 / Math.abs(vy),
+    vx === 0 ? Number.POSITIVE_INFINITY : size.width / 2 / Math.abs(vx),
+    vy === 0 ? Number.POSITIVE_INFINITY : size.height / 2 / Math.abs(vy),
   );
   return { x: cx + vx * scale, y: cy + vy * scale };
 }
 
 export function boardEdgeGeometry(from: BoardNodeType, to: BoardNodeType, edge: BoardEdgeType) {
-  const fromCenter = { x: from.x + BOARD_NODE_WIDTH / 2, y: from.y + BOARD_NODE_HEIGHT / 2 };
-  const toCenter = { x: to.x + BOARD_NODE_WIDTH / 2, y: to.y + BOARD_NODE_HEIGHT / 2 };
+  const fromSize = boardNodeSize(from);
+  const toSize = boardNodeSize(to);
+  const fromCenter = { x: from.x + fromSize.width / 2, y: from.y + fromSize.height / 2 };
+  const toCenter = { x: to.x + toSize.width / 2, y: to.y + toSize.height / 2 };
   const start = nodeBorderPoint(from, toCenter.x, toCenter.y);
   const end = nodeBorderPoint(to, fromCenter.x, fromCenter.y);
   const angle = Math.atan2(end.y - start.y, end.x - start.x);

@@ -1,7 +1,12 @@
 import type { BoardContentType } from '@keres/shared';
 import { getEntityAppearance } from '@keres/shared';
 import { boardEdgeGeometry } from './boardEdges';
-import { normalizeBoardCanvas, BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from './boardLayout';
+import {
+  normalizeBoardCanvas,
+  boardNodeSize,
+  BOARD_NOTE_BODY_MAX_LINES,
+  BOARD_NOTE_WIDTH,
+} from './boardLayout';
 import { boardPinAppearanceType } from './boardPinAppearance';
 
 export interface BoardSvgOptions {
@@ -21,6 +26,51 @@ export interface BoardSvgOptions {
 }
 
 const HEADER = 56;
+/** Approximate width of a character at 11px - only to size a body line. */
+const NOTE_BODY_CHAR_WIDTH = 6.2;
+const NOTE_BODY_CHARS_PER_LINE = Math.floor(
+  (BOARD_NOTE_WIDTH - 12 - 8 - 5 - 8) / NOTE_BODY_CHAR_WIDTH,
+);
+
+/**
+ * Breaks a note's body into display lines for the SVG, which has no text wrapping of its own.
+ * Paragraph breaks (`\n`) are preserved - unlike the shared `wrapLabel`, which collapses them.
+ */
+export function wrapNoteBody(
+  body: string,
+  maxLines = BOARD_NOTE_BODY_MAX_LINES,
+  maxChars = NOTE_BODY_CHARS_PER_LINE,
+): string[] {
+  const all: string[] = [];
+  for (const paragraph of (body ?? '').split('\n')) {
+    const words = paragraph.split(' ');
+    let current = '';
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (candidate.length <= maxChars) {
+        current = candidate;
+        continue;
+      }
+      if (current) {
+        all.push(current);
+        current = '';
+      }
+      // A single word longer than the whole line is cut by force.
+      if (word.length > maxChars) {
+        all.push(word.slice(0, maxChars));
+      } else {
+        current = word;
+      }
+    }
+    if (current) all.push(current);
+  }
+  const truncated = all.length > maxLines;
+  const lines = all.slice(0, maxLines);
+  if (truncated && lines.length > 0) {
+    lines[lines.length - 1] = `${lines[lines.length - 1]}…`;
+  }
+  return lines;
+}
 
 export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptions): string {
   // Nodes are free to be dragged anywhere; the drawing is normalised so the whole board - even a
@@ -55,11 +105,20 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
       const title = escapeXml(meta?.title ?? node.kind);
       const typeLabel = escapeXml(meta?.typeLabel ?? '');
       const fill = node.kind === 'note' ? options.colors.surface : options.colors.surface;
+      const size = boardNodeSize(node);
+      const bodyLines =
+        node.kind === 'note' && node.body
+          ? wrapNoteBody(node.body, BOARD_NOTE_BODY_MAX_LINES, NOTE_BODY_CHARS_PER_LINE)
+          : [];
       return [
-        `<rect x="${round(node.x)}" y="${round(node.y)}" width="${BOARD_NODE_WIDTH}" height="${BOARD_NODE_HEIGHT}" rx="10" fill="${fill}" stroke="${options.colors.border}"/>`,
-        `<rect x="${round(node.x)}" y="${round(node.y)}" width="5" height="${BOARD_NODE_HEIGHT}" rx="2" fill="${accent}"/>`,
+        `<rect x="${round(node.x)}" y="${round(node.y)}" width="${size.width}" height="${size.height}" rx="10" fill="${fill}" stroke="${options.colors.border}"/>`,
+        `<rect x="${round(node.x)}" y="${round(node.y)}" width="5" height="${size.height}" rx="2" fill="${accent}"/>`,
         `<text x="${round(node.x + 14)}" y="${round(node.y + 28)}" font-size="12" font-weight="600" fill="${options.colors.text}">${title}</text>`,
         `<text x="${round(node.x + 14)}" y="${round(node.y + 46)}" font-size="10" fill="${options.colors.textSecondary}">${typeLabel}</text>`,
+        ...bodyLines.map(
+          (line, index) =>
+            `<text x="${round(node.x + 14)}" y="${round(node.y + 64 + index * 13)}" font-size="11" fill="${options.colors.text}">${escapeXml(line)}</text>`,
+        ),
       ].join('');
     }),
     ...edges.map((edge) => {

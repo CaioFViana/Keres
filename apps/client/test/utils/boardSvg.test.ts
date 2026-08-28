@@ -2,7 +2,11 @@
  * @jest-environment node
  */
 import { renderBoardSvg } from '../../src/utils/boardSvg';
-import { BOARD_CANVAS_PADDING } from '../../src/utils/boardLayout';
+import {
+  BOARD_CANVAS_PADDING,
+  BOARD_NODE_WIDTH,
+  BOARD_NOTE_WIDTH,
+} from '../../src/utils/boardLayout';
 
 const content = {
   nodes: [
@@ -66,4 +70,96 @@ it('brings a node dragged outside the drawing back inside the exported canvas', 
   // And the node is never drawn at its raw negative coordinates.
   expect(svg).not.toContain('x="-300"');
   expect(svg).not.toContain('y="-200"');
+});
+
+it('renders the note body text inside the exported note card', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Reunião',
+          body: 'Frodo e Sam encontram Gandalf na estrada.',
+        },
+      ],
+      edges: [],
+    },
+    options,
+  );
+
+  // The body wraps to fit the note's width - both lines are present.
+  expect(svg).toContain('Frodo e Sam encontram Gandalf');
+  expect(svg).toContain('na estrada.');
+  expect(svg).toContain(`width="${BOARD_NOTE_WIDTH}"`);
+});
+
+it('caps the note body at ten lines', () => {
+  const body = Array.from({ length: 12 }, (_, index) => `linha ${index + 1}`).join('\n');
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Reunião',
+          body,
+        },
+      ],
+      edges: [],
+    },
+    options,
+  );
+
+  expect(svg).toContain('linha 1');
+  expect(svg).toContain('linha 10');
+  expect(svg).not.toContain('linha 11');
+});
+
+it('truncates an overflowing note body with an ellipsis', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Reunião',
+          body: 'palavra '.repeat(60).trim(),
+        },
+      ],
+      edges: [],
+    },
+    options,
+  );
+
+  expect(svg).toContain('…');
+});
+
+it('keeps entity pins at the standard size', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity' as const,
+          x: 40,
+          y: 40,
+          entityType: 'Character',
+          entityId: 'char-1',
+          labelAtPin: 'Frodo',
+        },
+      ],
+      edges: [],
+    },
+    options,
+  );
+
+  expect(svg).toContain(`width="${BOARD_NODE_WIDTH}"`);
+  expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
 });

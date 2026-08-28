@@ -4,7 +4,7 @@ import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { boardPinAppearanceType } from '../../../utils/boardPinAppearance';
-import { BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from '../../../utils/boardLayout';
+import { boardNodeSize, BOARD_NOTE_BODY_MAX_LINES } from '../../../utils/boardLayout';
 
 const DRAG_THRESHOLD = 5;
 
@@ -105,6 +105,8 @@ const BoardNodeView: React.FC<Props> = ({
 
   if (!dragging.current) origin.current = { x: node.x, y: node.y };
 
+  const size = boardNodeSize(node);
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -112,8 +114,8 @@ const BoardNodeView: React.FC<Props> = ({
           position: 'absolute',
           left: node.x,
           top: node.y,
-          width: BOARD_NODE_WIDTH,
-          height: BOARD_NODE_HEIGHT,
+          width: size.width,
+          height: size.height,
           borderRadius: 10,
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -138,8 +140,9 @@ const BoardNodeView: React.FC<Props> = ({
         row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
         title: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.text },
         typeLabel: { fontSize: 10, fontWeight: '600', marginTop: 3, textTransform: 'uppercase' },
+        body: { fontSize: 11, color: colors.text, marginTop: 6, lineHeight: 14 },
       }),
-    [colors, ghost, node, selected],
+    [colors, ghost, node, selected, size],
   );
 
   const appearance = getEntityAppearance(
@@ -166,6 +169,15 @@ const BoardNodeView: React.FC<Props> = ({
         >
           {typeLabel}
         </Text>
+        {node.kind === 'note' && !!node.body && (
+          <Text
+            style={styles.body}
+            numberOfLines={BOARD_NOTE_BODY_MAX_LINES}
+            selectable={false}
+          >
+            {node.body}
+          </Text>
+        )}
       </View>
     </View>
   );

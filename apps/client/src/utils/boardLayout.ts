@@ -2,8 +2,19 @@ import type { BoardContentType, BoardNodeType } from '@keres/shared';
 
 export const BOARD_NODE_WIDTH = 148;
 export const BOARD_NODE_HEIGHT = 86;
+/** Notes carry up to `BOARD_NOTE_BODY_MAX_LINES` lines of body text, so they get a bigger card. */
+export const BOARD_NOTE_WIDTH = 220;
+export const BOARD_NOTE_HEIGHT = 200;
+export const BOARD_NOTE_BODY_MAX_LINES = 10;
 export const BOARD_CANVAS_PADDING = 240;
 export const BOARD_CANVAS_MIN = 720;
+
+/** Size of a node's card: notes are larger because they show their body text. */
+export function boardNodeSize(node: BoardNodeType): { width: number; height: number } {
+  return node.kind === 'note'
+    ? { width: BOARD_NOTE_WIDTH, height: BOARD_NOTE_HEIGHT }
+    : { width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT };
+}
 
 export function boardCanvasSize(
   nodes: BoardNodeType[],
@@ -16,8 +27,9 @@ export function boardCanvasSize(
   let maxX = 0;
   let maxY = 0;
   for (const node of nodes) {
-    maxX = Math.max(maxX, node.x + BOARD_NODE_WIDTH);
-    maxY = Math.max(maxY, node.y + BOARD_NODE_HEIGHT);
+    const size = boardNodeSize(node);
+    maxX = Math.max(maxX, node.x + size.width);
+    maxY = Math.max(maxY, node.y + size.height);
   }
   return {
     width: Math.max(minWidth, maxX + BOARD_CANVAS_PADDING),
@@ -47,10 +59,11 @@ export function normalizeBoardCanvas(
   let maxX = Number.NEGATIVE_INFINITY;
   let maxY = Number.NEGATIVE_INFINITY;
   for (const node of nodes) {
+    const size = boardNodeSize(node);
     minX = Math.min(minX, node.x);
     minY = Math.min(minY, node.y);
-    maxX = Math.max(maxX, node.x + BOARD_NODE_WIDTH);
-    maxY = Math.max(maxY, node.y + BOARD_NODE_HEIGHT);
+    maxX = Math.max(maxX, node.x + size.width);
+    maxY = Math.max(maxY, node.y + size.height);
   }
   return {
     offsetX: BOARD_CANVAS_PADDING - minX,

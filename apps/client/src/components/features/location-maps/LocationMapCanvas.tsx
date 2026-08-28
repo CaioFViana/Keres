@@ -144,6 +144,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             uri={imageUris[image.galleryId] ?? null}
             selected={selectedImageId === image.id}
             scale={scale}
+            locked={image.locked}
             onSelect={() => onSelectImage(image.id)}
             onMove={(x, y) => onMoveImage(image.id, x, y)}
             onDragStart={() => setChildDragging(true)}

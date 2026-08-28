@@ -909,6 +909,8 @@
   "location_map_export_success": "Mapa salvo como {{fileName}}.",
   "location_map_grow_image": "Aumentar imagem",
   "location_map_image_size_hint": "Toque e arraste a imagem para posicioná-la. Use + e − para ajustar o tamanho.",
+  "location_map_lock_hint_locked": "Imagem travada: toque e arraste sobre ela para mover o mapa inteiro.",
+  "location_map_lock_image": "Travar imagem",
   "location_map_list_empty": "Nenhum mapa ainda. Crie um para desenhar seus locais sobre imagens.",
   "location_map_list_title": "Mapas",
   "location_map_load_failed": "Não foi possível carregar os mapas.",

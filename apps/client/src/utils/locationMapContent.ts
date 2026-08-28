@@ -30,6 +30,7 @@ export function appendImagesToMap(
           y: 80 + (index % 4) * 24,
           width: entry.width,
           height: entry.height,
+          locked: false,
         },
       ],
     };

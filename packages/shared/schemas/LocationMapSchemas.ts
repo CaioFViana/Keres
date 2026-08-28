@@ -44,6 +44,8 @@ const LocationMapImageSchema = z.object({
   y: z.number().finite(),
   width: z.number().finite().positive(),
   height: z.number().finite().positive(),
+  /** When locked, touching/dragging the image moves the whole canvas instead of the image. */
+  locked: z.boolean().default(false),
 });
 
 const LocationMapNodeSchema = z.object({

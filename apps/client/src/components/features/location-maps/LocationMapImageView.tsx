@@ -10,6 +10,8 @@ interface Props {
   uri: string | null;
   selected: boolean;
   scale: number;
+  /** When locked, dragging on the image pans the canvas instead of moving the image. */
+  locked: boolean;
   onSelect: () => void;
   onMove: (x: number, y: number) => void;
   onDragStart: () => void;
@@ -19,12 +21,17 @@ interface Props {
 /**
  * An image base of the map: draggable and tappable (selecting it lets the person resize/remove it
  * through the image sheet). The drag responder is the same pattern as the board's pin.
+ *
+ * When locked, the image still claims the touch's start so a tap selects it, but it never starts a
+ * child drag and never moves: the canvas's pan responder steals the gesture on movement, so
+ * touching a locked image slides the whole map.
  */
 const LocationMapImageView: React.FC<Props> = ({
   image,
   uri,
   selected,
   scale,
+  locked,
   onSelect,
   onMove,
   onDragStart,
@@ -37,6 +44,8 @@ const LocationMapImageView: React.FC<Props> = ({
   position.current = { x: image.x, y: image.y };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
+  const lockedRef = useRef(locked);
+  lockedRef.current = locked;
   const handlers = useRef({ onSelect, onMove, onDragStart, onDragEnd });
   handlers.current = { onSelect, onMove, onDragStart, onDragEnd };
 
@@ -45,17 +54,17 @@ const LocationMapImageView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => true,
         onStartShouldSetPanResponder: () => {
-          handlers.current.onDragStart();
+          if (!lockedRef.current) handlers.current.onDragStart();
           return true;
         },
         onMoveShouldSetPanResponderCapture: () => dragging.current,
         onMoveShouldSetPanResponder: (_event, gesture) =>
-          Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
-        onPanResponderTerminationRequest: () => false,
+          !lockedRef.current && Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
+        onPanResponderTerminationRequest: () => lockedRef.current,
         onPanResponderGrant: (event) => {
           dragging.current = false;
           origin.current = { x: position.current.x, y: position.current.y };
-          handlers.current.onDragStart();
+          if (!lockedRef.current) handlers.current.onDragStart();
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             setPointerCapture?: (id: number) => void;
@@ -63,6 +72,7 @@ const LocationMapImageView: React.FC<Props> = ({
           if (pointerId != null) target?.setPointerCapture?.(pointerId);
         },
         onPanResponderMove: (_event, gesture) => {
+          if (lockedRef.current) return;
           if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
           dragging.current = true;
           const zoom = Math.max(scaleRef.current, 0.01);
@@ -77,7 +87,7 @@ const LocationMapImageView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd();
+          if (!lockedRef.current) handlers.current.onDragEnd();
           if (!dragging.current) handlers.current.onSelect();
           dragging.current = false;
         },
@@ -87,7 +97,7 @@ const LocationMapImageView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd();
+          if (!lockedRef.current) handlers.current.onDragEnd();
           dragging.current = false;
         },
       }),

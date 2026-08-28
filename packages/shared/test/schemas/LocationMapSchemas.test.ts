@@ -44,6 +44,14 @@ describe('LocationMapContentSchema', () => {
     expect(content.nodes[0].color).toBe('#8BC34A');
   });
 
+  it('defaults an image locked flag so older maps without it keep parsing', () => {
+    const content = LocationMapContentSchema.parse({
+      images: [{ id: imageId, galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240 }],
+      nodes: [],
+    });
+    expect(content.images[0].locked).toBe(false);
+  });
+
   it('rejects duplicate image ids', () => {
     expect(() =>
       LocationMapContentSchema.parse({
@@ -82,8 +90,8 @@ describe('remapLocationMapContent', () => {
   it('rewrites gallery and location ids, keeping local ids', () => {
     const remapped = remapLocationMapContent(
       {
-        images: [{ id: imageId, galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240 }],
-        nodes: [{ id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin' }],
+        images: [{ id: imageId, galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240, locked: false }],
+        nodes: [{ id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin', color: '#8BC34A' }],
       },
       (id) => `${id}-copy`,
     );

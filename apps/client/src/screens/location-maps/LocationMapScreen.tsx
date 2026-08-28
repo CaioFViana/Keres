@@ -417,6 +417,16 @@ const LocationMapScreen = () => {
     setSelectedImageId(null);
   }, [selectedImageId]);
 
+  const handleToggleImageLock = useCallback(() => {
+    if (!selectedImageId) return;
+    setContent((current) => ({
+      ...current,
+      images: current.images.map((image) =>
+        image.id === selectedImageId ? { ...image, locked: !image.locked } : image,
+      ),
+    }));
+  }, [selectedImageId]);
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     tools: {
@@ -507,6 +517,8 @@ const LocationMapScreen = () => {
           onClose={() => setSelectedImageId(null)}
           onResize={handleResizeImage}
           onRemove={handleRemoveImage}
+          locked={selectedImage.locked}
+          onToggleLock={handleToggleImageLock}
         />
       )}
       {selectedNode && (

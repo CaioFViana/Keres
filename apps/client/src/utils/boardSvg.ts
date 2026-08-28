@@ -1,7 +1,7 @@
 import type { BoardContentType } from '@keres/shared';
 import { getEntityAppearance } from '@keres/shared';
 import { boardEdgeGeometry } from './boardEdges';
-import { boardCanvasSize, BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from './boardLayout';
+import { normalizeBoardCanvas, BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from './boardLayout';
 import { boardPinAppearanceType } from './boardPinAppearance';
 
 export interface BoardSvgOptions {
@@ -23,10 +23,16 @@ export interface BoardSvgOptions {
 const HEADER = 56;
 
 export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptions): string {
-  const size = boardCanvasSize(content.nodes);
-  const width = size.width;
-  const height = size.height + HEADER;
-  const nodesById = new Map(content.nodes.map((node) => [node.id, node]));
+  // Nodes are free to be dragged anywhere; the drawing is normalised so the whole board - even a
+  // pin dragged to negative coordinates - always lands inside the exported canvas.
+  const { offsetX, offsetY, width, height } = normalizeBoardCanvas(content.nodes);
+  const shiftedNodes = content.nodes.map((node) => ({
+    ...node,
+    x: node.x + offsetX,
+    y: node.y + offsetY,
+  }));
+  const totalHeight = height + HEADER;
+  const nodesById = new Map(shiftedNodes.map((node) => [node.id, node]));
 
   const edges = content.edges.flatMap((edge) => {
     const from = nodesById.get(edge.from);
@@ -36,11 +42,11 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
   });
 
   const body = [
-    `<rect x="0" y="0" width="${round(width)}" height="${round(height)}" fill="${options.colors.background}"/>`,
+    `<rect x="0" y="0" width="${round(width)}" height="${round(totalHeight)}" fill="${options.colors.background}"/>`,
     `<text x="24" y="28" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
     `<text x="24" y="46" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
     `<g transform="translate(0 ${HEADER})">`,
-    ...content.nodes.map((node) => {
+    ...shiftedNodes.map((node) => {
       const meta = options.titles[node.id];
       const accent = getEntityAppearance(
         meta?.appearanceType ??
@@ -75,7 +81,7 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width)}" height="${round(height)}" viewBox="0 0 ${round(width)} ${round(height)}" font-family="Helvetica, Arial, sans-serif">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width)}" height="${round(totalHeight)}" viewBox="0 0 ${round(width)} ${round(totalHeight)}" font-family="Helvetica, Arial, sans-serif">`,
     `<title>${escapeXml(options.title)}</title>`,
     body,
     '</svg>',

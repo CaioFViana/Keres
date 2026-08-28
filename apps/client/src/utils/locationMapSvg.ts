@@ -1,5 +1,7 @@
 import type { LocationMapContentType } from '@keres/shared';
 import type { LocationMapConnection, LocationMapContains } from '@/src/components/features/location-maps/LocationMapCanvas';
+import { interpolateColor, pointOnCircleBoundary } from './locationMapColors';
+import { LOCATION_MAP_NODE_SIZE } from './locationMapLayout';
 
 export interface LocationMapSvgOptions {
   title: string;
@@ -13,38 +15,19 @@ export interface LocationMapSvgOptions {
   };
   /** Display names of the locations, keyed by location id. */
   nodeNames: Record<string, string>;
-  /** Real `connected_to` relations, drawn as dashed lines. */
+  /** Real `connected_to` relations, drawn as solid lines. */
   connections: LocationMapConnection[];
-  /** Real `contains` relations, drawn as directional sawtooth arrows (parent -> child). */
+  /** Real `contains` relations, drawn as dashed directional arrows (parent -> child). */
   contains: LocationMapContains[];
   /** Data URIs of the image bases, keyed by gallery id - embedded in the exported file. */
   imageUris?: Record<string, string>;
 }
 
 /** A map point's icon is an Ionicons glyph the SVG cannot render without the font - a coloured circle carries the identity instead. */
-const NODE_RADIUS = 22;
-const NODE_LABEL_Y = 8;
-const CONNECTED_COLOR = '#9E9E9E';
-const CONTAINS_COLOR = '#8BC34A';
-const SAWTOOTH_AMPLITUDE = 7;
-const SAWTOOTH_SEGMENTS = 6;
+const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
+const LINE_END_MARGIN = 3;
+const CONTAINS_DASH = '6 4';
 const PADDING = 40;
-
-/** A sawtooth (zigzag) path between two points - the visual of a `contains` relation. */
-function sawtoothPath(ax: number, ay: number, bx: number, by: number): string {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const length = Math.hypot(dx, dy) || 1;
-  const nx = -dy / length;
-  const ny = dx / length;
-  let d = `M ${round(ax)} ${round(ay)}`;
-  for (let index = 1; index < SAWTOOTH_SEGMENTS; index += 1) {
-    const t = index / SAWTOOTH_SEGMENTS;
-    const side = index % 2 === 1 ? 1 : -1;
-    d += ` L ${round(ax + dx * t + nx * SAWTOOTH_AMPLITUDE * side)} ${round(ay + dy * t + ny * SAWTOOTH_AMPLITUDE * side)}`;
-  }
-  return `${d} L ${round(bx)} ${round(by)}`;
-}
 
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number): string {
@@ -75,14 +58,14 @@ export function renderLocationMapSvg(
   }
   for (const node of content.nodes) {
     maxX = Math.max(maxX, node.x + NODE_RADIUS * 2);
-    maxY = Math.max(maxY, node.y + NODE_RADIUS * 2 + NODE_LABEL_Y + 10);
+    maxY = Math.max(maxY, node.y + NODE_RADIUS * 2 + 18);
   }
   const width = Math.max(560, maxX + PADDING * 2);
   const height = Math.max(400, maxY + PADDING * 2);
 
-  const byLocation = new Map<string, { x: number; y: number }>();
+  const byLocation = new Map<string, { x: number; y: number; color: string }>();
   for (const node of content.nodes) {
-    byLocation.set(node.locationId, { x: node.x, y: node.y });
+    byLocation.set(node.locationId, { x: node.x, y: node.y, color: node.color });
   }
 
   const imageElements = content.images.map((image) => {
@@ -101,7 +84,9 @@ export function renderLocationMapSvg(
     .map((connection) => {
       const a = byLocation.get(connection.locationAId)!;
       const b = byLocation.get(connection.locationBId)!;
-      return `<path d="M ${round(a.x)} ${round(a.y)} L ${round(b.x)} ${round(b.y)}" fill="none" stroke="${CONNECTED_COLOR}" stroke-width="2" stroke-dasharray="6 4" stroke-opacity="0.8"/>`;
+      const start = pointOnCircleBoundary(a, b, NODE_RADIUS + LINE_END_MARGIN);
+      const end = pointOnCircleBoundary(b, a, NODE_RADIUS + LINE_END_MARGIN);
+      return `<path d="M ${round(start.x)} ${round(start.y)} L ${round(end.x)} ${round(end.y)}" fill="none" stroke="${interpolateColor(a.color, b.color)}" stroke-width="2" stroke-opacity="0.85"/>`;
     });
 
   const containsElements = options.contains
@@ -112,10 +97,13 @@ export function renderLocationMapSvg(
     .flatMap((relation) => {
       const from = byLocation.get(relation.parentLocationId)!;
       const to = byLocation.get(relation.childLocationId)!;
-      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
+      const tip = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
+      const angle = Math.atan2(tip.y - start.y, tip.x - start.x);
+      const color = interpolateColor(from.color, to.color);
       return [
-        `<path d="${sawtoothPath(from.x, from.y, to.x, to.y)}" fill="none" stroke="${CONTAINS_COLOR}" stroke-width="2" stroke-opacity="0.9"/>`,
-        `<polygon points="${arrowHeadPoints(to.x, to.y, angle)}" fill="${CONTAINS_COLOR}"/>`,
+        `<path d="M ${round(start.x)} ${round(start.y)} L ${round(tip.x)} ${round(tip.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
+        `<polygon points="${arrowHeadPoints(tip.x, tip.y, angle)}" fill="${color}"/>`,
       ];
     });
 
@@ -123,7 +111,7 @@ export function renderLocationMapSvg(
     const name = escapeXml(options.nodeNames[node.locationId] ?? node.locationId);
     return [
       `<circle cx="${round(node.x)}" cy="${round(node.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(node.color)}" stroke-width="2"/>`,
-      `<text x="${round(node.x)}" y="${round(node.y + NODE_LABEL_Y)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+      `<text x="${round(node.x)}" y="${round(node.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
 

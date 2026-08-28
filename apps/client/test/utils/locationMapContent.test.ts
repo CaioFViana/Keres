@@ -28,10 +28,19 @@ it('appends location points with the default icon and colour', () => {
   expect(next.nodes[0].color).toBe('#8BC34A');
 });
 
+const relationBase = {
+  storyId: 'story-1',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+};
+
 const relations = [
-  { id: 'r1', locationAId: 'a', locationBId: 'b', relationType: 'connected_to' as const },
-  { id: 'r2', locationAId: 'a', locationBId: 'c', relationType: 'contains' as const },
-  { id: 'r3', locationAId: 'a', locationBId: 'd', relationType: 'connected_to' as const },
+  { id: 'r1', locationAId: 'a', locationBId: 'b', relationType: 'connected_to' as const, ...relationBase },
+  { id: 'r2', locationAId: 'a', locationBId: 'c', relationType: 'contains' as const, ...relationBase },
+  { id: 'r3', locationAId: 'a', locationBId: 'd', relationType: 'connected_to' as const, ...relationBase },
 ];
 
 it('derives only the relations between locations on the map', () => {

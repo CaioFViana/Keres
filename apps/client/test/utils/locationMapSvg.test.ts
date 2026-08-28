@@ -43,12 +43,20 @@ it('embeds an image base as a data URI when provided', () => {
   expect(svg).toContain('<image href="data:image/png;base64,AAAA"');
 });
 
-it('draws a dashed line for connected_to and a sawtooth arrow for contains', () => {
+it('draws connected_to as a solid line and contains as a dashed arrow', () => {
   const svg = renderLocationMapSvg(content, options);
 
+  // The connected_to line is solid (no dash array); the contains line is dashed with an arrow.
+  expect(svg).toContain('stroke-opacity="0.85"/>');
   expect(svg).toContain('stroke-dasharray="6 4"');
   expect(svg).toContain('<polygon');
-  expect(svg).toContain('L 500 300');
+});
+
+it('colours relation lines halfway between the two nodes', () => {
+  const svg = renderLocationMapSvg(content, options);
+
+  // #8BC34A and #F44336 interpolate to #c08340.
+  expect(svg).toContain('stroke="#c08340"');
 });
 
 it('draws every node as a coloured circle with its name', () => {

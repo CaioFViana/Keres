@@ -4,7 +4,8 @@ import Svg, { Path, Polygon } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
-import { locationMapCanvasSize } from '../../../utils/locationMapLayout';
+import { interpolateColor, pointOnCircleBoundary } from '../../../utils/locationMapColors';
+import { locationMapCanvasSize, LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
@@ -27,9 +28,9 @@ interface Props {
   imageUris: Record<string, string | null>;
   /** Display names of the locations, keyed by location id. */
   nodeNames: Record<string, string>;
-  /** Real `connected_to` relations between locations, drawn as lines. */
+  /** Real `connected_to` relations between locations, drawn as solid lines. */
   connections: LocationMapConnection[];
-  /** Real `contains` relations between locations, drawn as directional sawtooth arrows. */
+  /** Real `contains` relations between locations, drawn as dashed directional arrows. */
   contains: LocationMapContains[];
   selectedImageId: string | null;
   selectedNodeId: string | null;
@@ -39,26 +40,10 @@ interface Props {
   onMoveNode: (nodeId: string, x: number, y: number) => void;
 }
 
-const CONNECTED_COLOR = '#9E9E9E';
-const CONTAINS_COLOR = '#8BC34A';
-const SAWTOOTH_AMPLITUDE = 7;
-const SAWTOOTH_SEGMENTS = 6;
-
-/** A sawtooth (zigzag) path between two points - the visual of a `contains` relation. */
-function sawtoothPath(ax: number, ay: number, bx: number, by: number): string {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const length = Math.hypot(dx, dy) || 1;
-  const nx = -dy / length;
-  const ny = dx / length;
-  let d = `M ${ax} ${ay}`;
-  for (let index = 1; index < SAWTOOTH_SEGMENTS; index += 1) {
-    const t = index / SAWTOOTH_SEGMENTS;
-    const side = index % 2 === 1 ? 1 : -1;
-    d += ` L ${ax + dx * t + nx * SAWTOOTH_AMPLITUDE * side} ${ay + dy * t + ny * SAWTOOTH_AMPLITUDE * side}`;
-  }
-  return `${d} L ${bx} ${by}`;
-}
+const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
+/** How far the line's tip stays from the node's border - the arrow must not be buried under it. */
+const LINE_END_MARGIN = 3;
+const CONTAINS_DASH = '6 4';
 
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number): string {
@@ -95,13 +80,15 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     const scale = getTransform().scale;
 
     const byLocation = useMemo(() => {
-      const map = new Map<string, { x: number; y: number }>();
+      const map = new Map<string, { x: number; y: number; color: string }>();
       for (const node of content.nodes) {
-        map.set(node.locationId, { x: node.x, y: node.y });
+        map.set(node.locationId, { x: node.x, y: node.y, color: node.color });
       }
       return map;
     }, [content.nodes]);
 
+    // `connected_to` is a solid line between the two nodes' borders, coloured halfway between the
+    // two nodes' colours.
     const connectionPaths = useMemo(
       () =>
         connections
@@ -112,11 +99,19 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           .map((connection) => {
             const a = byLocation.get(connection.locationAId)!;
             const b = byLocation.get(connection.locationBId)!;
-            return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+            const start = pointOnCircleBoundary(a, b, NODE_RADIUS + LINE_END_MARGIN);
+            const end = pointOnCircleBoundary(b, a, NODE_RADIUS + LINE_END_MARGIN);
+            return {
+              id: `${connection.locationAId}-${connection.locationBId}`,
+              path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+              color: interpolateColor(a.color, b.color),
+            };
           }),
       [byLocation, connections],
     );
 
+    // `contains` is a dashed arrow from the parent's border to the child's border, so the tip is
+    // visible instead of hidden under the target node.
     const containsArrows = useMemo(
       () =>
         contains
@@ -127,10 +122,14 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           .map((relation) => {
             const from = byLocation.get(relation.parentLocationId)!;
             const to = byLocation.get(relation.childLocationId)!;
-            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
+            const tip = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
+            const angle = Math.atan2(tip.y - start.y, tip.x - start.x);
             return {
-              path: sawtoothPath(from.x, from.y, to.x, to.y),
-              arrow: arrowHeadPoints(to.x, to.y, angle),
+              id: `${relation.parentLocationId}-${relation.childLocationId}`,
+              path: `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`,
+              arrow: arrowHeadPoints(tip.x, tip.y, angle),
+              color: interpolateColor(from.color, to.color),
             };
           }),
       [byLocation, contains],
@@ -157,27 +156,27 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           pointerEvents="none"
           style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0 }}
         >
-          {connectionPaths.map((path, index) => (
+          {connectionPaths.map((connection) => (
             <Path
-              key={`connection-${index}`}
-              d={path}
+              key={connection.id}
+              d={connection.path}
               fill="none"
-              stroke={CONNECTED_COLOR}
+              stroke={connection.color}
               strokeWidth={2}
-              strokeDasharray="6 4"
-              strokeOpacity={0.8}
+              strokeOpacity={0.85}
             />
           ))}
-          {containsArrows.map((arrow, index) => (
-            <React.Fragment key={`contains-${index}`}>
+          {containsArrows.map((arrow) => (
+            <React.Fragment key={arrow.id}>
               <Path
                 d={arrow.path}
                 fill="none"
-                stroke={CONTAINS_COLOR}
+                stroke={arrow.color}
                 strokeWidth={2}
-                strokeOpacity={0.9}
+                strokeDasharray={CONTAINS_DASH}
+                strokeOpacity={0.85}
               />
-              <Polygon points={arrow.arrow} fill={CONTAINS_COLOR} />
+              <Polygon points={arrow.arrow} fill={arrow.color} />
             </React.Fragment>
           ))}
         </Svg>

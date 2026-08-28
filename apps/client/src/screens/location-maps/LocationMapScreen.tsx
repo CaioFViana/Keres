@@ -15,13 +15,12 @@ import LocationMapCanvas, {
   type LocationMapCanvasHandle,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import LocationMapImageSheet from '@/src/components/features/location-maps/LocationMapImageSheet';
-import LocationMapNodeSheet, {
-  type LocationMapNodeConnection,
-} from '@/src/components/features/location-maps/LocationMapNodeSheet';
+import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
 import type { GallerySelect, LocationMapSelect, LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
@@ -43,7 +42,6 @@ import {
 } from '../../utils/locationMapLayout';
 import { appendImagesToMap, appendLocationsToMap } from '../../utils/locationMapContent';
 import { bytesToBase64, imageSizeOf } from '../../utils/locationMapMedia';
-import { deriveConnections, deriveContains } from '../../utils/locationMapRelations';
 import { renderLocationMapSvg } from '../../utils/locationMapSvg';
 import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { setDocumentTitle } from '../../utils/documentTitle';
@@ -249,9 +247,37 @@ const LocationMapScreen = () => {
     return next;
   }, [content.nodes, locationNameById]);
 
-  const connections = useMemo(() => deriveConnections(relations, content), [relations, content]);
+  const selectedNode = useMemo(
+    () => content.nodes.find((node) => node.id === selectedNodeId) ?? null,
+    [content.nodes, selectedNodeId],
+  );
 
-  const contains = useMemo(() => deriveContains(relations, content), [relations, content]);
+  const {
+    connections,
+    contains,
+    nodeConnections,
+    nodeParent,
+    nodeChildren,
+    parentCandidates,
+    childCandidates,
+    connectCandidates,
+    handleAddConnection,
+    handleRemoveConnection,
+    handleSetParent,
+    handleRemoveParent,
+    handleAddChild,
+    handleRemoveRelation,
+  } = useLocationMapRelations({
+    db,
+    storyId,
+    userId,
+    relations,
+    setRelations,
+    locations,
+    content,
+    selectedNode,
+    notify: showNotification,
+  });
 
   const handleExport = useCallback(async () => {
     if (!map) return;
@@ -361,67 +387,6 @@ const LocationMapScreen = () => {
   const selectedImage = useMemo(
     () => content.images.find((image) => image.id === selectedImageId) ?? null,
     [content.images, selectedImageId],
-  );
-  const selectedNode = useMemo(
-    () => content.nodes.find((node) => node.id === selectedNodeId) ?? null,
-    [content.nodes, selectedNodeId],
-  );
-
-  const nodeConnections = useMemo((): LocationMapNodeConnection[] => {
-    if (!selectedNode) return [];
-    return relations
-      .filter(
-        (relation) =>
-          relation.relationType === 'connected_to' &&
-          (relation.locationAId === selectedNode.locationId || relation.locationBId === selectedNode.locationId),
-      )
-      .map((relation) => {
-        const otherId = relation.locationAId === selectedNode.locationId ? relation.locationBId : relation.locationAId;
-        return {
-          relationId: relation.id,
-          otherLocationId: otherId,
-          otherName: locationNameById.get(otherId) ?? otherId,
-        };
-      });
-  }, [relations, selectedNode, locationNameById]);
-
-  const connectCandidates = useMemo(() => {
-    if (!selectedNode) return [];
-    const connectedIds = new Set(nodeConnections.map((connection) => connection.otherLocationId));
-    connectedIds.add(selectedNode.locationId);
-    return locations
-      .filter((location) => !connectedIds.has(location.id))
-      .map((location) => ({ id: location.id, name: location.name }));
-  }, [locations, nodeConnections, selectedNode]);
-
-  const handleAddConnection = useCallback(
-    async (otherLocationId: string) => {
-      if (!selectedNode || !storyId || !userId) return;
-      try {
-        await createLocationRelationService(db).addConnection(userId, storyId, selectedNode.locationId, otherLocationId);
-        const loadedRelations = await createLocationRelationService(db).getAllRelationsForStory(storyId);
-        setRelations(loadedRelations.filter((x) => !x.isDeleted));
-      } catch (connectionError) {
-        console.log('LocationMapScreen: failed to add connection.', connectionError);
-        showNotification(t('failed_to_save_relation'), 'error');
-      }
-    },
-    [db, selectedNode, showNotification, storyId, t, userId],
-  );
-
-  const handleRemoveConnection = useCallback(
-    async (relationId: string) => {
-      if (!userId || !storyId) return;
-      try {
-        await createLocationRelationService(db).removeRelation(userId, relationId);
-        const loadedRelations = await createLocationRelationService(db).getAllRelationsForStory(storyId);
-        setRelations(loadedRelations.filter((x) => !x.isDeleted));
-      } catch (connectionError) {
-        console.log('LocationMapScreen: failed to remove connection.', connectionError);
-        showNotification(t('failed_to_save_relation'), 'error');
-      }
-    },
-    [db, showNotification, storyId, t, userId],
   );
 
   const handleResizeImage = useCallback(
@@ -549,7 +514,11 @@ const LocationMapScreen = () => {
           name={nodeNames[selectedNode.locationId] ?? selectedNode.locationId}
           icon={selectedNode.icon}
           color={selectedNode.color}
+          parent={nodeParent}
+          childLocations={nodeChildren}
           connections={nodeConnections}
+          parentCandidates={parentCandidates}
+          childCandidates={childCandidates}
           connectCandidates={connectCandidates}
           canEdit={canEdit}
           onChangeIcon={(icon) =>
@@ -564,6 +533,10 @@ const LocationMapScreen = () => {
               nodes: current.nodes.map((node) => (node.id === selectedNode.id ? { ...node, color } : node)),
             }))
           }
+          onSetParent={(locationId) => void handleSetParent(locationId)}
+          onRemoveParent={() => void handleRemoveParent()}
+          onAddChild={(locationId) => void handleAddChild(locationId)}
+          onRemoveRelation={(relationId) => void handleRemoveRelation(relationId)}
           onAddConnection={(locationId) => void handleAddConnection(locationId)}
           onRemoveConnection={(relationId) => void handleRemoveConnection(relationId)}
           onRemoveNode={() => {

@@ -242,6 +242,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                 onChangeText={setNoteBody}
                 placeholder={t('board_note_body')}
                 multiline
+                style={{ minHeight: 140, textAlignVertical: 'top' }}
               />
             </View>
           </>

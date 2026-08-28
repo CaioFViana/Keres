@@ -163,3 +163,25 @@ it('keeps entity pins at the standard size', () => {
   expect(svg).toContain(`width="${BOARD_NODE_WIDTH}"`);
   expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
 });
+
+it('keeps a short note at the standard width', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Reunião',
+          body: 'Curto.',
+        },
+      ],
+      edges: [],
+    },
+    options,
+  );
+
+  expect(svg).toContain(`width="${BOARD_NODE_WIDTH}"`);
+  expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
+});

@@ -4,11 +4,15 @@
 import {
   boardCanvasSize,
   boardNodeSize,
+  noteSizeFor,
   normalizeBoardCanvas,
+  wrapNoteBody,
   BOARD_CANVAS_MIN,
   BOARD_CANVAS_PADDING,
-  BOARD_NOTE_WIDTH,
+  BOARD_NODE_HEIGHT,
+  BOARD_NODE_WIDTH,
   BOARD_NOTE_HEIGHT,
+  BOARD_NOTE_WIDTH,
 } from '../../src/utils/boardLayout';
 
 it('grows the drawing past the minimum when a pin is near the edge', () => {
@@ -29,8 +33,7 @@ it('grows the drawing past the minimum when a pin is near the edge', () => {
   expect(grown.height).toBe(BOARD_CANVAS_MIN);
 });
 
-it('sizes a note card bigger than an entity pin', () => {
-  const note = { id: 'n', kind: 'note' as const, x: 0, y: 0, title: 'N', body: null };
+it('sizes entity pins at the standard size', () => {
   const entity = {
     id: 'e',
     kind: 'entity' as const,
@@ -41,8 +44,37 @@ it('sizes a note card bigger than an entity pin', () => {
     labelAtPin: 'Frodo',
   };
 
-  expect(boardNodeSize(note)).toEqual({ width: BOARD_NOTE_WIDTH, height: BOARD_NOTE_HEIGHT });
-  expect(boardNodeSize(entity).width).toBeLessThan(BOARD_NOTE_WIDTH);
+  expect(boardNodeSize(entity)).toEqual({ width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT });
+});
+
+it('keeps a note with no body at the standard pin size', () => {
+  const note = { id: 'n', kind: 'note' as const, x: 0, y: 0, title: 'Título', body: null };
+
+  expect(boardNodeSize(note)).toEqual({ width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT });
+});
+
+it('grows a note with its body text up to the note maximum', () => {
+  const short = noteSizeFor('Título', 'Uma linha curta.');
+  const long = noteSizeFor(
+    'Título',
+    Array.from({ length: 12 }, () => 'palavra '.repeat(6).trim()).join('\n'),
+  );
+
+  expect(short.width).toBeGreaterThanOrEqual(BOARD_NODE_WIDTH);
+  expect(short.width).toBeLessThanOrEqual(BOARD_NOTE_WIDTH);
+  expect(short.height).toBeGreaterThanOrEqual(BOARD_NODE_HEIGHT);
+  expect(short.height).toBeLessThanOrEqual(BOARD_NOTE_HEIGHT);
+  expect(long.width).toBe(BOARD_NOTE_WIDTH);
+  expect(long.height).toBe(BOARD_NOTE_HEIGHT);
+  expect(long.height).toBeGreaterThan(short.height);
+});
+
+it('wraps a note body into capped lines', () => {
+  const lines = wrapNoteBody('uma palavra longa '.repeat(20).trim(), 10, 31);
+
+  expect(lines.length).toBe(10);
+  expect(lines[lines.length - 1].endsWith('…')).toBe(true);
+  expect(wrapNoteBody('primeira\nsegunda', 10, 31)).toEqual(['primeira', 'segunda']);
 });
 
 describe('normalizeBoardCanvas', () => {

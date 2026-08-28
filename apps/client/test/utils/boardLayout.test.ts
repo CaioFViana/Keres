@@ -59,8 +59,8 @@ it('grows a Gallery pin with an image into a bigger card', () => {
     entityId: 'gal-1',
     labelAtPin: 'Capa',
   };
-  const withImage = { mediaType: 'image', localPath: 'file:///a.png', thumbnailPath: null };
-  const withoutImage = { mediaType: 'document', localPath: null, thumbnailPath: null };
+  const withImage = { mediaType: 'image', mimeType: 'image/png', localPath: 'file:///a.png', thumbnailPath: null };
+  const withoutImage = { mediaType: 'document', mimeType: 'application/pdf', localPath: null, thumbnailPath: null };
 
   expect(boardNodeSize(gallery, withImage)).toEqual({
     width: BOARD_GALLERY_WIDTH,

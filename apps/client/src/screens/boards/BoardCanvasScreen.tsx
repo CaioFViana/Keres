@@ -29,6 +29,7 @@ import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
 import { createBoardService } from '../../services/storymanagement/BoardService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
+import { mediaFileService } from '../../services/MediaFileService';
 import { useBoardDraftStore } from '../../state/boardDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -45,6 +46,16 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
+
+/** Base64 of the bytes, chunked so a large image does not blow the call stack. */
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -141,6 +152,7 @@ const BoardCanvasScreen = () => {
       for (const row of rows) {
         next[row.id] = {
           mediaType: row.mediaType,
+          mimeType: row.mimeType,
           localPath: row.localPath,
           thumbnailPath: row.thumbnailPath ?? null,
         };
@@ -267,6 +279,23 @@ const BoardCanvasScreen = () => {
     if (!selectedStory) return;
     setExporting(true);
     try {
+      // The exported SVG is standalone, so each gallery pin's picture is embedded as a data URI.
+      // Only the pinned galleries are read - a story's whole gallery can be large.
+      const galleryImages: Record<string, string> = {};
+      for (const node of content.nodes) {
+        if (node.kind !== 'entity' || node.entityType !== 'Gallery') continue;
+        const media = galleryMediaById[node.entityId];
+        if (!media) continue;
+        const path = media.mediaType === 'image' ? media.localPath : media.thumbnailPath;
+        if (!path) continue;
+        try {
+          const bytes = await mediaFileService.readBytes(path);
+          galleryImages[node.entityId] = `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
+        } catch (readError) {
+          console.log('BoardCanvasScreen: failed to read gallery image for export.', readError);
+        }
+      }
+
       const svg = renderBoardSvg(content, {
         title: board?.name ?? t('boards_title'),
         subtitle: t('board_export_subtitle', {
@@ -283,6 +312,7 @@ const BoardCanvasScreen = () => {
         },
         titles,
         galleryMediaById,
+        galleryImages,
       });
       const result = await deliverSvgMap(
         svg,

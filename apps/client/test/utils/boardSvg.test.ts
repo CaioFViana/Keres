@@ -205,14 +205,103 @@ it('grows a Gallery pin with an image into a bigger card with a picture placehol
     {
       ...options,
       galleryMediaById: {
-        'gal-1': { mediaType: 'image', localPath: 'file:///a.png', thumbnailPath: null },
+        'gal-1': { mediaType: 'image', mimeType: 'image/png', localPath: 'file:///a.png', thumbnailPath: null },
       },
     },
   );
 
   expect(svg).toContain(`width="${BOARD_NOTE_WIDTH}"`);
-  // The standalone SVG does not embed the bytes - a picture placeholder marks the image area.
+  // Without embedded bytes a picture placeholder marks the image area.
   expect(svg).toContain('<circle');
+});
+
+it('embeds a gallery image as a data URI when the caller provides it', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity' as const,
+          x: 40,
+          y: 40,
+          entityType: 'Gallery',
+          entityId: 'gal-1',
+          labelAtPin: 'Capa',
+        },
+      ],
+      edges: [],
+    },
+    {
+      ...options,
+      galleryMediaById: {
+        'gal-1': { mediaType: 'image', mimeType: 'image/png', localPath: 'file:///a.png', thumbnailPath: null },
+      },
+      galleryImages: { 'gal-1': 'data:image/png;base64,AAAA' },
+    },
+  );
+
+  expect(svg).toContain('<image href="data:image/png;base64,AAAA"');
+  expect(svg).not.toContain('<circle');
+});
+
+it('truncates an overly long pin title so it stays inside the card', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Um título absurdamente longo que não cabe no cartão',
+          body: null,
+        },
+      ],
+      edges: [],
+    },
+    {
+      ...options,
+      titles: {
+        '01ABCDEF': {
+          title: 'Um título absurdamente longo que não cabe no cartão',
+          typeLabel: 'Note',
+        },
+      },
+    },
+  );
+
+  expect(svg).toContain('…');
+  expect(svg).not.toContain('não cabe no cartão');
+});
+
+it('gives an edge label an opaque background with a border', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'A',
+          body: null,
+        },
+        {
+          id: '02GHIJKL',
+          kind: 'note' as const,
+          x: 400,
+          y: 40,
+          title: 'B',
+          body: null,
+        },
+      ],
+      edges: [{ id: 'e1', from: '01ABCDEF', to: '02GHIJKL', directed: true, label: 'liga' }],
+    },
+    options,
+  );
+
+  expect(svg).toContain('fill="#ffffff" fill-opacity="0.92" stroke="#cccccc"');
+  expect(svg).toContain('>liga</text>');
 });
 
 it('keeps a Gallery pin without an image at the standard size', () => {
@@ -234,7 +323,7 @@ it('keeps a Gallery pin without an image at the standard size', () => {
     {
       ...options,
       galleryMediaById: {
-        'gal-1': { mediaType: 'document', localPath: null, thumbnailPath: null },
+        'gal-1': { mediaType: 'document', mimeType: 'application/pdf', localPath: null, thumbnailPath: null },
       },
     },
   );

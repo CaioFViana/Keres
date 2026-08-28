@@ -20,6 +20,7 @@ export const BOARD_CANVAS_MIN = 720;
  */
 export interface BoardGalleryMedia {
   mediaType: string;
+  mimeType: string;
   localPath: string | null;
   thumbnailPath: string | null;
 }

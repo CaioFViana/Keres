@@ -1,3 +1,5 @@
+import type { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -115,27 +117,36 @@ export function useBoardPinOptions(storyId: string | undefined) {
   }, [load]);
 
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
-    const groups: { key: BoardPinOption['group']; label: string }[] = [
-      { key: 'character', label: t('character_plural') },
-      { key: 'location', label: t('location_plural') },
-      { key: 'scene', label: t('scene_plural') },
-      { key: 'chapter', label: t('chapter_plural') },
-      { key: 'event', label: t('event_plural') },
-      { key: 'item', label: t('item_plural') },
-      { key: 'note', label: t('note_plural') },
-      { key: 'gallery', label: t('gallery') },
+    const groups: {
+      key: BoardPinOption['group'];
+      label: string;
+      appearanceType: string;
+    }[] = [
+      { key: 'character', label: t('character_plural'), appearanceType: 'Character' },
+      { key: 'location', label: t('location_plural'), appearanceType: 'Location' },
+      { key: 'scene', label: t('scene_plural'), appearanceType: 'Scene' },
+      { key: 'chapter', label: t('chapter_plural'), appearanceType: 'Chapter' },
+      { key: 'event', label: t('event_plural'), appearanceType: 'Event' },
+      { key: 'item', label: t('item_plural'), appearanceType: 'Item' },
+      { key: 'note', label: t('note_plural'), appearanceType: 'Note' },
+      { key: 'gallery', label: t('gallery'), appearanceType: 'Gallery' },
     ];
     return groups
-      .map((group) => ({
-        key: group.key,
-        label: group.label,
-        options: options
-          .filter((option) => option.group === group.key)
-          .map((option) => ({
-            label: option.label,
-            value: encodeBoardPinValue(option.entityType, option.entityId),
-          })),
-      }))
+      .map((group) => {
+        const appearance = getEntityAppearance(group.appearanceType);
+        return {
+          key: group.key,
+          label: group.label,
+          icon: appearance.icon as keyof typeof Ionicons.glyphMap,
+          color: appearance.color,
+          options: options
+            .filter((option) => option.group === group.key)
+            .map((option) => ({
+              label: option.label,
+              value: encodeBoardPinValue(option.entityType, option.entityId),
+            })),
+        };
+      })
       .filter((group) => group.options.length > 0);
   }, [options, t]);
 

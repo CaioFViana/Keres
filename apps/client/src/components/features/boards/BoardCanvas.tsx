@@ -88,15 +88,30 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               />
               {edge.directed && <Polygon points={edge.arrow.points} fill={colors.text} />}
               {!!edge.label && (
-                <SvgText
-                  x={edge.labelX}
-                  y={edge.labelY}
-                  fill={colors.text}
-                  fontSize={11}
-                  textAnchor="middle"
-                >
-                  {edge.label}
-                </SvgText>
+                <React.Fragment>
+                  <SvgText
+                    x={edge.labelX}
+                    y={edge.labelY}
+                    fill={colors.background}
+                    stroke={colors.background}
+                    strokeWidth={4}
+                    fontSize={11}
+                    fontWeight="600"
+                    textAnchor="middle"
+                  >
+                    {edge.label}
+                  </SvgText>
+                  <SvgText
+                    x={edge.labelX}
+                    y={edge.labelY}
+                    fill={colors.text}
+                    fontSize={11}
+                    fontWeight="600"
+                    textAnchor="middle"
+                  >
+                    {edge.label}
+                  </SvgText>
+                </React.Fragment>
               )}
             </React.Fragment>
           ))}

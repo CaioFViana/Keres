@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
+import { getContrastTextColor, getEntityAppearance } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -146,25 +147,23 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   title,
   analysisSummary,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
 
   const tilesData = [
-    { label: t('chapters'), count: chapterCount, icon: 'bookmarks', color: '#F44336' }, // red
-    { label: t('scenes'), count: sceneCount, icon: 'easel', color: '#a13fb3ff' }, // purple
-    { label: t('locations'), count: locationCount, icon: 'map', color: '#8BC34A' }, // light green
-    { label: t('characters'), count: characterCount, icon: 'people', color: '#37afa5ff' }, // light blue
-    { label: t('notes'), count: noteCount, icon: 'document', color: '#FFEB3B' }, // yellow
-    { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#03A9F4' }, // blue
-    { label: t('items'), count: itemCount, icon: 'cube', color: '#795548' }, // brown
-    { label: t('gallery'), count: galleryCount, icon: 'images', color: '#009688' }, // teal
-    { label: t('tags_title'), count: tagCount, icon: 'pricetag', color: '#E91E63' }, // pink
+    { label: t('chapters'), count: chapterCount, ...getEntityAppearance('Chapter') },
+    { label: t('scenes'), count: sceneCount, ...getEntityAppearance('Scene') },
+    { label: t('locations'), count: locationCount, ...getEntityAppearance('Location') },
+    { label: t('characters'), count: characterCount, ...getEntityAppearance('Character') },
+    { label: t('notes'), count: noteCount, ...getEntityAppearance('Note') },
+    { label: t('world_rules'), count: worldRuleCount, ...getEntityAppearance('WorldRule') },
+    { label: t('items'), count: itemCount, ...getEntityAppearance('Item') },
+    { label: t('gallery'), count: galleryCount, ...getEntityAppearance('Gallery') },
+    { label: t('tags_title'), count: tagCount, ...getEntityAppearance('Tag') },
     {
       label: t('custom_attributes'),
       count: customAttributeCount,
-      icon: 'options',
-      color: '#673AB7',
-    }, // deep purple
+      ...getEntityAppearance('StorySchemaField'),
+    },
   ];
 
   // Add "Forks" and "Choices" tiles if it's a branching story or if there are multiple branching stories.
@@ -173,15 +172,13 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     tilesData.unshift({
       label: t('choices'),
       count: choiceCount,
-      icon: 'shuffle',
-      color: '#FF9800',
-    }); // orange
+      ...getEntityAppearance('Choice'),
+    });
     tilesData.unshift({
       label: t('forks'),
       count: branchingStoryForkCount,
-      icon: 'git-branch',
-      color: '#FFD700',
-    }); // gold
+      ...getEntityAppearance('Fork'),
+    });
   }
 
   return (
@@ -210,7 +207,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
                   label={data.label}
                   count={data.count}
                   backgroundColor={data.color}
-                  textColor={colors.onPrimary}
+                  textColor={getContrastTextColor(data.color)}
                 />
               );
             }

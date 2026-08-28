@@ -87,6 +87,7 @@ export * from './schemas/PublicationSchemas';
 export * from './metadata/OperationLogEntityType';
 export * from './metadata/recoverableEntityTypes';
 export * from './metadata/entityDisplayName';
+export * from './metadata/entityAppearance';
 export * from './metadata/FriendStatus';
 export * from './metadata/AttributeType';
 export * from './metadata/AppRelease';

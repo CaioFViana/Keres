@@ -73,6 +73,12 @@ const BoardNodeSheet: React.FC<Props> = ({
           paddingTop: 16,
           paddingBottom: 24,
           maxHeight: '78%',
+          overflow: 'visible',
+        },
+        scroll: { flexGrow: 1 },
+        scrollContent: {
+          paddingHorizontal: 2,
+          paddingVertical: 2,
         },
         handle: {
           alignSelf: 'center',
@@ -119,7 +125,11 @@ const BoardNodeSheet: React.FC<Props> = ({
         },
         itemText: { flex: 1, color: colors.text, fontSize: 13 },
         itemMeta: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
-        field: { marginBottom: 10 },
+        field: {
+          marginBottom: 10,
+          paddingHorizontal: 2,
+          paddingVertical: 2,
+        },
         switchRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -198,7 +208,7 @@ const BoardNodeSheet: React.FC<Props> = ({
         </TouchableOpacity>
       )}
 
-      <ScrollView>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {node.kind === 'note' && canEdit && (
           <>
             <Text style={styles.section}>{t('board_note')}</Text>

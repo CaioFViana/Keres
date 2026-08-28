@@ -5,6 +5,7 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 
+import { getEntityAppearance } from '@keres/shared';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '../../src/db';
 import {
@@ -67,6 +68,7 @@ it('loads every owner type and exposes both flat and grouped picker options', as
     expect.arrayContaining([
       expect.objectContaining({
         key: 'Character',
+        ...getEntityAppearance('Character'),
         options: [{ label: 'Ariane', value: 'Character:character-1' }],
       }),
       expect.objectContaining({

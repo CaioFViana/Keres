@@ -1,20 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { BoardNodeType, BoardPinEntity } from '@keres/shared';
+import type { BoardNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
-import { boardPinAccent } from '../../../utils/boardPinAppearance';
+import { boardPinAccent, boardPinIcon } from '../../../utils/boardPinAppearance';
 import { BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from '../../../utils/boardLayout';
-
-const PIN_ICONS: Record<BoardPinEntity, keyof typeof Ionicons.glyphMap> = {
-  Character: 'person-outline',
-  Location: 'location-outline',
-  Note: 'document-text-outline',
-  Scene: 'film-outline',
-  Item: 'cube-outline',
-  Gallery: 'images-outline',
-  Chapter: 'book-outline',
-};
 
 const DRAG_THRESHOLD = 5;
 
@@ -154,8 +144,11 @@ const BoardNodeView: React.FC<Props> = ({
     [colors, ghost, node, selected],
   );
 
-  const icon =
-    node.kind === 'note' ? 'create-outline' : PIN_ICONS[node.entityType] ?? 'ellipse-outline';
+  const accent = boardPinAccent(node.kind, node.kind === 'entity' ? node.entityType : undefined);
+  const icon = boardPinIcon(
+    node.kind,
+    node.kind === 'entity' ? node.entityType : undefined,
+  ) as keyof typeof Ionicons.glyphMap;
 
   return (
     <View style={styles.node} {...pan.panHandlers}>
@@ -165,7 +158,7 @@ const BoardNodeView: React.FC<Props> = ({
           <Ionicons
             name={icon}
             size={16}
-            color={boardPinAccent(node.kind, node.kind === 'entity' ? node.entityType : undefined)}
+            color={accent}
           />
           <Text style={styles.title} numberOfLines={1} selectable={false}>
             {title}

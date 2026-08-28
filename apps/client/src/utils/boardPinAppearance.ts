@@ -1,20 +1,14 @@
 import type { BoardPinEntity } from '@keres/shared';
-
-/** Accent on the pin so a Character and a Location do not look like the same card with a different icon. */
-export const BOARD_PIN_ACCENT: Record<BoardPinEntity | 'note', string> = {
-  Character: '#3D5A80',
-  Location: '#2A9D8F',
-  Scene: '#6C63FF',
-  Item: '#E76F51',
-  Gallery: '#9B5DE5',
-  Chapter: '#4D749E',
-  Note: '#C9A227',
-  note: '#B08900',
-};
+import { getEntityAppearance } from '@keres/shared';
 
 export function boardPinAccent(kind: 'note' | 'entity', entityType?: BoardPinEntity): string {
-  if (kind === 'note') return BOARD_PIN_ACCENT.note;
-  return BOARD_PIN_ACCENT[entityType ?? 'Character'];
+  if (kind === 'note') return getEntityAppearance('Note').color;
+  return getEntityAppearance(entityType ?? 'Character').color;
+}
+
+export function boardPinIcon(kind: 'note' | 'entity', entityType?: BoardPinEntity): string {
+  if (kind === 'note') return getEntityAppearance('Note').icon;
+  return getEntityAppearance(entityType ?? 'Character').icon;
 }
 
 export function boardPinTypeKey(kind: 'note' | 'entity', entityType?: BoardPinEntity): string {

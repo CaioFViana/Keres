@@ -385,7 +385,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                 </TouchableOpacity>
               )}
               <Text style={styles.modalTitle} numberOfLines={1}>
-                {activeGroup ? activeGroup.label : label || placeholder || t('select_tags')}
+                {activeGroup && effectiveGroups.length > 1
+                  ? activeGroup.label
+                  : label || placeholder || t('select_tags')}
               </Text>
             </View>
             <TouchableOpacity onPress={closeModal} style={styles.closeButton}>

@@ -4,15 +4,14 @@
 import { boardEdgeGeometry, nodeBorderPoint } from '../../src/utils/boardEdges';
 import { BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from '../../src/utils/boardLayout';
 
-const pin = (id: string, x: number, y: number) =>
-  ({
-    id,
-    kind: 'note' as const,
-    x,
-    y,
-    title: id,
-    body: null,
-  });
+const pin = (id: string, x: number, y: number) => ({
+  id,
+  kind: 'note' as const,
+  x,
+  y,
+  title: id,
+  body: null,
+});
 
 it('meets the node on its rectangle, not at the centre', () => {
   const from = pin('01ABCDEF', 0, 0);

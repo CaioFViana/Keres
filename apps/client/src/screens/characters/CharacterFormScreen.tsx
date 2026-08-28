@@ -731,9 +731,7 @@ const CharacterFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {t('save_character')}
-        </Button>
+        <Button onPress={handleSave}>{t('save_character')}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_character_title')}

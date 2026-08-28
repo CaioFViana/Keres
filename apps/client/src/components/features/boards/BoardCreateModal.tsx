@@ -51,7 +51,12 @@ const BoardCreateModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) => 
   });
 
   return (
-    <ResponsiveModal visible={visible} onClose={onCancel} contentStyle={styles.sheet} maxHeight="86%">
+    <ResponsiveModal
+      visible={visible}
+      onClose={onCancel}
+      contentStyle={styles.sheet}
+      maxHeight="86%"
+    >
       <Text style={styles.title}>{t('board_create_title')}</Text>
       <View style={styles.field}>
         <Text style={styles.label}>{t('name')}</Text>

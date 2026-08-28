@@ -19,7 +19,9 @@ export function encodeBoardPinValue(entityType: string, entityId: string): strin
   return `${entityType}:${entityId}`;
 }
 
-export function decodeBoardPinValue(value: string): { entityType: string; entityId: string } | null {
+export function decodeBoardPinValue(
+  value: string,
+): { entityType: string; entityId: string } | null {
   const separator = value.indexOf(':');
   if (separator < 0) return null;
   return { entityType: value.slice(0, separator), entityId: value.slice(separator + 1) };

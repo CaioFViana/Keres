@@ -383,7 +383,10 @@ describe('buildConflictSummaries - entity display name fallbacks', () => {
           entityType: 'Board',
           entityId: 'board-1',
           localValues: { name: 'Royal family', content: { nodes: [], edges: [] } },
-          serverValues: { name: 'Royal family', content: { nodes: [{ id: '01ABCDEF' }], edges: [] } },
+          serverValues: {
+            name: 'Royal family',
+            content: { nodes: [{ id: '01ABCDEF' }], edges: [] },
+          },
           contestedFields: ['content'],
         }),
       ],

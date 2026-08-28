@@ -1102,9 +1102,7 @@ const SceneFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {t('save_scene')}
-        </Button>
+        <Button onPress={handleSave}>{t('save_scene')}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_scene_title')}

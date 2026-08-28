@@ -652,9 +652,7 @@ const LocationFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {t('save_location')}
-        </Button>
+        <Button onPress={handleSave}>{t('save_location')}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_location_title')}

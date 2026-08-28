@@ -249,9 +249,9 @@ describe('gesture decisions', () => {
   it('treats a mouse event without a touches list as a one-finger drag', async () => {
     const config = await configOf();
 
-    expect(
-      config.onMoveShouldSetPanResponderCapture({ nativeEvent: {} }, { dx: 20, dy: 0 }),
-    ).toBe(true);
+    expect(config.onMoveShouldSetPanResponderCapture({ nativeEvent: {} }, { dx: 20, dy: 0 })).toBe(
+      true,
+    );
   });
 
   it('takes over immediately for a second finger, however small the movement', async () => {

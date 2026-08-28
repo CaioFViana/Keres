@@ -154,20 +154,13 @@ const BoardNodeView: React.FC<Props> = ({
       <View style={[styles.stripe, { backgroundColor: accent }]} pointerEvents="none" />
       <View pointerEvents="none">
         <View style={styles.row}>
-          <Ionicons
-            name={icon}
-            size={16}
-            color={accent}
-          />
+          <Ionicons name={icon} size={16} color={accent} />
           <Text style={styles.title} numberOfLines={1} selectable={false}>
             {title}
           </Text>
         </View>
         <Text
-          style={[
-            styles.typeLabel,
-            { color: ghost ? colors.error : colors.textSecondary },
-          ]}
+          style={[styles.typeLabel, { color: ghost ? colors.error : colors.textSecondary }]}
           numberOfLines={1}
           selectable={false}
         >

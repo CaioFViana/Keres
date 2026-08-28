@@ -23,7 +23,10 @@ import { useDocumentTitle } from '../../utils/documentTitle';
 import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
 
-type StatLadderNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatLadder'>;
+type StatLadderNavigationProp = NativeStackNavigationProp<
+  CustomizationStackParamList,
+  'StatLadder'
+>;
 
 interface DraftTier {
   /** A draft-only key; already-saved tiers also carry the database id. */

@@ -13,7 +13,10 @@ import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { BoardStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  BoardStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { createBoardService } from '../../services/storymanagement/BoardService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -99,7 +102,12 @@ const BoardListScreen = () => {
     },
     name: { fontSize: 16, fontWeight: '600', color: colors.text },
     description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
-    empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 32, paddingHorizontal: 24 },
+    empty: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 32,
+      paddingHorizontal: 24,
+    },
   });
 
   if (error) {

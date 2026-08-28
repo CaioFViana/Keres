@@ -977,9 +977,7 @@ const ChoiceFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {t('save_choice')}
-        </Button>
+        <Button onPress={handleSave}>{t('save_choice')}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_choice_title')}

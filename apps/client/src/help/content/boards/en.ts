@@ -2,7 +2,8 @@ import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'boards',
   title: 'Boards',
-  summary: 'Small freeform sketches of the story dictionary: pins, notes and arrows that are not relations.',
+  summary:
+    'Small freeform sketches of the story dictionary: pins, notes and arrows that are not relations.',
   keywords: ['board', 'corkboard', 'canvas', 'pin', 'sketch', 'map'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
@@ -39,7 +40,8 @@ const page: HelpPage = {
         {
           key: 'description',
           label: 'Description',
-          whatToWrite: 'Optional note on what this board is for (the conspiracy, the family, Act II).',
+          whatToWrite:
+            'Optional note on what this board is for (the conspiracy, the family, Act II).',
           note: 'Does not appear on the canvas. Used in the list and in search.',
         },
       ],

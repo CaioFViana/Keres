@@ -1,9 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type {
-  BoardContentType,
-  BoardNodeType,
-  BoardPinEntity,
-} from '@keres/shared';
+import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -160,14 +156,22 @@ const BoardCanvasScreen = () => {
         headerRight: canEdit
           ? () => (
               <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
-                <TouchableOpacity onPress={revert} disabled={!dirty} accessibilityLabel={t('board_revert')}>
+                <TouchableOpacity
+                  onPress={revert}
+                  disabled={!dirty}
+                  accessibilityLabel={t('board_revert')}
+                >
                   <Ionicons
                     name="arrow-undo-outline"
                     size={24}
                     color={dirty ? colors.text : colors.textSecondary}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => void save()} disabled={!dirty} accessibilityLabel={t('board_save')}>
+                <TouchableOpacity
+                  onPress={() => void save()}
+                  disabled={!dirty}
+                  accessibilityLabel={t('board_save')}
+                >
                   <Ionicons
                     name="checkmark-outline"
                     size={26}
@@ -178,7 +182,18 @@ const BoardCanvasScreen = () => {
             )
           : undefined,
       });
-    }, [board?.name, canEdit, colors.primary, colors.text, colors.textSecondary, dirty, navigation, revert, save, t]),
+    }, [
+      board?.name,
+      canEdit,
+      colors.primary,
+      colors.text,
+      colors.textSecondary,
+      dirty,
+      navigation,
+      revert,
+      save,
+      t,
+    ]),
   );
 
   const titles = useMemo(() => {
@@ -339,7 +354,13 @@ const BoardCanvasScreen = () => {
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !board) {
-    return <ScreenError message={error || t('board_not_found')} onGoBack={() => navigation.goBack()} padded />;
+    return (
+      <ScreenError
+        message={error || t('board_not_found')}
+        onGoBack={() => navigation.goBack()}
+        padded
+      />
+    );
   }
 
   return (

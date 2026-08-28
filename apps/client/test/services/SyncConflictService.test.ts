@@ -1051,9 +1051,7 @@ describe('resolveKeepServerAndCloneBoard', () => {
       entityId: 'board-1',
       payload: JSON.stringify({
         content: {
-          nodes: [
-            { id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null },
-          ],
+          nodes: [{ id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null }],
           edges: [],
         },
       }),

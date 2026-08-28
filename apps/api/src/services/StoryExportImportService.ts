@@ -90,8 +90,7 @@ export class StoryExportImportService {
         and(eq(storyCalendars.storyId, storyId), eq(storyCalendars.isDeleted, false)),
     });
     const storyBoards = await db.query.boards.findMany({
-      where: (boards, { eq, and }) =>
-        and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)),
+      where: (boards, { eq, and }) => and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)),
     });
 
     const characterRelations = await db.query.characterRelations.findMany({

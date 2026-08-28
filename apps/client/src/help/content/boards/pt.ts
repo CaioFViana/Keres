@@ -39,7 +39,8 @@ const page: HelpPage = {
         {
           key: 'description',
           label: 'Descrição',
-          whatToWrite: 'Nota opcional sobre o propósito deste board (a conspiração, a família, o acto II).',
+          whatToWrite:
+            'Nota opcional sobre o propósito deste board (a conspiração, a família, o acto II).',
           note: 'Não aparece no canvas. Usada na lista e na pesquisa.',
         },
       ],

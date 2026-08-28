@@ -884,7 +884,10 @@ const MainSystemNavigator = () => {
         <Drawer.Screen
           name="StoryAnalysis"
           component={StoryAnalysisScreen}
-          options={{ title: t('story_analysis_title'), drawerIcon: drawerIcon('analytics-outline') }}
+          options={{
+            title: t('story_analysis_title'),
+            drawerIcon: drawerIcon('analytics-outline'),
+          }}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"

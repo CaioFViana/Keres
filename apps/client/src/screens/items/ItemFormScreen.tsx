@@ -424,9 +424,7 @@ const ItemFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {t('save_item')}
-        </Button>
+        <Button onPress={handleSave}>{t('save_item')}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_item_title')}

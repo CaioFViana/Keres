@@ -1,10 +1,7 @@
 /**
  * @jest-environment node
  */
-import {
-  boardPinAppearanceType,
-  boardPinTypeKey,
-} from '../../src/utils/boardPinAppearance';
+import { boardPinAppearanceType, boardPinTypeKey } from '../../src/utils/boardPinAppearance';
 
 it('treats a Chapter pin as an Event when the live row is an event', () => {
   expect(boardPinAppearanceType('entity', 'Chapter', 'event')).toBe('Event');

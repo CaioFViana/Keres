@@ -41,19 +41,21 @@ const BoardNodeSheet: React.FC<Props> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const noteTitleFromNode = node.kind === 'note' ? node.title : '';
+  const noteBodyFromNode = node.kind === 'note' ? (node.body ?? '') : '';
   const [connectTo, setConnectTo] = useState<string | null>(null);
   const [directed, setDirected] = useState(true);
   const [edgeLabel, setEdgeLabel] = useState('');
-  const [noteTitle, setNoteTitle] = useState(node.kind === 'note' ? node.title : '');
-  const [noteBody, setNoteBody] = useState(node.kind === 'note' ? (node.body ?? '') : '');
+  const [noteTitle, setNoteTitle] = useState(noteTitleFromNode);
+  const [noteBody, setNoteBody] = useState(noteBodyFromNode);
 
   useEffect(() => {
     setConnectTo(null);
     setDirected(true);
     setEdgeLabel('');
-    setNoteTitle(node.kind === 'note' ? node.title : '');
-    setNoteBody(node.kind === 'note' ? (node.body ?? '') : '');
-  }, [node.body, node.id, node.kind, node.title]);
+    setNoteTitle(noteTitleFromNode);
+    setNoteBody(noteBodyFromNode);
+  }, [node.id, noteBodyFromNode, noteTitleFromNode]);
 
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
   const others = content.nodes.filter((item) => item.id !== node.id);
@@ -182,10 +184,7 @@ const BoardNodeSheet: React.FC<Props> = ({
     setDirected(true);
   };
 
-  const typeKey = boardPinTypeKey(
-    node.kind,
-    node.kind === 'entity' ? node.entityType : undefined,
-  );
+  const typeKey = boardPinTypeKey(node.kind, node.kind === 'entity' ? node.entityType : undefined);
 
   return (
     <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
@@ -208,7 +207,11 @@ const BoardNodeSheet: React.FC<Props> = ({
         </TouchableOpacity>
       )}
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {node.kind === 'note' && canEdit && (
           <>
             <Text style={styles.section}>{t('board_note')}</Text>
@@ -246,7 +249,10 @@ const BoardNodeSheet: React.FC<Props> = ({
                   {!!edge.label && <Text style={styles.itemMeta}>{edge.label}</Text>}
                 </View>
                 {canEdit && (
-                  <TouchableOpacity onPress={() => removeEdge(edge.id)} accessibilityLabel={t('delete')}>
+                  <TouchableOpacity
+                    onPress={() => removeEdge(edge.id)}
+                    accessibilityLabel={t('delete')}
+                  >
                     <Ionicons name="close-circle" size={18} color={colors.error} />
                   </TouchableOpacity>
                 )}

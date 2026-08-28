@@ -14,7 +14,10 @@ export interface BoardSvgOptions {
     textSecondary: string;
     border: string;
   };
-  titles: Record<string, { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }>;
+  titles: Record<
+    string,
+    { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }
+  >;
 }
 
 const HEADER = 56;

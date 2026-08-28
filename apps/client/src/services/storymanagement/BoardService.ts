@@ -73,7 +73,10 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
 
       const nextContent =
         changes.content !== undefined ? BoardContentSchema.parse(changes.content) : undefined;
-      const normalised = { ...changes, ...(nextContent !== undefined ? { content: nextContent } : {}) };
+      const normalised = {
+        ...changes,
+        ...(nextContent !== undefined ? { content: nextContent } : {}),
+      };
       const changed = getChangedFields(original, { ...original, ...normalised });
       delete changed.version;
       delete changed.updatedAt;

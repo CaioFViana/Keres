@@ -444,9 +444,7 @@ const ChapterFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {t('save_chapter')}
-        </Button>
+        <Button onPress={handleSave}>{t('save_chapter')}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {t('delete_chapter_title')}

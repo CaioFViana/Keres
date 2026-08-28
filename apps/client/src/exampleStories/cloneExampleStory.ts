@@ -1,8 +1,4 @@
-import {
-  FullStoryExportSchema,
-  remapBoardContent,
-  type FullStoryExportType,
-} from '@keres/shared';
+import { FullStoryExportSchema, remapBoardContent, type FullStoryExportType } from '@keres/shared';
 import { createULID } from '../utils/entityUtils';
 
 type EntityWithId = { id: string };

@@ -11,6 +11,7 @@ import {
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import LocationGraphCanvas from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -28,6 +29,7 @@ import type {
 } from '@keres/shared/graphs/locationGraphLayout';
 import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
+import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
@@ -40,6 +42,9 @@ import type { LocationsScreenNavigationProp } from './LocationListScreen';
  *
  * Visualization/navigation only at this stage - no visual editing (dragging to reparent, etc.).
  */
+
+/** Cap on the focus filter - the same ceiling as the character relation map. */
+const MAX_SELECTED_LOCATIONS = 12;
 
 interface LocationNodeConnection {
   relationId: string;
@@ -65,6 +70,8 @@ const LocationGraphScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  /** Empty means the whole map; the focus filter only narrows it. */
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const storyId = selectedStory?.id;
 
@@ -121,14 +128,19 @@ const LocationGraphScreen = () => {
     [relations],
   );
 
+  const filtered = useMemo(
+    () => filterLocationGraph(locations, graphRelations, selectedIds),
+    [locations, graphRelations, selectedIds],
+  );
+
   const layout = useMemo(
     () =>
       buildLocationGraphLayout(
-        locations,
-        graphRelations,
+        filtered.locations,
+        filtered.relations,
         isCompact ? 'top-to-bottom' : 'left-to-right',
       ),
-    [locations, graphRelations, isCompact],
+    [filtered, isCompact],
   );
 
   const selectedNode = useMemo(
@@ -213,6 +225,7 @@ const LocationGraphScreen = () => {
       const svg = renderLocationGraphMapSvg(layout, {
         title: selectedStory.title,
         subtitle: graphSubtitle,
+        highlightedNodeIds: selectedIds,
         labels: {
           isolated: t('location_graph_badge_isolated'),
           contains: t('location_relation_type_contains'),
@@ -249,7 +262,7 @@ const LocationGraphScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, graphSubtitle, selectedStory, showNotification, t]);
+  }, [colors, layout, graphSubtitle, selectedIds, selectedStory, showNotification, t]);
 
   const styles = useMemo(
     () =>
@@ -274,6 +287,20 @@ const LocationGraphScreen = () => {
           paddingHorizontal: 12,
           marginTop: 1,
         },
+        filterActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 12,
+          paddingBottom: 8,
+        },
+        filterHint: {
+          color: colors.textSecondary,
+          fontSize: 12,
+          flex: 1,
+        },
+        filterAction: { paddingVertical: 5 },
+        filterActionText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
         controls: {
           position: 'absolute',
           right: 14,
@@ -327,10 +354,32 @@ const LocationGraphScreen = () => {
         </Text>
       </View>
 
+      <MultiSelectPill
+        options={locations.map((location) => ({
+          label: location.name,
+          value: location.id,
+        }))}
+        selectedValues={selectedIds}
+        onSelectionChange={(next) => setSelectedIds(next.slice(0, MAX_SELECTED_LOCATIONS))}
+        maxSelections={MAX_SELECTED_LOCATIONS}
+        placeholder={t('locations_title')}
+        searchPlaceholder={t('search')}
+        triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
+      />
+      {selectedIds.length > 0 && (
+        <View style={styles.filterActions}>
+          <Text style={styles.filterHint}>{t('location_graph_filter_hint')}</Text>
+          <TouchableOpacity style={styles.filterAction} onPress={() => setSelectedIds([])}>
+            <Text style={styles.filterActionText}>{t('location_graph_clear_filter')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <LocationGraphCanvas
         ref={canvasRef}
         layout={layout}
         selectedNodeId={selectedNodeId}
+        highlightedNodeIds={selectedIds}
         onSelectNode={handleSelectNode}
       />
 

@@ -234,4 +234,19 @@ describe('location map specifics', () => {
       expect(svg).toContain(`d="${edge.path}"`);
     }
   });
+
+  it('draws a highlighted location with the primary stroke', () => {
+    const svg = renderLocationGraphMapSvg(
+      locationLayout(),
+      locationOptions({ highlightedNodeIds: ['reino'] }),
+    );
+
+    expect(svg).toContain('stroke="#0033aa" stroke-width="2.5"');
+  });
+
+  it('does not highlight any location without highlightedNodeIds', () => {
+    const svg = renderLocationGraphMapSvg(locationLayout(), locationOptions());
+
+    expect(svg).not.toContain('stroke="#0033aa" stroke-width="2.5"');
+  });
 });

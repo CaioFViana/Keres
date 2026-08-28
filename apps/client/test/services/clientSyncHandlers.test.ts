@@ -5,6 +5,8 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { AttributeValueClientSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueClientSyncHandler';
+import { BoardClientSyncHandler } from '../../src/services/entity-sync-handlers/BoardClientSyncHandler';
+import { ChapterAnchorClientSyncHandler } from '../../src/services/entity-sync-handlers/ChapterAnchorClientSyncHandler';
 import { ChapterClientSyncHandler } from '../../src/services/entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterClientSyncHandler';
 import { CharacterSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSceneClientSyncHandler';
@@ -21,6 +23,7 @@ import { PlotClientSyncHandler } from '../../src/services/entity-sync-handlers/P
 import { PlotSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotSceneClientSyncHandler';
 import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
+import { StoryCalendarClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryCalendarClientSyncHandler';
 import {
   ModeClientSyncHandler,
   StatClientSyncHandler,
@@ -43,6 +46,72 @@ let database: TestDatabase;
  * pull. The contract is the same for all 20+ handlers; these four cover the shapes that exist.
  */
 const HANDLERS = [
+  {
+    name: 'Board',
+    build: () => new BoardClientSyncHandler(),
+    table: schema.boards,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Mapa da cidade',
+      description: null,
+      content: { nodes: [], edges: [] },
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Mapa da cidade revisado' },
+  },
+  {
+    name: 'ChapterAnchor',
+    build: () => new ChapterAnchorClientSyncHandler(),
+    table: schema.chapterAnchors,
+    labelColumn: 'chapterId' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      chapterId: `chapter-${id}`,
+      order: 1,
+      startSceneId: `scene-${id}`,
+      startPosition: 'start',
+      startOffset: null,
+      startOffsetUnit: null,
+      endSceneId: null,
+      endPosition: null,
+      endOffset: null,
+      endOffsetUnit: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { chapterId: 'chapter-revised' },
+  },
+  {
+    name: 'StoryCalendar',
+    build: () => new StoryCalendarClientSyncHandler(),
+    table: schema.storyCalendars,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Calendário lunar',
+      isPrimary: true,
+      description: null,
+      definition: {},
+      extraNotes: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Calendário solar' },
+  },
   {
     name: 'AttributeValue',
     build: () => new AttributeValueClientSyncHandler(),
@@ -589,6 +658,7 @@ const deleteUpdate = (entity: string, id: string): DeleteStoryUpdate =>
 beforeEach(async () => {
   database = await createTestDatabase();
   jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 

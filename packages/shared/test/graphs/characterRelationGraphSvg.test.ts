@@ -19,6 +19,7 @@ const options = (
     textSecondary: '#666666',
     border: '#cccccc',
     primaryContainer: '#dde7ff',
+    primary: '#0B6E99',
   },
   ...overrides,
 });
@@ -167,6 +168,18 @@ describe('renderCharacterRelationMapSvg', () => {
 
     expect(svg).toContain('fill="#ffffff"');
     expect(svg).toContain('stroke="#cccccc"');
+  });
+
+  it('draws a highlighted node with the primary stroke', () => {
+    const svg = renderCharacterRelationMapSvg(connected(), options({ highlightedNodeIds: ['a'] }));
+
+    expect(svg).toContain('stroke="#0B6E99"');
+  });
+
+  it('does not highlight any node without highlightedNodeIds', () => {
+    const svg = renderCharacterRelationMapSvg(connected(), options());
+
+    expect(svg).not.toContain('stroke="#0B6E99"');
   });
 
   it('is deterministic for the same layout and options', () => {

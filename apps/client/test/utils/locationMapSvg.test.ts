@@ -67,3 +67,35 @@ it('draws every node as a coloured circle with its name', () => {
   expect(svg).toContain('>Reino</text>');
   expect(svg).toContain('>Cidade</text>');
 });
+
+it('draws each node icon as an ionicons path filled with the node colour', () => {
+  const svg = renderLocationMapSvg(content, options);
+
+  expect(svg).toContain('<g transform="translate(');
+  expect(svg).toContain('fill="#8BC34A">');
+  expect(svg).toContain('<path d="M336 96a80 80 0 1 0-96 78.39');
+});
+
+it('draws a contrast halo behind every line', () => {
+  const svg = renderLocationMapSvg(content, options);
+
+  // Each line is drawn twice: a thick background-coloured halo, then the coloured line.
+  expect(svg).toContain('stroke="#ffffff" stroke-width="6"');
+  expect(svg).toContain('stroke="#c08340"');
+});
+
+it('normalises nodes dragged to negative coordinates back inside the canvas', () => {
+  const dragged = {
+    images: [],
+    nodes: [
+      { id: '02GHJKMN', locationId: 'location-1', x: -300, y: -200, icon: 'pin', color: '#8BC34A' },
+    ],
+  };
+  const svg = renderLocationMapSvg(dragged, options);
+
+  expect(svg).toContain('>Reino</text>');
+  // No raw negative coordinates: the drawing is shifted inside the viewBox.
+  expect(svg).not.toContain('x="-300"');
+  expect(svg).not.toContain('y="-200"');
+  expect(svg).toContain('<circle cx="62" cy="62"');
+});

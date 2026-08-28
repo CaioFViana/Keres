@@ -6,6 +6,7 @@ import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { interpolateColor, pointOnCircleBoundary } from '../../../utils/locationMapColors';
 import { locationMapCanvasSize, LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
+import { useTheme } from '../../../theme';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
@@ -44,10 +45,11 @@ const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
 /** How far the line's tip stays from the node's border - the arrow must not be buried under it. */
 const LINE_END_MARGIN = 3;
 const CONTAINS_DASH = '6 4';
+/** Width of the contrast halo behind every line, so it stays visible over the image bases. */
+const HALO_WIDTH = 6;
 
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
-function arrowHeadPoints(tipX: number, tipY: number, angle: number): string {
-  const size = 10;
+function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
   return [
     [tipX, tipY],
     [tipX - size * Math.cos(angle - 0.4), tipY - size * Math.sin(angle - 0.4)],
@@ -74,6 +76,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     },
     ref,
   ) => {
+    const { colors } = useTheme();
     const size = locationMapCanvasSize(content);
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
@@ -128,7 +131,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             return {
               id: `${relation.parentLocationId}-${relation.childLocationId}`,
               path: `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`,
-              arrow: arrowHeadPoints(tip.x, tip.y, angle),
+              arrow: arrowHeadPoints(tip.x, tip.y, angle, 10),
+              arrowHalo: arrowHeadPoints(tip.x, tip.y, angle, 13),
               color: interpolateColor(from.color, to.color),
             };
           }),
@@ -158,17 +162,32 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0 }}
         >
           {connectionPaths.map((connection) => (
-            <Path
-              key={connection.id}
-              d={connection.path}
-              fill="none"
-              stroke={connection.color}
-              strokeWidth={2}
-              strokeOpacity={0.85}
-            />
+            <React.Fragment key={connection.id}>
+              <Path
+                d={connection.path}
+                fill="none"
+                stroke={colors.background}
+                strokeWidth={HALO_WIDTH}
+                strokeOpacity={0.9}
+              />
+              <Path
+                d={connection.path}
+                fill="none"
+                stroke={connection.color}
+                strokeWidth={2}
+                strokeOpacity={0.85}
+              />
+            </React.Fragment>
           ))}
           {containsArrows.map((arrow) => (
             <React.Fragment key={arrow.id}>
+              <Path
+                d={arrow.path}
+                fill="none"
+                stroke={colors.background}
+                strokeWidth={HALO_WIDTH}
+                strokeOpacity={0.9}
+              />
               <Path
                 d={arrow.path}
                 fill="none"
@@ -177,6 +196,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
                 strokeDasharray={CONTAINS_DASH}
                 strokeOpacity={0.85}
               />
+              <Polygon points={arrow.arrowHalo} fill={colors.background} />
               <Polygon points={arrow.arrow} fill={arrow.color} />
             </React.Fragment>
           ))}

@@ -2,6 +2,7 @@ import type { LocationMapContentType } from '@keres/shared';
 import type { LocationMapConnection, LocationMapContains } from '@/src/components/features/location-maps/LocationMapCanvas';
 import { interpolateColor, pointOnCircleBoundary } from './locationMapColors';
 import { LOCATION_MAP_NODE_SIZE } from './locationMapLayout';
+import { LOCATION_MAP_ICON_PATHS } from './locationMapIconPaths';
 
 export interface LocationMapSvgOptions {
   title: string;
@@ -23,15 +24,17 @@ export interface LocationMapSvgOptions {
   imageUris?: Record<string, string>;
 }
 
-/** A map point's icon is an Ionicons glyph the SVG cannot render without the font - a coloured circle carries the identity instead. */
 const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
 const LINE_END_MARGIN = 3;
 const CONTAINS_DASH = '6 4';
 const PADDING = 40;
+/** Width of the contrast halo behind every line, so it stays visible over the image bases. */
+const HALO_WIDTH = 6;
+/** The ionicons viewBox is 512; this scale brings the icon to ~32px, inside the 44px circle. */
+const ICON_SCALE = 1 / 16;
 
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
-function arrowHeadPoints(tipX: number, tipY: number, angle: number): string {
-  const size = 10;
+function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
   return [
     [tipX, tipY],
     [tipX - size * Math.cos(angle - 0.4), tipY - size * Math.sin(angle - 0.4)],
@@ -42,26 +45,43 @@ function arrowHeadPoints(tipX: number, tipY: number, angle: number): string {
 }
 
 /**
- * Serialises a Location Map as a standalone SVG file - the same reasoning as the board's export:
- * it comes out whole regardless of zoom, and the interactive screen and the exported file never
- * disagree about where a location point sits.
+ * Serialises a Location Map as a standalone SVG file. The drawing is normalised (nodes and images
+ * dragged anywhere, even to negative coordinates, land inside the canvas), every line gets a
+ * contrast halo so it reads over the image bases, and each point carries its icon (an ionicons
+ * path) and its name.
  */
 export function renderLocationMapSvg(
   content: LocationMapContentType,
   options: LocationMapSvgOptions,
 ): string {
-  let maxX = 0;
-  let maxY = 0;
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
   for (const image of content.images) {
+    minX = Math.min(minX, image.x);
+    minY = Math.min(minY, image.y);
     maxX = Math.max(maxX, image.x + image.width);
     maxY = Math.max(maxY, image.y + image.height);
   }
   for (const node of content.nodes) {
-    maxX = Math.max(maxX, node.x + NODE_RADIUS * 2);
-    maxY = Math.max(maxY, node.y + NODE_RADIUS * 2 + 18);
+    minX = Math.min(minX, node.x - NODE_RADIUS);
+    minY = Math.min(minY, node.y - NODE_RADIUS);
+    maxX = Math.max(maxX, node.x + NODE_RADIUS);
+    maxY = Math.max(maxY, node.y + NODE_RADIUS + 18);
   }
-  const width = Math.max(560, maxX + PADDING * 2);
-  const height = Math.max(400, maxY + PADDING * 2);
+  if (content.images.length === 0 && content.nodes.length === 0) {
+    minX = 0;
+    minY = 0;
+    maxX = 0;
+    maxY = 0;
+  }
+  const offsetX = PADDING - minX;
+  const offsetY = PADDING - minY;
+  const width = Math.max(560, maxX - minX + PADDING * 2);
+  const height = Math.max(400, maxY - minY + PADDING * 2);
+
+  const shift = (x: number, y: number) => ({ x: x + offsetX, y: y + offsetY });
 
   const byLocation = new Map<string, { x: number; y: number; color: string }>();
   for (const node of content.nodes) {
@@ -69,24 +89,33 @@ export function renderLocationMapSvg(
   }
 
   const imageElements = content.images.map((image) => {
+    const p = shift(image.x, image.y);
     const uri = options.imageUris?.[image.galleryId];
     if (uri) {
-      return `<image href="${uri}" x="${round(image.x)}" y="${round(image.y)}" width="${round(image.width)}" height="${round(image.height)}" preserveAspectRatio="xMidYMid slice"/>`;
+      return `<image href="${uri}" x="${round(p.x)}" y="${round(p.y)}" width="${round(image.width)}" height="${round(image.height)}" preserveAspectRatio="xMidYMid slice"/>`;
     }
-    return `<rect x="${round(image.x)}" y="${round(image.y)}" width="${round(image.width)}" height="${round(image.height)}" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`;
+    return `<rect x="${round(p.x)}" y="${round(p.y)}" width="${round(image.width)}" height="${round(image.height)}" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`;
   });
 
+  // Every line is drawn twice: a thicker background-coloured halo first, then the coloured line,
+  // so it stays visible over the image bases in either theme.
   const connectionElements = options.connections
     .filter(
       (connection) =>
         byLocation.has(connection.locationAId) && byLocation.has(connection.locationBId),
     )
-    .map((connection) => {
+    .flatMap((connection) => {
       const a = byLocation.get(connection.locationAId)!;
       const b = byLocation.get(connection.locationBId)!;
       const start = pointOnCircleBoundary(a, b, NODE_RADIUS + LINE_END_MARGIN);
       const end = pointOnCircleBoundary(b, a, NODE_RADIUS + LINE_END_MARGIN);
-      return `<path d="M ${round(start.x)} ${round(start.y)} L ${round(end.x)} ${round(end.y)}" fill="none" stroke="${interpolateColor(a.color, b.color)}" stroke-width="2" stroke-opacity="0.85"/>`;
+      const p1 = shift(start.x, start.y);
+      const p2 = shift(end.x, end.y);
+      const color = interpolateColor(a.color, b.color);
+      return [
+        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
+        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85"/>`,
+      ];
     });
 
   const containsElements = options.contains
@@ -100,18 +129,31 @@ export function renderLocationMapSvg(
       const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
       const tip = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
       const angle = Math.atan2(tip.y - start.y, tip.x - start.x);
+      const p1 = shift(start.x, start.y);
+      const p2 = shift(tip.x, tip.y);
       const color = interpolateColor(from.color, to.color);
       return [
-        `<path d="M ${round(start.x)} ${round(start.y)} L ${round(tip.x)} ${round(tip.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
-        `<polygon points="${arrowHeadPoints(tip.x, tip.y, angle)}" fill="${color}"/>`,
+        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
+        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
+        `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 13)}" fill="${options.colors.background}"/>`,
+        `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 10)}" fill="${color}"/>`,
       ];
     });
 
   const nodeElements = content.nodes.map((node) => {
+    const p = shift(node.x, node.y);
     const name = escapeXml(options.nodeNames[node.locationId] ?? node.locationId);
+    const iconPaths = LOCATION_MAP_ICON_PATHS[node.icon] ?? '';
+    const iconScale = ICON_SCALE;
+    const iconSize = 512 * iconScale;
+    const iconX = p.x - iconSize / 2;
+    const iconY = p.y - iconSize / 2;
     return [
-      `<circle cx="${round(node.x)}" cy="${round(node.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(node.color)}" stroke-width="2"/>`,
-      `<text x="${round(node.x)}" y="${round(node.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+      `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(node.color)}" stroke-width="2"/>`,
+      iconPaths
+        ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${iconScale})" fill="${escapeXml(node.color)}">${iconPaths}</g>`
+        : '',
+      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
 
@@ -119,7 +161,7 @@ export function renderLocationMapSvg(
     `<rect x="0" y="0" width="${round(width)}" height="${round(height)}" fill="${options.colors.background}"/>`,
     `<text x="24" y="28" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
     `<text x="24" y="46" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
-    `<g transform="translate(${PADDING} ${PADDING})">`,
+    `<g>`,
     ...imageElements,
     ...connectionElements,
     ...containsElements,

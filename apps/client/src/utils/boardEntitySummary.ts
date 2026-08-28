@@ -5,7 +5,9 @@ import { createCharacterService } from '../services/storymanagement/CharacterSer
 import { createGalleryService } from '../services/storymanagement/GalleryService';
 import { createItemService } from '../services/storymanagement/ItemService';
 import { createLocationService } from '../services/storymanagement/LocationService';
+import { createNoteService } from '../services/storymanagement/NoteService';
 import { createSceneService } from '../services/storymanagement/SceneService';
+import { createWorldRuleService } from '../services/storymanagement/WorldRuleService';
 
 /** A light summary of an entity pin, shown when its board node is opened. */
 export interface BoardEntitySummary {
@@ -47,6 +49,14 @@ export async function loadBoardEntitySummary(
     case 'Gallery': {
       const row = await createGalleryService(db).getById(entityId);
       return row ? { title: row.title ?? row.fileName, details: row.extraNotes } : null;
+    }
+    case 'WorldRule': {
+      const row = await createWorldRuleService(db).getById(entityId);
+      return row ? { title: row.title, details: row.description } : null;
+    }
+    case 'Note': {
+      const row = await createNoteService(db).getById(entityId);
+      return row ? { title: row.title, details: row.body } : null;
     }
     default:
       return null;

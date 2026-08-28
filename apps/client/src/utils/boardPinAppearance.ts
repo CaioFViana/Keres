@@ -47,6 +47,8 @@ export function boardPinTypeKey(
       return 'gallery';
     case 'Chapter':
       return 'chapter';
+    case 'WorldRule':
+      return 'world_rule';
     case 'Event':
       return 'event';
     case 'Note':

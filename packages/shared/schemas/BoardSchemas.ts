@@ -17,6 +17,7 @@ export const BOARD_PIN_ENTITIES = [
   'Item',
   'Gallery',
   'Chapter',
+  'WorldRule',
 ] as const;
 export type BoardPinEntity = (typeof BOARD_PIN_ENTITIES)[number];
 

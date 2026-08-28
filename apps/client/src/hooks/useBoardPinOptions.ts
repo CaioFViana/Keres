@@ -9,10 +9,27 @@ import { chapters, galleries } from '../db/schema';
 import { loadEntityOptions } from '../utils/entityOptions';
 
 export interface BoardPinOption {
-  entityType: 'Character' | 'Location' | 'Note' | 'Scene' | 'Item' | 'Gallery' | 'Chapter';
+  entityType:
+    | 'Character'
+    | 'Location'
+    | 'Note'
+    | 'Scene'
+    | 'Item'
+    | 'Gallery'
+    | 'Chapter'
+    | 'WorldRule';
   entityId: string;
   label: string;
-  group: 'character' | 'location' | 'note' | 'scene' | 'item' | 'gallery' | 'chapter' | 'event';
+  group:
+    | 'character'
+    | 'location'
+    | 'note'
+    | 'scene'
+    | 'item'
+    | 'gallery'
+    | 'chapter'
+    | 'event'
+    | 'worldrule';
 }
 
 export function encodeBoardPinValue(entityType: string, entityId: string): string {
@@ -43,12 +60,14 @@ export function useBoardPinOptions(storyId: string | undefined) {
     }
     setLoading(true);
     try {
-      const [character, location, note, scene, item, galleryRows, chapterRows] = await Promise.all([
+      const [character, location, note, scene, item, worldRule, galleryRows, chapterRows] =
+      await Promise.all([
         loadEntityOptions(db, storyId, 'Character'),
         loadEntityOptions(db, storyId, 'Location'),
         loadEntityOptions(db, storyId, 'Note'),
         loadEntityOptions(db, storyId, 'Scene'),
         loadEntityOptions(db, storyId, 'Item'),
+        loadEntityOptions(db, storyId, 'WorldRule'),
         db
           .select()
           .from(galleries)
@@ -92,6 +111,12 @@ export function useBoardPinOptions(storyId: string | undefined) {
           label: row.name,
           group: 'item' as const,
         })),
+        ...worldRule.map((row) => ({
+          entityType: 'WorldRule' as const,
+          entityId: row.id,
+          label: row.name,
+          group: 'worldrule' as const,
+        })),
         ...galleryRows.map((row) => ({
           entityType: 'Gallery' as const,
           entityId: row.id,
@@ -131,6 +156,7 @@ export function useBoardPinOptions(storyId: string | undefined) {
       { key: 'event', label: t('event_plural'), appearanceType: 'Event' },
       { key: 'item', label: t('item_plural'), appearanceType: 'Item' },
       { key: 'note', label: t('note_plural'), appearanceType: 'Note' },
+      { key: 'worldrule', label: t('world_rules_title'), appearanceType: 'WorldRule' },
       { key: 'gallery', label: t('gallery'), appearanceType: 'Gallery' },
     ];
     return groups

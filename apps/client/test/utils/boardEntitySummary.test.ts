@@ -23,6 +23,20 @@ describe('loadBoardEntitySummary', () => {
       description: 'O portador do anel.',
       ...entityBase,
     });
+    await database.db.insert(schema.worldRules).values({
+      id: 'rule-1',
+      storyId: TEST_STORY_ID,
+      title: 'A magia é proibida',
+      description: 'Ninguém pode lançar feitiços.',
+      ...entityBase,
+    });
+    await database.db.insert(schema.notes).values({
+      id: 'note-1',
+      storyId: TEST_STORY_ID,
+      title: 'Diário de Frodo',
+      body: 'Hoje atravessamos o rio.',
+      ...entityBase,
+    });
   });
 
   afterAll(() => database.close());
@@ -34,11 +48,21 @@ describe('loadBoardEntitySummary', () => {
     });
   });
 
-  it('returns null for an entity that does not exist', async () => {
-    await expect(loadBoardEntitySummary(database.db, 'Character', 'ghost')).resolves.toBeNull();
+  it('returns the world rule title and description', async () => {
+    await expect(loadBoardEntitySummary(database.db, 'WorldRule', 'rule-1')).resolves.toEqual({
+      title: 'A magia é proibida',
+      details: 'Ninguém pode lançar feitiços.',
+    });
   });
 
-  it('returns null for entity kinds without a summary', async () => {
-    await expect(loadBoardEntitySummary(database.db, 'Note', 'nope')).resolves.toBeNull();
+  it('returns the note title and body', async () => {
+    await expect(loadBoardEntitySummary(database.db, 'Note', 'note-1')).resolves.toEqual({
+      title: 'Diário de Frodo',
+      details: 'Hoje atravessamos o rio.',
+    });
+  });
+
+  it('returns null for an entity that does not exist', async () => {
+    await expect(loadBoardEntitySummary(database.db, 'Character', 'ghost')).resolves.toBeNull();
   });
 });

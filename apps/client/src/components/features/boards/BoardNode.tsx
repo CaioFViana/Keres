@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { BoardNodeType } from '@keres/shared';
+import { getEntityAppearance, type BoardNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
-import { boardPinAccent, boardPinIcon } from '../../../utils/boardPinAppearance';
+import { boardPinAppearanceType } from '../../../utils/boardPinAppearance';
 import { BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from '../../../utils/boardLayout';
 
 const DRAG_THRESHOLD = 5;
@@ -12,6 +12,7 @@ interface Props {
   node: BoardNodeType;
   title: string;
   typeLabel: string;
+  appearanceType?: string;
   ghost?: boolean;
   selected: boolean;
   scale: number;
@@ -25,6 +26,7 @@ const BoardNodeView: React.FC<Props> = ({
   node,
   title,
   typeLabel,
+  appearanceType,
   ghost,
   selected,
   scale,
@@ -132,10 +134,6 @@ const BoardNodeView: React.FC<Props> = ({
           top: 0,
           bottom: 0,
           width: 5,
-          backgroundColor: boardPinAccent(
-            node.kind,
-            node.kind === 'entity' ? node.entityType : undefined,
-          ),
         },
         row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
         title: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.text },
@@ -144,15 +142,16 @@ const BoardNodeView: React.FC<Props> = ({
     [colors, ghost, node, selected],
   );
 
-  const accent = boardPinAccent(node.kind, node.kind === 'entity' ? node.entityType : undefined);
-  const icon = boardPinIcon(
-    node.kind,
-    node.kind === 'entity' ? node.entityType : undefined,
-  ) as keyof typeof Ionicons.glyphMap;
+  const appearance = getEntityAppearance(
+    appearanceType ??
+      boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
+  );
+  const accent = appearance.color;
+  const icon = appearance.icon as keyof typeof Ionicons.glyphMap;
 
   return (
     <View style={styles.node} {...pan.panHandlers}>
-      <View style={styles.stripe} pointerEvents="none" />
+      <View style={[styles.stripe, { backgroundColor: accent }]} pointerEvents="none" />
       <View pointerEvents="none">
         <View style={styles.row}>
           <Ionicons

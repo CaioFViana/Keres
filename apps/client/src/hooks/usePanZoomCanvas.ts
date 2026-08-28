@@ -51,6 +51,11 @@ interface PanZoomCanvasOptions {
    * reaches the canvas: the map stops zooming as soon as the drawing covers the screen.
    */
   onTap?: (point: { x: number; y: number }) => void;
+  /**
+   * A board is a drawing you slide around even when it fits in the window. The story map instead
+   * recentres while it is smaller than the viewport, so it cannot be "lost".
+   */
+  freePan?: boolean;
 }
 
 interface Transform {
@@ -69,6 +74,7 @@ export function usePanZoomCanvas(
   const fitVerticalAlignment = options.fitVerticalAlignment ?? 'center';
   const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
   const fitMode = options.fitMode ?? 'contain';
+  const freePan = options.freePan ?? false;
   /** In a ref so that changing the handler does not rebuild the `PanResponder` mid-gesture. */
   const onTap = useRef(options.onTap);
   onTap.current = options.onTap;
@@ -105,6 +111,7 @@ export function usePanZoomCanvas(
   /**
    * Keeps the map inside the window: when it is bigger, it does not let you drag it out of
    * sight; when it is smaller, it centres it. Without this it is easy to "lose" the graph and never find it again.
+   * `freePan` only insists that a strip of the drawing stays on screen, so a small board can still slide.
    */
   const clamp = useCallback(() => {
     const { width: viewportWidth, height: viewportHeight } = viewport.current;
@@ -112,6 +119,19 @@ export function usePanZoomCanvas(
 
     const scaledWidth = layout.width * transform.current.scale;
     const scaledHeight = layout.height * transform.current.scale;
+
+    if (freePan) {
+      const keep = 64;
+      transform.current.x = Math.min(
+        viewportWidth - keep,
+        Math.max(keep - scaledWidth, transform.current.x),
+      );
+      transform.current.y = Math.min(
+        viewportHeight - keep,
+        Math.max(keep - scaledHeight, transform.current.y),
+      );
+      return;
+    }
 
     transform.current.x =
       scaledWidth <= viewportWidth
@@ -124,7 +144,7 @@ export function usePanZoomCanvas(
           ? 0
           : (viewportHeight - scaledHeight) / 2
         : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
-  }, [fitVerticalAlignment, layout.height, layout.width]);
+  }, [fitVerticalAlignment, freePan, layout.height, layout.width]);
 
   /** Applies a zoom keeping fixed the point of the map that lies under `focus`. */
   const zoomAround = useCallback(
@@ -207,7 +227,13 @@ export function usePanZoomCanvas(
         onStartShouldSetPanResponderCapture: () => false,
         // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
         // `onTap` all start here, instead of the gesture being dropped for want of an owner.
-        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponder: () => !childDragging.current,
+        onMoveShouldSetPanResponder: (event, gestureState) => {
+          if (childDragging.current) return false;
+          const touches = event.nativeEvent.touches ?? [];
+          if (touches.length > 1) return true;
+          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+        },
         onMoveShouldSetPanResponderCapture: (event, gestureState) => {
           const touches = event.nativeEvent.touches ?? [];
           if (touches.length > 1) return true;
@@ -223,6 +249,11 @@ export function usePanZoomCanvas(
             pinchScale: transform.current.scale,
           };
           tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
+          const pointerId = (event?.nativeEvent as { pointerId?: number } | undefined)?.pointerId;
+          const target = event?.currentTarget as unknown as {
+            setPointerCapture?: (id: number) => void;
+          };
+          if (pointerId != null) target?.setPointerCapture?.(pointerId);
         },
 
         onPanResponderMove: (event, gestureState) => {
@@ -265,6 +296,11 @@ export function usePanZoomCanvas(
 
         onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: (event, gestureState) => {
+          const pointerId = (event?.nativeEvent as { pointerId?: number } | undefined)?.pointerId;
+          const target = event?.currentTarget as unknown as {
+            releasePointerCapture?: (id: number) => void;
+          };
+          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
           gesture.current.pinchDistance = 0;
           const wasTap =
             tapping.current && Math.hypot(gestureState.dx, gestureState.dy) <= DRAG_THRESHOLD;

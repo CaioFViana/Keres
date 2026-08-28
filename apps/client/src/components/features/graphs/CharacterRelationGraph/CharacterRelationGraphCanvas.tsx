@@ -32,7 +32,7 @@ const CharacterRelationGraphCanvas = forwardRef<
   CharacterRelationGraphCanvasProps
 >(({ layout, showEdgeLabels, selectedNodeId, onSelectNode }, ref) => {
   const { colors } = useTheme();
-  const panZoom = usePanZoomCanvas(ref, layout);
+  const panZoom = usePanZoomCanvas(ref, layout, { freePan: true });
 
   const styles = useMemo(
     () =>

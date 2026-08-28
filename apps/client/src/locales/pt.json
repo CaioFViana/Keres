@@ -563,6 +563,7 @@
   "eons": "Éons",
   "error": "Erro",
   "error_fetching_summary": "Erro ao buscar resumo:",
+  "event": "Evento",
   "event_plural": "Eventos",
   "example_stories_author": "Por {{author}}",
   "example_stories_description": "Instale uma história de exemplo pronta para conhecer os recursos do sistema. Depois de instalada, ela vira uma história normal - você pode editá-la ou excluí-la como qualquer outra.",

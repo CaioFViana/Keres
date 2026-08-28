@@ -1,7 +1,8 @@
 import type { BoardContentType } from '@keres/shared';
+import { getEntityAppearance } from '@keres/shared';
 import { boardEdgeGeometry } from './boardEdges';
 import { boardCanvasSize, BOARD_NODE_HEIGHT, BOARD_NODE_WIDTH } from './boardLayout';
-import { boardPinAccent } from './boardPinAppearance';
+import { boardPinAppearanceType } from './boardPinAppearance';
 
 export interface BoardSvgOptions {
   title: string;
@@ -13,7 +14,7 @@ export interface BoardSvgOptions {
     textSecondary: string;
     border: string;
   };
-  titles: Record<string, { title: string; typeLabel: string; ghost?: boolean }>;
+  titles: Record<string, { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }>;
 }
 
 const HEADER = 56;
@@ -38,7 +39,10 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
     `<g transform="translate(0 ${HEADER})">`,
     ...content.nodes.map((node) => {
       const meta = options.titles[node.id];
-      const accent = boardPinAccent(node.kind, node.kind === 'entity' ? node.entityType : undefined);
+      const accent = getEntityAppearance(
+        meta?.appearanceType ??
+          boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
+      ).color;
       const title = escapeXml(meta?.title ?? node.kind);
       const typeLabel = escapeXml(meta?.typeLabel ?? '');
       const fill = node.kind === 'note' ? options.colors.surface : options.colors.surface;

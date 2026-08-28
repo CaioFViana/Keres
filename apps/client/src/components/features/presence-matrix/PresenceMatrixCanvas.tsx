@@ -57,6 +57,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
       maxScale: 3,
       fitVerticalAlignment: 'top',
       refitOnLayoutChange: false,
+      freePan: true,
       onTap: handleTap,
     });
     const styles = useMemo(

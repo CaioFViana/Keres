@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated, Platform, View } from 'react-native';
 import type { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
 
@@ -45,6 +45,9 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
         flex: 1 as const,
         overflow: 'hidden' as const,
         backgroundColor: colors.background,
+        ...(Platform.OS === 'web'
+          ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
+          : {}),
       },
       content: {
         position: 'absolute' as const,
@@ -52,13 +55,25 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
         left: 0,
         transformOrigin: 'top left' as const,
         overflow: contentOverflow,
+        // Empty space belongs to the container's pan; pins/nodes still receive the hit.
+        pointerEvents: 'box-none' as const,
       },
     }),
     [colors, contentOverflow],
   );
 
   return (
-    <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
+    <View
+      ref={containerRef}
+      style={styles.container}
+      onLayout={handleLayout}
+      {...panHandlers}
+      {...(Platform.OS === 'web'
+        ? {
+            onDragStart: (event: { preventDefault?: () => void }) => event.preventDefault?.(),
+          }
+        : {})}
+    >
       <Animated.View style={[styles.content, { width, height, transform: animatedTransform }]}>
         {children}
       </Animated.View>

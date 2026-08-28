@@ -276,6 +276,18 @@ describe('gesture decisions', () => {
     expect(config.onStartShouldSetPanResponder()).toBe(true);
   });
 
+  it('does not take the background while a pin is dragging', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas();
+    const config = create.mock.calls.at(-1)![0] as any;
+    result.current.setChildDragging(true);
+
+    expect(config.onStartShouldSetPanResponder()).toBe(false);
+    expect(
+      config.onMoveShouldSetPanResponder({ nativeEvent: { touches: [{}] } }, { dx: 20, dy: 0 }),
+    ).toBe(false);
+  });
+
   /** Releasing the canvas mid-drag would make the map jump on the next interaction. */
   it('does not hand the gesture over once it has taken it', async () => {
     const config = await configOf();
@@ -309,6 +321,24 @@ describe('panning', () => {
 
     expect(after.x).toBeLessThan(before.x);
     expect(after.y).toBeLessThan(before.y);
+  });
+
+  it('slides a drawing that still fits the window when freePan is on', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas({ width: 100, height: 100 }, VIEWPORT, {
+      maxScale: 1,
+      freePan: true,
+    });
+    const config = create.mock.calls.at(-1)![0] as any;
+    const before = transformOf(result.current);
+
+    config.onPanResponderGrant();
+    config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: 40, dy: 25 });
+    jest.restoreAllMocks();
+
+    const after = transformOf(result.current);
+    expect(after.x).toBeGreaterThan(before.x);
+    expect(after.y).toBeGreaterThan(before.y);
   });
 
   it('treats the gesture delta as cumulative, not incremental', async () => {

@@ -82,6 +82,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
       fitVerticalAlignment: 'top',
       fitMode: 'height',
       refitOnLayoutChange: false,
+      freePan: true,
       onTap: handleTap,
     });
     const styles = useMemo(
@@ -121,6 +122,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     );
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
+        <View pointerEvents="none" style={{ width: layout.width, height: layout.height }}>
         {/*
           Anchored containers, drawn as bands across the scenes they cover. A dashed outline is a
           chapter placed somewhere other than where it is told; a solid one is an event. Only the
@@ -386,6 +388,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             </React.Fragment>
           );
         })}
+        </View>
       </GraphCanvasFrame>
     );
   },

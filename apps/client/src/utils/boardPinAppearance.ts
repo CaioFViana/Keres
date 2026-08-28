@@ -1,19 +1,40 @@
 import type { BoardPinEntity } from '@keres/shared';
 import { getEntityAppearance } from '@keres/shared';
 
-export function boardPinAccent(kind: 'note' | 'entity', entityType?: BoardPinEntity): string {
-  if (kind === 'note') return getEntityAppearance('Note').color;
-  return getEntityAppearance(entityType ?? 'Character').color;
+/** Events live in the Chapter table; the picker group is what tells them apart on a board. */
+export function boardPinAppearanceType(
+  kind: 'note' | 'entity',
+  entityType?: BoardPinEntity,
+  group?: string,
+): string {
+  if (kind === 'note') return 'Note';
+  if (group === 'event') return 'Event';
+  return entityType ?? 'Character';
 }
 
-export function boardPinIcon(kind: 'note' | 'entity', entityType?: BoardPinEntity): string {
-  if (kind === 'note') return getEntityAppearance('Note').icon;
-  return getEntityAppearance(entityType ?? 'Character').icon;
+export function boardPinAccent(
+  kind: 'note' | 'entity',
+  entityType?: BoardPinEntity,
+  group?: string,
+): string {
+  return getEntityAppearance(boardPinAppearanceType(kind, entityType, group)).color;
 }
 
-export function boardPinTypeKey(kind: 'note' | 'entity', entityType?: BoardPinEntity): string {
-  if (kind === 'note') return 'board_note';
-  switch (entityType) {
+export function boardPinIcon(
+  kind: 'note' | 'entity',
+  entityType?: BoardPinEntity,
+  group?: string,
+): string {
+  return getEntityAppearance(boardPinAppearanceType(kind, entityType, group)).icon;
+}
+
+export function boardPinTypeKey(
+  kind: 'note' | 'entity',
+  entityType?: BoardPinEntity,
+  group?: string,
+): string {
+  const appearance = boardPinAppearanceType(kind, entityType, group);
+  switch (appearance) {
     case 'Character':
       return 'character';
     case 'Location':
@@ -26,8 +47,10 @@ export function boardPinTypeKey(kind: 'note' | 'entity', entityType?: BoardPinEn
       return 'gallery';
     case 'Chapter':
       return 'chapter';
+    case 'Event':
+      return 'event';
     case 'Note':
-      return 'note';
+      return kind === 'note' ? 'board_note' : 'note';
     default:
       return 'board_note';
   }

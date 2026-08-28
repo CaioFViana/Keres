@@ -31,7 +31,7 @@ interface LocationGraphCanvasProps {
 const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphCanvasProps>(
   ({ layout, selectedNodeId, onSelectNode }, ref) => {
     const { colors } = useTheme();
-    const panZoom = usePanZoomCanvas(ref, layout);
+    const panZoom = usePanZoomCanvas(ref, layout, { freePan: true });
 
     const styles = useMemo(
       () =>

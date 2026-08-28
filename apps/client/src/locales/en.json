@@ -563,6 +563,7 @@
   "eons": "Eons",
   "error": "Error",
   "error_fetching_summary": "Error fetching summary:",
+  "event": "Event",
   "event_plural": "Events",
   "example_stories_author": "By {{author}}",
   "example_stories_description": "Install a ready-made example story to explore the system's features. Once installed, it becomes a regular story - you can edit or delete it like any other.",

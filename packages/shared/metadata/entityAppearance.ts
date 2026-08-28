@@ -6,7 +6,7 @@
  */
 export const ENTITY_APPEARANCE = {
   Chapter: { color: '#F44336', icon: 'bookmarks' },
-  Event: { color: '#F44336', icon: 'flag' },
+  Event: { color: '#5C6BC0', icon: 'flag' },
   Scene: { color: '#a13fb3', icon: 'easel' },
   Location: { color: '#8BC34A', icon: 'map' },
   Character: { color: '#37afa5', icon: 'people' },

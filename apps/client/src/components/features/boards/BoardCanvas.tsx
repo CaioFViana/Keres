@@ -14,6 +14,7 @@ export type BoardCanvasHandle = PanZoomCanvasHandle;
 export interface BoardPinTitle {
   title: string;
   typeLabel: string;
+  appearanceType?: string;
   ghost?: boolean;
 }
 
@@ -29,7 +30,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
   ({ content, titles, selectedNodeId, onSelectNode, onMoveNode }, ref) => {
     const { colors } = useTheme();
     const size = boardCanvasSize(content.nodes);
-    const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false });
+    const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;
     const nodesById = useMemo(() => {
@@ -61,6 +62,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               node={node}
               title={meta?.title ?? node.kind}
               typeLabel={meta?.typeLabel ?? node.kind}
+              appearanceType={meta?.appearanceType}
               ghost={meta?.ghost}
               selected={selectedNodeId === node.id}
               scale={scale}

@@ -23,7 +23,11 @@ import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasCon
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useBoardPinOptions, decodeBoardPinValue } from '../../hooks/useBoardPinOptions';
+import {
+  useBoardPinOptions,
+  decodeBoardPinValue,
+  type BoardPinOption,
+} from '../../hooks/useBoardPinOptions';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
@@ -34,7 +38,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { nextStaggeredPosition } from '../../utils/boardLayout';
-import { boardPinTypeKey } from '../../utils/boardPinAppearance';
+import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
 import { renderBoardSvg } from '../../utils/boardSvg';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -63,7 +67,9 @@ const BoardCanvasScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<BoardNodeType | null>(null);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
-  const [liveNames, setLiveNames] = useState<Record<string, string>>({});
+  const [livePins, setLivePins] = useState<
+    Record<string, { label: string; group: BoardPinOption['group'] }>
+  >({});
   const [exporting, setExporting] = useState(false);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
@@ -109,11 +115,14 @@ const BoardCanvasScreen = () => {
   }, [load]);
 
   useEffect(() => {
-    const names: Record<string, string> = {};
+    const next: Record<string, { label: string; group: BoardPinOption['group'] }> = {};
     for (const option of options) {
-      names[`${option.entityType}:${option.entityId}`] = option.label;
+      next[`${option.entityType}:${option.entityId}`] = {
+        label: option.label,
+        group: option.group,
+      };
     }
-    setLiveNames(names);
+    setLivePins(next);
   }, [options]);
 
   const save = useCallback(async () => {
@@ -173,26 +182,40 @@ const BoardCanvasScreen = () => {
   );
 
   const titles = useMemo(() => {
-    const map: Record<string, { title: string; typeLabel: string; ghost?: boolean }> = {};
+    const map: Record<
+      string,
+      { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }
+    > = {};
     for (const node of content.nodes) {
+      const live =
+        node.kind === 'entity' ? livePins[`${node.entityType}:${node.entityId}`] : undefined;
+      const appearanceType = boardPinAppearanceType(
+        node.kind,
+        node.kind === 'entity' ? node.entityType : undefined,
+        live?.group,
+      );
       const typeLabel = t(
-        boardPinTypeKey(node.kind, node.kind === 'entity' ? node.entityType : undefined),
+        boardPinTypeKey(
+          node.kind,
+          node.kind === 'entity' ? node.entityType : undefined,
+          live?.group,
+        ),
       );
       if (node.kind === 'note') {
-        map[node.id] = { title: node.title.trim() || t('board_note'), typeLabel };
+        map[node.id] = { title: node.title.trim() || t('board_note'), typeLabel, appearanceType };
         continue;
       }
-      const live = liveNames[`${node.entityType}:${node.entityId}`];
       map[node.id] = live
-        ? { title: live, typeLabel }
+        ? { title: live.label, typeLabel, appearanceType }
         : {
             title: node.labelAtPin || t('board_deleted_entity'),
             typeLabel: `${typeLabel} · ${t('board_deleted_entity')}`,
+            appearanceType,
             ghost: true,
           };
     }
     return map;
-  }, [content.nodes, liveNames, t]);
+  }, [content.nodes, livePins, t]);
 
   const handleExport = useCallback(async () => {
     if (!selectedStory) return;

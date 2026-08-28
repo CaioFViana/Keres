@@ -505,9 +505,9 @@ const CustomizationStackNavigator = () => {
 type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
 
 const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
-  ({ color, size }: { color: string; size: number }) => (
-    <Ionicons name={name} color={color} size={size} />
-  );
+  function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
+    return <Ionicons name={name} color={color} size={size} />;
+  };
 
 const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
   const { colors } = useTheme();

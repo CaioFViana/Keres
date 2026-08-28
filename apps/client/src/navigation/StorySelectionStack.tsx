@@ -255,9 +255,9 @@ const StorySelectionNavigator = () => {
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
   const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
-    ({ color, size }: { color: string; size: number }) => (
-      <Ionicons name={name} color={color} size={size} />
-    );
+    function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
+      return <Ionicons name={name} color={color} size={size} />;
+    };
 
   return (
     <Drawer.Navigator

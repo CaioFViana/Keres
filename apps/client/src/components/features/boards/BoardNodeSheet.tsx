@@ -53,7 +53,7 @@ const BoardNodeSheet: React.FC<Props> = ({
     setEdgeLabel('');
     setNoteTitle(node.kind === 'note' ? node.title : '');
     setNoteBody(node.kind === 'note' ? (node.body ?? '') : '');
-  }, [node.id]);
+  }, [node.body, node.id, node.kind, node.title]);
 
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
   const others = content.nodes.filter((item) => item.id !== node.id);

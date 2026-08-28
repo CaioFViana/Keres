@@ -141,6 +141,13 @@
       "when": 1787875469311,
       "tag": "0019_modern_warhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1787929195599,
+      "tag": "0020_wide_moonstone",
+      "breakpoints": true
     }
   ]
 }

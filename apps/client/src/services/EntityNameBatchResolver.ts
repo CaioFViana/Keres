@@ -27,6 +27,7 @@ const nameKey = (entityType: string, entityId: string) => `${entityType}:${entit
 /** The column that carries the display name of each simple type a relation can point at. */
 const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
   Board: 'name',
+  LocationMap: 'name',
   Character: 'name',
   Location: 'name',
   Item: 'name',

@@ -48,6 +48,8 @@ import LocationDetailsScreen from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
+import LocationMapListScreen from '../screens/location-maps/LocationMapListScreen';
+import LocationMapScreen from '../screens/location-maps/LocationMapScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
@@ -292,6 +294,8 @@ export type LocationStackParamList = {
   LocationDetail: LocationDetailScreenParamList['LocationDetail'];
   LocationForm: { locationId?: string };
   LocationView: undefined;
+  LocationMapList: undefined;
+  LocationMap: { mapId: string };
 };
 
 const LocationStackNavigator = () => {
@@ -305,6 +309,8 @@ const LocationStackNavigator = () => {
       <LocationStack.Screen name="LocationDetail" component={LocationDetailsScreen} />
       <LocationStack.Screen name="LocationForm" component={LocationFormScreen} />
       <LocationStack.Screen name="LocationView" component={LocationGraphScreen} />
+      <LocationStack.Screen name="LocationMapList" component={LocationMapListScreen} />
+      <LocationStack.Screen name="LocationMap" component={LocationMapScreen} />
     </LocationStack.Navigator>
   );
 };

@@ -50,7 +50,13 @@ jest.mock('@react-navigation/native', () => ({
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
-  return { __esModule: true, useTranslation: () => ({ t }) };
+  return {
+    __esModule: true,
+    useTranslation: () => ({ t }),
+    // `utils/i18n.ts` calls `i18n.use(initReactI18next)`; without the export the
+    // module crashes with "undefined module" whenever a screen pulls in `syncUtils`.
+    initReactI18next: { type: '3rdParty', init: jest.fn() },
+  };
 });
 jest.mock('../../src/theme', () => ({
   __esModule: true,

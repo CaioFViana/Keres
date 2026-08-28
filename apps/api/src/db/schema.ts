@@ -21,6 +21,7 @@ export * from './schema/tables/favorites';
 export * from './schema/tables/itemJourneys';
 export * from './schema/tables/items';
 export * from './schema/tables/locations';
+export * from './schema/tables/locationMaps';
 export * from './schema/tables/locationRelations';
 export * from './schema/tables/mediaStorageSettings';
 export * from './schema/tables/modes';

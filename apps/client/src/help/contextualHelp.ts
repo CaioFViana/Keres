@@ -55,6 +55,8 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   LocationDetail: 'locations',
   LocationForm: 'locations',
   LocationView: 'location-map',
+  LocationMapList: 'location-map',
+  LocationMap: 'location-map',
   ItemsStack: 'items',
   Items: 'items',
   ItemDetail: 'items',

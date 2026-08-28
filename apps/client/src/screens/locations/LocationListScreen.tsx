@@ -117,6 +117,13 @@ const LocationsScreen = () => {
             >
               <Ionicons name="git-network-outline" size={26} color={colors.text} />
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('LocationMapList')}
+              style={styles.headerButton}
+              accessibilityLabel={t('location_map_list_title')}
+            >
+              <Ionicons name="map-outline" size={26} color={colors.text} />
+            </TouchableOpacity>
             {canEdit && (
               <TouchableOpacity
                 onPress={() => navigation.navigate('LocationForm', { locationId: undefined })}

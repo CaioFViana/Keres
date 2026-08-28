@@ -46,6 +46,7 @@ import { PlotSyncHandler } from './entity-sync-handlers/PlotSyncHandler';
 import { PlotSceneSyncHandler } from './entity-sync-handlers/PlotSceneSyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationRelationSyncHandler } from './entity-sync-handlers/LocationRelationSyncHandler';
+import { LocationMapSyncHandler } from './entity-sync-handlers/LocationMapSyncHandler';
 import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
 import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler';
 import { NoteSyncHandler } from './entity-sync-handlers/NoteSyncHandler';
@@ -97,6 +98,7 @@ export class SyncService {
     this.registerEntityHandler(new ChapterAnchorSyncHandler());
     this.registerEntityHandler(new StoryCalendarSyncHandler());
     this.registerEntityHandler(new BoardSyncHandler());
+    this.registerEntityHandler(new LocationMapSyncHandler());
     this.registerEntityHandler(new CharacterRelationSyncHandler());
     this.registerEntityHandler(new ItemSyncHandler());
     this.registerEntityHandler(new ItemJourneySyncHandler());

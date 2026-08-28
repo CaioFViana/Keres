@@ -71,6 +71,7 @@ import {
   itemJourneys,
   items,
   locations,
+  locationMaps,
   locationRelations,
   noteRelations,
   notes,
@@ -1168,6 +1169,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyChapterAnchors,
         storyOwnCalendars,
         storyBoards,
+        storyLocationMaps,
         storyCharacterRelations,
         storyCharacterScenes,
         storyGalleryItems,
@@ -1204,6 +1206,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.chapterAnchors.findMany({ where: belongsToStory(chapterAnchors) }),
         db.query.storyCalendars.findMany({ where: belongsToStory(storyCalendars) }),
         db.query.boards.findMany({ where: belongsToStory(boards) }),
+        db.query.locationMaps.findMany({ where: belongsToStory(locationMaps) }),
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
         db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
         db.query.galleries.findMany({ where: belongsToStory(galleries) }),
@@ -1247,6 +1250,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           chapterAnchors: storyChapterAnchors,
           storyCalendars: storyOwnCalendars,
           storyBoards,
+          storyLocationMaps,
           characterRelations: storyCharacterRelations,
           characterScenes: storyCharacterScenes,
           galleryItems: storyGalleryItems,
@@ -1560,6 +1564,25 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               createdAt: new Date(board.createdAt),
               updatedAt: new Date(),
               version: board.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
+        /*
+         * Location maps. `content.locationId`/`content.galleryId` have already been remapped by
+         * cloneStoryForLocalImport; ids that were never in the package stay as they were.
+         */
+        for (const map of fullStoryData.storyLocationMaps ?? []) {
+          await tx
+            .insert(locationMaps)
+            .values({
+              ...map,
+              storyId: map.storyId,
+              createdAt: new Date(map.createdAt),
+              updatedAt: new Date(),
+              version: map.version,
               isDeleted: false,
               deletedAt: null,
             })

@@ -9,6 +9,8 @@ interface IconPickerInputProps {
   onSelectIcon: (icon: string) => void;
   currentIcon: string | null;
   placeholder?: string;
+  /** The icon list to pick from - defaults to the avatar set; maps use `MAP_ICON_OPTIONS`. */
+  iconOptions?: readonly (keyof typeof Ionicons.glyphMap)[];
   /**
    * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
    * draws the field's frame, and a second border/height around it misaligns the inner content.
@@ -20,6 +22,7 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
   onSelectIcon,
   currentIcon,
   placeholder,
+  iconOptions,
   style,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -96,6 +99,7 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
           onSelectIcon={handleSelectIcon}
           onClose={() => setModalVisible(false)}
           title={placeholder}
+          options={iconOptions}
         />
       </ResponsiveModal>
     </View>

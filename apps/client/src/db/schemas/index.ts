@@ -18,6 +18,7 @@ export * from './favorites';
 export * from './itemJourneys';
 export * from './items';
 export * from './locations';
+export * from './locationMaps';
 export * from './locationRelations';
 export * from './modes';
 export * from './notes';

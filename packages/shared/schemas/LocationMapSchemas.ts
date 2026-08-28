@@ -17,6 +17,9 @@ export const LOCATION_MAP_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 export const MAX_LOCATION_MAP_IMAGES = 200;
 export const MAX_LOCATION_MAP_NODES = 500;
 
+/** Default icon color of a map point - the Location entity's own colour. */
+export const DEFAULT_LOCATION_MAP_NODE_COLOR = '#8BC34A';
+
 const LocationMapLocalIdSchema = z
   .string()
   .regex(LOCATION_MAP_LOCAL_ID_REGEX, 'Location map image and node ids are 8 Crockford characters');
@@ -51,6 +54,8 @@ const LocationMapNodeSchema = z.object({
   y: z.number().finite(),
   /** An Ionicons glyph name (see `metadata/mapIcons.ts`). */
   icon: z.string().min(1).max(60),
+  /** Color of the icon on the map, as a hex string. Defaults so older maps without it keep parsing. */
+  color: z.string().max(20).default(DEFAULT_LOCATION_MAP_NODE_COLOR),
 });
 
 export const LocationMapContentSchema = z

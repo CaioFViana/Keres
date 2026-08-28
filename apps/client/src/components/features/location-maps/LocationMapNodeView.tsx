@@ -119,7 +119,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           justifyContent: 'center',
           backgroundColor: colors.surface,
           borderWidth: selected ? 2.5 : 1.5,
-          borderColor: selected ? colors.primary : colors.textSecondary,
+          borderColor: selected ? colors.primary : node.color,
         },
         label: {
           fontSize: 10,
@@ -130,13 +130,17 @@ const LocationMapNodeView: React.FC<Props> = ({
           maxWidth: 96,
         },
       }),
-    [colors, node.x, node.y, selected],
+    [colors, node.color, node.x, node.y, selected],
   );
 
   return (
     <View style={styles.node} {...pan.panHandlers}>
       <View style={styles.circle} pointerEvents="none">
-        <Ionicons name={(node.icon as keyof typeof Ionicons.glyphMap) || 'location'} size={22} color={colors.primary} />
+        <Ionicons
+          name={(node.icon as keyof typeof Ionicons.glyphMap) || 'location'}
+          size={22}
+          color={node.color}
+        />
       </View>
       <Text style={styles.label} numberOfLines={1} pointerEvents="none">
         {name}

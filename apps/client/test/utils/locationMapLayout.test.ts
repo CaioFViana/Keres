@@ -18,7 +18,7 @@ it('returns the minimum canvas for an empty map', () => {
 it('grows the canvas with image bases and location points', () => {
   const size = locationMapCanvasSize({
     images: [{ id: '01ABCDEF', galleryId: 'g1', x: 0, y: 0, width: 400, height: 300 }],
-    nodes: [{ id: '02GHJKMN', locationId: 'l1', x: 600, y: 500, icon: 'pin' }],
+    nodes: [{ id: '02GHJKMN', locationId: 'l1', x: 600, y: 500, icon: 'pin', color: '#8BC34A' }],
   });
 
   expect(size.width).toBe(

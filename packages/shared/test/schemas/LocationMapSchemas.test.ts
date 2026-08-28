@@ -36,6 +36,14 @@ describe('LocationMapContentSchema', () => {
     expect(content.nodes).toHaveLength(1);
   });
 
+  it('defaults a node color so older maps without it keep parsing', () => {
+    const content = LocationMapContentSchema.parse({
+      images: [],
+      nodes: [{ id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin' }],
+    });
+    expect(content.nodes[0].color).toBe('#8BC34A');
+  });
+
   it('rejects duplicate image ids', () => {
     expect(() =>
       LocationMapContentSchema.parse({

@@ -32,10 +32,13 @@ type Navigation = CompositeNavigationProp<
 >;
 
 const LocationMapListScreen = () => {
-  useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<Navigation>();
+  useBackButtonHandler({
+    showWebBackButton: true,
+    onBack: () => navigation.goBack(),
+  });
   const db = useDrizzle();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const { canEdit } = useStoryRole(storyId);

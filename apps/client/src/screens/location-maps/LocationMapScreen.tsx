@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapContentType } from '@keres/shared';
-import { getEntityAppearance, generateLocationMapLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,7 +13,6 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationMapCanvas, {
   type LocationMapCanvasHandle,
-  type LocationMapConnection,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import LocationMapImageSheet from '@/src/components/features/location-maps/LocationMapImageSheet';
 import LocationMapNodeSheet, {
@@ -27,6 +25,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
+import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { createLocationMapService } from '../../services/storymanagement/LocationMapService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
@@ -42,6 +41,11 @@ import {
   LOCATION_MAP_IMAGE_MAX,
   LOCATION_MAP_IMAGE_MIN,
 } from '../../utils/locationMapLayout';
+import { appendImagesToMap, appendLocationsToMap } from '../../utils/locationMapContent';
+import { bytesToBase64, imageSizeOf } from '../../utils/locationMapMedia';
+import { deriveConnections, deriveContains } from '../../utils/locationMapRelations';
+import { renderLocationMapSvg } from '../../utils/locationMapSvg';
+import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
 const LocationMapScreen = () => {
@@ -67,6 +71,7 @@ const LocationMapScreen = () => {
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
@@ -200,10 +205,14 @@ const LocationMapScreen = () => {
   );
 
   const galleryMediaById = useMemo(() => {
-    const next: Record<string, { mediaType: string; localPath: string | null; thumbnailPath: string | null }> = {};
+    const next: Record<
+      string,
+      { mediaType: string; mimeType: string; localPath: string | null; thumbnailPath: string | null }
+    > = {};
     for (const gallery of galleries) {
       next[gallery.id] = {
         mediaType: gallery.mediaType,
+        mimeType: gallery.mimeType,
         localPath: gallery.localPath,
         thumbnailPath: gallery.thumbnailPath ?? null,
       };
@@ -240,17 +249,63 @@ const LocationMapScreen = () => {
     return next;
   }, [content.nodes, locationNameById]);
 
-  const connections = useMemo((): LocationMapConnection[] => {
-    const nodeLocationIds = new Set(content.nodes.map((node) => node.locationId));
-    return relations
-      .filter(
-        (relation) =>
-          relation.relationType === 'connected_to' &&
-          nodeLocationIds.has(relation.locationAId) &&
-          nodeLocationIds.has(relation.locationBId),
-      )
-      .map((relation) => ({ locationAId: relation.locationAId, locationBId: relation.locationBId }));
-  }, [content.nodes, relations]);
+  const connections = useMemo(() => deriveConnections(relations, content), [relations, content]);
+
+  const contains = useMemo(() => deriveContains(relations, content), [relations, content]);
+
+  const handleExport = useCallback(async () => {
+    if (!map) return;
+    setExporting(true);
+    try {
+      // The exported SVG is standalone, so each image base is embedded as a data URI. Only the
+      // images actually used on the map are read.
+      const imageUris: Record<string, string> = {};
+      for (const image of content.images) {
+        const media = galleryMediaById[image.galleryId];
+        const path = media?.mediaType === 'image' ? media.localPath : null;
+        if (!path) continue;
+        try {
+          const bytes = await mediaFileService.readBytes(path);
+          imageUris[image.galleryId] = `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
+        } catch (readError) {
+          console.log('LocationMapScreen: failed to read image for export.', readError);
+        }
+      }
+
+      const svg = renderLocationMapSvg(content, {
+        title: map.name,
+        subtitle: t('location_map_export_subtitle', {
+          nodeCount: content.nodes.length,
+          imageCount: content.images.length,
+        }),
+        colors: {
+          background: colors.background,
+          surface: colors.surface,
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          border: colors.border,
+        },
+        nodeNames,
+        connections,
+        contains,
+        imageUris,
+      });
+      const result = await deliverSvgMap(svg, buildLocationMapFileName(map.name));
+      if (result.delivered) {
+        showNotification(t('location_map_export_success', { fileName: result.fileName }), 'success');
+      } else {
+        showNotification(
+          t('location_map_export_no_share_target', { path: result.uri ?? result.fileName }),
+          'warning',
+        );
+      }
+    } catch (exportError) {
+      console.log('LocationMapScreen: failed to export map.', exportError);
+      showNotification(t('location_map_export_failed'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [colors, connections, contains, content, galleryMediaById, map, nodeNames, showNotification, t]);
 
   const usedGalleryIds = useMemo(() => new Set(content.images.map((image) => image.galleryId)), [content.images]);
   const imageOptions = useMemo(
@@ -270,55 +325,37 @@ const LocationMapScreen = () => {
     [locations, usedLocationIds],
   );
 
-  const addImages = (values: string[]) => {
-    setContent((current) => {
-      const existing = new Set([...current.images.map((image) => image.id), ...current.nodes.map((node) => node.id)]);
-      let next = current;
-      for (const galleryId of values) {
-        const index = next.images.length + next.nodes.length;
-        next = {
-          ...next,
-          images: [
-            ...next.images,
-            {
-              id: generateLocationMapLocalId(existing),
-              galleryId,
-              x: 80 + (index % 4) * 24,
-              y: 80 + (index % 4) * 24,
-              width: LOCATION_MAP_IMAGE_DEFAULT_WIDTH,
-              height: LOCATION_MAP_IMAGE_DEFAULT_HEIGHT,
-            },
-          ],
-        };
-        existing.add(next.images[next.images.length - 1].id);
+  const addImages = async (values: string[]) => {
+    // Each image keeps its real aspect ratio: the default size is a bounding box the image is
+    // scaled to fit, so a square picture comes in square instead of stretched rectangular.
+    const sized: { galleryId: string; width: number; height: number }[] = [];
+    for (const galleryId of values) {
+      const media = galleryMediaById[galleryId];
+      let width = LOCATION_MAP_IMAGE_DEFAULT_WIDTH;
+      let height = LOCATION_MAP_IMAGE_DEFAULT_HEIGHT;
+      if (media?.localPath) {
+        try {
+          const { width: naturalWidth, height: naturalHeight } = await imageSizeOf(media.localPath);
+          if (naturalWidth > 0 && naturalHeight > 0) {
+            const scale = Math.min(
+              LOCATION_MAP_IMAGE_DEFAULT_WIDTH / naturalWidth,
+              LOCATION_MAP_IMAGE_DEFAULT_HEIGHT / naturalHeight,
+            );
+            width = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalWidth * scale));
+            height = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalHeight * scale));
+          }
+        } catch (sizeError) {
+          console.log('LocationMapScreen: failed to read image size, using default.', sizeError);
+        }
       }
-      return next;
-    });
+      sized.push({ galleryId, width, height });
+    }
+
+    setContent((current) => appendImagesToMap(current, sized));
   };
 
   const addLocations = (values: string[]) => {
-    setContent((current) => {
-      const existing = new Set([...current.images.map((image) => image.id), ...current.nodes.map((node) => node.id)]);
-      let next = current;
-      for (const locationId of values) {
-        const index = next.images.length + next.nodes.length;
-        next = {
-          ...next,
-          nodes: [
-            ...next.nodes,
-            {
-              id: generateLocationMapLocalId(existing),
-              locationId,
-              x: 120 + (index % 4) * 24,
-              y: 120 + (index % 4) * 24,
-              icon: getEntityAppearance('Location').icon,
-            },
-          ],
-        };
-        existing.add(next.nodes[next.nodes.length - 1].id);
-      }
-      return next;
-    });
+    setContent((current) => appendLocationsToMap(current, values));
   };
 
   const selectedImage = useMemo(
@@ -467,6 +504,7 @@ const LocationMapScreen = () => {
         imageUris={imageUris}
         nodeNames={nodeNames}
         connections={connections}
+        contains={contains}
         selectedImageId={selectedImageId}
         selectedNodeId={selectedNodeId}
         onSelectImage={(imageId) => {
@@ -494,6 +532,9 @@ const LocationMapScreen = () => {
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
         onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
         onFit={() => canvasRef.current?.fitToScreen()}
+        onExport={() => void handleExport()}
+        exporting={exporting}
+        exportLabel={t('location_map_export')}
       />
       {selectedImage && (
         <LocationMapImageSheet
@@ -507,6 +548,7 @@ const LocationMapScreen = () => {
         <LocationMapNodeSheet
           name={nodeNames[selectedNode.locationId] ?? selectedNode.locationId}
           icon={selectedNode.icon}
+          color={selectedNode.color}
           connections={nodeConnections}
           connectCandidates={connectCandidates}
           canEdit={canEdit}
@@ -514,6 +556,12 @@ const LocationMapScreen = () => {
             setContent((current) => ({
               ...current,
               nodes: current.nodes.map((node) => (node.id === selectedNode.id ? { ...node, icon } : node)),
+            }))
+          }
+          onChangeColor={(color) =>
+            setContent((current) => ({
+              ...current,
+              nodes: current.nodes.map((node) => (node.id === selectedNode.id ? { ...node, color } : node)),
             }))
           }
           onAddConnection={(locationId) => void handleAddConnection(locationId)}

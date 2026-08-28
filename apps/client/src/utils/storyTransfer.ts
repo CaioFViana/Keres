@@ -98,6 +98,14 @@ export function buildBoardMapFileName(
   return `${slugify(storyTitle)}-${slugify(boardName)}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
+/** The location map drawing's image file. */
+export function buildLocationMapFileName(
+  mapName: string,
+  now: Date = new Date(),
+): string {
+  return `${slugify(mapName)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
+}
+
 /** The result of trying to deliver the file to the user. */
 export interface ExportDeliveryResult {
   /** `false` when the platform offers no way at all of sharing a file. */

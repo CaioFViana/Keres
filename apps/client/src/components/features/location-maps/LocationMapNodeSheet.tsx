@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
+import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -19,11 +20,13 @@ export interface LocationMapNodeConnection {
 interface Props {
   name: string;
   icon: string;
+  color: string;
   connections: LocationMapNodeConnection[];
   /** Locations that can still be connected to this one (no `connected_to` yet). */
   connectCandidates: { id: string; name: string }[];
   canEdit: boolean;
   onChangeIcon: (icon: string) => void;
+  onChangeColor: (color: string) => void;
   onAddConnection: (locationId: string) => void;
   onRemoveConnection: (relationId: string) => void;
   onRemoveNode: () => void;
@@ -37,10 +40,12 @@ interface Props {
 const LocationMapNodeSheet: React.FC<Props> = ({
   name,
   icon,
+  color,
   connections,
   connectCandidates,
   canEdit,
   onChangeIcon,
+  onChangeColor,
   onAddConnection,
   onRemoveConnection,
   onRemoveNode,
@@ -123,6 +128,13 @@ const LocationMapNodeSheet: React.FC<Props> = ({
               onSelectIcon={onChangeIcon}
               placeholder={t('location_map_node_icon')}
               iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]}
+            />
+            <View style={{ height: 12 }} />
+            <Text style={styles.section}>{t('location_map_node_color')}</Text>
+            <ColorPickerInput
+              currentColor={color}
+              onSelectColor={onChangeColor}
+              placeholder={t('location_map_node_color')}
             />
           </>
         )}

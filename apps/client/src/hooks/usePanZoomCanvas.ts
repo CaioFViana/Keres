@@ -209,7 +209,8 @@ export function usePanZoomCanvas(
         // `onTap` all start here, instead of the gesture being dropped for want of an owner.
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponderCapture: (event, gestureState) => {
-          if (event.nativeEvent.touches.length > 1) return true;
+          const touches = event.nativeEvent.touches ?? [];
+          if (touches.length > 1) return true;
           if (childDragging.current) return false;
           return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
         },
@@ -225,7 +226,7 @@ export function usePanZoomCanvas(
         },
 
         onPanResponderMove: (event, gestureState) => {
-          const touches = event.nativeEvent.touches;
+          const touches = event.nativeEvent.touches ?? [];
 
           if (touches.length >= 2) {
             tapping.current = false;

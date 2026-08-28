@@ -232,6 +232,28 @@ describe('gesture decisions', () => {
     ).toBe(true);
   });
 
+  it('does not steal a pin that is already dragging', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas();
+    const config = create.mock.calls.at(-1)![0] as any;
+    result.current.setChildDragging(true);
+
+    expect(
+      config.onMoveShouldSetPanResponderCapture(
+        { nativeEvent: { touches: [{}] } },
+        { dx: 20, dy: 0 },
+      ),
+    ).toBe(false);
+  });
+
+  it('treats a mouse event without a touches list as a one-finger drag', async () => {
+    const config = await configOf();
+
+    expect(
+      config.onMoveShouldSetPanResponderCapture({ nativeEvent: {} }, { dx: 20, dy: 0 }),
+    ).toBe(true);
+  });
+
   it('takes over immediately for a second finger, however small the movement', async () => {
     const config = await configOf();
 

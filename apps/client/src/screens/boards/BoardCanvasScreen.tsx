@@ -10,7 +10,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   ScreenError,
@@ -181,59 +181,66 @@ const BoardCanvasScreen = () => {
   }, [titles]);
 
   const addEntities = (values: string[]) => {
-    let next = content;
-    const origin = { x: 80, y: 80 };
-    for (const value of values) {
-      const decoded = decodeBoardPinValue(value);
-      if (!decoded) continue;
-      const option = options.find(
-        (item) => item.entityType === decoded.entityType && item.entityId === decoded.entityId,
-      );
-      const existing = new Set([
-        ...next.nodes.map((node) => node.id),
-        ...next.edges.map((edge) => edge.id),
-      ]);
-      const position = nextStaggeredPosition(next, origin);
-      next = {
-        ...next,
-        nodes: [
-          ...next.nodes,
-          {
-            id: generateBoardLocalId(existing),
-            kind: 'entity',
-            x: position.x,
-            y: position.y,
-            entityType: decoded.entityType as BoardPinEntity,
-            entityId: decoded.entityId,
-            labelAtPin: option?.label ?? decoded.entityId,
-          },
-        ],
-      };
+    let created: BoardNodeType[] = [];
+    setContent((current) => {
+      let next = current;
+      created = [];
+      const origin = { x: 80, y: 80 };
+      for (const value of values) {
+        const decoded = decodeBoardPinValue(value);
+        if (!decoded) continue;
+        const option = options.find(
+          (item) => item.entityType === decoded.entityType && item.entityId === decoded.entityId,
+        );
+        const existing = new Set([
+          ...next.nodes.map((node) => node.id),
+          ...next.edges.map((edge) => edge.id),
+        ]);
+        const position = nextStaggeredPosition(next, origin);
+        const node: BoardNodeType = {
+          id: generateBoardLocalId(existing),
+          kind: 'entity',
+          x: position.x,
+          y: position.y,
+          entityType: decoded.entityType as BoardPinEntity,
+          entityId: decoded.entityId,
+          labelAtPin: option?.label ?? decoded.entityId,
+        };
+        created.push(node);
+        next = { ...next, nodes: [...next.nodes, node] };
+      }
+      return next;
+    });
+    const last = created[created.length - 1];
+    if (last) setSelected(last);
+    if (created.length === 1) {
+      const pin = created[0];
+      const name = pin.kind === 'entity' ? pin.labelAtPin : t('board_note');
+      showNotification(t('board_pin_added', { name }), 'success');
+    } else if (created.length > 1) {
+      showNotification(t('board_pins_added', { count: created.length }), 'success');
     }
-    setContent(next);
-    setPickerValues([]);
   };
 
   const addNote = () => {
-    const existing = new Set([
-      ...content.nodes.map((node) => node.id),
-      ...content.edges.map((edge) => edge.id),
-    ]);
-    const position = nextStaggeredPosition(content, { x: 120, y: 120 });
-    setContent({
-      ...content,
-      nodes: [
-        ...content.nodes,
-        {
-          id: generateBoardLocalId(existing),
-          kind: 'note',
-          x: position.x,
-          y: position.y,
-          title: '',
-          body: null,
-        },
-      ],
+    let created: BoardNodeType | null = null;
+    setContent((current) => {
+      const existing = new Set([
+        ...current.nodes.map((node) => node.id),
+        ...current.edges.map((edge) => edge.id),
+      ]);
+      const position = nextStaggeredPosition(current, { x: 120, y: 120 });
+      created = {
+        id: generateBoardLocalId(existing),
+        kind: 'note',
+        x: position.x,
+        y: position.y,
+        title: '',
+        body: null,
+      };
+      return { ...current, nodes: [...current.nodes, created] };
     });
+    if (created) setSelected(created);
   };
 
   const styles = StyleSheet.create({
@@ -262,7 +269,7 @@ const BoardCanvasScreen = () => {
             onSelectionChange={(values) => {
               const added = values.filter((value) => !pickerValues.includes(value));
               if (added.length > 0) addEntities(added);
-              else setPickerValues(values);
+              setPickerValues(values);
             }}
             placeholder={t('board_add_entity')}
             noOptionsText={t('board_no_entities')}
@@ -270,8 +277,10 @@ const BoardCanvasScreen = () => {
           <TouchableOpacity
             onPress={addNote}
             style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+            accessibilityLabel={t('board_add_note')}
           >
             <Ionicons name="create-outline" size={18} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 14 }}>{t('board_add_note')}</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -41,8 +41,18 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       .filter((edge): edge is NonNullable<typeof edge> => edge !== null);
 
     return (
-      <GraphCanvasFrame width={size.width} height={size.height} {...frame}>
-        <Svg width={size.width} height={size.height}>
+      <GraphCanvasFrame
+        width={size.width}
+        height={size.height}
+        contentOverflow="visible"
+        {...frame}
+      >
+        <Svg
+          width={size.width}
+          height={size.height}
+          pointerEvents="none"
+          style={{ overflow: 'visible' }}
+        >
           {edges.map((edge) => (
             <React.Fragment key={edge.id}>
               <Path

@@ -13,6 +13,11 @@ interface GraphCanvasFrameProps {
   handleLayout: PanZoomCanvasResult['handleLayout'];
   panHandlers: PanZoomCanvasResult['panHandlers'];
   animatedTransform: PanZoomCanvasResult['animatedTransform'];
+  /**
+   * Boards draw pins as views on top of an SVG. When a pin is dragged into the empty margin of a
+   * centred drawing, the line must still paint. Other graphs stay clipped to the drawing box.
+   */
+  contentOverflow?: 'hidden' | 'visible';
 }
 
 /**
@@ -30,6 +35,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   panHandlers,
   animatedTransform,
   children,
+  contentOverflow = 'hidden',
 }) => {
   const { colors } = useTheme();
 
@@ -45,9 +51,10 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
         top: 0,
         left: 0,
         transformOrigin: 'top left' as const,
+        overflow: contentOverflow,
       },
     }),
-    [colors],
+    [colors, contentOverflow],
   );
 
   return (

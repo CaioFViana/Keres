@@ -128,6 +128,11 @@ const LocationMapNodeView: React.FC<Props> = ({
           textAlign: 'center',
           marginTop: 2,
           maxWidth: 96,
+          // A soft halo in the background colour, so the name stays readable over the image
+          // bases - the same treatment the exported SVG gives it.
+          textShadowColor: colors.background,
+          textShadowRadius: 3,
+          textShadowOffset: { width: 0, height: 0 },
         },
       }),
     [colors, node.color, node.x, node.y, selected],

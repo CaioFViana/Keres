@@ -94,8 +94,45 @@ it('normalises nodes dragged to negative coordinates back inside the canvas', ()
   const svg = renderLocationMapSvg(dragged, options);
 
   expect(svg).toContain('>Reino</text>');
-  // No raw negative coordinates: the drawing is shifted inside the viewBox.
+  // No raw negative coordinates: the drawing is shifted inside the viewBox, below the header.
   expect(svg).not.toContain('x="-300"');
   expect(svg).not.toContain('y="-200"');
-  expect(svg).toContain('<circle cx="62" cy="62"');
+  expect(svg).toContain('<circle cx="62" cy="132"');
+});
+
+it('reserves the header so an image base never covers the title', () => {
+  // A single image at the very top of the drawing: after normalisation it must start below the
+  // header (y = HEADER + PADDING = 110), not over the title at y = 28/46.
+  const svg = renderLocationMapSvg(
+    {
+      images: [{ id: '01ABCDEF', galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240, locked: false }],
+      nodes: [],
+    },
+    options,
+  );
+
+  expect(svg).toContain('y="110"');
+  expect(svg).toContain('>Continente</text>');
+});
+
+it('draws the node name with a contrast halo', () => {
+  const svg = renderLocationMapSvg(content, options);
+
+  // The name is drawn twice: once with a thick background stroke (halo), once as plain text.
+  const nameCount = svg.split('>Reino</text>').length - 1;
+  expect(nameCount).toBe(2);
+  expect(svg).toContain('stroke="#ffffff" stroke-width="4"');
+});
+
+it('draws the default map icon as a path', () => {
+  const withMapIcon = {
+    images: [],
+    nodes: [
+      { id: '02GHJKMN', locationId: 'location-1', x: 100, y: 100, icon: 'map', color: '#8BC34A' },
+    ],
+  };
+  const svg = renderLocationMapSvg(withMapIcon, options);
+
+  expect(svg).toContain('<g transform="translate(');
+  expect(svg).toContain('fill="#8BC34A"><path');
 });

@@ -28,6 +28,8 @@ const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
 const LINE_END_MARGIN = 3;
 const CONTAINS_DASH = '6 4';
 const PADDING = 40;
+/** Height reserved for the title/subtitle at the top of the exported file. */
+const HEADER = 70;
 /** Width of the contrast halo behind every line, so it stays visible over the image bases. */
 const HALO_WIDTH = 6;
 /** The ionicons viewBox is 512; this scale brings the icon to ~32px, inside the 44px circle. */
@@ -77,9 +79,10 @@ export function renderLocationMapSvg(
     maxY = 0;
   }
   const offsetX = PADDING - minX;
-  const offsetY = PADDING - minY;
+  // The drawing starts below the reserved header, so an image base never covers the title.
+  const offsetY = HEADER + PADDING - minY;
   const width = Math.max(560, maxX - minX + PADDING * 2);
-  const height = Math.max(400, maxY - minY + PADDING * 2);
+  const height = Math.max(400, maxY - minY + PADDING * 2 + HEADER);
 
   const shift = (x: number, y: number) => ({ x: x + offsetX, y: y + offsetY });
 
@@ -153,6 +156,9 @@ export function renderLocationMapSvg(
       iconPaths
         ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${iconScale})" fill="${escapeXml(node.color)}">${iconPaths}</g>`
         : '',
+      // The name is drawn twice: a thick background-coloured stroke first (a halo), then the text,
+      // so it stays readable over the image bases - the same treatment the lines got.
+      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
       `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });

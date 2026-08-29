@@ -20,6 +20,7 @@ import { createChoiceService } from '../../../../services/storymanagement/Choice
 import { createItemJourneyService } from '../../../../services/storymanagement/ItemJourneyService';
 import { createSceneService } from '../../../../services/storymanagement/SceneService';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
+import { useSceneCalendarDates } from '../../../../hooks/useSceneCalendarDates';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
@@ -46,6 +47,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
   const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
   const drizzleDb = useDrizzle();
+  const { dateForScene } = useSceneCalendarDates(storyId);
 
   const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
@@ -205,6 +207,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
             const newOwner = journey.newCharacterOwnerId
               ? characterById.get(journey.newCharacterOwnerId)
               : undefined;
+            const sceneDate = scene ? dateForScene(scene) : null;
             return (
               <View key={journey.id} style={styles.row}>
                 <Ionicons
@@ -225,6 +228,11 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
                   <Text style={styles.cardTitle} numberOfLines={2}>
                     {journey.newState}
                   </Text>
+                  {sceneDate && (
+                    <Text style={styles.cardSubtitle} numberOfLines={1}>
+                      {sceneDate.date}
+                    </Text>
+                  )}
                   {newOwner && (
                     <Text style={styles.cardSubtitle} numberOfLines={1}>
                       {newOwner.name}

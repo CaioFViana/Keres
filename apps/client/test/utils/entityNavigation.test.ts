@@ -101,6 +101,36 @@ describe('navigateToEntityDetail', () => {
       returnToOrigin,
     );
   });
+
+  it('automatically returns to the focused source when the destination is a sibling stack', () => {
+    const navigate = jest.fn();
+    const drawer = {
+      navigate,
+      getState: () => ({
+        index: 0,
+        routes: [
+          {
+            name: 'NarrativeElementsStack',
+            state: {
+              index: 1,
+              routes: [
+                { name: 'NarrativeElements' },
+                { name: 'SceneDetail', params: { sceneId: 'scene-1' } },
+              ],
+            },
+          },
+        ],
+      }),
+    } as any;
+
+    navigateToEntityDetail(drawer, 'Location', 'location-1');
+    useHeaderBackActionStore.getState().consumeCrossStackReturnAction()?.();
+
+    expect(navigate).toHaveBeenNthCalledWith(2, 'NarrativeElementsStack', {
+      screen: 'SceneDetail',
+      params: { sceneId: 'scene-1' },
+    });
+  });
 });
 
 /**

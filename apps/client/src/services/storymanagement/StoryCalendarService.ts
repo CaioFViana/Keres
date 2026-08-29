@@ -18,15 +18,13 @@ import { createServerService } from '../ServerService';
  *
  * ## The primary
  *
- * Exactly one calendar is primary: it is the one the graphs render in, and the one whose units the
- * story's durations are written in. The invariant is owned here rather than by the database, because
- * "exactly one true per story" is not expressible as a partial unique index without also forbidding
- * zero - and a story mid-setup legitimately has none.
+ * At most one calendar is primary: it is the one the graphs render in, and the one whose units the
+ * story's durations are written in. A story may deliberately have none, in which case duration
+ * display keeps the established Gregorian averages and its calendars remain parallel references.
  *
- * Two mechanisms keep it true. Promoting one demotes the rest in the same call, and `getPrimary`
- * picks deterministically when it finds more than one. The second exists because synchronization can
- * produce two: promoting on one device while another promotes a different calendar is not a
- * conflict either side can detect, and refusing to read in that state would be worse than choosing.
+ * Promoting one demotes the rest in the same call. `getPrimary` still picks deterministically when
+ * synchronization has produced two: two devices may promote different calendars concurrently, and
+ * choosing the same winner everywhere is safer than rendering different dates per device.
  */
 
 export interface StoryCalendarService {
@@ -52,6 +50,8 @@ export interface StoryCalendarService {
   ): Promise<StoryCalendarSelect>;
   /** Makes this one primary and demotes every other calendar in the story. */
   setPrimary(currentUserId: string, calendarId: string): Promise<void>;
+  /** Demotes the current primary without promoting a replacement. */
+  clearPrimary(currentUserId: string, storyId: string): Promise<void>;
   deleteCalendar(currentUserId: string, calendarId: string): Promise<void>;
 }
 
@@ -119,15 +119,10 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
     async createCalendar(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
 
-      /*
-       * The first calendar a story gets is its primary, whatever the caller asked for. A story with
-       * calendars and no primary would render no dates at all, which reads as the feature being
-       * broken rather than as a setting being unset.
-       */
       const existing = await service.getCalendarsForStory(data.storyId);
       const calendar = prepareNewEntityData<StoryCalendarInsert>({
         ...data,
-        isPrimary: existing.length === 0 ? true : (data.isPrimary ?? false),
+        isPrimary: data.isPrimary ?? false,
       });
       const result = await db.insert(storyCalendars).values(calendar).returning().get();
 
@@ -198,6 +193,22 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
       }
     },
 
+    async clearPrimary(currentUserId, storyId) {
+      await assertStoryIsWritable(db, storyId);
+      const calendars = await service.getCalendarsForStory(storyId);
+      for (const calendar of calendars.filter((candidate) => candidate.isPrimary)) {
+        await db
+          .update(storyCalendars)
+          .set({
+            isPrimary: false,
+            updatedAt: new Date(),
+            version: sql`${storyCalendars.version} + 1`,
+          })
+          .where(eq(storyCalendars.id, calendar.id));
+        await logOperation(currentUserId, storyId, 'update', calendar.id, { isPrimary: false });
+      }
+    },
+
     async deleteCalendar(currentUserId, calendarId) {
       const calendar = await service.getById(calendarId);
       if (!calendar) {
@@ -229,15 +240,6 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
         version: updated.version,
       });
 
-      /*
-       * Deleting the primary promotes whatever is left. A story that still has calendars but no
-       * primary would silently stop showing dates, and the writer would have no way to tell that
-       * the deletion is what did it.
-       */
-      if (calendar.isPrimary) {
-        const remaining = await service.getCalendarsForStory(calendar.storyId);
-        if (remaining.length > 0) await service.setPrimary(currentUserId, remaining[0].id);
-      }
     },
   };
 

@@ -92,17 +92,15 @@ describe('creating a calendar', () => {
     expect(payloadOf(operation).name).toBe('Reckoning');
   });
 
-  it('makes the first calendar primary whatever the caller asked for', async () => {
-    // A story with calendars and no primary renders no dates at all, which reads as the feature
-    // being broken rather than as a setting being unset.
+  it('allows the first calendar to remain parallel', async () => {
     const first = await make('Reckoning', { isPrimary: false });
 
-    expect(first.isPrimary).toBe(true);
-    expect((await service().getPrimary(TEST_STORY_ID))?.id).toBe(first.id);
+    expect(first.isPrimary).toBe(false);
+    expect(await service().getPrimary(TEST_STORY_ID)).toBeUndefined();
   });
 
   it('leaves a second calendar secondary unless asked otherwise', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second');
 
     expect(second.isPrimary).toBe(false);
@@ -110,7 +108,7 @@ describe('creating a calendar', () => {
   });
 
   it('demotes the incumbent when a new calendar is created as primary', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second', { isPrimary: true });
 
     expect((await service().getPrimary(TEST_STORY_ID))?.id).toBe(second.id);
@@ -121,7 +119,7 @@ describe('creating a calendar', () => {
 
 describe('the primary calendar', () => {
   it('promotes one and demotes the rest', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second');
 
     await service().setPrimary(TEST_USER_ID, second.id);
@@ -131,7 +129,7 @@ describe('the primary calendar', () => {
   });
 
   it('logs the demotion as well as the promotion', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second');
     const before = (await operations()).length;
 
@@ -153,7 +151,7 @@ describe('the primary calendar', () => {
   });
 
   it('writes nothing when the calendar is already the primary', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const before = (await operations()).length;
 
     await service().setPrimary(TEST_USER_ID, first.id);
@@ -161,8 +159,18 @@ describe('the primary calendar', () => {
     expect((await operations()).length).toBe(before);
   });
 
+  it('can demote the primary without promoting a replacement', async () => {
+    const first = await make('First', { isPrimary: true });
+    await make('Second');
+
+    await service().clearPrimary(TEST_USER_ID, TEST_STORY_ID);
+
+    expect((await service().getById(first.id))?.isPrimary).toBe(false);
+    expect(await service().getPrimary(TEST_STORY_ID)).toBeUndefined();
+  });
+
   it('picks deterministically when synchronization has left two primaries', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second');
     // What two devices promoting different calendars produces: neither side can detect it.
     await database.db
@@ -179,7 +187,7 @@ describe('the primary calendar', () => {
   it('hands the timing helpers a definition, or null for a story with no calendar', async () => {
     expect(await service().getPrimaryDefinition(TEST_STORY_ID)).toBeNull();
 
-    await make('Reckoning', { definition: definition({ daysPerWeek: 6 }) });
+    await make('Reckoning', { isPrimary: true, definition: definition({ daysPerWeek: 6 }) });
 
     expect((await service().getPrimaryDefinition(TEST_STORY_ID))?.daysPerWeek).toBe(6);
   });
@@ -239,19 +247,18 @@ describe('deleting a calendar', () => {
     expect((await service().getById(calendar.id))?.isDeleted).toBe(true);
   });
 
-  it('promotes a survivor when the primary is deleted', async () => {
-    const first = await make('First');
+  it('leaves no primary when the primary is deleted', async () => {
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second');
 
     await service().deleteCalendar(TEST_USER_ID, first.id);
 
-    // Otherwise the story would still have a calendar and silently stop showing dates, with no way
-    // for the writer to tell that the deletion is what did it.
-    expect((await service().getPrimary(TEST_STORY_ID))?.id).toBe(second.id);
+    expect(second.isPrimary).toBe(false);
+    expect(await service().getPrimary(TEST_STORY_ID)).toBeUndefined();
   });
 
   it('leaves the primary alone when a secondary is deleted', async () => {
-    const first = await make('First');
+    const first = await make('First', { isPrimary: true });
     const second = await make('Second');
 
     await service().deleteCalendar(TEST_USER_ID, second.id);

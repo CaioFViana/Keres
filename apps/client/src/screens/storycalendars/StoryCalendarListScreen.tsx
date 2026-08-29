@@ -93,6 +93,20 @@ const StoryCalendarListScreen = () => {
     [currentUserId, db, notify, reload, t],
   );
 
+  const clearPrimary = useCallback(async () => {
+    if (!currentUserId || !story?.id) return;
+    setBusy(true);
+    try {
+      await createStoryCalendarService(db).clearPrimary(currentUserId, story.id);
+      await reload();
+    } catch (error) {
+      console.log('StoryCalendarListScreen: failed to clear the primary calendar.', error);
+      notify(t('calendar_save_failed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }, [currentUserId, db, notify, reload, story?.id, t]);
+
   const remove = useCallback(
     (calendar: StoryCalendarSelect) => {
       AppAlert.alert(
@@ -238,7 +252,14 @@ const StoryCalendarListScreen = () => {
                   <Ionicons name="create-outline" size={17} color={colors.primary} />
                   <Text style={styles.actionText}>{t('edit')}</Text>
                 </TouchableOpacity>
-                {calendar.id !== primary?.id && (
+                {calendar.id === primary?.id ? (
+                  <TouchableOpacity style={styles.action} onPress={clearPrimary} disabled={busy}>
+                    <Ionicons name="star-half-outline" size={17} color={colors.textSecondary} />
+                    <Text style={[styles.actionText, { color: colors.textSecondary }]}>
+                      {t('calendar_clear_primary')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
                   <TouchableOpacity
                     style={styles.action}
                     onPress={() => promote(calendar)}

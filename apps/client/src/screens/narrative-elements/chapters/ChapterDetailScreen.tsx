@@ -31,6 +31,7 @@ import type { SceneService } from '@/src/services/storymanagement/SceneService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
 import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
@@ -89,6 +90,7 @@ const ChapterDetailScreen = () => {
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
   const { canEdit } = useStoryRole(chapter?.storyId);
   const { definition: calendar } = useStoryCalendar();
+  const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
   const {
     commentsByField,
     canComment,
@@ -340,16 +342,27 @@ const ChapterDetailScreen = () => {
         onUpdateComment={updateComment}
       />
       {selectedStory?.type === 'linear' && (
-        <DetailField
-          label={t('in_universe_duration')}
-          value={formatChapterUniverseDuration(
-            allScenes
-              .filter((scene) => scene.chapterId === chapterId)
-              .sort((a, b) => a.index - b.index),
-            t,
-            selectedStory.normalizeSceneTiming,
-          )}
-        />
+        <>
+          {allScenes
+            .filter((scene) => scene.chapterId === chapterId)
+            .sort((a, b) => a.index - b.index)
+            .slice(0, 1)
+            .map((scene) =>
+              dateForScene(scene) ? (
+                <DetailField key="calendar-date" label={t('calendar_chapter_date')} value={dateForScene(scene)!.date} />
+              ) : null,
+            )}
+          <DetailField
+            label={t('in_universe_duration')}
+            value={formatChapterUniverseDuration(
+              allScenes
+                .filter((scene) => scene.chapterId === chapterId)
+                .sort((a, b) => a.index - b.index),
+              t,
+              { normalize: selectedStory.normalizeSceneTiming, calendar },
+            )}
+          />
+        </>
       )}
 
       <CustomAttributeDetailFields
@@ -405,6 +418,8 @@ const ChapterDetailScreen = () => {
               }),
             });
           }
+          const sceneDate = dateForScene(scene);
+          if (sceneDate) details.push({ label: t('calendar_scene_date'), value: sceneDate.date });
           const locationName = allLocations.find(
             (location) => location.id === scene.locationId,
           )?.name;

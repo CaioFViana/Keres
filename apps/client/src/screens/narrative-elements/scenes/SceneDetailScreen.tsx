@@ -23,7 +23,6 @@ import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import 
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -54,6 +53,7 @@ import { createSceneService } from '../../../services/storymanagement/SceneServi
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
+import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
 import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
 import { useTheme } from '../../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
@@ -61,6 +61,7 @@ import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsScreenNavigationProp } from '../chapters/NarrativeElementsListScreen';
 
 // Define the parameter list for this screen
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
@@ -69,13 +70,13 @@ const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneDetail'>>();
+  const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
   const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
@@ -555,8 +556,16 @@ const SceneDetailScreen = () => {
 
   const handleLocationPress = useCallback(() => {
     if (!location) return;
-    navigateToDetail('Location', location.id);
-  }, [navigateToDetail, location]);
+    // Location belongs to a sibling Drawer stack. Its own history cannot know that this Scene
+    // opened it, so preserve the exact source screen for the shared back handler.
+    navigateToDetail('Location', location.id, {
+      onReturn: () =>
+        navigation.navigate('NarrativeElementsStack', {
+          screen: 'SceneDetail',
+          params: { sceneId },
+        }),
+    });
+  }, [navigateToDetail, location, navigation, sceneId]);
 
   const renderHeaderRight = useCallback(
     () =>
@@ -647,19 +656,22 @@ const SceneDetailScreen = () => {
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
+      {dateForScene(scene) && (
+        <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
+      )}
       <DetailField
         label={t('gap')}
-        value={formatSceneGap(scene, t, {
+        value={`${formatSceneGap(scene, t, {
           normalize: selectedStory?.normalizeSceneTiming,
           calendar,
-        })}
+        })}${dateForScene(scene)?.gapRange ? ` · ${dateForScene(scene)?.gapRange}` : ''}`}
       />
       <DetailField
         label={t('in_universe_duration')}
-        value={formatSceneUniverseDuration(scene, t, {
+        value={`${formatSceneUniverseDuration(scene, t, {
           normalize: selectedStory?.normalizeSceneTiming,
           calendar,
-        })}
+        })}${dateForScene(scene)?.durationEnd ? ` · ${dateForScene(scene)?.durationEnd}` : ''}`}
       />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />

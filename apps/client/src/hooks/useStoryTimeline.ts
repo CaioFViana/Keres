@@ -271,11 +271,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
     (sceneId: string) => {
       const row = layout.rows.find((candidate) => candidate.id === sceneId);
       const epochDay = story?.timelineEpochDay;
-      if (
-        row?.elapsedSeconds === undefined ||
-        epochDay === null ||
-        epochDay === undefined
-      ) {
+      if (row?.elapsedSeconds === undefined || epochDay === null || epochDay === undefined) {
         return null;
       }
       const epochSeconds = story?.timelineEpochSeconds ?? 0;
@@ -290,7 +286,14 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
       }
       return describeDay(dayNumberForElapsed(calendar, epochDay, row.elapsedSeconds, epochSeconds));
     },
-    [calendar, dateDisplayFormat, describeDay, layout, story?.timelineEpochDay, story?.timelineEpochSeconds],
+    [
+      calendar,
+      dateDisplayFormat,
+      describeDay,
+      layout,
+      story?.timelineEpochDay,
+      story?.timelineEpochSeconds,
+    ],
   );
 
   const exportTimeline = useCallback(async () => {

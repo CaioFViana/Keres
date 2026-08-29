@@ -199,7 +199,9 @@ const SettingsScreen = () => {
 
         <View style={styles.settingItem}>
           <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('date_display_format')}</Text>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('date_display_format')}
+            </Text>
             <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
               {t('date_display_format_hint')}
             </Text>

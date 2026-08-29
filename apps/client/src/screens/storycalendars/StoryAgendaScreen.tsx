@@ -274,8 +274,7 @@ const StoryAgendaScreen = () => {
   const weeks: (number | null)[][] = [];
   // Weekday labels are optional decoration. The week itself is not: without this offset, calendars
   // that omit labels would incorrectly show every month as starting on its first column.
-  const offset =
-    ((firstOfMonth % daysPerWeek) + daysPerWeek) % daysPerWeek;
+  const offset = ((firstOfMonth % daysPerWeek) + daysPerWeek) % daysPerWeek;
   let week: (number | null)[] = Array.from(
     { length: offset },
     (_, index) => firstOfMonth - offset + index,
@@ -309,7 +308,7 @@ const StoryAgendaScreen = () => {
     if (!definition) {
       const zeroBased = cursorParts.month - 1 + direction;
       const year = cursorParts.year + Math.floor(zeroBased / 12);
-      const month = ((zeroBased % 12) + 12) % 12 + 1;
+      const month = (((zeroBased % 12) + 12) % 12) + 1;
       setCursor(gregorianDayNumber({ year, month, day: 1 }));
       return;
     }
@@ -418,7 +417,12 @@ const StoryAgendaScreen = () => {
                   {day !== null && (
                     <>
                       <Text style={[styles.cellDay, isOutsideMonth && styles.cellDayOutside]}>
-                        {(definition ? dayNumberToParts(definition, day) : gregorianPartsFromDayNumber(day)).day}
+                        {
+                          (definition
+                            ? dayNumberToParts(definition, day)
+                            : gregorianPartsFromDayNumber(day)
+                          ).day
+                        }
                       </Text>
                       {(byDay.get(day) ?? []).slice(0, 3).map((entry) => (
                         <Text key={entry.id} numberOfLines={1} style={styles.cellEntry}>

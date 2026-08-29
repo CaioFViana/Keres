@@ -74,7 +74,10 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ use24HourTime });
   },
 
-  setDateDisplayFormat: async (db: AppDrizzleClient, dateDisplayFormat: GregorianDateDisplayFormat) => {
+  setDateDisplayFormat: async (
+    db: AppDrizzleClient,
+    dateDisplayFormat: GregorianDateDisplayFormat,
+  ) => {
     await updateClientSettings(db, { dateDisplayFormat });
     set({ dateDisplayFormat });
   },

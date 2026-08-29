@@ -59,7 +59,9 @@ const gregorianDaysInMonth = (year: number, month: number): number => {
  * Story epochs use this coordinate when their primary calendar is the built-in Gregorian one; it
  * is deliberately not a Unix timestamp, because story dates are civil dates rather than instants.
  */
-export function gregorianDayNumber(parts: Pick<AttributeDateParts, 'year' | 'month' | 'day'>): number {
+export function gregorianDayNumber(
+  parts: Pick<AttributeDateParts, 'year' | 'month' | 'day'>,
+): number {
   if (
     !Number.isInteger(parts.year) ||
     parts.month < 1 ||
@@ -82,10 +84,9 @@ export function gregorianDayNumber(parts: Pick<AttributeDateParts, 'year' | 'mon
  * The picker deliberately accepts only years 1–9999, but a timeline may contain an eon-sized
  * duration. Displaying that scene must not crash merely because it lies beyond what can be typed.
  */
-export function gregorianPartsFromDayNumber(dayNumber: number): Pick<
-  AttributeDateParts,
-  'year' | 'month' | 'day'
-> {
+export function gregorianPartsFromDayNumber(
+  dayNumber: number,
+): Pick<AttributeDateParts, 'year' | 'month' | 'day'> {
   if (!Number.isInteger(dayNumber)) {
     throw new RangeError('Invalid Gregorian day number.');
   }
@@ -126,7 +127,11 @@ export function formatGregorianDate(
   const day = String(parts.day).padStart(2, '0');
   const month = String(parts.month).padStart(2, '0');
   const core =
-    format === 'dmy' ? `${day}/${month}/${year}` : format === 'mdy' ? `${month}/${day}/${year}` : `${year}-${month}-${day}`;
+    format === 'dmy'
+      ? `${day}/${month}/${year}`
+      : format === 'mdy'
+        ? `${month}/${day}/${year}`
+        : `${year}-${month}-${day}`;
   return parts.year <= 0 ? `${core} BCE` : core;
 }
 

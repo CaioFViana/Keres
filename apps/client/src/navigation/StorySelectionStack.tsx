@@ -319,9 +319,7 @@ const StorySelectionNavigator = () => {
                     {showNestedBackButton ? (
                       <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
                     ) : null}
-                    {!isWide ? (
-                      <DrawerToggleButton navigation={navigation} />
-                    ) : null}
+                    {!isWide ? <DrawerToggleButton navigation={navigation} /> : null}
                     {showContextualHelp && helpPageId ? (
                       <TouchableOpacity
                         onPress={() =>

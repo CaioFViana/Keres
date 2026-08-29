@@ -179,7 +179,9 @@ const StoryCalendarListScreen = () => {
       AppAlert.alert(
         t('calendar_delete_title'),
         `${t('calendar_delete_message', { name: calendar.name })}${
-          calendar.id === primary?.id && story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined
+          calendar.id === primary?.id &&
+          story?.timelineEpochDay !== null &&
+          story?.timelineEpochDay !== undefined
             ? `\n\n${t('calendar_epoch_change_message')}`
             : ''
         }`,
@@ -535,7 +537,9 @@ const StoryCalendarListScreen = () => {
                 <TouchableOpacity
                   style={styles.action}
                   onPress={() => saveEpoch(gregorianEpochDay, gregorianEpochSeconds)}
-                  disabled={busy || gregorianEpochDay === null || gregorianEpochIsOutsidePickerRange}
+                  disabled={
+                    busy || gregorianEpochDay === null || gregorianEpochIsOutsidePickerRange
+                  }
                 >
                   <Ionicons name="save-outline" size={17} color={colors.primary} />
                   <Text style={styles.actionText}>{t('save')}</Text>

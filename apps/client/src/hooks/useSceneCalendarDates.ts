@@ -43,9 +43,7 @@ const formatTime = (definition: CalendarDefinitionType | null, elapsedSeconds: n
   const minutesPerHour = definition?.minutesPerHour ?? 60;
   const secondsPerMinute = definition?.secondsPerMinute ?? 60;
   const hour = Math.floor(withinDay / (minutesPerHour * secondsPerMinute));
-  const minute = Math.floor(
-    (withinDay % (minutesPerHour * secondsPerMinute)) / secondsPerMinute,
-  );
+  const minute = Math.floor((withinDay % (minutesPerHour * secondsPerMinute)) / secondsPerMinute);
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 };
 
@@ -149,10 +147,7 @@ export function useSceneCalendarDates(storyId?: string | null) {
       const startTime = formatTime(definition, epochSeconds + startSeconds);
       const endTime = formatTime(definition, epochSeconds + endSeconds);
       const gapStartSeconds = starts.gap.get(scene.id);
-      const gapStartDay =
-        gapStartSeconds === undefined
-          ? undefined
-          : toDay(gapStartSeconds);
+      const gapStartDay = gapStartSeconds === undefined ? undefined : toDay(gapStartSeconds);
       const gapStartTime =
         gapStartSeconds === undefined
           ? undefined

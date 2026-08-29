@@ -27,10 +27,7 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import {
-  CustomCalendarDateLookup,
-  GregorianCalendarDateLookup,
-} from './AgendaDateLookup';
+import { CustomCalendarDateLookup, GregorianCalendarDateLookup } from './AgendaDateLookup';
 
 /**
  * The story's calendar as a month of days, with what happens on each.

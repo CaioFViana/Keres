@@ -164,7 +164,9 @@ const StoryCalendarListScreen = () => {
       Math.max(Number(epoch.minute) || 0, 0),
       primary.definition.minutesPerHour - 1,
     );
-    return (hour * primary.definition.minutesPerHour + minute) * primary.definition.secondsPerMinute;
+    return (
+      (hour * primary.definition.minutesPerHour + minute) * primary.definition.secondsPerMinute
+    );
   }, [epoch.hour, epoch.minute, primary]);
 
   const saveEpoch = useCallback(

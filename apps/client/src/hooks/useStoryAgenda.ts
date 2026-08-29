@@ -39,12 +39,7 @@ export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
         id: row.id,
         name: row.name,
         kind: 'scene' as const,
-        dayNumber: dayNumberForElapsed(
-          definition,
-          epochDay,
-          row.elapsedSeconds ?? 0,
-          epochSeconds,
-        ),
+        dayNumber: dayNumberForElapsed(definition, epochDay, row.elapsedSeconds ?? 0, epochSeconds),
         summary: summaries.get(row.id) ?? null,
       }));
 
@@ -64,7 +59,12 @@ export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
           id: span.id,
           name: span.name,
           kind: 'event' as const,
-          dayNumber: dayNumberForElapsed(definition, epochDay, row?.elapsedSeconds ?? 0, epochSeconds),
+          dayNumber: dayNumberForElapsed(
+            definition,
+            epochDay,
+            row?.elapsedSeconds ?? 0,
+            epochSeconds,
+          ),
         };
       });
 

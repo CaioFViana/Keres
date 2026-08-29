@@ -181,18 +181,40 @@ const StoryAgendaScreen = () => {
           backgroundColor: colors.surface,
         },
         cellInteractive: { borderColor: colors.primary },
-        cellToday: { backgroundColor: colors.primaryContainer, borderColor: colors.primary, borderWidth: 1.5 },
-        cellOutsideMonth: { backgroundColor: colors.background, borderColor: colors.border, opacity: 0.68 },
+        cellToday: {
+          backgroundColor: colors.primaryContainer,
+          borderColor: colors.primary,
+          borderWidth: 1.5,
+        },
+        cellOutsideMonth: {
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+          opacity: 0.68,
+        },
         cellDay: { fontSize: 11, fontWeight: '700', color: colors.textSecondary },
         cellDayOutside: { color: colors.textSecondary, fontWeight: '500' },
         cellEntry: { fontSize: 9, color: colors.text, marginTop: 1 },
         aside: { fontSize: 12, color: colors.textSecondary, marginTop: 12, lineHeight: 18 },
-        dayDetails: { marginTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+        dayDetails: {
+          marginTop: 14,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
+        },
         dayDetailsTitle: { fontSize: 15, fontWeight: '700', marginTop: 14, marginBottom: 4 },
-        dayEntry: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingVertical: 12 },
+        dayEntry: {
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
+          paddingVertical: 12,
+        },
         dayEntryRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
         dayEntryTitle: { fontSize: 15, fontWeight: '700' },
-        dayEntrySummary: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginTop: 4, marginBottom: 9 },
+        dayEntrySummary: {
+          fontSize: 13,
+          color: colors.textSecondary,
+          lineHeight: 19,
+          marginTop: 4,
+          marginBottom: 9,
+        },
         eventBadge: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
       }),
     [colors],
@@ -419,7 +441,9 @@ const StoryAgendaScreen = () => {
                     </Text>
                     <Ionicons name="chevron-forward" size={19} color={colors.textSecondary} />
                   </View>
-                  {entry.summary ? <Text style={styles.dayEntrySummary}>{entry.summary}</Text> : null}
+                  {entry.summary ? (
+                    <Text style={styles.dayEntrySummary}>{entry.summary}</Text>
+                  ) : null}
                 </TouchableOpacity>
               ) : (
                 <View key={`${entry.kind}:${entry.id}`} style={styles.dayEntry}>
@@ -435,120 +459,123 @@ const StoryAgendaScreen = () => {
   );
 };
 
-const DateLookup = React.memo(
-  function DateLookup({
-    definition,
-    cursor,
-    onMonthChange,
-    styles,
-  }: {
-    definition: NonNullable<ReturnType<typeof useStoryCalendar>['definition']>;
-    cursor: number;
-    onMonthChange: (day: number) => void;
-    styles: {
-      lookup: ViewStyle;
-      lookupTitle: TextStyle;
-      lookupRow: ViewStyle;
-      lookupField: ViewStyle;
-      lookupLabel: TextStyle;
-      lookupInput: TextStyle;
-      lookupYear: ViewStyle;
-      lookupMonth: ViewStyle;
-      lookupGo: ViewStyle;
-    };
-  }) {
-    const { t } = useTranslation();
-    const { colors } = useTheme();
-    const initialParts = useMemo(() => dayNumberToParts(definition, cursor), [definition, cursor]);
-    const [yearText, setYearText] = useState(() => String(initialParts.year));
-    const [monthValue, setMonthValue] = useState(() => String(initialParts.month));
-    const [eraValue, setEraValue] = useState<string | null>(null);
+const DateLookup = React.memo(function DateLookup({
+  definition,
+  cursor,
+  onMonthChange,
+  styles,
+}: {
+  definition: NonNullable<ReturnType<typeof useStoryCalendar>['definition']>;
+  cursor: number;
+  onMonthChange: (day: number) => void;
+  styles: {
+    lookup: ViewStyle;
+    lookupTitle: TextStyle;
+    lookupRow: ViewStyle;
+    lookupField: ViewStyle;
+    lookupLabel: TextStyle;
+    lookupInput: TextStyle;
+    lookupYear: ViewStyle;
+    lookupMonth: ViewStyle;
+    lookupGo: ViewStyle;
+  };
+}) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const initialParts = useMemo(() => dayNumberToParts(definition, cursor), [definition, cursor]);
+  const [yearText, setYearText] = useState(() => String(initialParts.year));
+  const [monthValue, setMonthValue] = useState(() => String(initialParts.month));
+  const [eraValue, setEraValue] = useState<string | null>(null);
 
-    useEffect(() => {
-      const next = dayNumberToParts(definition, cursor);
-      setYearText(String(next.year));
-      setMonthValue(String(next.month));
-    }, [cursor, definition]);
+  useEffect(() => {
+    const next = dayNumberToParts(definition, cursor);
+    setYearText(String(next.year));
+    setMonthValue(String(next.month));
+  }, [cursor, definition]);
 
-    const open = useCallback(
-      (next: { year: number; month: number }) => {
-        if (!Number.isInteger(next.year) || !Number.isInteger(next.month)) return;
-        onMonthChange(partsToDayNumber(definition, { ...next, day: 1 }));
-      },
-      [definition, onMonthChange],
-    );
-    const eras = useMemo(() => {
-      const ordered = [...definition.eras].sort((a, b) => a.startYear - b.startYear);
-      return ordered.map((era, index) => {
-        const next = ordered[index + 1];
-        const range =
-          era.direction === 'backward'
-            ? `≤ ${era.startYear - 1}`
-            : `${era.startYear}–${next ? next.startYear - 1 : '∞'}`;
-        return { label: `${era.name} (${era.abbreviation}) · ${range}`, value: String(index) };
-      });
-    }, [definition.eras]);
+  const open = useCallback(
+    (next: { year: number; month: number }) => {
+      if (!Number.isInteger(next.year) || !Number.isInteger(next.month)) return;
+      onMonthChange(partsToDayNumber(definition, { ...next, day: 1 }));
+    },
+    [definition, onMonthChange],
+  );
+  const eras = useMemo(() => {
+    const ordered = [...definition.eras].sort((a, b) => a.startYear - b.startYear);
+    return ordered.map((era, index) => {
+      const next = ordered[index + 1];
+      const range =
+        era.direction === 'backward'
+          ? `≤ ${era.startYear - 1}`
+          : `${era.startYear}–${next ? next.startYear - 1 : '∞'}`;
+      return { label: `${era.name} (${era.abbreviation}) · ${range}`, value: String(index) };
+    });
+  }, [definition.eras]);
 
-    return (
-      <View style={styles.lookup}>
-        <Text style={styles.lookupTitle}>{t('agenda_go_to_date')}</Text>
-        {eras.length > 0 && (
-          <View style={{ marginBottom: 8, zIndex: 3 }}>
-            <Text style={styles.lookupLabel}>{t('calendar_eras')}</Text>
-            <Select
-              options={eras}
-              value={eraValue}
-              onValueChange={(value) => {
-                setEraValue(value);
-                if (value === null) return;
-                const era = [...definition.eras].sort((a, b) => a.startYear - b.startYear)[Number(value)];
-                if (!era) return;
-                const year = era.direction === 'backward' ? era.startYear - 1 : era.startYear;
-                setYearText(String(year));
-              }}
-              placeholder={t('agenda_pick_era')}
-              multiple={false}
-            />
-          </View>
-        )}
-        <View style={styles.lookupRow}>
-          <View style={[styles.lookupField, styles.lookupYear]}>
-            <Text style={styles.lookupLabel}>{t('calendar_epoch_year')}</Text>
-            <TextInput
-              value={yearText}
-              onChangeText={(text) => {
-                if (!text || /^-?\d*$/.test(text)) setYearText(text);
-              }}
-              onEndEditing={() => {
-                if (!Number.isInteger(Number(yearText))) return;
-              }}
-              keyboardType="numbers-and-punctuation"
-              style={styles.lookupInput}
-            />
-          </View>
-          <View style={[styles.lookupField, styles.lookupMonth]}>
-            <Text style={styles.lookupLabel}>{t('calendar_epoch_month')}</Text>
-            <Select
-              options={definition.months.map((month, index) => ({ label: month.name || String(index + 1), value: String(index + 1) }))}
-              value={monthValue}
-              onValueChange={(value) => {
-                if (value === null) return;
-                setMonthValue(value);
-              }}
-              multiple={false}
-            />
-          </View>
-          <Button
-            onPress={() => open({ year: Number(yearText), month: Number(monthValue) })}
-            accessibilityLabel={t('agenda_go_to_date')}
-            style={styles.lookupGo}
-          >
-            <Ionicons name="search-outline" size={20} color={colors.onPrimary} />
-          </Button>
+  return (
+    <View style={styles.lookup}>
+      <Text style={styles.lookupTitle}>{t('agenda_go_to_date')}</Text>
+      {eras.length > 0 && (
+        <View style={{ marginBottom: 8, zIndex: 3 }}>
+          <Text style={styles.lookupLabel}>{t('calendar_eras')}</Text>
+          <Select
+            options={eras}
+            value={eraValue}
+            onValueChange={(value) => {
+              setEraValue(value);
+              if (value === null) return;
+              const era = [...definition.eras].sort((a, b) => a.startYear - b.startYear)[
+                Number(value)
+              ];
+              if (!era) return;
+              const year = era.direction === 'backward' ? era.startYear - 1 : era.startYear;
+              setYearText(String(year));
+            }}
+            placeholder={t('agenda_pick_era')}
+            multiple={false}
+          />
         </View>
+      )}
+      <View style={styles.lookupRow}>
+        <View style={[styles.lookupField, styles.lookupYear]}>
+          <Text style={styles.lookupLabel}>{t('calendar_epoch_year')}</Text>
+          <TextInput
+            value={yearText}
+            onChangeText={(text) => {
+              if (!text || /^-?\d*$/.test(text)) setYearText(text);
+            }}
+            onEndEditing={() => {
+              if (!Number.isInteger(Number(yearText))) return;
+            }}
+            keyboardType="numbers-and-punctuation"
+            style={styles.lookupInput}
+          />
+        </View>
+        <View style={[styles.lookupField, styles.lookupMonth]}>
+          <Text style={styles.lookupLabel}>{t('calendar_epoch_month')}</Text>
+          <Select
+            options={definition.months.map((month, index) => ({
+              label: month.name || String(index + 1),
+              value: String(index + 1),
+            }))}
+            value={monthValue}
+            onValueChange={(value) => {
+              if (value === null) return;
+              setMonthValue(value);
+            }}
+            multiple={false}
+          />
+        </View>
+        <Button
+          onPress={() => open({ year: Number(yearText), month: Number(monthValue) })}
+          accessibilityLabel={t('agenda_go_to_date')}
+          style={styles.lookupGo}
+        >
+          <Ionicons name="search-outline" size={20} color={colors.onPrimary} />
+        </Button>
       </View>
-    );
-  },
-);
+    </View>
+  );
+});
 
 export default StoryAgendaScreen;

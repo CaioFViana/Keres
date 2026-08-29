@@ -29,9 +29,7 @@ import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);
   const withinDay = ((Math.floor(elapsedSeconds) % secondsPerDay) + secondsPerDay) % secondsPerDay;
-  const hour = Math.floor(
-    withinDay / (definition.minutesPerHour * definition.secondsPerMinute),
-  );
+  const hour = Math.floor(withinDay / (definition.minutesPerHour * definition.secondsPerMinute));
   const minute = Math.floor(
     (withinDay % (definition.minutesPerHour * definition.secondsPerMinute)) /
       definition.secondsPerMinute,
@@ -265,7 +263,12 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         return null;
       }
       return describeDay(
-        dayNumberForElapsed(calendar, epochDay, row.elapsedSeconds, story?.timelineEpochSeconds ?? 0),
+        dayNumberForElapsed(
+          calendar,
+          epochDay,
+          row.elapsedSeconds,
+          story?.timelineEpochSeconds ?? 0,
+        ),
       );
     },
     [calendar, describeDay, layout, story?.timelineEpochDay, story?.timelineEpochSeconds],

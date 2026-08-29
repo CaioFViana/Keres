@@ -34,7 +34,10 @@ const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) 
   const secondsPerDay = calendarSecondsPerDay(definition);
   const withinDay = ((Math.floor(elapsedSeconds) % secondsPerDay) + secondsPerDay) % secondsPerDay;
   const hour = Math.floor(withinDay / (definition.minutesPerHour * definition.secondsPerMinute));
-  const minute = Math.floor((withinDay % (definition.minutesPerHour * definition.secondsPerMinute)) / definition.secondsPerMinute);
+  const minute = Math.floor(
+    (withinDay % (definition.minutesPerHour * definition.secondsPerMinute)) /
+      definition.secondsPerMinute,
+  );
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 };
 
@@ -89,9 +92,10 @@ export function useSceneCalendarDates(storyId?: string | null) {
     );
     const ordered = (scenes as TimedScene[])
       .filter((scene) => !scene.isDeleted && scene.chapterId && chapterIndex.has(scene.chapterId))
-      .sort((a, b) =>
-        (chapterIndex.get(a.chapterId!) ?? 0) - (chapterIndex.get(b.chapterId!) ?? 0) ||
-        a.index - b.index,
+      .sort(
+        (a, b) =>
+          (chapterIndex.get(a.chapterId!) ?? 0) - (chapterIndex.get(b.chapterId!) ?? 0) ||
+          a.index - b.index,
       );
     let elapsed = 0;
     let previousChapterIndex: number | undefined;
@@ -119,7 +123,12 @@ export function useSceneCalendarDates(storyId?: string | null) {
       const epochDay = story?.timelineEpochDay;
       const epochSeconds = story?.timelineEpochSeconds ?? 0;
       const startSeconds = starts.scene.get(scene.id);
-      if (!definition || epochDay === null || epochDay === undefined || startSeconds === undefined) {
+      if (
+        !definition ||
+        epochDay === null ||
+        epochDay === undefined ||
+        startSeconds === undefined
+      ) {
         return null;
       }
       const endSeconds = startSeconds + secondsFor(scene.duration, scene.durationType, definition);
@@ -134,7 +143,9 @@ export function useSceneCalendarDates(storyId?: string | null) {
           ? undefined
           : dayNumberForElapsed(definition, epochDay, gapStartSeconds, epochSeconds);
       const gapStartTime =
-        gapStartSeconds === undefined ? undefined : formatTime(definition, epochSeconds + gapStartSeconds);
+        gapStartSeconds === undefined
+          ? undefined
+          : formatTime(definition, epochSeconds + gapStartSeconds);
       return {
         date: startTime === '00:00' ? date : `${date} · ${startTime}`,
         // The date is already shown at the start. Repeat it only when an interval crosses a day.

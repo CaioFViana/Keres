@@ -349,7 +349,11 @@ const ChapterDetailScreen = () => {
             .slice(0, 1)
             .map((scene) =>
               dateForScene(scene) ? (
-                <DetailField key="calendar-date" label={t('calendar_chapter_date')} value={dateForScene(scene)!.date} />
+                <DetailField
+                  key="calendar-date"
+                  label={t('calendar_chapter_date')}
+                  value={dateForScene(scene)!.date}
+                />
               ) : null,
             )}
           <DetailField

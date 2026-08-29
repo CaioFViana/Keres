@@ -239,7 +239,6 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
         isDeleted: updated.isDeleted,
         version: updated.version,
       });
-
     },
   };
 

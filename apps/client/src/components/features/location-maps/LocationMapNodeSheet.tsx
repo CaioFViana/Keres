@@ -128,11 +128,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     removeButton: { marginTop: 16, backgroundColor: colors.error },
   });
 
-  const relationRow = (
-    relationId: string,
-    label: string,
-    onRemove: (() => void) | undefined,
-  ) => (
+  const relationRow = (relationId: string, label: string, onRemove: (() => void) | undefined) => (
     <View key={relationId} style={styles.item}>
       <Text style={styles.itemText}>{label}</Text>
       {canEdit && onRemove && (

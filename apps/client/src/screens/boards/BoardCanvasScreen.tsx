@@ -36,10 +36,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { nextStaggeredPosition } from '../../utils/boardLayout';
-import type {
-  BoardGalleryMedia,
-  BoardGalleryMediaById,
-} from '../../utils/boardLayout';
+import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
 import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
 import { renderBoardSvg } from '../../utils/boardSvg';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
@@ -310,7 +307,8 @@ const BoardCanvasScreen = () => {
         if (!path) continue;
         try {
           const bytes = await mediaFileService.readBytes(path);
-          galleryImages[node.entityId] = `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
+          galleryImages[node.entityId] =
+            `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
         } catch (readError) {
           console.log('BoardCanvasScreen: failed to read gallery image for export.', readError);
         }

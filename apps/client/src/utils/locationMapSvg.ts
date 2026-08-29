@@ -1,5 +1,8 @@
 import type { LocationMapContentType } from '@keres/shared';
-import type { LocationMapConnection, LocationMapContains } from '@/src/components/features/location-maps/LocationMapCanvas';
+import type {
+  LocationMapConnection,
+  LocationMapContains,
+} from '@/src/components/features/location-maps/LocationMapCanvas';
 import { interpolateColor, pointOnCircleBoundary } from './locationMapColors';
 import { LOCATION_MAP_NODE_SIZE } from './locationMapLayout';
 import { LOCATION_MAP_ICON_PATHS } from './locationMapIconPaths';

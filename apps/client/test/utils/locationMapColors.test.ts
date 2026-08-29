@@ -1,7 +1,11 @@
 /**
  * @jest-environment node
  */
-import { interpolateColor, parseHexColor, pointOnCircleBoundary } from '../../src/utils/locationMapColors';
+import {
+  interpolateColor,
+  parseHexColor,
+  pointOnCircleBoundary,
+} from '../../src/utils/locationMapColors';
 
 it('parses #RGB and #RRGGBB colours', () => {
   expect(parseHexColor('#8BC34A')).toEqual({ r: 139, g: 195, b: 74 });

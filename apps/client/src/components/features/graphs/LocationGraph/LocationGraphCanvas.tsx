@@ -86,11 +86,12 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
         {layout.nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
           const isHighlighted = highlightedNodeIds?.includes(node.id) ?? false;
-          const borderColor = isSelected || isHighlighted
-            ? colors.primary
-            : node.isIsolated
-              ? colors.textSecondary
-              : colors.border;
+          const borderColor =
+            isSelected || isHighlighted
+              ? colors.primary
+              : node.isIsolated
+                ? colors.textSecondary
+                : colors.border;
 
           return (
             <TouchableOpacity

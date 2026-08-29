@@ -17,10 +17,7 @@ import { createServerService } from '../ServerService';
 export interface LocationMapService {
   getMapsForStory(storyId: string): Promise<LocationMapSelect[]>;
   getById(mapId: string): Promise<LocationMapSelect | undefined>;
-  createMap(
-    currentUserId: string,
-    data: Create<LocationMapInsert>,
-  ): Promise<LocationMapSelect>;
+  createMap(currentUserId: string, data: Create<LocationMapInsert>): Promise<LocationMapSelect>;
   updateMap(
     currentUserId: string,
     mapId: string,
@@ -67,9 +64,7 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
 
     async createMap(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
-      const content = LocationMapContentSchema.parse(
-        data.content ?? { images: [], nodes: [] },
-      );
+      const content = LocationMapContentSchema.parse(data.content ?? { images: [], nodes: [] });
       const map = prepareNewEntityData<LocationMapInsert>({ ...data, content });
       const result = await db.insert(locationMaps).values(map).returning().get();
       await logOperation(currentUserId, map.storyId, 'create', map.id, { ...result });

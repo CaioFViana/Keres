@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   ScreenError,
   ScreenLoading,
@@ -16,15 +15,20 @@ import LocationMapCanvas, {
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import LocationMapImageSheet from '@/src/components/features/location-maps/LocationMapImageSheet';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
+import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
-import type { GallerySelect, LocationMapSelect, LocationRelationSelect, LocationSelect } from '../../db/schema';
+import type {
+  GallerySelect,
+  LocationMapSelect,
+  LocationRelationSelect,
+  LocationSelect,
+} from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { createLocationMapService } from '../../services/storymanagement/LocationMapService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
@@ -41,15 +45,16 @@ import {
   LOCATION_MAP_IMAGE_MIN,
 } from '../../utils/locationMapLayout';
 import { appendImagesToMap, appendLocationsToMap } from '../../utils/locationMapContent';
-import { bytesToBase64, imageSizeOf } from '../../utils/locationMapMedia';
-import { renderLocationMapSvg } from '../../utils/locationMapSvg';
+import { imageSizeOf } from '../../utils/locationMapMedia';
+import { buildLocationMapSvg } from '../../utils/locationMapExport';
 import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
 const LocationMapScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<LocationStackParamList, 'LocationMap'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<LocationStackParamList, 'LocationMap'>>();
   const { mapId } = useRoute<RouteProp<LocationStackParamList, 'LocationMap'>>().params;
   const db = useDrizzle();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
@@ -60,7 +65,10 @@ const LocationMapScreen = () => {
 
   const [map, setMap] = useState<LocationMapSelect | null>(null);
   const [content, setContent] = useState<LocationMapContentType>({ images: [], nodes: [] });
-  const [savedContent, setSavedContent] = useState<LocationMapContentType>({ images: [], nodes: [] });
+  const [savedContent, setSavedContent] = useState<LocationMapContentType>({
+    images: [],
+    nodes: [],
+  });
   const [locations, setLocations] = useState<LocationSelect[]>([]);
   const [galleries, setGalleries] = useState<GallerySelect[]>([]);
   const [relations, setRelations] = useState<LocationRelationSelect[]>([]);
@@ -205,7 +213,12 @@ const LocationMapScreen = () => {
   const galleryMediaById = useMemo(() => {
     const next: Record<
       string,
-      { mediaType: string; mimeType: string; localPath: string | null; thumbnailPath: string | null }
+      {
+        mediaType: string;
+        mimeType: string;
+        localPath: string | null;
+        thumbnailPath: string | null;
+      }
     > = {};
     for (const gallery of galleries) {
       next[gallery.id] = {
@@ -243,7 +256,8 @@ const LocationMapScreen = () => {
   );
   const nodeNames = useMemo(() => {
     const next: Record<string, string> = {};
-    for (const node of content.nodes) next[node.locationId] = locationNameById.get(node.locationId) ?? node.locationId;
+    for (const node of content.nodes)
+      next[node.locationId] = locationNameById.get(node.locationId) ?? node.locationId;
     return next;
   }, [content.nodes, locationNameById]);
 
@@ -285,20 +299,7 @@ const LocationMapScreen = () => {
     try {
       // The exported SVG is standalone, so each image base is embedded as a data URI. Only the
       // images actually used on the map are read.
-      const imageUris: Record<string, string> = {};
-      for (const image of content.images) {
-        const media = galleryMediaById[image.galleryId];
-        const path = media?.mediaType === 'image' ? media.localPath : null;
-        if (!path) continue;
-        try {
-          const bytes = await mediaFileService.readBytes(path);
-          imageUris[image.galleryId] = `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
-        } catch (readError) {
-          console.log('LocationMapScreen: failed to read image for export.', readError);
-        }
-      }
-
-      const svg = renderLocationMapSvg(content, {
+      const svg = await buildLocationMapSvg(content, galleryMediaById, {
         title: map.name,
         subtitle: t('location_map_export_subtitle', {
           nodeCount: content.nodes.length,
@@ -314,11 +315,13 @@ const LocationMapScreen = () => {
         nodeNames,
         connections,
         contains,
-        imageUris,
       });
       const result = await deliverSvgMap(svg, buildLocationMapFileName(map.name));
       if (result.delivered) {
-        showNotification(t('location_map_export_success', { fileName: result.fileName }), 'success');
+        showNotification(
+          t('location_map_export_success', { fileName: result.fileName }),
+          'success',
+        );
       } else {
         showNotification(
           t('location_map_export_no_share_target', { path: result.uri ?? result.fileName }),
@@ -331,18 +334,37 @@ const LocationMapScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, connections, contains, content, galleryMediaById, map, nodeNames, showNotification, t]);
+  }, [
+    colors,
+    connections,
+    contains,
+    content,
+    galleryMediaById,
+    map,
+    nodeNames,
+    showNotification,
+    t,
+  ]);
 
-  const usedGalleryIds = useMemo(() => new Set(content.images.map((image) => image.galleryId)), [content.images]);
+  const usedGalleryIds = useMemo(
+    () => new Set(content.images.map((image) => image.galleryId)),
+    [content.images],
+  );
   const imageOptions = useMemo(
     () =>
       galleries
-        .filter((gallery) => gallery.mediaType === 'image' && !!gallery.localPath && !usedGalleryIds.has(gallery.id))
+        .filter(
+          (gallery) =>
+            gallery.mediaType === 'image' && !!gallery.localPath && !usedGalleryIds.has(gallery.id),
+        )
         .map((gallery) => ({ label: gallery.title || gallery.fileName, value: gallery.id })),
     [galleries, usedGalleryIds],
   );
 
-  const usedLocationIds = useMemo(() => new Set(content.nodes.map((node) => node.locationId)), [content.nodes]);
+  const usedLocationIds = useMemo(
+    () => new Set(content.nodes.map((node) => node.locationId)),
+    [content.nodes],
+  );
   const locationOptions = useMemo(
     () =>
       locations
@@ -399,7 +421,11 @@ const LocationMapScreen = () => {
             ? {
                 ...image,
                 width: clamp(image.width * factor, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
-                height: clamp(image.height * factor, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
+                height: clamp(
+                  image.height * factor,
+                  LOCATION_MAP_IMAGE_MIN,
+                  LOCATION_MAP_IMAGE_MAX,
+                ),
               }
             : image,
         ),
@@ -429,13 +455,6 @@ const LocationMapScreen = () => {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    tools: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
   });
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
@@ -452,26 +471,14 @@ const LocationMapScreen = () => {
   return (
     <View style={styles.container}>
       {canEdit && (
-        <View style={styles.tools}>
-          <MultiSelectPill
-            options={imageOptions}
-            selectedValues={[]}
-            onSelectionChange={(values) => {
-              addImages(values);
-            }}
-            placeholder={t('location_map_add_images')}
-            noOptionsText={t('location_map_no_images')}
-            searchPlaceholder={t('search')}
-          />
-          <MultiSelectPill
-            options={locationOptions}
-            selectedValues={[]}
-            onSelectionChange={(values) => addLocations(values)}
-            placeholder={t('location_map_add_locations')}
-            noOptionsText={t('location_map_no_locations')}
-            searchPlaceholder={t('search')}
-          />
-        </View>
+        <LocationMapTools
+          imageOptions={imageOptions}
+          locationOptions={locationOptions}
+          onAddImages={(values) => {
+            addImages(values);
+          }}
+          onAddLocations={addLocations}
+        />
       )}
       <LocationMapCanvas
         ref={canvasRef}
@@ -489,7 +496,9 @@ const LocationMapScreen = () => {
         onMoveImage={(imageId, x, y) =>
           setContent((current) => ({
             ...current,
-            images: current.images.map((image) => (image.id === imageId ? { ...image, x, y } : image)),
+            images: current.images.map((image) =>
+              image.id === imageId ? { ...image, x, y } : image,
+            ),
           }))
         }
         onSelectNode={(nodeId) => {
@@ -536,13 +545,17 @@ const LocationMapScreen = () => {
           onChangeIcon={(icon) =>
             setContent((current) => ({
               ...current,
-              nodes: current.nodes.map((node) => (node.id === selectedNode.id ? { ...node, icon } : node)),
+              nodes: current.nodes.map((node) =>
+                node.id === selectedNode.id ? { ...node, icon } : node,
+              ),
             }))
           }
           onChangeColor={(color) =>
             setContent((current) => ({
               ...current,
-              nodes: current.nodes.map((node) => (node.id === selectedNode.id ? { ...node, color } : node)),
+              nodes: current.nodes.map((node) =>
+                node.id === selectedNode.id ? { ...node, color } : node,
+              ),
             }))
           }
           onSetParent={(locationId) => void handleSetParent(locationId)}

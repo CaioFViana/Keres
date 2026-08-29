@@ -70,7 +70,8 @@ const BoardNodeSheet: React.FC<Props> = ({
   }));
 
   const cardStyles = useMemo(() => getCommonCardStyles(colors), [colors]);
-  const noteDirty = node.kind === 'note' && (noteTitle !== noteTitleFromNode || noteBody !== noteBodyFromNode);
+  const noteDirty =
+    node.kind === 'note' && (noteTitle !== noteTitleFromNode || noteBody !== noteBodyFromNode);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -255,9 +256,7 @@ const BoardNodeSheet: React.FC<Props> = ({
 
         {node.kind === 'entity' && summary && (
           <View style={cardStyles.cardContainer}>
-            <Text style={[cardStyles.cardText, styles.cardTitle]}>
-              {t('board_entity_summary')}
-            </Text>
+            <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('board_entity_summary')}</Text>
             {summary.details ? (
               <Text style={styles.summaryText}>{summary.details}</Text>
             ) : (

@@ -205,7 +205,12 @@ it('grows a Gallery pin with an image into a bigger card with a picture placehol
     {
       ...options,
       galleryMediaById: {
-        'gal-1': { mediaType: 'image', mimeType: 'image/png', localPath: 'file:///a.png', thumbnailPath: null },
+        'gal-1': {
+          mediaType: 'image',
+          mimeType: 'image/png',
+          localPath: 'file:///a.png',
+          thumbnailPath: null,
+        },
       },
     },
   );
@@ -234,7 +239,12 @@ it('embeds a gallery image as a data URI when the caller provides it', () => {
     {
       ...options,
       galleryMediaById: {
-        'gal-1': { mediaType: 'image', mimeType: 'image/png', localPath: 'file:///a.png', thumbnailPath: null },
+        'gal-1': {
+          mediaType: 'image',
+          mimeType: 'image/png',
+          localPath: 'file:///a.png',
+          thumbnailPath: null,
+        },
       },
       galleryImages: { 'gal-1': 'data:image/png;base64,AAAA' },
     },
@@ -323,7 +333,12 @@ it('keeps a Gallery pin without an image at the standard size', () => {
     {
       ...options,
       galleryMediaById: {
-        'gal-1': { mediaType: 'document', mimeType: 'application/pdf', localPath: null, thumbnailPath: null },
+        'gal-1': {
+          mediaType: 'document',
+          mimeType: 'application/pdf',
+          localPath: null,
+          thumbnailPath: null,
+        },
       },
     },
   );

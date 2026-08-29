@@ -1,6 +1,9 @@
 import type { LocationMapContentType } from '@keres/shared';
 import type { LocationRelationSelect } from '../db/schema';
-import type { LocationMapConnection, LocationMapContains } from '@/src/components/features/location-maps/LocationMapCanvas';
+import type {
+  LocationMapConnection,
+  LocationMapContains,
+} from '@/src/components/features/location-maps/LocationMapCanvas';
 
 /** The `connected_to` relations between locations that are actually on the map. */
 export function deriveConnections(

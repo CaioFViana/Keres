@@ -4,7 +4,17 @@
 import { renderLocationMapSvg } from '../../src/utils/locationMapSvg';
 
 const content = {
-  images: [{ id: '01ABCDEF', galleryId: 'gallery-1', x: 40, y: 40, width: 320, height: 240, locked: false }],
+  images: [
+    {
+      id: '01ABCDEF',
+      galleryId: 'gallery-1',
+      x: 40,
+      y: 40,
+      width: 320,
+      height: 240,
+      locked: false,
+    },
+  ],
   nodes: [
     { id: '02GHJKMN', locationId: 'location-1', x: 400, y: 300, icon: 'pin', color: '#8BC34A' },
     { id: '03PQRSVW', locationId: 'location-2', x: 500, y: 300, icon: 'flag', color: '#F44336' },
@@ -105,7 +115,17 @@ it('reserves the header so an image base never covers the title', () => {
   // header (y = HEADER + PADDING = 110), not over the title at y = 28/46.
   const svg = renderLocationMapSvg(
     {
-      images: [{ id: '01ABCDEF', galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240, locked: false }],
+      images: [
+        {
+          id: '01ABCDEF',
+          galleryId: 'gallery-1',
+          x: 0,
+          y: 0,
+          width: 320,
+          height: 240,
+          locked: false,
+        },
+      ],
       nodes: [],
     },
     options,

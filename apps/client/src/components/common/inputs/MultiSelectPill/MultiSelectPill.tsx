@@ -406,10 +406,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
             />
           )}
 
-          <ScrollView
-            style={{ flexShrink: 1 }}
-            keyboardShouldPersistTaps="handled"
-          >
+          <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
             {showGroupPicker ? (
               effectiveGroups.map((group) => {
                 const selectedCount = group.options.filter((option) =>

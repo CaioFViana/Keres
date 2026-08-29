@@ -85,8 +85,36 @@ describe('getEntityName', () => {
     });
 
     await expect(
-      EntityService.getEntityName(database.db, OperationLogEntityType.Board, 'board-1', STORY_ID, t),
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Board,
+        'board-1',
+        STORY_ID,
+        t,
+      ),
     ).resolves.toBe('board - Mapa da cidade');
+  });
+
+  it('names a location map by its name', async () => {
+    await seedStory();
+    await database.db.insert(schema.locationMaps).values({
+      id: 'map-1',
+      storyId: STORY_ID,
+      name: 'Continente',
+      description: null,
+      content: { images: [], nodes: [] },
+      ...base,
+    });
+
+    await expect(
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.LocationMap,
+        'map-1',
+        STORY_ID,
+        t,
+      ),
+    ).resolves.toBe('location_map - Continente');
   });
 
   it.each([

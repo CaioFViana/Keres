@@ -152,6 +152,8 @@
   "blacklist_successful": "Usuário colocado na lista negra com sucesso!",
   "blocked_by_other_user": "Este usuário te bloqueou. Só ele pode desfazer isso.",
   "board": "Board",
+  "LocationMap": "Mapa de Locais",
+  "location_map": "Mapa de Locais",
   "board_add_edge": "Adicionar ligação",
   "board_add_entity": "Adicionar uma entidade",
   "board_add_note": "Adicionar uma nota",

@@ -27,9 +27,7 @@ describe('LocationMapContentSchema', () => {
 
   it('accepts images and nodes with their ids', () => {
     const content = LocationMapContentSchema.parse({
-      images: [
-        { id: imageId, galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240 },
-      ],
+      images: [{ id: imageId, galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240 }],
       nodes: [{ id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin' }],
     });
     expect(content.images).toHaveLength(1);
@@ -90,8 +88,20 @@ describe('remapLocationMapContent', () => {
   it('rewrites gallery and location ids, keeping local ids', () => {
     const remapped = remapLocationMapContent(
       {
-        images: [{ id: imageId, galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240, locked: false }],
-        nodes: [{ id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin', color: '#8BC34A' }],
+        images: [
+          {
+            id: imageId,
+            galleryId: 'gallery-1',
+            x: 0,
+            y: 0,
+            width: 320,
+            height: 240,
+            locked: false,
+          },
+        ],
+        nodes: [
+          { id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin', color: '#8BC34A' },
+        ],
       },
       (id) => `${id}-copy`,
     );

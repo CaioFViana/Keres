@@ -40,8 +40,7 @@ export function filterLocationGraph(
   return {
     locations: locations.filter((location) => kept.has(location.id)),
     relations: relations.filter(
-      (relation) =>
-        kept.has(relation.locationAId) && kept.has(relation.locationBId),
+      (relation) => kept.has(relation.locationAId) && kept.has(relation.locationBId),
     ),
   };
 }

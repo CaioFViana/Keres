@@ -39,8 +39,7 @@ export function filterCharacterRelationGraph(
   return {
     characters: characters.filter((character) => kept.has(character.id)),
     relations: relations.filter(
-      (relation) =>
-        kept.has(relation.character1Id) && kept.has(relation.character2Id),
+      (relation) => kept.has(relation.character1Id) && kept.has(relation.character2Id),
     ),
   };
 }

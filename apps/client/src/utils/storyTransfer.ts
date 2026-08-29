@@ -99,10 +99,7 @@ export function buildBoardMapFileName(
 }
 
 /** The location map drawing's image file. */
-export function buildLocationMapFileName(
-  mapName: string,
-  now: Date = new Date(),
-): string {
+export function buildLocationMapFileName(mapName: string, now: Date = new Date()): string {
   return `${slugify(mapName)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
 }
 

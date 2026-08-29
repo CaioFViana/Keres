@@ -84,8 +84,14 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
           : undefined;
       const hasGalleryImage = galleryHasImage(galleryMedia);
       const size = boardNodeSize(node, galleryMedia);
-      const title = truncate(meta?.title ?? node.kind, Math.floor((size.width - NODE_TEXT_PADDING_X) / TITLE_CHAR_WIDTH));
-      const typeLabel = truncate(meta?.typeLabel ?? '', Math.floor((size.width - NODE_TEXT_PADDING_X) / TYPE_CHAR_WIDTH));
+      const title = truncate(
+        meta?.title ?? node.kind,
+        Math.floor((size.width - NODE_TEXT_PADDING_X) / TITLE_CHAR_WIDTH),
+      );
+      const typeLabel = truncate(
+        meta?.typeLabel ?? '',
+        Math.floor((size.width - NODE_TEXT_PADDING_X) / TYPE_CHAR_WIDTH),
+      );
       const fill = node.kind === 'note' ? options.colors.surface : options.colors.surface;
       const bodyLines =
         node.kind === 'note' && node.body

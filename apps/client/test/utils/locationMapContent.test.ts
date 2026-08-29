@@ -38,9 +38,27 @@ const relationBase = {
 };
 
 const relations = [
-  { id: 'r1', locationAId: 'a', locationBId: 'b', relationType: 'connected_to' as const, ...relationBase },
-  { id: 'r2', locationAId: 'a', locationBId: 'c', relationType: 'contains' as const, ...relationBase },
-  { id: 'r3', locationAId: 'a', locationBId: 'd', relationType: 'connected_to' as const, ...relationBase },
+  {
+    id: 'r1',
+    locationAId: 'a',
+    locationBId: 'b',
+    relationType: 'connected_to' as const,
+    ...relationBase,
+  },
+  {
+    id: 'r2',
+    locationAId: 'a',
+    locationBId: 'c',
+    relationType: 'contains' as const,
+    ...relationBase,
+  },
+  {
+    id: 'r3',
+    locationAId: 'a',
+    locationBId: 'd',
+    relationType: 'connected_to' as const,
+    ...relationBase,
+  },
 ];
 
 it('derives only the relations between locations on the map', () => {
@@ -65,7 +83,5 @@ it('includes contains relations when both ends are on the map', () => {
     ],
   };
 
-  expect(deriveContains(relations, map)).toEqual([
-    { parentLocationId: 'a', childLocationId: 'c' },
-  ]);
+  expect(deriveContains(relations, map)).toEqual([{ parentLocationId: 'a', childLocationId: 'c' }]);
 });

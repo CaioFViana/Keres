@@ -3,11 +3,7 @@
  */
 import * as schema from '../../src/db/schema';
 import { loadBoardEntitySummary } from '../../src/utils/boardEntitySummary';
-import {
-  seedLocalStory,
-  TEST_STORY_ID,
-  entityBase,
-} from '../helpers/storyTestData';
+import { seedLocalStory, TEST_STORY_ID, entityBase } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 describe('loadBoardEntitySummary', () => {

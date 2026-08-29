@@ -138,11 +138,7 @@ export function boardNodeSize(
   if (node.kind === 'note') {
     return noteSizeFor(node.title, node.body);
   }
-  if (
-    node.kind === 'entity' &&
-    node.entityType === 'Gallery' &&
-    galleryHasImage(galleryMedia)
-  ) {
+  if (node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia)) {
     return { width: BOARD_GALLERY_WIDTH, height: BOARD_GALLERY_HEIGHT };
   }
   return { width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT };

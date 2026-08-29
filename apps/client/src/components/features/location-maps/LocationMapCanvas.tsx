@@ -140,7 +140,12 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     );
 
     return (
-      <GraphCanvasFrame width={size.width} height={size.height} contentOverflow="visible" {...frame}>
+      <GraphCanvasFrame
+        width={size.width}
+        height={size.height}
+        contentOverflow="visible"
+        {...frame}
+      >
         {content.images.map((image) => (
           <LocationMapImageView
             key={image.id}

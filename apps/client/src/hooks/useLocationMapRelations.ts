@@ -53,7 +53,8 @@ export function useLocationMapRelations({
 
   const reloadRelations = useCallback(async () => {
     if (!storyId) return;
-    const loadedRelations = await createLocationRelationService(db).getAllRelationsForStory(storyId);
+    const loadedRelations =
+      await createLocationRelationService(db).getAllRelationsForStory(storyId);
     setRelations(loadedRelations.filter((x) => !x.isDeleted));
   }, [db, setRelations, storyId]);
 
@@ -83,7 +84,8 @@ export function useLocationMapRelations({
   }, [relations, selectedNode, locationNameById]);
 
   const nodeParent = useMemo(
-    () => (selectedNode ? deriveParent(relations, selectedNode.locationId, locationNameById) : null),
+    () =>
+      selectedNode ? deriveParent(relations, selectedNode.locationId, locationNameById) : null,
     [relations, selectedNode, locationNameById],
   );
   const nodeChildren = useMemo(

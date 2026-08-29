@@ -14,6 +14,7 @@ import {
   itemJourneys,
   items,
   locations,
+  locationMaps,
   locationRelations,
   modes,
   noteRelations,
@@ -31,6 +32,7 @@ import {
 
 const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   board: OperationLogEntityType.Board,
+  locationmap: OperationLogEntityType.LocationMap,
   chapter: OperationLogEntityType.Chapter,
   character: OperationLogEntityType.Character,
   choice: OperationLogEntityType.Choice,
@@ -147,6 +149,18 @@ export async function resolveRelationEntityName(
       });
       name = worldRule?.title;
       type = t('world_rule');
+      break;
+    case OperationLogEntityType.LocationMap:
+      const locationMap = await db.query.locationMaps.findFirst({
+        where: and(
+          eq(locationMaps.id, relationId),
+          eq(locationMaps.storyId, storyId),
+          eq(locationMaps.isDeleted, false),
+        ),
+        columns: { name: true },
+      });
+      name = locationMap?.name;
+      type = t('location_map');
       break;
     case OperationLogEntityType.Chapter:
       const chapter = await db.query.chapters.findFirst({

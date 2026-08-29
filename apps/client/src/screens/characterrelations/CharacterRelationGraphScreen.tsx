@@ -235,7 +235,16 @@ const CharacterRelationGraphScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, mapSubtitle, selectedIds, selectedStory, showEdgeLabels, showNotification, t]);
+  }, [
+    colors,
+    layout,
+    mapSubtitle,
+    selectedIds,
+    selectedStory,
+    showEdgeLabels,
+    showNotification,
+    t,
+  ]);
 
   const styles = useMemo(
     () =>
@@ -343,9 +352,7 @@ const CharacterRelationGraphScreen = () => {
         <View style={styles.filterActions}>
           <Text style={styles.filterHint}>{t('character_relation_map_filter_hint')}</Text>
           <TouchableOpacity style={styles.filterAction} onPress={() => setSelectedIds([])}>
-            <Text style={styles.filterActionText}>
-              {t('character_relation_map_clear_filter')}
-            </Text>
+            <Text style={styles.filterActionText}>{t('character_relation_map_clear_filter')}</Text>
           </TouchableOpacity>
         </View>
       )}

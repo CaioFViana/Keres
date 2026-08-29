@@ -152,6 +152,8 @@
   "blacklist_successful": "User blacklisted successfully!",
   "blocked_by_other_user": "This user has blocked you. Only they can undo it.",
   "board": "Board",
+  "LocationMap": "Location Map",
+  "location_map": "Location Map",
   "board_add_edge": "Add connection",
   "board_add_entity": "Add an entity",
   "board_add_note": "Add a note",

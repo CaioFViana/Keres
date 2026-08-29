@@ -22,6 +22,7 @@ import {
   itemJourneys,
   items,
   locations,
+  locationMaps,
   locationRelations,
   noteRelations,
   notes,
@@ -82,6 +83,18 @@ export class EntityService {
         });
         entitySpecificName = board?.name;
         translatedEntityType = t('board');
+        break;
+      case OperationLogEntityType.LocationMap:
+        const locationMap = await db.query.locationMaps.findFirst({
+          where: and(
+            eq(locationMaps.id, entityId),
+            eq(locationMaps.storyId, storyId),
+            eq(locationMaps.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
+        entitySpecificName = locationMap?.name;
+        translatedEntityType = t('location_map');
         break;
       case OperationLogEntityType.Story:
         const story = await db.query.stories.findFirst({

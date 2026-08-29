@@ -61,24 +61,24 @@ export function useBoardPinOptions(storyId: string | undefined) {
     setLoading(true);
     try {
       const [character, location, note, scene, item, worldRule, galleryRows, chapterRows] =
-      await Promise.all([
-        loadEntityOptions(db, storyId, 'Character'),
-        loadEntityOptions(db, storyId, 'Location'),
-        loadEntityOptions(db, storyId, 'Note'),
-        loadEntityOptions(db, storyId, 'Scene'),
-        loadEntityOptions(db, storyId, 'Item'),
-        loadEntityOptions(db, storyId, 'WorldRule'),
-        db
-          .select()
-          .from(galleries)
-          .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)))
-          .all(),
-        db
-          .select()
-          .from(chapters)
-          .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
-          .all(),
-      ]);
+        await Promise.all([
+          loadEntityOptions(db, storyId, 'Character'),
+          loadEntityOptions(db, storyId, 'Location'),
+          loadEntityOptions(db, storyId, 'Note'),
+          loadEntityOptions(db, storyId, 'Scene'),
+          loadEntityOptions(db, storyId, 'Item'),
+          loadEntityOptions(db, storyId, 'WorldRule'),
+          db
+            .select()
+            .from(galleries)
+            .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)))
+            .all(),
+          db
+            .select()
+            .from(chapters)
+            .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
+            .all(),
+        ]);
 
       const next: BoardPinOption[] = [
         ...character.map((row) => ({

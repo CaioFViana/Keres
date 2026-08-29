@@ -22,8 +22,12 @@ const payloadOf = (operation: { payload: unknown }) =>
   typeof operation.payload === 'string' ? JSON.parse(operation.payload) : operation.payload;
 
 const content = {
-  images: [{ id: '01ABCDEF', galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240, locked: false }],
-  nodes: [{ id: '02GHJKMN', locationId: 'location-1', x: 100, y: 100, icon: 'pin', color: '#8BC34A' }],
+  images: [
+    { id: '01ABCDEF', galleryId: 'gallery-1', x: 0, y: 0, width: 320, height: 240, locked: false },
+  ],
+  nodes: [
+    { id: '02GHJKMN', locationId: 'location-1', x: 100, y: 100, icon: 'pin', color: '#8BC34A' },
+  ],
 };
 
 beforeEach(async () => {
@@ -83,7 +87,9 @@ describe('LocationMapService', () => {
     const unchanged = await service().updateMap(TEST_USER_ID, created.id, { name: 'Continente' });
 
     expect(unchanged.content).toEqual(content);
-    const updates = (await operations()).filter((operation) => operation.operationType === 'update');
+    const updates = (await operations()).filter(
+      (operation) => operation.operationType === 'update',
+    );
     expect(updates).toHaveLength(1);
     expect(payloadOf(updates[0]).content).toEqual(content);
   });

@@ -1,5 +1,9 @@
 import type { LocationMapContentType } from '@keres/shared';
-import { DEFAULT_LOCATION_MAP_NODE_COLOR, generateLocationMapLocalId, getEntityAppearance } from '@keres/shared';
+import {
+  DEFAULT_LOCATION_MAP_NODE_COLOR,
+  generateLocationMapLocalId,
+  getEntityAppearance,
+} from '@keres/shared';
 
 export interface LocationMapImageEntry {
   galleryId: string;

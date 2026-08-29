@@ -396,8 +396,6 @@ const BoardCanvasScreen = () => {
       }
       return next;
     });
-    const last = created[created.length - 1];
-    if (last) setSelected(last);
     if (created.length === 1) {
       const pin = created[0];
       const name = pin.kind === 'entity' ? pin.labelAtPin : t('board_note');

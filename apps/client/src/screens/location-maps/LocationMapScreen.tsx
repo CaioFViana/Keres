@@ -26,6 +26,7 @@ import type {
 } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
@@ -49,6 +50,7 @@ import { imageSizeOf } from '../../utils/locationMapMedia';
 import { buildLocationMapSvg } from '../../utils/locationMapExport';
 import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 
 const LocationMapScreen = () => {
   const { t } = useTranslation();
@@ -61,6 +63,7 @@ const LocationMapScreen = () => {
   const { canEdit } = useStoryRole(storyId);
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
+  const navigateToEntity = useNavigateToEntityDetail();
   const canvasRef = useRef<LocationMapCanvasHandle>(null);
 
   const [map, setMap] = useState<LocationMapSelect | null>(null);
@@ -76,6 +79,7 @@ const LocationMapScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -265,6 +269,19 @@ const LocationMapScreen = () => {
     () => content.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [content.nodes, selectedNodeId],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    setSelectedNodeSummary(null);
+    if (!selectedNode) return;
+    (async () => {
+      const summary = await loadBoardEntitySummary(db, 'Location', selectedNode.locationId);
+      if (!cancelled) setSelectedNodeSummary(summary);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [db, selectedNode]);
 
   const {
     connections,
@@ -539,6 +556,7 @@ const LocationMapScreen = () => {
       {selectedNode && (
         <LocationMapNodeSheet
           name={nodeNames[selectedNode.locationId] ?? selectedNode.locationId}
+          summary={selectedNodeSummary}
           icon={selectedNode.icon}
           color={selectedNode.color}
           parent={nodeParent}
@@ -576,6 +594,10 @@ const LocationMapScreen = () => {
               nodes: current.nodes.filter((node) => node.id !== selectedNode.id),
             }));
             setSelectedNodeId(null);
+          }}
+          onOpenLocation={() => {
+            setSelectedNodeId(null);
+            navigateToEntity('Location', selectedNode.locationId);
           }}
           onClose={() => setSelectedNodeId(null)}
         />

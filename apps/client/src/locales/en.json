@@ -956,6 +956,8 @@
   "location_map_node_color": "Icon color",
   "location_map_node_icon": "Map icon",
   "location_map_not_found": "Map not found.",
+  "location_map_open_location": "Open location",
+  "location_map_location_summary": "Location summary",
   "location_map_remove_image": "Remove image",
   "location_map_remove_node": "Remove from map",
   "location_map_save_failed": "Could not save the map.",

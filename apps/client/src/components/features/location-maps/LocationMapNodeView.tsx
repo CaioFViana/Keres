@@ -136,9 +136,11 @@ const LocationMapNodeView: React.FC<Props> = ({
           color: colors.text,
           textAlign: 'center',
           marginTop: 2,
-          // A mobile label has less effective width because of the device's font scaling. Let it
-          // use two short lines before truncating, while keeping the compact web treatment.
-          maxWidth: Platform.OS === 'web' ? 96 : 156,
+          // On a touch map the full place name is more useful than a compact, ambiguous label.
+          // The canvas permits overflowing labels, so mobile can wrap freely rather than hiding
+          // the identifying end of a name behind an ellipsis.
+          width: Platform.OS === 'web' ? undefined : 240,
+          maxWidth: Platform.OS === 'web' ? 96 : 240,
           // A soft halo in the background colour, so the name stays readable over the image
           // bases - the same treatment the exported SVG gives it.
           textShadowColor: colors.background,
@@ -160,7 +162,7 @@ const LocationMapNodeView: React.FC<Props> = ({
       </View>
       <Text
         style={styles.label}
-        numberOfLines={Platform.OS === 'web' ? 1 : 2}
+        numberOfLines={Platform.OS === 'web' ? 1 : undefined}
         pointerEvents="none"
       >
         {name}

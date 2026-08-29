@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
+import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type {
   LocationMapChildRelation,
   LocationMapParentRelation,
@@ -23,6 +24,8 @@ export interface LocationMapNodeConnection {
 
 interface Props {
   name: string;
+  /** The location's description, loaded without leaving the map. */
+  summary?: BoardEntitySummary | null;
   icon: string;
   color: string;
   /** The `contains` relation that makes this location a child (its parent), if any. */
@@ -46,6 +49,7 @@ interface Props {
   onAddConnection: (locationId: string) => void;
   onRemoveConnection: (relationId: string) => void;
   onRemoveNode: () => void;
+  onOpenLocation: () => void;
   onClose: () => void;
 }
 
@@ -56,6 +60,7 @@ interface Props {
  */
 const LocationMapNodeSheet: React.FC<Props> = ({
   name,
+  summary,
   icon,
   color,
   parent,
@@ -74,6 +79,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   onAddConnection,
   onRemoveConnection,
   onRemoveNode,
+  onOpenLocation,
   onClose,
 }) => {
   const { colors } = useTheme();
@@ -104,6 +110,13 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     header: { flexDirection: 'row', alignItems: 'flex-start' },
     headerText: { flex: 1, marginRight: 12 },
     title: { fontSize: 19, fontWeight: 'bold', color: colors.text },
+    openRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 12,
+      paddingVertical: 8,
+    },
+    openText: { color: colors.primary, fontSize: 15, fontWeight: '600', marginLeft: 6 },
     section: {
       fontSize: 13,
       fontWeight: 'bold',
@@ -125,6 +138,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     },
     itemText: { flex: 1, color: colors.text, fontSize: 13 },
     hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
+    summaryText: { color: colors.text, fontSize: 13, lineHeight: 19 },
     removeButton: { marginTop: 16, backgroundColor: colors.error },
     colorMarging: { marginBottom: 20 }
   });
@@ -151,12 +165,29 @@ const LocationMapNodeSheet: React.FC<Props> = ({
           <Ionicons name="close" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.openRow} onPress={onOpenLocation}>
+        <Ionicons name="open-outline" size={18} color={colors.primary} />
+        <Text style={styles.openText}>{t('location_map_open_location')}</Text>
+      </TouchableOpacity>
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {summary && (
+          <View style={cardStyles.cardContainer}>
+            <Text style={[cardStyles.cardText, styles.cardTitle]}>
+              {t('location_map_location_summary')}
+            </Text>
+            {summary.details ? (
+              <Text style={styles.summaryText}>{summary.details}</Text>
+            ) : (
+              <Text style={styles.hint}>{t('common_na')}</Text>
+            )}
+          </View>
+        )}
+
         {canEdit && (
           <>
             <Text style={styles.section}>{t('location_map_node_icon')}</Text>

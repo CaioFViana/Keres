@@ -8,6 +8,7 @@ import {
   CURRENT_STORY_FORMAT_VERSION,
   findStoryExportIntegrityViolations,
   FullStoryExportSchema,
+  StorySchema,
 } from '@keres/shared';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 import { statSync } from 'node:fs';
@@ -43,6 +44,7 @@ it('exposes the bundled example catalog and rejects an unknown slug-language pai
 it('ships every public-domain example as a complete showcase of applicable features', () => {
   for (const entry of exampleStoryRegistry) {
     for (const language of entry.languages) {
+      const rawPackage = language.story as Record<string, unknown>;
       const parsed = FullStoryExportSchema.safeParse(reviveDates(language.story));
 
       expect(parsed.success).toBe(true);
@@ -51,6 +53,12 @@ it('ships every public-domain example as a complete showcase of applicable featu
       // The schema keeps collections introduced in old versions optional in the type, even though the current
       // format and these guards require all of them in the package.
       const story = parsed.data as any;
+      expect(Object.keys(FullStoryExportSchema.shape).filter((key) => !(key in rawPackage))).toEqual([]);
+      expect(
+        Object.keys(StorySchema.shape).filter(
+          (key) => !(key in (rawPackage.story as Record<string, unknown>)),
+        ),
+      ).toEqual([]);
       expect(story.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
       expect(story.chapters.length).toBeGreaterThanOrEqual(3);
       expect(story.scenes.length).toBeGreaterThanOrEqual(12);
@@ -85,18 +93,19 @@ it('ships every public-domain example as a complete showcase of applicable featu
       expect(new Set(story.effects.map((effect: any) => effect.effectType))).toEqual(
         new Set(['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset']),
       );
-      expect(new Set(story.storySchemaFields.map((field: any) => field.type))).toEqual(
-        new Set([
-          'text',
-          'long_text',
-          'number',
-          'boolean',
-          'date',
-          'suggestion',
-          'suggestion_list',
-          'entity',
-        ]),
-      );
+      const expectedAttributeTypes = [
+        'text',
+        'long_text',
+        'number',
+        'boolean',
+        'date',
+        'suggestion',
+        'suggestion_list',
+        'entity',
+      ];
+      const attributeTypes = new Set(story.storySchemaFields.map((field: any) => field.type));
+      expectedAttributeTypes.forEach((type) => expect(attributeTypes).toContain(type));
+      expect(attributeTypes.has('story_date')).toBe(entry.slug === 'cinderella');
       expect(
         new Set(story.locationRelations.map((relation: any) => relation.relationType)),
       ).toEqual(new Set(['contains', 'connected_to']));
@@ -133,6 +142,56 @@ it('ships every public-domain example as a complete showcase of applicable featu
       }
     }
   }
+});
+
+it('uses the documented current-feature showcase matrix', () => {
+  const packageFor = (slug: string) => {
+    const entry = exampleStoryRegistry.find((candidate) => candidate.slug === slug);
+    const english = entry?.languages.find((language) => language.language === 'en');
+    expect(english).toBeDefined();
+    return reviveDates(english!.story) as any;
+  };
+
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const story = reviveDates(language.story) as any;
+      expect(story.galleryItems).toHaveLength(1);
+      expect(story.galleryItems[0]).toMatchObject({ mediaType: 'link', mimeType: 'text/uri-list' });
+      expect(story.galleryRelations).toHaveLength(1);
+      expect(story.galleryRelations[0].galleryId).toBe(story.galleryItems[0].id);
+    }
+  }
+
+  const alice = packageFor('alice-in-wonderland');
+  expect(alice.storyBoards).toHaveLength(1);
+  expect(alice.storyBoards[0].content.nodes.some((node: any) => node.kind === 'note')).toBe(true);
+  expect(alice.storyBoards[0].content.nodes.some((node: any) => node.kind === 'entity')).toBe(true);
+
+  const beauty = packageFor('beauty-and-the-beast');
+  const mermaid = packageFor('little-mermaid');
+  [beauty, mermaid].forEach((story) => {
+    expect(story.storyLocationMaps).toHaveLength(1);
+    expect(story.storyLocationMaps[0].content.nodes.length).toBeGreaterThanOrEqual(5);
+  });
+
+  const cinderella = packageFor('cinderella');
+  expect(cinderella.storyCalendars).toHaveLength(1);
+  expect(cinderella.storyCalendars[0].isPrimary).toBe(true);
+  expect(cinderella.chapterAnchors).toHaveLength(2);
+  expect(cinderella.story.timelineEpochSeconds).toBeGreaterThan(0);
+  expect(cinderella.storySchemaFields.some((field: any) => field.type === 'story_date')).toBe(true);
+
+  const goldilocks = packageFor('goldilocks');
+  expect(goldilocks.storyCalendars).toHaveLength(0);
+  expect(goldilocks.story.timelineEpochDay).not.toBeNull();
+  expect(goldilocks.story.timelineEpochSeconds).toBeGreaterThan(0);
+
+  const kaguya = packageFor('princess-kaguya');
+  expect(kaguya.storyCalendars).toHaveLength(1);
+  expect(kaguya.storyCalendars[0].isPrimary).toBe(false);
+  expect(kaguya.storyCalendars[0].definition.eras).toEqual(
+    expect.arrayContaining([expect.objectContaining({ direction: 'backward' })]),
+  );
 });
 
 /**

@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": null,
+    "timelineEpochSeconds": null,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -1380,7 +1388,26 @@
       "sceneId": "13F45JCPG6BV2FRJXA3TTY2X1A"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "6Q1BK736VN97VTHCJP9QT6RE5P",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "4124ba8f9ce18d69be071a0442a42189",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/The_Little_Mermaid",
+      "title": "Public story source",
+      "isFavorite": false,
+      "extraNotes": "A link to the public source used as editorial reference for this example."
+    }
+  ],
   "items": [
     {
       "id": "01KYXKY1XP89Y9MMHND96H7S38",
@@ -3074,5 +3101,77 @@
       "note": "Resolves it"
     }
   ],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "21QQQ1ZG1QKVVC4SW9X2YQZC6V",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "6Q1BK736VN97VTHCJP9QT6RE5P",
+      "ownerId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [],
+  "storyLocationMaps": [
+    {
+      "id": "4NENJ0S29B1R9HV40DQ3594RDQ",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "name": "Sea and shore map",
+      "description": "Surface and underwater places used by the narrative.",
+      "content": {
+        "images": [],
+        "nodes": [
+          {
+            "id": "5EA00001",
+            "locationId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+            "x": 120,
+            "y": 120,
+            "icon": "home-outline",
+            "color": "#8BC34A"
+          },
+          {
+            "id": "5EA00002",
+            "locationId": "01KYXBHD0MESF281V4YSN4MAA5",
+            "x": 350,
+            "y": 120,
+            "icon": "home-outline",
+            "color": "#38BDF8"
+          },
+          {
+            "id": "5EA00003",
+            "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
+            "x": 580,
+            "y": 120,
+            "icon": "location-outline",
+            "color": "#F59E0B"
+          },
+          {
+            "id": "5EA00004",
+            "locationId": "13MJXKDTSXR2T4V7PM14DQGMAY",
+            "x": 120,
+            "y": 310,
+            "icon": "location-outline",
+            "color": "#F472B6"
+          },
+          {
+            "id": "5EA00005",
+            "locationId": "0R2ZR2G13HEWEPF604TKGTBAJB",
+            "x": 350,
+            "y": 310,
+            "icon": "location-outline",
+            "color": "#A78BFA"
+          }
+        ]
+      }
+    }
+  ]
 }

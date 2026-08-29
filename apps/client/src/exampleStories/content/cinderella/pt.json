@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": 18,
+    "timelineEpochSeconds": 72000,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -868,7 +876,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Crescimento"
     },
     {
@@ -879,7 +887,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Dever"
     },
     {
@@ -890,7 +898,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Descoberta"
     },
     {
@@ -901,7 +909,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Reconciliação"
     },
     {
@@ -912,7 +920,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Promessa"
     },
     {
@@ -923,7 +931,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Limiar"
     },
     {
@@ -934,7 +942,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Transformação"
     },
     {
@@ -945,7 +953,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Retorno"
     },
     {
@@ -1091,8 +1099,119 @@
       "relationType": "Apaixonados"
     }
   ],
-  "chapterAnchors": [],
-  "storyCalendars": [],
+  "chapterAnchors": [
+    {
+      "id": "51F33JM6WE13M3TMKAQFBXN89T",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
+      "order": 1,
+      "startSceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "startPosition": "start",
+      "startOffset": null,
+      "startOffsetUnit": null,
+      "endSceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B",
+      "endPosition": "end",
+      "endOffset": null,
+      "endOffsetUnit": null
+    },
+    {
+      "id": "46T9D6YBDFGRZHKVM2MF2AVWV0",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
+      "order": 1,
+      "startSceneId": "4NWHXAHMB4APXXVE8158T0ZM0V",
+      "startPosition": "start",
+      "startOffset": 1,
+      "startOffsetUnit": "days",
+      "endSceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR",
+      "endPosition": "end",
+      "endOffset": null,
+      "endOffsetUnit": null
+    }
+  ],
+  "storyCalendars": [
+    {
+      "id": "0VV00GR4ANZTDJTFDBJFZJ4QFF",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "name": "Calendário do Baile",
+      "isPrimary": true,
+      "description": "O calendário que mede a aproximação da meia-noite.",
+      "extraNotes": null,
+      "definition": {
+        "secondsPerMinute": 60,
+        "minutesPerHour": 60,
+        "hoursPerDay": 24,
+        "daysPerWeek": 6,
+        "weekdayNames": [
+          "Lua",
+          "Vênus",
+          "Marte",
+          "Mercúrio",
+          "Júpiter",
+          "Saturno"
+        ],
+        "unitNames": {},
+        "months": [
+          {
+            "name": "Cinzas",
+            "days": 30
+          },
+          {
+            "name": "Abóboras",
+            "days": 30
+          },
+          {
+            "name": "Baile",
+            "days": 30
+          },
+          {
+            "name": "Vidro",
+            "days": 30
+          }
+        ],
+        "eras": [
+          {
+            "name": "Era do Reino",
+            "abbreviation": "ER",
+            "startYear": 1,
+            "direction": "forward"
+          }
+        ],
+        "moons": [
+          {
+            "name": "Lua Madrinha",
+            "periodDays": 29.5,
+            "referenceDay": 1
+          }
+        ],
+        "seasons": [
+          {
+            "name": "Preparação",
+            "startDayOfYear": 1
+          },
+          {
+            "name": "Celebração",
+            "startDayOfYear": 61
+          }
+        ]
+      }
+    }
+  ],
   "characterScenes": [
     {
       "id": "50S7EB7ZRT4YFHNSTPEK87TYVV",
@@ -1469,7 +1588,26 @@
       "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "4CWCX1GDSXKKGP8PJ2KWE9EA1W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "6cb20d20beca510b23faca8d8d50ec93",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/Cinderella",
+      "title": "Fonte pública da história",
+      "isFavorite": false,
+      "extraNotes": "Link para a fonte pública usada como referência editorial do exemplo."
+    }
+  ],
   "items": [
     {
       "id": "01KYXKHJQYQDRD87YKKB9WJXDY",
@@ -1749,10 +1887,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Character",
-      "name": "Arco",
-      "key": "arc",
-      "description": "Valor controlado de arco",
-      "type": "suggestion",
+      "name": "Data do destino",
+      "key": "date_of_destiny",
+      "description": "Uma data registrada no calendário próprio da história.",
+      "type": "story_date",
       "targetEntityType": null,
       "isRequired": false,
       "defaultValue": null,
@@ -1767,10 +1905,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Character",
-      "name": "Motivos",
-      "key": "motifs",
-      "description": "Vários motivos controlados",
-      "type": "suggestion_list",
+      "name": "Arco",
+      "key": "arc",
+      "description": "Valor controlado de arco",
+      "type": "suggestion",
       "targetEntityType": null,
       "isRequired": false,
       "defaultValue": null,
@@ -1785,6 +1923,24 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Character",
+      "name": "Motivos",
+      "key": "motifs",
+      "description": "Vários motivos controlados",
+      "type": "suggestion_list",
+      "targetEntityType": null,
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 7
+    },
+    {
+      "id": "6WVTHNM69NXM0VZFJ8JZMGZ6R1",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "entityType": "Character",
       "name": "Local de referência",
       "key": "reference_place",
       "description": "Local relacionado",
@@ -1792,7 +1948,7 @@
       "targetEntityType": "Location",
       "isRequired": false,
       "defaultValue": null,
-      "order": 7
+      "order": 8
     }
   ],
   "attributeValues": [
@@ -1937,7 +2093,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": "7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
-      "value": "Crescimento"
+      "value": "18"
     },
     {
       "id": "2XP4K527WPGMGTXTHXN74PA6K5",
@@ -1950,7 +2106,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
       "fieldId": "7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
-      "value": "Dever"
+      "value": "79"
     },
     {
       "id": "70VP8YDSYZZF7BNPA8EKYB5XWJ",
@@ -1963,7 +2119,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": "57RFNCNR9NQAKB9MZ3JKMHRQG3",
-      "value": "[\"Promessa\",\"Transformação\"]"
+      "value": "Crescimento"
     },
     {
       "id": "3CBDFDF8CCHZAH5NTBGRV5VN2B",
@@ -1976,7 +2132,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
       "fieldId": "57RFNCNR9NQAKB9MZ3JKMHRQG3",
-      "value": "[\"Limiar\",\"Retorno\"]"
+      "value": "Dever"
     },
     {
       "id": "1J50ED8EN355BP6GERHW2EZ4C3",
@@ -1989,7 +2145,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": "2RRGMVMF7KFKS51AJQ7V9YVRS0",
-      "value": "01KYXBHD0JDW8Z6SWRWC3D7Y3C"
+      "value": "[\"Promessa\",\"Transformação\"]"
     },
     {
       "id": "5MAAGV07DPHSKNXVV414CKDAR0",
@@ -2002,6 +2158,32 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
       "fieldId": "2RRGMVMF7KFKS51AJQ7V9YVRS0",
+      "value": "[\"Limiar\",\"Retorno\"]"
+    },
+    {
+      "id": "2R0CBF7NVB1RZ9ZYT2CKSQ4VVY",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "entityType": "Character",
+      "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "fieldId": "6WVTHNM69NXM0VZFJ8JZMGZ6R1",
+      "value": "01KYXBHD0JDW8Z6SWRWC3D7Y3C"
+    },
+    {
+      "id": "38BA2P98JQVH1K7QBDQ6J5VP6A",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "entityType": "Character",
+      "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "fieldId": "6WVTHNM69NXM0VZFJ8JZMGZ6R1",
       "value": "01KYXBHD0J0KFKQ2J5PYWHQ58Z"
     }
   ],
@@ -3163,5 +3345,20 @@
       "note": "Resolve o fio"
     }
   ],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "35BDSEDDF8RPBC3K9V0W8FFQSJ",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "4CWCX1GDSXKKGP8PJ2KWE9EA1W",
+      "ownerId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [],
+  "storyLocationMaps": []
 }

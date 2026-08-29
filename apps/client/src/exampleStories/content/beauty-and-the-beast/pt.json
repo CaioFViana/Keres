@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": null,
+    "timelineEpochSeconds": null,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -1685,7 +1693,26 @@
       "sceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "654S9WQHNDEKKEFN8JFMWM45ME",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "1f51a6b96ec3aa69f1c9b2c529342087",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/Beauty_and_the_Beast",
+      "title": "Fonte pública da história",
+      "isFavorite": false,
+      "extraNotes": "Link para a fonte pública usada como referência editorial do exemplo."
+    }
+  ],
   "items": [
     {
       "id": "01KYXK9BMQN9V35XYM1X1C7J76",
@@ -3293,5 +3320,77 @@
   ],
   "plots": [],
   "plotScenes": [],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "21YTK9JJKJQT5T4WRG9J6G3P1X",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "654S9WQHNDEKKEFN8JFMWM45ME",
+      "ownerId": "01KYXBHD0FT43JJV1HABMERBPA",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [],
+  "storyLocationMaps": [
+    {
+      "id": "0TE6ZE65XE2TDV8B6A50G7CZNJ",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "name": "Mapa do castelo",
+      "description": "Locais do castelo e seus caminhos narrativos.",
+      "content": {
+        "images": [],
+        "nodes": [
+          {
+            "id": "CA571E01",
+            "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
+            "x": 120,
+            "y": 120,
+            "icon": "home-outline",
+            "color": "#8BC34A"
+          },
+          {
+            "id": "CA571E02",
+            "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+            "x": 350,
+            "y": 120,
+            "icon": "home-outline",
+            "color": "#38BDF8"
+          },
+          {
+            "id": "CA571E03",
+            "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
+            "x": 580,
+            "y": 120,
+            "icon": "location-outline",
+            "color": "#F59E0B"
+          },
+          {
+            "id": "CA571E04",
+            "locationId": "6V6DQ7VA05TVKS0Y5XYRP7T4GN",
+            "x": 120,
+            "y": 310,
+            "icon": "location-outline",
+            "color": "#F472B6"
+          },
+          {
+            "id": "CA571E05",
+            "locationId": "4AF8S592M5N1CS6DF3DTN1ND4H",
+            "x": 350,
+            "y": 310,
+            "icon": "location-outline",
+            "color": "#A78BFA"
+          }
+        ]
+      }
+    }
+  ]
 }

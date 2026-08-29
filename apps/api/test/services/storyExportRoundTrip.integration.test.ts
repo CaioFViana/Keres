@@ -100,6 +100,90 @@ const id = {
   modeValue: '',
 };
 
+/**
+ * Importing intentionally restamps persistence metadata. It must not, however, change the
+ * portable story payload: every collection, value and reference survives a preserve-id import.
+ * Collections are sorted by their stable ids because database row order is not part of the format.
+ */
+function comparableExport(pkg: Record<string, any>) {
+  const stripPersistenceMetadata = (value: any): any => {
+    if (Array.isArray(value)) return value.map(stripPersistenceMetadata);
+    if (!value || typeof value !== 'object') return value;
+    const normalized = Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => !['createdAt', 'updatedAt', 'version', 'isDeleted', 'deletedAt'].includes(key))
+        .map(([key, child]) => [key, stripPersistenceMetadata(child)]),
+    );
+    // Character relations are an unordered pair. The importer canonically persists the lower id
+    // first, so the two equivalent serializations must compare as the same portable relation.
+    if (
+      typeof normalized.character1Id === 'string' &&
+      typeof normalized.character2Id === 'string' &&
+      normalized.character1Id > normalized.character2Id
+    ) {
+      [normalized.character1Id, normalized.character2Id] = [
+        normalized.character2Id,
+        normalized.character1Id,
+      ];
+    }
+    return normalized;
+  };
+
+  return Object.fromEntries(
+    Object.entries(pkg)
+      .filter(([key]) => key !== 'serverLastOperationVersion')
+      .map(([key, value]) => [
+        key,
+        Array.isArray(value)
+          ? value
+              .map(stripPersistenceMetadata)
+              .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+          : stripPersistenceMetadata(value),
+      ]),
+  );
+}
+
+/** The duplicate/import path deliberately creates new row ids and changes authorship. */
+function comparableRemappedExport(pkg: Record<string, any>) {
+  const stripRemappedIdentity = (value: any, isExportRow = false): any => {
+    if (Array.isArray(value)) return value.map((child) => stripRemappedIdentity(child));
+    if (!value || typeof value !== 'object') return value;
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(
+          ([key]) =>
+            ![
+              'createdAt',
+              'updatedAt',
+              'version',
+              'isDeleted',
+              'deletedAt',
+              'userId',
+              'authorUserId',
+            ].includes(key),
+        )
+        // `id` is a database id only on the story and top-level collection rows. Board/map local
+        // node ids are content, so they deliberately remain in the comparison.
+        .filter(([key]) => !(isExportRow && key === 'id'))
+        .filter(([key]) => !key.endsWith('Id'))
+        .map(([key, child]) => [key, stripRemappedIdentity(child)]),
+    );
+  };
+
+  return Object.fromEntries(
+    Object.entries(pkg)
+      .filter(([key]) => key !== 'serverLastOperationVersion')
+      .map(([key, value]) => [
+        key,
+        Array.isArray(value)
+          ? value
+              .map((row) => stripRemappedIdentity(row, true))
+              .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
+          : stripRemappedIdentity(value, true),
+      ]),
+  );
+}
+
 beforeEach(async () => {
   await truncateAll();
   for (const key of Object.keys(id) as Array<keyof typeof id>) id[key] = newId();
@@ -598,6 +682,29 @@ describe('import of a package with one row of every kind', () => {
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,
     ).toBe(id.characterA);
+  });
+
+  it('re-exports every collection and reference after a preserve-id import', async () => {
+    const exported = await service.exportStory(id.story, OWNER);
+
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    await service.importStory(OWNER, JSON.parse(JSON.stringify(exported)), id.story);
+    const reExported = await service.exportStory(id.story, OWNER);
+
+    expect(comparableExport(reExported)).toEqual(comparableExport(exported));
+  });
+
+  it('re-exports the same portable shape after regenerating ids', async () => {
+    const exported = await service.exportStory(id.story, OWNER);
+    const importedId = await service.importStory(IMPORTER, JSON.parse(JSON.stringify(exported)));
+    const reExported = await service.exportStory(importedId, IMPORTER);
+
+    expect(comparableRemappedExport(reExported)).toEqual(comparableRemappedExport(exported));
   });
 
   it('makes the importer the owner of the favorites and the comments', async () => {

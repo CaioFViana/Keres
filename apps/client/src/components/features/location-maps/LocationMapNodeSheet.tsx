@@ -1,15 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
-import { MAP_ICON_OPTIONS } from '@keres/shared';
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { getCommonCardStyles } from '../../../theme/commonStyles';
+import { Ionicons } from '@expo/vector-icons';
+import { MAP_ICON_OPTIONS } from '@keres/shared';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
+import { getCommonCardStyles } from '../../../theme/commonStyles';
 import type {
   LocationMapChildRelation,
   LocationMapParentRelation,
@@ -126,6 +126,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     itemText: { flex: 1, color: colors.text, fontSize: 13 },
     hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
     removeButton: { marginTop: 16, backgroundColor: colors.error },
+    colorMarging: { marginBottom: 20 }
   });
 
   const relationRow = (relationId: string, label: string, onRemove: (() => void) | undefined) => (
@@ -165,12 +166,12 @@ const LocationMapNodeSheet: React.FC<Props> = ({
               placeholder={t('location_map_node_icon')}
               iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]}
             />
-            <View style={{ height: 12 }} />
             <Text style={styles.section}>{t('location_map_node_color')}</Text>
             <ColorPickerInput
               currentColor={color}
               onSelectColor={onChangeColor}
               placeholder={t('location_map_node_color')}
+              style={styles.colorMarging}
             />
           </>
         )}

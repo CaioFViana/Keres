@@ -146,6 +146,58 @@ function base(id: string, storyId: string) {
   };
 }
 
+function showcaseText(language: Language) {
+  return language === 'pt'
+    ? {
+        galleryTitle: 'Fonte pública da história',
+        galleryNotes: 'Link para a fonte pública usada como referência editorial do exemplo.',
+        boardName: 'Fios de decisão',
+        boardDescription: 'Uma visão de personagens, pistas e escolhas que alteram o caminho.',
+        boardNoteTitle: 'Pergunta de revisão',
+        boardNoteBody: 'A decisão precisa deixar claro o que Alice sabe antes de escolher.',
+        castleMapName: 'Mapa do castelo',
+        castleMapDescription: 'Locais do castelo e seus caminhos narrativos.',
+        seaMapName: 'Mapa do mar e da costa',
+        seaMapDescription: 'Pontos da superfície e do fundo do mar usados pela narrativa.',
+        calendarName: 'Calendário do Baile',
+        calendarDescription: 'O calendário que mede a aproximação da meia-noite.',
+        parallelCalendarName: 'Calendário Lunar',
+        parallelCalendarDescription: 'Uma contagem paralela para as eras lunares da história.',
+        storyDateName: 'Data do destino',
+        storyDateDescription: 'Uma data registrada no calendário próprio da história.',
+      }
+    : {
+        galleryTitle: 'Public story source',
+        galleryNotes: 'A link to the public source used as editorial reference for this example.',
+        boardName: 'Decision threads',
+        boardDescription: 'A view of characters, clues, and choices that change the path.',
+        boardNoteTitle: 'Revision question',
+        boardNoteBody: 'The choice should make clear what Alice knows before she decides.',
+        castleMapName: 'Castle map',
+        castleMapDescription: 'Castle places and the narrative paths between them.',
+        seaMapName: 'Sea and shore map',
+        seaMapDescription: 'Surface and underwater places used by the narrative.',
+        calendarName: 'Ball Calendar',
+        calendarDescription: 'The calendar that measures the approach of midnight.',
+        parallelCalendarName: 'Lunar Calendar',
+        parallelCalendarDescription: 'A parallel count for the story’s lunar eras.',
+        storyDateName: 'Date of destiny',
+        storyDateDescription: 'A date recorded in the story’s own calendar.',
+      };
+}
+
+function publicSourceUrl(slug: string): string {
+  const slugs: Record<string, string> = {
+    'alice-in-wonderland': 'Alice%27s_Adventures_in_Wonderland',
+    'beauty-and-the-beast': 'Beauty_and_the_Beast',
+    cinderella: 'Cinderella',
+    goldilocks: 'The_Story_of_the_Three_Bears',
+    'little-mermaid': 'The_Little_Mermaid',
+    'princess-kaguya': 'The_Tale_of_the_Bamboo_Cutter',
+  };
+  return `https://en.wikisource.org/wiki/${slugs[slug] ?? slug}`;
+}
+
 /**
  * Nothing here invents narrative any more.
  *
@@ -167,6 +219,7 @@ function requireCount(source: any[] | undefined, count: number, what: string, sl
 
 function buildStory(slug: string, language: Language, source: StoryDocument): StoryDocument {
   const text = localized[language];
+  const showcase = showcaseText(language);
   const storyId = source.story.id as string;
   const id = (key: string) => deterministicUlid(slug, key);
 
@@ -359,25 +412,44 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     'number',
     'boolean',
     'date',
+    ...(slug === 'cinderella' ? ['story_date'] : []),
     'suggestion',
     'suggestion_list',
     'entity',
   ];
+  const schemaFieldsByType: Record<string, { name: string; key: string; description: string }> = {
+    text: {
+      name: text.schema.names[0],
+      key: 'theme_note',
+      description: text.schema.descriptions[0],
+    },
+    long_text: {
+      name: text.schema.names[1],
+      key: 'editorial_analysis',
+      description: text.schema.descriptions[1],
+    },
+    number: {
+      name: text.schema.names[2],
+      key: 'narrative_weight',
+      description: text.schema.descriptions[2],
+    },
+    boolean: { name: text.schema.names[3], key: 'resolved', description: text.schema.descriptions[3] },
+    date: { name: text.schema.names[4], key: 'review_date', description: text.schema.descriptions[4] },
+    story_date: {
+      name: showcase.storyDateName,
+      key: 'date_of_destiny',
+      description: showcase.storyDateDescription,
+    },
+    suggestion: { name: text.schema.names[5], key: 'arc', description: text.schema.descriptions[5] },
+    suggestion_list: { name: text.schema.names[6], key: 'motifs', description: text.schema.descriptions[6] },
+    entity: { name: text.schema.names[7], key: 'reference_place', description: text.schema.descriptions[7] },
+  };
   const storySchemaFields = schemaTypes.map((type, index) => ({
     ...base(id(`schema-field-${index}`), storyId),
     entityType: 'Character',
-    name: text.schema.names[index],
-    key: [
-      'theme_note',
-      'editorial_analysis',
-      'narrative_weight',
-      'resolved',
-      'review_date',
-      'arc',
-      'motifs',
-      'reference_place',
-    ][index],
-    description: text.schema.descriptions[index],
+    name: schemaFieldsByType[type].name,
+    key: schemaFieldsByType[type].key,
+    description: schemaFieldsByType[type].description,
     type,
     targetEntityType: type === 'entity' ? 'Location' : null,
     isRequired: false,
@@ -392,6 +464,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
         number: String(3 + characterIndex * 4),
         boolean: characterIndex === 0 ? 'true' : 'false',
         date: characterIndex === 0 ? '2025-03-15' : '2025-09-30',
+        story_date: characterIndex === 0 ? '18' : '79',
         suggestion: text.schema.suggestionValues[characterIndex],
         suggestion_list: JSON.stringify([
           text.schema.listValues[characterIndex],
@@ -409,9 +482,15 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     }),
   );
 
+  const fieldFor = (type: string) => {
+    const field = storySchemaFields.find((candidate) => candidate.type === type);
+    if (!field) throw new Error(`${slug}: missing ${type} example field.`);
+    return field;
+  };
+
   const suggestionCatalogs = [
-    ...text.schema.suggestionValues.map((value) => [`custom:${storySchemaFields[5].id}`, value]),
-    ...text.schema.listValues.map((value) => [`custom:${storySchemaFields[6].id}`, value]),
+    ...text.schema.suggestionValues.map((value) => [`custom:${fieldFor('suggestion').id}`, value]),
+    ...text.schema.listValues.map((value) => [`custom:${fieldFor('suggestion_list').id}`, value]),
     ['character_gender', language === 'pt' ? 'Não informado' : 'Unspecified'],
     ['character_race', language === 'pt' ? 'Humano' : 'Human'],
     ['item_category', ''],
@@ -601,6 +680,203 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     userId: EXAMPLE_USER_ID,
   }));
 
+  const storyCalendars =
+    slug === 'cinderella'
+      ? [
+          {
+            ...base(id('calendar-primary'), storyId),
+            name: showcase.calendarName,
+            isPrimary: true,
+            description: showcase.calendarDescription,
+            extraNotes: null,
+            definition: {
+              secondsPerMinute: 60,
+              minutesPerHour: 60,
+              hoursPerDay: 24,
+              daysPerWeek: 6,
+              weekdayNames:
+                language === 'pt'
+                  ? ['Lua', 'Vênus', 'Marte', 'Mercúrio', 'Júpiter', 'Saturno']
+                  : ['Moon', 'Venus', 'Mars', 'Mercury', 'Jupiter', 'Saturn'],
+              unitNames: {},
+              months:
+                language === 'pt'
+                  ? [
+                      { name: 'Cinzas', days: 30 },
+                      { name: 'Abóboras', days: 30 },
+                      { name: 'Baile', days: 30 },
+                      { name: 'Vidro', days: 30 },
+                    ]
+                  : [
+                      { name: 'Ashes', days: 30 },
+                      { name: 'Pumpkins', days: 30 },
+                      { name: 'Ball', days: 30 },
+                      { name: 'Glass', days: 30 },
+                    ],
+              eras: [
+                {
+                  name: language === 'pt' ? 'Era do Reino' : 'Kingdom Era',
+                  abbreviation: language === 'pt' ? 'ER' : 'KE',
+                  startYear: 1,
+                  direction: 'forward',
+                },
+              ],
+              moons: [
+                { name: language === 'pt' ? 'Lua Madrinha' : 'Godmother Moon', periodDays: 29.5, referenceDay: 1 },
+              ],
+              seasons: [
+                { name: language === 'pt' ? 'Preparação' : 'Preparation', startDayOfYear: 1 },
+                { name: language === 'pt' ? 'Celebração' : 'Celebration', startDayOfYear: 61 },
+              ],
+            },
+          },
+        ]
+      : slug === 'princess-kaguya'
+        ? [
+            {
+              ...base(id('calendar-parallel'), storyId),
+              name: showcase.parallelCalendarName,
+              isPrimary: false,
+              description: showcase.parallelCalendarDescription,
+              extraNotes: null,
+              definition: {
+                secondsPerMinute: 60,
+                minutesPerHour: 60,
+                hoursPerDay: 24,
+                daysPerWeek: 5,
+                weekdayNames:
+                  language === 'pt'
+                    ? ['Bambu', 'Névoa', 'Lua', 'Vento', 'Estrela']
+                    : ['Bamboo', 'Mist', 'Moon', 'Wind', 'Star'],
+                unitNames: {},
+                months:
+                  language === 'pt'
+                    ? [
+                        { name: 'Bambu', days: 28 },
+                        { name: 'Prata', days: 28 },
+                        { name: 'Retorno', days: 28 },
+                      ]
+                    : [
+                        { name: 'Bamboo', days: 28 },
+                        { name: 'Silver', days: 28 },
+                        { name: 'Return', days: 28 },
+                      ],
+                eras: [
+                  {
+                    name: language === 'pt' ? 'Antes da Lua' : 'Before the Moon',
+                    abbreviation: language === 'pt' ? 'AL' : 'BM',
+                    startYear: 1,
+                    direction: 'backward',
+                  },
+                ],
+                moons: [{ name: language === 'pt' ? 'Lua' : 'Moon', periodDays: 28, referenceDay: 1 }],
+                seasons: [],
+              },
+            },
+          ]
+        : [];
+
+  const chapterAnchors =
+    slug === 'cinderella'
+      ? [
+          {
+            ...base(id('chapter-anchor-1'), storyId),
+            chapterId: chapters[1].id,
+            order: 1,
+            startSceneId: scenes[4].id,
+            startPosition: 'start',
+            startOffset: null,
+            startOffsetUnit: null,
+            endSceneId: scenes[7].id,
+            endPosition: 'end',
+            endOffset: null,
+            endOffsetUnit: null,
+          },
+          {
+            ...base(id('chapter-anchor-2'), storyId),
+            chapterId: chapters[2].id,
+            order: 1,
+            startSceneId: scenes[8].id,
+            startPosition: 'start',
+            startOffset: 1,
+            startOffsetUnit: 'days',
+            endSceneId: scenes[11].id,
+            endPosition: 'end',
+            endOffset: null,
+            endOffsetUnit: null,
+          },
+        ]
+      : [];
+
+  const storyBoards =
+    slug === 'alice-in-wonderland'
+      ? [
+          {
+            ...base(id('board-decisions'), storyId),
+            name: showcase.boardName,
+            description: showcase.boardDescription,
+            content: {
+              nodes: [
+                { id: 'A1CE0001', kind: 'entity', x: 80, y: 100, entityType: 'Character', entityId: characters[0].id, labelAtPin: characters[0].name },
+                { id: 'A1CE0002', kind: 'entity', x: 360, y: 80, entityType: 'Scene', entityId: scenes[3].id, labelAtPin: scenes[3].name },
+                { id: 'A1CE0003', kind: 'entity', x: 350, y: 300, entityType: 'Item', entityId: items[0].id, labelAtPin: items[0].name },
+                { id: 'A1CE0004', kind: 'note', x: 100, y: 310, title: showcase.boardNoteTitle, body: showcase.boardNoteBody },
+              ],
+              edges: [
+                { id: 'A1CE1001', from: 'A1CE0001', to: 'A1CE0002', directed: true, label: null },
+                { id: 'A1CE1002', from: 'A1CE0002', to: 'A1CE0003', directed: true, label: null },
+                { id: 'A1CE1003', from: 'A1CE0004', to: 'A1CE0002', directed: false, label: null },
+              ],
+            },
+          },
+        ]
+      : [];
+
+  const mapSlug = slug === 'beauty-and-the-beast' ? 'castle' : slug === 'little-mermaid' ? 'sea' : null;
+  const storyLocationMaps = mapSlug
+    ? [
+        {
+          ...base(id(`location-map-${mapSlug}`), storyId),
+          name: mapSlug === 'castle' ? showcase.castleMapName : showcase.seaMapName,
+          description: mapSlug === 'castle' ? showcase.castleMapDescription : showcase.seaMapDescription,
+          // Examples ship as JSON, so they cannot include local image bytes. The map still demonstrates
+          // movable, navigable pins and its real location relations; API ZIP tests cover image bases.
+          content: {
+            images: [],
+            nodes: locations.slice(0, 5).map((location, index) => ({
+              id: `${mapSlug === 'castle' ? 'CA571E' : '5EA000'}0${index + 1}`,
+              locationId: location.id,
+              x: 120 + (index % 3) * 230,
+              y: 120 + Math.floor(index / 3) * 190,
+              icon: index < 2 ? 'home-outline' : 'location-outline',
+              color: ['#8BC34A', '#38BDF8', '#F59E0B', '#F472B6', '#A78BFA'][index],
+            })),
+          },
+        },
+      ]
+    : [];
+
+  const gallery = {
+    ...base(id('gallery-public-source'), storyId),
+    mediaType: 'link',
+    mimeType: 'text/uri-list',
+    fileName: 'public-story-source.url',
+    hash: createHash('md5').update(`${slug}:public-source`).digest('hex'),
+    sizeBytes: 0,
+    sourceUrl: publicSourceUrl(slug),
+    title: showcase.galleryTitle,
+    isFavorite: false,
+    extraNotes: showcase.galleryNotes,
+  };
+  const galleryRelations = [
+    {
+      ...base(id('gallery-relation-public-source'), storyId),
+      galleryId: gallery.id,
+      ownerId: locations[0].id,
+      ownerType: 'Location',
+    },
+  ];
+
   return {
     ...source,
     // The constant, not a literal: pinned by hand it silently falls behind the format, and the
@@ -610,6 +886,14 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     story: {
       ...source.story,
       userId: EXAMPLE_USER_ID,
+      favoriteBehavior: 'individual',
+      theme: null,
+      timelineEpochDay: slug === 'cinderella' ? 18 : slug === 'goldilocks' ? 20_000 : null,
+      timelineEpochSeconds: slug === 'cinderella' ? 72_000 : slug === 'goldilocks' ? 25_200 : null,
+      normalizeSceneTiming: false,
+      allowReaderComments: true,
+      autoLinkMentions: true,
+      completenessChecks: true,
       statSystem: true,
       statNotation: 'letter',
       updatedAt: FIXED_DATE,
@@ -640,12 +924,16 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     comments,
     seeAlsoRelations,
     favorites,
+    chapterAnchors,
+    storyCalendars,
+    storyBoards,
+    storyLocationMaps,
     stats,
     statStrengths: [...defaultLadder, ...customLadder],
     statRelations,
     modes,
-    galleryItems: [],
-    galleryRelations: [],
+    galleryItems: [gallery],
+    galleryRelations,
   };
 }
 

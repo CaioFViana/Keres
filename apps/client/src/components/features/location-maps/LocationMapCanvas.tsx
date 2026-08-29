@@ -1,11 +1,11 @@
 import type { LocationMapContentType } from '@keres/shared';
-import React, { forwardRef, useMemo } from 'react';
+import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import Svg, { Path, Polygon } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { interpolateColor, pointOnCircleBoundary } from '../../../utils/locationMapColors';
-import { locationMapCanvasSize, LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
+import { locationMapCanvasBounds, LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
 import { useTheme } from '../../../theme';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
@@ -48,6 +48,13 @@ const CONTAINS_DASH = '6 4';
 /** Width of the contrast halo behind every line, so it stays visible over the image bases. */
 const HALO_WIDTH = 6;
 
+type ActiveDrag = {
+  kind: 'image' | 'node';
+  id: string;
+  x: number;
+  y: number;
+};
+
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
   return [
@@ -77,18 +84,130 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     ref,
   ) => {
     const { colors } = useTheme();
-    const size = locationMapCanvasSize(content);
+    const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+    const activeDragRef = useRef<ActiveDrag | null>(null);
+    const pendingDragRef = useRef<ActiveDrag | null>(null);
+    const dragFrameRef = useRef<number | null>(null);
+    // The drag is measured in the surface coordinates from press time. That surface can gain a
+    // negative-world margin while the pointer moves, so do not rebase a running gesture on it.
+    const dragWorldOriginRef = useRef({ x: 0, y: 0 });
+    const layoutContent = useMemo(() => {
+      if (!activeDrag) return content;
+      if (activeDrag.kind === 'image') {
+        return {
+          ...content,
+          images: content.images.map((image) =>
+            image.id === activeDrag.id ? { ...image, x: activeDrag.x, y: activeDrag.y } : image,
+          ),
+        };
+      }
+      return {
+        ...content,
+        nodes: content.nodes.map((node) =>
+          node.id === activeDrag.id ? { ...node, x: activeDrag.x, y: activeDrag.y } : node,
+        ),
+      };
+    }, [activeDrag, content]);
+    const size = locationMapCanvasBounds(layoutContent);
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;
 
+    const displayContent = useMemo(() => {
+      if (size.originX === 0 && size.originY === 0) return layoutContent;
+      return {
+        ...layoutContent,
+        images: layoutContent.images.map((image) => ({
+          ...image,
+          x: image.x - size.originX,
+          y: image.y - size.originY,
+        })),
+        nodes: layoutContent.nodes.map((node) => ({
+          ...node,
+          x: node.x - size.originX,
+          y: node.y - size.originY,
+        })),
+      };
+    }, [layoutContent, size.originX, size.originY]);
+
+    const publishPendingDrag = useCallback(() => {
+      dragFrameRef.current = null;
+      const next = pendingDragRef.current;
+      pendingDragRef.current = null;
+      if (!next) return;
+      activeDragRef.current = next;
+      setActiveDrag(next);
+    }, []);
+
+    const updateDrag = useCallback(
+      (kind: ActiveDrag['kind'], id: string, x: number, y: number) => {
+        pendingDragRef.current = {
+          kind,
+          id,
+          x: x + dragWorldOriginRef.current.x,
+          y: y + dragWorldOriginRef.current.y,
+        };
+        if (dragFrameRef.current !== null) return;
+        // Pointer events can arrive more often than a screen can paint. One visual update per
+        // animation frame keeps the moving item and its lines smooth without redrawing the whole
+        // editor for every raw event.
+        dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
+      },
+      [publishPendingDrag],
+    );
+    const handleImageDragMove = useCallback(
+      (imageId: string, x: number, y: number) => updateDrag('image', imageId, x, y),
+      [updateDrag],
+    );
+    const handleNodeDragMove = useCallback(
+      (nodeId: string, x: number, y: number) => updateDrag('node', nodeId, x, y),
+      [updateDrag],
+    );
+
+    const consumeDrag = useCallback((kind: ActiveDrag['kind'], id: string) => {
+      if (dragFrameRef.current !== null) {
+        cancelAnimationFrame(dragFrameRef.current);
+        dragFrameRef.current = null;
+      }
+      const next = pendingDragRef.current ?? activeDragRef.current;
+      pendingDragRef.current = null;
+      activeDragRef.current = null;
+      setActiveDrag(null);
+      return next?.kind === kind && next.id === id ? next : null;
+    }, []);
+
+    const handleImageDragStart = useCallback(() => {
+      dragWorldOriginRef.current = { x: size.originX, y: size.originY };
+      setChildDragging(true);
+    }, [setChildDragging, size.originX, size.originY]);
+    const handleNodeDragStart = useCallback(() => {
+      dragWorldOriginRef.current = { x: size.originX, y: size.originY };
+      setChildDragging(true);
+    }, [setChildDragging, size.originX, size.originY]);
+    const handleImageDragEnd = useCallback(
+      (imageId: string) => {
+        setChildDragging(false);
+        const position = consumeDrag('image', imageId);
+        if (position) onMoveImage(imageId, position.x, position.y);
+      },
+      [consumeDrag, onMoveImage, setChildDragging],
+    );
+    const handleNodeDragEnd = useCallback(
+      (nodeId: string) => {
+        setChildDragging(false);
+        const position = consumeDrag('node', nodeId);
+        if (position) onMoveNode(nodeId, position.x, position.y);
+      },
+      [consumeDrag, onMoveNode, setChildDragging],
+    );
+
     const byLocation = useMemo(() => {
       const map = new Map<string, { x: number; y: number; color: string }>();
-      for (const node of content.nodes) {
+      for (const node of displayContent.nodes) {
         map.set(node.locationId, { x: node.x, y: node.y, color: node.color });
       }
       return map;
-    }, [content.nodes]);
+    }, [displayContent.nodes]);
 
     // `connected_to` is a solid line between the two nodes' borders, coloured halfway between the
     // two nodes' colours.
@@ -146,7 +265,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
-        {content.images.map((image) => (
+        {displayContent.images.map((image) => (
           <LocationMapImageView
             key={image.id}
             image={image}
@@ -154,10 +273,10 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             selected={selectedImageId === image.id}
             scale={scale}
             locked={image.locked}
-            onSelect={() => onSelectImage(image.id)}
-            onMove={(x, y) => onMoveImage(image.id, x, y)}
-            onDragStart={() => setChildDragging(true)}
-            onDragEnd={() => setChildDragging(false)}
+            onSelect={onSelectImage}
+            onMove={handleImageDragMove}
+            onDragStart={handleImageDragStart}
+            onDragEnd={handleImageDragEnd}
           />
         ))}
         <Svg
@@ -206,17 +325,17 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             </React.Fragment>
           ))}
         </Svg>
-        {content.nodes.map((node) => (
+        {displayContent.nodes.map((node) => (
           <LocationMapNodeView
             key={node.id}
             node={node}
             name={nodeNames[node.locationId] ?? node.locationId}
             selected={selectedNodeId === node.id}
             scale={scale}
-            onSelect={() => onSelectNode(node.id)}
-            onMove={(x, y) => onMoveNode(node.id, x, y)}
-            onDragStart={() => setChildDragging(true)}
-            onDragEnd={() => setChildDragging(false)}
+            onSelect={onSelectNode}
+            onMove={handleNodeDragMove}
+            onDragStart={handleNodeDragStart}
+            onDragEnd={handleNodeDragEnd}
           />
         ))}
       </GraphCanvasFrame>

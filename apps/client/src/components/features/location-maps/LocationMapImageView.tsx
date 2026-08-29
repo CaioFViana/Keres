@@ -12,10 +12,10 @@ interface Props {
   scale: number;
   /** When locked, dragging on the image pans the canvas instead of moving the image. */
   locked: boolean;
-  onSelect: () => void;
-  onMove: (x: number, y: number) => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  onSelect: (imageId: string) => void;
+  onMove: (imageId: string, x: number, y: number) => void;
+  onDragStart: (imageId: string) => void;
+  onDragEnd: (imageId: string) => void;
 }
 
 /**
@@ -40,6 +40,8 @@ const LocationMapImageView: React.FC<Props> = ({
   const { colors } = useTheme();
   const origin = useRef({ x: image.x, y: image.y });
   const dragging = useRef(false);
+  const imageId = useRef(image.id);
+  imageId.current = image.id;
   const position = useRef({ x: image.x, y: image.y });
   position.current = { x: image.x, y: image.y };
   const scaleRef = useRef(scale);
@@ -54,7 +56,7 @@ const LocationMapImageView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => true,
         onStartShouldSetPanResponder: () => {
-          if (!lockedRef.current) handlers.current.onDragStart();
+          if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () => dragging.current,
@@ -64,7 +66,7 @@ const LocationMapImageView: React.FC<Props> = ({
         onPanResponderGrant: (event) => {
           dragging.current = false;
           origin.current = { x: position.current.x, y: position.current.y };
-          if (!lockedRef.current) handlers.current.onDragStart();
+          if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             setPointerCapture?: (id: number) => void;
@@ -77,6 +79,7 @@ const LocationMapImageView: React.FC<Props> = ({
           dragging.current = true;
           const zoom = Math.max(scaleRef.current, 0.01);
           handlers.current.onMove(
+            imageId.current,
             origin.current.x + gesture.dx / zoom,
             origin.current.y + gesture.dy / zoom,
           );
@@ -87,8 +90,8 @@ const LocationMapImageView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          if (!lockedRef.current) handlers.current.onDragEnd();
-          if (!dragging.current) handlers.current.onSelect();
+          if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
+          if (!dragging.current) handlers.current.onSelect(imageId.current);
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
@@ -97,7 +100,7 @@ const LocationMapImageView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          if (!lockedRef.current) handlers.current.onDragEnd();
+          if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
           dragging.current = false;
         },
       }),
@@ -135,4 +138,4 @@ const LocationMapImageView: React.FC<Props> = ({
   );
 };
 
-export default LocationMapImageView;
+export default React.memo(LocationMapImageView);

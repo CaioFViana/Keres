@@ -549,7 +549,7 @@
   "delete_scene_message": "Tem certeza que deseja excluir esta cena? Esta ação não pode ser desfeita.",
   "delete_scene_title": "Excluir Cena",
   "delete_server": "Excluir Servidor",
-  "delete_server_message": "Tem certeza de que deseja excluir este servidor? Esta ação é irreversível e não poderá ser desfeita.",
+  "delete_server_message": "Tem certeza de que deseja sair deste servidor? Histórias em que você é leitor ou escritor, incluindo alterações offline, serão removidas deste dispositivo. Histórias suas devem ser removidas separadamente. Esta ação é irreversível.",
   "delete_server_title": "Excluir Servidor",
   "delete_story_message": "Tem certeza de que deseja excluir esta história? Esta ação é irreversível e não poderá ser desfeita.",
   "delete_story_title": "Excluir História",

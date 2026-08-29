@@ -1,4 +1,4 @@
-import { useCallback, useImperativeHandle, useMemo, useRef } from 'react';
+import { useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 import type { View } from 'react-native';
 import { Animated, PanResponder } from 'react-native';
 
@@ -31,6 +31,9 @@ export interface PanZoomCanvasHandle {
 export interface PanZoomLayout {
   width: number;
   height: number;
+  /** World coordinate represented by the drawing's top-left corner. */
+  originX?: number;
+  originY?: number;
 }
 
 interface PanZoomCanvasOptions {
@@ -101,6 +104,7 @@ export function usePanZoomCanvas(
   const tapping = useRef(false);
   /** The identity of the last layout already framed, so as not to reframe on every render. */
   const fittedLayout = useRef<PanZoomLayout | null>(null);
+  const appliedOrigin = useRef({ x: layout.originX ?? 0, y: layout.originY ?? 0 });
 
   const publish = useCallback(() => {
     animatedScale.setValue(transform.current.scale);
@@ -145,6 +149,20 @@ export function usePanZoomCanvas(
           : (viewportHeight - scaledHeight) / 2
         : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
   }, [fitVerticalAlignment, freePan, layout.height, layout.width]);
+
+  // When a drawing grows above or to the left of zero, its inner coordinates are translated so
+  // Views and SVG paths stay inside the surface. Counter-translate the pan by that exact amount,
+  // preserving the on-screen world position instead of making the whole graph jump mid-drag.
+  useLayoutEffect(() => {
+    const next = { x: layout.originX ?? 0, y: layout.originY ?? 0 };
+    const previous = appliedOrigin.current;
+    if (next.x === previous.x && next.y === previous.y) return;
+    transform.current.x += (next.x - previous.x) * transform.current.scale;
+    transform.current.y += (next.y - previous.y) * transform.current.scale;
+    appliedOrigin.current = next;
+    clamp();
+    publish();
+  }, [clamp, layout.originX, layout.originY, publish]);
 
   /** Applies a zoom keeping fixed the point of the map that lies under `focus`. */
   const zoomAround = useCallback(

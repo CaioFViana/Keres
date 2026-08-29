@@ -25,10 +25,10 @@ interface Props {
   scale: number;
   /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
   galleryMedia?: BoardGalleryMedia | null;
-  onSelect: () => void;
-  onMove: (x: number, y: number) => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  onSelect: (node: BoardNodeType) => void;
+  onMove: (nodeId: string, x: number, y: number) => void;
+  onDragStart: (nodeId: string) => void;
+  onDragEnd: (nodeId: string) => void;
 }
 
 const BoardNodeView: React.FC<Props> = ({
@@ -52,6 +52,10 @@ const BoardNodeView: React.FC<Props> = ({
    */
   const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
+  const nodeRef = useRef(node);
+  nodeRef.current = node;
+  const nodeId = useRef(node.id);
+  nodeId.current = node.id;
   const position = useRef({ x: node.x, y: node.y });
   position.current = { x: node.x, y: node.y };
   const scaleRef = useRef(scale);
@@ -64,7 +68,7 @@ const BoardNodeView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => true,
         onStartShouldSetPanResponder: () => {
-          handlers.current.onDragStart();
+          handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () => dragging.current,
@@ -74,7 +78,7 @@ const BoardNodeView: React.FC<Props> = ({
         onPanResponderGrant: (event) => {
           dragging.current = false;
           origin.current = { x: position.current.x, y: position.current.y };
-          handlers.current.onDragStart();
+          handlers.current.onDragStart(nodeId.current);
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             setPointerCapture?: (id: number) => void;
@@ -86,6 +90,7 @@ const BoardNodeView: React.FC<Props> = ({
           dragging.current = true;
           const zoom = Math.max(scaleRef.current, 0.01);
           handlers.current.onMove(
+            nodeId.current,
             origin.current.x + gesture.dx / zoom,
             origin.current.y + gesture.dy / zoom,
           );
@@ -96,8 +101,8 @@ const BoardNodeView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd();
-          if (!dragging.current) handlers.current.onSelect();
+          handlers.current.onDragEnd(nodeId.current);
+          if (!dragging.current) handlers.current.onSelect(nodeRef.current);
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
@@ -106,7 +111,7 @@ const BoardNodeView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd();
+          handlers.current.onDragEnd(nodeId.current);
           dragging.current = false;
         },
       }),
@@ -235,4 +240,4 @@ const BoardNodeView: React.FC<Props> = ({
   );
 };
 
-export default BoardNodeView;
+export default React.memo(BoardNodeView);

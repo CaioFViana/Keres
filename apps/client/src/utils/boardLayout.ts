@@ -150,19 +150,43 @@ export function boardCanvasSize(
   minHeight = BOARD_CANVAS_MIN,
   galleryMediaById?: BoardGalleryMediaById,
 ): { width: number; height: number } {
+  const { width, height } = boardCanvasBounds(nodes, minWidth, minHeight, galleryMediaById);
+  return { width, height };
+}
+
+/**
+ * The screen's drawable world bounds. `originX`/`originY` map raw, persisted board coordinates
+ * onto the surface; they let the canvas grow above and to the left without rewriting any node.
+ */
+export function boardCanvasBounds(
+  nodes: BoardNodeType[],
+  minWidth = BOARD_CANVAS_MIN,
+  minHeight = BOARD_CANVAS_MIN,
+  galleryMediaById?: BoardGalleryMediaById,
+): { width: number; height: number; originX: number; originY: number } {
   if (nodes.length === 0) {
-    return { width: minWidth, height: minHeight };
+    return { width: minWidth, height: minHeight, originX: 0, originY: 0 };
   }
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
   let maxX = 0;
   let maxY = 0;
   for (const node of nodes) {
     const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
+    minX = Math.min(minX, node.x);
+    minY = Math.min(minY, node.y);
     maxX = Math.max(maxX, node.x + size.width);
     maxY = Math.max(maxY, node.y + size.height);
   }
+  // Keep the existing zero-based plane until a pin actually crosses its top/left edge. At that
+  // point reserve a full margin on the newly exposed side, so it remains usable after the drag.
+  const originX = minX < 0 ? minX - BOARD_CANVAS_PADDING : 0;
+  const originY = minY < 0 ? minY - BOARD_CANVAS_PADDING : 0;
   return {
-    width: Math.max(minWidth, maxX + BOARD_CANVAS_PADDING),
-    height: Math.max(minHeight, maxY + BOARD_CANVAS_PADDING),
+    width: Math.max(minWidth, maxX - originX + BOARD_CANVAS_PADDING),
+    height: Math.max(minHeight, maxY - originY + BOARD_CANVAS_PADDING),
+    originX,
+    originY,
   };
 }
 
@@ -172,8 +196,8 @@ export function boardCanvasSize(
  * Nodes are free to be dragged anywhere, including outside the area the screen renders, and the
  * export must never cut one: this shifts every node so the top-left corner of the bounding box
  * lands on `BOARD_CANVAS_PADDING`, and sizes the canvas to the box plus that padding on all sides.
- * The screen keeps drawing at raw coordinates (`boardCanvasSize`, overflow visible); only the
- * exported file is normalised, so the saved content is never rewritten.
+ * The editor similarly uses a translated world plane; only the exported file is normalised, so
+ * the saved content is never rewritten.
  */
 export function normalizeBoardCanvas(
   nodes: BoardNodeType[],

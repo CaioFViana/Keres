@@ -453,6 +453,30 @@ const LocationMapScreen = () => {
     }));
   }, [selectedImageId]);
 
+  const handleSelectImage = useCallback((imageId: string) => {
+    setSelectedNodeId(null);
+    setSelectedImageId(imageId);
+  }, []);
+
+  const handleMoveImage = useCallback((imageId: string, x: number, y: number) => {
+    setContent((current) => ({
+      ...current,
+      images: current.images.map((image) => (image.id === imageId ? { ...image, x, y } : image)),
+    }));
+  }, []);
+
+  const handleSelectNode = useCallback((nodeId: string) => {
+    setSelectedImageId(null);
+    setSelectedNodeId(nodeId);
+  }, []);
+
+  const handleMoveNode = useCallback((nodeId: string, x: number, y: number) => {
+    setContent((current) => ({
+      ...current,
+      nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
+    }));
+  }, []);
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
   });
@@ -489,28 +513,10 @@ const LocationMapScreen = () => {
         contains={contains}
         selectedImageId={selectedImageId}
         selectedNodeId={selectedNodeId}
-        onSelectImage={(imageId) => {
-          setSelectedNodeId(null);
-          setSelectedImageId(imageId);
-        }}
-        onMoveImage={(imageId, x, y) =>
-          setContent((current) => ({
-            ...current,
-            images: current.images.map((image) =>
-              image.id === imageId ? { ...image, x, y } : image,
-            ),
-          }))
-        }
-        onSelectNode={(nodeId) => {
-          setSelectedImageId(null);
-          setSelectedNodeId(nodeId);
-        }}
-        onMoveNode={(nodeId, x, y) =>
-          setContent((current) => ({
-            ...current,
-            nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
-          }))
-        }
+        onSelectImage={handleSelectImage}
+        onMoveImage={handleMoveImage}
+        onSelectNode={handleSelectNode}
+        onMoveNode={handleMoveNode}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}

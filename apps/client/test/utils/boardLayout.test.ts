@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import {
+  boardCanvasBounds,
   boardCanvasSize,
   boardNodeSize,
   noteSizeFor,
@@ -33,6 +34,25 @@ it('grows the drawing past the minimum when a pin is near the edge', () => {
   ]);
   expect(grown.width).toBeGreaterThan(BOARD_CANVAS_MIN);
   expect(grown.height).toBe(BOARD_CANVAS_MIN);
+});
+
+it('extends the editable plane above and left of zero without changing node coordinates', () => {
+  const bounds = boardCanvasBounds([
+    {
+      id: 'negative',
+      kind: 'note',
+      x: -300,
+      y: -200,
+      title: 'Outside',
+      body: null,
+    },
+  ]);
+
+  expect(bounds.originX).toBe(-300 - BOARD_CANVAS_PADDING);
+  expect(bounds.originY).toBe(-200 - BOARD_CANVAS_PADDING);
+  // Applying the world origin puts the node at the same usable padding as a new positive node.
+  expect(-300 - bounds.originX).toBe(BOARD_CANVAS_PADDING);
+  expect(-200 - bounds.originY).toBe(BOARD_CANVAS_PADDING);
 });
 
 it('sizes entity pins at the standard size', () => {

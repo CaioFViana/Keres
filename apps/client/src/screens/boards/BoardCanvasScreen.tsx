@@ -358,6 +358,13 @@ const BoardCanvasScreen = () => {
     return map;
   }, [titles]);
 
+  const handleMoveNode = useCallback((id: string, x: number, y: number) => {
+    setContent((current) => ({
+      ...current,
+      nodes: current.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
+    }));
+  }, []);
+
   const addEntities = (values: string[]) => {
     let created: BoardNodeType[] = [];
     setContent((current) => {
@@ -475,12 +482,7 @@ const BoardCanvasScreen = () => {
         selectedNodeId={selected?.id ?? null}
         galleryMediaById={galleryMediaById}
         onSelectNode={setSelected}
-        onMoveNode={(id, x, y) =>
-          setContent((current) => ({
-            ...current,
-            nodes: current.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
-          }))
-        }
+        onMoveNode={handleMoveNode}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}

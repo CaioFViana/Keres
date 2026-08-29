@@ -58,8 +58,17 @@ export function useLocationMapRelations({
     setRelations(loadedRelations.filter((x) => !x.isDeleted));
   }, [db, setRelations, storyId]);
 
-  const connections = useMemo(() => deriveConnections(relations, content), [relations, content]);
-  const contains = useMemo(() => deriveContains(relations, content), [relations, content]);
+  // These only care which locations are represented by nodes. Image position, size and locking
+  // must not make the relation graph run again.
+  const mapNodes = content.nodes;
+  const connections = useMemo(
+    () => deriveConnections(relations, { nodes: mapNodes }),
+    [mapNodes, relations],
+  );
+  const contains = useMemo(
+    () => deriveContains(relations, { nodes: mapNodes }),
+    [mapNodes, relations],
+  );
 
   const nodeConnections = useMemo((): LocationMapNodeConnection[] => {
     if (!selectedNode) return [];

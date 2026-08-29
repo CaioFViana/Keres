@@ -12,10 +12,10 @@ interface Props {
   name: string;
   selected: boolean;
   scale: number;
-  onSelect: () => void;
-  onMove: (x: number, y: number) => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  onSelect: (nodeId: string) => void;
+  onMove: (nodeId: string, x: number, y: number) => void;
+  onDragStart: (nodeId: string) => void;
+  onDragEnd: (nodeId: string) => void;
 }
 
 /**
@@ -35,6 +35,8 @@ const LocationMapNodeView: React.FC<Props> = ({
   const { colors } = useTheme();
   const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
+  const nodeId = useRef(node.id);
+  nodeId.current = node.id;
   const position = useRef({ x: node.x, y: node.y });
   position.current = { x: node.x, y: node.y };
   const scaleRef = useRef(scale);
@@ -47,7 +49,7 @@ const LocationMapNodeView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => true,
         onStartShouldSetPanResponder: () => {
-          handlers.current.onDragStart();
+          handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () => dragging.current,
@@ -57,7 +59,7 @@ const LocationMapNodeView: React.FC<Props> = ({
         onPanResponderGrant: (event) => {
           dragging.current = false;
           origin.current = { x: position.current.x, y: position.current.y };
-          handlers.current.onDragStart();
+          handlers.current.onDragStart(nodeId.current);
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             setPointerCapture?: (id: number) => void;
@@ -69,6 +71,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           dragging.current = true;
           const zoom = Math.max(scaleRef.current, 0.01);
           handlers.current.onMove(
+            nodeId.current,
             origin.current.x + gesture.dx / zoom,
             origin.current.y + gesture.dy / zoom,
           );
@@ -79,8 +82,8 @@ const LocationMapNodeView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd();
-          if (!dragging.current) handlers.current.onSelect();
+          handlers.current.onDragEnd(nodeId.current);
+          if (!dragging.current) handlers.current.onSelect(nodeId.current);
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
@@ -89,7 +92,7 @@ const LocationMapNodeView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd();
+          handlers.current.onDragEnd(nodeId.current);
           dragging.current = false;
         },
       }),
@@ -122,12 +125,14 @@ const LocationMapNodeView: React.FC<Props> = ({
           borderColor: selected ? colors.primary : node.color,
         },
         label: {
-          fontSize: 10,
+          fontSize: Platform.OS === 'web' ? 10 : 12,
           fontWeight: '600',
           color: colors.text,
           textAlign: 'center',
           marginTop: 2,
-          maxWidth: 96,
+          // A mobile label has less effective width because of the device's font scaling. Let it
+          // use two short lines before truncating, while keeping the compact web treatment.
+          maxWidth: Platform.OS === 'web' ? 96 : 156,
           // A soft halo in the background colour, so the name stays readable over the image
           // bases - the same treatment the exported SVG gives it.
           textShadowColor: colors.background,
@@ -147,11 +152,15 @@ const LocationMapNodeView: React.FC<Props> = ({
           color={node.color}
         />
       </View>
-      <Text style={styles.label} numberOfLines={1} pointerEvents="none">
+      <Text
+        style={styles.label}
+        numberOfLines={Platform.OS === 'web' ? 1 : 2}
+        pointerEvents="none"
+      >
         {name}
       </Text>
     </View>
   );
 };
 
-export default LocationMapNodeView;
+export default React.memo(LocationMapNodeView);

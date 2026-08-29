@@ -8,7 +8,7 @@ import type {
 /** The `connected_to` relations between locations that are actually on the map. */
 export function deriveConnections(
   relations: LocationRelationSelect[],
-  content: LocationMapContentType,
+  content: Pick<LocationMapContentType, 'nodes'>,
 ): LocationMapConnection[] {
   const nodeLocationIds = new Set(content.nodes.map((node) => node.locationId));
   return relations
@@ -24,7 +24,7 @@ export function deriveConnections(
 /** The `contains` relations between locations that are actually on the map (parent -> child). */
 export function deriveContains(
   relations: LocationRelationSelect[],
-  content: LocationMapContentType,
+  content: Pick<LocationMapContentType, 'nodes'>,
 ): LocationMapContains[] {
   const nodeLocationIds = new Set(content.nodes.map((node) => node.locationId));
   return relations

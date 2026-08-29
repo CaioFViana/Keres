@@ -2,10 +2,14 @@
  * @jest-environment node
  */
 import * as schema from '../../src/db/schema';
+jest.mock('../../src/services/MediaFileService', () => ({
+  mediaFileService: { deleteStoryMedia: jest.fn() },
+}));
 import {
   createServerService,
   ServerUrlAlreadyRegisteredError,
 } from '../../src/services/ServerService';
+import { mediaFileService } from '../../src/services/MediaFileService';
 import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -100,4 +104,107 @@ describe('server URL uniqueness', () => {
       service.updateServer(beta.id, { url: 'https://alpha.example/' }),
     ).rejects.toBeInstanceOf(ServerUrlAlreadyRegisteredError);
   });
+});
+
+it('purges reader and writer stories with their local sync state when leaving a server', async () => {
+  await database.db.insert(schema.servers).values({
+    id: 'shared-server',
+    idUser: 'local-user',
+    userName: 'Caio',
+    tag: 'caio',
+    name: 'Compartilhado',
+    url: 'https://shared.test',
+    ...entityBase,
+  });
+  await database.db.insert(schema.stories).values([
+    {
+      id: 'writer-story',
+      userId: 'owner-on-server',
+      title: 'Rascunho compartilhado',
+      type: 'linear',
+      favoriteBehavior: 'individual',
+      serverId: 'shared-server',
+      myRole: 'writer',
+      ...entityBase,
+    },
+    {
+      id: 'reader-story',
+      userId: 'owner-on-server',
+      title: 'Leitura compartilhada',
+      type: 'linear',
+      favoriteBehavior: 'individual',
+      serverId: 'shared-server',
+      myRole: 'reader',
+      ...entityBase,
+    },
+  ]);
+  await database.db.insert(schema.chapters).values({
+    id: 'writer-chapter',
+    storyId: 'writer-story',
+    name: 'Capítulo',
+    index: 1,
+    ...entityBase,
+  });
+  await database.db.insert(schema.locationMaps).values({
+    id: 'writer-map',
+    storyId: 'writer-story',
+    name: 'Mapa',
+    content: { images: [], nodes: [] },
+    ...entityBase,
+  });
+  await database.db.insert(schema.operationLogs).values({
+    id: 'writer-operation',
+    storyId: 'writer-story',
+    userId: 'local-user',
+    operationVersion: 1,
+    operationType: 'update',
+    entityType: 'Chapter',
+    entityId: 'writer-chapter',
+    payload: '{}',
+    createdAt: TEST_NOW,
+  });
+  await database.db.insert(schema.syncConflicts).values({
+    id: 'writer-conflict',
+    storyId: 'writer-story',
+    entityType: 'Chapter',
+    entityId: 'writer-chapter',
+    reason: 'server_version_mismatch',
+    localOperationType: 'update',
+    localOperationIds: '["writer-operation"]',
+    localValues: '{}',
+    detectedAt: TEST_NOW,
+  });
+  await database.db.insert(schema.storyPublications).values({
+    id: 'writer-publication',
+    serverId: 'shared-server',
+    storyId: 'writer-story',
+    label: 'v1',
+    operationVersion: 1,
+    byteSize: 1,
+    createdAt: TEST_NOW,
+  });
+
+  await createServerService(database.db).deleteServer('shared-server');
+
+  expect(await database.db.select().from(schema.stories).all()).toEqual(
+    expect.not.arrayContaining([
+      expect.objectContaining({ id: 'writer-story' }),
+      expect.objectContaining({ id: 'reader-story' }),
+    ]),
+  );
+  expect(await database.db.select().from(schema.chapters).all()).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ storyId: 'writer-story' })]),
+  );
+  expect(await database.db.select().from(schema.locationMaps).all()).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ storyId: 'writer-story' })]),
+  );
+  expect(await database.db.select().from(schema.operationLogs).all()).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ storyId: 'writer-story' })]),
+  );
+  expect(await database.db.select().from(schema.syncConflicts).all()).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ storyId: 'writer-story' })]),
+  );
+  expect(await database.db.select().from(schema.storyPublications).all()).toEqual([]);
+  expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('writer-story');
+  expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('reader-story');
 });

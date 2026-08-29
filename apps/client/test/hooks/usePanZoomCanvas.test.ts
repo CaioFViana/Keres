@@ -104,6 +104,29 @@ describe('fitting on layout', () => {
 
     expect(transformOf(result.current)).toEqual(fitted);
   });
+
+  it('keeps the world stationary when the canvas grows above or to the left', async () => {
+    const ref = createRef<PanZoomCanvasHandle>();
+    let layout = { ...LAYOUT, originX: 0, originY: 0 };
+    const view = await renderHook(() =>
+      usePanZoomCanvas(ref, layout, { freePan: true, refitOnLayoutChange: false }),
+    );
+    (view.result.current.containerRef as any).current = {
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) =>
+        callback(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height),
+    };
+    view.result.current.handleLayout();
+    const before = transformOf(view.result.current);
+
+    layout = { width: 1240, height: 1040, originX: -240, originY: -240 };
+    await view.rerender(undefined as never);
+    const after = transformOf(view.result.current);
+
+    // World point (0, 0) has moved 240 canvas units in each axis. The pan moves by the inverse
+    // amount, so its visible position stays exactly where the drag left it.
+    expect(after.x + after.scale * 240).toBeCloseTo(before.x, 4);
+    expect(after.y + after.scale * 240).toBeCloseTo(before.y, 4);
+  });
 });
 
 describe('the handle exposed to the screen', () => {

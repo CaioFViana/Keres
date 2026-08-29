@@ -6,6 +6,7 @@ import { createPlotSceneService } from '../services/storymanagement/PlotSceneSer
 import { createPlotService } from '../services/storymanagement/PlotService';
 import { createSceneService } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import { sortScenesNarratively } from '../utils/narrativeSceneOrder';
 
 /**
@@ -68,8 +69,9 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
     }
   }, [drizzleDb, storyId]);
 
+  useEntityInitialLoad(reload);
+
   useEffect(() => {
-    reload();
     const events = ['plot_changed', 'plot_scene_changed', 'scene_changed', 'chapter_changed'];
     for (const event of events) entityEventEmitter.on(event, reload);
     return () => {

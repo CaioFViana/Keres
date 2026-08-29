@@ -18,6 +18,7 @@ import { AppAlert } from '@/src/utils/AppAlert';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
@@ -210,11 +211,7 @@ const ChapterDetailScreen = () => {
     [selectedStory?.id, fetchAllLocationsInStory],
   );
 
-  useEffect(() => {
-    if (chapterServiceRef.current) {
-      void fetchChapter();
-    }
-  }, [fetchChapter]);
+  useEntityInitialLoad(fetchChapter);
 
   // Re-subscribing after a callback changes must not reload the chapter.
   useEffect(() => {

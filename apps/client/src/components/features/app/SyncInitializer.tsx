@@ -15,6 +15,7 @@ import { useStoryStore } from '../../../state/storyStore'; // Import useStorySto
 import { useSyncConflictStore } from '../../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
 
 interface SyncInitializerProps {
   children: React.ReactNode;
@@ -232,29 +233,28 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     return () => entityEventEmitter.off('operation_log_updated', pushLocalChange);
   }, [selectedStory?.id]);
 
-  // Keeps the list of pending conflicts in sync with the database. The synchronization
-  // engine emits the event when a push is refused or when a pull collides with local
-  // edits; that is what makes the resolution screen appear.
-  useEffect(() => {
-    if (!drizzleClient) {
-      return;
-    }
-
-    const refreshConflicts = () => {
+  const refreshConflicts = useCallback(() => {
+    if (drizzleClient) {
       useSyncConflictStore
         .getState()
         .refresh(drizzleClient, selectedStory?.id)
         .catch((error) => {
           console.log('SyncInitializer: failed to refresh sync conflicts.', error);
         });
-    };
+    }
+  }, [drizzleClient, selectedStory?.id]);
 
-    refreshConflicts();
+  useEntityInitialLoad(refreshConflicts);
+
+  // Keeps the list of pending conflicts in sync with the database. The synchronization
+  // engine emits the event when a push is refused or when a pull collides with local
+  // edits; that is what makes the resolution screen appear.
+  useEffect(() => {
     entityEventEmitter.on('sync_conflicts_changed', refreshConflicts);
     return () => {
       entityEventEmitter.off('sync_conflicts_changed', refreshConflicts);
     };
-  }, [drizzleClient, selectedStory?.id]);
+  }, [refreshConflicts]);
 
   // NEW: useEffect to handle push synchronization for the selected story
   useEffect(() => {

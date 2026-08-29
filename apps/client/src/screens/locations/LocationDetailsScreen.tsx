@@ -28,6 +28,7 @@ import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -432,11 +433,7 @@ const LocationDetailsScreen = () => {
     [userId, t],
   );
 
-  useEffect(() => {
-    if (locationServiceRef.current) {
-      void fetchLocationDetails();
-    }
-  }, [fetchLocationDetails]);
+  useEntityInitialLoad(fetchLocationDetails);
 
   // Keep subscription churn independent from the location's initial load.
   useEffect(() => {

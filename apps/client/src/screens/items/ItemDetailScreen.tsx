@@ -21,6 +21,7 @@ import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 're
 import { useDrizzle } from '../../db';
 import type { CharacterSelect, ItemSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -146,9 +147,7 @@ const ItemDetailScreen = () => {
     [itemId, navigation, t],
   );
 
-  useEffect(() => {
-    void fetchItem();
-  }, [fetchItem]);
+  useEntityInitialLoad(fetchItem);
 
   // Event subscriptions never initiate an item load.
   useEffect(() => {

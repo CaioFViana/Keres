@@ -3,6 +3,7 @@ import { useDrizzle } from '../db';
 import type { SceneSelect } from '../db/schema';
 import { createChapterService } from '../services/storymanagement/ChapterService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**
  * A scene's chapter name, for the lists that show scenes outside their own chapter.
@@ -33,8 +34,9 @@ export function useChapterNames(
     }
   }, [drizzleDb, storyId]);
 
+  useEntityInitialLoad(reload);
+
   useEffect(() => {
-    reload();
     entityEventEmitter.on('chapter_changed', reload);
     return () => entityEventEmitter.off('chapter_changed', reload);
   }, [reload]);

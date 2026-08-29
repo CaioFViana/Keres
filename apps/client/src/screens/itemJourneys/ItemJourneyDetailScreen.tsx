@@ -17,6 +17,7 @@ import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '../../db';
 import type { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
@@ -188,9 +189,7 @@ const ItemJourneyDetailScreen = () => {
     [itemJourneyId, navigation, t, items],
   );
 
-  useEffect(() => {
-    void fetchItemJourney();
-  }, [fetchItemJourney]);
+  useEntityInitialLoad(fetchItemJourney);
 
   // Event subscriptions never initiate an item-journey load.
   useEffect(() => {

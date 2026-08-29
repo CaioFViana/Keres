@@ -22,6 +22,7 @@ import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
 import type { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -249,12 +250,14 @@ const NoteDetailScreen = () => {
     [noteId, fetchTagsForNote],
   );
 
-  useEffect(() => {
+  const loadInitialNoteData = useCallback(() => {
     if (noteServiceRef.current && selectedStory?.id) {
       void fetchNote();
       void fetchNoteRelations();
     }
   }, [fetchNote, fetchNoteRelations, selectedStory?.id]);
+
+  useEntityInitialLoad(loadInitialNoteData);
 
   // Subscribing is intentionally separate from the initial loads above.
   useEffect(() => {

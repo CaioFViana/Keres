@@ -31,6 +31,7 @@ import { useDrizzle } from '../../db';
 import type { SceneSelect } from '../../db/schema'; // For available scenes
 import type { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -357,11 +358,7 @@ const CharacterDetailScreen = () => {
     [character?.storyId, fetchAllLocationsInStory],
   );
 
-  useEffect(() => {
-    if (characterServiceRef.current) {
-      void fetchCharacter();
-    }
-  }, [fetchCharacter]);
+  useEntityInitialLoad(fetchCharacter);
 
   // Keep subscription changes from ever triggering a fresh entity load.
   useEffect(() => {

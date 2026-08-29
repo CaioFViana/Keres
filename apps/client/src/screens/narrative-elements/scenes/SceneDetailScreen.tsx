@@ -54,6 +54,7 @@ import { createSceneService } from '../../../services/storymanagement/SceneServi
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
+import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
 import { useTheme } from '../../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
 import { setDocumentTitle } from '../../../utils/documentTitle';
@@ -482,11 +483,7 @@ const SceneDetailScreen = () => {
   // Fetching a scene and subscribing to its auxiliary changes are deliberately separate effects.
   // The handlers below legitimately change when related scene state changes; coupling that to the
   // initial fetch used to fetch and replace `scene` again on every re-subscription.
-  useEffect(() => {
-    if (sceneServiceRef.current) {
-      void fetchScene();
-    }
-  }, [fetchScene]);
+  useEntityInitialLoad(fetchScene);
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {

@@ -18,6 +18,7 @@ import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-na
 import { useDrizzle } from '../../db';
 import type { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -139,11 +140,7 @@ const WorldRuleDetailScreen = () => {
     [worldRuleId, setWorldRule],
   );
 
-  useEffect(() => {
-    if (worldRuleServiceRef.current) {
-      void fetchWorldRule();
-    }
-  }, [fetchWorldRule]);
+  useEntityInitialLoad(fetchWorldRule);
 
   // Subscription lifecycle is independent from loading the entity.
   useEffect(() => {

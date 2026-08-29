@@ -8,6 +8,7 @@ import type { CommentSelect } from '../../../../db/schema';
 import { createCommentService } from '../../../../services/storymanagement/CommentService';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 
 interface CommentListProps {
   storyId: string;
@@ -50,9 +51,14 @@ const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPre
     [commentService, storyId, pageSize],
   );
 
-  useEffect(() => {
+  const loadFirstPage = useCallback(() => {
     setPage(0);
-    fetchComments(0);
+    void fetchComments(0);
+  }, [fetchComments]);
+
+  useEntityInitialLoad(loadFirstPage);
+
+  useEffect(() => {
     const handleChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) {
         setPage(0);

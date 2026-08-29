@@ -15,6 +15,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
@@ -103,8 +104,9 @@ const FriendDetailScreen = () => {
     }
   }, [friendshipService, serverService, friendshipId, navigation, showNotification, t]);
 
+  useEntityInitialLoad(load);
+
   useEffect(() => {
-    load();
     const unsubscribeFocus = navigation.addListener('focus', load);
     entityEventEmitter.on('friendship_changed', load);
     return () => {

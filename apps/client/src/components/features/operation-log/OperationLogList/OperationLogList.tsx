@@ -9,6 +9,7 @@ import { useTheme } from '../../../../theme';
 import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import type { FavoriteBehavior } from '@keres/shared';
 
 interface OperationLogListProps {
@@ -100,10 +101,14 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     [operationLogService, storyId, limit, paginated, pageSize, t, userId],
   );
 
-  useEffect(() => {
+  const loadFirstPage = useCallback(() => {
     setPage(1); // Reset page when storyId or mode changes
-    fetchLogs(1);
+    void fetchLogs(1);
+  }, [fetchLogs]);
 
+  useEntityInitialLoad(loadFirstPage);
+
+  useEffect(() => {
     const handleOperationLogUpdated = (updatedStoryId: string) => {
       if (updatedStoryId === storyId) {
         setPage(1); // Reset page to 1

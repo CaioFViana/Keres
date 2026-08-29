@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import { DrizzleContext } from '../db';
 import { useStoryStore } from '../state/storyStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from '../hooks/useEntityRefreshLifecycle';
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,
@@ -88,8 +89,9 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
     }
   }, [drizzleDb, enabled, storyId]);
 
+  useEntityInitialLoad(reload);
+
   useEffect(() => {
-    reload();
     if (!enabled) return;
     for (const event of CHANGE_EVENTS) entityEventEmitter.on(event, reload);
     return () => {

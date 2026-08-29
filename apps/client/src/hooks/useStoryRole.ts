@@ -2,6 +2,7 @@ import type { EffectiveStoryRole } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '../db';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**
  * The current user's effective role on a story, kept fresh from `stories.myRole` (set the
@@ -49,8 +50,9 @@ export function useStoryRole(storyId: string | undefined | null): {
     }
   }, [drizzleDb, storyId]);
 
+  useEntityInitialLoad(fetchRole);
+
   useEffect(() => {
-    fetchRole();
     entityEventEmitter.on('story_role_changed', fetchRole);
     return () => {
       entityEventEmitter.off('story_role_changed', fetchRole);

@@ -11,6 +11,7 @@ import type { StoryCalendarSelect } from '@/src/db/schema';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { useStoryStore } from '@/src/state/storyStore';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 
 /**
  * The selected story's calendars, and the one the app measures with.
@@ -48,8 +49,9 @@ export function useStoryCalendar(storyIdOverride?: string) {
     setLoading(false);
   }, [db, storyId]);
 
+  useEntityInitialLoad(reload);
+
   useEffect(() => {
-    void reload();
     // A calendar edited on another screen changes every duration on this one, so the refresh is
     // driven by the same event the sync handlers emit rather than by a focus listener.
     const listener = () => void reload();

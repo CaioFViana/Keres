@@ -14,6 +14,7 @@ import {
   joinSuggestionListForDisplay,
 } from '@keres/shared';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
@@ -146,8 +147,9 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
     }
   }, [drizzleDb, entityId, fields, storyId, t]);
 
+  useEntityInitialLoad(fetchValues);
+
   useEffect(() => {
-    fetchValues();
     entityEventEmitter.on('attribute_value_changed', fetchValues);
     return () => {
       entityEventEmitter.off('attribute_value_changed', fetchValues);

@@ -5,13 +5,11 @@ import {
   attributeDateWeekdayLabels,
   daysInMonth,
   dayNumberToParts,
-  formatAttributeDate,
   formatAttributeDateMonthLabel,
   formatCalendarDate,
   formatGregorianDate,
   gregorianDayNumber,
   gregorianPartsFromDayNumber,
-  parseAttributeDate,
   partsToDayNumber,
 } from '@keres/shared';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -19,7 +17,6 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TextStyle, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useStoryAgenda } from '@/src/hooks/useStoryAgenda';
@@ -29,11 +26,11 @@ import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import Button from '@/src/components/common/controls/Button/Button';
-import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
+import {
+  CustomCalendarDateLookup,
+  GregorianCalendarDateLookup,
+} from './AgendaDateLookup';
 
 /**
  * The story's calendar as a month of days, with what happens on each.
@@ -335,14 +332,14 @@ const StoryAgendaScreen = () => {
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         {definition ? (
-          <DateLookup
+          <CustomCalendarDateLookup
             definition={definition}
             cursor={cursor}
             onMonthChange={setCursor}
             styles={styles}
           />
         ) : (
-          <GregorianDateLookup cursor={cursor} onMonthChange={setCursor} styles={styles} />
+          <GregorianCalendarDateLookup cursor={cursor} onMonthChange={setCursor} styles={styles} />
         )}
 
         <View style={styles.nav}>
@@ -488,162 +485,5 @@ const StoryAgendaScreen = () => {
     </View>
   );
 };
-
-const DateLookup = React.memo(function DateLookup({
-  definition,
-  cursor,
-  onMonthChange,
-  styles,
-}: {
-  definition: NonNullable<ReturnType<typeof useStoryCalendar>['definition']>;
-  cursor: number;
-  onMonthChange: (day: number) => void;
-  styles: {
-    lookup: ViewStyle;
-    lookupTitle: TextStyle;
-    lookupRow: ViewStyle;
-    lookupField: ViewStyle;
-    lookupLabel: TextStyle;
-    lookupInput: TextStyle;
-    lookupYear: ViewStyle;
-    lookupMonth: ViewStyle;
-    lookupGo: ViewStyle;
-  };
-}) {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  const initialParts = useMemo(() => dayNumberToParts(definition, cursor), [definition, cursor]);
-  const [yearText, setYearText] = useState(() => String(initialParts.year));
-  const [monthValue, setMonthValue] = useState(() => String(initialParts.month));
-  const [eraValue, setEraValue] = useState<string | null>(null);
-
-  useEffect(() => {
-    const next = dayNumberToParts(definition, cursor);
-    setYearText(String(next.year));
-    setMonthValue(String(next.month));
-  }, [cursor, definition]);
-
-  const open = useCallback(
-    (next: { year: number; month: number }) => {
-      if (!Number.isInteger(next.year) || !Number.isInteger(next.month)) return;
-      onMonthChange(partsToDayNumber(definition, { ...next, day: 1 }));
-    },
-    [definition, onMonthChange],
-  );
-  const eras = useMemo(() => {
-    const ordered = [...definition.eras].sort((a, b) => a.startYear - b.startYear);
-    return ordered.map((era, index) => {
-      const next = ordered[index + 1];
-      const range =
-        era.direction === 'backward'
-          ? `≤ ${era.startYear - 1}`
-          : `${era.startYear}–${next ? next.startYear - 1 : '∞'}`;
-      return { label: `${era.name} (${era.abbreviation}) · ${range}`, value: String(index) };
-    });
-  }, [definition.eras]);
-
-  return (
-    <View style={styles.lookup}>
-      <Text style={styles.lookupTitle}>{t('agenda_go_to_date')}</Text>
-      {eras.length > 0 && (
-        <View style={{ marginBottom: 8, zIndex: 3 }}>
-          <Text style={styles.lookupLabel}>{t('calendar_eras')}</Text>
-          <Select
-            options={eras}
-            value={eraValue}
-            onValueChange={(value) => {
-              setEraValue(value);
-              if (value === null) return;
-              const era = [...definition.eras].sort((a, b) => a.startYear - b.startYear)[
-                Number(value)
-              ];
-              if (!era) return;
-              const year = era.direction === 'backward' ? era.startYear - 1 : era.startYear;
-              setYearText(String(year));
-            }}
-            placeholder={t('agenda_pick_era')}
-            multiple={false}
-          />
-        </View>
-      )}
-      <View style={styles.lookupRow}>
-        <View style={[styles.lookupField, styles.lookupYear]}>
-          <Text style={styles.lookupLabel}>{t('calendar_epoch_year')}</Text>
-          <TextInput
-            value={yearText}
-            onChangeText={(text) => {
-              if (!text || /^-?\d*$/.test(text)) setYearText(text);
-            }}
-            onEndEditing={() => {
-              if (!Number.isInteger(Number(yearText))) return;
-            }}
-            keyboardType="numbers-and-punctuation"
-            style={styles.lookupInput}
-          />
-        </View>
-        <View style={[styles.lookupField, styles.lookupMonth]}>
-          <Text style={styles.lookupLabel}>{t('calendar_epoch_month')}</Text>
-          <Select
-            options={definition.months.map((month, index) => ({
-              label: month.name || String(index + 1),
-              value: String(index + 1),
-            }))}
-            value={monthValue}
-            onValueChange={(value) => {
-              if (value === null) return;
-              setMonthValue(value);
-            }}
-            multiple={false}
-          />
-        </View>
-        <Button
-          onPress={() => open({ year: Number(yearText), month: Number(monthValue) })}
-          accessibilityLabel={t('agenda_go_to_date')}
-          style={styles.lookupGo}
-        >
-          <Ionicons name="search-outline" size={20} color={colors.onPrimary} />
-        </Button>
-      </View>
-    </View>
-  );
-});
-
-/** The regular calendar uses the established date picker as a lookup control, not as a new date model. */
-const GregorianDateLookup = React.memo(function GregorianDateLookup({
-  cursor,
-  onMonthChange,
-  styles,
-}: {
-  cursor: number;
-  onMonthChange: (day: number) => void;
-  styles: { lookup: ViewStyle; lookupTitle: TextStyle };
-}) {
-  const { t } = useTranslation();
-  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
-  const parts = useMemo(() => gregorianPartsFromDayNumber(cursor), [cursor]);
-  const supportsPicker = parts.year >= 1 && parts.year <= 9999;
-  const value = useMemo(() => {
-    return formatAttributeDate({ ...parts, hour: null, minute: null });
-  }, [parts]);
-
-  return (
-    <View style={styles.lookup}>
-      <Text style={styles.lookupTitle}>{t('agenda_go_to_date')}</Text>
-      {supportsPicker ? (
-        <DatePickerInput
-          value={value}
-          onChange={(next) => {
-            const nextParts = parseAttributeDate(next);
-            if (nextParts) onMonthChange(gregorianDayNumber(nextParts));
-          }}
-          placeholder={t('agenda_go_to_date')}
-          style={{ marginBottom: 0 }}
-        />
-      ) : (
-        <Text>{formatGregorianDate(parts, dateDisplayFormat)}</Text>
-      )}
-    </View>
-  );
-});
 
 export default StoryAgendaScreen;

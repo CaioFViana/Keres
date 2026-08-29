@@ -456,12 +456,20 @@ const BoardCanvasScreen = () => {
             groups={groupedOptions}
             selectedValues={pickerValues}
             onSelectionChange={(values) => {
-              const added = values.filter((value) => !pickerValues.includes(value));
-              if (added.length > 0) addEntities(added);
-              setPickerValues(values);
+              const selectedValue = values[0];
+              if (!selectedValue) {
+                setPickerValues([]);
+                return;
+              }
+              // A board picker is an action, not a persistent filter: every selection creates a
+              // fresh pin, so the same entity must be immediately available for another pin.
+              addEntities([selectedValue]);
+              setPickerValues([selectedValue]);
+              requestAnimationFrame(() => setPickerValues([]));
             }}
             placeholder={t('board_add_entity')}
             noOptionsText={t('board_no_entities')}
+            singleSelect
           />
           <TouchableOpacity
             onPress={addNote}

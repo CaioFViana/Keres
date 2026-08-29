@@ -3,6 +3,7 @@ import {
   AttributeType,
   CURRENT_STORY_FORMAT_VERSION,
   remapBoardContent,
+  remapLocationMapContent,
   describeStoryIntegrityViolations,
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
@@ -91,6 +92,10 @@ export class StoryExportImportService {
     });
     const storyBoards = await db.query.boards.findMany({
       where: (boards, { eq, and }) => and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)),
+    });
+    const storyLocationMaps = await db.query.locationMaps.findMany({
+      where: (locationMaps, { eq, and }) =>
+        and(eq(locationMaps.storyId, storyId), eq(locationMaps.isDeleted, false)),
     });
 
     const characterRelations = await db.query.characterRelations.findMany({
@@ -208,6 +213,7 @@ export class StoryExportImportService {
         chapterAnchors,
         storyCalendars,
         storyBoards,
+        storyLocationMaps,
         characterRelations,
         characterScenes,
         plots,
@@ -851,6 +857,29 @@ export class StoryExportImportService {
       });
       if (newStoryBoardsData.length > 0) {
         await tx.insert(dbSchema.boards).values(newStoryBoardsData);
+      }
+
+      /*
+       * Location maps hold location and gallery ids in their JSON document. They therefore wait
+       * until both collections are in the id map, just as boards wait for their pinnable entities.
+       */
+      const newStoryLocationMapsData = (validatedFullStory.storyLocationMaps ?? []).map(
+        (original) => {
+          const newId = nextId(original.id);
+          idMap.set(original.id, newId);
+          return {
+            ...original,
+            id: newId,
+            storyId: targetStoryId,
+            content: remapLocationMapContent(original.content, (id) => idMap.get(id) ?? id),
+            createdAt: new Date(original.createdAt),
+            updatedAt: new Date(original.updatedAt),
+            deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+          };
+        },
+      );
+      if (newStoryLocationMapsData.length > 0) {
+        await tx.insert(dbSchema.locationMaps).values(newStoryLocationMapsData);
       }
 
       // --- ChoiceCheckGroups (Optional, map choice ID) ---

@@ -21,6 +21,7 @@ import {
   itemJourneys,
   items,
   locationRelations,
+  locationMaps,
   locations,
   modes,
   noteRelations,
@@ -61,6 +62,7 @@ const id = {
   chapterAnchor: '',
   storyCalendar: '',
   board: '',
+  locationMap: '',
   location: '',
   otherLocation: '',
   sceneA: '',
@@ -237,6 +239,25 @@ beforeEach(async () => {
           to: '01HJKMNP',
           directed: true,
           label: 'tends',
+        },
+      ],
+    },
+  } as never);
+  // Map content uses foreign ids too, so the export/import path has to carry and rewrite it.
+  await db.insert(locationMaps).values({
+    id: id.locationMap,
+    storyId,
+    name: 'A costa',
+    content: {
+      images: [{ id: '01ABCDEF', galleryId: id.gallery, x: 0, y: 0, width: 800, height: 600 }],
+      nodes: [
+        {
+          id: '01HJKMNP',
+          locationId: id.location,
+          x: 50,
+          y: 70,
+          icon: 'location',
+          color: '#8BC34A',
         },
       ],
     },
@@ -429,6 +450,7 @@ async function childrenOf(storyId: string) {
     statRelations: await rows(statRelations),
     modes: await rows(modes),
     storyBoards: await rows(boards),
+    storyLocationMaps: await rows(locationMaps),
   };
 }
 
@@ -545,6 +567,8 @@ describe('import of a package with one row of every kind', () => {
     );
     expect(boardPin.entityId).toBe(character.id);
     expect(boardPin.id).toBe('01ABCDEF');
+    expect(after.storyLocationMaps[0].content.images[0].galleryId).toBe(after.galleries[0].id);
+    expect(after.storyLocationMaps[0].content.nodes[0].locationId).toBe(location.id);
   });
 
   it('keeps every original id when the client asks to preserve them', async () => {
@@ -569,6 +593,7 @@ describe('import of a package with one row of every kind', () => {
     expect(after.seeAlsoRelations[0].entityBId).toBe(id.location);
     expect(after.itemJourneys[0].newCharacterOwnerId).toBe(id.characterB);
     expect(after.storyBoards[0].id).toBe(id.board);
+    expect(after.storyLocationMaps[0].id).toBe(id.locationMap);
     expect(
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,

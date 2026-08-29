@@ -4,6 +4,7 @@ import Svg, { Path, Polygon } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
+import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
 import { interpolateColor, pointOnCircleBoundary } from '../../../utils/locationMapColors';
 import { locationMapCanvasBounds, LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
 import { useTheme } from '../../../theme';
@@ -108,7 +109,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         ),
       };
     }, [activeDrag, content]);
-    const size = locationMapCanvasBounds(layoutContent);
+    const requiredSize = locationMapCanvasBounds(layoutContent);
+    const size = useGrowingCanvasBounds(requiredSize);
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;

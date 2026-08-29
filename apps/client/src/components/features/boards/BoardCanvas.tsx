@@ -4,6 +4,7 @@ import Svg, { Path, Polygon, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
+import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import { boardCanvasBounds, type BoardGalleryMediaById } from '../../../utils/boardLayout';
@@ -49,7 +50,8 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           : content.nodes,
       [activeDrag, content.nodes],
     );
-    const size = boardCanvasBounds(layoutNodes, undefined, undefined, galleryMediaById);
+    const requiredSize = boardCanvasBounds(layoutNodes, undefined, undefined, galleryMediaById);
+    const size = useGrowingCanvasBounds(requiredSize);
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;

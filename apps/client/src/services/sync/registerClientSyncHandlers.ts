@@ -18,6 +18,7 @@ import { GalleryRelationClientSyncHandler } from '../entity-sync-handlers/Galler
 import { ItemClientSyncHandler } from '../entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from '../entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from '../entity-sync-handlers/LocationClientSyncHandler';
+import { LocationMapClientSyncHandler } from '../entity-sync-handlers/LocationMapClientSyncHandler';
 import { LocationRelationClientSyncHandler } from '../entity-sync-handlers/LocationRelationClientSyncHandler';
 import { NoteClientSyncHandler } from '../entity-sync-handlers/NoteClientSyncHandler';
 import { NoteRelationClientSyncHandler } from '../entity-sync-handlers/NoteRelationClientSyncHandler';
@@ -51,6 +52,7 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new BoardClientSyncHandler(),
     new CharacterRelationClientSyncHandler(),
     new LocationClientSyncHandler(),
+    new LocationMapClientSyncHandler(),
     new LocationRelationClientSyncHandler(),
     new ChapterClientSyncHandler(),
     new CharacterSceneClientSyncHandler(),

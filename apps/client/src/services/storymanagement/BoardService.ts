@@ -90,12 +90,22 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
       const updated = await db.query.boards.findFirst({ where: eq(boards.id, boardId) });
       if (!updated) throw new Error(`Failed to retrieve updated Board ${boardId}.`);
 
+      const operationChanges = getChangedFields(original, updated);
+      // `content` is one validated document on the wire, not a patchable object. The generic
+      // diff descends into objects and would turn a change to it into a fragment such as
+      // `{ content: { nodes: [...] } }`, omitting the required `edges` array. Besides being
+      // rejected by the server, that left the original create queued beside the refused update.
+      // Always record the complete document when it changed.
+      if (operationChanges.content !== undefined) {
+        operationChanges.content = updated.content;
+      }
+
       await logOperation(
         currentUserId,
         updated.storyId,
         'update',
         boardId,
-        getChangedFields(original, updated),
+        operationChanges,
       );
       return updated;
     },

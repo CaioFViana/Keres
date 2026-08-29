@@ -95,12 +95,19 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
       const updated = await db.query.locationMaps.findFirst({ where: eq(locationMaps.id, mapId) });
       if (!updated) throw new Error(`Failed to retrieve updated LocationMap ${mapId}.`);
 
+      const operationChanges = getChangedFields(original, updated);
+      // The map content is a single validated JSON document. It must travel whole: the generic
+      // object diff would otherwise omit an unchanged required collection (`images` or `nodes`).
+      if (operationChanges.content !== undefined) {
+        operationChanges.content = updated.content;
+      }
+
       await logOperation(
         currentUserId,
         updated.storyId,
         'update',
         mapId,
-        getChangedFields(original, updated),
+        operationChanges,
       );
       return updated;
     },

@@ -42,6 +42,41 @@ export class SyncConflictError extends Error {
   }
 }
 
+/**
+ * JSONB does not preserve object-key insertion order. A raw `JSON.stringify` comparison therefore
+ * treats `{ nodes: [], edges: [] }` and the identical JSONB value read back as
+ * `{ edges: [], nodes: [] }` as different. Entity create retries must compare JSON by value.
+ */
+function valuesMatch(left: unknown, right: unknown): boolean {
+  if (left instanceof Date || right instanceof Date) {
+    const leftTime = left instanceof Date ? left.getTime() : new Date(String(left)).getTime();
+    const rightTime = right instanceof Date ? right.getTime() : new Date(String(right)).getTime();
+    return leftTime === rightTime;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((value, index) => valuesMatch(value, right[index]))
+    );
+  }
+  if (typeof left === 'object' && left !== null && typeof right === 'object' && right !== null) {
+    const leftRecord = left as Record<string, unknown>;
+    const rightRecord = right as Record<string, unknown>;
+    const leftKeys = Object.keys(leftRecord).sort();
+    const rightKeys = Object.keys(rightRecord).sort();
+    return (
+      leftKeys.length === rightKeys.length &&
+      leftKeys.every(
+        (key, index) =>
+          key === rightKeys[index] && valuesMatch(leftRecord[key], rightRecord[key]),
+      )
+    );
+  }
+  return (left ?? null) === (right ?? null);
+}
+
 export interface SyncEntityHandler {
   entityName: string;
   findById(id: string): Promise<any | undefined>;
@@ -431,14 +466,7 @@ export abstract class BaseSyncEntityHandler<
       if (SYNC_CLIENT_IMMUTABLE_FIELD_SET.has(key)) continue;
       if (key === 'userId' || key === 'authorUserId') continue;
       if (value === undefined) continue;
-      const current = existing?.[key];
-      if (current instanceof Date) {
-        const incomingTime =
-          value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
-        if (current.getTime() !== incomingTime) return false;
-        continue;
-      }
-      if (JSON.stringify(current ?? null) !== JSON.stringify(value ?? null)) {
+      if (!valuesMatch(existing?.[key], value)) {
         return false;
       }
     }

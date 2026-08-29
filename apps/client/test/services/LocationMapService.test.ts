@@ -80,7 +80,7 @@ describe('LocationMapService', () => {
       storyId: TEST_STORY_ID,
       name: 'Continente',
       description: null,
-      content: { images: [], nodes: [] },
+      content: { images: content.images, nodes: [] },
     });
 
     await service().updateMap(TEST_USER_ID, created.id, { content });

@@ -198,6 +198,18 @@ describe('updating a calendar', () => {
     expect(payloadOf(all[all.length - 1]).name).toBe('Renamed');
   });
 
+  it('logs the complete definition when one of its fields changes', async () => {
+    const calendar = await make('Reckoning');
+    const revisedDefinition = definition({ daysPerWeek: 6 });
+
+    await service().updateCalendar(TEST_USER_ID, calendar.id, {
+      definition: revisedDefinition,
+    });
+
+    const all = await operations();
+    expect(payloadOf(all[all.length - 1]).definition).toEqual(revisedDefinition);
+  });
+
   it('writes nothing when nothing changed', async () => {
     const calendar = await make('Reckoning');
     const before = (await operations()).length;

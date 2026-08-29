@@ -249,10 +249,12 @@ export class SyncPush {
       return { applied: pushedOperations.length, conflicts: 0 };
     }
 
+    const acceptedOperationIds = new Set<string>();
     for (const entry of result.applied || []) {
       if (!entry.clientOperationId) {
         continue;
       }
+      acceptedOperationIds.add(entry.clientOperationId);
       await this.context
         .db()!
         .update(schema.operationLogs)
@@ -276,10 +278,13 @@ export class SyncPush {
     let autoMergedCount = 0;
     for (const [key, group] of conflictsByEntity) {
       const first = group[0];
-      // Every local operation for that entity goes into the conflict, not only the one the server cited: the
-      // following ones rested on the refused base.
+      // Every *unaccepted* local operation for that entity goes into the conflict, not only the one the
+      // server cited: following ones rested on the refused base. Accepted operations must never be put
+      // back into a conflict merely because a later operation on the same entity was refused; doing that
+      // leaves the local operation log internally contradictory (synced and conflicted at once).
       const relatedOps = pushedOperations.filter(
-        (op) => syncEntityKey(op.entityType, op.entityId) === key,
+        (op) =>
+          syncEntityKey(op.entityType, op.entityId) === key && !acceptedOperationIds.has(op.id),
       );
       const localOperationType = relatedOps.some((op) => op.operationType === 'delete')
         ? 'delete'

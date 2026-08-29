@@ -157,12 +157,19 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
       const updated = await service.getById(calendarId);
       if (!updated) throw new Error(`Failed to retrieve updated StoryCalendar ${calendarId}.`);
 
+      const operationChanges = getChangedFields(original, updated);
+      // A calendar definition is validated as one document. A recursive diff can retain only a
+      // changed scalar (for example `daysPerWeek`) and omit required parts such as `months`.
+      if (operationChanges.definition !== undefined) {
+        operationChanges.definition = updated.definition;
+      }
+
       await logOperation(
         currentUserId,
         updated.storyId,
         'update',
         calendarId,
-        getChangedFields(original, updated),
+        operationChanges,
       );
       return updated;
     },

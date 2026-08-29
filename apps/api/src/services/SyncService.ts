@@ -310,11 +310,27 @@ export class SyncService {
 
           if (update.type === 'create') {
             if (currentEntity) {
-              // An idempotent resend only if the payload describes the same row. A create with the same id and
-              // different data is not a retry, it is a collision.
-              if (
-                !handler.createPayloadMatches(currentEntity, (update as CreateStoryUpdate).data)
-              ) {
+              const createData = (update as CreateStoryUpdate).data;
+              // The entity may have changed since its creation, so its current row is not always
+              // the correct reference for a retried create. The server's operation log preserves
+              // the original accepted create payload and is the authoritative idempotency record.
+              const [recordedCreate] = await db
+                .select({ payload: operationLog.payload })
+                .from(operationLog)
+                .where(
+                  and(
+                    eq(operationLog.storyId, storyId),
+                    eq(operationLog.entityType, update.entity),
+                    eq(operationLog.entityId, entityId),
+                    eq(operationLog.operationType, 'create'),
+                  ),
+                )
+                .limit(1);
+              const matchesCurrent = handler.createPayloadMatches(currentEntity, createData);
+              const matchesRecordedCreate =
+                !!recordedCreate &&
+                handler.createPayloadMatches(recordedCreate.payload as Record<string, any>, createData);
+              if (!matchesCurrent && !matchesRecordedCreate) {
                 throw new SyncConflictError(
                   'validation',
                   `An entity with ID ${entityId} already exists with different data.`,

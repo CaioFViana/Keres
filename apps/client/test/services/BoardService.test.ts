@@ -81,8 +81,27 @@ describe('BoardService', () => {
     });
 
     expect(unchanged.version).toBe(2);
-    const logged = await operations();
-    expect(logged.filter((row) => row.operationType === 'update')).toHaveLength(1);
+    const logged = (await operations()).filter((row) => row.operationType === 'update');
+    expect(logged).toHaveLength(1);
+    expect(logged).toEqual([
+      expect.objectContaining({
+        payload: expect.stringContaining('"edges":[]'),
+      }),
+    ]);
+    const [update] = logged;
+    expect(payloadOf(update).content).toEqual({
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note',
+          x: 10,
+          y: 20,
+          title: 'Theme',
+          body: null,
+        },
+      ],
+      edges: [],
+    });
   });
 
   it('soft-deletes a board', async () => {

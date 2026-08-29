@@ -17,6 +17,7 @@ import { EffectClientSyncHandler } from '../../src/services/entity-sync-handlers
 import { ItemClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationClientSyncHandler';
+import { LocationMapClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationMapClientSyncHandler';
 import { NoteClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteClientSyncHandler';
 import { NoteRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteRelationClientSyncHandler';
 import { PlotClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotClientSyncHandler';
@@ -57,6 +58,25 @@ const HANDLERS = [
       name: 'Mapa da cidade',
       description: null,
       content: { nodes: [], edges: [] },
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Mapa da cidade revisado' },
+  },
+  {
+    name: 'LocationMap',
+    build: () => new LocationMapClientSyncHandler(),
+    table: schema.locationMaps,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Mapa da cidade',
+      description: null,
+      content: { images: [], nodes: [] },
       createdAt: CREATED_AT,
       updatedAt: CREATED_AT,
       version: 1,

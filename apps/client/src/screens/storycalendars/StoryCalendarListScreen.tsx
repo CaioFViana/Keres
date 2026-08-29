@@ -312,9 +312,11 @@ const StoryCalendarListScreen = () => {
           <TouchableOpacity
             style={[styles.add, { marginBottom: 10, borderStyle: 'solid' }]}
             onPress={() => navigation.navigate('StoryAgenda')}
+            accessibilityRole="button"
+            accessibilityLabel={t('calendar_view_agenda')}
           >
             <Ionicons name="calendar-outline" size={19} color={colors.primary} />
-            <Text style={styles.addText}>{t('agenda_title')}</Text>
+            <Text style={styles.addText}>{t('calendar_view_agenda')}</Text>
           </TouchableOpacity>
         )}
 

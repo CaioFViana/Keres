@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -72,8 +72,16 @@ function CalendarRowList<T extends Record<string, unknown>>({
     [colors],
   );
 
-  const patch = (index: number, key: string, raw: string, kind: CalendarRowField<T>['kind']) => {
-    const next = [...rows];
+  // The parent validates the entire definition on every edit. Keep the row callbacks stable and
+  // read the latest rows from a ref so that unrelated form sections do not need to recreate their
+  // native text inputs while someone is typing in this list.
+  const rowsRef = useRef(rows);
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+
+  const patch = useCallback((index: number, key: string, raw: string, kind: CalendarRowField<T>['kind']) => {
+    const next = [...rowsRef.current];
     /*
      * Text is stored as typed; numbers are stored as numbers, with a half-finished entry ("-", "",
      * "3.") landing as 0. The row keeps the raw string nowhere, so the field re-renders from the
@@ -82,7 +90,14 @@ function CalendarRowList<T extends Record<string, unknown>>({
     const value = kind === 'text' ? raw : Number(raw === '' || raw === '-' ? 0 : raw) || 0;
     next[index] = { ...next[index], [key]: value };
     onChange(next);
-  };
+  }, [onChange]);
+
+  const remove = useCallback(
+    (index: number) => onChange(rowsRef.current.filter((_, other) => other !== index)),
+    [onChange],
+  );
+
+  const add = useCallback(() => onChange([...rowsRef.current, blank()]), [blank, onChange]);
 
   return (
     <View>
@@ -111,7 +126,7 @@ function CalendarRowList<T extends Record<string, unknown>>({
           ))}
           {editable && (
             <TouchableOpacity
-              onPress={() => onChange(rows.filter((_, other) => other !== index))}
+              onPress={() => remove(index)}
               accessibilityLabel={t('delete')}
             >
               <Ionicons name="close-circle-outline" size={22} color={colors.error} />
@@ -121,7 +136,7 @@ function CalendarRowList<T extends Record<string, unknown>>({
       ))}
 
       {editable && (
-        <TouchableOpacity style={styles.add} onPress={() => onChange([...rows, blank()])}>
+        <TouchableOpacity style={styles.add} onPress={add}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={styles.addText}>{addLabel}</Text>
         </TouchableOpacity>
@@ -130,4 +145,4 @@ function CalendarRowList<T extends Record<string, unknown>>({
   );
 }
 
-export default CalendarRowList;
+export default memo(CalendarRowList) as typeof CalendarRowList;

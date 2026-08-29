@@ -5,7 +5,7 @@ import {
   dayNumberToParts,
   formatCalendarDate,
 } from '@keres/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
@@ -26,12 +26,14 @@ export function useStoryCalendar(storyIdOverride?: string) {
   const storyId = storyIdOverride ?? selectedStory?.id;
   const [calendars, setCalendars] = useState<StoryCalendarSelect[]>([]);
   const [definition, setDefinition] = useState<CalendarDefinitionType | null>(null);
+  const [primaryId, setPrimaryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
     if (!storyId) {
       setCalendars([]);
       setDefinition(null);
+      setPrimaryId(null);
       setLoading(false);
       return;
     }
@@ -42,6 +44,7 @@ export function useStoryCalendar(storyIdOverride?: string) {
     ]);
     setCalendars(all);
     setDefinition(primary?.definition ?? null);
+    setPrimaryId(primary?.id ?? null);
     setLoading(false);
   }, [db, storyId]);
 
@@ -56,7 +59,13 @@ export function useStoryCalendar(storyIdOverride?: string) {
     };
   }, [reload]);
 
-  const primary = calendars.find((calendar) => calendar.definition === definition);
+  // `all` and `primary` above are separate database reads. Their JSON definitions may have equal
+  // contents but are not necessarily the same JavaScript object, so reference equality made the
+  // main calendar disappear from the UI. Identity is the persisted calendar id.
+  const primary = useMemo(
+    () => calendars.find((calendar) => calendar.id === primaryId),
+    [calendars, primaryId],
+  );
 
   /*
    * A day, said in full: the date, the season it falls in, and where each moon is.

@@ -250,6 +250,7 @@
   "calendar_summary": "{{months}} months, {{days}} days a year, {{week}}-day week",
   "calendar_weekday_names": "Names of the days",
   "calendar_weekday_names_placeholder": "Leave empty, or name every one, separated by commas",
+  "calendar_view_agenda": "View calendar",
   "calendar_year_summary": "A year is {{days}} days long.",
   "cancel": "Cancel",
   "cancel_request_confirmation_message": "Are you sure you want to cancel this friend request?",

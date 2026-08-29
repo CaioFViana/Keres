@@ -90,6 +90,19 @@ const StoryCalendarFormScreen = () => {
     [],
   );
 
+  const monthFields = useMemo<CalendarRowField<{ name: string; days: number }>[]>(
+    () => [
+      { key: 'name', placeholder: t('calendar_month_name'), kind: 'text', flex: 3 },
+      { key: 'days', placeholder: t('calendar_month_days'), kind: 'number', flex: 1 },
+    ],
+    [t],
+  );
+  const changeMonths = useCallback(
+    (months: CalendarDefinitionType['months']) => patch({ months }),
+    [patch],
+  );
+  const newMonth = useCallback(() => ({ name: '', days: 30 }), []);
+
   /**
    * A number field on the definition itself.
    *
@@ -139,11 +152,6 @@ const StoryCalendarFormScreen = () => {
       }),
     [colors],
   );
-
-  const monthFields: CalendarRowField<{ name: string; days: number }>[] = [
-    { key: 'name', placeholder: t('calendar_month_name'), kind: 'text', flex: 3 },
-    { key: 'days', placeholder: t('calendar_month_days'), kind: 'number', flex: 1 },
-  ];
 
   /*
    * Validation runs on every keystroke rather than on save.
@@ -209,10 +217,10 @@ const StoryCalendarFormScreen = () => {
         hint={t('calendar_months_hint')}
         rows={definition.months}
         fields={monthFields}
-        blank={() => ({ name: '', days: 30 })}
+        blank={newMonth}
         addLabel={t('calendar_add_month')}
         editable={canEdit}
-        onChange={(months) => patch({ months })}
+        onChange={changeMonths}
       />
       <Text style={styles.summary}>
         {t('calendar_year_summary', { days: calendarDaysPerYear(definition) })}

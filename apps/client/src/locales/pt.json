@@ -250,6 +250,7 @@
   "calendar_summary": "{{months}} meses, {{days}} dias por ano, semana de {{week}} dias",
   "calendar_weekday_names": "Nomes dos dias",
   "calendar_weekday_names_placeholder": "Deixe vazio, ou nomeie todos, separados por vírgula",
+  "calendar_view_agenda": "Ver calendário",
   "calendar_year_summary": "Um ano tem {{days}} dias.",
   "cancel": "Cancelar",
   "cancel_request_confirmation_message": "Tem certeza de que deseja cancelar este pedido de amizade?",

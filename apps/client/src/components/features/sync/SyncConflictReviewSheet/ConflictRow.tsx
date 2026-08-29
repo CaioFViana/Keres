@@ -11,15 +11,12 @@ interface ConflictRowProps {
   onKeepMine: () => void;
   onKeepServer: () => void;
   onCloneBoard?: () => void;
-  onOpenDiff: () => void;
+  onOpenDetails: () => void;
 }
 
 /**
- * One row per conflict. When it can be resolved without comparing field by field (every relation, and
- * every binary content conflict - a deletion, no copy on the server, no genuinely disputed
- * field), two icon buttons resolve it on the spot, without navigating anywhere - the same
- * visual language as `FriendshipListScreen`'s inline action buttons. It only opens the diff
- * drill-in when there really are multiple content fields to compare.
+ * One row per conflict. The row opens an accessible explanation of the conflict. Fast actions
+ * remain available for simple cases, but the parent asks for confirmation before applying them.
  */
 const ConflictRow: React.FC<ConflictRowProps> = ({
   summary,
@@ -27,7 +24,7 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
   onKeepMine,
   onKeepServer,
   onCloneBoard,
-  onOpenDiff,
+  onOpenDetails,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -44,7 +41,7 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
       marginBottom: 7,
     },
     icon: { marginRight: 9 },
-    textWrapper: { flex: 1, marginRight: 8 },
+    textWrapper: { flex: 1, marginRight: 8, paddingVertical: 2 },
     title: { fontSize: 13, fontWeight: '600', color: colors.text },
     detail: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     actions: { flexDirection: 'row' },
@@ -56,21 +53,30 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
   return (
     <View style={styles.row}>
       <Ionicons name={icon} size={18} color={colors.textSecondary} style={styles.icon} />
-      <View style={styles.textWrapper}>
+      <TouchableOpacity
+        style={styles.textWrapper}
+        onPress={onOpenDetails}
+        disabled={isResolving}
+        accessibilityRole="button"
+        accessibilityLabel={t('conflict_open_details', { title: summary.title })}
+        accessibilityHint={t('conflict_open_details_hint')}
+      >
         <Text style={styles.title} numberOfLines={1}>
           {summary.title}
         </Text>
         <Text style={styles.detail} numberOfLines={2}>
           {summary.detail}
         </Text>
-      </View>
+      </TouchableOpacity>
       {summary.canQuickResolve ? (
         <View style={styles.actions}>
           <TouchableOpacity
             onPress={onKeepMine}
             disabled={isResolving}
             style={styles.actionButton}
+            accessibilityRole="button"
             accessibilityLabel={t('conflict_keep_mine')}
+            accessibilityHint={t('conflict_keep_mine_description')}
           >
             <Ionicons name="checkmark-circle-outline" size={22} color={colors.primary} />
           </TouchableOpacity>
@@ -78,7 +84,9 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
             onPress={onKeepServer}
             disabled={isResolving}
             style={styles.actionButton}
+            accessibilityRole="button"
             accessibilityLabel={t('conflict_keep_server')}
+            accessibilityHint={t('conflict_keep_server_description')}
           >
             <Ionicons name="cloud-download-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -87,14 +95,23 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
               onPress={onCloneBoard}
               disabled={isResolving}
               style={styles.actionButton}
+              accessibilityRole="button"
               accessibilityLabel={t('conflict_clone_board')}
+              accessibilityHint={t('conflict_clone_board_description')}
             >
               <Ionicons name="copy-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
           )}
         </View>
       ) : (
-        <TouchableOpacity onPress={onOpenDiff} disabled={isResolving} style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={onOpenDetails}
+          disabled={isResolving}
+          style={styles.actionButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('conflict_open_details', { title: summary.title })}
+          accessibilityHint={t('conflict_open_details_hint')}
+        >
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       )}

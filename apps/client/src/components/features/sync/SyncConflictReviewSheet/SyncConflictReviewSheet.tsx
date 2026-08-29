@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
@@ -16,6 +16,8 @@ import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { AppAlert } from '@/src/utils/AppAlert';
+import ConflictDetailSheet from '../ConflictDetailSheet/ConflictDetailSheet';
 import ConflictFieldDiffSheet from '../ConflictFieldDiffSheet/ConflictFieldDiffSheet';
 import ConflictRow from './ConflictRow';
 
@@ -48,6 +50,7 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
 
   const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
   const [names, setNames] = useState<Map<string, string>>(new Map());
+  const [detailConflictId, setDetailConflictId] = useState<string | null>(null);
 
   // Two phases: first each conflict's own local row (it fills in what
   // `deleted_on_server` leaves missing in `localValues`/`serverValues` - the name of a content
@@ -97,6 +100,63 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
 
   const selectedConflict = conflicts.find((conflict) => conflict.id === selectedConflictId);
   const selectedSummary = summaries.find((summary) => summary.id === selectedConflictId);
+  const detailConflict = conflicts.find((conflict) => conflict.id === detailConflictId);
+  const detailSummary = summaries.find((summary) => summary.id === detailConflictId);
+
+  const resolveKeepMine = useCallback(
+    (conflictId: string) => {
+      AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_keep_mine'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('conflict_confirm_action'),
+          onPress: () => {
+            setDetailConflictId(null);
+            void keepLocal(db, conflictId);
+          },
+        },
+      ]);
+    },
+    [db, keepLocal, t],
+  );
+
+  const resolveKeepServer = useCallback(
+    (conflictId: string) => {
+      AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_keep_server'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('conflict_confirm_action'),
+          style: 'destructive',
+          onPress: () => {
+            setDetailConflictId(null);
+            void keepServer(db, conflictId);
+          },
+        },
+      ]);
+    },
+    [db, keepServer, t],
+  );
+
+  const resolveCloneBoard = useCallback(
+    (conflictId: string, boardName: string) => {
+      if (!userId) return;
+      AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_clone_board'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('conflict_confirm_action'),
+          onPress: () => {
+            setDetailConflictId(null);
+            void keepServerAndCloneBoard(
+              db,
+              conflictId,
+              userId,
+              t('board_copy_name', { name: boardName }),
+            );
+          },
+        },
+      ]);
+    },
+    [db, keepServerAndCloneBoard, t, userId],
+  );
 
   const styles = StyleSheet.create({
     sheet: {
@@ -147,7 +207,12 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
         <View style={styles.handle} />
         <View style={styles.header}>
           <Text style={styles.title}>{t('conflict_review_title')}</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('conflict_close_review')}
+          >
             <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -165,25 +230,40 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
               <ConflictRow
                 summary={item}
                 isResolving={isResolving}
-                onKeepMine={() => keepLocal(db, item.id)}
-                onKeepServer={() => keepServer(db, item.id)}
+                onKeepMine={() => resolveKeepMine(item.id)}
+                onKeepServer={() => resolveKeepServer(item.id)}
                 onCloneBoard={
                   item.offerBoardClone && userId
-                    ? () =>
-                        keepServerAndCloneBoard(
-                          db,
-                          item.id,
-                          userId,
-                          t('board_copy_name', { name: item.title }),
-                        )
+                    ? () => resolveCloneBoard(item.id, item.title)
                     : undefined
                 }
-                onOpenDiff={() => selectConflict(item.id)}
+                onOpenDetails={() => setDetailConflictId(item.id)}
               />
             )}
           />
         )}
       </ResponsiveModal>
+
+      {detailConflict && detailSummary && (
+        <ConflictDetailSheet
+          conflict={detailConflict}
+          summary={detailSummary}
+          visible
+          isResolving={isResolving}
+          onClose={() => setDetailConflictId(null)}
+          onKeepMine={() => resolveKeepMine(detailConflict.id)}
+          onKeepServer={() => resolveKeepServer(detailConflict.id)}
+          onCloneBoard={
+            detailSummary.offerBoardClone && userId
+              ? () => resolveCloneBoard(detailConflict.id, detailSummary.title)
+              : undefined
+          }
+          onCompareFields={() => {
+            setDetailConflictId(null);
+            selectConflict(detailConflict.id);
+          }}
+        />
+      )}
 
       {selectedConflict && selectedSummary && (
         <ConflictFieldDiffSheet

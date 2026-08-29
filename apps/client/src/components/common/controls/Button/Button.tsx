@@ -9,9 +9,19 @@ interface ButtonProps {
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
   testID?: string;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ onPress, children, style, disabled, testID }) => {
+const Button: React.FC<ButtonProps> = ({
+  onPress,
+  children,
+  style,
+  disabled,
+  testID,
+  accessibilityLabel,
+  accessibilityHint,
+}) => {
   const { colors } = useTheme();
 
   const styles = StyleSheet.create({
@@ -40,6 +50,9 @@ const Button: React.FC<ButtonProps> = ({ onPress, children, style, disabled, tes
       onPress={onPress}
       disabled={disabled}
       testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
     >
       {typeof children === 'string' ? <Text style={styles.buttonText}>{children}</Text> : children}
     </TouchableOpacity>

@@ -164,13 +164,7 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
         operationChanges.definition = updated.definition;
       }
 
-      await logOperation(
-        currentUserId,
-        updated.storyId,
-        'update',
-        calendarId,
-        operationChanges,
-      );
+      await logOperation(currentUserId, updated.storyId, 'update', calendarId, operationChanges);
       return updated;
     },
 

@@ -285,12 +285,19 @@ describe('push result handling', () => {
       [create, update],
     );
 
-    expect(await database.db.query.operationLogs.findFirst({ where: eq(schema.operationLogs.id, 'board-create') })).toMatchObject({
+    expect(
+      await database.db.query.operationLogs.findFirst({
+        where: eq(schema.operationLogs.id, 'board-create'),
+      }),
+    ).toMatchObject({
       isSynced: true,
       serverOperationVersion: 11,
     });
     expect(recordConflict).toHaveBeenCalledWith(
-      expect.objectContaining({ localOperationType: 'update', localOperationIds: ['board-update'] }),
+      expect.objectContaining({
+        localOperationType: 'update',
+        localOperationIds: ['board-update'],
+      }),
     );
   });
 

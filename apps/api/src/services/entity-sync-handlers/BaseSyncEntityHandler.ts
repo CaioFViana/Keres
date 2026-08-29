@@ -69,8 +69,7 @@ function valuesMatch(left: unknown, right: unknown): boolean {
     return (
       leftKeys.length === rightKeys.length &&
       leftKeys.every(
-        (key, index) =>
-          key === rightKeys[index] && valuesMatch(leftRecord[key], rightRecord[key]),
+        (key, index) => key === rightKeys[index] && valuesMatch(leftRecord[key], rightRecord[key]),
       )
     );
   }

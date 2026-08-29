@@ -102,13 +102,7 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
         operationChanges.content = updated.content;
       }
 
-      await logOperation(
-        currentUserId,
-        updated.storyId,
-        'update',
-        mapId,
-        operationChanges,
-      );
+      await logOperation(currentUserId, updated.storyId, 'update', mapId, operationChanges);
       return updated;
     },
 

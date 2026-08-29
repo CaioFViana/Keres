@@ -329,7 +329,10 @@ export class SyncService {
               const matchesCurrent = handler.createPayloadMatches(currentEntity, createData);
               const matchesRecordedCreate =
                 !!recordedCreate &&
-                handler.createPayloadMatches(recordedCreate.payload as Record<string, any>, createData);
+                handler.createPayloadMatches(
+                  recordedCreate.payload as Record<string, any>,
+                  createData,
+                );
               if (!matchesCurrent && !matchesRecordedCreate) {
                 throw new SyncConflictError(
                   'validation',

@@ -26,7 +26,8 @@ export async function buildLocationMapSvg(
     if (!media || media.mediaType !== 'image' || !media.localPath) continue;
     try {
       const bytes = await mediaFileService.readBytes(media.localPath);
-      imageUris[image.galleryId] = `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
+      imageUris[image.galleryId] =
+        `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
     } catch (readError) {
       console.log('LocationMapScreen: failed to read image for export.', readError);
     }

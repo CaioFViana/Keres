@@ -100,13 +100,7 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
         operationChanges.content = updated.content;
       }
 
-      await logOperation(
-        currentUserId,
-        updated.storyId,
-        'update',
-        boardId,
-        operationChanges,
-      );
+      await logOperation(currentUserId, updated.storyId, 'update', boardId, operationChanges);
       return updated;
     },
 

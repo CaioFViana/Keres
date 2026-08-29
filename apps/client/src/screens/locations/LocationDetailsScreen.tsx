@@ -432,10 +432,15 @@ const LocationDetailsScreen = () => {
     [userId, t],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (locationServiceRef.current) {
-      fetchLocationDetails();
+      void fetchLocationDetails();
+    }
+  }, [fetchLocationDetails]);
+
+  // Keep subscription churn independent from the location's initial load.
+  useEffect(() => {
+    if (locationServiceRef.current) {
       entityEventEmitter.on('location_changed', handleLocationChange);
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange);
@@ -455,8 +460,6 @@ const LocationDetailsScreen = () => {
       };
     }
   }, [
-    locationId,
-    fetchLocationDetails,
     handleLocationChange,
     handleCharacterChange,
     handleCharacterSceneChange,

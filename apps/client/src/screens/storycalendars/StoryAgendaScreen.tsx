@@ -12,6 +12,8 @@ import type { CustomizationStackParamList } from '@/src/navigation/MainSystemSta
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 
 /**
  * The story's calendar as a month of days, with what happens on each.
@@ -38,6 +40,8 @@ const StoryAgendaScreen = () => {
     useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryAgenda'>>();
   const { entries, loading } = useStoryAgenda();
   const [cursor, setCursor] = useState<number | null>(null);
+  const [yearText, setYearText] = useState('1');
+  const [monthText, setMonthText] = useState('1');
 
   useFocusEffect(
     useCallback(() => {
@@ -52,6 +56,15 @@ const StoryAgendaScreen = () => {
   useEffect(() => {
     if (cursor === null && entries.length > 0) setCursor(entries[0].dayNumber);
   }, [cursor, entries]);
+
+  // Keep the date controls in step with scene/event navigation, while still allowing the writer to
+  // type an arbitrary year and then explicitly open that month.
+  useEffect(() => {
+    if (!definition || cursor === null) return;
+    const parts = dayNumberToParts(definition, cursor);
+    setYearText(String(parts.year));
+    setMonthText(String(parts.month));
+  }, [cursor, definition]);
 
   const byDay = useMemo(() => {
     const map = new Map<number, typeof entries>();
@@ -90,6 +103,26 @@ const StoryAgendaScreen = () => {
           borderColor: colors.border,
         },
         navText: { fontSize: 12, fontWeight: '700', color: colors.primary },
+        lookup: {
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          borderRadius: 8,
+          padding: 10,
+          marginBottom: 14,
+        },
+        lookupTitle: { fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 8 },
+        lookupRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, zIndex: 2 },
+        lookupField: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
+        lookupLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 3 },
+        lookupInput: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          color: colors.text,
+          borderRadius: 6,
+          paddingHorizontal: 9,
+          paddingVertical: 8,
+          minHeight: 40,
+        },
         week: { flexDirection: 'row' },
         weekdayCell: {
           flexGrow: 1,
@@ -201,6 +234,12 @@ const StoryAgendaScreen = () => {
   };
 
   const cursorDescription = describeDay(cursor);
+  const openChosenMonth = () => {
+    const year = Number(yearText);
+    const monthIndex = Number(monthText);
+    if (!Number.isInteger(year) || !Number.isInteger(monthIndex)) return;
+    setCursor(partsToDayNumber(definition, { year, month: monthIndex, day: 1 }));
+  };
 
   return (
     <View style={styles.root}>
@@ -230,6 +269,69 @@ const StoryAgendaScreen = () => {
             <Text style={styles.navText}>{t('agenda_next_event')}</Text>
             <Ionicons name="arrow-forward" size={14} color={colors.primary} />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.lookup}>
+          <Text style={styles.lookupTitle}>{t('agenda_go_to_date')}</Text>
+          {definition.eras.length > 0 && (
+            <View style={{ marginBottom: 8, zIndex: 3 }}>
+              <Text style={styles.lookupLabel}>{t('calendar_eras')}</Text>
+              <Select
+                options={definition.eras.map((era, index) => ({
+                  label: `${era.name} (${era.abbreviation})`,
+                  value: String(index),
+                }))}
+                value={null}
+                onValueChange={(eraIndex) => {
+                  if (eraIndex === null) return;
+                  const era = definition.eras[Number(eraIndex)];
+                  if (!era) return;
+                  const year = era.direction === 'backward' ? era.startYear - 1 : era.startYear;
+                  setYearText(String(year));
+                  setCursor(partsToDayNumber(definition, {
+                    year,
+                    month: Number(monthText) || 1,
+                    day: 1,
+                  }));
+                }}
+                placeholder={t('agenda_pick_era')}
+                multiple={false}
+              />
+            </View>
+          )}
+          <View style={styles.lookupRow}>
+            <View style={styles.lookupField}>
+              <Text style={styles.lookupLabel}>{t('calendar_epoch_year')}</Text>
+              <TextInput
+                value={yearText}
+                onChangeText={(text) => {
+                  if (!text || /^-?\d*$/.test(text)) setYearText(text);
+                }}
+                keyboardType="numbers-and-punctuation"
+                style={styles.lookupInput}
+              />
+            </View>
+            <View style={styles.lookupField}>
+              <Text style={styles.lookupLabel}>{t('calendar_epoch_month')}</Text>
+              <Select
+                options={definition.months.map((month, index) => ({
+                  label: month.name || String(index + 1),
+                  value: String(index + 1),
+                }))}
+                value={monthText}
+                onValueChange={(month) => month !== null && setMonthText(month)}
+                multiple={false}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={openChosenMonth}
+              accessibilityRole="button"
+              accessibilityLabel={t('agenda_go_to_date')}
+            >
+              <Text style={styles.navText}>{t('agenda_go')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {definition.weekdayNames.length > 0 && (

@@ -270,8 +270,23 @@ const StoryCalendarFormScreen = () => {
               { key: 'name', placeholder: t('calendar_era_name'), kind: 'text', flex: 3 },
               { key: 'abbreviation', placeholder: t('calendar_era_short'), kind: 'text', flex: 1 },
               { key: 'startYear', placeholder: t('calendar_era_start'), kind: 'signed', flex: 1 },
+              {
+                key: 'direction',
+                placeholder: t('calendar_era_direction'),
+                kind: 'choice',
+                flex: 2,
+                choices: [
+                  { value: 'forward', label: t('calendar_era_forward') },
+                  { value: 'backward', label: t('calendar_era_backward') },
+                ],
+              },
             ]}
-            blank={() => ({ name: '', abbreviation: '', startYear: 1 })}
+            blank={() => ({
+              name: '',
+              abbreviation: '',
+              startYear: 1,
+              direction: 'forward' as const,
+            })}
             addLabel={t('calendar_add_era')}
             emptyLabel={t('calendar_eras_empty')}
             editable={canEdit}

@@ -256,7 +256,7 @@ const SceneDetailScreen = () => {
       !sceneServiceRef.current ||
       !selectedStory?.id ||
       !sceneId ||
-      !scene ||
+      !scene?.chapterId ||
       selectedStory.type !== 'linear'
     ) {
       setPreviousScene(undefined);
@@ -276,7 +276,7 @@ const SceneDetailScreen = () => {
       setPreviousScene(undefined);
       setNextScene(undefined);
     }
-  }, [selectedStory?.id, sceneId, scene, selectedStory?.type]);
+  }, [selectedStory?.id, sceneId, scene?.chapterId, selectedStory?.type]);
 
   const fetchChoicesForScene = useCallback(async () => {
     if (
@@ -479,10 +479,18 @@ const SceneDetailScreen = () => {
     [sceneId, fetchCharacterSceneRelations],
   );
 
+  // Fetching a scene and subscribing to its auxiliary changes are deliberately separate effects.
+  // The handlers below legitimately change when related scene state changes; coupling that to the
+  // initial fetch used to fetch and replace `scene` again on every re-subscription.
+  useEffect(() => {
+    if (sceneServiceRef.current) {
+      void fetchScene();
+    }
+  }, [fetchScene]);
+
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (sceneServiceRef.current) {
-      fetchScene();
       entityEventEmitter.on('scene_changed', handleSceneChange);
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
       entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
@@ -498,8 +506,6 @@ const SceneDetailScreen = () => {
       };
     }
   }, [
-    sceneId,
-    fetchScene,
     handleSceneChange,
     handleCharacterSceneChange,
     handleItemChange,

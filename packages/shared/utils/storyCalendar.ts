@@ -32,6 +32,55 @@ import type {
 const floorDiv = (value: number, divisor: number) => Math.floor(value / divisor);
 const floorMod = (value: number, divisor: number) => value - floorDiv(value, divisor) * divisor;
 
+/**
+ * Precomputed calendar facts. A definition is immutable while it is being read, so caching against
+ * its object identity keeps date rendering independent of the number of scenes on screen. In
+ * particular, formatting every row of a long timeline must not repeatedly sum months and sort eras.
+ */
+interface CalendarMath {
+  daysPerYear: number;
+  monthStarts: number[];
+  eras: CalendarDefinitionType['eras'];
+  seasons: CalendarDefinitionType['seasons'];
+}
+
+const calendarMathCache = new WeakMap<CalendarDefinitionType, CalendarMath>();
+
+const mathFor = (definition: CalendarDefinitionType): CalendarMath => {
+  const cached = calendarMathCache.get(definition);
+  if (cached) return cached;
+
+  let daysPerYear = 0;
+  const monthStarts = definition.months.map((month) => {
+    const start = daysPerYear;
+    daysPerYear += month.days;
+    return start;
+  });
+  const math: CalendarMath = {
+    daysPerYear,
+    monthStarts,
+    eras: [...definition.eras].sort((a, b) => a.startYear - b.startYear),
+    seasons: [...definition.seasons].sort((a, b) => a.startDayOfYear - b.startDayOfYear),
+  };
+  calendarMathCache.set(definition, math);
+  return math;
+};
+
+/** Index of the last item whose ordered key is at most `value`, or -1 if there is none. */
+const lastAtOrBefore = <T>(items: T[], value: number, key: (item: T) => number): number => {
+  let low = 0;
+  let high = items.length - 1;
+  let result = -1;
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    if (key(items[middle]) <= value) {
+      result = middle;
+      low = middle + 1;
+    } else high = middle - 1;
+  }
+  return result;
+};
+
 /** Re-exported so callers of the arithmetic do not need a second import for the vocabulary. */
 export { TIMING_UNITS };
 export type CalendarTimingUnit = TimingUnit;
@@ -58,7 +107,7 @@ export const FALLBACK_SECONDS_PER_DAY = 86_400;
 
 /** The number of days in one year of this calendar. Always an integer. */
 export function calendarDaysPerYear(definition: CalendarDefinitionType): number {
-  return definition.months.reduce((total, month) => total + month.days, 0);
+  return mathFor(definition).daysPerYear;
 }
 
 /** The number of the calendar's own seconds in one of its days. */
@@ -81,7 +130,7 @@ export function calendarUnitDays(
 ): Record<CalendarTimingUnit, number> {
   if (!definition) return { ...FALLBACK_UNIT_DAYS };
 
-  const daysPerYear = calendarDaysPerYear(definition);
+  const { daysPerYear } = mathFor(definition);
   const secondsPerDay = calendarSecondsPerDay(definition);
   return {
     seconds: 1 / secondsPerDay,
@@ -140,16 +189,12 @@ export function dayNumberToParts(
   definition: CalendarDefinitionType,
   dayNumber: number,
 ): CalendarDateParts {
-  const daysPerYear = calendarDaysPerYear(definition);
+  const { daysPerYear, monthStarts } = mathFor(definition);
   const year = floorDiv(dayNumber, daysPerYear) + 1;
   const dayOfYear = floorMod(dayNumber, daysPerYear);
 
-  let remaining = dayOfYear;
-  let month = 0;
-  while (month < definition.months.length - 1 && remaining >= definition.months[month].days) {
-    remaining -= definition.months[month].days;
-    month += 1;
-  }
+  const month = Math.max(0, lastAtOrBefore(monthStarts, dayOfYear, (start) => start));
+  const remaining = dayOfYear - monthStarts[month];
 
   return {
     year,
@@ -172,11 +217,9 @@ export function partsToDayNumber(
   definition: CalendarDefinitionType,
   parts: { year: number; month: number; day: number },
 ): number {
-  const daysPerYear = calendarDaysPerYear(definition);
+  const { daysPerYear, monthStarts } = mathFor(definition);
   const monthIndex = Math.min(Math.max(parts.month, 1), definition.months.length) - 1;
-  const daysBefore = definition.months
-    .slice(0, monthIndex)
-    .reduce((total, month) => total + month.days, 0);
+  const daysBefore = monthStarts[monthIndex];
   const day = Math.min(Math.max(parts.day, 1), definition.months[monthIndex].days);
 
   return (parts.year - 1) * daysPerYear + daysBefore + (day - 1);
@@ -187,13 +230,30 @@ export function calendarEraFor(
   definition: CalendarDefinitionType,
   year: number,
 ): { name: string; abbreviation: string; year: number } | null {
-  const ordered = [...definition.eras].sort((a, b) => a.startYear - b.startYear);
-  let found: (typeof ordered)[number] | undefined;
-  for (const era of ordered) {
-    if (era.startYear <= year) found = era;
+  const ordered = mathFor(definition).eras;
+  const index = lastAtOrBefore(ordered, year, (era) => era.startYear);
+  const forward =
+    index === -1
+      ? undefined
+      : [...ordered.slice(0, index + 1)].reverse().find((era) => era.direction !== 'backward');
+  if (forward) {
+    return {
+      name: forward.name,
+      abbreviation: forward.abbreviation,
+      year: year - forward.startYear + 1,
+    };
   }
-  if (!found) return null;
-  return { name: found.name, abbreviation: found.abbreviation, year: year - found.startYear + 1 };
+
+  // A backward era beginning at year 1 reads year 0 as "1 B.C." and year -399 as "400 B.C.".
+  const backward = ordered.find(
+    (era) => era.direction === 'backward' && era.startYear > year,
+  );
+  if (!backward) return null;
+  return {
+    name: backward.name,
+    abbreviation: backward.abbreviation,
+    year: backward.startYear - year,
+  };
 }
 
 /** How many named phases a moon is bucketed into for display. */
@@ -241,11 +301,9 @@ export function calendarSeasonFor(
   dayOfYear: number,
 ): CalendarSeasonType | null {
   if (definition.seasons.length === 0) return null;
-  const ordered = [...definition.seasons].sort((a, b) => a.startDayOfYear - b.startDayOfYear);
-  let found: CalendarSeasonType | undefined;
-  for (const season of ordered) {
-    if (season.startDayOfYear <= dayOfYear) found = season;
-  }
+  const ordered = mathFor(definition).seasons;
+  const index = lastAtOrBefore(ordered, dayOfYear, (season) => season.startDayOfYear);
+  const found: CalendarSeasonType | undefined = index === -1 ? undefined : ordered[index];
   return found ?? ordered[ordered.length - 1];
 }
 

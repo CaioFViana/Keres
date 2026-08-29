@@ -378,6 +378,20 @@ describe('writing a date', () => {
     expect(formatCalendarDate(laterEra, 3517 * 100)).toBe('1 Thaw, 3019 T.A.');
   });
 
+  it('counts backward eras before their anchor year', () => {
+    const beforeCommon = define({
+      months: [{ name: 'Thaw', days: 100 }],
+      eras: [
+        { name: 'Common Era', abbreviation: 'C.E.', startYear: 1 },
+        { name: 'Before Common Era', abbreviation: 'B.C.', startYear: 1, direction: 'backward' },
+      ],
+    });
+
+    expect(formatCalendarDate(beforeCommon, -1)).toBe('100 Thaw, 1 B.C.');
+    expect(formatCalendarDate(beforeCommon, -400 * 100)).toBe('1 Thaw, 400 B.C.');
+    expect(calendarEraFor(beforeCommon, 1)?.abbreviation).toBe('C.E.');
+  });
+
   it('falls back to the absolute year when no era covers it', () => {
     expect(formatCalendarDate(define(), 0)).toBe('1 M1, 1');
   });

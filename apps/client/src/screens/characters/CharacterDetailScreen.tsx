@@ -357,10 +357,15 @@ const CharacterDetailScreen = () => {
     [character?.storyId, fetchAllLocationsInStory],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (characterServiceRef.current) {
-      fetchCharacter();
+      void fetchCharacter();
+    }
+  }, [fetchCharacter]);
+
+  // Keep subscription changes from ever triggering a fresh entity load.
+  useEffect(() => {
+    if (characterServiceRef.current) {
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for character relation changes
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
@@ -378,8 +383,6 @@ const CharacterDetailScreen = () => {
       };
     }
   }, [
-    characterId,
-    fetchCharacter,
     handleCharacterChange,
     handleCharacterRelationChange,
     handleCharacterSceneChange,

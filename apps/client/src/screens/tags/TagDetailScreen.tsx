@@ -234,11 +234,15 @@ const TagDetailScreen = () => {
   );
 
   useEffect(() => {
-    // Only subscribe and fetch if tagServiceRef.current is initialized
     if (tagServiceRef.current && selectedStory?.id) {
-      fetchTag();
-      fetchTagRelations();
+      void fetchTag();
+      void fetchTagRelations();
+    }
+  }, [fetchTag, fetchTagRelations, selectedStory?.id]);
 
+  // Only subscribe here; a callback identity change must not reload the tag.
+  useEffect(() => {
+    if (tagServiceRef.current && selectedStory?.id) {
       entityEventEmitter.on('tag_changed', handleTagChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
@@ -248,11 +252,8 @@ const TagDetailScreen = () => {
       };
     }
   }, [
-    tagId,
-    fetchTag,
     handleTagChange,
     selectedStory?.id,
-    fetchTagRelations,
     handleTagRelationChange,
   ]);
 

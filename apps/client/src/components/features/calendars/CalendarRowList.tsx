@@ -17,7 +17,8 @@ export interface CalendarRowField<T> {
   key: keyof T & string;
   placeholder: string;
   /** Numeric fields are typed digit-by-digit; `signed` also allows a leading minus. */
-  kind: 'text' | 'number' | 'signed' | 'decimal';
+  kind: 'text' | 'number' | 'signed' | 'decimal' | 'choice';
+  choices?: { value: string; label: string }[];
   /** Relative width against the other columns. */
   flex: number;
 }
@@ -37,7 +38,7 @@ interface Props<T> {
 
 /** What a partially typed number looks like, so a half-typed `-` or `.` is not thrown away. */
 const isTypable = (kind: CalendarRowField<never>['kind'], text: string) => {
-  if (kind === 'text') return true;
+  if (kind === 'text' || kind === 'choice') return true;
   if (text === '') return true;
   if (kind === 'number') return /^\d+$/.test(text);
   if (kind === 'signed') return /^-?\d*$/.test(text);
@@ -87,7 +88,8 @@ function CalendarRowList<T extends Record<string, unknown>>({
      * "3.") landing as 0. The row keeps the raw string nowhere, so the field re-renders from the
      * number - which is why `isTypable` has to let those intermediate states through first.
      */
-    const value = kind === 'text' ? raw : Number(raw === '' || raw === '-' ? 0 : raw) || 0;
+    const value =
+      kind === 'text' || kind === 'choice' ? raw : Number(raw === '' || raw === '-' ? 0 : raw) || 0;
     next[index] = { ...next[index], [key]: value };
     onChange(next);
   }, [onChange]);
@@ -111,17 +113,38 @@ function CalendarRowList<T extends Record<string, unknown>>({
         <View key={index} style={styles.row}>
           {fields.map((field) => (
             <View key={field.key} style={{ flexGrow: field.flex, flexShrink: 1, flexBasis: 0 }}>
-              <TextInput
-                placeholder={field.placeholder}
-                value={String(row[field.key] ?? '')}
-                editable={editable}
-                onChangeText={(text) => {
-                  if (!isTypable(field.kind, text)) return;
-                  patch(index, field.key, text, field.kind);
-                }}
-                keyboardType={field.kind === 'text' ? 'default' : 'numbers-and-punctuation'}
-                style={styles.input}
-              />
+              {field.kind === 'choice' ? (
+                <TouchableOpacity
+                  style={styles.input}
+                  disabled={!editable}
+                  onPress={() => {
+                    const choices = field.choices ?? [];
+                    const current = String(row[field.key] ?? '');
+                    const choiceIndex = choices.findIndex((choice) => choice.value === current);
+                    const next = choices[(choiceIndex + 1) % choices.length];
+                    if (next) patch(index, field.key, next.value, field.kind);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={field.placeholder}
+                >
+                  <Text style={{ color: colors.text }} numberOfLines={1}>
+                    {field.choices?.find((choice) => choice.value === row[field.key])?.label ??
+                      field.placeholder}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TextInput
+                  placeholder={field.placeholder}
+                  value={String(row[field.key] ?? '')}
+                  editable={editable}
+                  onChangeText={(text) => {
+                    if (!isTypable(field.kind, text)) return;
+                    patch(index, field.key, text, field.kind);
+                  }}
+                  keyboardType={field.kind === 'text' ? 'default' : 'numbers-and-punctuation'}
+                  style={styles.input}
+                />
+              )}
             </View>
           ))}
           {editable && (

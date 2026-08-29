@@ -210,10 +210,15 @@ const ChapterDetailScreen = () => {
     [selectedStory?.id, fetchAllLocationsInStory],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (chapterServiceRef.current) {
-      fetchChapter();
+      void fetchChapter();
+    }
+  }, [fetchChapter]);
+
+  // Re-subscribing after a callback changes must not reload the chapter.
+  useEffect(() => {
+    if (chapterServiceRef.current) {
       entityEventEmitter.on('chapter_changed', handleChapterChange);
       entityEventEmitter.on('scene_changed', handleSceneChange); // Listen for scene changes
       entityEventEmitter.on('location_changed', handleLocationChange); // Listen for location changes
@@ -224,7 +229,7 @@ const ChapterDetailScreen = () => {
         entityEventEmitter.off('location_changed', handleLocationChange); // Cleanup listener
       };
     }
-  }, [chapterId, fetchChapter, handleChapterChange, handleSceneChange, handleLocationChange]);
+  }, [handleChapterChange, handleSceneChange, handleLocationChange]);
 
   useEffect(() => {
     if (chapter) {

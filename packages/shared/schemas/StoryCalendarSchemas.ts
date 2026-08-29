@@ -46,6 +46,8 @@ export const CalendarEraSchema = z.object({
   name: z.string().min(1).max(80),
   abbreviation: z.string().min(1).max(12),
   startYear: z.number().int(),
+  /** Forward eras count from their first year; backward eras count into the years before it. */
+  direction: z.enum(['forward', 'backward']).default('forward'),
 });
 
 /**

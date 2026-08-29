@@ -139,10 +139,15 @@ const WorldRuleDetailScreen = () => {
     [worldRuleId, setWorldRule],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (worldRuleServiceRef.current) {
-      fetchWorldRule();
+      void fetchWorldRule();
+    }
+  }, [fetchWorldRule]);
+
+  // Subscription lifecycle is independent from loading the entity.
+  useEffect(() => {
+    if (worldRuleServiceRef.current) {
       entityEventEmitter.on('worldrule_changed', handleWorldRuleChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
@@ -151,7 +156,7 @@ const WorldRuleDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, handleTagRelationChange]);
+  }, [handleWorldRuleChange, handleTagRelationChange]);
 
   const renderHeaderRight = useCallback(
     () =>

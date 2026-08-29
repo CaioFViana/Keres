@@ -226,14 +226,17 @@ const ChoiceDetailScreen = () => {
     }
   }, [choice?.storyId]);
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
-    fetchChoice();
+    void fetchChoice();
+  }, [fetchChoice]);
+
+  // The choice is loaded above; this effect owns only event subscriptions.
+  useEffect(() => {
     entityEventEmitter.on('choice_changed', handleChoiceChange);
     return () => {
       entityEventEmitter.off('choice_changed', handleChoiceChange);
     };
-  }, [choiceId, fetchChoice, handleChoiceChange]);
+  }, [handleChoiceChange]);
 
   useEffect(() => {
     if (choice && isBranching) {

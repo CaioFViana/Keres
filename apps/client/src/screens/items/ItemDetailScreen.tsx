@@ -146,14 +146,17 @@ const ItemDetailScreen = () => {
     [itemId, navigation, t],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
-    fetchItem();
+    void fetchItem();
+  }, [fetchItem]);
+
+  // Event subscriptions never initiate an item load.
+  useEffect(() => {
     entityEventEmitter.on('item_changed', handleItemChange);
     return () => {
       entityEventEmitter.off('item_changed', handleItemChange);
     };
-  }, [itemId, fetchItem, handleItemChange]);
+  }, [handleItemChange]);
 
   useEffect(() => {
     if (item) {

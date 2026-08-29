@@ -251,10 +251,14 @@ const NoteDetailScreen = () => {
 
   useEffect(() => {
     if (noteServiceRef.current && selectedStory?.id) {
-      // Ensure selectedStory.id is available
-      fetchNote();
-      fetchNoteRelations(); // Fetch relations when the screen loads
+      void fetchNote();
+      void fetchNoteRelations();
+    }
+  }, [fetchNote, fetchNoteRelations, selectedStory?.id]);
 
+  // Subscribing is intentionally separate from the initial loads above.
+  useEffect(() => {
+    if (noteServiceRef.current && selectedStory?.id) {
       entityEventEmitter.on('note_changed', handleNoteChange);
       entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
@@ -266,14 +270,11 @@ const NoteDetailScreen = () => {
       };
     }
   }, [
-    noteId,
-    fetchNote,
     handleNoteChange,
     handleTagRelationChange,
     selectedStory?.id,
-    fetchNoteRelations,
     handleNoteRelationChange,
-  ]); // Add selectedStory?.id and fetchNoteRelations to dependencies
+  ]);
 
   useEffect(() => {
     if (note) {

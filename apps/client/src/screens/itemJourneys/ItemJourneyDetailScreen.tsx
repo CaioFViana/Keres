@@ -188,14 +188,17 @@ const ItemJourneyDetailScreen = () => {
     [itemJourneyId, navigation, t, items],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
-    fetchItemJourney();
+    void fetchItemJourney();
+  }, [fetchItemJourney]);
+
+  // Event subscriptions never initiate an item-journey load.
+  useEffect(() => {
     entityEventEmitter.on('item_journey_changed', handleItemJourneyChange);
     return () => {
       entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
     };
-  }, [itemJourneyId, fetchItemJourney, handleItemJourneyChange]);
+  }, [handleItemJourneyChange]);
 
   const relatedItem = items.find((item) => item.id === itemJourney?.itemId);
   const relatedScene = scenes.find((scene) => scene.id === itemJourney?.sceneId);

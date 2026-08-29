@@ -1,6 +1,6 @@
 import type { LocationMapContentType } from '@keres/shared';
 import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
-import Svg, { Path, Polygon } from 'react-native-svg';
+import Svg, { G, Path, Polygon } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
@@ -56,6 +56,67 @@ type ActiveDrag = {
   y: number;
 };
 
+type WorldNode = LocationMapContentType['nodes'][number];
+type ConnectionPath = { id: string; path: string; color: string };
+type ContainsArrow = {
+  id: string;
+  path: string;
+  arrow: string;
+  arrowHalo: string;
+  color: string;
+};
+
+const ConnectionPathView = React.memo(function ConnectionPathView({
+  path,
+  background,
+}: {
+  path: ConnectionPath;
+  background: string;
+}) {
+  return (
+    <>
+      <Path
+        d={path.path}
+        fill="none"
+        stroke={background}
+        strokeWidth={HALO_WIDTH}
+        strokeOpacity={0.9}
+      />
+      <Path d={path.path} fill="none" stroke={path.color} strokeWidth={2} strokeOpacity={0.85} />
+    </>
+  );
+});
+
+const ContainsArrowView = React.memo(function ContainsArrowView({
+  arrow,
+  background,
+}: {
+  arrow: ContainsArrow;
+  background: string;
+}) {
+  return (
+    <>
+      <Path
+        d={arrow.path}
+        fill="none"
+        stroke={background}
+        strokeWidth={HALO_WIDTH}
+        strokeOpacity={0.9}
+      />
+      <Path
+        d={arrow.path}
+        fill="none"
+        stroke={arrow.color}
+        strokeWidth={2}
+        strokeDasharray={CONTAINS_DASH}
+        strokeOpacity={0.85}
+      />
+      <Polygon points={arrow.arrowHalo} fill={background} />
+      <Polygon points={arrow.arrow} fill={arrow.color} />
+    </>
+  );
+});
+
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
   return [
@@ -89,6 +150,18 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
+    const connectionCacheRef = useRef(
+      new Map<
+        string,
+        { relation: LocationMapConnection; from: WorldNode; to: WorldNode; path: ConnectionPath }
+      >(),
+    );
+    const containsCacheRef = useRef(
+      new Map<
+        string,
+        { relation: LocationMapContains; from: WorldNode; to: WorldNode; arrow: ContainsArrow }
+      >(),
+    );
     // The drag is measured in the surface coordinates from press time. That surface can gain a
     // negative-world margin while the pointer moves, so do not rebase a running gesture on it.
     const dragWorldOriginRef = useRef({ x: 0, y: 0 });
@@ -114,23 +187,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;
-
-    const displayContent = useMemo(() => {
-      if (size.originX === 0 && size.originY === 0) return layoutContent;
-      return {
-        ...layoutContent,
-        images: layoutContent.images.map((image) => ({
-          ...image,
-          x: image.x - size.originX,
-          y: image.y - size.originY,
-        })),
-        nodes: layoutContent.nodes.map((node) => ({
-          ...node,
-          x: node.x - size.originX,
-          y: node.y - size.originY,
-        })),
-      };
-    }, [layoutContent, size.originX, size.originY]);
 
     const publishPendingDrag = useCallback(() => {
       dragFrameRef.current = null;
@@ -203,62 +259,74 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [consumeDrag, onMoveNode, setChildDragging],
     );
 
-    const byLocation = useMemo(() => {
-      const map = new Map<string, { x: number; y: number; color: string }>();
-      for (const node of displayContent.nodes) {
-        map.set(node.locationId, { x: node.x, y: node.y, color: node.color });
+    const nodesByLocation = useMemo(() => {
+      const map = new Map<string, WorldNode>();
+      for (const node of layoutContent.nodes) {
+        map.set(node.locationId, node);
       }
       return map;
-    }, [displayContent.nodes]);
+    }, [layoutContent.nodes]);
 
     // `connected_to` is a solid line between the two nodes' borders, coloured halfway between the
     // two nodes' colours.
-    const connectionPaths = useMemo(
-      () =>
-        connections
-          .filter(
-            (connection) =>
-              byLocation.has(connection.locationAId) && byLocation.has(connection.locationBId),
-          )
-          .map((connection) => {
-            const a = byLocation.get(connection.locationAId)!;
-            const b = byLocation.get(connection.locationBId)!;
-            const start = pointOnCircleBoundary(a, b, NODE_RADIUS + LINE_END_MARGIN);
-            const end = pointOnCircleBoundary(b, a, NODE_RADIUS + LINE_END_MARGIN);
-            return {
-              id: `${connection.locationAId}-${connection.locationBId}`,
-              path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
-              color: interpolateColor(a.color, b.color),
-            };
-          }),
-      [byLocation, connections],
-    );
+    const connectionPaths = useMemo(() => {
+      const activeIds = new Set<string>();
+      const next = connections.flatMap((connection) => {
+        const from = nodesByLocation.get(connection.locationAId);
+        const to = nodesByLocation.get(connection.locationBId);
+        if (!from || !to) return [];
+        const id = `${connection.locationAId}-${connection.locationBId}`;
+        activeIds.add(id);
+        const cached = connectionCacheRef.current.get(id);
+        if (cached?.relation === connection && cached.from === from && cached.to === to)
+          return [cached.path];
+        const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
+        const end = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
+        const path = {
+          id,
+          path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+          color: interpolateColor(from.color, to.color),
+        };
+        connectionCacheRef.current.set(id, { relation: connection, from, to, path });
+        return [path];
+      });
+      for (const id of connectionCacheRef.current.keys()) {
+        if (!activeIds.has(id)) connectionCacheRef.current.delete(id);
+      }
+      return next;
+    }, [connections, nodesByLocation]);
 
     // `contains` is a dashed arrow from the parent's border to the child's border, so the tip is
     // visible instead of hidden under the target node.
-    const containsArrows = useMemo(
-      () =>
-        contains
-          .filter(
-            (relation) =>
-              byLocation.has(relation.parentLocationId) && byLocation.has(relation.childLocationId),
-          )
-          .map((relation) => {
-            const from = byLocation.get(relation.parentLocationId)!;
-            const to = byLocation.get(relation.childLocationId)!;
-            const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
-            const tip = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
-            const angle = Math.atan2(tip.y - start.y, tip.x - start.x);
-            return {
-              id: `${relation.parentLocationId}-${relation.childLocationId}`,
-              path: `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`,
-              arrow: arrowHeadPoints(tip.x, tip.y, angle, 10),
-              arrowHalo: arrowHeadPoints(tip.x, tip.y, angle, 13),
-              color: interpolateColor(from.color, to.color),
-            };
-          }),
-      [byLocation, contains],
-    );
+    const containsArrows = useMemo(() => {
+      const activeIds = new Set<string>();
+      const next = contains.flatMap((relation) => {
+        const from = nodesByLocation.get(relation.parentLocationId);
+        const to = nodesByLocation.get(relation.childLocationId);
+        if (!from || !to) return [];
+        const id = `${relation.parentLocationId}-${relation.childLocationId}`;
+        activeIds.add(id);
+        const cached = containsCacheRef.current.get(id);
+        if (cached?.relation === relation && cached.from === from && cached.to === to)
+          return [cached.arrow];
+        const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
+        const tip = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
+        const angle = Math.atan2(tip.y - start.y, tip.x - start.x);
+        const arrow = {
+          id,
+          path: `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`,
+          arrow: arrowHeadPoints(tip.x, tip.y, angle, 10),
+          arrowHalo: arrowHeadPoints(tip.x, tip.y, angle, 13),
+          color: interpolateColor(from.color, to.color),
+        };
+        containsCacheRef.current.set(id, { relation, from, to, arrow });
+        return [arrow];
+      });
+      for (const id of containsCacheRef.current.keys()) {
+        if (!activeIds.has(id)) containsCacheRef.current.delete(id);
+      }
+      return next;
+    }, [contains, nodesByLocation]);
 
     return (
       <GraphCanvasFrame
@@ -267,13 +335,15 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
-        {displayContent.images.map((image) => (
+        {layoutContent.images.map((image) => (
           <LocationMapImageView
             key={image.id}
             image={image}
             uri={imageUris[image.galleryId] ?? null}
             selected={selectedImageId === image.id}
             scale={scale}
+            positionOffsetX={-size.originX}
+            positionOffsetY={-size.originY}
             locked={image.locked}
             onSelect={onSelectImage}
             onMove={handleImageDragMove}
@@ -287,53 +357,24 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           pointerEvents="none"
           style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0 }}
         >
+          <G transform={`translate(${-size.originX} ${-size.originY})`}>
           {connectionPaths.map((connection) => (
-            <React.Fragment key={connection.id}>
-              <Path
-                d={connection.path}
-                fill="none"
-                stroke={colors.background}
-                strokeWidth={HALO_WIDTH}
-                strokeOpacity={0.9}
-              />
-              <Path
-                d={connection.path}
-                fill="none"
-                stroke={connection.color}
-                strokeWidth={2}
-                strokeOpacity={0.85}
-              />
-            </React.Fragment>
+            <ConnectionPathView key={connection.id} path={connection} background={colors.background} />
           ))}
           {containsArrows.map((arrow) => (
-            <React.Fragment key={arrow.id}>
-              <Path
-                d={arrow.path}
-                fill="none"
-                stroke={colors.background}
-                strokeWidth={HALO_WIDTH}
-                strokeOpacity={0.9}
-              />
-              <Path
-                d={arrow.path}
-                fill="none"
-                stroke={arrow.color}
-                strokeWidth={2}
-                strokeDasharray={CONTAINS_DASH}
-                strokeOpacity={0.85}
-              />
-              <Polygon points={arrow.arrowHalo} fill={colors.background} />
-              <Polygon points={arrow.arrow} fill={arrow.color} />
-            </React.Fragment>
+            <ContainsArrowView key={arrow.id} arrow={arrow} background={colors.background} />
           ))}
+          </G>
         </Svg>
-        {displayContent.nodes.map((node) => (
+        {layoutContent.nodes.map((node) => (
           <LocationMapNodeView
             key={node.id}
             node={node}
             name={nodeNames[node.locationId] ?? node.locationId}
             selected={selectedNodeId === node.id}
             scale={scale}
+            positionOffsetX={-size.originX}
+            positionOffsetY={-size.originY}
             onSelect={onSelectNode}
             onMove={handleNodeDragMove}
             onDragStart={handleNodeDragStart}

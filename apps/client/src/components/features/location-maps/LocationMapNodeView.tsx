@@ -12,6 +12,9 @@ interface Props {
   name: string;
   selected: boolean;
   scale: number;
+  /** Surface translation for the world-coordinate canvas. */
+  positionOffsetX?: number;
+  positionOffsetY?: number;
   onSelect: (nodeId: string) => void;
   onMove: (nodeId: string, x: number, y: number) => void;
   onDragStart: (nodeId: string) => void;
@@ -27,18 +30,20 @@ const LocationMapNodeView: React.FC<Props> = ({
   name,
   selected,
   scale,
+  positionOffsetX = 0,
+  positionOffsetY = 0,
   onSelect,
   onMove,
   onDragStart,
   onDragEnd,
 }) => {
   const { colors } = useTheme();
-  const origin = useRef({ x: node.x, y: node.y });
+  const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
   const dragging = useRef(false);
   const nodeId = useRef(node.id);
   nodeId.current = node.id;
-  const position = useRef({ x: node.x, y: node.y });
-  position.current = { x: node.x, y: node.y };
+  const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
+  position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const handlers = useRef({ onSelect, onMove, onDragStart, onDragEnd });
@@ -99,15 +104,16 @@ const LocationMapNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  if (!dragging.current)
+    origin.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: node.x - LOCATION_MAP_NODE_SIZE / 2,
-          top: node.y - LOCATION_MAP_NODE_SIZE / 2,
+          left: node.x + positionOffsetX - LOCATION_MAP_NODE_SIZE / 2,
+          top: node.y + positionOffsetY - LOCATION_MAP_NODE_SIZE / 2,
           width: LOCATION_MAP_NODE_SIZE,
           alignItems: 'center',
           ...(Platform.OS === 'web'
@@ -140,7 +146,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           textShadowOffset: { width: 0, height: 0 },
         },
       }),
-    [colors, node.color, node.x, node.y, selected],
+    [colors, node.color, node.x, node.y, positionOffsetX, positionOffsetY, selected],
   );
 
   return (

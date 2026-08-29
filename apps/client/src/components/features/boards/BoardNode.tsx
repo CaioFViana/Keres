@@ -23,6 +23,9 @@ interface Props {
   ghost?: boolean;
   selected: boolean;
   scale: number;
+  /** Surface translation for the world-coordinate canvas. */
+  positionOffsetX?: number;
+  positionOffsetY?: number;
   /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
   galleryMedia?: BoardGalleryMedia | null;
   onSelect: (node: BoardNodeType) => void;
@@ -39,6 +42,8 @@ const BoardNodeView: React.FC<Props> = ({
   ghost,
   selected,
   scale,
+  positionOffsetX = 0,
+  positionOffsetY = 0,
   galleryMedia,
   onSelect,
   onMove,
@@ -50,14 +55,14 @@ const BoardNodeView: React.FC<Props> = ({
    * The responder is created once. Recreating it on every parent render (each `onMove`) drops the
    * mouse on the web as soon as the pin leaves the original hit box.
    */
-  const origin = useRef({ x: node.x, y: node.y });
+  const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
   const dragging = useRef(false);
   const nodeRef = useRef(node);
   nodeRef.current = node;
   const nodeId = useRef(node.id);
   nodeId.current = node.id;
-  const position = useRef({ x: node.x, y: node.y });
-  position.current = { x: node.x, y: node.y };
+  const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
+  position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const handlers = useRef({ onSelect, onMove, onDragStart, onDragEnd });
@@ -118,7 +123,8 @@ const BoardNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  if (!dragging.current)
+    origin.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
 
   const hasGalleryImage =
     node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia);
@@ -136,8 +142,8 @@ const BoardNodeView: React.FC<Props> = ({
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: node.x,
-          top: node.y,
+          left: node.x + positionOffsetX,
+          top: node.y + positionOffsetY,
           width: size.width,
           height: size.height,
           borderRadius: 10,
@@ -172,7 +178,7 @@ const BoardNodeView: React.FC<Props> = ({
         typeLabel: { fontSize: 10, fontWeight: '600', marginTop: 3, textTransform: 'uppercase' },
         body: { fontSize: 11, color: colors.text, marginTop: 6, lineHeight: 14 },
       }),
-    [colors, ghost, hasGalleryImage, node, selected, size],
+    [colors, ghost, hasGalleryImage, node, positionOffsetX, positionOffsetY, selected, size],
   );
 
   const appearance = getEntityAppearance(

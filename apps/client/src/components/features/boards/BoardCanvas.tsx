@@ -1,6 +1,6 @@
 import type { BoardContentType, BoardNodeType } from '@keres/shared';
 import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
-import Svg, { Path, Polygon, Text as SvgText } from 'react-native-svg';
+import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
@@ -30,6 +30,57 @@ interface Props {
 }
 
 type ActiveDrag = { id: string; x: number; y: number };
+type BoardEdgeGeometry = ReturnType<typeof boardEdgeGeometry>;
+
+/** Individual SVG edges stay mounted; only an edge whose cached geometry changed updates on drag. */
+const BoardEdgeView = React.memo(function BoardEdgeView({
+  edge,
+  stroke,
+  labelBackground,
+}: {
+  edge: BoardEdgeGeometry;
+  stroke: string;
+  labelBackground: string;
+}) {
+  return (
+    <>
+      <Path
+        d={edge.path}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={edge.directed ? 2 : 1.6}
+        strokeOpacity={0.85}
+      />
+      {edge.directed && <Polygon points={edge.arrow.points} fill={stroke} />}
+      {!!edge.label && (
+        <>
+          <SvgText
+            x={edge.labelX}
+            y={edge.labelY}
+            fill={labelBackground}
+            stroke={labelBackground}
+            strokeWidth={4}
+            fontSize={11}
+            fontWeight="600"
+            textAnchor="middle"
+          >
+            {edge.label}
+          </SvgText>
+          <SvgText
+            x={edge.labelX}
+            y={edge.labelY}
+            fill={stroke}
+            fontSize={11}
+            fontWeight="600"
+            textAnchor="middle"
+          >
+            {edge.label}
+          </SvgText>
+        </>
+      )}
+    </>
+  );
+});
 
 const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
   ({ content, titles, selectedNodeId, galleryMediaById, onSelectNode, onMoveNode }, ref) => {
@@ -38,6 +89,18 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
+    const edgeCacheRef = useRef(
+      new Map<
+        string,
+        {
+          edge: BoardContentType['edges'][number];
+          from: BoardNodeType;
+          to: BoardNodeType;
+          galleryMediaById: BoardGalleryMediaById | undefined;
+              geometry: BoardEdgeGeometry;
+        }
+      >(),
+    );
     // Gesture coordinates remain relative to the surface that existed at press time. The surface
     // may grow while dragging past zero, so this origin must stay fixed until release.
     const dragWorldOriginRef = useRef({ x: 0, y: 0 });
@@ -55,17 +118,6 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
     const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
     const { setChildDragging, getTransform, ...frame } = panZoom;
     const scale = getTransform().scale;
-    const displayNodes = useMemo(
-      () =>
-        size.originX === 0 && size.originY === 0
-          ? layoutNodes
-          : layoutNodes.map((node) => ({
-              ...node,
-              x: node.x - size.originX,
-              y: node.y - size.originY,
-            })),
-      [layoutNodes, size.originX, size.originY],
-    );
 
     const publishPendingDrag = useCallback(() => {
       dragFrameRef.current = null;
@@ -113,18 +165,35 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       [consumeNodeDrag, onMoveNode, setChildDragging],
     );
     const nodesById = useMemo(() => {
-      const map = new Map(displayNodes.map((node) => [node.id, node]));
+      const map = new Map(layoutNodes.map((node) => [node.id, node]));
       return map;
-    }, [displayNodes]);
+    }, [layoutNodes]);
 
-    const edges = content.edges
-      .map((edge) => {
+    const edges = useMemo(() => {
+      const activeIds = new Set<string>();
+      const next = content.edges.flatMap((edge) => {
         const from = nodesById.get(edge.from);
         const to = nodesById.get(edge.to);
-        if (!from || !to) return null;
-        return boardEdgeGeometry(from, to, edge, galleryMediaById);
-      })
-      .filter((edge): edge is NonNullable<typeof edge> => edge !== null);
+        if (!from || !to) return [];
+        activeIds.add(edge.id);
+        const cached = edgeCacheRef.current.get(edge.id);
+        if (
+          cached?.edge === edge &&
+          cached.from === from &&
+          cached.to === to &&
+          cached.galleryMediaById === galleryMediaById
+        ) {
+          return [cached.geometry];
+        }
+        const geometry = boardEdgeGeometry(from, to, edge, galleryMediaById);
+        edgeCacheRef.current.set(edge.id, { edge, from, to, galleryMediaById, geometry });
+        return [geometry];
+      });
+      for (const id of edgeCacheRef.current.keys()) {
+        if (!activeIds.has(id)) edgeCacheRef.current.delete(id);
+      }
+      return next;
+    }, [content.edges, galleryMediaById, nodesById]);
 
     return (
       <GraphCanvasFrame
@@ -133,7 +202,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
-        {displayNodes.map((node) => {
+        {layoutNodes.map((node) => {
           const meta = titles[node.id];
           return (
             <BoardNodeView
@@ -145,6 +214,8 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               ghost={meta?.ghost}
               selected={selectedNodeId === node.id}
               scale={scale}
+              positionOffsetX={-size.originX}
+              positionOffsetY={-size.originY}
               galleryMedia={
                 node.kind === 'entity' && node.entityType === 'Gallery'
                   ? galleryMediaById?.[node.entityId]
@@ -161,46 +232,18 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           width={size.width}
           height={size.height}
           pointerEvents="none"
-          style={{ overflow: 'visible' }}
+          style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0 }}
         >
-          {edges.map((edge) => (
-            <React.Fragment key={edge.id}>
-              <Path
-                d={edge.path}
-                fill="none"
+          <G transform={`translate(${-size.originX} ${-size.originY})`}>
+            {edges.map((edge) => (
+              <BoardEdgeView
+                key={edge.id}
+                edge={edge}
                 stroke={colors.text}
-                strokeWidth={edge.directed ? 2 : 1.6}
-                strokeOpacity={0.85}
+                labelBackground={colors.background}
               />
-              {edge.directed && <Polygon points={edge.arrow.points} fill={colors.text} />}
-              {!!edge.label && (
-                <React.Fragment>
-                  <SvgText
-                    x={edge.labelX}
-                    y={edge.labelY}
-                    fill={colors.background}
-                    stroke={colors.background}
-                    strokeWidth={4}
-                    fontSize={11}
-                    fontWeight="600"
-                    textAnchor="middle"
-                  >
-                    {edge.label}
-                  </SvgText>
-                  <SvgText
-                    x={edge.labelX}
-                    y={edge.labelY}
-                    fill={colors.text}
-                    fontSize={11}
-                    fontWeight="600"
-                    textAnchor="middle"
-                  >
-                    {edge.label}
-                  </SvgText>
-                </React.Fragment>
-              )}
-            </React.Fragment>
-          ))}
+            ))}
+          </G>
         </Svg>
       </GraphCanvasFrame>
     );

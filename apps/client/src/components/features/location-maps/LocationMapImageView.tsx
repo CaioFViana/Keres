@@ -10,6 +10,9 @@ interface Props {
   uri: string | null;
   selected: boolean;
   scale: number;
+  /** Surface translation for the world-coordinate canvas. */
+  positionOffsetX?: number;
+  positionOffsetY?: number;
   /** When locked, dragging on the image pans the canvas instead of moving the image. */
   locked: boolean;
   onSelect: (imageId: string) => void;
@@ -31,6 +34,8 @@ const LocationMapImageView: React.FC<Props> = ({
   uri,
   selected,
   scale,
+  positionOffsetX = 0,
+  positionOffsetY = 0,
   locked,
   onSelect,
   onMove,
@@ -38,12 +43,12 @@ const LocationMapImageView: React.FC<Props> = ({
   onDragEnd,
 }) => {
   const { colors } = useTheme();
-  const origin = useRef({ x: image.x, y: image.y });
+  const origin = useRef({ x: image.x + positionOffsetX, y: image.y + positionOffsetY });
   const dragging = useRef(false);
   const imageId = useRef(image.id);
   imageId.current = image.id;
-  const position = useRef({ x: image.x, y: image.y });
-  position.current = { x: image.x, y: image.y };
+  const position = useRef({ x: image.x + positionOffsetX, y: image.y + positionOffsetY });
+  position.current = { x: image.x + positionOffsetX, y: image.y + positionOffsetY };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const lockedRef = useRef(locked);
@@ -107,15 +112,16 @@ const LocationMapImageView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current) origin.current = { x: image.x, y: image.y };
+  if (!dragging.current)
+    origin.current = { x: image.x + positionOffsetX, y: image.y + positionOffsetY };
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         image: {
           position: 'absolute',
-          left: image.x,
-          top: image.y,
+          left: image.x + positionOffsetX,
+          top: image.y + positionOffsetY,
           width: image.width,
           height: image.height,
           backgroundColor: colors.surface,
@@ -126,7 +132,7 @@ const LocationMapImageView: React.FC<Props> = ({
             : {}),
         },
       }),
-    [colors, image.height, image.width, image.x, image.y, selected],
+    [colors, image.height, image.width, image.x, image.y, positionOffsetX, positionOffsetY, selected],
   );
 
   return (

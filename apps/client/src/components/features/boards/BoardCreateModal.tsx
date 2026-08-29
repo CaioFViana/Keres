@@ -72,7 +72,7 @@ const BoardCreateModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) => 
         <TextInput
           value={description}
           onChangeText={setDescription}
-          placeholder={t('title_optional')}
+          placeholder={t('board_description_placeholder')}
           style={commonInputStyles.input}
         />
       </View>

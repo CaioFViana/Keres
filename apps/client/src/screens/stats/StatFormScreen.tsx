@@ -47,7 +47,7 @@ const StatFormScreen = () => {
   useDocumentTitle(title);
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ title });
+      navigation.getParent()?.setOptions({ title, headerRight: undefined });
     }, [navigation, title]),
   );
 

@@ -39,7 +39,10 @@ const CustomizationIndexScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('customization_title') });
+      navigation.getParent()?.setOptions({
+        title: t('customization_title'),
+        headerRight: undefined,
+      });
       setDocumentTitle(t('customization_title'));
     }, [navigation, t]),
   );

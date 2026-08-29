@@ -48,7 +48,7 @@ const StatRankingScreen = () => {
   useDocumentTitle(t('stat_ranking_title'));
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('stat_ranking_title') });
+      navigation.getParent()?.setOptions({ title: t('stat_ranking_title'), headerRight: undefined });
     }, [navigation, t]),
   );
 

@@ -90,7 +90,7 @@ const StatComparisonScreen = () => {
   useDocumentTitle(t('stat_compare_title'));
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('stat_compare_title') });
+      navigation.getParent()?.setOptions({ title: t('stat_compare_title'), headerRight: undefined });
     }, [navigation, t]),
   );
 

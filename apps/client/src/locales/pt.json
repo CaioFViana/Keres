@@ -161,6 +161,7 @@
   "board_connect_pick": "Ligar a…",
   "board_copy_name": "{{name}} (cópia)",
   "board_create_title": "Novo board",
+  "board_description_placeholder": "Digite uma descrição (opcional)",
   "board_delete_message": "Remover este board? O desenho some; as entidades da história ficam.",
   "board_delete_title": "Excluir board",
   "board_deleted_entity": "Entidade excluída",

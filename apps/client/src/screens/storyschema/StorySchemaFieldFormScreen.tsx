@@ -80,6 +80,7 @@ const StorySchemaFieldFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_attribute_title') : t('create_attribute_title'),
+        headerRight: undefined,
       });
     }, [navigation, isEditing, t]),
   );

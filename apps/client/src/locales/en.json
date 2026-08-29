@@ -161,6 +161,7 @@
   "board_connect_pick": "Connect to…",
   "board_copy_name": "{{name}} (copy)",
   "board_create_title": "New board",
+  "board_description_placeholder": "Enter a description (optional)",
   "board_delete_message": "Remove this board? The drawing is deleted; the story's entities stay.",
   "board_delete_title": "Delete board",
   "board_deleted_entity": "Deleted entity",

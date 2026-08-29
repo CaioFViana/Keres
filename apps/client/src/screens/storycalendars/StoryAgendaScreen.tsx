@@ -39,10 +39,11 @@ import { CustomCalendarDateLookup, GregorianCalendarDateLookup } from './AgendaD
  * useless and the only thing that would make this screen expensive. Navigating by content answers
  * the scale problem and gives the grid a purpose it does not have on its own.
  *
- * ## Why it needs the epoch
+ * ## Why it benefits from the epoch
  *
- * Without one no scene has an absolute day, so there is nothing to place. The screen says that
- * rather than drawing an empty calendar, which would read as broken.
+ * Without one no scene has an absolute day, so nothing can be placed. The grid remains useful,
+ * though: a parallel calendar still needs to be browsed and consulted before the writer anchors
+ * the story on it.
  */
 const StoryAgendaScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -90,15 +91,25 @@ const StoryAgendaScreen = () => {
     useCallback(() => {
       // The drawer owns the header, so the title has to be set on the parent - see
       // `StorySettingsScreen` for what happens when it is not.
-      navigation.getParent()?.setOptions({ title: t('agenda_title') });
+      navigation.getParent()?.setOptions({ title: t('agenda_title'), headerRight: undefined });
       setDocumentTitle(t('agenda_title'));
     }, [navigation, t]),
   );
 
-  // Opens on the month holding the first thing that happens, not on year one.
+  // Opens on the month holding the first thing that happens, not on year one. A calendar without
+  // an epoch is still browseable; begin it at its own year one rather than hiding its viewer.
   useEffect(() => {
-    if (cursor === null && entries.length > 0) setCursor(entries[0].dayNumber);
-  }, [cursor, entries]);
+    if (cursor !== null) return;
+    if (entries.length > 0) {
+      setCursor(entries[0].dayNumber);
+      return;
+    }
+    setCursor(
+      definition
+        ? partsToDayNumber(definition, { year: 1, month: 1, day: 1 })
+        : gregorianDayNumber({ year: 1, month: 1, day: 1 }),
+    );
+  }, [cursor, definition, entries]);
 
   const byDay = useMemo(() => {
     const map = new Map<number, typeof entries>();
@@ -156,12 +167,9 @@ const StoryAgendaScreen = () => {
         lookupField: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
         lookupLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 3 },
         lookupInput: {
-          borderWidth: 1,
-          borderColor: colors.border,
-          color: colors.text,
-          borderRadius: 8,
-          paddingHorizontal: 10,
-          minHeight: 46,
+          // `TextInput` already applies the shared input style. Do not override its border here:
+          // doing so made Year look like an unstyled browser field until hover/focus on web.
+          marginBottom: 0,
         },
         lookupYear: { flexGrow: 0, flexShrink: 1, flexBasis: 118 },
         lookupMonth: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
@@ -232,18 +240,6 @@ const StoryAgendaScreen = () => {
       }),
     [colors],
   );
-
-  if (story?.timelineEpochDay === null || story?.timelineEpochDay === undefined)
-    return (
-      <View style={styles.root}>
-        <Text style={styles.message}>{t('agenda_no_epoch')}</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('StoryCalendarList')}>
-          <Text style={[styles.message, { color: colors.primary, paddingTop: 0 }]}>
-            {t('calendar_epoch_title')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
 
   if (loading || cursor === null)
     return (
@@ -337,6 +333,14 @@ const StoryAgendaScreen = () => {
           />
         ) : (
           <GregorianCalendarDateLookup cursor={cursor} onMonthChange={setCursor} styles={styles} />
+        )}
+
+        {(story?.timelineEpochDay === null || story?.timelineEpochDay === undefined) && (
+          <TouchableOpacity onPress={() => navigation.navigate('StoryCalendarList')}>
+            <Text style={[styles.aside, { color: colors.textSecondary, marginTop: 0 }]}>
+              {t('agenda_no_epoch')}
+            </Text>
+          </TouchableOpacity>
         )}
 
         <View style={styles.nav}>

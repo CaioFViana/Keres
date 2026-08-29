@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 /**
  * A repeatable row of small fields: months, eras, seasons, moons.
@@ -15,6 +16,8 @@ import { useTheme } from '@/src/theme';
 
 export interface CalendarRowField<T> {
   key: keyof T & string;
+  /** Persistent label above the field; placeholders alone are too ambiguous in dense rows. */
+  label: string;
   placeholder: string;
   /** Numeric fields are typed digit-by-digit; `signed` also allows a leading minus. */
   kind: 'text' | 'number' | 'signed' | 'decimal' | 'choice';
@@ -58,19 +61,34 @@ function CalendarRowList<T extends Record<string, unknown>>({
 }: Props<T>) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         title: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 18 },
         hint: { fontSize: 12, color: colors.textSecondary, lineHeight: 17, marginTop: 4 },
-        row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+        row: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'flex-end',
+          gap: 6,
+          marginTop: 8,
+        },
+        field: { flexShrink: 1 },
+        fieldWithRemove: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, flexShrink: 1 },
+        fieldLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 3 },
         input: { marginBottom: 0, width: undefined },
+        choiceInput: {
+          ...StyleSheet.flatten(inputStyles.input),
+          justifyContent: 'center',
+        },
         empty: { fontSize: 13, color: colors.textSecondary, marginTop: 8 },
         add: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
         addText: { fontSize: 14, fontWeight: '700', color: colors.primary },
+        remove: { height: 50, minWidth: 22, justifyContent: 'center', alignItems: 'center' },
       }),
-    [colors],
+    [colors, inputStyles.input],
   );
 
   // The parent validates the entire definition on every edit. Keep the row callbacks stable and
@@ -116,47 +134,79 @@ function CalendarRowList<T extends Record<string, unknown>>({
       {rows.map((row, index) => (
         // The index is the identity: these lists have no ids, and reordering is not offered.
         <View key={index} style={styles.row}>
-          {fields.map((field) => (
-            <View key={field.key} style={{ flexGrow: field.flex, flexShrink: 1, flexBasis: 0 }}>
-              {field.kind === 'choice' ? (
-                <TouchableOpacity
-                  style={styles.input}
-                  disabled={!editable}
-                  onPress={() => {
-                    const choices = field.choices ?? [];
-                    const current = String(row[field.key] ?? '');
-                    const choiceIndex = choices.findIndex((choice) => choice.value === current);
-                    const next = choices[(choiceIndex + 1) % choices.length];
-                    if (next) patch(index, field.key, next.value, field.kind);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={field.placeholder}
+          {fields.map((field, fieldIndex) => {
+            const fieldWidth = field.flex >= 3 ? 150 : field.flex >= 2 ? 116 : 90;
+            const isLastField = fieldIndex === fields.length - 1;
+            const control = (
+              <>
+                <Text style={styles.fieldLabel}>{field.label}</Text>
+                {field.kind === 'choice' ? (
+                  <TouchableOpacity
+                    style={[styles.choiceInput, styles.input]}
+                    disabled={!editable}
+                    onPress={() => {
+                      const choices = field.choices ?? [];
+                      const current = String(row[field.key] ?? '');
+                      const choiceIndex = choices.findIndex((choice) => choice.value === current);
+                      const next = choices[(choiceIndex + 1) % choices.length];
+                      if (next) patch(index, field.key, next.value, field.kind);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={field.label}
+                  >
+                    <Text style={{ color: colors.text }} numberOfLines={1}>
+                      {field.choices?.find((choice) => choice.value === row[field.key])?.label ??
+                        field.placeholder}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TextInput
+                    placeholder={field.placeholder}
+                    value={String(row[field.key] ?? '')}
+                    editable={editable}
+                    onChangeText={(text) => {
+                      if (!isTypable(field.kind, text)) return;
+                      patch(index, field.key, text, field.kind);
+                    }}
+                    keyboardType={field.kind === 'text' ? 'default' : 'numbers-and-punctuation'}
+                    style={styles.input}
+                  />
+                )}
+              </>
+            );
+
+            const fieldStyle = {
+              flexGrow: field.flex,
+              flexBasis: fieldWidth,
+              minWidth: fieldWidth,
+            };
+
+            // The removal affordance travels with the final field, so wrapping a dense row never
+            // leaves a lone X on the following line.
+            if (editable && isLastField) {
+              return (
+                <View
+                  key={field.key}
+                  style={[styles.fieldWithRemove, { ...fieldStyle, minWidth: fieldWidth + 28 }]}
                 >
-                  <Text style={{ color: colors.text }} numberOfLines={1}>
-                    {field.choices?.find((choice) => choice.value === row[field.key])?.label ??
-                      field.placeholder}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TextInput
-                  placeholder={field.placeholder}
-                  value={String(row[field.key] ?? '')}
-                  editable={editable}
-                  onChangeText={(text) => {
-                    if (!isTypable(field.kind, text)) return;
-                    patch(index, field.key, text, field.kind);
-                  }}
-                  keyboardType={field.kind === 'text' ? 'default' : 'numbers-and-punctuation'}
-                  style={styles.input}
-                />
-              )}
-            </View>
-          ))}
-          {editable && (
-            <TouchableOpacity onPress={() => remove(index)} accessibilityLabel={t('delete')}>
-              <Ionicons name="close-circle-outline" size={22} color={colors.error} />
-            </TouchableOpacity>
-          )}
+                  <View style={[styles.field, { flex: 1, minWidth: fieldWidth }]}>{control}</View>
+                  <TouchableOpacity
+                    style={styles.remove}
+                    onPress={() => remove(index)}
+                    accessibilityLabel={t('delete')}
+                  >
+                    <Ionicons name="close-circle-outline" size={22} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+
+            return (
+              <View key={field.key} style={[styles.field, fieldStyle]}>
+                {control}
+              </View>
+            );
+          })}
         </View>
       ))}
 

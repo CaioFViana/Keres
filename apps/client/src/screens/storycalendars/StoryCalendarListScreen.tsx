@@ -103,10 +103,23 @@ const StoryCalendarListScreen = () => {
     useCallback(() => {
       // The drawer owns the header, so the title has to be set on the parent - see
       // `StorySettingsScreen` for what happens when it is not.
-      navigation.getParent()?.setOptions({ title: t('calendar_list_title') });
+      navigation.getParent()?.setOptions({
+        title: t('calendar_list_title'),
+        headerRight: canEdit
+          ? () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('StoryCalendarForm', {})}
+                style={{ marginRight: 15 }}
+                accessibilityLabel={t('calendar_add')}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )
+          : undefined,
+      });
       setDocumentTitle(t('calendar_list_title'));
       void reload();
-    }, [navigation, reload, t]),
+    }, [canEdit, colors.text, navigation, reload, t]),
   );
 
   const promote = useCallback(
@@ -324,18 +337,6 @@ const StoryCalendarListScreen = () => {
         action: { flexDirection: 'row', alignItems: 'center', gap: 5 },
         actionText: { fontSize: 13, fontWeight: '700', color: colors.primary },
         empty: { fontSize: 14, color: colors.textSecondary, lineHeight: 21, paddingVertical: 10 },
-        add: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          paddingVertical: 13,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderStyle: 'dashed',
-          borderColor: colors.primary,
-        },
-        addText: { fontSize: 15, fontWeight: '700', color: colors.primary },
         epochRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
         epochField: { flexGrow: 1, flexShrink: 1, flexBasis: 90, minWidth: 72 },
         epochLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 3 },
@@ -559,16 +560,6 @@ const StoryCalendarListScreen = () => {
               </View>
             )}
           </View>
-        )}
-
-        {canEdit && (
-          <TouchableOpacity
-            style={styles.add}
-            onPress={() => navigation.navigate('StoryCalendarForm', {})}
-          >
-            <Ionicons name="add-circle-outline" size={19} color={colors.primary} />
-            <Text style={styles.addText}>{t('calendar_add')}</Text>
-          </TouchableOpacity>
         )}
       </ScrollView>
     </View>

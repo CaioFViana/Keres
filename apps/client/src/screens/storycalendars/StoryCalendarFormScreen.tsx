@@ -67,7 +67,7 @@ const StoryCalendarFormScreen = () => {
       const title = t(calendarId ? 'calendar_edit_title' : 'calendar_new_title');
       // The drawer owns the header, so the title has to be set on the parent - see
       // `StorySettingsScreen` for what happens when it is not.
-      navigation.getParent()?.setOptions({ title });
+      navigation.getParent()?.setOptions({ title, headerRight: undefined });
       setDocumentTitle(title);
     }, [calendarId, navigation, t]),
   );
@@ -92,8 +92,20 @@ const StoryCalendarFormScreen = () => {
 
   const monthFields = useMemo<CalendarRowField<{ name: string; days: number }>[]>(
     () => [
-      { key: 'name', placeholder: t('calendar_month_name'), kind: 'text', flex: 3 },
-      { key: 'days', placeholder: t('calendar_month_days'), kind: 'number', flex: 1 },
+      {
+        key: 'name',
+        label: t('calendar_month_name'),
+        placeholder: t('calendar_month_name'),
+        kind: 'text',
+        flex: 3,
+      },
+      {
+        key: 'days',
+        label: t('calendar_month_days'),
+        placeholder: t('calendar_month_days'),
+        kind: 'number',
+        flex: 1,
+      },
     ],
     [t],
   );
@@ -267,11 +279,30 @@ const StoryCalendarFormScreen = () => {
             hint={t('calendar_eras_hint')}
             rows={definition.eras}
             fields={[
-              { key: 'name', placeholder: t('calendar_era_name'), kind: 'text', flex: 3 },
-              { key: 'abbreviation', placeholder: t('calendar_era_short'), kind: 'text', flex: 1 },
-              { key: 'startYear', placeholder: t('calendar_era_start'), kind: 'signed', flex: 1 },
+              {
+                key: 'name',
+                label: t('calendar_era_name'),
+                placeholder: t('calendar_era_name'),
+                kind: 'text',
+                flex: 3,
+              },
+              {
+                key: 'abbreviation',
+                label: t('calendar_era_short'),
+                placeholder: t('calendar_era_short'),
+                kind: 'text',
+                flex: 1,
+              },
+              {
+                key: 'startYear',
+                label: t('calendar_era_start'),
+                placeholder: t('calendar_era_start'),
+                kind: 'signed',
+                flex: 1,
+              },
               {
                 key: 'direction',
+                label: t('calendar_era_direction'),
                 placeholder: t('calendar_era_direction'),
                 kind: 'choice',
                 flex: 2,
@@ -298,9 +329,16 @@ const StoryCalendarFormScreen = () => {
             hint={t('calendar_seasons_hint')}
             rows={definition.seasons}
             fields={[
-              { key: 'name', placeholder: t('calendar_season_name'), kind: 'text', flex: 3 },
+              {
+                key: 'name',
+                label: t('calendar_season_name'),
+                placeholder: t('calendar_season_name'),
+                kind: 'text',
+                flex: 3,
+              },
               {
                 key: 'startDayOfYear',
+                label: t('calendar_season_start'),
                 placeholder: t('calendar_season_start'),
                 kind: 'number',
                 flex: 1,
@@ -318,15 +356,23 @@ const StoryCalendarFormScreen = () => {
             hint={t('calendar_moons_hint')}
             rows={definition.moons}
             fields={[
-              { key: 'name', placeholder: t('calendar_moon_name'), kind: 'text', flex: 3 },
+              {
+                key: 'name',
+                label: t('calendar_moon_name'),
+                placeholder: t('calendar_moon_name'),
+                kind: 'text',
+                flex: 3,
+              },
               {
                 key: 'periodDays',
+                label: t('calendar_moon_period'),
                 placeholder: t('calendar_moon_period'),
                 kind: 'decimal',
                 flex: 1,
               },
               {
                 key: 'referenceDay',
+                label: t('calendar_moon_reference'),
                 placeholder: t('calendar_moon_reference'),
                 kind: 'signed',
                 flex: 1,

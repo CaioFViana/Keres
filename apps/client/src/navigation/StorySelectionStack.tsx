@@ -11,6 +11,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -43,6 +44,7 @@ import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
+import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -113,17 +115,7 @@ const DrawerToggleButton = ({
   navigation,
 }: {
   navigation: StorySelectionMainDrawerNavigationProp;
-}) => {
-  const { colors } = useTheme();
-  return (
-    <TouchableOpacity
-      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-      style={{ marginLeft: 15 }}
-    >
-      <Ionicons name="menu" size={30} color={colors.text} />
-    </TouchableOpacity>
-  );
-};
+}) => <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />;
 
 const StorySelectionMainStackNavigator = () => {
   const { t } = useTranslation();
@@ -326,7 +318,8 @@ const StorySelectionNavigator = () => {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     {showNestedBackButton ? (
                       <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
-                    ) : !isWide ? (
+                    ) : null}
+                    {!isWide ? (
                       <DrawerToggleButton navigation={navigation} />
                     ) : null}
                     {showContextualHelp && helpPageId ? (
@@ -351,6 +344,8 @@ const StorySelectionNavigator = () => {
           drawerInactiveTintColor: colors.text,
           drawerType: isWide ? 'permanent' : 'front',
           swipeEnabled: !isWide,
+          swipeEdgeWidth: isWide ? 0 : DRAWER_SWIPE_EDGE_WIDTH,
+          swipeMinDistance: DRAWER_SWIPE_MIN_DISTANCE,
           drawerStyle: {
             backgroundColor: colors.surface,
             minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,

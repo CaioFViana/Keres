@@ -97,7 +97,10 @@ jest.mock(
 );
 jest.mock(
   '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
-  () => ({ __esModule: true, default: () => null }),
+  () => {
+    const { View } = jest.requireActual('react-native');
+    return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
+  },
 );
 jest.mock(
   '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay',
@@ -390,10 +393,40 @@ it('configures a compact, front drawer and preserves the current story as its da
   });
 
   expect(navigator).toMatchObject({ defaultStatus: 'closed', backBehavior: 'history' });
-  expect(options).toMatchObject({ drawerType: 'front', swipeEnabled: true });
+  expect(options).toMatchObject({
+    drawerType: 'front',
+    swipeEnabled: true,
+    swipeEdgeWidth: 28,
+    swipeMinDistance: 24,
+  });
   expect(options.drawerStyle).toMatchObject({ minWidth: 280, width: 360 });
   expect(drawerScreen('MainDashboard')?.options).toMatchObject({ title: 'A jornada' });
   expect(drawerScreen('ChoicesStack')).toBeUndefined();
+});
+
+it('keeps both back and menu controls on a nested compact screen', async () => {
+  mockResponsiveLayout.isCompact = true;
+  mockResponsiveLayout.isWide = false;
+  mockResponsiveLayout.width = 500;
+  await renderDrawer();
+  const navigator = mockDrawerNavigatorProps.at(-1);
+  const options = navigator?.screenOptions({
+    navigation: { getState: () => ({ routes: [] }) },
+    route: {
+      key: 'items-key',
+      name: 'ItemsStack',
+      state: {
+        type: 'stack',
+        key: 'items-stack',
+        index: 1,
+        routes: [{ name: 'ItemList' }, { name: 'ItemDetail' }],
+      },
+    },
+  });
+  const { getByTestId } = await render(<>{options.headerLeft()}</>);
+
+  expect(getByTestId('navigation-back-button')).toBeTruthy();
+  expect(getByTestId('drawer-menu-button')).toBeTruthy();
 });
 
 it.each([

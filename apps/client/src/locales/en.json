@@ -1138,6 +1138,7 @@
   "operation_log_no_changes": "No changes recorded for this operation.",
   "operation_log_not_found": "Operation log not found.",
   "operation_logs_title": "Operation Logs",
+  "open_navigation_menu": "Open navigation menu",
   "operation_note_relation_added": "{{noteRelationDescription}} added",
   "operation_note_relation_removed": "{{noteRelationDescription}} removed",
   "operation_tag_relation_added": "{{tagRelationDescription}} added",

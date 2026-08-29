@@ -224,7 +224,12 @@ it('uses the compact front drawer dimensions on small screens', async () => {
   const options = navigator?.screenOptions({ navigation: {}, route: { name: 'Settings' } });
 
   expect(navigator).toMatchObject({ defaultStatus: 'closed' });
-  expect(options).toMatchObject({ drawerType: 'front', swipeEnabled: true });
+  expect(options).toMatchObject({
+    drawerType: 'front',
+    swipeEnabled: true,
+    swipeEdgeWidth: 28,
+    swipeMinDistance: 24,
+  });
   expect(options.drawerStyle).toMatchObject({ minWidth: 300, width: 300 });
 });
 
@@ -312,5 +317,15 @@ describe('the packs stack', () => {
     focusOn('PackForm');
     const { queryByTestId } = await headerOf(packsRoute(0, 'PackForm'));
     expect(queryByTestId('navigation-back-button')).not.toBeNull();
+  });
+
+  it('keeps the menu beside the back control on compact screens', async () => {
+    mockResponsiveLayout.isCompact = true;
+    mockResponsiveLayout.isWide = false;
+    mockResponsiveLayout.width = 500;
+    const { getByTestId } = await headerOf(packsRoute(1, 'PackList', 'PackForm'));
+
+    expect(getByTestId('navigation-back-button')).toBeTruthy();
+    expect(getByTestId('drawer-menu-button')).toBeTruthy();
   });
 });

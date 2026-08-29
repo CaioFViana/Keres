@@ -16,6 +16,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
+import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -26,6 +27,7 @@ import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
 import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
+import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import type { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
@@ -515,17 +517,9 @@ const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
     return <Ionicons name={name} color={color} size={size} />;
   };
 
-const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
-  const { colors } = useTheme();
-  return (
-    <TouchableOpacity
-      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-      style={{ marginLeft: 15 }}
-    >
-      <Ionicons name="menu" size={30} color={colors.text} />
-    </TouchableOpacity>
-  );
-};
+const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => (
+  <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />
+);
 
 const MainSystemNavigator = () => {
   const { colors } = useTheme();
@@ -617,7 +611,8 @@ const MainSystemNavigator = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {showNestedBackButton ? (
                         <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
-                      ) : !isWide ? (
+                      ) : null}
+                      {!isWide ? (
                         <DrawerToggleButton
                           navigation={navigation as MainDashboardScreenNavigationProp}
                         />
@@ -644,6 +639,8 @@ const MainSystemNavigator = () => {
             drawerInactiveTintColor: colors.text,
             drawerType: isWide ? 'permanent' : 'front',
             swipeEnabled: !isWide,
+            swipeEdgeWidth: isWide ? 0 : DRAWER_SWIPE_EDGE_WIDTH,
+            swipeMinDistance: DRAWER_SWIPE_MIN_DISTANCE,
             drawerStyle: {
               backgroundColor: colors.surface,
               minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,

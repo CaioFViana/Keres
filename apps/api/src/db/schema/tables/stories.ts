@@ -53,6 +53,8 @@ export const stories = table('stories', {
    * the reader switches which calendar they are reading in.
    */
   timelineEpochDay: integer('timeline_epoch_day'),
+  /** Seconds after the beginning of the epoch day. */
+  timelineEpochSeconds: integer('timeline_epoch_seconds'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
   /** Renders entity names found in the story's text as links. See `entityMentions.ts` on the client. */

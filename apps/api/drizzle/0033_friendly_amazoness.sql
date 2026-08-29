@@ -1,0 +1,1 @@
+ALTER TABLE "stories" ADD COLUMN "timeline_epoch_seconds" integer;

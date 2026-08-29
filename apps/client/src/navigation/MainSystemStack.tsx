@@ -469,7 +469,7 @@ export type CustomizationStackParamList = {
   CustomizationIndex: undefined;
   StoryCalendarList: undefined;
   StoryCalendarForm: { calendarId?: string };
-  StoryAgenda: undefined;
+  StoryAgenda: { calendarId?: string } | undefined;
   StorySchemaList: undefined;
   StorySchemaFieldForm: { entityType: StorySchemaEntityType; fieldId?: string };
   Suggestions: undefined;

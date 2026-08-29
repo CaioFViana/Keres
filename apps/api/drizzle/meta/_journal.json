@@ -232,6 +232,13 @@
       "when": 1787929194346,
       "tag": "0032_lumpy_phantom_reporter",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788012167046,
+      "tag": "0033_friendly_amazoness",
+      "breakpoints": true
     }
   ]
 }

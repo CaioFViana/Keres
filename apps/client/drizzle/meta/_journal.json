@@ -225,6 +225,13 @@
       "when": 1787929197484,
       "tag": "0031_wonderful_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1788012172300,
+      "tag": "0032_bright_naoko",
+      "breakpoints": true
     }
   ]
 }

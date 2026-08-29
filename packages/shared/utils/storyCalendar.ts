@@ -334,6 +334,9 @@ export function dayNumberForElapsed(
   definition: CalendarDefinitionType,
   epochDay: number,
   elapsedSeconds: number,
+  epochSeconds = 0,
 ): number {
-  return epochDay + Math.floor(elapsedSeconds / calendarSecondsPerDay(definition));
+  return (
+    epochDay + Math.floor((epochSeconds + elapsedSeconds) / calendarSecondsPerDay(definition))
+  );
 }

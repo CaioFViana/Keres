@@ -27,6 +27,8 @@ export const stories = sqliteTable('stories', {
    * the reader switches which calendar they are reading in.
    */
   timelineEpochDay: integer('timeline_epoch_day'),
+  // Stored independently so an opening at night stays at night when dates are derived later.
+  timelineEpochSeconds: integer('timeline_epoch_seconds'),
   normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' })
     .notNull()
     .default(false),

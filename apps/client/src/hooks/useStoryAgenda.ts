@@ -1,7 +1,7 @@
+import type { CalendarDefinitionType } from '@keres/shared';
 import { dayNumberForElapsed } from '@keres/shared';
 import { useMemo } from 'react';
 import { useStoryTimeline } from './useStoryTimeline';
-import { useStoryCalendar } from './useStoryCalendar';
 import { useStoryStore } from '@/src/state/storyStore';
 
 /** One thing that happens on a day: a scene of the spine, or an anchored event. */
@@ -10,6 +10,7 @@ export interface AgendaEntry {
   name: string;
   kind: 'scene' | 'event';
   dayNumber: number;
+  summary?: string | null;
 }
 
 /**
@@ -22,22 +23,29 @@ export interface AgendaEntry {
  *
  * Empty whenever the story has no calendar or no epoch: without both, nothing has an absolute day.
  */
-export function useStoryAgenda() {
+export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
   const story = useStoryStore((state) => state.selectedStory);
-  const { definition } = useStoryCalendar(story?.id);
-  const { layout, loading } = useStoryTimeline();
+  const { layout, loading, scenes } = useStoryTimeline(definition);
 
   const entries = useMemo<AgendaEntry[]>(() => {
     const epochDay = story?.timelineEpochDay;
     if (!definition || epochDay === null || epochDay === undefined) return [];
 
-    const scenes = layout.rows
+    const summaries = new Map(scenes.map((scene) => [scene.id, scene.summary]));
+    const epochSeconds = story?.timelineEpochSeconds ?? 0;
+    const sceneEntries = layout.rows
       .filter((row) => row.elapsedSeconds !== undefined)
       .map((row) => ({
         id: row.id,
         name: row.name,
         kind: 'scene' as const,
-        dayNumber: dayNumberForElapsed(definition, epochDay, row.elapsedSeconds ?? 0),
+        dayNumber: dayNumberForElapsed(
+          definition,
+          epochDay,
+          row.elapsedSeconds ?? 0,
+          epochSeconds,
+        ),
+        summary: summaries.get(row.id) ?? null,
       }));
 
     /*
@@ -56,12 +64,12 @@ export function useStoryAgenda() {
           id: span.id,
           name: span.name,
           kind: 'event' as const,
-          dayNumber: dayNumberForElapsed(definition, epochDay, row?.elapsedSeconds ?? 0),
+          dayNumber: dayNumberForElapsed(definition, epochDay, row?.elapsedSeconds ?? 0, epochSeconds),
         };
       });
 
-    return [...scenes, ...events].sort((a, b) => a.dayNumber - b.dayNumber);
-  }, [definition, layout, story?.timelineEpochDay]);
+    return [...sceneEntries, ...events].sort((a, b) => a.dayNumber - b.dayNumber);
+  }, [definition, layout, scenes, story?.timelineEpochDay, story?.timelineEpochSeconds]);
 
   return { entries, loading };
 }

@@ -117,22 +117,24 @@ export function useSceneCalendarDates(storyId?: string | null) {
   const dateForScene = useCallback(
     (scene: Pick<TimedScene, 'id' | 'duration' | 'durationType'>) => {
       const epochDay = story?.timelineEpochDay;
+      const epochSeconds = story?.timelineEpochSeconds ?? 0;
       const startSeconds = starts.scene.get(scene.id);
       if (!definition || epochDay === null || epochDay === undefined || startSeconds === undefined) {
         return null;
       }
       const endSeconds = startSeconds + secondsFor(scene.duration, scene.durationType, definition);
-      const startDay = dayNumberForElapsed(definition, epochDay, startSeconds);
-      const endDay = dayNumberForElapsed(definition, epochDay, endSeconds);
+      const startDay = dayNumberForElapsed(definition, epochDay, startSeconds, epochSeconds);
+      const endDay = dayNumberForElapsed(definition, epochDay, endSeconds, epochSeconds);
       const date = formatCalendarDate(definition, startDay);
-      const startTime = formatTime(definition, startSeconds);
-      const endTime = formatTime(definition, endSeconds);
+      const startTime = formatTime(definition, epochSeconds + startSeconds);
+      const endTime = formatTime(definition, epochSeconds + endSeconds);
       const gapStartSeconds = starts.gap.get(scene.id);
       const gapStartDay =
         gapStartSeconds === undefined
           ? undefined
-          : dayNumberForElapsed(definition, epochDay, gapStartSeconds);
-      const gapStartTime = gapStartSeconds === undefined ? undefined : formatTime(definition, gapStartSeconds);
+          : dayNumberForElapsed(definition, epochDay, gapStartSeconds, epochSeconds);
+      const gapStartTime =
+        gapStartSeconds === undefined ? undefined : formatTime(definition, epochSeconds + gapStartSeconds);
       return {
         date: startTime === '00:00' ? date : `${date} · ${startTime}`,
         // The date is already shown at the start. Repeat it only when an interval crosses a day.
@@ -150,7 +152,7 @@ export function useSceneCalendarDates(storyId?: string | null) {
               : `${formatCalendarDate(definition, gapStartDay!)} · ${gapStartTime} → ${startTime}`,
       };
     },
-    [definition, starts, story?.timelineEpochDay],
+    [definition, starts, story?.timelineEpochDay, story?.timelineEpochSeconds],
   );
 
   return { dateForScene };

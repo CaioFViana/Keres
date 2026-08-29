@@ -20,10 +20,24 @@ import type {
   StoryTimelineScaleMode,
   TimelineAnchoredContainer,
 } from '@keres/shared/graphs/storyTimelineLayout';
-import { dayNumberForElapsed, formatCalendarDate } from '@keres/shared';
+import type { CalendarDefinitionType } from '@keres/shared';
+import { calendarSecondsPerDay, dayNumberForElapsed, formatCalendarDate } from '@keres/shared';
 import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import { useStoryCalendar } from './useStoryCalendar';
 import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
+
+const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
+  const secondsPerDay = calendarSecondsPerDay(definition);
+  const withinDay = ((Math.floor(elapsedSeconds) % secondsPerDay) + secondsPerDay) % secondsPerDay;
+  const hour = Math.floor(
+    withinDay / (definition.minutesPerHour * definition.secondsPerMinute),
+  );
+  const minute = Math.floor(
+    (withinDay % (definition.minutesPerHour * definition.secondsPerMinute)) /
+      definition.secondsPerMinute,
+  );
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
 
 /**
  * The timeline's data and the drawing derived from it.
@@ -32,9 +46,10 @@ import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
  * anchors into a layout lives here, so adding a toggle does not grow the screen past the size
  * ceiling.
  */
-export function useStoryTimeline() {
+export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | null) {
   const { t } = useTranslation();
-  const { definition: calendar, describeDay } = useStoryCalendar();
+  const { definition: primaryCalendar, describeDay } = useStoryCalendar();
+  const calendar = calendarOverride ?? primaryCalendar;
   const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
@@ -98,9 +113,12 @@ export function useStoryTimeline() {
     (elapsedSeconds: number) => {
       const epochDay = story?.timelineEpochDay;
       if (!calendar || epochDay === null || epochDay === undefined) return null;
-      return formatCalendarDate(calendar, dayNumberForElapsed(calendar, epochDay, elapsedSeconds));
+      const epochSeconds = story?.timelineEpochSeconds ?? 0;
+      const day = dayNumberForElapsed(calendar, epochDay, elapsedSeconds, epochSeconds);
+      const time = formatTime(calendar, epochSeconds + elapsedSeconds);
+      return `${formatCalendarDate(calendar, day)} · ${time}`;
     },
-    [calendar, story?.timelineEpochDay],
+    [calendar, story?.timelineEpochDay, story?.timelineEpochSeconds],
   );
 
   const orderedScenes = useMemo(() => {
@@ -246,9 +264,11 @@ export function useStoryTimeline() {
       ) {
         return null;
       }
-      return describeDay(dayNumberForElapsed(calendar, epochDay, row.elapsedSeconds));
+      return describeDay(
+        dayNumberForElapsed(calendar, epochDay, row.elapsedSeconds, story?.timelineEpochSeconds ?? 0),
+      );
     },
-    [calendar, describeDay, layout, story?.timelineEpochDay],
+    [calendar, describeDay, layout, story?.timelineEpochDay, story?.timelineEpochSeconds],
   );
 
   const exportTimeline = useCallback(async () => {

@@ -53,18 +53,32 @@ const StoryCalendarListScreen = () => {
    * The epoch, edited here rather than on the calendar itself.
    *
    * It belongs to the story: "the story opens on this day" is a fact about the narrative, and it
-   * has to survive switching which calendar the reader is reading in. Three fields rather than a
-   * picker - see the plan's §10 on why the month grid stayed out of scope.
+   * has to survive switching which calendar the reader is reading in. The clock belongs here too:
+   * a story that begins at night must still be at night when later dates are calculated.
    */
-  const [epoch, setEpoch] = useState({ year: '1', month: '1', day: '1' });
+  const [epoch, setEpoch] = useState({ year: '1', month: '1', day: '1', hour: '0', minute: '0' });
 
   useEffect(() => {
     if (!primary || story?.timelineEpochDay === null || story?.timelineEpochDay === undefined) {
       return;
     }
     const parts = dayNumberToParts(primary.definition, story.timelineEpochDay);
-    setEpoch({ year: String(parts.year), month: String(parts.month), day: String(parts.day) });
-  }, [primary, story?.timelineEpochDay]);
+    const epochSeconds = story.timelineEpochSeconds ?? 0;
+    const hour = Math.floor(
+      epochSeconds / (primary.definition.minutesPerHour * primary.definition.secondsPerMinute),
+    );
+    const minute = Math.floor(
+      (epochSeconds % (primary.definition.minutesPerHour * primary.definition.secondsPerMinute)) /
+        primary.definition.secondsPerMinute,
+    );
+    setEpoch({
+      year: String(parts.year),
+      month: String(parts.month),
+      day: String(parts.day),
+      hour: String(hour),
+      minute: String(minute),
+    });
+  }, [primary, story?.timelineEpochDay, story?.timelineEpochSeconds]);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,13 +157,26 @@ const StoryCalendarListScreen = () => {
     });
   }, [epoch, primary]);
 
+  const epochSeconds = useMemo(() => {
+    if (!primary) return 0;
+    const hour = Math.min(Math.max(Number(epoch.hour) || 0, 0), primary.definition.hoursPerDay - 1);
+    const minute = Math.min(
+      Math.max(Number(epoch.minute) || 0, 0),
+      primary.definition.minutesPerHour - 1,
+    );
+    return (hour * primary.definition.minutesPerHour + minute) * primary.definition.secondsPerMinute;
+  }, [epoch.hour, epoch.minute, primary]);
+
   const saveEpoch = useCallback(
     async (value: number | null) => {
       if (!story || !currentUserId) return;
       setBusy(true);
       try {
         const service = createStoryService(db);
-        await service.updateStory(currentUserId, story.id, { timelineEpochDay: value });
+        await service.updateStory(currentUserId, story.id, {
+          timelineEpochDay: value,
+          timelineEpochSeconds: value === null ? null : epochSeconds,
+        });
         // The timeline reads the epoch off the selected story, so the store has to be told: the
         // update returns nothing, and a stale store would leave the dates showing the old day.
         const refreshed = await service.getStoryById(story.id);
@@ -161,7 +188,7 @@ const StoryCalendarListScreen = () => {
         setBusy(false);
       }
     },
-    [currentUserId, db, notify, setSelectedStory, story, t],
+    [currentUserId, db, epochSeconds, notify, setSelectedStory, story, t],
   );
 
   const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
@@ -189,7 +216,13 @@ const StoryCalendarListScreen = () => {
         },
         badgeText: { fontSize: 11, fontWeight: '700', color: colors.onPrimaryContainer },
         summary: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 18 },
-        actions: { flexDirection: 'row', gap: 14, marginTop: 12, alignItems: 'center' },
+        actions: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 14,
+          marginTop: 12,
+          alignItems: 'center',
+        },
         action: { flexDirection: 'row', alignItems: 'center', gap: 5 },
         actionText: { fontSize: 13, fontWeight: '700', color: colors.primary },
         empty: { fontSize: 14, color: colors.textSecondary, lineHeight: 21, paddingVertical: 10 },
@@ -205,7 +238,8 @@ const StoryCalendarListScreen = () => {
           borderColor: colors.primary,
         },
         addText: { fontSize: 15, fontWeight: '700', color: colors.primary },
-        epochRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+        epochRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+        epochField: { flexGrow: 1, flexShrink: 1, flexBasis: 90, minWidth: 72 },
         epochLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 3 },
       }),
     [colors],
@@ -241,40 +275,51 @@ const StoryCalendarListScreen = () => {
               <Text style={styles.summary}>{calendar.description}</Text>
             ) : null}
 
-            {canEdit && (
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.action}
-                  onPress={() =>
-                    navigation.navigate('StoryCalendarForm', { calendarId: calendar.id })
-                  }
-                >
-                  <Ionicons name="create-outline" size={17} color={colors.primary} />
-                  <Text style={styles.actionText}>{t('edit')}</Text>
-                </TouchableOpacity>
-                {calendar.id === primary?.id ? (
-                  <TouchableOpacity style={styles.action} onPress={clearPrimary} disabled={busy}>
-                    <Ionicons name="star-half-outline" size={17} color={colors.textSecondary} />
-                    <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-                      {t('calendar_clear_primary')}
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={styles.action}
+                onPress={() => navigation.navigate('StoryAgenda', { calendarId: calendar.id })}
+                accessibilityRole="button"
+                accessibilityLabel={t('calendar_view_agenda')}
+              >
+                <Ionicons name="calendar-outline" size={17} color={colors.primary} />
+                <Text style={styles.actionText}>{t('calendar_view_agenda')}</Text>
+              </TouchableOpacity>
+              {canEdit && (
+                <>
                   <TouchableOpacity
                     style={styles.action}
-                    onPress={() => promote(calendar)}
-                    disabled={busy}
+                    onPress={() =>
+                      navigation.navigate('StoryCalendarForm', { calendarId: calendar.id })
+                    }
                   >
-                    <Ionicons name="star-outline" size={17} color={colors.primary} />
-                    <Text style={styles.actionText}>{t('calendar_make_primary')}</Text>
+                    <Ionicons name="create-outline" size={17} color={colors.primary} />
+                    <Text style={styles.actionText}>{t('edit')}</Text>
                   </TouchableOpacity>
-                )}
-                <TouchableOpacity style={styles.action} onPress={() => remove(calendar)}>
-                  <Ionicons name="trash-outline" size={17} color={colors.error} />
-                  <Text style={[styles.actionText, { color: colors.error }]}>{t('delete')}</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                  {calendar.id === primary?.id ? (
+                    <TouchableOpacity style={styles.action} onPress={clearPrimary} disabled={busy}>
+                      <Ionicons name="star-half-outline" size={17} color={colors.textSecondary} />
+                      <Text style={[styles.actionText, { color: colors.textSecondary }]}>
+                        {t('calendar_clear_primary')}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.action}
+                      onPress={() => promote(calendar)}
+                      disabled={busy}
+                    >
+                      <Ionicons name="star-outline" size={17} color={colors.primary} />
+                      <Text style={styles.actionText}>{t('calendar_make_primary')}</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity style={styles.action} onPress={() => remove(calendar)}>
+                    <Ionicons name="trash-outline" size={17} color={colors.error} />
+                    <Text style={[styles.actionText, { color: colors.error }]}>{t('delete')}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           </View>
         ))}
 
@@ -283,14 +328,15 @@ const StoryCalendarListScreen = () => {
             <Text style={styles.name}>{t('calendar_epoch_title')}</Text>
             <Text style={styles.summary}>{t('calendar_epoch_hint')}</Text>
             <View style={styles.epochRow}>
-              {(['day', 'month', 'year'] as const).map((part) => (
-                <View key={part} style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
+              {(['day', 'month', 'year', 'hour', 'minute'] as const).map((part) => (
+                <View key={part} style={styles.epochField}>
                   <Text style={styles.epochLabel}>{t(`calendar_epoch_${part}`)}</Text>
                   <TextInput
                     value={epoch[part]}
                     editable={canEdit}
                     onChangeText={(text) => {
-                      if (text && !/^-?\d*$/.test(text)) return;
+                      const acceptsNegative = part === 'day' || part === 'month' || part === 'year';
+                      if (text && !(acceptsNegative ? /^-?\d*$/ : /^\d*$/).test(text)) return;
                       setEpoch((current) => ({ ...current, [part]: text }));
                     }}
                     keyboardType="numbers-and-punctuation"
@@ -300,7 +346,23 @@ const StoryCalendarListScreen = () => {
               ))}
             </View>
             {epochDay !== null && (
-              <Text style={styles.summary}>{formatCalendarDate(primary.definition, epochDay)}</Text>
+              <Text style={styles.summary}>
+                {formatCalendarDate(primary.definition, epochDay)} ·{' '}
+                {String(
+                  Math.floor(
+                    epochSeconds /
+                      (primary.definition.minutesPerHour * primary.definition.secondsPerMinute),
+                  ),
+                ).padStart(2, '0')}
+                :
+                {String(
+                  Math.floor(
+                    (epochSeconds %
+                      (primary.definition.minutesPerHour * primary.definition.secondsPerMinute)) /
+                      primary.definition.secondsPerMinute,
+                  ),
+                ).padStart(2, '0')}
+              </Text>
             )}
             {canEdit && (
               <View style={styles.actions}>
@@ -327,18 +389,6 @@ const StoryCalendarListScreen = () => {
               </View>
             )}
           </View>
-        )}
-
-        {primary && (
-          <TouchableOpacity
-            style={[styles.add, { marginBottom: 10, borderStyle: 'solid' }]}
-            onPress={() => navigation.navigate('StoryAgenda')}
-            accessibilityRole="button"
-            accessibilityLabel={t('calendar_view_agenda')}
-          >
-            <Ionicons name="calendar-outline" size={19} color={colors.primary} />
-            <Text style={styles.addText}>{t('calendar_view_agenda')}</Text>
-          </TouchableOpacity>
         )}
 
         {canEdit && (

@@ -420,6 +420,13 @@ describe('elapsed time to a day number', () => {
     expect(dayNumberForElapsed(shortDay, 0, 1_000)).toBe(1);
     expect(dayNumberForElapsed(shortDay, 0, 999)).toBe(0);
   });
+
+  it('carries an opening time over into the following day', () => {
+    const definition = define();
+
+    // Starting at 23:00 means a scene two hours later belongs to the next date.
+    expect(dayNumberForElapsed(definition, 100, 7_200, 82_800)).toBe(101);
+  });
 });
 
 describe('a calendar being typed', () => {

@@ -288,11 +288,13 @@ const StoryAgendaScreen = () => {
                   if (!era) return;
                   const year = era.direction === 'backward' ? era.startYear - 1 : era.startYear;
                   setYearText(String(year));
-                  setCursor(partsToDayNumber(definition, {
-                    year,
-                    month: Number(monthText) || 1,
-                    day: 1,
-                  }));
+                  setCursor(
+                    partsToDayNumber(definition, {
+                      year,
+                      month: Number(monthText) || 1,
+                      day: 1,
+                    }),
+                  );
                 }}
                 placeholder={t('agenda_pick_era')}
                 multiple={false}

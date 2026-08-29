@@ -272,12 +272,7 @@ const NoteDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [
-    handleNoteChange,
-    handleTagRelationChange,
-    selectedStory?.id,
-    handleNoteRelationChange,
-  ]);
+  }, [handleNoteChange, handleTagRelationChange, selectedStory?.id, handleNoteRelationChange]);
 
   useEffect(() => {
     if (note) {

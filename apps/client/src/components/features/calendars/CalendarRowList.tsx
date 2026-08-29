@@ -81,18 +81,23 @@ function CalendarRowList<T extends Record<string, unknown>>({
     rowsRef.current = rows;
   }, [rows]);
 
-  const patch = useCallback((index: number, key: string, raw: string, kind: CalendarRowField<T>['kind']) => {
-    const next = [...rowsRef.current];
-    /*
-     * Text is stored as typed; numbers are stored as numbers, with a half-finished entry ("-", "",
-     * "3.") landing as 0. The row keeps the raw string nowhere, so the field re-renders from the
-     * number - which is why `isTypable` has to let those intermediate states through first.
-     */
-    const value =
-      kind === 'text' || kind === 'choice' ? raw : Number(raw === '' || raw === '-' ? 0 : raw) || 0;
-    next[index] = { ...next[index], [key]: value };
-    onChange(next);
-  }, [onChange]);
+  const patch = useCallback(
+    (index: number, key: string, raw: string, kind: CalendarRowField<T>['kind']) => {
+      const next = [...rowsRef.current];
+      /*
+       * Text is stored as typed; numbers are stored as numbers, with a half-finished entry ("-", "",
+       * "3.") landing as 0. The row keeps the raw string nowhere, so the field re-renders from the
+       * number - which is why `isTypable` has to let those intermediate states through first.
+       */
+      const value =
+        kind === 'text' || kind === 'choice'
+          ? raw
+          : Number(raw === '' || raw === '-' ? 0 : raw) || 0;
+      next[index] = { ...next[index], [key]: value };
+      onChange(next);
+    },
+    [onChange],
+  );
 
   const remove = useCallback(
     (index: number) => onChange(rowsRef.current.filter((_, other) => other !== index)),
@@ -148,10 +153,7 @@ function CalendarRowList<T extends Record<string, unknown>>({
             </View>
           ))}
           {editable && (
-            <TouchableOpacity
-              onPress={() => remove(index)}
-              accessibilityLabel={t('delete')}
-            >
+            <TouchableOpacity onPress={() => remove(index)} accessibilityLabel={t('delete')}>
               <Ionicons name="close-circle-outline" size={22} color={colors.error} />
             </TouchableOpacity>
           )}

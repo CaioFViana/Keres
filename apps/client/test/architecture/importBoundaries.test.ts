@@ -220,8 +220,8 @@ describe('import boundaries', () => {
       .map(relativeOf)
       .sort();
 
-    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter((path) =>
-      !readFileSync(join(SOURCE_ROOT, path), 'utf8').includes('useEntityInitialLoad('),
+    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter(
+      (path) => !readFileSync(join(SOURCE_ROOT, path), 'utf8').includes('useEntityInitialLoad('),
     ).sort();
 
     expect({ missingDetailLifecycle, missingSharedLifecycle }).toEqual({

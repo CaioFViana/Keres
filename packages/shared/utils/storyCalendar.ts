@@ -193,7 +193,10 @@ export function dayNumberToParts(
   const year = floorDiv(dayNumber, daysPerYear) + 1;
   const dayOfYear = floorMod(dayNumber, daysPerYear);
 
-  const month = Math.max(0, lastAtOrBefore(monthStarts, dayOfYear, (start) => start));
+  const month = Math.max(
+    0,
+    lastAtOrBefore(monthStarts, dayOfYear, (start) => start),
+  );
   const remaining = dayOfYear - monthStarts[month];
 
   return {
@@ -245,9 +248,7 @@ export function calendarEraFor(
   }
 
   // A backward era beginning at year 1 reads year 0 as "1 B.C." and year -399 as "400 B.C.".
-  const backward = ordered.find(
-    (era) => era.direction === 'backward' && era.startYear > year,
-  );
+  const backward = ordered.find((era) => era.direction === 'backward' && era.startYear > year);
   if (!backward) return null;
   return {
     name: backward.name,

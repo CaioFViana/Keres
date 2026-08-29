@@ -254,11 +254,7 @@ const TagDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [
-    handleTagChange,
-    selectedStory?.id,
-    handleTagRelationChange,
-  ]);
+  }, [handleTagChange, selectedStory?.id, handleTagRelationChange]);
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {

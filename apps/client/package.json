@@ -1,7 +1,7 @@
 {
   "name": "@keres/client",
   "main": "expo-router/entry",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "scripts": {
     "prestart": "bun scripts/generate-indexes.ts",
     "start": "expo start",

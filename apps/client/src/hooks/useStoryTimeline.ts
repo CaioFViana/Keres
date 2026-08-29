@@ -21,10 +21,18 @@ import type {
   TimelineAnchoredContainer,
 } from '@keres/shared/graphs/storyTimelineLayout';
 import type { CalendarDefinitionType } from '@keres/shared';
-import { calendarSecondsPerDay, dayNumberForElapsed, formatCalendarDate } from '@keres/shared';
+import {
+  calendarSecondsPerDay,
+  dayNumberForElapsed,
+  formatCalendarDate,
+  formatGregorianDate,
+  gregorianDayNumberForElapsed,
+  gregorianPartsFromDayNumber,
+} from '@keres/shared';
 import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import { useStoryCalendar } from './useStoryCalendar';
 import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);
@@ -51,6 +59,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
+  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
   const notify = useNotificationStore((state) => state.showNotification);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
@@ -110,13 +119,21 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const dateForRow = useCallback(
     (elapsedSeconds: number) => {
       const epochDay = story?.timelineEpochDay;
-      if (!calendar || epochDay === null || epochDay === undefined) return null;
+      if (epochDay === null || epochDay === undefined) return null;
       const epochSeconds = story?.timelineEpochSeconds ?? 0;
+      if (!calendar) {
+        const day = gregorianDayNumberForElapsed(epochDay, elapsedSeconds, epochSeconds);
+        const time = formatTime(
+          { hoursPerDay: 24, minutesPerHour: 60, secondsPerMinute: 60 } as CalendarDefinitionType,
+          epochSeconds + elapsedSeconds,
+        );
+        return `${formatGregorianDate(gregorianPartsFromDayNumber(day), dateDisplayFormat)} · ${time}`;
+      }
       const day = dayNumberForElapsed(calendar, epochDay, elapsedSeconds, epochSeconds);
       const time = formatTime(calendar, epochSeconds + elapsedSeconds);
       return `${formatCalendarDate(calendar, day)} · ${time}`;
     },
-    [calendar, story?.timelineEpochDay, story?.timelineEpochSeconds],
+    [calendar, dateDisplayFormat, story?.timelineEpochDay, story?.timelineEpochSeconds],
   );
 
   const orderedScenes = useMemo(() => {
@@ -255,23 +272,25 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
       const row = layout.rows.find((candidate) => candidate.id === sceneId);
       const epochDay = story?.timelineEpochDay;
       if (
-        !calendar ||
         row?.elapsedSeconds === undefined ||
         epochDay === null ||
         epochDay === undefined
       ) {
         return null;
       }
-      return describeDay(
-        dayNumberForElapsed(
-          calendar,
-          epochDay,
-          row.elapsedSeconds,
-          story?.timelineEpochSeconds ?? 0,
-        ),
-      );
+      const epochSeconds = story?.timelineEpochSeconds ?? 0;
+      if (!calendar) {
+        const day = gregorianDayNumberForElapsed(epochDay, row.elapsedSeconds, epochSeconds);
+        return {
+          date: formatGregorianDate(gregorianPartsFromDayNumber(day), dateDisplayFormat),
+          weekday: null,
+          season: null,
+          moons: [],
+        };
+      }
+      return describeDay(dayNumberForElapsed(calendar, epochDay, row.elapsedSeconds, epochSeconds));
     },
-    [calendar, describeDay, layout, story?.timelineEpochDay, story?.timelineEpochSeconds],
+    [calendar, dateDisplayFormat, describeDay, layout, story?.timelineEpochDay, story?.timelineEpochSeconds],
   );
 
   const exportTimeline = useCallback(async () => {

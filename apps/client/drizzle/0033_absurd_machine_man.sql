@@ -1,0 +1,1 @@
+ALTER TABLE `client_settings` ADD `date_display_format` text DEFAULT 'iso' NOT NULL;

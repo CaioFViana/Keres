@@ -1,5 +1,5 @@
 import type { CalendarDefinitionType } from '@keres/shared';
-import { dayNumberForElapsed } from '@keres/shared';
+import { dayNumberForElapsed, gregorianDayNumberForElapsed } from '@keres/shared';
 import { useMemo } from 'react';
 import { useStoryTimeline } from './useStoryTimeline';
 import { useStoryStore } from '@/src/state/storyStore';
@@ -21,7 +21,7 @@ export interface AgendaEntry {
  * measured axis. Converting those to day numbers is a change of unit, so the agenda cannot disagree
  * with the drawing - which it would, sooner or later, if it walked the gaps a second time.
  *
- * Empty whenever the story has no calendar or no epoch: without both, nothing has an absolute day.
+ * Empty only when the story has no epoch. No custom primary means the built-in Gregorian calendar.
  */
 export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
   const story = useStoryStore((state) => state.selectedStory);
@@ -29,7 +29,7 @@ export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
 
   const entries = useMemo<AgendaEntry[]>(() => {
     const epochDay = story?.timelineEpochDay;
-    if (!definition || epochDay === null || epochDay === undefined) return [];
+    if (epochDay === null || epochDay === undefined) return [];
 
     const summaries = new Map(scenes.map((scene) => [scene.id, scene.summary]));
     const epochSeconds = story?.timelineEpochSeconds ?? 0;
@@ -39,7 +39,9 @@ export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
         id: row.id,
         name: row.name,
         kind: 'scene' as const,
-        dayNumber: dayNumberForElapsed(definition, epochDay, row.elapsedSeconds ?? 0, epochSeconds),
+        dayNumber: definition
+          ? dayNumberForElapsed(definition, epochDay, row.elapsedSeconds ?? 0, epochSeconds)
+          : gregorianDayNumberForElapsed(epochDay, row.elapsedSeconds ?? 0, epochSeconds),
         summary: summaries.get(row.id) ?? null,
       }));
 
@@ -59,12 +61,9 @@ export function useStoryAgenda(definition?: CalendarDefinitionType | null) {
           id: span.id,
           name: span.name,
           kind: 'event' as const,
-          dayNumber: dayNumberForElapsed(
-            definition,
-            epochDay,
-            row?.elapsedSeconds ?? 0,
-            epochSeconds,
-          ),
+          dayNumber: definition
+            ? dayNumberForElapsed(definition, epochDay, row?.elapsedSeconds ?? 0, epochSeconds)
+            : gregorianDayNumberForElapsed(epochDay, row?.elapsedSeconds ?? 0, epochSeconds),
         };
       });
 

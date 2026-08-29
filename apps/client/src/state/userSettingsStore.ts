@@ -1,4 +1,5 @@
 import type { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { create } from 'zustand';
 import type { AppDrizzleClient } from '../db';
 import type { ServerSelect } from '../db/schema';
@@ -10,6 +11,7 @@ interface UserSettingsState {
   language: string | null;
   /** `true` = 24h, `false` = AM/PM. It applies to every time display/edit in the Date features. */
   use24HourTime: boolean;
+  dateDisplayFormat: GregorianDateDisplayFormat;
   showContextualHelp: boolean;
   suggestLiteraryDevices: boolean;
   activeServer: ServerSelect | null;
@@ -17,6 +19,10 @@ interface UserSettingsState {
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
   setUse24HourTime: (db: AppDrizzleClient, use24HourTime: boolean) => Promise<void>;
+  setDateDisplayFormat: (
+    db: AppDrizzleClient,
+    dateDisplayFormat: GregorianDateDisplayFormat,
+  ) => Promise<void>;
   setShowContextualHelp: (db: AppDrizzleClient, showContextualHelp: boolean) => Promise<void>;
   setSuggestLiteraryDevices: (
     db: AppDrizzleClient,
@@ -32,6 +38,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   username: null,
   language: null,
   use24HourTime: true,
+  dateDisplayFormat: 'iso',
   showContextualHelp: true,
   suggestLiteraryDevices: true,
   activeServer: null,
@@ -44,6 +51,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
         username: settings.localUsername,
         language: settings.language,
         use24HourTime: settings.use24HourTime,
+        dateDisplayFormat: settings.dateDisplayFormat ?? 'iso',
         showContextualHelp: settings.showContextualHelp,
         suggestLiteraryDevices: settings.suggestLiteraryDevices,
       }); // Set userId
@@ -64,6 +72,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   setUse24HourTime: async (db: AppDrizzleClient, use24HourTime: boolean) => {
     await updateClientSettings(db, { use24HourTime });
     set({ use24HourTime });
+  },
+
+  setDateDisplayFormat: async (db: AppDrizzleClient, dateDisplayFormat: GregorianDateDisplayFormat) => {
+    await updateClientSettings(db, { dateDisplayFormat });
+    set({ dateDisplayFormat });
   },
 
   setShowContextualHelp: async (db: AppDrizzleClient, showContextualHelp: boolean) => {
@@ -90,6 +103,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
       username: null,
       language: null,
       use24HourTime: true,
+      dateDisplayFormat: 'iso',
       showContextualHelp: true,
       suggestLiteraryDevices: true,
       activeServer: null,

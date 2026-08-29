@@ -2,7 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   calendarDaysPerYear,
   dayNumberToParts,
+  formatAttributeDate,
   formatCalendarDate,
+  formatGregorianDate,
+  gregorianDayNumber,
+  gregorianPartsFromDayNumber,
+  parseAttributeDate,
   partsToDayNumber,
 } from '@keres/shared';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -24,6 +29,7 @@ import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
@@ -43,7 +49,7 @@ const StoryCalendarListScreen = () => {
   const story = useStoryStore((state) => state.selectedStory);
   const setSelectedStory = useStoryStore((state) => state.setSelectedStory);
   const { canEdit } = useStoryRole(story?.id);
-  const { userId: currentUserId } = useUserSettingsStore();
+  const { userId: currentUserId, dateDisplayFormat } = useUserSettingsStore();
   const notify = useNotificationStore((state) => state.showNotification);
   const navigation =
     useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryCalendarList'>>();
@@ -57,9 +63,22 @@ const StoryCalendarListScreen = () => {
    * a story that begins at night must still be at night when later dates are calculated.
    */
   const [epoch, setEpoch] = useState({ year: '1', month: '1', day: '1', hour: '0', minute: '0' });
+  const [gregorianEpoch, setGregorianEpoch] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!primary || story?.timelineEpochDay === null || story?.timelineEpochDay === undefined) {
+    if (story?.timelineEpochDay === null || story?.timelineEpochDay === undefined) {
+      return;
+    }
+    if (!primary) {
+      const date = gregorianPartsFromDayNumber(story.timelineEpochDay);
+      const seconds = story.timelineEpochSeconds ?? 0;
+      setGregorianEpoch(
+        formatAttributeDate({
+          ...date,
+          hour: Math.floor(seconds / 3600),
+          minute: Math.floor((seconds % 3600) / 60),
+        }),
+      );
       return;
     }
     const parts = dayNumberToParts(primary.definition, story.timelineEpochDay);
@@ -121,11 +140,49 @@ const StoryCalendarListScreen = () => {
     }
   }, [currentUserId, db, notify, reload, story?.id, t]);
 
+  const changeMainCalendar = useCallback(
+    (change: () => Promise<void>) => {
+      const hasEpoch = story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined;
+      if (!hasEpoch) {
+        void change();
+        return;
+      }
+      AppAlert.alert(t('calendar_epoch_change_title'), t('calendar_epoch_change_message'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('calendar_epoch_change_confirm'),
+          style: 'destructive',
+          onPress: async () => {
+            if (!story || !currentUserId) return;
+            try {
+              const service = createStoryService(db);
+              await service.updateStory(currentUserId, story.id, {
+                timelineEpochDay: null,
+                timelineEpochSeconds: null,
+              });
+              const refreshed = await service.getStoryById(story.id);
+              if (refreshed) setSelectedStory(refreshed as never);
+              await change();
+            } catch (error) {
+              console.log('StoryCalendarListScreen: failed to change the main calendar.', error);
+              notify(t('calendar_save_failed'), 'error');
+            }
+          },
+        },
+      ]);
+    },
+    [currentUserId, db, notify, setSelectedStory, story, t],
+  );
+
   const remove = useCallback(
     (calendar: StoryCalendarSelect) => {
       AppAlert.alert(
         t('calendar_delete_title'),
-        t('calendar_delete_message', { name: calendar.name }),
+        `${t('calendar_delete_message', { name: calendar.name })}${
+          calendar.id === primary?.id && story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined
+            ? `\n\n${t('calendar_epoch_change_message')}`
+            : ''
+        }`,
         [
           { text: t('cancel'), style: 'cancel' },
           {
@@ -134,6 +191,19 @@ const StoryCalendarListScreen = () => {
             onPress: async () => {
               if (!currentUserId) return;
               try {
+                if (
+                  calendar.id === primary?.id &&
+                  story?.timelineEpochDay !== null &&
+                  story?.timelineEpochDay !== undefined
+                ) {
+                  const storyService = createStoryService(db);
+                  await storyService.updateStory(currentUserId, story.id, {
+                    timelineEpochDay: null,
+                    timelineEpochSeconds: null,
+                  });
+                  const refreshed = await storyService.getStoryById(story.id);
+                  if (refreshed) setSelectedStory(refreshed as never);
+                }
                 await createStoryCalendarService(db).deleteCalendar(currentUserId, calendar.id);
                 await reload();
               } catch (error) {
@@ -145,7 +215,7 @@ const StoryCalendarListScreen = () => {
         ],
       );
     },
-    [currentUserId, db, notify, reload, t],
+    [currentUserId, db, notify, primary?.id, reload, setSelectedStory, story, t],
   );
 
   const epochDay = useMemo(() => {
@@ -169,15 +239,39 @@ const StoryCalendarListScreen = () => {
     );
   }, [epoch.hour, epoch.minute, primary]);
 
+  const gregorianEpochParts = useMemo(() => parseAttributeDate(gregorianEpoch), [gregorianEpoch]);
+  const storedGregorianEpochParts = useMemo(
+    () =>
+      story?.timelineEpochDay === null || story?.timelineEpochDay === undefined
+        ? null
+        : gregorianPartsFromDayNumber(story.timelineEpochDay),
+    [story?.timelineEpochDay],
+  );
+  const gregorianEpochIsOutsidePickerRange = Boolean(
+    storedGregorianEpochParts &&
+      (storedGregorianEpochParts.year < 1 || storedGregorianEpochParts.year > 9999),
+  );
+  const gregorianEpochDay = useMemo(
+    () => (gregorianEpochParts ? gregorianDayNumber(gregorianEpochParts) : null),
+    [gregorianEpochParts],
+  );
+  const gregorianEpochSeconds = useMemo(
+    () =>
+      gregorianEpochParts
+        ? (gregorianEpochParts.hour ?? 0) * 3600 + (gregorianEpochParts.minute ?? 0) * 60
+        : 0,
+    [gregorianEpochParts],
+  );
+
   const saveEpoch = useCallback(
-    async (value: number | null) => {
+    async (value: number | null, seconds = epochSeconds) => {
       if (!story || !currentUserId) return;
       setBusy(true);
       try {
         const service = createStoryService(db);
         await service.updateStory(currentUserId, story.id, {
           timelineEpochDay: value,
-          timelineEpochSeconds: value === null ? null : epochSeconds,
+          timelineEpochSeconds: value === null ? null : seconds,
         });
         // The timeline reads the epoch off the selected story, so the store has to be told: the
         // update returns nothing, and a stale store would leave the dates showing the old day.
@@ -262,6 +356,29 @@ const StoryCalendarListScreen = () => {
 
         {calendars.length === 0 && <Text style={styles.empty}>{t('calendar_list_empty')}</Text>}
 
+        {!primary && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.name}>{t('calendar_standard_title')}</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{t('calendar_primary')}</Text>
+              </View>
+            </View>
+            <Text style={styles.summary}>{t('calendar_standard_hint')}</Text>
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={styles.action}
+                onPress={() => navigation.navigate('StoryAgenda')}
+                accessibilityRole="button"
+                accessibilityLabel={t('calendar_view_agenda')}
+              >
+                <Ionicons name="calendar-outline" size={17} color={colors.primary} />
+                <Text style={styles.actionText}>{t('calendar_view_agenda')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {calendars.map((calendar) => (
           <View key={calendar.id} style={styles.card}>
             <View style={styles.cardHeader}>
@@ -299,7 +416,11 @@ const StoryCalendarListScreen = () => {
                     <Text style={styles.actionText}>{t('edit')}</Text>
                   </TouchableOpacity>
                   {calendar.id === primary?.id ? (
-                    <TouchableOpacity style={styles.action} onPress={clearPrimary} disabled={busy}>
+                    <TouchableOpacity
+                      style={styles.action}
+                      onPress={() => changeMainCalendar(clearPrimary)}
+                      disabled={busy}
+                    >
                       <Ionicons name="star-half-outline" size={17} color={colors.textSecondary} />
                       <Text style={[styles.actionText, { color: colors.textSecondary }]}>
                         {t('calendar_clear_primary')}
@@ -308,7 +429,7 @@ const StoryCalendarListScreen = () => {
                   ) : (
                     <TouchableOpacity
                       style={styles.action}
-                      onPress={() => promote(calendar)}
+                      onPress={() => changeMainCalendar(() => promote(calendar))}
                       disabled={busy}
                     >
                       <Ionicons name="star-outline" size={17} color={colors.primary} />
@@ -372,6 +493,49 @@ const StoryCalendarListScreen = () => {
                   style={styles.action}
                   onPress={() => saveEpoch(epochDay)}
                   disabled={busy}
+                >
+                  <Ionicons name="save-outline" size={17} color={colors.primary} />
+                  <Text style={styles.actionText}>{t('save')}</Text>
+                </TouchableOpacity>
+                {story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined && (
+                  <TouchableOpacity
+                    style={styles.action}
+                    onPress={() => saveEpoch(null)}
+                    disabled={busy}
+                  >
+                    <Ionicons name="backspace-outline" size={17} color={colors.textSecondary} />
+                    <Text style={[styles.actionText, { color: colors.textSecondary }]}>
+                      {t('calendar_epoch_clear')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {!primary && (
+          <View style={styles.card}>
+            <Text style={styles.name}>{t('calendar_epoch_title')}</Text>
+            <Text style={styles.summary}>{t('calendar_standard_epoch_hint')}</Text>
+            {gregorianEpochIsOutsidePickerRange && storedGregorianEpochParts ? (
+              <Text style={[styles.summary, { marginTop: 10 }]}>
+                {formatGregorianDate(storedGregorianEpochParts, dateDisplayFormat)}
+              </Text>
+            ) : (
+              <DatePickerInput
+                value={gregorianEpoch}
+                onChange={setGregorianEpoch}
+                placeholder={t('calendar_epoch_title')}
+                style={{ marginTop: 10, marginBottom: 0 }}
+              />
+            )}
+            {canEdit && (
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.action}
+                  onPress={() => saveEpoch(gregorianEpochDay, gregorianEpochSeconds)}
+                  disabled={busy || gregorianEpochDay === null || gregorianEpochIsOutsidePickerRange}
                 >
                   <Ionicons name="save-outline" size={17} color={colors.primary} />
                   <Text style={styles.actionText}>{t('save')}</Text>

@@ -232,6 +232,13 @@
       "when": 1788012172300,
       "tag": "0032_bright_naoko",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1788015513873,
+      "tag": "0033_absurd_machine_man",
+      "breakpoints": true
     }
   ]
 }

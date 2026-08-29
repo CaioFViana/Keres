@@ -2,8 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   calendarMoonPhases,
   calendarSeasonFor,
+  attributeDateWeekdayLabels,
+  daysInMonth,
   dayNumberToParts,
+  formatAttributeDate,
+  formatAttributeDateMonthLabel,
   formatCalendarDate,
+  formatGregorianDate,
+  gregorianDayNumber,
+  gregorianPartsFromDayNumber,
+  parseAttributeDate,
   partsToDayNumber,
 } from '@keres/shared';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -18,12 +26,14 @@ import { useStoryAgenda } from '@/src/hooks/useStoryAgenda';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import Button from '@/src/components/common/controls/Button/Button';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 
 /**
  * The story's calendar as a month of days, with what happens on each.
@@ -42,9 +52,10 @@ import Button from '@/src/components/common/controls/Button/Button';
  */
 const StoryAgendaScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const story = useStoryStore((state) => state.selectedStory);
+  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
   const { calendars, definition: primaryDefinition } = useStoryCalendar(story?.id);
   const route = useRoute<RouteProp<CustomizationStackParamList, 'StoryAgenda'>>();
   const definition = useMemo(() => {
@@ -61,7 +72,15 @@ const StoryAgendaScreen = () => {
 
   const describeDay = useCallback(
     (dayNumber: number) => {
-      if (!definition) return null;
+      if (!definition) {
+        const parts = gregorianPartsFromDayNumber(dayNumber);
+        return {
+          date: formatGregorianDate(parts, dateDisplayFormat),
+          weekday: null,
+          season: null,
+          moons: [],
+        };
+      }
       const parts = dayNumberToParts(definition, dayNumber);
       return {
         date: formatCalendarDate(definition, dayNumber),
@@ -70,7 +89,7 @@ const StoryAgendaScreen = () => {
         moons: calendarMoonPhases(definition, dayNumber),
       };
     },
-    [definition],
+    [dateDisplayFormat, definition],
   );
 
   useFocusEffect(
@@ -220,18 +239,6 @@ const StoryAgendaScreen = () => {
     [colors],
   );
 
-  if (!definition)
-    return (
-      <View style={styles.root}>
-        <Text style={styles.message}>{t('agenda_no_calendar')}</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('StoryCalendarList')}>
-          <Text style={[styles.message, { color: colors.primary, paddingTop: 0 }]}>
-            {t('calendar_list_title')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-
   if (story?.timelineEpochDay === null || story?.timelineEpochDay === undefined)
     return (
       <View style={styles.root}>
@@ -251,34 +258,38 @@ const StoryAgendaScreen = () => {
       </View>
     );
 
-  const cursorParts = dayNumberToParts(definition, cursor);
-  const month = definition.months[cursorParts.month - 1];
-  const firstOfMonth = partsToDayNumber(definition, {
-    year: cursorParts.year,
-    month: cursorParts.month,
-    day: 1,
-  });
+  const cursorParts = definition
+    ? dayNumberToParts(definition, cursor)
+    : gregorianPartsFromDayNumber(cursor);
+  const daysPerWeek = definition?.daysPerWeek ?? 7;
+  const weekdayNames = definition?.weekdayNames ?? attributeDateWeekdayLabels(i18n.language);
+  const daysInCurrentMonth = definition
+    ? definition.months[cursorParts.month - 1].days
+    : daysInMonth(cursorParts.year, cursorParts.month);
+  const firstOfMonth = definition
+    ? partsToDayNumber(definition, { year: cursorParts.year, month: cursorParts.month, day: 1 })
+    : gregorianDayNumber({ year: cursorParts.year, month: cursorParts.month, day: 1 });
 
   /** The month laid out in rows of the calendar's own week length. */
   const weeks: (number | null)[][] = [];
   // Weekday labels are optional decoration. The week itself is not: without this offset, calendars
   // that omit labels would incorrectly show every month as starting on its first column.
   const offset =
-    ((firstOfMonth % definition.daysPerWeek) + definition.daysPerWeek) % definition.daysPerWeek;
+    ((firstOfMonth % daysPerWeek) + daysPerWeek) % daysPerWeek;
   let week: (number | null)[] = Array.from(
     { length: offset },
     (_, index) => firstOfMonth - offset + index,
   );
-  for (let day = 0; day < month.days; day += 1) {
+  for (let day = 0; day < daysInCurrentMonth; day += 1) {
     week.push(firstOfMonth + day);
-    if (week.length === definition.daysPerWeek) {
+    if (week.length === daysPerWeek) {
       weeks.push(week);
       week = [];
     }
   }
   if (week.length > 0) {
-    let nextMonthDay = firstOfMonth + month.days;
-    while (week.length < definition.daysPerWeek) {
+    let nextMonthDay = firstOfMonth + daysInCurrentMonth;
+    while (week.length < daysPerWeek) {
       week.push(nextMonthDay);
       nextMonthDay += 1;
     }
@@ -295,6 +306,13 @@ const StoryAgendaScreen = () => {
   };
 
   const shiftMonth = (direction: 1 | -1) => {
+    if (!definition) {
+      const zeroBased = cursorParts.month - 1 + direction;
+      const year = cursorParts.year + Math.floor(zeroBased / 12);
+      const month = ((zeroBased % 12) + 12) % 12 + 1;
+      setCursor(gregorianDayNumber({ year, month, day: 1 }));
+      return;
+    }
     const nextMonth = cursorParts.month + direction;
     const wrappedYear =
       nextMonth < 1
@@ -317,12 +335,16 @@ const StoryAgendaScreen = () => {
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
-        <DateLookup
-          definition={definition}
-          cursor={cursor}
-          onMonthChange={setCursor}
-          styles={styles}
-        />
+        {definition ? (
+          <DateLookup
+            definition={definition}
+            cursor={cursor}
+            onMonthChange={setCursor}
+            styles={styles}
+          />
+        ) : (
+          <GregorianDateLookup cursor={cursor} onMonthChange={setCursor} styles={styles} />
+        )}
 
         <View style={styles.nav}>
           <TouchableOpacity style={styles.navButton} onPress={() => jump(-1)}>
@@ -344,16 +366,18 @@ const StoryAgendaScreen = () => {
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.monthLabel}>
-            {month.name || cursorParts.month} · {cursorParts.year}
+            {definition
+              ? `${definition.months[cursorParts.month - 1].name || cursorParts.month} · ${cursorParts.year}`
+              : formatAttributeDateMonthLabel(cursorParts.year, cursorParts.month, i18n.language)}
           </Text>
           <TouchableOpacity onPress={() => shiftMonth(1)} accessibilityLabel={t('next')}>
             <Ionicons name="chevron-forward" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
 
-        {definition.weekdayNames.length > 0 && (
+        {weekdayNames.length > 0 && (
           <View style={styles.week}>
-            {definition.weekdayNames.map((label, index) => (
+            {weekdayNames.map((label, index) => (
               <View key={`${label}-${index}`} style={styles.weekdayCell}>
                 <Text style={styles.weekdayText}>{label}</Text>
               </View>
@@ -366,7 +390,9 @@ const StoryAgendaScreen = () => {
           <View key={rowIndex} style={styles.week}>
             {row.map((day, cellIndex) => {
               const isOutsideMonth =
-                day !== null && dayNumberToParts(definition, day).month !== cursorParts.month;
+                day !== null &&
+                (definition ? dayNumberToParts(definition, day) : gregorianPartsFromDayNumber(day))
+                  .month !== cursorParts.month;
               return (
                 <TouchableOpacity
                   key={day ?? `blank-${cellIndex}`}
@@ -392,7 +418,7 @@ const StoryAgendaScreen = () => {
                   {day !== null && (
                     <>
                       <Text style={[styles.cellDay, isOutsideMonth && styles.cellDayOutside]}>
-                        {dayNumberToParts(definition, day).day}
+                        {(definition ? dayNumberToParts(definition, day) : gregorianPartsFromDayNumber(day)).day}
                       </Text>
                       {(byDay.get(day) ?? []).slice(0, 3).map((entry) => (
                         <Text key={entry.id} numberOfLines={1} style={styles.cellEntry}>
@@ -574,6 +600,44 @@ const DateLookup = React.memo(function DateLookup({
           <Ionicons name="search-outline" size={20} color={colors.onPrimary} />
         </Button>
       </View>
+    </View>
+  );
+});
+
+/** The regular calendar uses the established date picker as a lookup control, not as a new date model. */
+const GregorianDateLookup = React.memo(function GregorianDateLookup({
+  cursor,
+  onMonthChange,
+  styles,
+}: {
+  cursor: number;
+  onMonthChange: (day: number) => void;
+  styles: { lookup: ViewStyle; lookupTitle: TextStyle };
+}) {
+  const { t } = useTranslation();
+  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
+  const parts = useMemo(() => gregorianPartsFromDayNumber(cursor), [cursor]);
+  const supportsPicker = parts.year >= 1 && parts.year <= 9999;
+  const value = useMemo(() => {
+    return formatAttributeDate({ ...parts, hour: null, minute: null });
+  }, [parts]);
+
+  return (
+    <View style={styles.lookup}>
+      <Text style={styles.lookupTitle}>{t('agenda_go_to_date')}</Text>
+      {supportsPicker ? (
+        <DatePickerInput
+          value={value}
+          onChange={(next) => {
+            const nextParts = parseAttributeDate(next);
+            if (nextParts) onMonthChange(gregorianDayNumber(nextParts));
+          }}
+          placeholder={t('agenda_go_to_date')}
+          style={{ marginBottom: 0 }}
+        />
+      ) : (
+        <Text>{formatGregorianDate(parts, dateDisplayFormat)}</Text>
+      )}
     </View>
   );
 });

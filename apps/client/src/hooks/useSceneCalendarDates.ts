@@ -3,7 +3,11 @@ import {
   calendarSecondsPerDay,
   calendarUnitDays,
   dayNumberForElapsed,
+  FALLBACK_SECONDS_PER_DAY,
   formatCalendarDate,
+  formatGregorianDate,
+  gregorianDayNumberForElapsed,
+  gregorianPartsFromDayNumber,
 } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
@@ -11,6 +15,7 @@ import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import { useStoryCalendar } from './useStoryCalendar';
@@ -23,20 +28,23 @@ type TimedScene = Pick<
 const secondsFor = (
   value: number | null | undefined,
   unit: string | null | undefined,
-  calendar: CalendarDefinitionType,
+  calendar: CalendarDefinitionType | null,
 ) => {
   if (!value || !unit) return 0;
   const days = calendarUnitDays(calendar)[unit as keyof ReturnType<typeof calendarUnitDays>];
-  return typeof days === 'number' ? value * days * calendarSecondsPerDay(calendar) : 0;
+  return typeof days === 'number'
+    ? value * days * (calendar ? calendarSecondsPerDay(calendar) : FALLBACK_SECONDS_PER_DAY)
+    : 0;
 };
 
-const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
-  const secondsPerDay = calendarSecondsPerDay(definition);
+const formatTime = (definition: CalendarDefinitionType | null, elapsedSeconds: number) => {
+  const secondsPerDay = definition ? calendarSecondsPerDay(definition) : FALLBACK_SECONDS_PER_DAY;
   const withinDay = ((Math.floor(elapsedSeconds) % secondsPerDay) + secondsPerDay) % secondsPerDay;
-  const hour = Math.floor(withinDay / (definition.minutesPerHour * definition.secondsPerMinute));
+  const minutesPerHour = definition?.minutesPerHour ?? 60;
+  const secondsPerMinute = definition?.secondsPerMinute ?? 60;
+  const hour = Math.floor(withinDay / (minutesPerHour * secondsPerMinute));
   const minute = Math.floor(
-    (withinDay % (definition.minutesPerHour * definition.secondsPerMinute)) /
-      definition.secondsPerMinute,
+    (withinDay % (minutesPerHour * secondsPerMinute)) / secondsPerMinute,
   );
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 };
@@ -51,6 +59,7 @@ const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) 
 export function useSceneCalendarDates(storyId?: string | null) {
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
+  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
   const { definition } = useStoryCalendar(storyId ?? undefined);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
@@ -84,7 +93,6 @@ export function useSceneCalendarDates(storyId?: string | null) {
   }, [reload, storyId]);
 
   const starts = useMemo(() => {
-    if (!definition) return { scene: new Map<string, number>(), gap: new Map<string, number>() };
     const chapterIndex = new Map(
       chapters
         .filter((chapter) => !chapter.isDeleted)
@@ -123,25 +131,28 @@ export function useSceneCalendarDates(storyId?: string | null) {
       const epochDay = story?.timelineEpochDay;
       const epochSeconds = story?.timelineEpochSeconds ?? 0;
       const startSeconds = starts.scene.get(scene.id);
-      if (
-        !definition ||
-        epochDay === null ||
-        epochDay === undefined ||
-        startSeconds === undefined
-      ) {
+      if (epochDay === null || epochDay === undefined || startSeconds === undefined) {
         return null;
       }
       const endSeconds = startSeconds + secondsFor(scene.duration, scene.durationType, definition);
-      const startDay = dayNumberForElapsed(definition, epochDay, startSeconds, epochSeconds);
-      const endDay = dayNumberForElapsed(definition, epochDay, endSeconds, epochSeconds);
-      const date = formatCalendarDate(definition, startDay);
+      const toDay = (seconds: number) =>
+        definition
+          ? dayNumberForElapsed(definition, epochDay, seconds, epochSeconds)
+          : gregorianDayNumberForElapsed(epochDay, seconds, epochSeconds);
+      const formatDay = (day: number) =>
+        definition
+          ? formatCalendarDate(definition, day)
+          : formatGregorianDate(gregorianPartsFromDayNumber(day), dateDisplayFormat);
+      const startDay = toDay(startSeconds);
+      const endDay = toDay(endSeconds);
+      const date = formatDay(startDay);
       const startTime = formatTime(definition, epochSeconds + startSeconds);
       const endTime = formatTime(definition, epochSeconds + endSeconds);
       const gapStartSeconds = starts.gap.get(scene.id);
       const gapStartDay =
         gapStartSeconds === undefined
           ? undefined
-          : dayNumberForElapsed(definition, epochDay, gapStartSeconds, epochSeconds);
+          : toDay(gapStartSeconds);
       const gapStartTime =
         gapStartSeconds === undefined
           ? undefined
@@ -154,16 +165,16 @@ export function useSceneCalendarDates(storyId?: string | null) {
             ? null
             : startDay === endDay
               ? `${startTime} → ${endTime}`
-              : `→ ${formatCalendarDate(definition, endDay)} · ${endTime}`,
+              : `→ ${formatDay(endDay)} · ${endTime}`,
         gapRange:
           gapStartSeconds === undefined || gapStartSeconds === startSeconds
             ? null
             : gapStartDay === startDay
               ? `${gapStartTime} → ${startTime}`
-              : `${formatCalendarDate(definition, gapStartDay!)} · ${gapStartTime} → ${startTime}`,
+              : `${formatDay(gapStartDay!)} · ${gapStartTime} → ${startTime}`,
       };
     },
-    [definition, starts, story?.timelineEpochDay, story?.timelineEpochSeconds],
+    [dateDisplayFormat, definition, starts, story?.timelineEpochDay, story?.timelineEpochSeconds],
   );
 
   return { dateForScene };

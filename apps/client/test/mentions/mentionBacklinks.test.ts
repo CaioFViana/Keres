@@ -54,7 +54,14 @@ describe('mention backlinks', () => {
       { type: 'Character', id: 'second', name: 'Robin' },
     ]);
     const index = buildMentionBacklinkIndex(
-      [{ type: 'Character', id: 'first', name: 'Robin', fields: { biography: 'Robin remembers Robin.' } }],
+      [
+        {
+          type: 'Character',
+          id: 'first',
+          name: 'Robin',
+          fields: { biography: 'Robin remembers Robin.' },
+        },
+      ],
       matcher,
     );
     expect(index.size).toBe(0);

@@ -14,7 +14,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db } from '../../db';
-import { chapters, galleries, plots, stories, storySchemaFields } from '../../db/schema';
+import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -228,19 +228,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       });
     } else {
       // If it's not a story reorder update, delegate to the base class's update method
-      const changes = this.updateSchema.parse((update as UpdateStoryUpdate).changes);
-      if (changes.type === 'branching' && currentEntity.type !== 'branching') {
-        const activePlot = await db.query.plots.findFirst({
-          where: and(eq(plots.storyId, storyId), eq(plots.isDeleted, false)),
-          columns: { id: true },
-        });
-        if (activePlot) {
-          throw new SyncConflictError(
-            'validation',
-            'Remove all plots before converting this story to branching.',
-          );
-        }
-      }
+      this.updateSchema.parse((update as UpdateStoryUpdate).changes);
       await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
     }
   }

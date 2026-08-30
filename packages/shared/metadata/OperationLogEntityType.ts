@@ -24,6 +24,8 @@ export enum OperationLogEntityType {
   CharacterScene = 'CharacterScene',
   Plot = 'Plot',
   PlotScene = 'PlotScene',
+  Route = 'Route',
+  RouteStep = 'RouteStep',
   StorySchemaField = 'StorySchemaField',
   AttributeValue = 'AttributeValue',
   LocationRelation = 'LocationRelation',

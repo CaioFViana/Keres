@@ -1,8 +1,5 @@
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
@@ -73,7 +70,8 @@ const PlotMatrixScreen = () => {
   );
 
   const { plots, relations, scenes, chapters, loading, chapterNameOf, coverageOf } = useStoryPlots(
-    selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
+    selectedStory?.id,
+    selectedStory?.type,
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -215,10 +213,6 @@ const PlotMatrixScreen = () => {
       }),
     [colors],
   );
-
-  if (selectedStory?.type !== 'linear') {
-    return <ScreenError message={t('plots_linear_only')} onGoBack={() => navigation.goBack()} />;
-  }
 
   if (loading) {
     return <ScreenLoading message={t('loading_plots')} />;

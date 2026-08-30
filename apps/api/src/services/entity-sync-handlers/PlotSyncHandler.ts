@@ -5,10 +5,9 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreatePlotDataSchema, PartialPlotSchema } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { plots, stories } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { plots } from '../../db/schema';
+import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class PlotSyncHandler extends BaseSyncEntityHandler<
   typeof CreatePlotDataSchema,
@@ -22,16 +21,8 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
       deletedAtColumnName: 'deletedAt',
     });
   }
-  private async assertLinear(storyId: string) {
-    const story = await db.query.stories.findFirst({
-      where: and(eq(stories.id, storyId), eq(stories.isDeleted, false)),
-    });
-    if (!story || story.type !== 'linear')
-      throw new SyncConflictError('validation', 'Plots are only available for linear stories.');
-  }
   async create(_: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     const data: CreatePlotDataType = this.createSchema.parse(update.data);
-    await this.assertLinear(storyId);
     if (await this.findById(update.id!))
       throw new Error(`Conflict: Plot with ID ${update.id} already exists.`);
     await db.insert(plots).values({
@@ -52,7 +43,6 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
     update: UpdateStoryUpdate,
     currentEntity: any,
   ): Promise<void> {
-    await this.assertLinear(storyId);
     await super.update(userId, storyId, update, currentEntity);
   }
   async delete(
@@ -61,7 +51,6 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
     update: DeleteStoryUpdate,
     currentEntity: any,
   ): Promise<void> {
-    await this.assertLinear(storyId);
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

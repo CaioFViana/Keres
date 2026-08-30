@@ -32,8 +32,7 @@ export function buildMentionBacklinkIndex(
       const refs = splitTextIntoMentionSegments(text, matcher, {
         selfId: source.id,
         includeRepeated: true,
-      })
-        .flatMap((segment) => (segment.ref ? [segment.ref] : []));
+      }).flatMap((segment) => (segment.ref ? [segment.ref] : []));
       for (const ref of refs) {
         const key = mentionRefKey(ref.type, ref.id);
         const current = index.get(key) ?? [];

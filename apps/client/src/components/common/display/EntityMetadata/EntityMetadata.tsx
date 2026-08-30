@@ -54,20 +54,22 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({
 
   return (
     <>
-      {entityType && entityId && <MentionBacklinksSection entityType={entityType} entityId={entityId} />}
+      {entityType && entityId && (
+        <MentionBacklinksSection entityType={entityType} entityId={entityId} />
+      )}
       <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>
-      <View style={styles.row}>
-        <Text style={styles.label}>{t('version')}</Text>
-        <Text style={styles.value}>{version}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.label}>{t('created_at')}</Text>
-        <Text style={styles.value}>{formatDateTime(createdAt)}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.label}>{t('updated_at')}</Text>
-        <Text style={styles.value}>{formatDateTime(updatedAt)}</Text>
-      </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>{t('version')}</Text>
+          <Text style={styles.value}>{version}</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>{t('created_at')}</Text>
+          <Text style={styles.value}>{formatDateTime(createdAt)}</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>{t('updated_at')}</Text>
+          <Text style={styles.value}>{formatDateTime(updatedAt)}</Text>
+        </View>
       </CollapsibleCard>
     </>
   );

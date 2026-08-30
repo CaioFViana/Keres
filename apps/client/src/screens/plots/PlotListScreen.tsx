@@ -45,9 +45,7 @@ const PlotListScreen = () => {
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const { canEdit } = useStoryRole(storyId);
-  const { plots, relationsOf, loading } = useStoryPlots(
-    selectedStory?.type === 'linear' ? storyId : undefined,
-  );
+  const { plots, relationsOf, loading } = useStoryPlots(storyId, selectedStory?.type);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSort, setActiveSort] = useState<string | null>('name');
@@ -75,12 +73,14 @@ const PlotListScreen = () => {
         title: t('plots_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('PlotReader')}
-              accessibilityLabel={t('plot_reader_title')}
-            >
-              <Ionicons name="book-outline" size={24} color={colors.text} />
-            </TouchableOpacity>
+            {selectedStory?.type === 'linear' && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('PlotReader')}
+                accessibilityLabel={t('plot_reader_title')}
+              >
+                <Ionicons name="book-outline" size={24} color={colors.text} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               onPress={() => navigation.navigate('PlotMatrix')}
               accessibilityLabel={t('plot_matrix_title')}
@@ -104,7 +104,7 @@ const PlotListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, canEdit, styles.headerRightContainer]),
+    }, [navigation, colors.text, t, canEdit, selectedStory?.type, styles.headerRightContainer]),
   );
 
   const visiblePlots = useMemo(() => {
@@ -147,10 +147,6 @@ const PlotListScreen = () => {
 
   if (!storyId) {
     return <ScreenError message={t('no_story_selected')} onGoBack={() => navigation.goBack()} />;
-  }
-
-  if (selectedStory?.type !== 'linear') {
-    return <ScreenError message={t('plots_linear_only')} onGoBack={() => navigation.goBack()} />;
   }
 
   if (loading && plots.length === 0) {

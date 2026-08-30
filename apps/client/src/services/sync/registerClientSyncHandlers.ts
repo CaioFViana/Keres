@@ -24,6 +24,8 @@ import { NoteClientSyncHandler } from '../entity-sync-handlers/NoteClientSyncHan
 import { NoteRelationClientSyncHandler } from '../entity-sync-handlers/NoteRelationClientSyncHandler';
 import { PlotClientSyncHandler } from '../entity-sync-handlers/PlotClientSyncHandler';
 import { PlotSceneClientSyncHandler } from '../entity-sync-handlers/PlotSceneClientSyncHandler';
+import { RouteClientSyncHandler } from '../entity-sync-handlers/RouteClientSyncHandler';
+import { RouteStepClientSyncHandler } from '../entity-sync-handlers/RouteStepClientSyncHandler';
 import { SceneClientSyncHandler } from '../entity-sync-handlers/SceneClientSyncHandler';
 import { SeeAlsoRelationClientSyncHandler } from '../entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
 import {
@@ -64,6 +66,8 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new ItemJourneyClientSyncHandler(),
     new PlotClientSyncHandler(),
     new PlotSceneClientSyncHandler(),
+    new RouteClientSyncHandler(),
+    new RouteStepClientSyncHandler(),
     new SceneClientSyncHandler(),
     new GalleryClientSyncHandler(),
     new GalleryRelationClientSyncHandler(),

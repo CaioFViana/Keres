@@ -89,25 +89,100 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
       const named = perType.flat();
       const nextMatcher = buildMentionMatcher(named);
       const names = new Map(named.map((entity) => [`${entity.type}:${entity.id}`, entity.name]));
-      const [characters, locations, items, scenes, chapters, notes, worldRules, plots] = await Promise.all([
-        drizzleDb.select().from(schema.characters).where(and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.locations).where(and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.items).where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.scenes).where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.chapters).where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.notes).where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.worldRules).where(and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false))).all(),
-        drizzleDb.select().from(schema.plots).where(and(eq(schema.plots.storyId, storyId), eq(schema.plots.isDeleted, false))).all(),
-      ]);
-      const source = (type: MentionTextSource['type'], row: { id: string }, fields: MentionTextSource['fields']): MentionTextSource => ({ type, id: row.id, name: names.get(`${type}:${row.id}`) ?? '', fields });
+      const [characters, locations, items, scenes, chapters, notes, worldRules, plots] =
+        await Promise.all([
+          drizzleDb
+            .select()
+            .from(schema.characters)
+            .where(
+              and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
+            )
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.locations)
+            .where(
+              and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false)),
+            )
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.items)
+            .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false)))
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.scenes)
+            .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false)))
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.chapters)
+            .where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false)))
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.notes)
+            .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false)))
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.worldRules)
+            .where(
+              and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
+            )
+            .all(),
+          drizzleDb
+            .select()
+            .from(schema.plots)
+            .where(and(eq(schema.plots.storyId, storyId), eq(schema.plots.isDeleted, false)))
+            .all(),
+        ]);
+      const source = (
+        type: MentionTextSource['type'],
+        row: { id: string },
+        fields: MentionTextSource['fields'],
+      ): MentionTextSource => ({
+        type,
+        id: row.id,
+        name: names.get(`${type}:${row.id}`) ?? '',
+        fields,
+      });
       const sources: MentionTextSource[] = [
-        ...characters.map((row) => source('Character', row, { description: row.description, personality: row.personality, motivation: row.motivation, qualities: row.qualities, weaknesses: row.weaknesses, biography: row.biography, plannedTimeline: row.plannedTimeline, extraNotes: row.extraNotes })),
-        ...locations.map((row) => source('Location', row, { description: row.description, climate: row.climate, culture: row.culture, politics: row.politics, extraNotes: row.extraNotes })),
-        ...items.map((row) => source('Item', row, { description: row.description, extraNotes: row.extraNotes })),
-        ...scenes.map((row) => source('Scene', row, { summary: row.summary, extraNotes: row.extraNotes })),
-        ...chapters.map((row) => source('Chapter', row, { summary: row.summary, extraNotes: row.extraNotes })),
+        ...characters.map((row) =>
+          source('Character', row, {
+            description: row.description,
+            personality: row.personality,
+            motivation: row.motivation,
+            qualities: row.qualities,
+            weaknesses: row.weaknesses,
+            biography: row.biography,
+            plannedTimeline: row.plannedTimeline,
+            extraNotes: row.extraNotes,
+          }),
+        ),
+        ...locations.map((row) =>
+          source('Location', row, {
+            description: row.description,
+            climate: row.climate,
+            culture: row.culture,
+            politics: row.politics,
+            extraNotes: row.extraNotes,
+          }),
+        ),
+        ...items.map((row) =>
+          source('Item', row, { description: row.description, extraNotes: row.extraNotes }),
+        ),
+        ...scenes.map((row) =>
+          source('Scene', row, { summary: row.summary, extraNotes: row.extraNotes }),
+        ),
+        ...chapters.map((row) =>
+          source('Chapter', row, { summary: row.summary, extraNotes: row.extraNotes }),
+        ),
         ...notes.map((row) => source('Note', row, { body: row.body, extraNotes: row.extraNotes })),
-        ...worldRules.map((row) => source('WorldRule', row, { description: row.description, extraNotes: row.extraNotes })),
+        ...worldRules.map((row) =>
+          source('WorldRule', row, { description: row.description, extraNotes: row.extraNotes }),
+        ),
         ...plots.map((row) => source('Plot', row, { details: row.details })),
       ];
       if (token !== loadToken.current) return;
@@ -134,7 +209,9 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
 
   return (
     <MentionMatcherContext.Provider value={matcher}>
-      <MentionBacklinksContext.Provider value={backlinks}>{children}</MentionBacklinksContext.Provider>
+      <MentionBacklinksContext.Provider value={backlinks}>
+        {children}
+      </MentionBacklinksContext.Provider>
     </MentionMatcherContext.Provider>
   );
 };

@@ -246,6 +246,13 @@
       "when": 1788099188610,
       "tag": "0034_wet_layla_miller",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788103957943,
+      "tag": "0035_nifty_hex",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,8 @@ export const SYNC_ENTITY_EVENTS: Record<string, string> = {
   ItemJourney: 'item_journey_changed',
   Plot: 'plot_changed',
   PlotScene: 'plot_scene_changed',
+  Route: 'route_changed',
+  RouteStep: 'route_step_changed',
   Gallery: 'gallery_changed',
   GalleryRelation: 'gallery_relation_changed',
   StorySchemaField: 'story_schema_field_changed',

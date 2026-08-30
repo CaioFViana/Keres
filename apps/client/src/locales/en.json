@@ -1825,6 +1825,8 @@
   "unknown_location": "Unknown Location",
   "unknown_note": "Unknown Note",
   "unknown_scene": "Unknown Scene",
+  "route": "Route",
+  "route_step": "Route step",
   "unknown_stat": "Unknown stat",
   "unknown_tag": "Unknown Tag",
   "unknown_trigger": "Unknown Trigger",

@@ -162,6 +162,13 @@
       "when": 1788099190347,
       "tag": "0022_stale_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1788103959288,
+      "tag": "0023_sharp_callisto",
+      "breakpoints": true
     }
   ]
 }

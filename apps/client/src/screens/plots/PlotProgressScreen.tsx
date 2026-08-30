@@ -1,7 +1,4 @@
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -36,7 +33,8 @@ const PlotProgressScreen = () => {
   const [saving, setSaving] = useState(false);
 
   const { plots, relations, scenes, chapters, loading } = useStoryPlots(
-    selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
+    selectedStory?.id,
+    selectedStory?.type,
   );
 
   // Empty plots count towards the average: they are part of the story's plan just as much as the
@@ -168,10 +166,6 @@ const PlotProgressScreen = () => {
       t,
     ]),
   );
-
-  if (selectedStory?.type !== 'linear') {
-    return <ScreenError message={t('plots_linear_only')} onGoBack={() => navigation.goBack()} />;
-  }
 
   if (loading) {
     return <ScreenLoading padded message={t('loading_plots')} />;

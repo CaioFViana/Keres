@@ -722,23 +722,21 @@ const MainSystemNavigator = () => {
             },
           })}
         />
-        {selectedStory?.type === 'linear' && (
-          <Drawer.Screen
-            name="PlotsStack"
-            component={PlotsStackNavigator}
-            options={{
-              title: t('plots_title'),
-              drawerLabel: t('plots_title'),
-              drawerIcon: drawerIcon('git-branch-outline'),
-            }}
-            listeners={({ navigation }) => ({
-              drawerItemPress: (e) => {
-                e.preventDefault();
-                navigation.navigate('PlotsStack', { screen: 'Plots' });
-              },
-            })}
-          />
-        )}
+        <Drawer.Screen
+          name="PlotsStack"
+          component={PlotsStackNavigator}
+          options={{
+            title: t('plots_title'),
+            drawerLabel: t('plots_title'),
+            drawerIcon: drawerIcon('git-branch-outline'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('PlotsStack', { screen: 'Plots' });
+            },
+          })}
+        />
         <Drawer.Screen
           name="LocationsStack"
           component={LocationStackNavigator}

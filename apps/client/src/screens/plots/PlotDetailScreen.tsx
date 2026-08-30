@@ -55,7 +55,8 @@ const PlotDetailScreen = () => {
   const scrollBottomPadding = useFormScrollBottomPadding();
 
   const { plotById, relationsOf, sceneById, chapterNameOf, coverageOf, loading } = useStoryPlots(
-    selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
+    selectedStory?.id,
+    selectedStory?.type,
   );
   const plot = plotById(plotId);
   const { canEdit } = useStoryRole(plot?.storyId);

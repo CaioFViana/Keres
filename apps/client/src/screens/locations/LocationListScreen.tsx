@@ -137,7 +137,15 @@ const LocationsScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton, canEdit, term]),
+    }, [
+      navigation,
+      colors.text,
+      t,
+      styles.headerRightContainer,
+      styles.headerButton,
+      canEdit,
+      term,
+    ]),
   );
 
   const handleToggleFavorite = useCallback(

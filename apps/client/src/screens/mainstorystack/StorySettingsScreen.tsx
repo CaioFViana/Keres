@@ -289,21 +289,10 @@ const StorySettingsScreen = () => {
     if (!storyId || !userId || !canManageStoryPolicy || newType === type) return;
 
     if (newType === 'branching') {
-      // Plots only exist in linear stories: warn before asking, as in the opposite
-      // direction, instead of letting the conversion fail without explanation.
       (async () => {
         try {
           setLoading(true);
-          const activePlots = await storyService().countActivePlots(storyId);
           setLoading(false);
-
-          if (activePlots > 0) {
-            AppAlert.alert(
-              t('cannot_convert_to_branching_title'),
-              t('cannot_convert_to_branching_plots_message', { count: activePlots }),
-            );
-            return;
-          }
 
           AppAlert.alert(
             t('convert_to_branching_title'),

@@ -21,6 +21,8 @@ import {
   notes,
   plots,
   plotScenes,
+  routes,
+  routeSteps,
   scenes,
   seeAlsoRelations,
   stats,
@@ -53,6 +55,8 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   characterscene: OperationLogEntityType.CharacterScene,
   plot: OperationLogEntityType.Plot,
   plotscene: OperationLogEntityType.PlotScene,
+  route: OperationLogEntityType.Route,
+  routestep: OperationLogEntityType.RouteStep,
   gallery: OperationLogEntityType.Gallery,
   galleryrelation: OperationLogEntityType.GalleryRelation,
   favorite: OperationLogEntityType.Favorite,
@@ -101,6 +105,40 @@ export async function resolveRelationEntityName(
       });
       name = story?.title;
       type = t('story');
+      break;
+    case OperationLogEntityType.Route:
+      const route = await db.query.routes.findFirst({
+        where: and(
+          eq(routes.id, relationId),
+          eq(routes.storyId, storyId),
+          eq(routes.isDeleted, false),
+        ),
+        columns: { name: true },
+      });
+      name = route?.name;
+      type = t('route');
+      break;
+    case OperationLogEntityType.RouteStep:
+      const routeStep = await db.query.routeSteps.findFirst({
+        where: and(
+          eq(routeSteps.id, relationId),
+          eq(routeSteps.storyId, storyId),
+          eq(routeSteps.isDeleted, false),
+        ),
+        columns: { routeId: true, position: true, sceneId: true },
+      });
+      if (routeStep) {
+        const routeForStep = await db.query.routes.findFirst({
+          where: and(eq(routes.id, routeStep.routeId), eq(routes.isDeleted, false)),
+          columns: { name: true },
+        });
+        const sceneForStep = await db.query.scenes.findFirst({
+          where: and(eq(scenes.id, routeStep.sceneId), eq(scenes.isDeleted, false)),
+          columns: { name: true },
+        });
+        name = `${routeForStep?.name || t('unknown_entity')} · ${routeStep.position}: ${sceneForStep?.name || t('unknown_scene')}`;
+      }
+      type = t('route_step');
       break;
     case OperationLogEntityType.Character:
       const character = await db.query.characters.findFirst({

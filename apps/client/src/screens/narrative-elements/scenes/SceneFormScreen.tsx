@@ -266,12 +266,7 @@ const SceneFormScreen = () => {
   }, [selectedStory?.id, currentSceneId]);
 
   const fetchPlotData = useCallback(async () => {
-    if (
-      !selectedStory?.id ||
-      isBranching ||
-      !plotServiceRef.current ||
-      !plotSceneServiceRef.current
-    ) {
+    if (!selectedStory?.id || !plotServiceRef.current || !plotSceneServiceRef.current) {
       setPlots([]);
       setPlotSceneRelations([]);
       return;
@@ -284,7 +279,7 @@ const SceneFormScreen = () => {
     ]);
     setPlots(availablePlots);
     setPlotSceneRelations(relations);
-  }, [currentSceneId, isBranching, selectedStory?.id]);
+  }, [currentSceneId, selectedStory?.id]);
 
   const fetchSceneEffects = useCallback(async () => {
     if (!effectServiceRef.current || !selectedStory?.id || !currentSceneId) {
@@ -992,7 +987,7 @@ const SceneFormScreen = () => {
         </View>
       )}
 
-      {selectedStory?.id && !isBranching && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <ScenePlotManager
             relations={currentSceneId ? plotSceneRelations : pendingPlotSceneRelations}

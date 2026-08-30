@@ -27,6 +27,8 @@ export * from './operationLogs';
 export * from './packs';
 export * from './plots';
 export * from './plotScenes';
+export * from './routes';
+export * from './routeSteps';
 export * from './scenes';
 export * from './seeAlsoRelations';
 export * from './servers';

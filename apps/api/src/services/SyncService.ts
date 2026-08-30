@@ -44,6 +44,8 @@ import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
 import { PlotSyncHandler } from './entity-sync-handlers/PlotSyncHandler';
 import { PlotSceneSyncHandler } from './entity-sync-handlers/PlotSceneSyncHandler';
+import { RouteSyncHandler } from './entity-sync-handlers/RouteSyncHandler';
+import { RouteStepSyncHandler } from './entity-sync-handlers/RouteStepSyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationRelationSyncHandler } from './entity-sync-handlers/LocationRelationSyncHandler';
 import { LocationMapSyncHandler } from './entity-sync-handlers/LocationMapSyncHandler';
@@ -104,6 +106,8 @@ export class SyncService {
     this.registerEntityHandler(new ItemJourneySyncHandler());
     this.registerEntityHandler(new PlotSyncHandler());
     this.registerEntityHandler(new PlotSceneSyncHandler());
+    this.registerEntityHandler(new RouteSyncHandler());
+    this.registerEntityHandler(new RouteStepSyncHandler());
     this.registerEntityHandler(new SuggestionSyncHandler());
     this.registerEntityHandler(new TagSyncHandler());
     this.registerEntityHandler(new TagRelationSyncHandler());

@@ -22,21 +22,56 @@ export const MentionBacklinksSection: React.FC<Props> = ({ entityType, entityId 
   const backlinks = useMentionBacklinks(entityType, entityId);
   const totalMentions = backlinks.reduce((total, entry) => total + entry.mentionCount, 0);
   const styles = useMemo(
-    () => StyleSheet.create({
-      row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-      rowLast: { borderBottomWidth: 0 },
-      content: { flex: 1, minWidth: 0 },
-      title: { color: colors.text, fontSize: 15, fontWeight: '600' },
-      excerpt: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
-      empty: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
-    }),
+    () =>
+      StyleSheet.create({
+        row: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          paddingVertical: 10,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+        rowLast: { borderBottomWidth: 0 },
+        content: { flex: 1, minWidth: 0 },
+        title: { color: colors.text, fontSize: 15, fontWeight: '600' },
+        excerpt: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+        empty: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
+      }),
     [colors],
   );
-  return <CollapsibleCard title={t('backlinks_title', { entities: backlinks.length, mentions: totalMentions })} initialExpanded={false}>
-    {backlinks.length === 0 ? <Text style={styles.empty}>{t('backlinks_empty')}</Text> : backlinks.map((entry, index) => <TouchableOpacity key={`${entry.source.type}:${entry.source.id}`} style={[styles.row, index === backlinks.length - 1 && styles.rowLast]} onPress={() => navigate(entry.source.type, entry.source.id)} accessibilityLabel={t('backlinks_open_source', { name: entry.source.name })}>
-      <Ionicons name={ENTITY_TYPE_ICONS[entry.source.type]} color={colors.primary} size={20} />
-      <View style={styles.content}><Text style={styles.title} numberOfLines={1}>{entry.source.name}</Text><Text style={styles.excerpt} numberOfLines={2}>{entry.excerpt}</Text></View>
-      <Ionicons name="chevron-forward" color={colors.textSecondary} size={18} />
-    </TouchableOpacity>)}
-  </CollapsibleCard>;
+  return (
+    <CollapsibleCard
+      title={t('backlinks_title', { entities: backlinks.length, mentions: totalMentions })}
+      initialExpanded={false}
+    >
+      {backlinks.length === 0 ? (
+        <Text style={styles.empty}>{t('backlinks_empty')}</Text>
+      ) : (
+        backlinks.map((entry, index) => (
+          <TouchableOpacity
+            key={`${entry.source.type}:${entry.source.id}`}
+            style={[styles.row, index === backlinks.length - 1 && styles.rowLast]}
+            onPress={() => navigate(entry.source.type, entry.source.id)}
+            accessibilityLabel={t('backlinks_open_source', { name: entry.source.name })}
+          >
+            <Ionicons
+              name={ENTITY_TYPE_ICONS[entry.source.type]}
+              color={colors.primary}
+              size={20}
+            />
+            <View style={styles.content}>
+              <Text style={styles.title} numberOfLines={1}>
+                {entry.source.name}
+              </Text>
+              <Text style={styles.excerpt} numberOfLines={2}>
+                {entry.excerpt}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" color={colors.textSecondary} size={18} />
+          </TouchableOpacity>
+        ))
+      )}
+    </CollapsibleCard>
+  );
 };

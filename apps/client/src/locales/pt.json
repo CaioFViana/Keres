@@ -1825,6 +1825,8 @@
   "unknown_location": "Location Desconhecida",
   "unknown_note": "Nota Desconhecida",
   "unknown_scene": "Cena Desconhecida",
+  "route": "Rota",
+  "route_step": "Passo da rota",
   "unknown_stat": "Status desconhecido",
   "unknown_tag": "Tag Desconhecida",
   "unknown_trigger": "Trigger Desconhecido",

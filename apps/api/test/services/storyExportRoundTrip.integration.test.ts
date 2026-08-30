@@ -27,6 +27,8 @@ import {
   noteRelations,
   notes,
   scenes,
+  routes,
+  routeSteps,
   seeAlsoRelations,
   statRelations,
   statStrengths,
@@ -98,6 +100,9 @@ const id = {
   mode: '',
   baseValue: '',
   modeValue: '',
+  route: '',
+  routeStepA: '',
+  routeStepB: '',
 };
 
 /**
@@ -285,6 +290,30 @@ beforeEach(async () => {
     nextSceneId: id.sceneB,
     text: 'Descer até a enseada',
   } as never);
+  await db.insert(routes).values({
+    id: id.route,
+    storyId,
+    name: 'A rota da maré',
+    details: 'A escolha que leva do farol até a enseada.',
+  } as never);
+  await db.insert(routeSteps).values([
+    {
+      id: id.routeStepA,
+      storyId,
+      routeId: id.route,
+      position: 1,
+      sceneId: id.sceneA,
+      selectedChoiceId: id.choice,
+    },
+    {
+      id: id.routeStepB,
+      storyId,
+      routeId: id.route,
+      position: 2,
+      sceneId: id.sceneB,
+      selectedChoiceId: null,
+    },
+  ] as never);
   await db
     .insert(choiceCheckGroups)
     .values({ id: id.group, storyId, choiceId: id.choice, combinator: 'AND' } as never);
@@ -537,6 +566,8 @@ async function childrenOf(storyId: string) {
     modes: await rows(modes),
     storyBoards: await rows(boards),
     storyLocationMaps: await rows(locationMaps),
+    routes: await rows(routes),
+    routeSteps: await rows(routeSteps),
   };
 }
 

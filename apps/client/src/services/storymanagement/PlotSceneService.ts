@@ -35,8 +35,7 @@ const assertRelationIsValid = async (db: AppDrizzleClient, relation: SavePlotSce
       ),
     }),
   ]);
-  if (!story || story.type !== 'linear')
-    throw new Error('Plots are only available for linear stories.');
+  if (!story || story.isDeleted) throw new Error('Story not found.');
   if (!plot || !scene) throw new Error('Plot and scene must belong to the active story.');
 };
 

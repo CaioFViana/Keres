@@ -1,363 +1,239 @@
-# Keres feature landscape
+# Keres product landscape
 
-What comparable tools offer that Keres does not, what Keres offers that they do not, and which gaps
-are worth closing — read through Keres's own design premise. An input to product decisions, not a
-commitment.
+**Status:** living product decision document  
+**Last audited:** 2026-08-29  
+**Purpose:** describe the product Keres is building, distinguish delivered capability from proposals, and make strategic trade-offs explicit. It is not a release plan or a competitor feature checklist.
 
-**Basis and confidence.** Everything stated about Keres was verified against the code in
-`packages/shared/entities/`, `packages/shared/metadata/`, `apps/*/src/db/`,
-`apps/client/src/storyDevices/content/`, `apps/client/src/utils/storyAnalysisChecks.ts` and the
-archived plans in `docs/finished_planning/`. Those claims are checkable and should be re-checked
-when this document ages. Everything stated about other products is general knowledge of the
-category, not a tested feature matrix — treat competitor rows as "verify before acting on". No
-pricing, versions or third-party roadmaps are recorded, because those go stale fastest.
+## How to read this document
 
-Reference points: Scrivener, Plottr, Dabble, Bibisco, yWriter, Storyist, LivingWriter, Novelcrafter,
-Sudowrite, Campfire, World Anvil, Kanka, LegendKeeper, Obsidian, Milanote, Aeon Timeline,
-Fictionary, Ellipsus.
+The codebase is the source of truth for Keres. A claim is **implemented** only when the persisted model, client behaviour, server/sync path, import/export where applicable, and relevant tests are in place. A UI-only prototype, a finished planning document, or an example story does not meet that bar by itself.
 
----
+Competitor information is intentionally narrow and time-sensitive. It is based on official product pages checked on the audit date, not on pricing, marketing promises, or an exhaustive feature matrix. Re-check it before making a roadmap decision. The competitors that matter depend on the job the user is hiring Keres for:
 
-## 1. The design premise
+- **Plottr** for planning a linear book.
+- **World Anvil** and **Kanka** for wide worldbuilding, maps, chronology, publishing and RPG work.
+- **articy:draft** and **Twine** for playable or production-ready branching narrative.
+- **Scrivener**, Dabble and similar tools for drafting and compiling prose.
 
-Two commitments define the product, and every recommendation below is filtered through them:
-
-1. **Do not limit the writer in anything.**
-2. **Keres is not the text editor — it is the dictionary of a story, usable by any medium.**
-
-"Any medium" means the same story bible has to serve a novel, a comic, a game, an RPG campaign, a
-screenplay or an animation. That is a wider claim than any competitor in §9 makes, and it is the
-sharpest thing Keres has.
-
-### 1.1 The test this premise implies
-
-**A missing feature limits nobody — you simply do not use it. An imposed constraint limits
-everybody.**
-
-That inverts the usual product question. "What do competitors have that we lack?" is the wrong first
-question for Keres; the right first question is **"what does Keres currently force the writer to
-do?"** A gap is optional by nature. A constraint is not.
-
-The second filter follows from it: **does this feature add capability, or does it encode one
-school's ontology into every story in the app?** A freeform canvas adds capability. A required
-"value shift" field encodes a specific theory of novel craft into a comic script.
+This distinction is important: Keres should not pretend that all of these are the same market.
 
 ---
 
-## 2. What Keres currently forces (highest priority)
+## 1. Product thesis
 
-These are present-tense constraints, verified in the code. Under §1 they matter more than anything
-in the gap list, because they affect every user and cannot be opted out of.
+Keres is a **local-first, structured story bible** for people who need to connect a work's narrative, world, entities, time and choices. It is designed to support a novel, comic, game, campaign, screenplay or animation without making one medium's craft method mandatory for every other medium.
 
-### 2.1 ~~Every scene must have a location and a chapter~~ (location done; chapter now optional)
+Keres is **not** the manuscript editor, game engine or public wiki for every use case. It may integrate with those tools, but it should not absorb their entire scope at the cost of its own model.
 
-`Scene.locationId` is `string | null` — a scene may happen nowhere in particular. That constraint
-from the first draft of this document is gone.
+### 1.1 A useful, non-absolute principle
 
-`Scene.chapterId` is also `string | null`. A fragment, a study, a design note with scenes no longer
-has to invent a numbered chapter. Unchaptered scenes sit in a list bucket at the end ("Unchaptered" /
-"Sem capítulo"), sorted alphabetically by default (they have no 1..N of their own) and following the
-list's sort-by otherwise. They do not occupy the narrative spine, cannot be reordered as a chapter
-would, and are not offered as timeline anchors.
+"Do not limit the creator" is a decision filter, not a literal promise. Every data model limits something. The question is whether a feature creates optional expressive power or forces everyone to use one theory of narrative.
 
-What remains of this item is lighter: the *labels* are still Chapter/Scene (see §2.5).
+- A board, custom attribute, calendar, optional pack or relation adds capacity.
+- A required POV, value shift, three-act beat or mandatory chapter ordering imposes a method.
 
-### 2.2 A story must be linear or branching
+The first is usually aligned with Keres. The second is acceptable only as an opt-in seed that the creator owns and may change or delete.
 
-`Story.type` is `'linear' | 'branching'`. There is no third state. A world bible with no narrative
-order at all — a setting, a reference wiki, a campaign world — must still declare itself one of two
-narrative shapes it does not have. `Plot` compounds this: plots exist only in linear stories, so
-choosing "branching" removes a whole organizing tool.
+### 1.2 The claim Keres still has to earn
 
-### 2.3 ~~The timeline assumes the story is an ordered sequence of scenes~~ (Events exist)
+"Usable by any medium" is directionally right, but not yet fully true in the product. The model and custom schema are flexible; the visible vocabulary is still prose-shaped: Chapter, Scene, Character and Location. A comic creator still sees chapters where they expect issues or pages; an RPG creator still sees scenes where they might expect sessions or encounters.
 
-The timeline's **axis** is still the numbered spine (chapter → scene order). That is intentional:
-narrative order and chronology are two questions.
-
-What this section originally asked for is in the product: a container that is not a numbered chapter.
-`chapters.type` is `'chapter' | 'event'`. An Event holds scenes without a spine number; `chapterAnchors`
-place it against the spine (or measure it from the scenes it contains, or mark it as an instant).
-World history that is not "Chapter 4" has a home. Unchaptered scenes (§2.1) are the remaining
-fragments that do not even join an Event.
-
-### 2.4 Story Analysis opinions are opt-in
-
-The partition in `storyAnalysisChecks.ts` is written down and enforced. The six opinionated keys
-(`analysis_character_no_scenes`, `analysis_character_no_relationships`, `analysis_location_unused`,
-`analysis_location_no_connections`, `analysis_item_unused`, `analysis_tag_unused`) live in
-`COMPLETENESS_FINDING_KEYS` and fire only when `Story.completenessChecks` is on — **off by default**.
-
-Integrity findings (dangling choices, unreachable scenes, unsatisfiable checks, schema violations
-the writer declared, crooked 1..N numbering) stay always on. That is the boundary §5.1 asked to
-write before the checks multiplied. Keep it: craft checks must not become warnings.
-
-### 2.5 The vocabulary is prose-shaped
-
-The entities are named `Chapter`, `Scene`, `Character`, `Location`. A comic has issues, pages and
-panels; a game has quests and levels; an RPG has sessions and encounters; a screenplay has
-sequences. The underlying graph fits all of them — the *labels* do not.
-
-A per-story vocabulary layer (rename `Chapter` → "Issue", `Scene` → "Page", `Location` → "Set") is a
-label mapping over existing entities, not a schema change. It is the most direct expression of "any
-medium" available, and it costs no new entity.
+Per-story vocabulary is therefore not cosmetic. It is the lowest-cost proof that the product can serve more than one medium without duplicating the data model.
 
 ---
 
-## 3. The scope boundary: settled
+## 2. Verified capability today
 
-Keres is not a text editor. The model confirms this is structural: `Scene` has `summary` and no
-`content`; there is no `wordCount`, `draft`, `status` or `povCharacterId` anywhere in
-`packages/shared/entities/`; `Story` has no target word count, deadline or cover.
+### 2.1 Story model and organisation
 
-This is not a gap to close. Under §1 it is the premise: a dictionary that also owned the prose would
-constrain which medium the prose belongs to.
+- Stories can be **linear** or **branching**. Branching stories use directed Choices between scenes, with conditions and effects.
+- A Scene may have no location and no container. Unchaptered scenes are valid fragments, not invalid chapters waiting to be invented.
+- A container is a Chapter or an **Event**. Events have their own display order and can be anchored in chronology; they are not forced into the numbered narrative spine.
+- Custom attributes, tags, notes, see-also relations, galleries, items, character relations, stats, suggestions and comments provide a configurable story bible rather than one fixed character sheet.
+- Story packs seed existing entities at creation. The creator owns the generated rows immediately; packs are not permanent rails over the story.
 
-Everything below follows from that decision and should not be revisited feature by feature:
+### 2.2 Time, spatial and visual surfaces
 
-| Absent from Keres | Typical of |
-| --- | --- |
-| Prose editor, distraction-free mode | Scrivener, Dabble, Bibisco, yWriter, Novelcrafter |
-| Word-count targets, deadlines, streaks, output charts | Dabble, Scrivener, Bibisco |
-| Snapshots of prose, draft-to-draft diffing | Scrivener, Novelcrafter, Ellipsus |
-| Compile to DOCX/EPUB/PDF | Scrivener, Storyist, LivingWriter |
-| Prose analysis: readability, adverbs, repetition | Fictionary, ProWritingAid, AutoCrit |
+- Custom and standard calendars can express in-world dates, eras, time of day, seasons and moons; stories can choose a primary calendar or use calendar views in parallel.
+- The agenda renders calendar dates and scenes/events placed on them.
+- The linear timeline separates narrative order from anchored Events and chronology.
+- Boards provide freeform entity pins, notes and arrows.
+- Location Maps provide a structured location graph and saved layouts.
+- Story maps render the Choice graph for branching stories; location and character relation graphs provide other structural views.
 
-> The operation log is not draft history. It has per-entity `version` and full change tracking, but
-> that answers "what changed and in what order" — synchronization bookkeeping — not "show me this
-> scene as it read in draft two".
+These are authoring and inspection surfaces. A Location Map is **not** yet an uploaded geographic image with coordinate pins, layers and discoverable regions.
 
----
+### 2.3 Data ownership and collaboration
 
-## 4. Gaps that fit the premise
+- The client stores data locally and synchronizes through an operation log.
+- The server supports roles, asynchronous collaboration, optimistic concurrency and user-facing conflict resolution.
+- Stories, relations and supported media can be exported and imported as packages.
+- Comments are field-anchored and can be reviewed across entities.
 
-Ranked by how well they add capability without imposing an ontology.
+This is a meaningful architectural differentiator, but it is not a license to claim perfect reliability. Sync, conflict and import/export are critical infrastructure: every new persisted feature must prove its full lifecycle before it is described as production-ready.
 
-| # | Gap | Typical of | Fit with §1 | Status in Keres |
-| --- | --- | --- | --- | --- |
-| 1 | **Freeform canvas / corkboard with dragging** | Scrivener, Plottr, Milanote, Campfire | **Excellent** — the least prescriptive surface that exists. Imposes no structure; works for panels, quests, encounters or scenes alike. | **Shipped as Boards.** A story-scoped `boards` row holds a JSON drawing (entity pins, free notes, board-only arrows). Auto-layout graphs stay view-only. |
-| 2 | **`Event` decoupled from `Scene`** | Aeon Timeline, World Anvil | **Excellent** — removes the constraint in §2.3 rather than adding a rule. | **Shipped.** Not a new table: `chapters.type = 'event'` plus `chapterAnchors`. Scenes still live in a container; the container is no longer forced onto the spine. |
-| 3 | **Mention-based auto-linking and backlinks** | Obsidian, World Anvil (`[[…]]`) | **Excellent** — this is literally how a dictionary works. Additive, ignorable. | **Forward links shipped** (`Story.autoLinkMentions`): names in text become tappable, nothing is persisted. `SeeAlsoRelation` stays manual. **No "mentioned in" panel** (backlinks). |
-| 4 | **Custom in-world calendars** | World Anvil, Kanka, Fantasy Calendar | **Good** — describes a world, prescribes no narrative. | `AttributeType.DATE` is a deliberately floating civil date; scene timing reaches "eras". No custom months, leap rules or in-world arithmetic. |
-| 5 | **Image maps with pinned locations** | World Anvil, LegendKeeper, Kanka | **Good** — pure description, medium-agnostic. | There is a location *graph* (`contains` / `connected_to`) and a Gallery, but no map image with coordinates. |
-| 6 | **Research and reference items** — URLs, PDFs, clippings | Scrivener (Research), Milanote | **Good** — a dictionary that cannot hold a reference is odd. | **Shipped as Gallery types**, not a new entity. `link` stores an http(s) URL (`sourceUrl`) and never fetches it; it opens outside Keres. `document` is a hashed file shown as type icon + name; no in-app viewer. Image/video/audio still play inside. |
-| 7 | **Family trees / genealogy** | Kanka, World Anvil, Family Echo | **Good** — descriptive; optional per story. | `CharacterRelation` is a typed unordered pair drawn radially; no generation or descent semantics. |
-| 8 | **Series above Story** | LivingWriter, Campfire, World Anvil | **Good** — a shared dictionary across works is the premise scaled up. | `Story` is the top container. Sharing a character across two works means export/import, which clones with new ids. |
-| 9 | ~~**Generators** — names, tables, dice~~ | Kanka, World Anvil | **Cut** — ships one list shared by every user; see §5.4. | Absent. |
-| 10 | **Prebuilt entity-sheet templates** | Campfire, World Anvil | **Neutral if opt-in** — see §5.2. | Packs at creation (§5.4). Shipped: Comic, Novel craft, Tabletop stats. |
-| 11 | **Guided questionnaires** — character interviews, thesauri | Bibisco, One Stop for Writers | **Careful** — helpful as prompts, prescriptive if they become required fields. | Mechanism exists (Suggestions, custom attributes); content does not. |
-| 12 | **Structure templates** (Save the Cat, 3-act, Story Circle) | Plottr | **Only as seeds** — see §5.2. | 54 device pages exist as *reading material* only. |
-| 13 | **AI assistance** | Sudowrite, Novelcrafter, Campfire | **Conflicts** — an AI that suggests is an AI with an opinion about your story. | Absent. Offline-first and self-hosting already make this read as a stance. |
-| 14 | **Real-time co-editing** — live cursors | Ellipsus, Google Docs | **Neutral** — orthogonal to the premise. | Asynchronous collaboration with OCC, conflict resolution, roles and field-anchored comments; no live presence. |
-| 15 | **Scene craft fields** — POV, goal/conflict/outcome, value shift | Fictionary, Save the Cat method | **Conflicts as native fields** — see §5.2. | Absent as columns; expressible today as custom attributes. |
+### 2.4 Deliberate boundaries
+
+Keres does not currently provide:
+
+- a long-form manuscript editor, word-count workflow, editorial revision history or book compiler;
+- a game runtime, playable branching reader, engine export or scripting language;
+- real-time co-editing with cursors;
+- a full public-world publishing and permission system;
+- an image-map editor with pins and layers;
+- a series-level shared entity model across Stories.
+
+The operation log is not draft history. It records entity changes for synchronization and conflicts; it is not a safe substitute for snapshots of prose.
 
 ---
 
-## 5. Recommendations
+## 3. Constraints and partial capabilities
 
-### 5.1 Constraint removals — what landed, what is left
+These are the places where Keres should be honest rather than letting a nearby feature imply more than it does.
 
-Nothing in §4 is worth as much as §2, because §2 affects every user and cannot be opted out of.
-
-**Done**
-
-1. **`Scene.locationId` nullable** (§2.1).
-2. **Story Analysis boundary** (§2.4) — `completenessChecks`, off by default.
-3. **`Event` as a container that is not a numbered chapter** (§2.3 / §4 #2) — type column, not a new table.
-4. **`Scene.chapterId` nullable** (§2.1) — fragments listed under Unchaptered; not on the spine.
-
-**Still open**
-
-5. **A per-story vocabulary layer** (§2.5) — the most direct expression of "any medium" available,
-   with no new entity and no change to the graph. The Comic pack adds fields; it does not rename Chapter → Page.
-6. **Reconsider the `linear | branching` binary** (§2.2), including whether `Plot` must stay
-   linear-only. A world bible with no narrative order has no honest option today.
-
-### 5.2 What changed from the earlier draft of this document
-
-An earlier version of this analysis recommended, as its second priority, **adding native scene craft
-fields** — POV, goal/conflict/outcome, value shift — on the grounds that they would feed Story
-Analysis. **That recommendation is withdrawn.** Under §1 it is the worst item on the list: it
-encodes one school of novel craft (Swain's scene/sequel, Fictionary's model) into the schema of
-every story in the app, including comics, campaigns and games that have no use for it. Worse, its
-stated benefit — feeding Story Analysis — is precisely the prescription leak identified in §2.4.
-
-The correct form is a **prebuilt custom-attribute pack** the writer opts into: a "novel craft" set
-that creates those fields through `StorySchemaField`, which already exists and was built for exactly
-this. Zero schema change, zero imposition, same capability for whoever wants it.
-
-**Structure templates** (§4 #12) survive, but only in a specific shape:
-
-- they **generate** entities the writer then owns, edits and deletes freely;
-- they **never validate** afterwards — no "your story does not match the beat sheet";
-- they **never appear in Story Analysis**;
-- they are **labelled by origin** (Save the Cat is screenplay-derived; Kishōtenketsu is not
-  novel-specific), so the writer chooses knowingly.
-
-A seed you can throw away does not limit anyone. A rail does.
-
-### 5.3 The list, consolidated
-
-The single ordered view. Tier A first because it affects every user and cannot be opted out of;
-within each tier, cheapest and most aligned first.
-
-**Tier A — remove a constraint** (the premise in §1 applied to what exists today)
-
-| # | Item | Ref | Cost |
-| ---: | --- | --- | --- |
-| 1 | ~~Make `Scene.locationId` nullable~~ | §2.1 | **Done** |
-| 2 | ~~Write down the Story Analysis boundary — structural vs. opinion~~ | §2.4 | **Done** |
-| 3 | Per-story vocabulary layer (Chapter → "Issue", Scene → "Page", …) | §2.5 | Low |
-| 4 | Reconsider `linear \| branching`, and `Plot` being linear-only | §2.2 | Medium — needs design first |
-| 5 | ~~Reconsider the chapter requirement on `Scene`~~ | §2.1 | **Done** — unchaptered bucket; index unused |
-
-**Tier B — add capability without imposing an ontology**
-
-| # | Item | Ref | Cost |
-| ---: | --- | --- | --- |
-| 6 | ~~Freeform canvas / corkboard with dragging~~ | §4 #1 | **Done** — Boards (JSON drawing, explicit save, ghosts on delete) |
-| 7 | ~~`Event` decoupled from `Scene`~~ | §4 #2 | **Done** — `type` on `chapters` + anchors, not a new table |
-| 8 | Mention auto-linking ~~and backlinks~~ | §4 #3 | Forward links **done**; backlinks still open |
-| 9 | Family trees / genealogy | §4 #7 | Medium — may reuse `CharacterRelation` with a directional type |
-| 10 | ~~Research and reference items (URLs, PDFs)~~ | §4 #6 | **Done** — Gallery `document` and `link` |
-| 11 | Custom in-world calendars | §4 #4 | High — new entity |
-| 12 | Image maps with pinned locations | §4 #5 | High |
-| 13 | Series above `Story` | §4 #8 | High — touches every story-scoped query |
-
-**Tier C — opt-in content, no imposition** — all of it is one feature; see §5.4
-
-| # | Item | Ref | Cost |
-| ---: | --- | --- | --- |
-| 14 | **Story packs**, chosen at story creation — carries schema fields, suggestion catalogues, tags, structure skeletons, stat systems and story settings | §5.4 | Low mechanism, content is the cost |
-| — | ~~Generators — names, tables, dice~~ | §5.4 | **Cut** — see the shipped-content rule |
-
-**Tier D — does not follow from the premise**
-
-| # | Item | Ref | Verdict |
-| ---: | --- | --- | --- |
-| 19 | Real-time co-editing | §4 #14 | Neutral — orthogonal; the async model is stronger offline |
-| 20 | AI assistance | §4 #13 | Conflicts — worth stating publicly as a stance rather than leaving as a silent gap |
-| — | ~~Native scene craft fields~~ | §5.2 | **Withdrawn** — ships as #14 instead |
-
-**Suggested next batch:** 3 (vocabulary). The original first batch's constraint
-removals have landed; these two are still the cheapest remaining items that add no entity.
-
-### 5.4 Story packs
-
-Items 14–17 of the earlier draft were four names for one mechanism, and item 18 was cut. What
-follows is the agreed shape.
-
-**Chosen at story creation, never applied later.** Applying a pack to an existing story would flood
-the operation log with dozens of synthetic operations interleaved with real history, and would risk
-colliding with fields the writer already filled in. At creation there is no history to pollute and
-nothing at stake: a new story uploads to a server whole, through the bootstrap path
-(`uploadNewStoryToServer` / `POST /stories/import`), not as incremental operations.
-
-**Collisions are deliberate.** Because the writer picks several packs in one moment, two packs
-claiming the same `StorySchemaField` key is a decision the picker presents — conflict or merge — not
-an accident against existing work.
-
-**Payload.** Any subset of, all of them existing entities:
-
-| Content | Serves |
-| --- | --- |
-| `storySchemaFields` | custom fields; `description` doubles as the interview question for questionnaire packs (already rendered under the field) |
-| `suggestions` | value catalogues |
-| `tags` | a starter tag set |
-| `chapters` + `scenes` | a structure skeleton — a beat sheet is 15 named scenes with empty summaries |
-| `stats` + `statStrengths` | a stat system with its tier ladder — "D&D stats" is six `Stat` rows plus a ladder |
-| story settings | `type`, `statSystem`, `statNotation`, `normalizeSceneTiming` — safe to set **only** at creation |
-| `worldRules` / `notes` | reference or prompts |
-
-Examples worth shipping: a novel-craft field pack (the withdrawn native scene fields, as opt-in
-fields), a Save the Cat / three-act / Story Circle skeleton, "D&D stats", "film skeleton", and
-medium packs that pair with the vocabulary layer (§2.5) — a "Comic" pack installing the vocabulary
-map *and* the fields *and* the catalogues is the concrete delivery of "any medium".
-
-**It cannot become a rail.** Nothing records that a pack was applied — no `packId` column anywhere.
-Creation-time-only makes this structural rather than merely a rule: a pack that exists only before
-the story does cannot validate the story afterwards. Everything it creates is an ordinary entity the
-writer owns, edits and deletes from the first second.
-
-**Risks.** Creation-time-only removes most of them:
-
-| Risk | Status |
-| --- | --- |
-| Key collisions with existing work | Gone — becomes a deliberate choice between packs in the picker |
-| Uninstall losing `AttributeValue` data | Gone — there is no data yet |
-| Operation-log flood on a synced story | Gone — a new story bootstraps whole |
-| Seed becoming a rail | Structurally prevented |
-| **Translation and bundle maintenance** | **Remains** — every pack is content in two languages, the problem already documented in the risks of `EXAMPLE_STORIES_PLAN.md` |
-
-**Why generators were cut.** A generator would ship one list shared by every Keres user. The app
-today contains no strings that limit it — everything is either translated UI chrome or entered by
-the writer. That yields a general rule worth keeping:
-
-> Shipped content is acceptable when installing it **transfers ownership** — the writer gets an
-> ordinary copy they can edit and delete. It is not acceptable when it stays an external shared list
-> the writer draws from but never owns.
-
-Packs and example stories pass that test; a name generator does not. The cheap version that does
-pass is a "pick at random" button over the story's own `Suggestion` catalogue, which is the writer's
-own list.
-
----
-
-## 6. Cost model
-
-From `docs/finished_planning/PLOT_IMPLEMENTATION_PLAN.md`, a new entity costs: a shared entity and
-Zod schema, two database schemas and migrations (SQLite and Postgres), two sync handlers,
-export/import with id remapping, an `OperationLogEntityType` entry, global search integration, help
-content in two languages, and tests across all of it.
-
-| Item | New entity? | Relative cost |
+| Area | Current reality | Product consequence |
 | --- | --- | --- |
-| Nullable `locationId` | No — one column, one migration each side | **Done** |
-| Analysis boundary | No — categorisation plus documentation | **Done** |
-| Nullable `chapterId` | No — one column; list bucket; numbering skipped | **Done** |
-| Vocabulary layer | No — a label map on `Story` | **Low** |
-| Structure templates | No — generates existing entities | **Low** (packs ship skeletons) |
-| Custom-attribute packs | No — uses `StorySchemaField` | **Done** (mechanism + three shipped packs) |
-| Freeform canvas | **Yes** — `boards` row with JSON drawing | **Done** |
-| Mention linking + backlinks | Possibly none — derivable from text scanning | Forward **done**; backlinks open |
-| `Event` | **No** — discriminator on `chapters`, plus `chapterAnchors` | **Done** (cheaper than a new table) |
-| Custom calendars | **Yes** | **High** |
-| Image maps | **Yes** (or Gallery extension) | **High** |
+| Story shape | A Story is linear or branching; there is no neutral world-bible mode. | A reference setting must still choose a narrative shape. |
+| Vocabulary | Labels remain Chapter/Scene/Character/Location. | The multi-medium thesis is not visible to the creator. |
+| Branching | Choices, checks, effects and a graph exist. Plot is currently restricted to linear stories. | Keres plans branching; it does not yet model a plot across a graph. |
+| Time in branching | Event data and anchors can exist, but the narrative Timeline intentionally renders only linear stories. | Chronology needs a graph-aware presentation before it is first-class in branching. |
+| Plot views | Detail, matrix, reader and coverage assume a single narrative ordering. | Enabling Plot in branching is a design task, not merely removing a guard. |
+| Knowledge graph | Forward auto-links and manual see-also relations exist; there is no derived mentioned-in panel. | Discovery remains weaker than a mature connected-notes tool. |
+| Maps | Location graph and Gallery exist; no map-image coordinates, layers or region navigation. | Do not position Location Maps as an alternative to interactive cartography. |
+| Series | Story is the top-level ownership boundary. | Shared canon across books or campaigns requires copying/importing today. |
 
-Image maps still deserve their own plan. Vocabulary is the cheapest remaining Tier A item.
+### 3.1 Events in branching stories
 
----
+An Event is a container of scenes, not an edge in the Choice graph. Choices can lead into or out of its scenes because Choices point at scenes, never at containers. Its index is a display order only; it never establishes the reader's route through a branching story.
 
-## 7. What Keres has that most of the category does not
+That model is sound. The missing piece is presentation: a linear timeline cannot truthfully turn a graph of possible routes into one sequence. Do not solve this by silently choosing an arbitrary order.
 
-Recorded so these are not traded away by accident:
+### 3.2 Plots in branching stories
 
-- **Genuine offline-first**, with a real synchronization engine, optimistic concurrency and a
-  user-facing conflict resolution flow. Most competitors are web-only or single-device.
-- **Self-hostable**, with a documented API and a no-Docker home-server binary.
-- **Structural story analysis** — unreachable scenes, dangling choice references, choice
-  satisfiability, numbering integrity. Rare anywhere in the category. (See §2.4 for the part that
-  should stay structural.)
-- **Branching and linear in one tool**, with checks, effects, inventory and flags, plus a validated
-  conversion between the two.
-- **Per-story custom schema** across 7 entity types with 8 attribute types — the mechanism most
-  competitors approximate with fixed templates.
-- **The stats system** — axes, per-stat tier ladders, character modes, radar and ranking.
-- **Item journeys** — possession and state tracked scene by scene.
-- **Presence matrix and plot coverage** charts.
-- **Public Showcase** — publishing a read-only story bible to the web.
-- **Field-anchored comments** with five criticality levels and a cross-entity list.
-- **54 story-device pages** in Portuguese and English, alongside a full help catalogue.
-- **Story packs** at creation (no `packId` on the story): Comic, Novel craft, Tabletop stats.
+The existing Plot plus PlotScene model is already suitable for **membership**: a plot can mark a set of scenes, including scenes reached through different branches. This is the recommended first extension because it needs no new relationship shape.
+
+It does **not** define a route. If a Plot must mean "take Choice A, then B, then C", Keres needs a separate route/step model that records selected Choices and supports variants, loops, deleted edges and validation. Do not pretend that an ordered list of PlotScenes is such a route.
 
 ---
 
-## 8. Open questions
+## 4. Competitive reality
 
-- Does `Story.type` need a third value, or should `Plot` simply stop being linear-only (§2.2)?
-- Is the AI absence (§4 #13) worth stating publicly as a product stance? Under §1 it is a
-  consequence of the premise, not an omission.
-- Does "any medium" extend to the Showcase — should a published bible be presentable as something
-  other than a story (a setting, a campaign)?
-- Unchaptered scenes are off the spine and cannot be timeline anchors. Is that enough, or should a
-  fragment be pin-able the way an Event is?
-- Backlinks ("mentioned in") were deferred when auto-linking shipped. Still worth a panel?
+### 4.1 Keres is not competing on feature count
+
+Worldbuilding and writing products have had years to accumulate categories, templates, publishing systems and integrations. Matching them one feature at a time is a losing strategy. Keres should compete on a coherent combination of local ownership, structured relationships, multiple visual views and safe asynchronous collaboration.
+
+| User job | Strong reference products | Their verified strength | Keres's honest position |
+| --- | --- | --- | --- |
+| Plan a conventional book quickly | [Plottr](https://plottr.com/features/) | Mature drag-and-drop timeline, scene cards, plotlines, templates, filtering and series planning. | Behind in focused linear-planning polish and series workflows. Keres is more structurally connected, not faster for the ordinary outline. |
+| Build and present a large world or campaign | [World Anvil](https://www.worldanvil.com/about), [Kanka](https://kanka.io/features) | Broad object catalogues, interactive maps, calendars, timelines, permissions and presentation/community surfaces. | Behind by a large margin in breadth, map tooling, public discovery and RPG-specific workflows. Keres can win for private, local-first structured authoring. |
+| Manage exact chronology | [Aeon Timeline](https://release.aeontimeline.com/version1/manuals/AeonTimeline_UserManualMac.pdf) | Chronology-centered events, arcs and custom calendars with historical ranges. | Keres has calendars and timeline foundations, but the branching/time intersection and mature chronology tooling remain incomplete. |
+| Create interactive branching content | [articy:draft](https://www.articy.com/en/articydraft/feature-list/), [Twine](https://twinery.org/) | Visual flow, execution/simulation, variables or scripting, and publishing/engine paths. | Keres has a useful planning graph and story-bible context, but is not yet an interactive-fiction authoring or runtime tool. |
+| Draft, revise and compile prose | Scrivener, Dabble, Novelcrafter and similar | Manuscript editing, revision workflow, targets and publishing export. | Deliberately outside Keres's scope. The right relationship is coexistence or integration, not feature parity. |
+| Build a linked personal knowledge base | Obsidian and similar tools | Backlinks, graph navigation, local files and ecosystem extensibility. | Keres is stronger in first-class narrative entities and rules; it is weaker in backlink discovery and general-purpose extensibility. |
+
+### 4.2 The competitive omission to correct
+
+Any discussion of Keres branching must include articy:draft and Twine. Treating only Plottr or World Anvil as competitors hides the key distinction:
+
+- Keres currently models and analyses a branching plan.
+- articy:draft and Twine let the author execute, test or publish a branching experience.
+
+Keres may intentionally remain on the first side of that boundary. If so, say it plainly. If it wants to cross it, that is a separate product strategy requiring a runtime, state persistence, playtesting, production export and a much stronger branching model.
+
+### 4.3 A defensible position
+
+The strongest positioning hypothesis is:
+
+> Keres is a local-first story bible for complex works: it connects narrative, world, time, relationships and choices without forcing a single writing method or storing the manuscript.
+
+This is a hypothesis, not a market fact. It becomes credible only when its weak points — vocabulary, branching parity and infrastructure reliability — no longer contradict it.
+
+---
+
+## 5. Strategic priorities
+
+### Priority 0 — trust before breadth
+
+The operation log, synchronization, conflict resolution, migrations, import/export and local data cleanup are the foundation of Keres. New features that persist or synchronize data must include real-database service tests and server integration coverage where they cross the network.
+
+No visual novelty compensates for losing work or leaving a user unable to synchronize it.
+
+### Priority 1 — make the multi-medium promise visible
+
+Add per-story vocabulary over the existing model. This is low-cost relative to a new entity and unlocks a clearer Comic, RPG, game and screenplay experience without fragmenting services, sync or export.
+
+### Priority 2 — make branching a first-class planning mode
+
+Extend Plot membership to branching stories, then adapt each view honestly:
+
+- plots highlight scenes/nodes in the Choice graph;
+- detail and matrix use a labelled catalogue order, not a fictional reading order;
+- coverage is described as scene coverage/distribution, not path progress;
+- the linear Reader remains unavailable unless a real route model exists;
+- conversion between linear and branching preserves ordinary PlotScene membership.
+
+This has more strategic value than adding another isolated entity: it repairs a contradiction in the current model.
+
+### Priority 3 — improve connected discovery
+
+Add a derived, non-persisted mentioned-in panel for auto-links and make it navigable. It fits the story-bible premise, imposes no ontology and gives the user a meaningful reason to keep structured notes in Keres rather than a generic notebook.
+
+### Priority 4 — choose the next expansion by audience
+
+Do not pursue all of these simultaneously:
+
+| If the target user is… | Invest next in… | Do not mistake it for… |
+| --- | --- | --- |
+| novelist / screenwriter | polish of Boards, calendar/timeline, Plot and external writing workflow | becoming a manuscript editor |
+| worldbuilder / GM | image maps with entity pins, layers, events and controlled reveal | instant parity with World Anvil/Kanka |
+| game narrative designer | route modelling, graph validation, path inspection and later export | a runtime before the model is ready |
+| multi-book creator | a deliberate series/canon model | a simple folder around Stories |
+
+### Deliberately not a priority
+
+- Native mandatory craft fields. Ship optional packs and custom attributes instead.
+- AI assistance as an assumed feature. It requires an explicit privacy, cost and product stance.
+- Real-time cursors before asynchronous collaboration is boringly reliable.
+- A generic generator with centrally imposed lists. Creator-owned suggestion catalogues and packs are the compatible alternative.
+
+---
+
+## 6. Story packs: the permanent rule
+
+Packs are creation-time seeds, not frameworks installed over an existing story. They may create existing rows such as custom fields, suggestions, tags, chapters, scenes, stats, world rules and notes. The creator may then edit or delete every one of them.
+
+This preserves three properties:
+
+1. No operation-log flood is retroactively added to a lived, synced story.
+2. No pack owns user data or becomes a validation rail.
+3. A structure template is a starting point, not an authority that judges the work later.
+
+Content remains the cost: a pack requires useful, translated, maintained material. The mechanism is not the product by itself.
+
+---
+
+## 7. Decision gates for a new feature
+
+Before implementation, every feature proposal should answer:
+
+1. **User job:** which user and concrete problem does it solve?
+2. **Boundary:** is it story-bible capability, manuscript editing, public presentation or a game runtime?
+3. **Model:** does it require a new persisted entity, or can an existing relation/model express it?
+4. **Topology:** does it assume a linear order, a graph route, chronology, or none of these?
+5. **Lifecycle:** what happens on create, update, delete, sync, conflict, export, import, clone and story-type conversion?
+6. **Honest UI:** does the screen say exactly what the data means, without inventing an order, path or certainty the creator did not provide?
+7. **Verification:** which real-database and API integration tests make regression observable?
+
+The fifth and seventh questions are mandatory for any stored feature. This is where a feature stops being a screen and becomes a reliable part of Keres.
+
+---
+
+## 8. Maintenance rule
+
+Update this file in the same change that materially changes a capability or strategic boundary.
+
+- Mark each claim as implemented, partial, proposed or deliberately out of scope.
+- Link plans only as historical rationale; do not let a completed plan substitute for current code.
+- Re-audit competitor statements when a roadmap decision depends on them.
+- Keep release notes, roadmap and this document separate: one records change, one schedules work, and this one explains why the product exists.
+

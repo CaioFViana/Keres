@@ -161,6 +161,8 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
     if (!story) throw new Error(`Story with ID ${storyId} not found for pack extraction.`);
 
     const content: PackContentType = { ...EMPTY_CONTENT, settings: { ...EMPTY_CONTENT.settings } };
+    // A pack offers terminology only at story creation. The resulting story owns its copied value.
+    content.settings.vocabulary = story.vocabulary;
 
     if (selection.customAttributes) {
       content.storySchemaFields = await db

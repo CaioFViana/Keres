@@ -327,6 +327,8 @@ const ItemDetailScreen = () => {
         version={item.version}
         createdAt={item.createdAt}
         updatedAt={item.updatedAt}
+        entityType="Item"
+        entityId={item.id}
       />
 
       <View style={styles.buttonContainer}>

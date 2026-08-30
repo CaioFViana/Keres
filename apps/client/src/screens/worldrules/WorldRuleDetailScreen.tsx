@@ -267,6 +267,8 @@ const WorldRuleDetailScreen = () => {
         version={worldRule.version}
         createdAt={worldRule.createdAt}
         updatedAt={worldRule.updatedAt}
+        entityType="WorldRule"
+        entityId={worldRule.id}
       />
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />
 

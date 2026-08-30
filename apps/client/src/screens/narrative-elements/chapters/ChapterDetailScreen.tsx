@@ -457,6 +457,8 @@ const ChapterDetailScreen = () => {
         version={chapter.version}
         createdAt={chapter.createdAt}
         updatedAt={chapter.updatedAt}
+        entityType="Chapter"
+        entityId={chapter.id}
       />
 
       <View style={styles.buttonContainer}>

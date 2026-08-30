@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ShowcaseOwnerSchema } from './PublicationSchemas';
-import { StatNotationSchema } from './StorySchemas';
+import { StatNotationSchema, StoryVocabularySchema } from './StorySchemas';
 import { StatSchema, StatStrengthSchema } from './StatSchemas';
 import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
 import { SuggestionSchema } from './SuggestionSchemas';
@@ -29,6 +29,8 @@ export const CURRENT_PACK_FORMAT_VERSION = 1;
 export const PackSettingsSchema = z.object({
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
+  /** Optional terminology offered when a new story is created from this pack. */
+  vocabulary: StoryVocabularySchema.nullable().optional(),
 });
 
 export const PackContentSchema = z.object({

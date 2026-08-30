@@ -794,6 +794,8 @@ const SceneDetailScreen = () => {
         version={scene.version}
         createdAt={scene.createdAt}
         updatedAt={scene.updatedAt}
+        entityType="Scene"
+        entityId={scene.id}
       />
 
       <View style={styles.buttonContainer}>

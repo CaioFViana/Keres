@@ -157,6 +157,8 @@ const PlotDetailScreen = () => {
         version={plot.version}
         createdAt={plot.createdAt}
         updatedAt={plot.updatedAt}
+        entityType="Plot"
+        entityId={plot.id}
       />
 
       <View style={styles.buttonContainer}>

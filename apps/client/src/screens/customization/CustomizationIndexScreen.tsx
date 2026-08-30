@@ -49,6 +49,12 @@ const CustomizationIndexScreen = () => {
 
   const entries: Entry[] = [
     {
+      route: 'Vocabulary',
+      icon: 'text-outline',
+      titleKey: 'vocabulary_title',
+      descriptionKey: 'vocabulary_index_description',
+    },
+    {
       route: 'StoryCalendarList',
       icon: 'calendar-outline',
       titleKey: 'calendar_list_title',

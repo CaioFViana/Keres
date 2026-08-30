@@ -39,6 +39,7 @@ import { createSceneService } from '../../../services/storymanagement/SceneServi
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
 import { createTagService } from '../../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../../services/storymanagement/TagRelationService';
+import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -79,6 +80,7 @@ const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: strin
 const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -556,13 +558,13 @@ const NarrativeElementsListScreen = () => {
 
   const advancedSearchScopes = useMemo(
     () => [
-      { entityName: 'Chapter' as const, prefix: 'chapter', label: t('chapters_title') },
-      { entityName: 'Scene' as const, prefix: 'scene', label: t('scenes_title') },
+      { entityName: 'Chapter' as const, prefix: 'chapter', label: term('Chapter', true) },
+      { entityName: 'Scene' as const, prefix: 'scene', label: term('Scene', true) },
       ...(selectedStory?.type === 'branching'
         ? [{ entityName: 'Choice' as const, prefix: 'choice', label: t('choices_title') }]
         : []),
     ],
-    [selectedStory?.type, t],
+    [selectedStory?.type, t, term],
   );
 
   const visibleSceneCount = useMemo(() => {
@@ -695,7 +697,10 @@ const NarrativeElementsListScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('chapter_outline_search_placeholder')}
+        searchPlaceholder={t('chapter_outline_search_placeholder', {
+          chapters: term('Chapter', true),
+          scenes: term('Scene', true),
+        })}
         currentSearchTerm={searchQuery}
         filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
         onFilterChange={setActiveTagIds}

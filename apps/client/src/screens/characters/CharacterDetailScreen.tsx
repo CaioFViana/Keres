@@ -839,6 +839,8 @@ const CharacterDetailScreen = () => {
         version={character.version}
         createdAt={character.createdAt}
         updatedAt={character.updatedAt}
+        entityType="Character"
+        entityId={character.id}
       />
 
       <View style={styles.buttonContainer}>

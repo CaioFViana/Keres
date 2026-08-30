@@ -20,6 +20,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -39,6 +40,7 @@ type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<
 const StorySchemaListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   useDocumentTitle(t('story_schema_management_title'));
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaListScreenNavigationProp>();
@@ -219,7 +221,12 @@ const StorySchemaListScreen = () => {
             style={[styles.tab, activeEntityType === entityType && styles.tabActive]}
           >
             <Text style={[styles.tabText, activeEntityType === entityType && styles.tabTextActive]}>
-              {t(ENTITY_TYPE_LABEL_KEYS[entityType])}
+              {entityType === 'Character' ||
+              entityType === 'Location' ||
+              entityType === 'Scene' ||
+              entityType === 'Chapter'
+                ? term(entityType, true)
+                : t(ENTITY_TYPE_LABEL_KEYS[entityType])}
             </Text>
           </TouchableOpacity>
         ))}

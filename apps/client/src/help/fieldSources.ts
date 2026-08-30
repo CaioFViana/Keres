@@ -487,6 +487,9 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'serverId',
       'lastOperationLog',
       'lastServerSyncedLog',
+      // The vocabulary editor owns this configuration under Customization. It is not a Story
+      // Settings field, so it must not be claimed by that help page's field list.
+      'vocabulary',
       'version',
       'isDeleted',
       'deletedAt',

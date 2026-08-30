@@ -60,7 +60,7 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v2Export)).toEqual({
       ...v2Export,
-      story: { ...v2Export.story, statSystem: false, statNotation: 'letter' },
+      story: { ...v2Export.story, statSystem: false, statNotation: 'letter', vocabulary: null },
       comments: [],
       seeAlsoRelations: [],
       choiceCheckGroups: [],
@@ -89,7 +89,7 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v3Export)).toEqual({
       ...v3Export,
-      story: { ...v3Export.story, statSystem: false, statNotation: 'letter' },
+      story: { ...v3Export.story, statSystem: false, statNotation: 'letter', vocabulary: null },
       choiceCheckGroups: [],
       choiceChecks: [],
       effects: [],
@@ -139,7 +139,7 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v4Export)).toEqual({
       ...v4Export,
-      story: { ...v4Export.story, statSystem: false, statNotation: 'letter' },
+      story: { ...v4Export.story, statSystem: false, statNotation: 'letter', vocabulary: null },
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,

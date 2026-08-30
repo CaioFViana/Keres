@@ -3,11 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import { MentionBacklinksSection } from '@/src/components/features/mentions/MentionBacklinksSection';
+import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 
 interface EntityMetadataProps {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+  entityType?: NavigableEntityType;
+  entityId?: string;
 }
 
 /**
@@ -18,7 +22,13 @@ interface EntityMetadataProps {
  * Reusable across every entity because those three fields (and their meaning) are identical
  * everywhere; only the values change.
  */
-const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, updatedAt }) => {
+const EntityMetadata: React.FC<EntityMetadataProps> = ({
+  version,
+  createdAt,
+  updatedAt,
+  entityType,
+  entityId,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -43,7 +53,9 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, upd
     date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
   return (
-    <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>
+    <>
+      {entityType && entityId && <MentionBacklinksSection entityType={entityType} entityId={entityId} />}
+      <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>
       <View style={styles.row}>
         <Text style={styles.label}>{t('version')}</Text>
         <Text style={styles.value}>{version}</Text>
@@ -56,7 +68,8 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, upd
         <Text style={styles.label}>{t('updated_at')}</Text>
         <Text style={styles.value}>{formatDateTime(updatedAt)}</Text>
       </View>
-    </CollapsibleCard>
+      </CollapsibleCard>
+    </>
   );
 };
 

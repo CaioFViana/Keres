@@ -35,6 +35,7 @@ import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
 import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import VocabularyScreen from '../screens/customization/VocabularyScreen';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
 import BoardListScreen from '../screens/boards/BoardListScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
@@ -100,6 +101,7 @@ import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
+import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import type { HelpStackParamList } from './HelpStack';
@@ -469,6 +471,7 @@ const CustomizationStack = createNativeStackNavigator<CustomizationStackParamLis
  */
 export type CustomizationStackParamList = {
   CustomizationIndex: undefined;
+  Vocabulary: undefined;
   StoryCalendarList: undefined;
   StoryCalendarForm: { calendarId?: string };
   StoryAgenda: { calendarId?: string } | undefined;
@@ -489,6 +492,7 @@ const CustomizationStackNavigator = () => {
   return (
     <CustomizationStack.Navigator screenOptions={{ headerShown: false }}>
       <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
+      <CustomizationStack.Screen name="Vocabulary" component={VocabularyScreen} />
       <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
       <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
       <CustomizationStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
@@ -525,6 +529,7 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
@@ -685,8 +690,8 @@ const MainSystemNavigator = () => {
           name="CharactersStack"
           component={CharacterStackNavigator}
           options={{
-            title: t('characters_title'),
-            drawerLabel: t('characters_title'),
+            title: term('Character', true),
+            drawerLabel: term('Character', true),
             drawerIcon: drawerIcon('people-outline'),
           }}
           listeners={({ navigation }) => ({
@@ -738,8 +743,8 @@ const MainSystemNavigator = () => {
           name="LocationsStack"
           component={LocationStackNavigator}
           options={{
-            title: t('locations_title'),
-            drawerLabel: t('locations_title'),
+            title: term('Location', true),
+            drawerLabel: term('Location', true),
             drawerIcon: drawerIcon('map-outline'),
           }}
           listeners={({ navigation }) => ({

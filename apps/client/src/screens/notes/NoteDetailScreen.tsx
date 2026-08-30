@@ -383,6 +383,8 @@ const NoteDetailScreen = () => {
         version={note.version}
         createdAt={note.createdAt}
         updatedAt={note.updatedAt}
+        entityType="Note"
+        entityId={note.id}
       />
 
       <View style={styles.buttonContainer}>

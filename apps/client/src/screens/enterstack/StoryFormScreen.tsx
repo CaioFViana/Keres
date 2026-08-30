@@ -181,6 +181,7 @@ const StoryFormScreen = () => {
           // never comes into the world with it.
           statSystem: false,
           statNotation: 'letter',
+          vocabulary: null,
           lastOperationLog: 0,
           lastServerSyncedLog: 0,
         };

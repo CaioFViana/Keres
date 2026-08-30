@@ -687,6 +687,8 @@ const LocationDetailsScreen = () => {
         version={location.version}
         createdAt={location.createdAt}
         updatedAt={location.updatedAt}
+        entityType="Location"
+        entityId={location.id}
       />
     </ScrollView>
   );

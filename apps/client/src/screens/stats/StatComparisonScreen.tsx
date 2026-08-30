@@ -18,6 +18,7 @@ import type {
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
@@ -55,6 +56,7 @@ const newSlot = (characterId: string | null = null): SeriesSlot => ({
 
 const StatComparisonScreen = () => {
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<StatComparisonNavigationProp>();
@@ -261,7 +263,7 @@ const StatComparisonScreen = () => {
         onSelectionChange={handleCharacterSelection}
         maxSelections={MAX_SERIES}
         placeholder={t('stat_compare_select_characters', { count: MAX_SERIES })}
-        searchPlaceholder={t('search_characters')}
+        searchPlaceholder={t('search_entities', { entities: term('Character', true) })}
         style={{ marginBottom: 16 }}
       />
       {slots.length >= MAX_SERIES ? (

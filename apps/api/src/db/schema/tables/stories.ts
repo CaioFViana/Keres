@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, json, table, text, timestamp, timestampNow } from '../columns';
+import type { StoryVocabulary } from '@keres/shared/entities/Story';
 import { users } from './users';
 import { characters } from './characters';
 import { storyPermissions } from './storyPermissions';
@@ -65,6 +66,8 @@ export const stories = table('stories', {
   statSystem: boolean('stat_system').notNull().default(false),
   /** 'letter' | 'number' - how stat values are displayed. */
   statNotation: text('stat_notation').notNull().default('letter'),
+  /** Per-story presentation terminology. Null means the app's standard translated vocabulary. */
+  vocabulary: json('vocabulary').$type<StoryVocabulary | null>(),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

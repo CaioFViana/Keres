@@ -29,9 +29,8 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;
 
 /**
- * Reading, not editing: name, details and the plot's scenes in narrative order. The relation itself
- * (which scene, with what note) carries on being edited on the Scene's form, so that there are not
- * two competing editors of the same relation.
+ * Reading, not editing: name, details and the plot's scenes in narrative order. Scene membership is
+ * authored in the Plot form, alongside the plot's own name and details.
  */
 const PlotDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

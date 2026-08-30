@@ -65,6 +65,7 @@ export const helpSections: HelpSection[] = [
     icon: 'git-branch-outline',
     pageIds: [
       'branching-basics',
+      'routes',
       'choices',
       'story-map',
       'choice-conditions',

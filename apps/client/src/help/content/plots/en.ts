@@ -9,7 +9,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'A Plot is one narrative line of the story: a set of Scenes that tell the same thread, each with a short note explaining what that Scene does for it. The same Scene can belong to several Plots. Plots exist in linear stories only.',
+      text: 'A Plot is one narrative line of the story: a set of Scenes that tell the same thread, each with a short note explaining what that Scene does for it. The same Scene can belong to several Plots, including in branching stories.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
@@ -23,8 +23,8 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Name the Plot and, if you want, describe it in Details.',
-        'Open a Scene that belongs to it and use the Plots section of the form.',
-        'Pick the Plot and write the one-line note about what that Scene does for it.',
+        'After saving it, use the Scenes in this plot section in the Plot form itself.',
+        'Pick the Scene and write the one-line note about what it does for the Plot.',
         'Go back to the Plot to read its Scenes in narrative order.',
         'Use the Matrix, Coverage and Reader at the top of the list to see the whole set.',
       ],
@@ -49,16 +49,16 @@ const page: HelpPage = {
           label: 'Scene note',
           whatToWrite:
             'In one line, say what that Scene does for this Plot. Required to save the link.',
-          note: 'Lives in the Scene form, on the Plot detail screen and in the matrix cells.',
+          note: 'Lives in the Plot form and detail screen, and in the matrix cells.',
         },
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Coverage shows how many active Scenes each Plot reaches; because a Scene can belong to several Plots, the percentages do not add up to 100%. Deleting a Plot removes only its links: the Scenes stay untouched. While plots exist, the story cannot be converted to branching.',
+      text: 'Coverage shows how many active Scenes each Plot reaches; because a Scene can belong to several Plots, the percentages do not add up to 100%. Deleting a Plot removes only its links: the Scenes stay untouched. In branching stories, use Routes to record a possible path without limiting a Plot’s coverage.',
     },
-    { type: 'seeAlso', pages: ['scenes', 'chapters', 'narrative-elements'] },
+    { type: 'seeAlso', pages: ['routes', 'scenes', 'chapters', 'narrative-elements'] },
   ],
 };
 export default page;

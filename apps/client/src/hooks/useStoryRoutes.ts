@@ -13,6 +13,7 @@ import { createRouteService } from '../services/storymanagement/RouteService';
 import { createSceneService } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
+import { validateRouteSteps } from '@keres/shared';
 
 interface RouteData {
   routes: RouteSelect[];
@@ -98,6 +99,12 @@ export function useStoryRoutes(storyId: string | undefined | null) {
       chapterNameOf: (chapterId: string | null) =>
         data.chapters.find((chapter) => chapter.id === chapterId)?.name,
       choicesFrom: (sceneId: string) => data.choices.filter((choice) => choice.sceneId === sceneId),
+      validationOf: (routeId: string) =>
+        validateRouteSteps(
+          data.stepsByRouteId.get(routeId) ?? [],
+          data.scenes.map((scene) => scene.id),
+          data.choices,
+        ),
     }),
     [data, loading, reload],
   );

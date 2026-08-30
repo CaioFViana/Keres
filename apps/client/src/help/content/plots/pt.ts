@@ -9,7 +9,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Uma Trama é uma linha narrativa da história: um conjunto de Cenas que contam a mesma coisa, com uma nota curta explicando o papel de cada Cena ali. A mesma Cena pode participar de várias Tramas. Tramas existem apenas em histórias lineares.',
+      text: 'Uma Trama é uma linha narrativa da história: um conjunto de Cenas que contam a mesma coisa, com uma nota curta explicando o papel de cada Cena ali. A mesma Cena pode participar de várias Tramas, inclusive em histórias ramificadas.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
@@ -23,8 +23,8 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Dê um nome à Trama e, se quiser, descreva-a em Detalhes.',
-        'Abra a Cena que faz parte dela e use a seção Tramas do formulário.',
-        'Escolha a Trama e escreva a nota de uma linha sobre o papel daquela Cena.',
+        'Depois de salvar, use a seção Cenas nesta trama no próprio formulário da Trama.',
+        'Escolha a Cena e escreva a nota de uma linha sobre o papel dela na Trama.',
         'Volte à Trama para ler as Cenas dela em ordem narrativa.',
         'Use a Matriz, a Cobertura e o Leitor no topo da lista para ver o conjunto.',
       ],
@@ -49,16 +49,16 @@ const page: HelpPage = {
           label: 'Nota da cena',
           whatToWrite:
             'Em uma linha, diga o que aquela Cena faz por esta Trama. É necessário para salvar a ligação.',
-          note: 'Fica no formulário da Cena, no detalhe da Trama e nas células da matriz.',
+          note: 'Fica no formulário e no detalhe da Trama, além das células da matriz.',
         },
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A Cobertura mostra quantas Cenas ativas cada Trama percorre; como uma Cena pode estar em várias Tramas, os percentuais não somam 100%. Excluir uma Trama remove só as ligações dela: as Cenas continuam intactas. Enquanto houver Tramas, a história não pode ser convertida para ramificada.',
+      text: 'A Cobertura mostra quantas Cenas ativas cada Trama percorre; como uma Cena pode estar em várias Tramas, os percentuais não somam 100%. Excluir uma Trama remove só as ligações dela: as Cenas continuam intactas. Em histórias ramificadas, use Rotas para registrar um caminho possível sem limitar a cobertura da Trama.',
     },
-    { type: 'seeAlso', pages: ['scenes', 'chapters', 'narrative-elements'] },
+    { type: 'seeAlso', pages: ['routes', 'scenes', 'chapters', 'narrative-elements'] },
   ],
 };
 export default page;

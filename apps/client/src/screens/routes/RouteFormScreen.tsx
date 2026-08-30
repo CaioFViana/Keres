@@ -140,18 +140,18 @@ export default function RouteFormScreen() {
         style={[input.input, { minHeight: 100, textAlignVertical: 'top' }]}
         multiline
       />
-      <FormActions stackOnCompact>
-        {routeId ? (
-          <>
+      {routeId ? (
+        <FormActions stackOnCompact>
             <Button onPress={save}>{t('save_changes')}</Button>
             <Button onPress={remove} style={{ backgroundColor: colors.error }}>
               {t('delete_route_title')}
             </Button>
-          </>
-        ) : (
+        </FormActions>
+      ) : (
+        <FormActions stackOnCompact>
           <Button onPress={save}>{t('create_route')}</Button>
-        )}
-      </FormActions>
+        </FormActions>
+      )}
     </KeyboardAwareScreen>
   );
 }

@@ -10,15 +10,12 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import Select from '@/src/components/common/inputs/Select/Select'; // Import Select component
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
-import ScenePlotManager from '@/src/components/features/plots/ScenePlotManager/ScenePlotManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import type { Effect } from '@keres/shared/entities/Effect';
-import type { Plot } from '@keres/shared/entities/Plot';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
 import type { Scene } from '@keres/shared/entities/Scene';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -38,8 +35,6 @@ import type { CharacterSceneServiceInterface } from '../../../services/storymana
 import { createCharacterSceneService } from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { createEffectService } from '../../../services/storymanagement/EffectService';
 import { createLocationService } from '../../../services/storymanagement/LocationService'; // Import LocationService
-import { createPlotSceneService } from '../../../services/storymanagement/PlotSceneService';
-import { createPlotService } from '../../../services/storymanagement/PlotService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useChapterStore } from '../../../state/chapterStore'; // Import useChapterStore
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
@@ -116,8 +111,6 @@ const SceneFormScreen = () => {
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
   const effectServiceRef = useRef<ReturnType<typeof createEffectService> | null>(null);
-  const plotServiceRef = useRef<ReturnType<typeof createPlotService> | null>(null);
-  const plotSceneServiceRef = useRef<ReturnType<typeof createPlotSceneService> | null>(null);
 
   const isBranching = selectedStory?.type === 'branching';
 
@@ -135,9 +128,6 @@ const SceneFormScreen = () => {
       if (!effectServiceRef.current) {
         effectServiceRef.current = createEffectService(drizzleDb);
       }
-      if (!plotServiceRef.current) plotServiceRef.current = createPlotService(drizzleDb);
-      if (!plotSceneServiceRef.current)
-        plotSceneServiceRef.current = createPlotSceneService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -215,9 +205,6 @@ const SceneFormScreen = () => {
   const [pendingCharacterSceneRelations, setPendingCharacterSceneRelations] = useState<
     CharacterScene[]
   >([]);
-  const [plots, setPlots] = useState<Plot[]>([]);
-  const [plotSceneRelations, setPlotSceneRelations] = useState<PlotScene[]>([]);
-  const [pendingPlotSceneRelations, setPendingPlotSceneRelations] = useState<PlotScene[]>([]);
 
   const {
     availableTags,
@@ -264,22 +251,6 @@ const SceneFormScreen = () => {
       console.error('Failed to fetch character-scene relations:', err);
     }
   }, [selectedStory?.id, currentSceneId]);
-
-  const fetchPlotData = useCallback(async () => {
-    if (!selectedStory?.id || !plotServiceRef.current || !plotSceneServiceRef.current) {
-      setPlots([]);
-      setPlotSceneRelations([]);
-      return;
-    }
-    const [availablePlots, relations] = await Promise.all([
-      plotServiceRef.current.getAllByStoryId(selectedStory.id),
-      currentSceneId
-        ? plotSceneServiceRef.current.getBySceneId(selectedStory.id, currentSceneId)
-        : Promise.resolve([]),
-    ]);
-    setPlots(availablePlots);
-    setPlotSceneRelations(relations);
-  }, [currentSceneId, selectedStory?.id]);
 
   const fetchSceneEffects = useCallback(async () => {
     if (!effectServiceRef.current || !selectedStory?.id || !currentSceneId) {
@@ -416,7 +387,6 @@ const SceneFormScreen = () => {
       } finally {
         setLoading(false);
         fetchCharacterSceneRelations(); // Fetch character-scene relations
-        fetchPlotData();
       }
     };
     loadSceneAndData();
@@ -424,7 +394,6 @@ const SceneFormScreen = () => {
     currentSceneId,
     drizzleDb,
     fetchCharacterSceneRelations,
-    fetchPlotData,
     initialChapterId,
     isEditing,
     selectedStory?.id,
@@ -535,7 +504,6 @@ const SceneFormScreen = () => {
         await persistNoteRelations(savedSceneId);
         await seeAlsoManagerRef.current?.persistPending(savedSceneId);
         await persistPendingCharacterSceneRelations(savedSceneId);
-        await persistPendingPlotSceneRelations(savedSceneId);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -671,37 +639,6 @@ const SceneFormScreen = () => {
       setPendingCharacterSceneRelations([]);
       entityEventEmitter.emit('character_scene_changed', selectedStory.id, targetSceneId);
     }
-  };
-
-  const handleSavePlotSceneRelation = async (relation: PlotScene) => {
-    if (!currentSceneId) {
-      setPendingPlotSceneRelations((current) => [
-        ...current.filter((item) => item.id !== relation.id),
-        relation,
-      ]);
-      return;
-    }
-    if (!plotSceneServiceRef.current || !userId) return;
-    const saved = await plotSceneServiceRef.current.save(userId, relation);
-    setPlotSceneRelations((current) => [...current.filter((item) => item.id !== saved.id), saved]);
-  };
-
-  const handleDeletePlotSceneRelation = async (relationId: string) => {
-    if (!currentSceneId) {
-      setPendingPlotSceneRelations((current) => current.filter((item) => item.id !== relationId));
-      return;
-    }
-    if (!plotSceneServiceRef.current || !userId) return;
-    await plotSceneServiceRef.current.delete(userId, relationId);
-    setPlotSceneRelations((current) => current.filter((item) => item.id !== relationId));
-  };
-
-  const persistPendingPlotSceneRelations = async (targetSceneId: string) => {
-    if (!plotSceneServiceRef.current || !userId) return;
-    for (const relation of pendingPlotSceneRelations) {
-      await plotSceneServiceRef.current.save(userId, { ...relation, sceneId: targetSceneId });
-    }
-    setPendingPlotSceneRelations([]);
   };
 
   const chapterOptions = useMemo(() => {
@@ -983,20 +920,6 @@ const SceneFormScreen = () => {
             editable={true}
             currentStoryId={selectedStory.id}
             currentSceneId={currentSceneId ?? ''}
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <ScenePlotManager
-            relations={currentSceneId ? plotSceneRelations : pendingPlotSceneRelations}
-            plots={plots}
-            currentStoryId={selectedStory.id}
-            currentSceneId={currentSceneId ?? ''}
-            editable={true}
-            onSave={handleSavePlotSceneRelation}
-            onDelete={handleDeletePlotSceneRelation}
           />
         </View>
       )}

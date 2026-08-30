@@ -71,6 +71,7 @@ export const fieldSources: Record<string, string[]> = {
   boards: ['name', 'description'],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],
   plots: ['name', 'details', 'note'],
+  routes: ['name', 'details', 'sceneId', 'selectedChoiceId'],
   'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
 };
 
@@ -384,6 +385,14 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   PlotScene: {
     documented: ['plotId', 'sceneId', 'note', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Route: {
+    documented: ['name', 'details', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  RouteStep: {
+    documented: ['position', 'sceneId', 'selectedChoiceId', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'routeId', 'version', 'isDeleted', 'deletedAt'],
   },
   RegistrationSettings: {
     documented: ['isRegistrationOpen', 'maxUsers', 'autoManage', 'defaultTierId', 'updatedAt'],

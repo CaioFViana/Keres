@@ -540,7 +540,7 @@ const NarrativeElementsListScreen = () => {
       activeSort,
       sortDirection,
       scenesWithFavoriteState,
-      selectedStory?.type,
+      selectedStory,
       searchQuery,
       tagsByChapterId,
       tagsBySceneId,
@@ -632,11 +632,11 @@ const NarrativeElementsListScreen = () => {
         title: t('narrative_elements_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
-            {selectedStory?.type === 'branching' && (
+            {selectedStory && (
               <TouchableOpacity
                 onPress={() => navigation.navigate('ChoiceView')}
                 style={styles.headerButton}
-                accessibilityLabel={t('story_map_title')}
+                accessibilityLabel={selectedStory.type === 'linear' ? t('story_flow_title') : t('story_map_title')}
               >
                 <Ionicons name="git-network-outline" size={26} color={colors.text} />
               </TouchableOpacity>
@@ -674,7 +674,7 @@ const NarrativeElementsListScreen = () => {
       styles.headerButton,
       styles.headerRightContainer,
       canEdit,
-      selectedStory?.type,
+      selectedStory,
     ]),
   );
 

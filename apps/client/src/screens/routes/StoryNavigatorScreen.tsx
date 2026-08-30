@@ -1,5 +1,9 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Select from '@/src/components/common/inputs/Select/Select';
+import NavigatorRoutePersistenceModal, {
+  type NavigatorRoutePersistenceMode,
+} from '@/src/components/features/routes/NavigatorRoutePersistenceModal';
 import {
   emptyStorySimulationState,
   enterSimulatedScene,
@@ -19,13 +23,19 @@ import {
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryNavigatorData } from '../../hooks/useStoryNavigatorData';
+import { useStoryRoutes } from '../../hooks/useStoryRoutes';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
+import { createRouteService } from '../../services/storymanagement/RouteService';
 import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { AppAlert } from '../../utils/AppAlert';
+import { useDrizzle } from '../../db';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'StoryNavigator'>;
+type SimulatedRouteStep = { sceneId: string; selectedChoiceId: string | null };
 
 export default function StoryNavigatorScreen() {
   useBackButtonHandler({ showWebBackButton: true });
@@ -33,14 +43,19 @@ export default function StoryNavigatorScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<Navigation>();
   const { selectedStory } = useStoryStore();
+  const { userId } = useUserSettingsStore();
+  const db = useDrizzle();
   const openEntity = useNavigateToEntityDetail();
   const { scenes, choices, items, groups, checks, effects, loading } = useStoryNavigatorData(
     selectedStory?.id,
   );
+  const { routes } = useStoryRoutes(selectedStory?.id);
   const [startSceneId, setStartSceneId] = useState<string | null>(null);
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [state, setState] = useState<StorySimulationState>(emptyStorySimulationState());
   const [activity, setActivity] = useState<string[]>([]);
+  const [simulatedSteps, setSimulatedSteps] = useState<SimulatedRouteStep[]>([]);
+  const [persistenceMode, setPersistenceMode] = useState<NavigatorRoutePersistenceMode | null>(null);
   const current = scenes.find((scene) => scene.id === currentSceneId);
   const sceneEffects = useCallback(
     (id: string) =>
@@ -75,6 +90,7 @@ export default function StoryNavigatorScreen() {
         }),
         ...effectMessages(entering),
       ]);
+      setSimulatedSteps([{ sceneId: id, selectedChoiceId: null }]);
     },
     [effectMessages, sceneEffects, scenes, startSceneId, t],
   );
@@ -115,6 +131,12 @@ export default function StoryNavigatorScreen() {
     const afterChoice = applySimulationEffects(state, choiceEffects);
     setCurrentSceneId(choice.nextSceneId);
     setState(enterSimulatedScene(afterChoice, choice.nextSceneId, entering));
+    setSimulatedSteps((steps) => [
+      ...steps.map((step, index) =>
+        index === steps.length - 1 ? { ...step, selectedChoiceId: choice.id } : step,
+      ),
+      { sceneId: choice.nextSceneId, selectedChoiceId: null },
+    ]);
     setActivity([
       t('navigator_chose', { choice: choice.text }),
       ...effectMessages(choiceEffects),
@@ -136,6 +158,42 @@ export default function StoryNavigatorScreen() {
         ? t('navigator_blocked_by_trigger', { trigger: trigger.triggerName })
         : t('navigator_requires_trigger', { trigger: trigger.triggerName });
     return t('navigator_choice_unavailable');
+  };
+  const persistTraversal = (value: { name?: string; routeId?: string }) => {
+    if (!selectedStory?.id || !userId || simulatedSteps.length === 0) return;
+    const replacing = Boolean(value.routeId);
+    AppAlert.alert(
+      t(replacing ? 'navigator_replace_route_confirm_title' : 'navigator_save_route_confirm_title'),
+      t(replacing ? 'navigator_replace_route_confirm_message' : 'navigator_save_route_confirm_message', {
+        count: simulatedSteps.length,
+      }),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t(replacing ? 'navigator_replace_route' : 'navigator_save_as_route'),
+          onPress: async () => {
+            try {
+              const service = createRouteService(db);
+              const route = value.routeId
+                ? routes.find((entry) => entry.id === value.routeId)
+                : await service.save(userId, {
+                    storyId: selectedStory.id,
+                    name: value.name!,
+                    details: null,
+                  });
+              if (!route) throw new Error('Route not found.');
+              await service.replaceSteps(userId, route.id, simulatedSteps);
+              setPersistenceMode(null);
+              navigation.navigate('RouteDetail', { routeId: route.id });
+            } catch (error) {
+              console.error('Failed to persist navigator route:', error);
+              AppAlert.alert(t('error'), t('navigator_save_route_failed'));
+            }
+          },
+        },
+      ],
+      { cancelable: true },
+    );
   };
   const styles = useMemo(
     () =>
@@ -166,6 +224,7 @@ export default function StoryNavigatorScreen() {
         state: { color: colors.textSecondary, marginTop: 16 },
         activity: { color: colors.textSecondary, marginTop: 6 },
         restart: { marginTop: 20 },
+        routeActions: { marginTop: 12 },
       }),
     [colors],
   );
@@ -258,6 +317,28 @@ export default function StoryNavigatorScreen() {
       <Button onPress={() => reset()} style={styles.restart}>
         {t('navigator_restart')}
       </Button>
+      <FormActions style={styles.routeActions} stackOnCompact>
+        <Button onPress={() => setPersistenceMode('new')} disabled={!simulatedSteps.length}>
+          {t('navigator_save_as_route')}
+        </Button>
+        <Button
+          onPress={() => setPersistenceMode('replace')}
+          disabled={!simulatedSteps.length || routes.length === 0}
+        >
+          {t('navigator_replace_route')}
+        </Button>
+      </FormActions>
+      {persistenceMode ? (
+        <NavigatorRoutePersistenceModal
+          visible
+          mode={persistenceMode}
+          routes={routes}
+          suggestedName={t('navigator_route_name_suggestion', { scene: current?.name ?? '' })}
+          stepCount={simulatedSteps.length}
+          onClose={() => setPersistenceMode(null)}
+          onConfirm={persistTraversal}
+        />
+      ) : null}
     </ScrollView>
   );
 }

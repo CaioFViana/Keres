@@ -1,6 +1,6 @@
 # Branching parity, Routes and Story Navigator
 
-**Status:** proposed implementation plan  
+**Status:** implementation in progress  
 **Scope:** Priority 2 of `FEATURE_LANDSCAPE.md`  
 **Last updated:** 2026-08-30
 
@@ -18,6 +18,33 @@ This plan also introduces two complementary concepts:
 
 Keres remains a story-bible and planning tool. A Navigator is not a public game runtime, a script
 engine, a save-game system or a publishing/export format for interactive fiction.
+
+## Implementation status — 2026-08-30
+
+The delivery order below remains the source of truth. This section records what is actually in the
+product so a later change does not mistake a proposal for delivered behaviour.
+
+- [x] Shared narrative projection: honest linear order, branching catalogue/layers and derived
+  linear edges.
+- [x] Plot parity: services, forms, detail/list, matrix/distribution and map filtering work for
+  both story types. A Plot is authored in its own form; that form also owns its Scene membership
+  and one-line relation notes. This deliberately replaces the earlier proposal to edit the same
+  relationship from the Scene form.
+- [x] Story Flow: linear stories use the shared graph surface with derived consecutive edges.
+- [x] Route foundation: shared entities/schemas, generated client and server migrations, local
+  operation log, sync handlers, export/import migrations and round-trip coverage.
+- [x] Route UX: list, guided step editor, validity reporting, detail and route-specific Reader.
+- [x] Navigator evaluator and UI: in-memory checks, block/enable reasoning, item/trigger effects,
+  active state and current-scene navigation.
+- [x] Contextual Help: dedicated Routes page and contextual shortcut on every Route/Navigator
+  screen; the Plots page now documents branching parity correctly.
+- [~] Navigator persistence boundary: saving the simulated traversal as a new Route or replacing
+  a selected Route is the next implementation item.
+- [ ] Route global-search entry and direct entity navigation from search.
+- [ ] Route-scoped chronology/date presentation, only after the persistence and usage model has
+  been exercised.
+- [ ] Final cross-layer audit: conversion preservation, offline sync/conflict recovery and
+  branching Plot/Route package round trips need their remaining explicit integration tests.
 
 ## Product decisions
 

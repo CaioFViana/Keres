@@ -31,7 +31,7 @@ export default function RouteDetailScreen() {
   const navigation = useNavigation<Navigation>();
   const { routeId } = useRoute<ScreenRoute>().params;
   const { selectedStory } = useStoryStore();
-  const { routes, stepsOf, sceneById, loading } = useStoryRoutes(selectedStory?.id);
+  const { routes, stepsOf, sceneById, validationOf, loading } = useStoryRoutes(selectedStory?.id);
   const route = routes.find((entry) => entry.id === routeId);
   const { canEdit } = useStoryRole(selectedStory?.id);
   const navigateToDetail = useNavigateToEntityDetail();
@@ -49,6 +49,7 @@ export default function RouteDetailScreen() {
         stepName: { color: colors.text, fontWeight: '700' },
         choice: { color: colors.textSecondary, marginTop: 4 },
         count: { color: colors.textSecondary, marginBottom: 14 },
+        invalid: { color: colors.error, marginBottom: 12 },
       }),
     [colors],
   );
@@ -95,10 +96,12 @@ export default function RouteDetailScreen() {
       <ScreenError padded message={t('route_not_found')} onGoBack={() => navigation.goBack()} />
     );
   const steps = stepsOf(routeId);
+  const issues = validationOf(routeId);
   return (
     <ScrollView style={container.container} contentContainerStyle={{ paddingBottom: 28 }}>
       <Text style={styles.mainTitle}>{route.name}</Text>
       <Text style={styles.count}>{t('route_step_count', { count: steps.length })}</Text>
+      {issues.length ? <Text style={styles.invalid}>{t('route_invalid_detail', { issues: issues.join(', ') })}</Text> : null}
       <DetailField label={t('route_details')} value={route.details || t('common_na')} />
       <Text style={styles.sectionTitle}>{t('route_steps')}</Text>
       {steps.length ? (

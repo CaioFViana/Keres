@@ -78,6 +78,11 @@ import PlotListScreen from '../screens/plots/PlotListScreen';
 import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
 import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
 import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
+import RouteListScreen from '../screens/routes/RouteListScreen';
+import RouteFormScreen from '../screens/routes/RouteFormScreen';
+import RouteDetailScreen from '../screens/routes/RouteDetailScreen';
+import RouteStepsScreen from '../screens/routes/RouteStepsScreen';
+import RouteReaderScreen from '../screens/routes/RouteReaderScreen';
 import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
 import StatFormScreen from '../screens/stats/StatFormScreen';
 import StatLadderScreen from '../screens/stats/StatLadderScreen';
@@ -170,6 +175,11 @@ export type PlotsStackParamList = {
   PlotMatrix: undefined;
   PlotProgress: undefined;
   PlotReader: undefined;
+  Routes: undefined;
+  RouteDetail: { routeId: string };
+  RouteForm: { routeId?: string };
+  RouteSteps: { routeId: string };
+  RouteReader: { routeId: string };
 };
 const PlotsStackNavigator = () => {
   useBackButtonHandler();
@@ -184,6 +194,11 @@ const PlotsStackNavigator = () => {
       <PlotsStack.Screen name="PlotMatrix" component={PlotMatrixScreen} />
       <PlotsStack.Screen name="PlotProgress" component={PlotProgressScreen} />
       <PlotsStack.Screen name="PlotReader" component={PlotReaderScreen} />
+      <PlotsStack.Screen name="Routes" component={RouteListScreen} />
+      <PlotsStack.Screen name="RouteForm" component={RouteFormScreen} />
+      <PlotsStack.Screen name="RouteDetail" component={RouteDetailScreen} />
+      <PlotsStack.Screen name="RouteSteps" component={RouteStepsScreen} />
+      <PlotsStack.Screen name="RouteReader" component={RouteReaderScreen} />
     </PlotsStack.Navigator>
   );
 };

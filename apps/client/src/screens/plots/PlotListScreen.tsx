@@ -81,6 +81,14 @@ const PlotListScreen = () => {
                 <Ionicons name="book-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             )}
+            {selectedStory?.type === 'branching' && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Routes')}
+                accessibilityLabel={t('routes_title')}
+              >
+                <Ionicons name="trail-sign-outline" size={24} color={colors.text} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               onPress={() => navigation.navigate('PlotMatrix')}
               accessibilityLabel={t('plot_matrix_title')}

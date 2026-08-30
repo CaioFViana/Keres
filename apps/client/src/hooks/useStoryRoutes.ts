@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import type { RouteSelect, RouteStepSelect, SceneSelect } from '../db/schema';
+import type { ChapterSelect, ChoiceSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../db/schema';
+import { createChapterService } from '../services/storymanagement/ChapterService';
+import { createChoiceService } from '../services/storymanagement/ChoiceService';
 import { createRouteService } from '../services/storymanagement/RouteService';
 import { createSceneService } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -9,10 +11,12 @@ import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 interface RouteData {
   routes: RouteSelect[];
   scenes: SceneSelect[];
+  choices: ChoiceSelect[];
+  chapters: ChapterSelect[];
   stepsByRouteId: Map<string, RouteStepSelect[]>;
 }
 
-const emptyData = (): RouteData => ({ routes: [], scenes: [], stepsByRouteId: new Map() });
+const emptyData = (): RouteData => ({ routes: [], scenes: [], choices: [], chapters: [], stepsByRouteId: new Map() });
 
 /**
  * The single read model for Route authoring and reading.  Steps are refreshed together with their
@@ -31,14 +35,16 @@ export function useStoryRoutes(storyId: string | undefined | null) {
     }
     try {
       const service = createRouteService(db);
-      const [routes, scenes] = await Promise.all([
+      const [routes, scenes, choices, chapters] = await Promise.all([
         service.getAllByStoryId(storyId),
         createSceneService(db).getAllByStoryId(storyId),
+        createChoiceService(db).getAllByStoryId(storyId),
+        createChapterService(db).getAllByStoryId(storyId),
       ]);
       const allSteps = await Promise.all(
         routes.map(async (route) => [route.id, await service.getSteps(route.id)] as const),
       );
-      setData({ routes, scenes, stepsByRouteId: new Map(allSteps) });
+      setData({ routes, scenes, choices, chapters, stepsByRouteId: new Map(allSteps) });
     } catch (error) {
       console.error('Failed to load story routes:', error);
       setData(emptyData());
@@ -77,6 +83,8 @@ export function useStoryRoutes(storyId: string | undefined | null) {
       reload,
       stepsOf: (routeId: string) => data.stepsByRouteId.get(routeId) ?? [],
       sceneById: (sceneId: string) => data.scenes.find((scene) => scene.id === sceneId),
+      chapterNameOf: (chapterId: string | null) => data.chapters.find((chapter) => chapter.id === chapterId)?.name,
+      choicesFrom: (sceneId: string) => data.choices.filter((choice) => choice.sceneId === sceneId),
     }),
     [data, loading, reload],
   );

@@ -24,11 +24,7 @@ export function growCanvasBounds(
 ): CanvasWorldBounds {
   const originX = growStart(current.originX, required.originX, step);
   const originY = growStart(current.originY, required.originY, step);
-  const right = growEnd(
-    current.originX + current.width,
-    required.originX + required.width,
-    step,
-  );
+  const right = growEnd(current.originX + current.width, required.originX + required.width, step);
   const bottom = growEnd(
     current.originY + current.height,
     required.originY + required.height,

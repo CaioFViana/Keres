@@ -78,7 +78,9 @@ describe('small session stores', () => {
     expect(useHeaderBackActionStore.getState().backAction).toBeUndefined();
 
     useHeaderBackActionStore.getState().setCrossStackReturnAction(returnToOrigin);
-    expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBe(returnToOrigin);
+    expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBe(
+      returnToOrigin,
+    );
     expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBeUndefined();
   });
 });

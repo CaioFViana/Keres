@@ -433,16 +433,36 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       key: 'narrative_weight',
       description: text.schema.descriptions[2],
     },
-    boolean: { name: text.schema.names[3], key: 'resolved', description: text.schema.descriptions[3] },
-    date: { name: text.schema.names[4], key: 'review_date', description: text.schema.descriptions[4] },
+    boolean: {
+      name: text.schema.names[3],
+      key: 'resolved',
+      description: text.schema.descriptions[3],
+    },
+    date: {
+      name: text.schema.names[4],
+      key: 'review_date',
+      description: text.schema.descriptions[4],
+    },
     story_date: {
       name: showcase.storyDateName,
       key: 'date_of_destiny',
       description: showcase.storyDateDescription,
     },
-    suggestion: { name: text.schema.names[5], key: 'arc', description: text.schema.descriptions[5] },
-    suggestion_list: { name: text.schema.names[6], key: 'motifs', description: text.schema.descriptions[6] },
-    entity: { name: text.schema.names[7], key: 'reference_place', description: text.schema.descriptions[7] },
+    suggestion: {
+      name: text.schema.names[5],
+      key: 'arc',
+      description: text.schema.descriptions[5],
+    },
+    suggestion_list: {
+      name: text.schema.names[6],
+      key: 'motifs',
+      description: text.schema.descriptions[6],
+    },
+    entity: {
+      name: text.schema.names[7],
+      key: 'reference_place',
+      description: text.schema.descriptions[7],
+    },
   };
   const storySchemaFields = schemaTypes.map((type, index) => ({
     ...base(id(`schema-field-${index}`), storyId),
@@ -722,7 +742,11 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
                 },
               ],
               moons: [
-                { name: language === 'pt' ? 'Lua Madrinha' : 'Godmother Moon', periodDays: 29.5, referenceDay: 1 },
+                {
+                  name: language === 'pt' ? 'Lua Madrinha' : 'Godmother Moon',
+                  periodDays: 29.5,
+                  referenceDay: 1,
+                },
               ],
               seasons: [
                 { name: language === 'pt' ? 'Preparação' : 'Preparation', startDayOfYear: 1 },
@@ -769,7 +793,9 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
                     direction: 'backward',
                   },
                 ],
-                moons: [{ name: language === 'pt' ? 'Lua' : 'Moon', periodDays: 28, referenceDay: 1 }],
+                moons: [
+                  { name: language === 'pt' ? 'Lua' : 'Moon', periodDays: 28, referenceDay: 1 },
+                ],
                 seasons: [],
               },
             },
@@ -817,10 +843,41 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
             description: showcase.boardDescription,
             content: {
               nodes: [
-                { id: 'A1CE0001', kind: 'entity', x: 80, y: 100, entityType: 'Character', entityId: characters[0].id, labelAtPin: characters[0].name },
-                { id: 'A1CE0002', kind: 'entity', x: 360, y: 80, entityType: 'Scene', entityId: scenes[3].id, labelAtPin: scenes[3].name },
-                { id: 'A1CE0003', kind: 'entity', x: 350, y: 300, entityType: 'Item', entityId: items[0].id, labelAtPin: items[0].name },
-                { id: 'A1CE0004', kind: 'note', x: 100, y: 310, title: showcase.boardNoteTitle, body: showcase.boardNoteBody },
+                {
+                  id: 'A1CE0001',
+                  kind: 'entity',
+                  x: 80,
+                  y: 100,
+                  entityType: 'Character',
+                  entityId: characters[0].id,
+                  labelAtPin: characters[0].name,
+                },
+                {
+                  id: 'A1CE0002',
+                  kind: 'entity',
+                  x: 360,
+                  y: 80,
+                  entityType: 'Scene',
+                  entityId: scenes[3].id,
+                  labelAtPin: scenes[3].name,
+                },
+                {
+                  id: 'A1CE0003',
+                  kind: 'entity',
+                  x: 350,
+                  y: 300,
+                  entityType: 'Item',
+                  entityId: items[0].id,
+                  labelAtPin: items[0].name,
+                },
+                {
+                  id: 'A1CE0004',
+                  kind: 'note',
+                  x: 100,
+                  y: 310,
+                  title: showcase.boardNoteTitle,
+                  body: showcase.boardNoteBody,
+                },
               ],
               edges: [
                 { id: 'A1CE1001', from: 'A1CE0001', to: 'A1CE0002', directed: true, label: null },
@@ -832,13 +889,15 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
         ]
       : [];
 
-  const mapSlug = slug === 'beauty-and-the-beast' ? 'castle' : slug === 'little-mermaid' ? 'sea' : null;
+  const mapSlug =
+    slug === 'beauty-and-the-beast' ? 'castle' : slug === 'little-mermaid' ? 'sea' : null;
   const storyLocationMaps = mapSlug
     ? [
         {
           ...base(id(`location-map-${mapSlug}`), storyId),
           name: mapSlug === 'castle' ? showcase.castleMapName : showcase.seaMapName,
-          description: mapSlug === 'castle' ? showcase.castleMapDescription : showcase.seaMapDescription,
+          description:
+            mapSlug === 'castle' ? showcase.castleMapDescription : showcase.seaMapDescription,
           // Examples ship as JSON, so they cannot include local image bytes. The map still demonstrates
           // movable, navigable pins and its real location relations; API ZIP tests cover image bases.
           content: {

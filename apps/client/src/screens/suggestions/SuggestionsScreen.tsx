@@ -184,9 +184,7 @@ const SuggestionsScreen = () => {
         title: t('standard_suggestions_title'),
         headerRight: () =>
           canEdit ? (
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 }}
-            >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 }}>
               <TouchableOpacity
                 onPress={() => {
                   setCreatingList(true);

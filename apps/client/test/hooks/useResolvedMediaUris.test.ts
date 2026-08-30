@@ -23,7 +23,9 @@ afterEach(() => setPlatform(originalOS));
 
 it('resolves each desktop path once, preserves direct paths and makes a failed item explicit', async () => {
   (resolveBlobUri as jest.Mock).mockImplementation((path: string) =>
-    path.endsWith('missing') ? Promise.reject(new Error('missing')) : Promise.resolve(`blob:${path}`),
+    path.endsWith('missing')
+      ? Promise.reject(new Error('missing'))
+      : Promise.resolve(`blob:${path}`),
   );
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 

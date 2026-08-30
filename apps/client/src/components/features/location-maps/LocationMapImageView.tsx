@@ -132,7 +132,16 @@ const LocationMapImageView: React.FC<Props> = ({
             : {}),
         },
       }),
-    [colors, image.height, image.width, image.x, image.y, positionOffsetX, positionOffsetY, selected],
+    [
+      colors,
+      image.height,
+      image.width,
+      image.x,
+      image.y,
+      positionOffsetX,
+      positionOffsetY,
+      selected,
+    ],
   );
 
   return (

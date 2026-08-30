@@ -124,7 +124,12 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
 
     async deleteServer(serverId: string): Promise<void> {
       const linkedStories = await db
-        .select({ id: stories.id, title: stories.title, myRole: stories.myRole, isDeleted: stories.isDeleted })
+        .select({
+          id: stories.id,
+          title: stories.title,
+          myRole: stories.myRole,
+          isDeleted: stories.isDeleted,
+        })
         .from(stories)
         .where(eq(stories.serverId, serverId))
         .all();

@@ -53,7 +53,9 @@ it('ships every public-domain example as a complete showcase of applicable featu
       // The schema keeps collections introduced in old versions optional in the type, even though the current
       // format and these guards require all of them in the package.
       const story = parsed.data as any;
-      expect(Object.keys(FullStoryExportSchema.shape).filter((key) => !(key in rawPackage))).toEqual([]);
+      expect(
+        Object.keys(FullStoryExportSchema.shape).filter((key) => !(key in rawPackage)),
+      ).toEqual([]);
       expect(
         Object.keys(StorySchema.shape).filter(
           (key) => !(key in (rawPackage.story as Record<string, unknown>)),

@@ -111,7 +111,9 @@ function comparableExport(pkg: Record<string, any>) {
     if (!value || typeof value !== 'object') return value;
     const normalized = Object.fromEntries(
       Object.entries(value)
-        .filter(([key]) => !['createdAt', 'updatedAt', 'version', 'isDeleted', 'deletedAt'].includes(key))
+        .filter(
+          ([key]) => !['createdAt', 'updatedAt', 'version', 'isDeleted', 'deletedAt'].includes(key),
+        )
         .map(([key, child]) => [key, stripPersistenceMetadata(child)]),
     );
     // Character relations are an unordered pair. The importer canonically persists the lower id

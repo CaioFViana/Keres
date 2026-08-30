@@ -21,7 +21,9 @@ beforeEach(() => {
   syncStoryMedia.mockResolvedValue({ uploaded: 0, downloaded: 0, failed: 0, offline: false });
 });
 
-function createSubject(overrides: Partial<{ db: unknown; storyId: string | null; server: unknown }> = {}) {
+function createSubject(
+  overrides: Partial<{ db: unknown; storyId: string | null; server: unknown }> = {},
+) {
   return new SyncMedia({
     db: () => (overrides.db === undefined ? db : (overrides.db as never)),
     storyId: () => (overrides.storyId === undefined ? 'story-1' : overrides.storyId),

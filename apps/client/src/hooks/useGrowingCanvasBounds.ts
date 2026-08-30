@@ -1,8 +1,5 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
-import {
-  growCanvasBounds,
-  type CanvasWorldBounds,
-} from '../utils/growingCanvasBounds';
+import { growCanvasBounds, type CanvasWorldBounds } from '../utils/growingCanvasBounds';
 
 /**
  * Keeps an interactive canvas surface stable through a gesture. Required bounds can move on every

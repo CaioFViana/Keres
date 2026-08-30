@@ -97,7 +97,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           from: BoardNodeType;
           to: BoardNodeType;
           galleryMediaById: BoardGalleryMediaById | undefined;
-              geometry: BoardEdgeGeometry;
+          geometry: BoardEdgeGeometry;
         }
       >(),
     );

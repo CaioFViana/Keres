@@ -181,16 +181,7 @@ const LocationMapScreen = () => {
             )
           : undefined,
       });
-    }, [
-      canEdit,
-      dirty,
-      map?.name,
-      navigation,
-      revert,
-      save,
-      saving,
-      t,
-    ]),
+    }, [canEdit, dirty, map?.name, navigation, revert, save, saving, t]),
   );
 
   const galleryMediaById = useMemo(() => {

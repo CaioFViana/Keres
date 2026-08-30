@@ -358,12 +358,16 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0 }}
         >
           <G transform={`translate(${-size.originX} ${-size.originY})`}>
-          {connectionPaths.map((connection) => (
-            <ConnectionPathView key={connection.id} path={connection} background={colors.background} />
-          ))}
-          {containsArrows.map((arrow) => (
-            <ContainsArrowView key={arrow.id} arrow={arrow} background={colors.background} />
-          ))}
+            {connectionPaths.map((connection) => (
+              <ConnectionPathView
+                key={connection.id}
+                path={connection}
+                background={colors.background}
+              />
+            ))}
+            {containsArrows.map((arrow) => (
+              <ContainsArrowView key={arrow.id} arrow={arrow} background={colors.background} />
+            ))}
           </G>
         </Svg>
         {layoutContent.nodes.map((node) => (

@@ -140,7 +140,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
     summaryText: { color: colors.text, fontSize: 13, lineHeight: 19 },
     removeButton: { marginTop: 16, backgroundColor: colors.error },
-    colorMarging: { marginBottom: 20 }
+    colorMarging: { marginBottom: 20 },
   });
 
   const relationRow = (relationId: string, label: string, onRemove: (() => void) | undefined) => (

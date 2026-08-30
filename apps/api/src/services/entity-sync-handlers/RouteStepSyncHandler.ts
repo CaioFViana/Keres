@@ -66,18 +66,16 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
     await this.validate(storyId, data.routeId, data.sceneId, data.selectedChoiceId);
     if (await this.findById(update.id!))
       throw new Error(`Conflict: RouteStep with ID ${update.id} already exists.`);
-    await db
-      .insert(routeSteps)
-      .values({
-        id: update.id!,
-        storyId,
-        ...data,
-        version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isDeleted: false,
-        deletedAt: null,
-      });
+    await db.insert(routeSteps).values({
+      id: update.id!,
+      storyId,
+      ...data,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    });
   }
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: any) {
     const changes = this.updateSchema.parse(update.changes);

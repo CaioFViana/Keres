@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import type { ChapterSelect, ChoiceSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../db/schema';
+import type {
+  ChapterSelect,
+  ChoiceSelect,
+  RouteSelect,
+  RouteStepSelect,
+  SceneSelect,
+} from '../db/schema';
 import { createChapterService } from '../services/storymanagement/ChapterService';
 import { createChoiceService } from '../services/storymanagement/ChoiceService';
 import { createRouteService } from '../services/storymanagement/RouteService';
@@ -16,7 +22,13 @@ interface RouteData {
   stepsByRouteId: Map<string, RouteStepSelect[]>;
 }
 
-const emptyData = (): RouteData => ({ routes: [], scenes: [], choices: [], chapters: [], stepsByRouteId: new Map() });
+const emptyData = (): RouteData => ({
+  routes: [],
+  scenes: [],
+  choices: [],
+  chapters: [],
+  stepsByRouteId: new Map(),
+});
 
 /**
  * The single read model for Route authoring and reading.  Steps are refreshed together with their
@@ -83,7 +95,8 @@ export function useStoryRoutes(storyId: string | undefined | null) {
       reload,
       stepsOf: (routeId: string) => data.stepsByRouteId.get(routeId) ?? [],
       sceneById: (sceneId: string) => data.scenes.find((scene) => scene.id === sceneId),
-      chapterNameOf: (chapterId: string | null) => data.chapters.find((chapter) => chapter.id === chapterId)?.name,
+      chapterNameOf: (chapterId: string | null) =>
+        data.chapters.find((chapter) => chapter.id === chapterId)?.name,
       choicesFrom: (sceneId: string) => data.choices.filter((choice) => choice.sceneId === sceneId),
     }),
     [data, loading, reload],

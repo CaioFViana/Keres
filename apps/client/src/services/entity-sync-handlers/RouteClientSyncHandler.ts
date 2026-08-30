@@ -17,15 +17,13 @@ export class RouteClientSyncHandler implements ClientSyncEntityHandler {
   async applyCreate(_: string, update: CreateStoryUpdate) {
     if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as Route;
-    await this.db
-      .insert(schema.routes)
-      .values({
-        ...data,
-        id: update.id,
-        createdAt: new Date(data.createdAt),
-        updatedAt: new Date(data.updatedAt),
-        deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
-      });
+    await this.db.insert(schema.routes).values({
+      ...data,
+      id: update.id,
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
+      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
+    });
   }
   async applyUpdate(_: string, update: UpdateStoryUpdate) {
     if (update.entity !== this.entityName || !update.id || !update.changes) return;

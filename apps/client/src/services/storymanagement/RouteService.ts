@@ -104,7 +104,7 @@ export const createRouteService = (db: AppDrizzleClient) => {
     async replaceSteps(
       userId: string,
       routeId: string,
-      steps: Array<Pick<RouteStep, 'sceneId' | 'selectedChoiceId'>>,
+      steps: Pick<RouteStep, 'sceneId' | 'selectedChoiceId'>[],
     ) {
       const route = await db.query.routes.findFirst({ where: eq(routes.id, routeId) });
       if (!route || route.isDeleted) throw new Error('Route not found.');

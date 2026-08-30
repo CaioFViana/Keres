@@ -34,19 +34,17 @@ export class RouteSyncHandler extends BaseSyncEntityHandler<
     await this.assertBranching(storyId);
     if (await this.findById(update.id!))
       throw new Error(`Conflict: Route with ID ${update.id} already exists.`);
-    await db
-      .insert(routes)
-      .values({
-        id: update.id!,
-        storyId,
-        name: data.name,
-        details: data.details,
-        version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isDeleted: false,
-        deletedAt: null,
-      });
+    await db.insert(routes).values({
+      id: update.id!,
+      storyId,
+      name: data.name,
+      details: data.details,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    });
   }
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: any) {
     await this.assertBranching(storyId);

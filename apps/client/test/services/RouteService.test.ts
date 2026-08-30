@@ -15,25 +15,21 @@ beforeEach(async () => {
     .set({ type: 'branching' })
     .where(eq(schema.stories.id, TEST_STORY_ID))
     .run();
-  await database.db
-    .insert(schema.locations)
-    .values({
-      id: 'location',
-      storyId: TEST_STORY_ID,
-      name: 'Porto',
-      ...entityBase,
-      deletedAt: null,
-    });
-  await database.db
-    .insert(schema.chapters)
-    .values({
-      id: 'chapter',
-      storyId: TEST_STORY_ID,
-      name: 'Ato',
-      index: 0,
-      ...entityBase,
-      deletedAt: null,
-    });
+  await database.db.insert(schema.locations).values({
+    id: 'location',
+    storyId: TEST_STORY_ID,
+    name: 'Porto',
+    ...entityBase,
+    deletedAt: null,
+  });
+  await database.db.insert(schema.chapters).values({
+    id: 'chapter',
+    storyId: TEST_STORY_ID,
+    name: 'Ato',
+    index: 0,
+    ...entityBase,
+    deletedAt: null,
+  });
   await database.db.insert(schema.scenes).values([
     {
       id: 'scene-a',
@@ -60,17 +56,15 @@ beforeEach(async () => {
       deletedAt: null,
     },
   ]);
-  await database.db
-    .insert(schema.choices)
-    .values({
-      id: 'choice-a',
-      storyId: TEST_STORY_ID,
-      sceneId: 'scene-a',
-      nextSceneId: 'scene-b',
-      text: 'Seguir',
-      ...entityBase,
-      deletedAt: null,
-    });
+  await database.db.insert(schema.choices).values({
+    id: 'choice-a',
+    storyId: TEST_STORY_ID,
+    sceneId: 'scene-a',
+    nextSceneId: 'scene-b',
+    text: 'Seguir',
+    ...entityBase,
+    deletedAt: null,
+  });
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 

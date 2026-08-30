@@ -21,7 +21,8 @@ export type GlobalSearchEntityType =
   | 'Note'
   | 'WorldRule'
   | 'Mode'
-  | 'Plot';
+  | 'Plot'
+  | 'Route';
 
 export interface GlobalSearchFieldConfig {
   /** Column used as the result's display title. */
@@ -92,6 +93,10 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
     searchFields: ['name', 'modeChanges'],
   },
   Plot: {
+    titleField: 'name',
+    searchFields: ['name', 'details'],
+  },
+  Route: {
     titleField: 'name',
     searchFields: ['name', 'details'],
   },

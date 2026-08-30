@@ -14,6 +14,7 @@ const ENTITY_TYPES: NavigableEntityType[] = [
   'Note',
   'WorldRule',
   'Plot',
+  'Route',
   // Modo abre o detalhe do personagem dono - ver ENTITY_ROUTES.Mode.
   'Mode',
 ];
@@ -55,6 +56,7 @@ describe('navigateToEntityDetail', () => {
       Choice: 'NarrativeElementsStack',
       Chapter: 'NarrativeElementsStack',
       ItemJourney: 'ItemsStack',
+      Route: 'PlotsStack',
     };
     expect(stack).toBe(
       mergedStacks[entityType] ??

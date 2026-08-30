@@ -38,9 +38,9 @@ product so a later change does not mistake a proposal for delivered behaviour.
   active state and current-scene navigation.
 - [x] Contextual Help: dedicated Routes page and contextual shortcut on every Route/Navigator
   screen; the Plots page now documents branching parity correctly.
-- [~] Navigator persistence boundary: saving the simulated traversal as a new Route or replacing
-  a selected Route is the next implementation item.
-- [ ] Route global-search entry and direct entity navigation from search.
+- [x] Navigator persistence boundary: the author can save the simulated traversal as a new Route
+  or replace a selected Route, with an explicit confirmation before writing.
+- [x] Route global-search entry and direct entity navigation from search.
 - [ ] Route-scoped chronology/date presentation, only after the persistence and usage model has
   been exercised.
 - [ ] Final cross-layer audit: conversion preservation, offline sync/conflict recovery and

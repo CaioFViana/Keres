@@ -51,6 +51,7 @@ const SECTION_LABELS: Record<SuggestionUsage['entityType'], string> = {
   Choice: 'choices_title',
   Tag: 'tags_title',
   Mode: 'modes_title',
+  Route: 'routes_title',
 };
 
 const SuggestionUsageScreen = () => {

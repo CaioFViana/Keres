@@ -239,6 +239,88 @@ describe('pull', () => {
     expect(character).toMatchObject({ name: 'Keres', storyId: STORY_ID });
   });
 
+  /** An unknown operation must block the cursor: advancing past it would lose that remote edit forever. */
+  it('does not advance the pull cursor past an entity type this client cannot apply yet', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [{ ...remoteCreate('future-1', 'From a newer client', 8), entity: 'FutureEntity' }],
+      serverMaxOperationVersion: 8,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect((await readStory())!.lastServerSyncedLog).toBe(0);
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.stringContaining('updates received'),
+      'info',
+    );
+  });
+
+  /** A partial reorder is unsafe to apply: it has to remain on the server for a later, valid retry. */
+  it('does not move the cursor past a reorder without its complete item list', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        {
+          type: 'reorder',
+          entity: 'Chapter',
+          id: 'chapter-1',
+          operationId: 'srv-reorder-7',
+          operationVersion: 7,
+          operationTime: NOW.toISOString(),
+          reorderItems: [],
+        },
+      ],
+      serverMaxOperationVersion: 7,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect((await readStory())!.lastServerSyncedLog).toBe(0);
+  });
+
+  it('imports a changed public favorite snapshot and announces it to its target entity', async () => {
+    await seedStory();
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    pullResponse = {
+      updates: [],
+      publicFavorites: [
+        {
+          id: 'favorite-remote',
+          storyId: STORY_ID,
+          entityId: 'character-remote',
+          entityType: 'Character',
+          userId: 'other-user',
+          createdAt: NOW.toISOString(),
+          updatedAt: NOW.toISOString(),
+          version: 3,
+          isDeleted: false,
+          deletedAt: null,
+        },
+      ],
+      serverMaxOperationVersion: 0,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.favorites.findFirst({ where: eq(schema.favorites.id, 'favorite-remote') })).toMatchObject({
+      entityId: 'character-remote',
+      userId: 'other-user',
+      version: 3,
+    });
+    expect(emit).toHaveBeenCalledWith(
+      'favorite_changed',
+      STORY_ID,
+      'Character',
+      'character-remote',
+      'other-user',
+    );
+    expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'character-remote');
+  });
+
   /**
    * The cursor advances to the highest operation that actually arrived, never to the response's
    * `serverMaxOperationVersion`: the two are read in separate queries on the

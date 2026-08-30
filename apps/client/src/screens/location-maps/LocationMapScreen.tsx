@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -14,6 +13,7 @@ import LocationMapCanvas, {
   type LocationMapCanvasHandle,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import LocationMapImageSheet from '@/src/components/features/location-maps/LocationMapImageSheet';
+import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
@@ -172,38 +172,17 @@ const LocationMapScreen = () => {
         title: map?.name ?? t('location_map_list_title'),
         headerRight: canEdit
           ? () => (
-              <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
-                <TouchableOpacity
-                  onPress={revert}
-                  disabled={!dirty}
-                  accessibilityLabel={t('board_revert')}
-                >
-                  <Ionicons
-                    name="arrow-undo-outline"
-                    size={24}
-                    color={dirty ? colors.text : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => void save()}
-                  disabled={!dirty || saving}
-                  accessibilityLabel={t('board_save')}
-                >
-                  <Ionicons
-                    name="checkmark-outline"
-                    size={26}
-                    color={dirty ? colors.primary : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <LocationMapHeaderActions
+                dirty={dirty}
+                saving={saving}
+                onRevert={revert}
+                onSave={() => void save()}
+              />
             )
           : undefined,
       });
     }, [
       canEdit,
-      colors.primary,
-      colors.text,
-      colors.textSecondary,
       dirty,
       map?.name,
       navigation,

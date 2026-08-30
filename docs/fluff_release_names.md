@@ -45,3 +45,12 @@ _"From the pile there was a fruit. Destined to the prettiest of them. No one kno
 
 1.5 came out as a mess on android. What happened... Such failures, some despair, some issues... this cant go on. Its... _chaotic_...
 But I want to shake things up. lets see how far I can push Keres
+
+
+### 1.7 - Iris.
+
+_"After the storm, a maiden with shoulder wings graces the land. If it's an angel or a bigger deity is unknown, but for this time, the prayers might be heared over the rainbow."_
+
+1.6 was such a big release. but at the same time, comparing to stablished products took a toll on mental. Keres was made for myself, but the dream of something bigger on the horizon scares me. 
+
+So I shouldnt be daunted by the storm. I need to go ahead. Like a rainbow after the storm that will carry my message to the heavens.

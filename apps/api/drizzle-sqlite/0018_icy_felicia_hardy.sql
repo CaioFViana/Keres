@@ -1,0 +1,1 @@
+ALTER TABLE `stories` ADD `timeline_epoch_day` integer;

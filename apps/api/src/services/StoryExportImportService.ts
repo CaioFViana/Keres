@@ -2,6 +2,8 @@ import type { FullStoryExportType } from '@keres/shared';
 import {
   AttributeType,
   CURRENT_STORY_FORMAT_VERSION,
+  remapBoardContent,
+  remapLocationMapContent,
   describeStoryIntegrityViolations,
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
@@ -80,6 +82,22 @@ export class StoryExportImportService {
       where: (suggestions, { eq, and }) =>
         and(eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false)),
     });
+    const chapterAnchors = await db.query.chapterAnchors.findMany({
+      where: (chapterAnchors, { eq, and }) =>
+        and(eq(chapterAnchors.storyId, storyId), eq(chapterAnchors.isDeleted, false)),
+    });
+    const storyCalendars = await db.query.storyCalendars.findMany({
+      where: (storyCalendars, { eq, and }) =>
+        and(eq(storyCalendars.storyId, storyId), eq(storyCalendars.isDeleted, false)),
+    });
+    const storyBoards = await db.query.boards.findMany({
+      where: (boards, { eq, and }) => and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)),
+    });
+    const storyLocationMaps = await db.query.locationMaps.findMany({
+      where: (locationMaps, { eq, and }) =>
+        and(eq(locationMaps.storyId, storyId), eq(locationMaps.isDeleted, false)),
+    });
+
     const characterRelations = await db.query.characterRelations.findMany({
       where: (characterRelations, { eq, and }) =>
         and(eq(characterRelations.storyId, storyId), eq(characterRelations.isDeleted, false)),
@@ -192,6 +210,10 @@ export class StoryExportImportService {
         notes,
         tags,
         suggestions,
+        chapterAnchors,
+        storyCalendars,
+        storyBoards,
+        storyLocationMaps,
         characterRelations,
         characterScenes,
         plots,
@@ -390,14 +412,18 @@ export class StoryExportImportService {
       const newScenesData = validatedFullStory.scenes.map((original) => {
         const newId = nextId(original.id);
         idMap.set(original.id, newId);
-        const mappedChapterId = idMap.get(original.chapterId);
-        if (!mappedChapterId) {
+        const mappedChapterId = original.chapterId ? idMap.get(original.chapterId) : null;
+        if (original.chapterId && !mappedChapterId) {
           throw new Error(
             `Import Error: Chapter ID ${original.chapterId} not found in ID map for scene ${original.id}.`,
           );
         }
-        const mappedLocationId = idMap.get(original.locationId); // Strict mapping
-        if (!mappedLocationId) {
+        /*
+         * A scene may have no place at all, which is not the same as naming one that is missing.
+         * The first is nothing to map; the second is a broken package and still refuses.
+         */
+        const mappedLocationId = original.locationId ? idMap.get(original.locationId) : null;
+        if (original.locationId && !mappedLocationId) {
           throw new Error(
             `Import Error: Location ID ${original.locationId} not found in ID map for scene ${original.id}.`,
           );
@@ -406,7 +432,7 @@ export class StoryExportImportService {
           ...original,
           id: newId,
           storyId: targetStoryId,
-          chapterId: mappedChapterId,
+          chapterId: mappedChapterId ?? null,
           locationId: mappedLocationId, // Use strictly mapped locationId
           version: 1,
           createdAt: now,
@@ -606,6 +632,61 @@ export class StoryExportImportService {
         await tx.insert(dbSchema.suggestions).values(newSuggestionsData);
       }
 
+      /*
+       * --- ChapterAnchors ---
+       *
+       * The container and the start scene always remap. The end scene is optional: an open stretch
+       * has none. A start scene missing from the map is a broken package and still refuses.
+       */
+      const newChapterAnchorsData = (validatedFullStory.chapterAnchors ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        const mappedChapter = idMap.get(original.chapterId);
+        const mappedStart = idMap.get(original.startSceneId);
+        const mappedEnd = original.endSceneId ? idMap.get(original.endSceneId) : null;
+        if (!mappedChapter || !mappedStart || (original.endSceneId && !mappedEnd)) {
+          throw new Error(
+            `Import Error: a row referenced by chapter anchor ${original.id} was not found in the ID map.`,
+          );
+        }
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          chapterId: mappedChapter,
+          startSceneId: mappedStart,
+          endSceneId: mappedEnd ?? null,
+          createdAt: new Date(original.createdAt),
+          updatedAt: new Date(original.updatedAt),
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newChapterAnchorsData.length > 0) {
+        await tx.insert(dbSchema.chapterAnchors).values(newChapterAnchorsData);
+      }
+
+      /*
+       * --- StoryCalendars ---
+       *
+       * Nothing to remap: a calendar references no other row. It is the only collection here that
+       * is a pure copy, which is the same property that makes it safe to carry in a pack.
+       */
+      const newStoryCalendarsData = (validatedFullStory.storyCalendars ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          createdAt: new Date(original.createdAt),
+          updatedAt: new Date(original.updatedAt),
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newStoryCalendarsData.length > 0) {
+        await tx.insert(dbSchema.storyCalendars).values(newStoryCalendarsData);
+      }
+
       // --- CharacterRelations ---
       const newCharacterRelationsData = validatedFullStory.characterRelations.map((original) => {
         const newId = nextId(original.id);
@@ -755,6 +836,50 @@ export class StoryExportImportService {
           };
         });
         await tx.insert(dbSchema.items).values(newItemsData);
+      }
+
+      /*
+       * Boards after every pinnable entity is in the id map (characters, locations, notes,
+       * scenes, items, galleries, chapters). Ghost pins — ids that never appear — stay unmapped.
+       */
+      const newStoryBoardsData = (validatedFullStory.storyBoards ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          content: remapBoardContent(original.content, (id) => idMap.get(id) ?? id),
+          createdAt: new Date(original.createdAt),
+          updatedAt: new Date(original.updatedAt),
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newStoryBoardsData.length > 0) {
+        await tx.insert(dbSchema.boards).values(newStoryBoardsData);
+      }
+
+      /*
+       * Location maps hold location and gallery ids in their JSON document. They therefore wait
+       * until both collections are in the id map, just as boards wait for their pinnable entities.
+       */
+      const newStoryLocationMapsData = (validatedFullStory.storyLocationMaps ?? []).map(
+        (original) => {
+          const newId = nextId(original.id);
+          idMap.set(original.id, newId);
+          return {
+            ...original,
+            id: newId,
+            storyId: targetStoryId,
+            content: remapLocationMapContent(original.content, (id) => idMap.get(id) ?? id),
+            createdAt: new Date(original.createdAt),
+            updatedAt: new Date(original.updatedAt),
+            deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+          };
+        },
+      );
+      if (newStoryLocationMapsData.length > 0) {
+        await tx.insert(dbSchema.locationMaps).values(newStoryLocationMapsData);
       }
 
       // --- ChoiceCheckGroups (Optional, map choice ID) ---

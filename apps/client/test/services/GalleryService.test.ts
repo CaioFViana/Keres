@@ -129,6 +129,32 @@ it('filters gallery media, retrieves it through a live owner relation, and ignor
   ).toEqual(['map']);
 });
 
+it('marks a newly created link as already transferred because there are no bytes to send', async () => {
+  const service = createGalleryService(database.db);
+  const created = await service.createGallery('local-user', {
+    storyId: TEST_STORY_ID,
+    mediaType: 'link',
+    mimeType: 'text/uri-list',
+    fileName: 'notes.example',
+    hash: 'a'.repeat(32),
+    sizeBytes: 0,
+    sourceUrl: 'https://notes.example/lore',
+    localPath: null,
+  });
+  expect(created).toEqual(
+    expect.objectContaining({
+      mediaType: 'link',
+      sourceUrl: 'https://notes.example/lore',
+      uploadState: 'uploaded',
+      downloadState: 'downloaded',
+      localPath: null,
+    }),
+  );
+  expect((await service.getPendingUploads(TEST_STORY_ID)).map(({ id }) => id)).not.toContain(
+    created.id,
+  );
+});
+
 it('writes metadata changes without treating local transfer state as a synced entity update', async () => {
   const service = createGalleryService(database.db);
   const created = await service.createGallery('local-user', {

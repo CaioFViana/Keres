@@ -20,6 +20,8 @@ interface KeresMediaBridge {
   deleteFile(relativePath: string): Promise<void>;
   deleteDirectory(relativePath: string): Promise<void>;
   listAllFiles(): Promise<string[]>;
+  /** Electron only: open this stored file with the OS handler. */
+  openInOs?(relativePath: string): Promise<void>;
 }
 
 declare global {
@@ -178,6 +180,21 @@ export async function deleteFile(relativePath: string): Promise<void> {
     blobUrlCache.delete(relativePath);
   }
   await backend().deleteFile(relativePath);
+}
+
+/**
+ * Opens a stored media file with the operating system (PDF reader, Word, …).
+ *
+ * Only the Electron bridge can do this: OPFS has no path the OS can see. Returns `false` when
+ * that bridge is absent so the caller can fall back (a new browser tab, a share sheet).
+ */
+export async function openInOs(relativePath: string): Promise<boolean> {
+  const electron = electronBridge();
+  if (!electron?.openInOs) {
+    return false;
+  }
+  await electron.openInOs(relativePath);
+  return true;
 }
 
 export async function deleteDirectory(relativeDirPath: string): Promise<void> {

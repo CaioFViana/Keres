@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
@@ -223,15 +224,14 @@ const TagFormScreen = () => {
         multiline
       />
 
-      <Button onPress={handleSave} style={styles.saveButton}>
-        {isEditing ? t('save_changes') : t('create_tag')}
-      </Button>
-
-      {isEditing && (
-        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-          {t('delete_tag_title')}
-        </Button>
-      )}
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>{isEditing ? t('save_changes') : t('create_tag')}</Button>
+        {isEditing && (
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
+            {t('delete_tag_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

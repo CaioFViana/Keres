@@ -17,6 +17,8 @@ export interface CharacterRelationMapSvgOptions {
   /** Context line under the title (counts). */
   subtitle: string;
   showEdgeLabels: boolean;
+  /** Characters drawn with an emphasised outline - the ones the focus filter selected. */
+  highlightedNodeIds?: string[];
   labels: {
     isolated: string;
   };
@@ -27,6 +29,7 @@ export interface CharacterRelationMapSvgOptions {
     textSecondary: string;
     border: string;
     primaryContainer: string;
+    primary: string;
   };
 }
 
@@ -44,6 +47,7 @@ export function renderCharacterRelationMapSvg(
   const hasIsolatedLegend = layout.isolatedCount > 0;
   const headerHeight = HEADER_TOP + 44 + (hasIsolatedLegend ? LEGEND_ROW_HEIGHT : 0) + 8;
   const totalHeight = headerHeight + layout.height;
+  const highlightedIds = new Set(options.highlightedNodeIds ?? []);
 
   const body = [
     `<rect x="0" y="0" width="${canvasWidth}" height="${totalHeight}" fill="${options.colors.background}"/>`,
@@ -52,7 +56,7 @@ export function renderCharacterRelationMapSvg(
     // Edges first: passing under the nodes keeps a line from striking through a character's name.
     ...layout.edges.map((edge) => renderEdge(edge, options)),
     ...(options.showEdgeLabels ? layout.edges.map((edge) => renderEdgeLabel(edge, options)) : []),
-    ...layout.nodes.map((node) => renderNode(node, options)),
+    ...layout.nodes.map((node) => renderNode(node, options, highlightedIds)),
     '</g>',
   ].join('\n');
 
@@ -106,12 +110,21 @@ function renderEdgeLabel(edge: RelationGraphEdge, options: CharacterRelationMapS
   ].join('');
 }
 
-function renderNode(node: RelationGraphNode, options: CharacterRelationMapSvgOptions): string {
+function renderNode(
+  node: RelationGraphNode,
+  options: CharacterRelationMapSvgOptions,
+  highlightedIds: Set<string>,
+): string {
   const fill = node.isIsolated ? options.colors.surface : options.colors.primaryContainer;
   const dash = node.isIsolated ? ' stroke-dasharray="4 3"' : '';
+  const highlighted = highlightedIds.has(node.id);
+  // The focused characters keep their own outline (same as the interactive canvas), so the exported
+  // file shows the same selection the screen does.
+  const stroke = highlighted ? options.colors.primary : options.colors.border;
+  const strokeWidth = highlighted ? 2.5 : 1.2;
 
   const parts = [
-    `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="${node.height / 2}" fill="${fill}" stroke="${options.colors.border}" stroke-width="1.2"${dash}/>`,
+    `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="${node.height / 2}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${dash}/>`,
   ];
 
   const centerX = node.x + node.width / 2;

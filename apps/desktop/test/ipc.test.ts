@@ -4,7 +4,7 @@ import * as path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * The 10 IPC channels are the only door between the renderer (which has no disk access) and the
+ * The 11 IPC channels are the only door between the renderer (which has no disk access) and the
  * user's machine: the `auth:` ones keep tokens in the system vault, and the `media:` ones write
  * real files. Electron is mocked, but the file system is not - the media and vault tests operate
  * on a real temporary directory, which is where path-resolution errors actually show up.
@@ -24,6 +24,7 @@ const electronMocks = vi.hoisted(() => ({
     shouldReEncrypt: false,
   })),
   handle: vi.fn(),
+  openPath: vi.fn(async () => ''),
 }));
 
 vi.mock('electron', () => ({
@@ -50,6 +51,7 @@ vi.mock('electron', () => ({
     decryptStringAsync: electronMocks.decryptStringAsync,
   },
   session: { defaultSession: { clearCache: vi.fn(), clearCodeCaches: vi.fn() } },
+  shell: { openPath: electronMocks.openPath, openExternal: vi.fn() },
 }));
 
 /** A legitimate renderer: only `app://app/...` is accepted, see `isTrustedRendererUrl`. */
@@ -106,6 +108,7 @@ describe('registered channels', () => {
     'media:delete-file',
     'media:delete-directory',
     'media:list-all',
+    'media:open',
   ])('registers %s', (channel) => {
     expect(handlers.has(channel)).toBe(true);
   });
@@ -350,11 +353,27 @@ describe('media channels', () => {
     await expect(invoke('media:list-all', null)).resolves.toEqual([]);
   });
 
+  it('asks the OS to open a stored file at the resolved path', async () => {
+    await invoke('media:write', null, RELATIVE, BYTES);
+    electronMocks.openPath.mockResolvedValueOnce('');
+
+    await expect(invoke('media:open', null, RELATIVE)).resolves.toBeUndefined();
+    expect(electronMocks.openPath).toHaveBeenCalledWith(path.join(MEDIA_ROOT, RELATIVE));
+  });
+
+  it('surfaces an OS failure instead of pretending the file opened', async () => {
+    await invoke('media:write', null, RELATIVE, BYTES);
+    electronMocks.openPath.mockResolvedValueOnce('Failed to open');
+
+    await expect(invoke('media:open', null, RELATIVE)).rejects.toThrow('Failed to open');
+  });
+
   it.each([
     ['media:write', ['../escapou.png', new Uint8Array([1])]],
     ['media:read', ['../escapou.png']],
     ['media:delete-file', ['../escapou.png']],
     ['media:delete-directory', ['..']],
+    ['media:open', ['../escapou.png']],
   ])('refuses %s outside the media root', async (channel, args) => {
     await expect(invoke(channel, null, ...(args as any[]))).rejects.toThrow(
       /outside media storage/,

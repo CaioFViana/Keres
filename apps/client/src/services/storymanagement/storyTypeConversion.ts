@@ -77,6 +77,7 @@ export function groupScenesByChapter(
 ): ChapterWithScenes[] {
   const scenesByChapter = new Map<string, SceneSelect[]>();
   for (const scene of allScenes) {
+    if (!scene.chapterId) continue;
     const list = scenesByChapter.get(scene.chapterId) ?? [];
     list.push(scene);
     scenesByChapter.set(scene.chapterId, list);

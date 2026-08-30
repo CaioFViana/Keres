@@ -1,3 +1,4 @@
+import { SYNC_PROTOCOL_HEADER, SYNC_PROTOCOL_VERSION } from '@keres/shared';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/index';
 
@@ -65,7 +66,14 @@ describe('new response schemas do not break DB-independent error branches', () =
 
   it('sync push', async () => {
     await expectCleanUnauthorized('POST', '/sync/s', {
-      headers: { ...badAuth, 'content-type': 'application/json' },
+      headers: {
+        ...badAuth,
+        'content-type': 'application/json',
+        // `/sync` refuses an incompatible protocol *before* it looks at credentials, so reaching
+        // the 401 this test is about means speaking the current one. That ordering is deliberate:
+        // a mismatched client must not be told "unauthorized" for a version problem.
+        [SYNC_PROTOCOL_HEADER]: String(SYNC_PROTOCOL_VERSION),
+      },
       body: JSON.stringify([]),
     });
   });

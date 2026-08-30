@@ -21,7 +21,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › Choices and tap the map icon in the header.',
+        'Open Story menu › Narrative Elements and tap the map icon in the header.',
         'Drag and zoom the diagram. Use the fit button to bring the whole map back onto the screen.',
         'Use the legend: the Start scene border marks where a path starts; the End scene border marks its ending; dashed lines indicate returning paths.',
         'Tap a scene to see its summary, timing, effects, and incoming or outgoing choices. Tap a connection shown there to move to the matching scene.',

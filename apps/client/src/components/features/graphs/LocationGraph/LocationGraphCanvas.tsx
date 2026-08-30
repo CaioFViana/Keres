@@ -25,13 +25,15 @@ export type LocationGraphCanvasHandle = PanZoomCanvasHandle;
 interface LocationGraphCanvasProps {
   layout: LocationGraphLayout;
   selectedNodeId: string | null;
+  /** Locations the focus filter chose - drawn with the primary outline. */
+  highlightedNodeIds?: string[];
   onSelectNode: (node: LocationGraphNode) => void;
 }
 
 const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphCanvasProps>(
-  ({ layout, selectedNodeId, onSelectNode }, ref) => {
+  ({ layout, selectedNodeId, highlightedNodeIds, onSelectNode }, ref) => {
     const { colors } = useTheme();
-    const panZoom = usePanZoomCanvas(ref, layout);
+    const panZoom = usePanZoomCanvas(ref, layout, { freePan: true });
 
     const styles = useMemo(
       () =>
@@ -83,11 +85,13 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
 
         {layout.nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
-          const borderColor = isSelected
-            ? colors.primary
-            : node.isIsolated
-              ? colors.textSecondary
-              : colors.border;
+          const isHighlighted = highlightedNodeIds?.includes(node.id) ?? false;
+          const borderColor =
+            isSelected || isHighlighted
+              ? colors.primary
+              : node.isIsolated
+                ? colors.textSecondary
+                : colors.border;
 
           return (
             <TouchableOpacity
@@ -103,7 +107,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
                 style={[
                   styles.nodeInner,
                   node.isIsolated && styles.nodeInnerIsolated,
-                  { borderColor, borderWidth: isSelected ? 2.5 : 1.2 },
+                  { borderColor, borderWidth: isSelected || isHighlighted ? 2.5 : 1.2 },
                 ]}
               >
                 {node.labelLines.map((line, index) => (

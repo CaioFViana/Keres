@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -106,7 +107,6 @@ function ReorderModal<T>({
     controls: { flexDirection: 'row' },
     controlButton: { padding: 8 },
     buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
-    buttonWrapper: { width: '47%' },
   });
 
   return (
@@ -166,22 +166,18 @@ function ReorderModal<T>({
             }}
           />
 
-          <View style={styles.buttons}>
-            <View style={styles.buttonWrapper}>
-              <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
-                {t('common_cancel')}
-              </Button>
-            </View>
-            <View style={styles.buttonWrapper}>
-              <Button
-                onPress={handleConfirm}
-                style={{ backgroundColor: colors.primary }}
-                disabled={confirmDisabled}
-              >
-                {t('common_confirm')}
-              </Button>
-            </View>
-          </View>
+          <FormActions>
+            <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
+              {t('common_cancel')}
+            </Button>
+            <Button
+              onPress={handleConfirm}
+              style={{ backgroundColor: colors.primary }}
+              disabled={confirmDisabled}
+            >
+              {t('common_confirm')}
+            </Button>
+          </FormActions>
         </View>
       </View>
     </Modal>

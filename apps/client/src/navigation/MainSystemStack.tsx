@@ -16,6 +16,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
+import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -24,19 +25,18 @@ import ResizableDrawerContent, {
 import { screenHelpPage } from '../help/contextualHelp';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import type { ChapterDetailScreenParamList } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
-import ChapterDetailScreen from '../screens/narrative-elements/chapters/ChapterDetailScreen';
-import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
-import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
+import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
+import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
+import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import type { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
-import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
-import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
-import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
+import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
+import BoardListScreen from '../screens/boards/BoardListScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
@@ -50,18 +50,41 @@ import LocationDetailsScreen from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
+import LocationMapListScreen from '../screens/location-maps/LocationMapListScreen';
+import LocationMapScreen from '../screens/location-maps/LocationMapScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import type { ChapterDetailScreenParamList } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import ChapterDetailScreen from '../screens/narrative-elements/chapters/ChapterDetailScreen';
+import ChapterFormScreen from '../screens/narrative-elements/chapters/ChapterFormScreen';
+import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/NarrativeElementsListScreen';
+import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
+import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
+import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
+import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
+import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
 import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteDetailScreen from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
 import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
 import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
-import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
-import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
-import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
+import PlotDetailScreen from '../screens/plots/PlotDetailScreen';
+import PlotFormScreen from '../screens/plots/PlotFormScreen';
+import PlotListScreen from '../screens/plots/PlotListScreen';
+import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
+import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
+import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
+import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
+import StatFormScreen from '../screens/stats/StatFormScreen';
+import StatLadderScreen from '../screens/stats/StatLadderScreen';
+import StatListScreen from '../screens/stats/StatListScreen';
+import StatRankingScreen from '../screens/stats/StatRankingScreen';
+import StoryAgendaScreen from '../screens/storycalendars/StoryAgendaScreen';
+import StoryCalendarFormScreen from '../screens/storycalendars/StoryCalendarFormScreen';
+import StoryCalendarListScreen from '../screens/storycalendars/StoryCalendarListScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
@@ -74,12 +97,6 @@ import type { WorldRuleDetailScreenParamList } from '../screens/worldrules/World
 import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
-import PlotListScreen from '../screens/plots/PlotListScreen';
-import PlotDetailScreen from '../screens/plots/PlotDetailScreen';
-import PlotFormScreen from '../screens/plots/PlotFormScreen';
-import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
-import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
-import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
 import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
@@ -87,8 +104,6 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
-import type { StatsStackParamList } from './StatsStack';
-import StatsStackNavigator from './StatsStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
 
@@ -107,15 +122,14 @@ export type MainSystemDrawerParamList = {
   PlotsStack: NavigatorScreenParams<PlotsStackParamList> | undefined;
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
+  BoardsStack: NavigatorScreenParams<BoardStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
   StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
-  StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
-  SuggestionsStack: NavigatorScreenParams<SuggestionsStackParamList> | undefined;
+  CustomizationStack: NavigatorScreenParams<CustomizationStackParamList> | undefined;
   StorySelection: undefined;
-  StatsDrawer: NavigatorScreenParams<StatsStackParamList>;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
@@ -129,38 +143,21 @@ const mainSystemStackRootScreens = new Set([
   'ItemJourneys',
   'Locations',
   'GalleryList',
+  'BoardList',
   'Tags',
   'Notes',
   'WorldRules',
   'Plots',
   'OperationLog',
   'CommentsList',
-  'StorySchemaList',
-  'Suggestions',
+  'CustomizationIndex',
   // The roots of the stacks the drawer opens directly: without them the header draws a back arrow on top
   // of the list itself, which is precisely the place there is no going back from.
-  'StatList',
   'HelpIndex',
   'DeviceIndex',
 ]);
 
 //#region Suggestions
-const SuggestionsStack = createNativeStackNavigator<SuggestionsStackParamList>();
-
-export type SuggestionsStackParamList = {
-  Suggestions: undefined;
-  SuggestionUsage: { type: string; value: string };
-};
-
-const SuggestionsStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <SuggestionsStack.Navigator screenOptions={{ headerShown: false }}>
-      <SuggestionsStack.Screen name="Suggestions" component={SuggestionsScreen} />
-      <SuggestionsStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
-    </SuggestionsStack.Navigator>
-  );
-};
 //#endregion
 //#region Plots
 const PlotsStack = createNativeStackNavigator<PlotsStackParamList>();
@@ -299,6 +296,8 @@ export type LocationStackParamList = {
   LocationDetail: LocationDetailScreenParamList['LocationDetail'];
   LocationForm: { locationId?: string };
   LocationView: undefined;
+  LocationMapList: undefined;
+  LocationMap: { mapId: string };
 };
 
 const LocationStackNavigator = () => {
@@ -312,6 +311,8 @@ const LocationStackNavigator = () => {
       <LocationStack.Screen name="LocationDetail" component={LocationDetailsScreen} />
       <LocationStack.Screen name="LocationForm" component={LocationFormScreen} />
       <LocationStack.Screen name="LocationView" component={LocationGraphScreen} />
+      <LocationStack.Screen name="LocationMapList" component={LocationMapListScreen} />
+      <LocationStack.Screen name="LocationMap" component={LocationMapScreen} />
     </LocationStack.Navigator>
   );
 };
@@ -332,6 +333,25 @@ const GalleryStackNavigator = () => {
       <GalleryStack.Screen name="GalleryList" component={GalleryListScreen} />
       <GalleryStack.Screen name="GalleryDetail" component={GalleryDetailScreen} />
     </GalleryStack.Navigator>
+  );
+};
+//#endregion
+//#region Boards
+
+const BoardsStack = createNativeStackNavigator<BoardStackParamList>();
+
+export type BoardStackParamList = {
+  BoardList: undefined;
+  BoardCanvas: { boardId: string };
+};
+
+const BoardsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <BoardsStack.Navigator screenOptions={{ headerShown: false }}>
+      <BoardsStack.Screen name="BoardList" component={BoardListScreen} />
+      <BoardsStack.Screen name="BoardCanvas" component={BoardCanvasScreen} />
+    </BoardsStack.Navigator>
   );
 };
 //#endregion
@@ -433,22 +453,58 @@ const CommentsStackNavigator = () => {
   );
 };
 //#endregion
-//#region Story Schema
+//#region Customization
 
-const StorySchemaStack = createNativeStackNavigator<StorySchemaStackParamList>();
+const CustomizationStack = createNativeStackNavigator<CustomizationStackParamList>();
 
-export type StorySchemaStackParamList = {
+/**
+ * Everything a writer shapes once and then works inside: the story's calendars, its custom fields,
+ * its suggestion catalogues and its stat system.
+ *
+ * These were four drawer entries. Each was reached rarely and each sat between things reached
+ * constantly, so the drawer read as a list of everything rather than a list of places to write.
+ * They are one stack rather than four nested ones because a nested navigator per area would put a
+ * second back stack between the index and the screens for no gain - the areas share no state and
+ * never navigate into each other.
+ */
+export type CustomizationStackParamList = {
+  CustomizationIndex: undefined;
+  StoryCalendarList: undefined;
+  StoryCalendarForm: { calendarId?: string };
+  StoryAgenda: { calendarId?: string } | undefined;
   StorySchemaList: undefined;
   StorySchemaFieldForm: { entityType: StorySchemaEntityType; fieldId?: string };
+  Suggestions: undefined;
+  SuggestionUsage: { type: string; value: string };
+  StatList: undefined;
+  StatForm: { statId?: string } | undefined;
+  /** An absent `statId` = the story's default ladder. */
+  StatLadder: { statId?: string } | undefined;
+  StatComparison: { characterId?: string; modeId?: string } | undefined;
+  StatRanking: { statId?: string } | undefined;
 };
 
-const StorySchemaStackNavigator = () => {
+const CustomizationStackNavigator = () => {
   useBackButtonHandler();
   return (
-    <StorySchemaStack.Navigator screenOptions={{ headerShown: false }}>
-      <StorySchemaStack.Screen name="StorySchemaList" component={StorySchemaListScreen} />
-      <StorySchemaStack.Screen name="StorySchemaFieldForm" component={StorySchemaFieldFormScreen} />
-    </StorySchemaStack.Navigator>
+    <CustomizationStack.Navigator screenOptions={{ headerShown: false }}>
+      <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
+      <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
+      <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
+      <CustomizationStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
+      <CustomizationStack.Screen name="StorySchemaList" component={StorySchemaListScreen} />
+      <CustomizationStack.Screen
+        name="StorySchemaFieldForm"
+        component={StorySchemaFieldFormScreen}
+      />
+      <CustomizationStack.Screen name="Suggestions" component={SuggestionsScreen} />
+      <CustomizationStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
+      <CustomizationStack.Screen name="StatList" component={StatListScreen} />
+      <CustomizationStack.Screen name="StatForm" component={StatFormScreen} />
+      <CustomizationStack.Screen name="StatLadder" component={StatLadderScreen} />
+      <CustomizationStack.Screen name="StatComparison" component={StatComparisonScreen} />
+      <CustomizationStack.Screen name="StatRanking" component={StatRankingScreen} />
+    </CustomizationStack.Navigator>
   );
 };
 //#endregion
@@ -456,17 +512,14 @@ const StorySchemaStackNavigator = () => {
 /// Main Drawer
 type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
 
-const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
-  const { colors } = useTheme();
-  return (
-    <TouchableOpacity
-      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-      style={{ marginLeft: 15 }}
-    >
-      <Ionicons name="menu" size={30} color={colors.text} />
-    </TouchableOpacity>
-  );
-};
+const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
+  function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
+    return <Ionicons name={name} color={color} size={size} />;
+  };
+
+const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => (
+  <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />
+);
 
 const MainSystemNavigator = () => {
   const { colors } = useTheme();
@@ -480,8 +533,13 @@ const MainSystemNavigator = () => {
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
-    <>
+    <MentionMatcherProvider>
       <Drawer.Navigator
+        // Every screen is wrapped so a mention can open its target: `navigateToEntityDetail` needs
+        // the drawer's navigation object, which does not exist above the navigator.
+        screenLayout={({ children }) => (
+          <MentionNavigationProvider>{children}</MentionNavigationProvider>
+        )}
         // The showcase opens straight into the requested item; outside it, the story's dashboard, as always.
         initialRouteName={readShowcaseRequest()?.stack as keyof MainSystemDrawerParamList}
         defaultStatus={isWide ? 'open' : 'closed'}
@@ -553,7 +611,8 @@ const MainSystemNavigator = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {showNestedBackButton ? (
                         <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
-                      ) : !isWide ? (
+                      ) : null}
+                      {!isWide ? (
                         <DrawerToggleButton
                           navigation={navigation as MainDashboardScreenNavigationProp}
                         />
@@ -580,6 +639,8 @@ const MainSystemNavigator = () => {
             drawerInactiveTintColor: colors.text,
             drawerType: isWide ? 'permanent' : 'front',
             swipeEnabled: !isWide,
+            swipeEdgeWidth: isWide ? 0 : DRAWER_SWIPE_EDGE_WIDTH,
+            swipeMinDistance: DRAWER_SWIPE_MIN_DISTANCE,
             drawerStyle: {
               backgroundColor: colors.surface,
               minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
@@ -593,6 +654,7 @@ const MainSystemNavigator = () => {
           component={MainDashboardScreen}
           options={{
             title: selectedStory?.title || t('dashboard_title'),
+            drawerIcon: drawerIcon('home-outline'),
             // The current story has to stand out from the drawer's other entries, which are only navigation -
             // without this, the story's name gets lost in the list as if it were just another item like
             // "Characters" or "Locations".
@@ -616,6 +678,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('global_search_title'),
             drawerLabel: t('global_search_title'),
+            drawerIcon: drawerIcon('search-outline'),
           }}
         />
         <Drawer.Screen
@@ -624,6 +687,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('characters_title'),
             drawerLabel: t('characters_title'),
+            drawerIcon: drawerIcon('people-outline'),
           }}
           listeners={({ navigation }) => ({
             // The Drawer's default behaviour, when an item is tapped, restores the nested state exactly as it was
@@ -644,6 +708,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('narrative_elements_title'),
             drawerLabel: t('narrative_elements_title'),
+            drawerIcon: drawerIcon('book-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -656,7 +721,11 @@ const MainSystemNavigator = () => {
           <Drawer.Screen
             name="PlotsStack"
             component={PlotsStackNavigator}
-            options={{ title: t('plots_title'), drawerLabel: t('plots_title') }}
+            options={{
+              title: t('plots_title'),
+              drawerLabel: t('plots_title'),
+              drawerIcon: drawerIcon('git-branch-outline'),
+            }}
             listeners={({ navigation }) => ({
               drawerItemPress: (e) => {
                 e.preventDefault();
@@ -671,6 +740,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('locations_title'),
             drawerLabel: t('locations_title'),
+            drawerIcon: drawerIcon('map-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -685,6 +755,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('items_title'),
             drawerLabel: t('items_title'),
+            drawerIcon: drawerIcon('cube-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -699,6 +770,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('tags_title'),
             drawerLabel: t('tags_title'),
+            drawerIcon: drawerIcon('pricetag-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -713,6 +785,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('world_rules_title'),
             drawerLabel: t('world_rules_title'),
+            drawerIcon: drawerIcon('globe-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -727,6 +800,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('notes_title'),
             drawerLabel: t('notes_title'),
+            drawerIcon: drawerIcon('document-text-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -741,6 +815,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('gallery_title'),
             drawerLabel: t('gallery_title'),
+            drawerIcon: drawerIcon('images-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -750,49 +825,32 @@ const MainSystemNavigator = () => {
           })}
         />
         <Drawer.Screen
-          name="StorySchemaStack"
-          component={StorySchemaStackNavigator}
+          name="BoardsStack"
+          component={BoardsStackNavigator}
           options={{
-            title: t('story_schema_management_title'),
-            drawerLabel: t('story_schema_management_title'),
+            title: t('boards_title'),
+            drawerLabel: t('boards_title'),
+            drawerIcon: drawerIcon('easel-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
-              navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
+              navigation.navigate('BoardsStack', { screen: 'BoardList' });
             },
           })}
         />
         <Drawer.Screen
-          name="SuggestionsStack"
-          component={SuggestionsStackNavigator}
+          name="CustomizationStack"
+          component={CustomizationStackNavigator}
           options={{
-            title: t('standard_suggestions_title'),
-            drawerLabel: t('standard_suggestions_title'),
+            title: t('customization_title'),
+            drawerLabel: t('customization_title'),
+            drawerIcon: drawerIcon('color-wand-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
-              navigation.navigate('SuggestionsStack', { screen: 'Suggestions' });
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="StatsDrawer"
-          component={StatsStackNavigator}
-          options={{
-            title: t('stats_title'),
-            drawerLabel: t('stats_title'),
-            // The stack stays registered; only the menu item disappears when the system is turned off.
-            drawerItemStyle: {
-              height: selectedStory?.statSystem ? undefined : 0,
-              overflow: 'hidden',
-            },
-          }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StatsDrawer', { screen: 'StatList' });
+              navigation.navigate('CustomizationStack', { screen: 'CustomizationIndex' });
             },
           })}
         />
@@ -802,6 +860,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('comments_title'),
             drawerLabel: t('comments_title'),
+            drawerIcon: drawerIcon('chatbubbles-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -816,6 +875,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('operation_logs_title'),
             drawerLabel: t('operation_logs_title'),
+            drawerIcon: drawerIcon('time-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -827,12 +887,10 @@ const MainSystemNavigator = () => {
         <Drawer.Screen
           name="StoryAnalysis"
           component={StoryAnalysisScreen}
-          options={{ title: t('story_analysis_title') }}
-        />
-        <Drawer.Screen
-          name="StorySettings"
-          component={StorySettingsScreen}
-          options={{ title: t('story_settings_title') }}
+          options={{
+            title: t('story_analysis_title'),
+            drawerIcon: drawerIcon('analytics-outline'),
+          }}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"
@@ -840,6 +898,7 @@ const MainSystemNavigator = () => {
           options={{
             title: t('story_devices_title'),
             drawerLabel: t('story_devices_title'),
+            drawerIcon: drawerIcon('bulb-outline'),
             // The screen stays registered when the setting is off so a direct navigation or a help link does not
             // break; only the menu item disappears.
             drawerItemStyle: {
@@ -857,7 +916,11 @@ const MainSystemNavigator = () => {
         <Drawer.Screen
           name="HelpDrawer"
           component={HelpStackNavigator}
-          options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+          options={{
+            title: t('help_title'),
+            drawerLabel: t('help_title'),
+            drawerIcon: drawerIcon('help-circle-outline'),
+          }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
@@ -866,10 +929,16 @@ const MainSystemNavigator = () => {
           })}
         />
         <Drawer.Screen
+          name="StorySettings"
+          component={StorySettingsScreen}
+          options={{ title: t('story_settings_title'), drawerIcon: drawerIcon('settings-outline') }}
+        />
+        <Drawer.Screen
           name="StorySelection"
           component={() => <View />} // A dummy component, as it won't be displayed
           options={{
             title: t('story_selection_title'),
+            drawerIcon: drawerIcon('exit-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
@@ -899,7 +968,7 @@ const MainSystemNavigator = () => {
       </Drawer.Navigator>
       <GalleryMediaViewerOverlay />
       <PresenceMatrixViewerOverlay />
-    </>
+    </MentionMatcherProvider>
   );
 };
 

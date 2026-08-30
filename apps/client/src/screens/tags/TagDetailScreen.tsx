@@ -17,6 +17,7 @@ import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 're
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
@@ -233,12 +234,18 @@ const TagDetailScreen = () => {
     [tagId, fetchTagRelations],
   );
 
-  useEffect(() => {
-    // Only subscribe and fetch if tagServiceRef.current is initialized
+  const loadInitialTagData = useCallback(() => {
     if (tagServiceRef.current && selectedStory?.id) {
-      fetchTag();
-      fetchTagRelations();
+      void fetchTag();
+      void fetchTagRelations();
+    }
+  }, [fetchTag, fetchTagRelations, selectedStory?.id]);
 
+  useEntityInitialLoad(loadInitialTagData);
+
+  // Only subscribe here; a callback identity change must not reload the tag.
+  useEffect(() => {
+    if (tagServiceRef.current && selectedStory?.id) {
       entityEventEmitter.on('tag_changed', handleTagChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
@@ -247,14 +254,7 @@ const TagDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [
-    tagId,
-    fetchTag,
-    handleTagChange,
-    selectedStory?.id,
-    fetchTagRelations,
-    handleTagRelationChange,
-  ]);
+  }, [handleTagChange, selectedStory?.id, handleTagRelationChange]);
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {

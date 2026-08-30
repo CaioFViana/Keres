@@ -31,6 +31,7 @@ export async function prepareShowcase(
         language: request.language,
         darkMode: request.theme === 'dark',
         use24HourTime: true,
+        dateDisplayFormat: 'iso',
         showContextualHelp: true,
         suggestLiteraryDevices: true,
       });

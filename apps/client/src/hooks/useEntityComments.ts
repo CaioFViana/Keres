@@ -6,6 +6,7 @@ import type { CommentTarget, CreateCommentInput } from '../services/storymanagem
 import { createCommentService } from '../services/storymanagement/CommentService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import { useStoryRole } from './useStoryRole';
 
 /**
@@ -57,8 +58,9 @@ export function useEntityComments(
     }
   }, [service, drizzleDb, storyId, entityType, entityId]);
 
+  useEntityInitialLoad(refresh);
+
   useEffect(() => {
-    refresh();
     const handleChange = (
       changedStoryId: string,
       changedEntityType?: CommentEntityType,

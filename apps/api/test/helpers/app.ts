@@ -1,3 +1,4 @@
+import { SYNC_PROTOCOL_HEADER, SYNC_PROTOCOL_VERSION } from '@keres/shared';
 import { ulid } from 'ulid';
 import { createApp } from '../../src/index';
 
@@ -38,7 +39,18 @@ export async function request<T = any>(
 ): Promise<ApiResponse<T>> {
   const app = await getApp();
 
-  const headers: Record<string, string> = { ...options.headers };
+  /**
+   * Every request speaks the current synchronization protocol unless a test says otherwise.
+   *
+   * `/sync` refuses a caller that announces nothing, because a client old enough not to announce is
+   * old enough to be refused (see `SyncProtocol.ts`). A helper that stayed silent would therefore
+   * make every sync suite a test of the gate rather than of what it meant to test. Tests of the gate
+   * itself override or clear this header explicitly.
+   */
+  const headers: Record<string, string> = {
+    [SYNC_PROTOCOL_HEADER]: String(SYNC_PROTOCOL_VERSION),
+    ...options.headers,
+  };
   let body: string | FormData | undefined;
   if (options.body instanceof FormData) {
     // No manual `content-type`: only the `Request` itself knows how to generate the multipart boundary.

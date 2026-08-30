@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'A chave começa enferrujada com Lia. Na Cena “Mercado”, uma trajetória registra Novo personagem dono: Omar e Novo estado: reparada.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Trajetória de itens', '+'] },
+    { type: 'path', segments: ['Menu da história', 'Itens', 'Trajetória de itens', '+'] },
     {
       type: 'steps',
       items: [

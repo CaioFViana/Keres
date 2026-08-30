@@ -17,6 +17,24 @@ import migration_13 from './0012_past_gorgon';
 import migration_14 from './0013_jittery_nomad';
 import migration_15 from './0014_scene_index_one_based';
 import migration_16 from './0015_relation_uniqueness';
+import migration_17 from './0016_auto_link_mentions';
+import migration_18 from './0017_completeness_checks';
+import migration_19 from './0018_packs';
+import migration_20 from './0019_pack_visibility';
+import migration_21 from './0020_closed_timeslip';
+import migration_22 from './0021_steep_young_avengers';
+import migration_23 from './0022_petite_peter_parker';
+import migration_24 from './0023_milky_morgan_stark';
+import migration_25 from './0024_damp_veda';
+import migration_26 from './0025_stiff_stature';
+import migration_27 from './0026_married_gladiator';
+import migration_28 from './0027_flashy_shape';
+import migration_29 from './0028_sweet_dust';
+import migration_30 from './0029_worthless_jack_murdock';
+import migration_31 from './0030_eminent_guardsmen';
+import migration_32 from './0031_wonderful_dragon_man';
+import migration_33 from './0032_bright_naoko';
+import migration_34 from './0033_absurd_machine_man';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -35,6 +53,24 @@ const migrations = [
   { id: 14, name: '0013_jittery_nomad', run: migration_14 },
   { id: 15, name: '0014_scene_index_one_based', run: migration_15 },
   { id: 16, name: '0015_relation_uniqueness', run: migration_16 },
+  { id: 17, name: '0016_auto_link_mentions', run: migration_17 },
+  { id: 18, name: '0017_completeness_checks', run: migration_18 },
+  { id: 19, name: '0018_packs', run: migration_19 },
+  { id: 20, name: '0019_pack_visibility', run: migration_20 },
+  { id: 21, name: '0020_closed_timeslip', run: migration_21 },
+  { id: 22, name: '0021_steep_young_avengers', run: migration_22 },
+  { id: 23, name: '0022_petite_peter_parker', run: migration_23 },
+  { id: 24, name: '0023_milky_morgan_stark', run: migration_24 },
+  { id: 25, name: '0024_damp_veda', run: migration_25 },
+  { id: 26, name: '0025_stiff_stature', run: migration_26 },
+  { id: 27, name: '0026_married_gladiator', run: migration_27 },
+  { id: 28, name: '0027_flashy_shape', run: migration_28 },
+  { id: 29, name: '0028_sweet_dust', run: migration_29 },
+  { id: 30, name: '0029_worthless_jack_murdock', run: migration_30 },
+  { id: 31, name: '0030_eminent_guardsmen', run: migration_31 },
+  { id: 32, name: '0031_wonderful_dragon_man', run: migration_32 },
+  { id: 33, name: '0032_bright_naoko', run: migration_33 },
+  { id: 34, name: '0033_absurd_machine_man', run: migration_34 },
 ];
 
 export default migrations;

@@ -1,4 +1,9 @@
-import { AttributeType, decodeAttributeValue, isValidAttributeDate } from '@keres/shared';
+import {
+  AttributeType,
+  type ChapterType,
+  decodeAttributeValue,
+  isValidAttributeDate,
+} from '@keres/shared';
 import type { NavigableEntityType } from './entityNavigation';
 
 /**
@@ -19,6 +24,32 @@ export type StoryAnalysisCategory =
   | 'choices'
   | 'storySchema';
 export type StoryAnalysisSeverity = 'warning' | 'error';
+
+/**
+ * The findings that are an opinion about the writer's work rather than a defect in it.
+ *
+ * Everything else this module reports is integrity: a reference pointing at something that does not
+ * exist, a graph that cannot be traversed, a numbering the API will refuse to reorder. Those are
+ * true whatever the story is for, and whatever medium it serves.
+ *
+ * These six are not. An unused tag, a location in no scene, a character with no relationships - in a
+ * story bible each of those is simply something that exists in the world. Reporting them as problems
+ * is the app telling a writer their worldbuilding is wrong, so they are behind `completenessChecks`
+ * and off by default.
+ *
+ * `analysis_attribute_required_missing` deliberately stays out of this list: it fires because the
+ * *writer* marked the field required. Holding somebody to a rule they declared is not an opinion.
+ */
+export const COMPLETENESS_FINDING_KEYS = [
+  'analysis_character_no_scenes',
+  'analysis_character_no_relationships',
+  'analysis_location_unused',
+  'analysis_location_no_connections',
+  'analysis_item_unused',
+  'analysis_tag_unused',
+] as const;
+
+export type CompletenessFindingKey = (typeof COMPLETENESS_FINDING_KEYS)[number];
 
 export interface StoryAnalysisFinding {
   /** Stable across runs - used as a list key, never displayed. */
@@ -41,19 +72,35 @@ export interface AnalysisEntityRef {
 export interface AnalysisScene {
   id: string;
   name: string;
-  locationId: string;
+  locationId: string | null;
   isStart: boolean;
   isFinish: boolean;
-  chapterId: string;
-  /** Position within the chapter: 1..N, with no holes and no repeats. */
+  chapterId: string | null;
+  /** Position within the chapter: 1..N, with no holes and no repeats. Null-chapter scenes skip this. */
   index: number;
+}
+
+/** One stretch of story time a container occupies, as the analysis reads it. */
+export interface AnalysisChapterAnchor {
+  chapterId: string;
+  order: number;
+  startSceneId: string;
+  startPosition: string;
+  endSceneId: string | null;
+  endPosition: string | null;
 }
 
 export interface AnalysisChapter {
   id: string;
   name: string;
-  /** Position in the story: 1..N, under the same rule as the scenes. */
+  /** Position within its own kind: 1..N, under the same rule as the scenes. */
   index: number;
+  /**
+   * Chapter or event. The two keep separate 1..N spaces in the same table, so the numbering check
+   * has to partition them - see `checkNarrativeIndexes`. Optional because every caller predating
+   * events means the spine.
+   */
+  type?: ChapterType;
 }
 
 export interface AnalysisChoice {
@@ -116,6 +163,8 @@ export interface AnalysisAttributeValue {
 
 export interface StoryAnalysisInput {
   storyType: 'linear' | 'branching';
+  /** `Story.completenessChecks`. Off means the six keys in `COMPLETENESS_FINDING_KEYS` never appear. */
+  includeCompletenessChecks: boolean;
   characters: AnalysisEntityRef[];
   characterScenes: { characterId: string }[];
   characterRelations: { character1Id: string; character2Id: string }[];
@@ -131,6 +180,8 @@ export interface StoryAnalysisInput {
   tags: AnalysisEntityRef[];
   tagRelations: { tagId: string }[];
   chapters: AnalysisChapter[];
+  /** Optional so a caller predating chronology keeps working; absent means none stated. */
+  chapterAnchors?: AnalysisChapterAnchor[];
   notes: AnalysisEntityRef[];
   worldRules: AnalysisEntityRef[];
   storySchemaFields: AnalysisStorySchemaField[];
@@ -172,12 +223,21 @@ function throwIfAborted(signal?: AbortSignal): void {
  * `buildStoryAnalysisReport`.
  */
 export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  // The four gated checks emit nothing but `COMPLETENESS_FINDING_KEYS`, so the switch is the whole
+  // partition - there is no integrity finding hiding inside them that would be lost.
+  const completeness = input.includeCompletenessChecks
+    ? [
+        ...checkCharacters(input),
+        ...checkLocations(input),
+        ...checkItems(input),
+        ...checkTags(input),
+      ]
+    : [];
+
   return [
-    ...checkCharacters(input),
-    ...checkLocations(input),
+    ...completeness,
     ...checkDuplicateRelations(input),
-    ...checkItems(input),
-    ...checkTags(input),
+    ...checkAnchorsRunForwards(input),
     ...checkSceneFinishWithChoices(input),
     ...(input.storyType === 'linear' ? checkNarrativeIndexes(input) : []),
     // Choice integrity is O(choices) and fits here even though it is "branching only" - dangling references
@@ -252,7 +312,14 @@ function checkCharacters(input: StoryAnalysisInput): StoryAnalysisFinding[] {
 
 function checkLocations(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const findings: StoryAnalysisFinding[] = [];
-  const usedLocationIds = new Set(input.scenes.map((s) => s.locationId));
+  /*
+   * A scene with no place uses no location, which is different from using one that is missing.
+   * Filtering here rather than letting `null` into the set keeps "unused location" meaning what it
+   * says.
+   */
+  const usedLocationIds = new Set(
+    input.scenes.map((scene) => scene.locationId).filter((id): id is string => id !== null),
+  );
   const connectedLocationIds = new Set<string>();
   for (const relation of input.locationRelations) {
     connectedLocationIds.add(relation.locationAId);
@@ -451,6 +518,64 @@ function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null
 }
 
 /**
+ * A stretch that ends before it begins.
+ *
+ * The cycle detection this replaced existed because interval *relations* could contradict each other
+ * in a loop. Anchors cannot: a stretch is two points on one axis, and the only way it can be wrong
+ * is by running backwards - which a writer does by picking the two scenes in the wrong order, and
+ * which nothing else in the app would notice.
+ *
+ * It is an integrity finding rather than an opinion: no arrangement of the story satisfies it.
+ */
+function checkAnchorsRunForwards(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const anchors = input.chapterAnchors ?? [];
+  if (anchors.length === 0) return [];
+
+  /*
+   * Narrative order, which is the only order the analysis has. Two scenes are compared by their
+   * container's position and then their own - the same ordering the timeline draws.
+   */
+  const chapterIndex = new Map(input.chapters.map((chapter) => [chapter.id, chapter.index]));
+  const positionOf = new Map(
+    input.scenes.map((scene) => [
+      scene.id,
+      [
+        scene.chapterId ? (chapterIndex.get(scene.chapterId) ?? 0) : Number.MAX_SAFE_INTEGER,
+        scene.index,
+      ] as const,
+    ]),
+  );
+  const fraction: Record<string, number> = { start: 0, middle: 0.5, end: 1 };
+
+  const findings: StoryAnalysisFinding[] = [];
+  for (const anchor of anchors) {
+    // An open stretch has no end to run backwards of: it is measured from the container's contents.
+    if (!anchor.endSceneId || !anchor.endPosition) continue;
+    const from = positionOf.get(anchor.startSceneId);
+    const to = positionOf.get(anchor.endSceneId);
+    // A scene the analysis was not given is not this check's business to report.
+    if (!from || !to) continue;
+
+    const backwards =
+      to[0] < from[0] ||
+      (to[0] === from[0] && to[1] < from[1]) ||
+      (to[0] === from[0] &&
+        to[1] === from[1] &&
+        (fraction[anchor.endPosition] ?? 0) < (fraction[anchor.startPosition] ?? 0));
+    if (!backwards) continue;
+
+    const container = input.chapters.find((chapter) => chapter.id === anchor.chapterId);
+    if (!container) continue;
+    findings.push(
+      buildFinding('scenes', 'warning', 'Chapter', container, 'analysis_anchor_backwards', {
+        name: container.name,
+      }),
+    );
+  }
+  return findings;
+}
+
+/**
  * The numbering of chapters (1..N in the story) and of scenes (1..M within the chapter).
  *
  * It is not fussiness: the API refuses a reorder whose indices do not form a contiguous 1..N, so a
@@ -463,19 +588,32 @@ function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null
 function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const findings: StoryAnalysisFinding[] = [];
 
-  const chapterProblem = inspectIndexes(input.chapters.map((chapter) => chapter.index));
-  if (chapterProblem && input.chapters.length > 0) {
+  /**
+   * Only the spine is checked for being the story's 1..N.
+   *
+   * Events sit in the same collection with a numbering of their own, so measuring the two together
+   * hands this `[1, 2, 3, 1, 2]` and accuses every story containing an event of corrupted
+   * numbering - an integrity finding, which the gentler mode does not silence.
+   */
+  const spine = input.chapters.filter((chapter) => (chapter.type ?? 'chapter') === 'chapter');
+  const chapterProblem = inspectIndexes(spine.map((chapter) => chapter.index));
+  if (chapterProblem && spine.length > 0) {
     findings.push(
       buildFinding(
         'scenes',
         'warning',
         'Chapter',
-        input.chapters[0]!,
+        spine[0]!,
         `analysis_chapter_index_${chapterProblem}`,
       ),
     );
   }
 
+  /**
+   * Scenes are checked inside **every** container, events included. How a war began, the war and
+   * its aftermath are three scenes in an order that matters exactly as much as any chapter's - and
+   * the API refuses a crooked reorder there for the same reason.
+   */
   for (const chapter of input.chapters) {
     const chapterScenes = input.scenes.filter((scene) => scene.chapterId === chapter.id);
     if (chapterScenes.length === 0) continue;

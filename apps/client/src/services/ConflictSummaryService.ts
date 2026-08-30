@@ -51,6 +51,7 @@ const CONTENT_REFERENCE_FIELDS: Record<string, string> = {
  * need the same label.
  */
 export const ENTITY_LABEL_KEYS: Record<string, string> = {
+  Board: 'board',
   Chapter: 'chapter',
   Character: 'character',
   CharacterRelation: 'character_relation',
@@ -159,6 +160,11 @@ export interface ConflictSummary {
    * disputed fields to compare.
    */
   canQuickResolve: boolean;
+  /**
+   * A Board whose drawing (`content`) clashed: keep-mine / keep-server, plus clone-mine-as-a-new-board.
+   * The JSON is not offered field-by-field — two layouts cannot be merged.
+   */
+  offerBoardClone: boolean;
   /** Only populated for `kind === 'content'` with `canQuickResolve === false`. */
   diffFields: ConflictDiffField[];
 }
@@ -398,11 +404,14 @@ export function buildConflictSummaries(
         detail: withServerMessage(detail, conflict),
         reason: conflict.reason,
         canQuickResolve: true,
+        offerBoardClone: false,
         diffFields: [],
       };
     }
 
-    const canQuickResolve = isBinaryContentConflict(conflict);
+    const offerBoardClone =
+      conflict.entityType === 'Board' && conflict.contestedFields.includes('content');
+    const canQuickResolve = isBinaryContentConflict(conflict) || offerBoardClone;
     const emptyLabel = t('conflict_empty_value');
     // `name`/`title` covers most entities, but not all: Choice has neither of the
     // two (the identifying field is `text`), and Gallery has an optional `title`, falling back to the file
@@ -454,6 +463,7 @@ export function buildConflictSummaries(
       detail,
       reason: conflict.reason,
       canQuickResolve,
+      offerBoardClone,
       diffFields,
     };
   });

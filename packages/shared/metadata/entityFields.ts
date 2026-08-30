@@ -1,4 +1,13 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color' | 'entity';
+export type FieldType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  /** A date in the story's own calendar, held as a day number. See `AttributeType.STORY_DATE`. */
+  | 'story_date'
+  | 'id'
+  | 'color'
+  | 'entity';
 
 export interface EntityFieldMetadata {
   name: string; // The field name in the entity
@@ -82,6 +91,10 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+  ],
+  Board: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
   ],
   Plot: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },

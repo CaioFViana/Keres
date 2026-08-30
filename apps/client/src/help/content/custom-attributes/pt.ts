@@ -17,7 +17,10 @@ const page: HelpPage = {
       text: 'Crie “Nível de suspeita” para Personagens, com tipo Número e valor padrão 0.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Atributos customizados', '+'] },
+    {
+      type: 'path',
+      segments: ['Menu da história', 'Personalização', 'Atributos Customizados', '+'],
+    },
     {
       type: 'steps',
       items: [

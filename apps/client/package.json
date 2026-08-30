@@ -1,7 +1,7 @@
 {
   "name": "@keres/client",
   "main": "expo-router/entry",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "scripts": {
     "prestart": "bun scripts/generate-indexes.ts",
     "start": "expo start",
@@ -14,7 +14,8 @@
     "test": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB",
     "test:coverage": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB --coverage",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "example-story:build": "bun scripts/build-example-story.ts"
+    "example-story:build": "bun scripts/build-example-story.ts",
+    "shipped-packs:build": "bun scripts/build-shipped-packs.ts"
   },
   "dependencies": {
     "@keres/shared": "workspace:*",

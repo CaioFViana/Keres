@@ -1,4 +1,10 @@
-import type { ShowcaseStoryCard, ShowcaseStoryDetail, ShowcaseStoryResponse } from '@keres/shared';
+import type {
+  ShowcasePackCard,
+  ShowcasePackDetail,
+  ShowcaseStoryCard,
+  ShowcaseStoryDetail,
+  ShowcaseStoryResponse,
+} from '@keres/shared';
 
 /**
  * The public site's HTTP client.
@@ -125,4 +131,28 @@ export async function fetchDownloadUrl(storyId: string, publicationId: string): 
   }
   const { url } = (await response.json()) as { url: string };
   return url;
+}
+
+/**
+ * The public packs.
+ *
+ * No `If-None-Match` here, unlike the story listing, because this page does not poll: a pack
+ * changes when its author re-extracts and shares it again, which is a deliberate and rare act,
+ * not something a visitor sits waiting for. An ETag exists there to make repeated polling cheap;
+ * with no polling it would only be ceremony.
+ */
+export async function fetchPacks(): Promise<ShowcasePackCard[]> {
+  const response = await fetch('/api/public/packs');
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
+}
+
+export async function fetchPack(packId: string): Promise<ShowcasePackDetail> {
+  const response = await fetch(`/api/public/packs/${encodeURIComponent(packId)}`);
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  return response.json();
 }

@@ -21,6 +21,7 @@ import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 're
 import { useDrizzle } from '../../db';
 import type { CharacterSelect, ItemSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -146,14 +147,15 @@ const ItemDetailScreen = () => {
     [itemId, navigation, t],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchItem);
+
+  // Event subscriptions never initiate an item load.
   useEffect(() => {
-    fetchItem();
     entityEventEmitter.on('item_changed', handleItemChange);
     return () => {
       entityEventEmitter.off('item_changed', handleItemChange);
     };
-  }, [itemId, fetchItem, handleItemChange]);
+  }, [handleItemChange]);
 
   useEffect(() => {
     if (item) {
@@ -213,6 +215,8 @@ const ItemDetailScreen = () => {
       {(() => {
         const commentableFieldProps = {
           storyId: item.storyId,
+          // Mentions of other entities in this one's text become links; it never links to itself.
+          mentionSourceId: item.id,
           canComment,
           isStoryOwner,
           currentUserId,

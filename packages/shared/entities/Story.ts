@@ -17,10 +17,25 @@ export interface Story {
   favoriteBehavior: FavoriteBehavior;
   extraNotes: string | null;
   theme: string | null;
+  /** The day the first scene falls on, or `null` when the story states no absolute date. */
+  timelineEpochDay: number | null;
+  /** Seconds after the beginning of the epoch day; `null` follows a missing epoch day. */
+  timelineEpochSeconds: number | null;
   normalizeSceneTiming: boolean;
   // Only relevant (and only shown in the UI) for stories linked to a server - local stories only
   // have the 'owner' role, so the reader/writer distinction does not exist for them.
   allowReaderComments: boolean;
+  /**
+   * When on, Story Analysis also reports elements that exist but are not referenced anywhere - a
+   * location in no scene, an unused tag. Off by default: whether an element has to be used is the
+   * writer's judgement, not the app's.
+   */
+  completenessChecks: boolean;
+  /**
+   * When on, entity names found in this story's own text render as links to those entities.
+   * Purely a reading convenience: it renders and navigates, and never writes a relation.
+   */
+  autoLinkMentions: boolean;
   /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: boolean;
   /** How stat values are displayed. Only matters with `statSystem` on. */

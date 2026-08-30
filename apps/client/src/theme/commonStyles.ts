@@ -170,6 +170,9 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
       borderRadius: 5,
       paddingHorizontal: 10,
       marginBottom: 0,
+      // Select fixes its content at 16px. Without an explicit size, React Native Web lets native
+      // inputs inherit the browser's smaller default, so the two controls drift apart in a form.
+      fontSize: 16,
       color: colors.text,
       backgroundColor: colors.surface,
       width: '100%',

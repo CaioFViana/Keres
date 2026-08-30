@@ -27,6 +27,8 @@ interface IconPickerModalProps {
   onSelectIcon: (icon: string) => void;
   onClose: () => void;
   title?: string;
+  /** The icon list to pick from - defaults to the avatar set; maps use `MAP_ICON_OPTIONS`. */
+  options?: readonly (keyof typeof Ionicons.glyphMap)[];
 }
 
 const CELL_MARGIN = 4;
@@ -41,6 +43,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
   onSelectIcon,
   onClose,
   title,
+  options = AVATAR_ICON_OPTIONS,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -101,7 +104,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
       {title && <Text style={styles.title}>{title}</Text>}
       <FlatList
         key={`icon-grid-${numColumns}`}
-        data={AVATAR_ICON_OPTIONS}
+        data={options}
         keyExtractor={(item) => item}
         numColumns={numColumns}
         style={styles.iconList}

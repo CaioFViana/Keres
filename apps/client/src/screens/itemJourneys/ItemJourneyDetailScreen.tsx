@@ -17,6 +17,7 @@ import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '../../db';
 import type { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
@@ -188,14 +189,15 @@ const ItemJourneyDetailScreen = () => {
     [itemJourneyId, navigation, t, items],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchItemJourney);
+
+  // Event subscriptions never initiate an item-journey load.
   useEffect(() => {
-    fetchItemJourney();
     entityEventEmitter.on('item_journey_changed', handleItemJourneyChange);
     return () => {
       entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
     };
-  }, [itemJourneyId, fetchItemJourney, handleItemJourneyChange]);
+  }, [handleItemJourneyChange]);
 
   const relatedItem = items.find((item) => item.id === itemJourney?.itemId);
   const relatedScene = scenes.find((scene) => scene.id === itemJourney?.sceneId);

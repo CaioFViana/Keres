@@ -5,6 +5,7 @@ import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelati
 import { createSeeAlsoRelationService } from '../services/storymanagement/SeeAlsoRelationService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 export interface SeeAlsoLink {
   relationId: string;
@@ -64,8 +65,9 @@ export function useSeeAlsoRelations(
     }
   }, [service, storyId, entityType, entityId]);
 
+  useEntityInitialLoad(refresh);
+
   useEffect(() => {
-    refresh();
     const handleChange = (changedStoryId: string, changedEntityId?: string) => {
       if (changedStoryId === storyId && (!changedEntityId || changedEntityId === entityId)) {
         refresh();

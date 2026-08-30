@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -452,15 +453,6 @@ const SceneFormScreen = () => {
       AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
-    if (!chapterId) {
-      AppAlert.alert(t('error'), t('chapter_required'));
-      return;
-    }
-    if (!locationId) {
-      // Validate locationId
-      AppAlert.alert(t('error'), t('location_required'));
-      return;
-    }
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;
@@ -828,18 +820,31 @@ const SceneFormScreen = () => {
         options={chapterOptions}
         value={chapterId}
         onValueChange={setChapterId}
-        placeholder={t('select_chapter')}
+        placeholder={t('select_chapter_optional')}
         multiple={false}
+        allowDeselect
       />
+      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+        {t('scene_chapter_optional_hint')}
+      </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('location')}</Text>
+      {/*
+        Optional since 1.6. An era, a war, a rumour heard in three cities is a scene with no single
+        place, and requiring one was Keres deciding something about the story on the writer's
+        behalf. `allowDeselect` is what lets them take it back off.
+      */}
       <Select
         options={locationOptions}
         value={locationId}
         onValueChange={setLocationId}
-        placeholder={t('select_location')}
+        placeholder={t('select_location_optional')}
         multiple={false}
+        allowDeselect
       />
+      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+        {t('scene_location_optional_hint')}
+      </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
       <TextInput
@@ -1096,15 +1101,14 @@ const SceneFormScreen = () => {
         </View>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton}>
-        {t('save_scene')}
-      </Button>
-
-      {isEditing && (
-        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-          {t('delete_scene_title')}
-        </Button>
-      )}
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>{t('save_scene')}</Button>
+        {isEditing && (
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
+            {t('delete_scene_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

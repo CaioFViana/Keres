@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -6,6 +5,7 @@ import { useTheme } from '../../../../theme';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput'; // Import TextInput
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import RelationRow from '@/src/components/features/relations/RelationManager/RelationRow';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
 
@@ -88,10 +88,6 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
   const styles = StyleSheet.create({
     ...relationSectionStyleDefs(colors),
-    deleteButton: {
-      marginLeft: 10,
-      padding: 5,
-    },
     addRelationContainer: {
       marginTop: 15,
       marginBottom: 10,
@@ -126,22 +122,6 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     },
     selectAddRow: {
       gap: 10,
-    },
-    assignedItems: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      overflow: 'hidden',
-    },
-    relationItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 15,
-      backgroundColor: colors.surface,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
     },
   });
 
@@ -224,37 +204,15 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     );
 
     return (
-      <View key={relation.id} style={styles.relationItem}>
-        {/* Só navega fora de um form: em `editable`, sair da tela perderia alterações não
-            salvas do formulário - mesma regra que já esconde o chevron abaixo. */}
-        {onItemPress && !editable ? (
-          <TouchableOpacity
-            style={styles.relationItemContent}
-            onPress={() => onItemPress(relatedItem)}
-            activeOpacity={0.7}
-          >
-            {content}
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.relationItemContent}>{content}</View>
-        )}
-        {onItemPress && !editable && (
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={colors.textSecondary}
-            style={styles.chevron}
-          />
-        )}
-        {editable && (
-          <TouchableOpacity
-            onPress={() => handleDeleteRelation(relation.id)}
-            style={styles.deleteButton}
-          >
-            <Ionicons name="trash-outline" size={24} color={colors.error} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <RelationRow
+        key={relation.id}
+        /* Only navigates outside a form: while `editable`, leaving the screen would drop the
+           form's unsaved changes - the same rule that hides the chevron. */
+        onPress={onItemPress && !editable ? () => onItemPress(relatedItem) : undefined}
+        onRemove={editable ? () => handleDeleteRelation(relation.id) : undefined}
+      >
+        {content}
+      </RelationRow>
     );
   };
 
@@ -291,7 +249,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
           {activeRelations.length === 0 ? (
             <Text style={{ color: colors.textSecondary }}>{noItemsAssignedMessage}</Text>
           ) : (
-            <View style={styles.assignedItems}>{activeRelations.map(renderRelationItem)}</View>
+            <View>{activeRelations.map(renderRelationItem)}</View>
           )}
         </View>
       </CollapsibleCard>

@@ -1,4 +1,9 @@
-import { FullStoryExportSchema, type FullStoryExportType } from '@keres/shared';
+import {
+  FullStoryExportSchema,
+  remapBoardContent,
+  remapLocationMapContent,
+  type FullStoryExportType,
+} from '@keres/shared';
 import { createULID } from '../utils/entityUtils';
 
 type EntityWithId = { id: string };
@@ -36,6 +41,10 @@ export function cloneExampleStoryForInstall(
   registerAll(example.tags);
   registerAll(example.tagRelations);
   registerAll(example.suggestions);
+  registerAll(example.chapterAnchors);
+  registerAll(example.storyCalendars);
+  registerAll(example.storyBoards);
+  registerAll(example.storyLocationMaps);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
   registerAll(example.plots);
@@ -56,6 +65,22 @@ export function cloneExampleStoryForInstall(
   registerAll(example.modes);
 
   const remapId = (id: string) => idMap.get(id) ?? id;
+  /**
+   * A `Suggestion.type` of `custom:<fieldId>` is a text column that is secretly an id: it is built
+   * from the live field id by `SuggestionService.customAttributeSuggestionType`. Remapping the
+   * fields without remapping this leaves every custom field's catalogue pointing at the id it had
+   * in the source - the field works, the suggestions are simply never found. Silent, and it applied
+   * to every installed example story and every imported `.json` until this was added.
+   *
+   * `list_<ulid>_<slug>` needs no such treatment: that ULID is minted by `namedListType` for the
+   * list itself, is not an entity id, and stays consistent with its catalogue entry precisely
+   * because neither side is remapped.
+   */
+  const CUSTOM_SUGGESTION_PREFIX = 'custom:';
+  const remapSuggestionType = (type: string) =>
+    type.startsWith(CUSTOM_SUGGESTION_PREFIX)
+      ? `${CUSTOM_SUGGESTION_PREFIX}${remapId(type.slice(CUSTOM_SUGGESTION_PREFIX.length))}`
+      : type;
   const remapNullableId = (id: string | null) => (id === null ? null : remapId(id));
   const cloneEntity = <T extends EntityWithId>(entity: T): T => ({
     ...entity,
@@ -83,8 +108,9 @@ export function cloneExampleStoryForInstall(
     scenes: example.scenes.map((scene) => ({
       ...cloneEntity(scene),
       storyId,
-      chapterId: remapId(scene.chapterId),
-      locationId: remapId(scene.locationId),
+      chapterId: remapNullableId(scene.chapterId),
+      // A scene may have no place at all; there is then nothing to remap.
+      locationId: scene.locationId ? remapId(scene.locationId) : null,
     })),
     choices: example.choices.map((choice) => ({
       ...cloneEntity(choice),
@@ -127,7 +153,32 @@ export function cloneExampleStoryForInstall(
       tagId: remapId(relation.tagId),
       relationId: remapId(relation.relationId),
     })),
-    suggestions: example.suggestions.map((suggestion) => ({ ...cloneEntity(suggestion), storyId })),
+    suggestions: example.suggestions.map((suggestion) => ({
+      ...cloneEntity(suggestion),
+      storyId,
+      type: remapSuggestionType(suggestion.type),
+    })),
+    chapterAnchors: example.chapterAnchors?.map((anchor) => ({
+      ...cloneEntity(anchor),
+      storyId,
+      chapterId: remapId(anchor.chapterId),
+      startSceneId: remapId(anchor.startSceneId),
+      endSceneId: remapNullableId(anchor.endSceneId),
+    })),
+    storyCalendars: example.storyCalendars?.map((calendar) => ({
+      ...cloneEntity(calendar),
+      storyId,
+    })),
+    storyBoards: example.storyBoards?.map((board) => ({
+      ...cloneEntity(board),
+      storyId,
+      content: remapBoardContent(board.content, remapId),
+    })),
+    storyLocationMaps: example.storyLocationMaps?.map((map) => ({
+      ...cloneEntity(map),
+      storyId,
+      content: remapLocationMapContent(map.content, remapId),
+    })),
     characterRelations: example.characterRelations.map((relation) => ({
       ...cloneEntity(relation),
       storyId,

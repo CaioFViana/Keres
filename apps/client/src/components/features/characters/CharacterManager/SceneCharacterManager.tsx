@@ -2,9 +2,13 @@ import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
+import { useTheme } from '../../../../theme';
 import { createULID } from '../../../../utils/entityUtils';
+import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager'; // Removed BaseItem, BaseRelation
+import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 
 interface SceneCharacterManagerProps {
   characterRelations: CharacterScene[];
@@ -30,7 +34,10 @@ const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
   currentSceneId,
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
+
+  const styles = StyleSheet.create(relationSectionStyleDefs(colors));
 
   const handleCharacterPress = useCallback(
     (character: Character) => {
@@ -93,6 +100,18 @@ const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
       selectItemToAddMessage={t('select_character_to_add')}
       deleteConfirmationTitle={t('delete_character_from_scene_title')}
       deleteConfirmationMessage={t('delete_character_from_scene_message')}
+      renderRelationItemExtraContent={(relation, characters) => {
+        const character = characters.find((candidate) => candidate.id === relation.characterId);
+        if (!character) return null;
+        return (
+          <View>
+            <Text style={styles.relationText}>{character.name}</Text>
+            {character.title ? (
+              <RelationAttributeLine label={t('title')} value={character.title} />
+            ) : null}
+          </View>
+        );
+      }}
       title={t('characters_title')}
       onItemPress={handleCharacterPress}
     />

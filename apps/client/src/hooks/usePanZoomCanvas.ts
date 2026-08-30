@@ -1,4 +1,4 @@
-import { useCallback, useImperativeHandle, useMemo, useRef } from 'react';
+import { useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 import type { View } from 'react-native';
 import { Animated, PanResponder } from 'react-native';
 
@@ -31,6 +31,9 @@ export interface PanZoomCanvasHandle {
 export interface PanZoomLayout {
   width: number;
   height: number;
+  /** World coordinate represented by the drawing's top-left corner. */
+  originX?: number;
+  originY?: number;
 }
 
 interface PanZoomCanvasOptions {
@@ -42,6 +45,20 @@ interface PanZoomCanvasOptions {
   refitOnLayoutChange?: boolean;
   /** Some visualizations, such as a timeline, must preserve the vertical scale and scroll horizontally. */
   fitMode?: 'contain' | 'height';
+  /**
+   * A tap that landed on the drawing, in its own coordinates (already undoing pan and zoom).
+   *
+   * It exists so that a canvas whose whole surface is meaningful - a timeline band, a matrix column -
+   * can hit-test its own drawing instead of carpeting it with touch targets. Views that answer to
+   * touch take the responder on the finger's way down, and a pinch that starts on one of them never
+   * reaches the canvas: the map stops zooming as soon as the drawing covers the screen.
+   */
+  onTap?: (point: { x: number; y: number }) => void;
+  /**
+   * A board is a drawing you slide around even when it fits in the window. The story map instead
+   * recentres while it is smaller than the viewport, so it cannot be "lost".
+   */
+  freePan?: boolean;
 }
 
 interface Transform {
@@ -60,6 +77,16 @@ export function usePanZoomCanvas(
   const fitVerticalAlignment = options.fitVerticalAlignment ?? 'center';
   const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
   const fitMode = options.fitMode ?? 'contain';
+  const freePan = options.freePan ?? false;
+  /** In a ref so that changing the handler does not rebuild the `PanResponder` mid-gesture. */
+  const onTap = useRef(options.onTap);
+  onTap.current = options.onTap;
+  /**
+   * A child (a board pin) that is dragging must keep the responder. Capture would steal the
+   * gesture as soon as the finger moved past DRAG_THRESHOLD, and the pin would never move.
+   * Two-finger pinch still belongs to the canvas even then.
+   */
+  const childDragging = useRef(false);
 
   const viewport = useRef({ width: 0, height: 0 });
   /** The canvas's corner within the window, to convert the pinch's focus into local coordinates. */
@@ -73,8 +100,11 @@ export function usePanZoomCanvas(
 
   /** Estado do gesto em andamento; zerado a cada toque novo. */
   const gesture = useRef({ lastDx: 0, lastDy: 0, pinchDistance: 0, pinchScale: 1 });
+  /** The gesture still qualifies as a tap: one finger, and no drag so far. */
+  const tapping = useRef(false);
   /** The identity of the last layout already framed, so as not to reframe on every render. */
   const fittedLayout = useRef<PanZoomLayout | null>(null);
+  const appliedOrigin = useRef({ x: layout.originX ?? 0, y: layout.originY ?? 0 });
 
   const publish = useCallback(() => {
     animatedScale.setValue(transform.current.scale);
@@ -85,6 +115,7 @@ export function usePanZoomCanvas(
   /**
    * Keeps the map inside the window: when it is bigger, it does not let you drag it out of
    * sight; when it is smaller, it centres it. Without this it is easy to "lose" the graph and never find it again.
+   * `freePan` only insists that a strip of the drawing stays on screen, so a small board can still slide.
    */
   const clamp = useCallback(() => {
     const { width: viewportWidth, height: viewportHeight } = viewport.current;
@@ -92,6 +123,19 @@ export function usePanZoomCanvas(
 
     const scaledWidth = layout.width * transform.current.scale;
     const scaledHeight = layout.height * transform.current.scale;
+
+    if (freePan) {
+      const keep = 64;
+      transform.current.x = Math.min(
+        viewportWidth - keep,
+        Math.max(keep - scaledWidth, transform.current.x),
+      );
+      transform.current.y = Math.min(
+        viewportHeight - keep,
+        Math.max(keep - scaledHeight, transform.current.y),
+      );
+      return;
+    }
 
     transform.current.x =
       scaledWidth <= viewportWidth
@@ -104,7 +148,21 @@ export function usePanZoomCanvas(
           ? 0
           : (viewportHeight - scaledHeight) / 2
         : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
-  }, [fitVerticalAlignment, layout.height, layout.width]);
+  }, [fitVerticalAlignment, freePan, layout.height, layout.width]);
+
+  // When a drawing grows above or to the left of zero, its inner coordinates are translated so
+  // Views and SVG paths stay inside the surface. Counter-translate the pan by that exact amount,
+  // preserving the on-screen world position instead of making the whole graph jump mid-drag.
+  useLayoutEffect(() => {
+    const next = { x: layout.originX ?? 0, y: layout.originY ?? 0 };
+    const previous = appliedOrigin.current;
+    if (next.x === previous.x && next.y === previous.y) return;
+    transform.current.x += (next.x - previous.x) * transform.current.scale;
+    transform.current.y += (next.y - previous.y) * transform.current.scale;
+    appliedOrigin.current = next;
+    clamp();
+    publish();
+  }, [clamp, layout.originX, layout.originY, publish]);
 
   /** Applies a zoom keeping fixed the point of the map that lies under `focus`. */
   const zoomAround = useCallback(
@@ -185,23 +243,42 @@ export function usePanZoomCanvas(
         // It does not capture the touch's start: that way a simple tap reaches the node and opens the
         // details. The drag is stolen from the node later, in the move's capture phase.
         onStartShouldSetPanResponderCapture: () => false,
-        onMoveShouldSetPanResponderCapture: (event, gestureState) =>
-          event.nativeEvent.touches.length > 1 ||
-          Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD,
+        // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
+        // `onTap` all start here, instead of the gesture being dropped for want of an owner.
+        onStartShouldSetPanResponder: () => !childDragging.current,
+        onMoveShouldSetPanResponder: (event, gestureState) => {
+          if (childDragging.current) return false;
+          const touches = event.nativeEvent.touches ?? [];
+          if (touches.length > 1) return true;
+          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+        },
+        onMoveShouldSetPanResponderCapture: (event, gestureState) => {
+          const touches = event.nativeEvent.touches ?? [];
+          if (touches.length > 1) return true;
+          if (childDragging.current) return false;
+          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+        },
 
-        onPanResponderGrant: () => {
+        onPanResponderGrant: (event) => {
           gesture.current = {
             lastDx: 0,
             lastDy: 0,
             pinchDistance: 0,
             pinchScale: transform.current.scale,
           };
+          tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
+          const pointerId = (event?.nativeEvent as { pointerId?: number } | undefined)?.pointerId;
+          const target = event?.currentTarget as unknown as {
+            setPointerCapture?: (id: number) => void;
+          };
+          if (pointerId != null) target?.setPointerCapture?.(pointerId);
         },
 
         onPanResponderMove: (event, gestureState) => {
-          const touches = event.nativeEvent.touches;
+          const touches = event.nativeEvent.touches ?? [];
 
           if (touches.length >= 2) {
+            tapping.current = false;
             const [first, second] = touches;
             const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
             const focus = {
@@ -225,6 +302,8 @@ export function usePanZoomCanvas(
           }
 
           gesture.current.pinchDistance = 0;
+          if (Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD)
+            tapping.current = false;
           transform.current.x += gestureState.dx - gesture.current.lastDx;
           transform.current.y += gestureState.dy - gesture.current.lastDy;
           gesture.current.lastDx = gestureState.dx;
@@ -234,11 +313,26 @@ export function usePanZoomCanvas(
         },
 
         onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: () => {
+        onPanResponderRelease: (event, gestureState) => {
+          const pointerId = (event?.nativeEvent as { pointerId?: number } | undefined)?.pointerId;
+          const target = event?.currentTarget as unknown as {
+            releasePointerCapture?: (id: number) => void;
+          };
+          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
           gesture.current.pinchDistance = 0;
+          const wasTap =
+            tapping.current && Math.hypot(gestureState.dx, gestureState.dy) <= DRAG_THRESHOLD;
+          tapping.current = false;
+          if (!wasTap || !onTap.current) return;
+          const { pageX, pageY } = event.nativeEvent;
+          onTap.current({
+            x: (pageX - viewportOrigin.current.x - transform.current.x) / transform.current.scale,
+            y: (pageY - viewportOrigin.current.y - transform.current.y) / transform.current.scale,
+          });
         },
         onPanResponderTerminate: () => {
           gesture.current.pinchDistance = 0;
+          tapping.current = false;
         },
       }),
     [clamp, publish, zoomAround],
@@ -253,5 +347,9 @@ export function usePanZoomCanvas(
       { translateY: animatedY },
       { scale: animatedScale },
     ],
+    setChildDragging: (dragging: boolean) => {
+      childDragging.current = dragging;
+    },
+    getTransform: () => ({ ...transform.current }),
   };
 }

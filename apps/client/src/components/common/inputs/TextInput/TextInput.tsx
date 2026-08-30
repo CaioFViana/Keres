@@ -31,25 +31,6 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
     const commonInputStyles = getCommonInputStyles(colors);
 
     const styles = StyleSheet.create({
-      input: {
-        width: '80%',
-        height: 50,
-        borderColor: colors.primary,
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        marginBottom: 20,
-        color: colors.text,
-        backgroundColor: colors.surface,
-        fontSize: 16,
-        ...(Platform.OS === 'web'
-          ? ({
-              outlineColor: 'transparent',
-              outlineStyle: 'none',
-              outlineWidth: 0,
-            } as any)
-          : {}),
-      },
       multilineInput: {
         paddingTop: 10,
         paddingBottom: 10,
@@ -82,7 +63,6 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
         ref={ref}
         style={[
           commonInputStyles.input,
-          styles.input,
           multiline && styles.multilineInput,
           style,
           interactionStyle,

@@ -90,7 +90,7 @@ describe('desktop startup', () => {
     expect(electronMocks.clearCache).toHaveBeenCalledOnce();
     expect(electronMocks.clearCodeCaches).toHaveBeenCalledWith({});
     expect(electronMocks.protocolHandle).toHaveBeenCalledWith('app', expect.any(Function));
-    expect(electronMocks.handle).toHaveBeenCalledTimes(9);
+    expect(electronMocks.handle).toHaveBeenCalledTimes(10);
     expect(electronMocks.BrowserWindow).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Keres',

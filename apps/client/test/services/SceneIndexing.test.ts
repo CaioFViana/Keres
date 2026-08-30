@@ -94,6 +94,43 @@ describe('SceneService index handling', () => {
     expect(await indexesOf('chapter-2')).toEqual(['a:1']);
   });
 
+  it('lets a scene leave its chapter without numbering the unchaptered group', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+
+    await service.updateScene(TEST_USER_ID, 'b', { chapterId: null });
+
+    expect(await indexesOf('chapter-1')).toEqual(['a:1']);
+    const unchaptered = (await database.db.query.scenes.findMany()).find(
+      (scene) => scene.id === 'b',
+    );
+    expect(unchaptered?.chapterId).toBeNull();
+  });
+
+  it('does not try to renumber when an unchaptered scene is deleted', async () => {
+    const service = createSceneService(database.db);
+    await database.db.insert(schema.scenes).values({
+      id: 'loose',
+      storyId: TEST_STORY_ID,
+      chapterId: null,
+      locationId: 'location-1',
+      name: 'Loose',
+      index: 1,
+      isStart: false,
+      isFinish: false,
+      ...entityBase,
+      deletedAt: null,
+    });
+
+    await service.deleteScene(TEST_USER_ID, 'loose');
+
+    const stored = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'loose'),
+    });
+    expect(stored?.isDeleted).toBe(true);
+  });
+
   it('records the re-indexing as its own operations, so the server learns the new order', async () => {
     const service = createSceneService(database.db);
     await seedScene('a', 'chapter-1', 1);

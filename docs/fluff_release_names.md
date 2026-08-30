@@ -32,8 +32,16 @@ The goddess of cleaningless, of preventing diseases, and much more. Who else to 
 
 Yeah...
 
-### 1.4.2: Galatea
+### 1.5: Galatea
 
 _"Crafting it piece by piece. Unknown if perfection will ever be achieved. Never stopped us from trying, until the heavens pity my dedication."_
 
 Simple fixes, code cleaning. Dumb stuff i should have done in 1.4.1 but 1.4.1 became... Anyway.
+It became huge with plots and more graphs on top of each other. 
+
+### 1.6: Eris.
+
+_"From the pile there was a fruit. Destined to the prettiest of them. No one knows who planted it there, but no one ever forgot what came next."_
+
+1.5 came out as a mess on android. What happened... Such failures, some despair, some issues... this cant go on. Its... _chaotic_...
+But I want to shake things up. lets see how far I can push Keres

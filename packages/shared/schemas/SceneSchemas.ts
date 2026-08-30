@@ -13,8 +13,19 @@ const SceneTimingValueSchema = z
 export const SceneSchema = z.object({
   id: z.string(),
   storyId: z.string(),
-  chapterId: z.string(),
-  locationId: z.string(),
+  /**
+   * Which container this scene is told in. Null is a fragment: it exists, it is listed under
+   * "Unchaptered", and it does not occupy a slot in any chapter's 1..N.
+   */
+  chapterId: z.string().nullable(),
+  /**
+   * Where the scene happens, when it happens anywhere in particular.
+   *
+   * Nullable since format V7: an era, a war, a rumour heard in three cities is a scene with no
+   * single place, and requiring one was Keres deciding something about the story on the writer's
+   * behalf - see `FEATURE_LANDSCAPE.md` section 2.1.
+   */
+  locationId: z.string().nullable(),
   name: z.string(),
   index: z.number(),
   summary: z.string().nullable(),

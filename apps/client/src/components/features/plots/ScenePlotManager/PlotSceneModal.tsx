@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -98,8 +99,9 @@ const PlotSceneModal: React.FC<PlotSceneModalProps> = ({
     },
     buttonContainer: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
+      justifyContent: 'space-between',
       marginTop: 20,
+      paddingHorizontal: '3%',
     },
   });
 
@@ -143,10 +145,10 @@ const PlotSceneModal: React.FC<PlotSceneModalProps> = ({
         </View>
       </ScrollView>
 
-      <View style={styles.buttonContainer}>
+      <FormActions>
         <Button onPress={onClose}>{t('cancel')}</Button>
         <Button onPress={handleSave}>{t('save_changes')}</Button>
-      </View>
+      </FormActions>
     </ResponsiveModal>
   );
 };

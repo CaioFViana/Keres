@@ -305,6 +305,19 @@ describe('EntityService.getEntityIdentifier', () => {
   const identifierOf = (entityTypeString: string, entityId: string) =>
     EntityService.getEntityIdentifier(database.db, entityTypeString, entityId, STORY_ID, t);
 
+  it('resolves a board by its name', async () => {
+    await database.db.insert(schema.boards).values({
+      id: 'board-1',
+      storyId: STORY_ID,
+      name: 'Mapa da cidade',
+      description: null,
+      content: { nodes: [], edges: [] },
+      ...base,
+    });
+
+    await expect(identifierOf('Board', 'board-1')).resolves.toBe('Mapa da cidade');
+  });
+
   it('resolves a character relation by both participants', async () => {
     await database.db.insert(schema.characters).values([
       { id: 'mira', storyId: STORY_ID, name: 'Mira', ...base },

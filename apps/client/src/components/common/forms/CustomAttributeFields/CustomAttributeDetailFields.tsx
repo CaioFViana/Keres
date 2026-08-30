@@ -1,10 +1,20 @@
-import type { CommentEntityType, StorySchemaEntityType } from '@keres/shared';
+import type {
+  CalendarDefinitionType,
+  CommentEntityType,
+  StorySchemaEntityType,
+} from '@keres/shared';
 import {
   AttributeType,
+  calendarMoonPhases,
+  calendarSeasonFor,
+  dayNumberToParts,
   decodeAttributeValue,
   formatAttributeDateForDisplay,
+  formatCalendarDate,
   joinSuggestionListForDisplay,
 } from '@keres/shared';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
@@ -29,6 +39,8 @@ function formatValueForDisplay(
   t: (key: string) => string,
   language: string,
   use24HourTime: boolean,
+  /** The story's primary calendar, needed only by `STORY_DATE`. */
+  calendar: CalendarDefinitionType | null,
 ): string {
   if (decoded === null) {
     return t('common_na');
@@ -38,6 +50,24 @@ function formatValueForDisplay(
   }
   if (typeof decoded === 'boolean') {
     return decoded ? t('common_yes') : t('common_no');
+  }
+  if (type === AttributeType.STORY_DATE) {
+    /*
+     * A day number written in the story's own calendar, with its season and moons beside it. With
+     * no calendar the number is shown raw rather than hidden - the value is still what the writer
+     * entered, and swallowing it would look like data loss.
+     */
+    const dayNumber = Number(decoded);
+    if (!calendar || !Number.isFinite(dayNumber)) return String(decoded);
+    const parts = dayNumberToParts(calendar, dayNumber);
+    const aside = [
+      calendarSeasonFor(calendar, parts.dayOfYear)?.name,
+      ...calendarMoonPhases(calendar, dayNumber).map(
+        (moon) => `${moon.name}: ${t(`moon_phase_${moon.phase}`)}`,
+      ),
+    ].filter(Boolean);
+    const date = formatCalendarDate(calendar, dayNumber);
+    return aside.length > 0 ? `${date} · ${aside.join(' · ')}` : date;
   }
   if (type === AttributeType.DATE) {
     // Day of the week + the date spelled out in the APP's language (never the device's), always identical
@@ -66,6 +96,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   const navigateToDetail = useNavigateToEntityDetail();
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
+  const { definition: calendar } = useStoryCalendar(storyId);
   const [values, setValues] = useState<Record<string, string | null>>({});
   const [resolvedEntityNames, setResolvedEntityNames] = useState<Record<string, string>>({});
   const {
@@ -116,8 +147,9 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
     }
   }, [drizzleDb, entityId, fields, storyId, t]);
 
+  useEntityInitialLoad(fetchValues);
+
   useEffect(() => {
-    fetchValues();
     entityEventEmitter.on('attribute_value_changed', fetchValues);
     return () => {
       entityEventEmitter.off('attribute_value_changed', fetchValues);
@@ -141,7 +173,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
         const displayValue =
           isEntityReference && rawValue
             ? resolvedEntityName || t('attribute_entity_deleted')
-            : formatValueForDisplay(field.type, decoded, t, i18n.language, use24HourTime);
+            : formatValueForDisplay(field.type, decoded, t, i18n.language, use24HourTime, calendar);
         const onPress =
           isEntityReference && resolvedEntityName && field.targetEntityType && rawValue
             ? () => {
@@ -155,6 +187,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
             label={field.name}
             value={displayValue}
             onPress={onPress}
+            mentionSourceId={entityId}
             comments={commentsByField[field.id] ?? []}
             canComment={canComment}
             isStoryOwner={isStoryOwner}

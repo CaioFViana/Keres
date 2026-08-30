@@ -8,7 +8,9 @@ import type { PendingConflict } from '../../../../services/SyncConflictService';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 /** De qual lado vem o valor escolhido para um campo em disputa. */
 type FieldChoice = 'local' | 'server';
@@ -75,6 +77,20 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
 
   const keepMineLabel = hasServerChoice ? t('conflict_apply_merge') : t('conflict_keep_mine');
 
+  const confirmKeepMine = useCallback(() => {
+    AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_keep_mine'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('conflict_confirm_action'), onPress: handleKeepMine },
+    ]);
+  }, [handleKeepMine, t]);
+
+  const confirmKeepServer = useCallback(() => {
+    AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_keep_server'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('conflict_confirm_action'), style: 'destructive', onPress: handleKeepServer },
+    ]);
+  }, [handleKeepServer, t]);
+
   const styles = StyleSheet.create({
     sheet: {
       backgroundColor: colors.surface,
@@ -128,7 +144,6 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      marginTop: 8,
     },
     secondaryButtonText: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
   });
@@ -147,7 +162,12 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
           <Text style={styles.title}>{t('conflict_choose_per_field')}</Text>
           <Text style={styles.subtitle}>{`${summary.entityLabel} — ${summary.title}`}</Text>
         </View>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <TouchableOpacity
+          onPress={onClose}
+          style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('conflict_close_details')}
+        >
           <Ionicons name="close" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -162,6 +182,9 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
               <TouchableOpacity
                 style={[styles.option, choice === 'local' && styles.optionSelected]}
                 onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'local' }))}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: choice === 'local' }}
+                accessibilityLabel={`${field.label}: ${t('conflict_side_mine')}. ${field.localDisplay}`}
               >
                 <Ionicons
                   name={choice === 'local' ? 'radio-button-on' : 'radio-button-off'}
@@ -177,6 +200,9 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
               <TouchableOpacity
                 style={[styles.option, choice === 'server' && styles.optionSelected]}
                 onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'server' }))}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: choice === 'server' }}
+                accessibilityLabel={`${field.label}: ${t('conflict_side_server')}. ${field.serverDisplay}`}
               >
                 <Ionicons
                   name={choice === 'server' ? 'radio-button-on' : 'radio-button-off'}
@@ -192,14 +218,25 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
           );
         })}
 
-        <View style={styles.footer}>
-          <Button onPress={handleKeepMine} disabled={isResolving}>
+        <FormActions stackOnCompact style={styles.footer}>
+          <Button
+            onPress={confirmKeepMine}
+            disabled={isResolving}
+            accessibilityLabel={keepMineLabel}
+            accessibilityHint={t('conflict_keep_mine_description')}
+          >
             {keepMineLabel}
           </Button>
-          <Button onPress={handleKeepServer} disabled={isResolving} style={styles.secondaryButton}>
+          <Button
+            onPress={confirmKeepServer}
+            disabled={isResolving}
+            style={styles.secondaryButton}
+            accessibilityLabel={t('conflict_keep_server')}
+            accessibilityHint={t('conflict_keep_server_description')}
+          >
             <Text style={styles.secondaryButtonText}>{t('conflict_keep_server')}</Text>
           </Button>
-        </View>
+        </FormActions>
       </ScrollView>
     </ResponsiveModal>
   );

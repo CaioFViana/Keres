@@ -9,8 +9,12 @@ import addServer_en from '../content/add-server/en';
 import addServer_pt from '../content/add-server/pt';
 import appSettings_en from '../content/app-settings/en';
 import appSettings_pt from '../content/app-settings/pt';
+import boards_en from '../content/boards/en';
+import boards_pt from '../content/boards/pt';
 import branchingBasics_en from '../content/branching-basics/en';
 import branchingBasics_pt from '../content/branching-basics/pt';
+import calendars_en from '../content/calendars/en';
+import calendars_pt from '../content/calendars/pt';
 import changePassword_en from '../content/change-password/en';
 import changePassword_pt from '../content/change-password/pt';
 import chapters_en from '../content/chapters/en';
@@ -71,6 +75,8 @@ import narrativeElements_en from '../content/narrative-elements/en';
 import narrativeElements_pt from '../content/narrative-elements/pt';
 import notes_en from '../content/notes/en';
 import notes_pt from '../content/notes/pt';
+import packs_en from '../content/packs/en';
+import packs_pt from '../content/packs/pt';
 import plots_en from '../content/plots/en';
 import plots_pt from '../content/plots/pt';
 import publishStory_en from '../content/publish-story/en';
@@ -125,7 +131,9 @@ export type GeneratedHelpPageId =
   | 'activity-log'
   | 'add-server'
   | 'app-settings'
+  | 'boards'
   | 'branching-basics'
+  | 'calendars'
   | 'change-password'
   | 'chapters'
   | 'character-modes'
@@ -156,6 +164,7 @@ export type GeneratedHelpPageId =
   | 'locations'
   | 'narrative-elements'
   | 'notes'
+  | 'packs'
   | 'plots'
   | 'publish-story'
   | 'scene-timing'
@@ -198,9 +207,17 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
     en: appSettings_en,
     pt: appSettings_pt,
   },
+  boards: {
+    en: boards_en,
+    pt: boards_pt,
+  },
   'branching-basics': {
     en: branchingBasics_en,
     pt: branchingBasics_pt,
+  },
+  calendars: {
+    en: calendars_en,
+    pt: calendars_pt,
   },
   'change-password': {
     en: changePassword_en,
@@ -321,6 +338,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   notes: {
     en: notes_en,
     pt: notes_pt,
+  },
+  packs: {
+    en: packs_en,
+    pt: packs_pt,
   },
   plots: {
     en: plots_en,

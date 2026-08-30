@@ -57,7 +57,8 @@ export interface NewGalleryMedia {
   fileName: string;
   hash: string;
   sizeBytes: number;
-  localPath: string;
+  sourceUrl?: string | null;
+  localPath: string | null;
   /** Video only. */
   thumbnailPath?: string;
   title?: string | null;
@@ -221,13 +222,14 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         fileName: media.fileName,
         hash: media.hash,
         sizeBytes: media.sizeBytes,
+        sourceUrl: media.sourceUrl ?? null,
         title: media.title ?? null,
         extraNotes: media.extraNotes ?? null,
         isFavorite: media.isFavorite ?? false,
         localPath: media.localPath,
         thumbnailPath: media.thumbnailPath ?? null,
-        // The file is born here: it is already on the device and has not gone to the server yet.
-        uploadState: 'pending',
+        // A link has no bytes to send; the metadata is the whole medium.
+        uploadState: media.mediaType === 'link' ? 'uploaded' : 'pending',
         downloadState: 'downloaded',
       } as Create<GalleryInsert>);
 

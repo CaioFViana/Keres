@@ -63,6 +63,21 @@ describe('buildStoryZipBytes', () => {
     expect(Array.from(media)).toEqual([1, 2, 3]);
   });
 
+  it('does not pack a link because a URL has no bytes to put in the zip', async () => {
+    const items = [
+      galleryItem('aaa', 'image/png'),
+      { ...galleryItem('linkhash', 'text/uri-list'), mediaType: 'link' } as GalleryType,
+    ];
+    const result = await buildStoryZipBytes(storyExport(items), async () => BYTES);
+
+    expect(result.includedCount).toBe(1);
+    expect(result.totalCount).toBe(1);
+
+    const zip = await JSZip.loadAsync(result.bytes);
+    expect(zip.file(`${MEDIA_DIR_PREFIX}aaa.png`)).not.toBeNull();
+    expect(zip.file(`${MEDIA_DIR_PREFIX}linkhash.url`)).toBeNull();
+  });
+
   it('skips media the resolver cannot provide and reports the shortfall', async () => {
     const items = [galleryItem('aaa', 'image/png'), galleryItem('bbb', 'image/png')];
     const result = await buildStoryZipBytes(storyExport(items), async (item) =>

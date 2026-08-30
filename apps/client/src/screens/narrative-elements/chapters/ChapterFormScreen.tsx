@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -7,6 +8,7 @@ import CustomAttributeFields, {
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -75,6 +77,8 @@ const ChapterFormScreen = () => {
   const [name, setName] = useState('');
   const [summary, setSummary] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  /** Only chosen at creation; changing it afterwards is a conversion - see `ChapterDetailScreen`. */
+  const [isEvent, setIsEvent] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
   const {
@@ -198,14 +202,20 @@ const ChapterFormScreen = () => {
         );
         AppAlert.alert(t('success'), t('chapter_updated_successfully'));
       } else {
-        // For new chapters, determine the next index
-        const allChapters = await chapterServiceRef.current!.getAllByStoryId(selectedStory.id);
+        // The next index within its own kind: chapters and events number independently, so the two
+        // spaces would collide if this counted across both.
+        const containerType = isEvent ? 'event' : 'chapter';
+        const siblings = await chapterServiceRef.current!.getAllByStoryId(
+          selectedStory.id,
+          containerType,
+        );
         const nextIndex =
-          allChapters.length > 0 ? Math.max(...allChapters.map((c) => c.index || 0)) + 1 : 1;
+          siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
         savedChapter = await chapterServiceRef.current!.createChapter(userId, {
           ...chapterData,
           storyId: selectedStory.id,
           index: nextIndex,
+          type: containerType,
         });
         AppAlert.alert(t('success'), t('chapter_created_successfully'));
         setCurrentChapterId(savedChapter.id);
@@ -337,6 +347,32 @@ const ChapterFormScreen = () => {
         />
       </View>
 
+      {/*
+        Only while creating. Changing the kind afterwards moves the container between two index
+        spaces and rewrites both, which is three operations rather than a saved field - it lives on
+        the detail screen as a deliberate action. See `ConvertContainerModal`.
+      */}
+      {!isEditing && (
+        <>
+          <View style={styles.switchContainer}>
+            <Text
+              style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}
+            >
+              {t('chapter_is_event')}
+            </Text>
+            <ThemedSwitch
+              value={isEvent}
+              onValueChange={setIsEvent}
+              testID="chapter-is-event"
+              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+            />
+          </View>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 5 }}>
+            {t('chapter_is_event_hint')}
+          </Text>
+        </>
+      )}
+
       <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
       <TextInput
         placeholder={t('extra_notes_placeholder')}
@@ -369,6 +405,17 @@ const ChapterFormScreen = () => {
         </View>
       )}
 
+      {currentChapterId && selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <AnchorManager
+            storyId={selectedStory.id}
+            chapterId={currentChapterId}
+            currentUserId={userId}
+            editable={true}
+          />
+        </View>
+      )}
+
       {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
@@ -396,15 +443,14 @@ const ChapterFormScreen = () => {
         </View>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton}>
-        {t('save_chapter')}
-      </Button>
-
-      {isEditing && (
-        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-          {t('delete_chapter_title')}
-        </Button>
-      )}
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>{t('save_chapter')}</Button>
+        {isEditing && (
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
+            {t('delete_chapter_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

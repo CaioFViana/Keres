@@ -35,6 +35,7 @@ import { createItemService } from '../../../services/storymanagement/ItemService
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
+import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useTheme } from '../../../theme';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
@@ -77,6 +78,7 @@ const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { definition: calendar } = useStoryCalendar();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceView'>>();
   const drizzleDb = useDrizzle();
@@ -582,10 +584,20 @@ const ChoiceViewScreen = () => {
                     title: t('scene_timing'),
                     description: [
                       hasSceneGap(selectedNode.scene)
-                        ? `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`
+                        ? `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, {
+                            normalize: selectedStory?.normalizeSceneTiming,
+                            calendar,
+                          })}`
                         : null,
                       hasSceneUniverseDuration(selectedNode.scene)
-                        ? `${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`
+                        ? `${t('in_universe_duration')}: ${formatSceneUniverseDuration(
+                            selectedNode.scene,
+                            t,
+                            {
+                              normalize: selectedStory?.normalizeSceneTiming,
+                              calendar,
+                            },
+                          )}`
                         : null,
                     ]
                       .filter(Boolean)

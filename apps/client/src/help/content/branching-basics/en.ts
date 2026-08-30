@@ -22,7 +22,7 @@ const page: HelpPage = {
       items: [
         'When creating the story, choose the Branching type. For an existing story, open Story menu › Story settings and change the type when conversion is allowed.',
         'Create the scenes that represent moments in the narrative. Mark a Start scene to show where a path begins.',
-        'In the Story menu, open Choices and create a choice: select the Source scene, write the text shown to the reader, and select the Destination scene.',
+        'In the Story menu, open Narrative Elements and create a choice: select the Source scene, write the text shown to the reader, and select the Destination scene.',
         'Open Story map to check the paths. Use Story analysis to find scenes with no links or paths that cannot be reached.',
         'When a path depends on what happened earlier, add conditions and effects to the choice or scene.',
       ],

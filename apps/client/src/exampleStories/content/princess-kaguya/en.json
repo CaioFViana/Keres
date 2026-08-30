@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": null,
+    "timelineEpochSeconds": null,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -1184,6 +1192,60 @@
       "relationType": "Suitor"
     }
   ],
+  "chapterAnchors": [],
+  "storyCalendars": [
+    {
+      "id": "3F8J535CKCY25W8907FA3GCSY4",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "name": "Lunar Calendar",
+      "isPrimary": false,
+      "description": "A parallel count for the story’s lunar eras.",
+      "extraNotes": null,
+      "definition": {
+        "secondsPerMinute": 60,
+        "minutesPerHour": 60,
+        "hoursPerDay": 24,
+        "daysPerWeek": 5,
+        "weekdayNames": ["Bamboo", "Mist", "Moon", "Wind", "Star"],
+        "unitNames": {},
+        "months": [
+          {
+            "name": "Bamboo",
+            "days": 28
+          },
+          {
+            "name": "Silver",
+            "days": 28
+          },
+          {
+            "name": "Return",
+            "days": 28
+          }
+        ],
+        "eras": [
+          {
+            "name": "Before the Moon",
+            "abbreviation": "BM",
+            "startYear": 1,
+            "direction": "backward"
+          }
+        ],
+        "moons": [
+          {
+            "name": "Moon",
+            "periodDays": 28,
+            "referenceDay": 1
+          }
+        ],
+        "seasons": []
+      }
+    }
+  ],
   "characterScenes": [
     {
       "id": "0KK0D2H822NB0243A0VXA2GHRQ",
@@ -1626,7 +1688,26 @@
       "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "7HK9TBS7THJFB6CNSNB60QDVF7",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "411f723ae31803681f7af4e4860f9540",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/The_Tale_of_the_Bamboo_Cutter",
+      "title": "Public story source",
+      "isFavorite": false,
+      "extraNotes": "A link to the public source used as editorial reference for this example."
+    }
+  ],
   "items": [
     {
       "id": "01KYXM6K0E6TVQT4TYVDMDS4AV",
@@ -2439,7 +2520,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 8,
   "stats": [
     {
       "id": "5RE90XMEW0CDRTM0J3CRTDR5KY",
@@ -3320,5 +3401,20 @@
       "note": "Resolves it"
     }
   ],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "75K8NYTK1DDZW7EWDKZ99YDGGS",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "7HK9TBS7THJFB6CNSNB60QDVF7",
+      "ownerId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [],
+  "storyLocationMaps": []
 }

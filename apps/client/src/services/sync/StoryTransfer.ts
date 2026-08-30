@@ -1,5 +1,5 @@
 import type { EffectiveStoryRole } from '@keres/shared';
-import { and, eq, lte, sql } from 'drizzle-orm';
+import { and, eq, lte } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import type { ServerSelect } from '../../db/schema';
@@ -147,17 +147,24 @@ export async function uploadNewStoryToServer(
   await createCommentService(db).migrateAuthorIdentity(storyId, userId, server.idUser);
   await db
     .update(schema.operationLogs)
+    // The import is a snapshot: it already contains every local entity state represented by
+    // operations up to this boundary. Leaving any of those operations pending makes the regular
+    // sync push them a second time against rows the import has just created (Board was the first
+    // visible casualty). Operations recorded after the snapshot remain pending and are sent
+    // normally.
     .set({ isSynced: true })
     .where(
       and(
         eq(schema.operationLogs.storyId, storyId),
-        sql`${schema.operationLogs.entityType} in ('Favorite', 'Comment')`,
         lte(schema.operationLogs.operationVersion, story.lastOperationLog),
       ),
     );
   await storyService.updateStory(userId, storyId, {
     serverId: server.id,
-    lastServerSyncedLog: story.lastOperationLog,
+    // Import writes a snapshot, not server operation-log rows. The server's next operation
+    // therefore starts at 1; carrying the local operation counter into this cursor would skip
+    // future remote updates forever.
+    lastServerSyncedLog: 0,
     lastPublicFavoriteLog: 0,
     myRole: 'owner',
   });

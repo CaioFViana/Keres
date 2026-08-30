@@ -23,7 +23,6 @@ import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import 
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -53,12 +52,16 @@ import { createLocationService } from '../../../services/storymanagement/Locatio
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';
+import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
+import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
+import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
 import { useTheme } from '../../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import type { NarrativeElementsScreenNavigationProp } from '../chapters/NarrativeElementsListScreen';
 
 // Define the parameter list for this screen
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
@@ -66,13 +69,14 @@ type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Sc
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneDetail'>>();
+  const { definition: calendar } = useStoryCalendar();
+  const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
   const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
@@ -254,7 +258,7 @@ const SceneDetailScreen = () => {
       !sceneServiceRef.current ||
       !selectedStory?.id ||
       !sceneId ||
-      !chapter?.id ||
+      !scene?.chapterId ||
       selectedStory.type !== 'linear'
     ) {
       setPreviousScene(undefined);
@@ -265,7 +269,7 @@ const SceneDetailScreen = () => {
       const { previousScene, nextScene } = await sceneServiceRef.current.getPreviousNextScenes(
         selectedStory.id,
         sceneId,
-        chapter.id,
+        scene.chapterId,
       );
       setPreviousScene(previousScene);
       setNextScene(nextScene);
@@ -274,7 +278,7 @@ const SceneDetailScreen = () => {
       setPreviousScene(undefined);
       setNextScene(undefined);
     }
-  }, [selectedStory?.id, sceneId, chapter?.id, selectedStory?.type]);
+  }, [selectedStory?.id, sceneId, scene?.chapterId, selectedStory?.type]);
 
   const fetchChoicesForScene = useCallback(async () => {
     if (
@@ -477,10 +481,14 @@ const SceneDetailScreen = () => {
     [sceneId, fetchCharacterSceneRelations],
   );
 
+  // Fetching a scene and subscribing to its auxiliary changes are deliberately separate effects.
+  // The handlers below legitimately change when related scene state changes; coupling that to the
+  // initial fetch used to fetch and replace `scene` again on every re-subscription.
+  useEntityInitialLoad(fetchScene);
+
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (sceneServiceRef.current) {
-      fetchScene();
       entityEventEmitter.on('scene_changed', handleSceneChange);
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
       entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
@@ -496,8 +504,6 @@ const SceneDetailScreen = () => {
       };
     }
   }, [
-    sceneId,
-    fetchScene,
     handleSceneChange,
     handleCharacterSceneChange,
     handleItemChange,
@@ -550,8 +556,16 @@ const SceneDetailScreen = () => {
 
   const handleLocationPress = useCallback(() => {
     if (!location) return;
-    navigateToDetail('Location', location.id);
-  }, [navigateToDetail, location]);
+    // Location belongs to a sibling Drawer stack. Its own history cannot know that this Scene
+    // opened it, so preserve the exact source screen for the shared back handler.
+    navigateToDetail('Location', location.id, {
+      onReturn: () =>
+        navigation.navigate('NarrativeElementsStack', {
+          screen: 'SceneDetail',
+          params: { sceneId },
+        }),
+    });
+  }, [navigateToDetail, location, navigation, sceneId]);
 
   const renderHeaderRight = useCallback(
     () =>
@@ -616,12 +630,14 @@ const SceneDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      {chapter && (
+      {chapter ? (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
           {chapter.name}
         </Text>
-      )}
+      ) : scene && !scene.chapterId ? (
+        <Text style={[styles.subTitle, { fontStyle: 'italic' }]}>{t('unchaptered_scenes')}</Text>
+      ) : null}
       <TagList tags={sceneTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
         storyId={scene.storyId}
@@ -640,13 +656,22 @@ const SceneDetailScreen = () => {
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
+      {dateForScene(scene) && (
+        <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
+      )}
       <DetailField
         label={t('gap')}
-        value={formatSceneGap(scene, t, selectedStory?.normalizeSceneTiming)}
+        value={`${formatSceneGap(scene, t, {
+          normalize: selectedStory?.normalizeSceneTiming,
+          calendar,
+        })}${dateForScene(scene)?.gapRange ? ` · ${dateForScene(scene)?.gapRange}` : ''}`}
       />
       <DetailField
         label={t('in_universe_duration')}
-        value={formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming)}
+        value={`${formatSceneUniverseDuration(scene, t, {
+          normalize: selectedStory?.normalizeSceneTiming,
+          calendar,
+        })}${dateForScene(scene)?.durationEnd ? ` · ${dateForScene(scene)?.durationEnd}` : ''}`}
       />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />

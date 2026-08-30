@@ -1,0 +1,1 @@
+ALTER TABLE `packs` ADD `visibility` text DEFAULT 'private' NOT NULL;

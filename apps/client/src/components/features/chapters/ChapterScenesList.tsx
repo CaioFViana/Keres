@@ -7,6 +7,8 @@ import { useTheme } from '@/src/theme';
 import SceneListItem from '@/src/components/features/list-items/SceneListItem';
 import ChapterSceneBranchTree from './ChapterSceneBranchTree';
 
+type SceneListSort = 'name' | 'index' | 'createdAt' | 'updatedAt';
+
 interface Props {
   storyType: 'linear' | 'branching' | undefined;
   scenes: SceneSelect[];
@@ -17,6 +19,10 @@ interface Props {
   onToggleFavorite: (sceneId: string, isFavorite: boolean) => void;
   onAddScene: () => void;
   onReorderScenes: () => void;
+  /** Unchaptered scenes have no 1..N: default is name, and reorder is hidden. */
+  unchaptered?: boolean;
+  sortBy?: string | null;
+  sortDirection?: 'asc' | 'desc';
   expandedSceneIds: ReadonlySet<string>;
   onSceneExpandedChange: (sceneId: string, isExpanded: boolean) => void;
   tagsBySceneId?: ReadonlyMap<string, TagSelect[]>;
@@ -32,16 +38,35 @@ const ChapterScenesList: React.FC<Props> = ({
   onToggleFavorite,
   onAddScene,
   onReorderScenes,
+  unchaptered = false,
+  sortBy = 'index',
+  sortDirection = 'asc',
   expandedSceneIds,
   onSceneExpandedChange,
   tagsBySceneId,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const sorted = useMemo(
-    () => [...scenes].sort((a, b) => a.index - b.index || a.id.localeCompare(b.id)),
-    [scenes],
-  );
+  const sorted = useMemo(() => {
+    const direction = sortDirection === 'desc' ? -1 : 1;
+    const key: SceneListSort =
+      unchaptered && (sortBy === 'index' || !sortBy)
+        ? 'name'
+        : sortBy === 'name' || sortBy === 'createdAt' || sortBy === 'updatedAt'
+          ? sortBy
+          : 'index';
+    return [...scenes].sort((a, b) => {
+      const by =
+        key === 'name'
+          ? a.name.localeCompare(b.name)
+          : key === 'createdAt'
+            ? a.createdAt.getTime() - b.createdAt.getTime()
+            : key === 'updatedAt'
+              ? a.updatedAt.getTime() - b.updatedAt.getTime()
+              : a.index - b.index;
+      return by * direction || a.id.localeCompare(b.id);
+    });
+  }, [scenes, sortBy, sortDirection, unchaptered]);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -67,7 +92,7 @@ const ChapterScenesList: React.FC<Props> = ({
         </Text>
         {canEdit && (
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            {sorted.length > 1 && (
+            {sorted.length > 1 && !unchaptered && (
               <TouchableOpacity style={styles.add} onPress={onReorderScenes}>
                 <Ionicons name="swap-vertical" size={16} color={colors.primary} />
               </TouchableOpacity>

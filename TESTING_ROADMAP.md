@@ -162,20 +162,27 @@ By group:
 `SyncEngineService` at 72% lines with **half its branches never taken** is the single worst number
 in the repository for critical code, and it is invisible in every headline figure.
 
-**The conflict matrix is barely sampled.** `ConflictResolution` is a five-value union
+**The conflict matrix was barely sampled.** `ConflictResolution` is a five-value union
 (`packages/shared` → `syncConflicts` DB enum → the review sheet's buttons). Test files naming each
-value today:
+value:
 
-| Resolution | Test files that exercise it |
-| --- | ---: |
-| `merge` | 1 |
-| `keep_local` | **0** |
-| `keep_server` | **0** |
-| `restore` | **0** |
-| `discard` | **0** |
+| Resolution | At the first measurement | Now |
+| --- | ---: | ---: |
+| `merge` | 1 | 1 |
+| `restore` | 0 *(measured wrong; it was 1)* | 1 |
+| `discard` | 0 *(measured wrong; it was 1)* | 1 |
+| `keep_local` | **0** | 1 |
+| `keep_server` | **0** | 1 |
 
-Four of the five buttons a writer can press to save their own work have no test anywhere. That is
-the concrete reason sync gets its own phase, a branch gate, and a target above everything else.
+The original count came from grepping the literal strings, which missed nothing for `keep_local` and
+`keep_server` — those genuinely had no test asserting the value written to the row — but was wrong
+about `restore` and `discard`, both of which were already asserted in `SyncConflictService.test.ts`.
+The behaviour behind all five was covered; what was missing was any assertion that the *recorded
+resolution* is the one the writer chose, which is what the review sheet and any later audit read
+back.
+
+That gap is closed. What remains is the reason sync still gets its own phase: the **branches** below,
+and the reason/resolution/operation-type matrix of §5.1.
 
 ---
 
@@ -367,7 +374,6 @@ back.
 | `LocationService.ts` | 127 | 53.5% |
 | `CharacterService.ts` | 122 | 54.9% |
 | `NoteService.ts` | 109 | 55.0% |
-| `ChapterService.ts` | 109 | 56.0% |
 | `WorldRuleService.ts` | 111 | 59.5% |
 | `SceneService.ts` | 150 | 60.0% |
 | `ItemService.ts` | 78 | 62.8% |
@@ -379,6 +385,8 @@ back.
 | `GalleryService.ts` | 90 | 76.7% |
 | `CommentService.ts` | 45 | 77.8% |
 | `LocationRelationService.ts` | 79 | 79.7% |
+
+`ChapterService.ts` (109 lines) has since been taken from 56.0% to 96.3% — see §14.
 
 These are the highest-value tests in the repository and the cheapest to write: `test/helpers/testDb.ts`
 already gives a real SQLite database with the production migrations applied. The pattern exists in
@@ -721,8 +729,13 @@ The infrastructure is already in place; new suites should reuse it rather than i
       line ceiling of its own.
 - [x] **Phase 1A.0** — scoped floors wired into `coverage-check.ts`, CI and
       `coverage-update.ts` (the API scopes use the unit/integration LCOV union).
-- [ ] **Phase 1A.1** — every reachable cell of the conflict matrix tested; `keep_local`,
-      `keep_server`, `restore` and `discard` go from **0 test files** to full coverage.
+- [ ] **Phase 1A.1** — every reachable cell of the conflict matrix tested. *Partly done:* all five
+      resolutions now assert the value they record, `SyncConflictService.ts` is at 100% lines /
+      85.6% branches, and the story-level reorder branches (chapters and `StorySchemaField`) are
+      covered. The reason × resolution × operation-type matrix of §5.1 is still open.
+- [x] **Phase 1B (chapters)** — `ChapterService.ts` from 56% to **96.3% lines / 87.5% branches**,
+      including the renumbering invariants named in §5.3. Done ahead of the rest of 1B because the
+      Events feature edits exactly that code — see `docs/events_feature_plan.md` §12.
 - [ ] **Phase 1A.2** — pull, push and scheduler at ≥97% lines / **≥90% branches**.
 - [ ] **Phase 1A.2** — client sync handlers (30 files) at ≥97% lines / **≥90% branches**.
 - [ ] **Phase 1A.2** — API sync handlers + `SyncService` + `BaseSyncEntityHandler` at ≥97% lines /

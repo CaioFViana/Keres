@@ -1,8 +1,9 @@
 import { swagger } from '@elysiajs/swagger';
-import { APP_RELEASE } from '@keres/shared';
+import { APP_RELEASE, SYNC_PROTOCOL_RANGE } from '@keres/shared';
 import { Elysia } from 'elysia';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
+import { packRoutes } from './modules/pack/pack.route';
 import { friendRoutes } from './modules/friend/friend.route';
 import { mediaRoutes } from './modules/media/media.route';
 import { publicRoutes } from './modules/public/public.route';
@@ -89,12 +90,20 @@ export function createApiRoutes() {
       '/kerescheck',
       ({ set }) => {
         set.status = 200;
-        return { version: APP_RELEASE.version };
+        /**
+         * `version` is the release, kept first and unchanged because every existing client reads
+         * it. `syncProtocol` is what compatibility is actually decided on - see
+         * `packages/shared/metadata/SyncProtocol.ts`. The two move independently: most releases
+         * bump the first and leave the second alone.
+         */
+        return { version: APP_RELEASE.version, syncProtocol: SYNC_PROTOCOL_RANGE };
       },
       {
         detail: {
           summary: 'Check API Status',
-          description: 'Returns the current version of the Keres API, useful for health checks.',
+          description:
+            'Returns this server release and the synchronization protocol range it supports. ' +
+            'A client compares its own protocol version against that range before registering.',
           tags: ['Health Check'],
         },
       },
@@ -106,6 +115,7 @@ export function createApiRoutes() {
     .group('/media', (app) => app.use(mediaRoutes))
     .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
     .group('/friend', (app) => app.use(friendRoutes))
+    .group('/packs', (app) => app.use(packRoutes))
     .group('/user', (app) => app.use(userRoutes))
     .group('/ws', (app) => app.use(wsRoutes))
     .group('/public', (app) => app.use(publicRoutes));

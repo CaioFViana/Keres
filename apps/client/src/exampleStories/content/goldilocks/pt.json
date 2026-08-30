@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": 20000,
+    "timelineEpochSeconds": 25200,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -1079,6 +1087,8 @@
       "relationType": "Acordou e a encontrou"
     }
   ],
+  "chapterAnchors": [],
+  "storyCalendars": [],
   "characterScenes": [
     {
       "id": "22YH93Q889FVK580AY1DSH5KP6",
@@ -1345,7 +1355,26 @@
       "sceneId": "01KYXBHD0KQNJ4T7GWC4W6VD18"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "6FT20M6B8WRSW38PDV9XR7N1YC",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "29e3827940eb47e38930e1f007b93bd9",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/The_Story_of_the_Three_Bears",
+      "title": "Fonte pública da história",
+      "isFavorite": false,
+      "extraNotes": "Link para a fonte pública usada como referência editorial do exemplo."
+    }
+  ],
   "items": [
     {
       "id": "01KYXKRGJQC429TKTH2KSHG6ZV",
@@ -2158,7 +2187,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 8,
   "stats": [
     {
       "id": "6ZVGMD560WVB2V67079KD7CFAE",
@@ -3039,5 +3068,20 @@
       "note": "Resolve o fio"
     }
   ],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "0MC0CKFBGDA6G59K0SFYGHSB5N",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "6FT20M6B8WRSW38PDV9XR7N1YC",
+      "ownerId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [],
+  "storyLocationMaps": []
 }

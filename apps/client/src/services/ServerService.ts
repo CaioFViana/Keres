@@ -1,9 +1,11 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import type { ServerInsert, ServerSelect } from '../db/schema';
-import { friendships, servers, stories } from '../db/schema';
+import { friendships, servers, stories, storyPublications } from '../db/schema';
 import { useConnectivityStore } from '../state/connectivityStore';
 import { useNotificationStore } from '../state/notificationStore';
+import { useStoryListStore } from '../state/storyListStore';
+import { useStoryStore } from '../state/storyStore';
 import type { Create } from '../utils/entityUtils';
 import { prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -11,6 +13,8 @@ import { isJwtExpired } from '../utils/jwtUtils'; // Added
 import { normalizeServerUrl } from '../utils/serverUrl';
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
+import { mediaFileService } from './MediaFileService';
+import { deleteStoryChildRows } from './storymanagement/storyLocalPurge';
 
 export interface OwnedServerStory {
   id: string;
@@ -119,12 +123,37 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
     },
 
     async deleteServer(serverId: string): Promise<void> {
-      const ownedStories = await this.getOwnedStories(serverId);
+      const linkedStories = await db
+        .select({
+          id: stories.id,
+          title: stories.title,
+          myRole: stories.myRole,
+          isDeleted: stories.isDeleted,
+        })
+        .from(stories)
+        .where(eq(stories.serverId, serverId))
+        .all();
+      const ownedStories = linkedStories.filter(
+        (story) => story.myRole === 'owner' && !story.isDeleted,
+      );
       if (ownedStories.length > 0) {
         throw new ServerHasOwnedStoriesError(ownedStories);
       }
+      // A server-owned story that is already deleted is only a stale local tombstone. Every other
+      // non-owner row is a reader/writer cache. Neither may remain once its server registration,
+      // credentials and sync route are gone.
+      const storyIdsToPurge = linkedStories
+        .filter((story) => story.myRole !== 'owner' || story.isDeleted)
+        .map((story) => story.id);
 
       await db.transaction(async (tx) => {
+        for (const storyId of storyIdsToPurge) {
+          await deleteStoryChildRows(tx, storyId);
+          await tx.delete(stories).where(eq(stories.id, storyId)).run();
+        }
+        // Publications are server cache too. They do not go through operation logs and must not
+        // make a removed server appear to still own data in a later session.
+        await tx.delete(storyPublications).where(eq(storyPublications.serverId, serverId)).run();
         // Friendships are a local cache of server state. Leaving the server must remove
         // only this local copy; logging in again will repopulate it from the unchanged API.
         await tx.delete(friendships).where(eq(friendships.serverId, serverId)).run();
@@ -135,6 +164,14 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
           .run();
       });
 
+      for (const storyId of storyIdsToPurge) {
+        mediaFileService.deleteStoryMedia(storyId);
+        useStoryListStore.getState().removeStory(storyId);
+      }
+      const selectedStory = useStoryStore.getState().selectedStory;
+      if (selectedStory && storyIdsToPurge.includes(selectedStory.id)) {
+        useStoryStore.getState().setSelectedStory(null);
+      }
       await authTokenManager.clearAuthForServer(serverId);
       entityEventEmitter.emit('friendship_changed');
       entityEventEmitter.emit('server_connection_changed');

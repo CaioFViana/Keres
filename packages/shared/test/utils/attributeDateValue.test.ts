@@ -4,8 +4,12 @@ import {
   attributeDateWeekdayLabels,
   daysInMonth,
   formatAttributeDate,
+  formatGregorianDate,
   formatAttributeDateForDisplay,
   formatAttributeDateMonthLabel,
+  gregorianDayNumber,
+  gregorianDayNumberForElapsed,
+  gregorianPartsFromDayNumber,
   isValidAttributeDate,
   fromClockHour,
   parseAttributeDate,
@@ -74,6 +78,48 @@ describe('parseAttributeDate', () => {
   });
 });
 
+describe('Gregorian story-epoch coordinates', () => {
+  it('round-trips leap days without a timezone or Unix-time dependency', () => {
+    const day = gregorianDayNumber({ year: 2024, month: 2, day: 29 });
+
+    expect(gregorianPartsFromDayNumber(day)).toEqual({ year: 2024, month: 2, day: 29 });
+    expect(gregorianPartsFromDayNumber(day + 1)).toEqual({ year: 2024, month: 3, day: 1 });
+  });
+
+  it('moves a scene into the next civil day when the story opens at night', () => {
+    const epochDay = gregorianDayNumber({ year: 2024, month: 1, day: 1 });
+
+    expect(gregorianDayNumberForElapsed(epochDay, 7_200, 82_800)).toBe(epochDay + 1);
+  });
+
+  it('can display a timeline date beyond the date picker input range', () => {
+    const dayAfterPickerRange = gregorianDayNumber({ year: 9999, month: 12, day: 31 }) + 1;
+
+    expect(gregorianPartsFromDayNumber(dayAfterPickerRange)).toEqual({
+      year: 10000,
+      month: 1,
+      day: 1,
+    });
+  });
+
+  it('round-trips astronomical years before the common era', () => {
+    const day = gregorianDayNumber({ year: 0, month: 2, day: 29 });
+
+    expect(gregorianPartsFromDayNumber(day)).toEqual({ year: 0, month: 2, day: 29 });
+    expect(gregorianPartsFromDayNumber(day - 1)).toEqual({ year: 0, month: 2, day: 28 });
+  });
+
+  it('formats Gregorian dates in each user-selectable presentation', () => {
+    const commonEra = { year: 42, month: 3, day: 5 };
+    const beforeCommonEra = { year: 0, month: 3, day: 5 };
+
+    expect(formatGregorianDate(commonEra, 'iso')).toBe('0042-03-05');
+    expect(formatGregorianDate(commonEra, 'dmy')).toBe('05/03/0042');
+    expect(formatGregorianDate(commonEra, 'mdy')).toBe('03/05/0042');
+    expect(formatGregorianDate(beforeCommonEra, 'dmy')).toBe('05/03/0001 BCE');
+  });
+});
+
 describe('formatAttributeDate', () => {
   it('round-trips every canonical shape', () => {
     for (const raw of ['2024-01-15', '2024-01-15T10:30', '0015-06-10', '9999-12-31T23:59']) {
@@ -85,6 +131,12 @@ describe('formatAttributeDate', () => {
     expect(formatAttributeDate({ year: 7, month: 2, day: 3, hour: 4, minute: 5 })).toBe(
       '0007-02-03T04:05',
     );
+  });
+});
+
+describe('Gregorian month labels', () => {
+  it('keeps the historical era visible in an agenda header', () => {
+    expect(formatAttributeDateMonthLabel(0, 1, 'en-US')).toContain('BCE');
   });
 });
 

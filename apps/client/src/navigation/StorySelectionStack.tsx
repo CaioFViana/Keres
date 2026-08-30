@@ -11,6 +11,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -25,6 +26,10 @@ import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
+import PackBrowseScreen from '../screens/packs/PackBrowseScreen';
+import PackFormScreen from '../screens/packs/PackFormScreen';
+import PackListScreen from '../screens/packs/PackListScreen';
+import ShippedPacksScreen from '../screens/packs/ShippedPacksScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
@@ -39,6 +44,7 @@ import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
+import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -58,6 +64,22 @@ export type FriendshipStackParamList = {
   FriendDetail: { friendshipId: string };
 };
 
+/**
+ * The packs stack.
+ *
+ * A stack rather than four flat drawer entries, for the same reason servers and friendships are
+ * one: the form and the two catalogues are reached *from* the list and belong behind it. Registered
+ * flat they had no back arrow - the drawer only draws one for a nested destination - and `goBack`
+ * walked the drawer's own history, landing wherever the user happened to be before rather than on
+ * the list.
+ */
+export type PacksStackParamList = {
+  PackList: undefined;
+  PackForm: { packId?: string } | undefined;
+  PackBrowse: undefined;
+  ShippedPacks: undefined;
+};
+
 export type StorySelectionDrawerParamList = {
   StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
@@ -65,6 +87,7 @@ export type StorySelectionDrawerParamList = {
   ImportExport: undefined;
   PublishStory: undefined;
   ExampleStories: undefined;
+  PacksDrawer: NavigatorScreenParams<PacksStackParamList>;
   Settings: undefined;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
@@ -74,11 +97,13 @@ const Drawer = createDrawerNavigator<StorySelectionDrawerParamList>();
 const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainStackParamList>();
 const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
 const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
+const PacksStack = createNativeStackNavigator<PacksStackParamList>();
 
 const storySelectionStackRootScreens = new Set([
   'StorySelectionScreen',
   'ServerManagement',
   'FriendshipList',
+  'PackList',
   // The same reason as the story's drawer: the root of a stack opened from the menu shows no arrow.
   'HelpIndex',
   'DeviceIndex',
@@ -90,17 +115,7 @@ const DrawerToggleButton = ({
   navigation,
 }: {
   navigation: StorySelectionMainDrawerNavigationProp;
-}) => {
-  const { colors } = useTheme();
-  return (
-    <TouchableOpacity
-      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-      style={{ marginLeft: 15 }}
-    >
-      <Ionicons name="menu" size={30} color={colors.text} />
-    </TouchableOpacity>
-  );
-};
+}) => <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />;
 
 const StorySelectionMainStackNavigator = () => {
   const { t } = useTranslation();
@@ -186,6 +201,41 @@ const FriendshipStackNavigator = () => {
   );
 };
 
+const PacksStackNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <PacksStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
+      <PacksStack.Screen
+        name="PackList"
+        component={PackListScreen}
+        options={{ headerTitle: t('packs_title') }}
+      />
+      <PacksStack.Screen
+        name="PackForm"
+        component={PackFormScreen}
+        options={({ route }) => ({
+          headerTitle: route.params?.packId ? t('packs_reextract') : t('packs_create'),
+        })}
+      />
+      <PacksStack.Screen
+        name="PackBrowse"
+        component={PackBrowseScreen}
+        options={{ headerTitle: t('packs_browse_title') }}
+      />
+      <PacksStack.Screen
+        name="ShippedPacks"
+        component={ShippedPacksScreen}
+        options={{ headerTitle: t('shipped_packs_title') }}
+      />
+    </PacksStack.Navigator>
+  );
+};
+
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -196,6 +246,10 @@ const StorySelectionNavigator = () => {
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
+  const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
+    function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
+      return <Ionicons name={name} color={color} size={size} />;
+    };
 
   return (
     <Drawer.Navigator
@@ -264,9 +318,8 @@ const StorySelectionNavigator = () => {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     {showNestedBackButton ? (
                       <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
-                    ) : !isWide ? (
-                      <DrawerToggleButton navigation={navigation} />
                     ) : null}
+                    {!isWide ? <DrawerToggleButton navigation={navigation} /> : null}
                     {showContextualHelp && helpPageId ? (
                       <TouchableOpacity
                         onPress={() =>
@@ -289,6 +342,8 @@ const StorySelectionNavigator = () => {
           drawerInactiveTintColor: colors.text,
           drawerType: isWide ? 'permanent' : 'front',
           swipeEnabled: !isWide,
+          swipeEdgeWidth: isWide ? 0 : DRAWER_SWIPE_EDGE_WIDTH,
+          swipeMinDistance: DRAWER_SWIPE_MIN_DISTANCE,
           drawerStyle: {
             backgroundColor: colors.surface,
             minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
@@ -303,6 +358,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('story_selection_title'),
           drawerLabel: t('story_selection_title'),
+          drawerIcon: drawerIcon('book-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -317,6 +373,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('manage_servers'),
           drawerLabel: t('manage_servers'),
+          drawerIcon: drawerIcon('server-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -331,6 +388,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('manage_friendships'),
           drawerLabel: t('manage_friendships'),
+          drawerIcon: drawerIcon('people-outline'),
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
@@ -350,6 +408,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('import_export_title'),
           drawerLabel: t('import_export_title'),
+          drawerIcon: drawerIcon('swap-horizontal-outline'),
         }}
       />
       {/*
@@ -364,6 +423,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('publish_story_title'),
           drawerLabel: t('publish_story_title'),
+          drawerIcon: drawerIcon('cloud-upload-outline'),
           drawerItemStyle: {
             height: hasServers ? undefined : 0,
             overflow: 'hidden',
@@ -374,12 +434,34 @@ const StorySelectionNavigator = () => {
         Mesmo raciocínio do Import/Export logo acima: instalar um exemplo cria uma história
         nova, então não depende de (nem pertence ao menu de) uma história já aberta.
       */}
+      {/*
+        Same reasoning as Import/Export and the examples above: a pack is made from a story and
+        applied when a new one is created, so it belongs to the app's menu rather than to any single
+        story's.
+      */}
+      <Drawer.Screen
+        name="PacksDrawer"
+        component={PacksStackNavigator}
+        options={{
+          title: t('packs_title'),
+          drawerLabel: t('packs_title'),
+          drawerIcon: drawerIcon('archive-outline'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            // The menu entry means the list, not wherever the stack was last left.
+            e.preventDefault();
+            navigation.navigate('PacksDrawer', { screen: 'PackList' });
+          },
+        })}
+      />
       <Drawer.Screen
         name="ExampleStories"
         component={ExampleStoriesScreen}
         options={{
           title: t('examples_title'),
           drawerLabel: t('examples_title'),
+          drawerIcon: drawerIcon('flask-outline'),
         }}
       />
       <Drawer.Screen
@@ -388,6 +470,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('story_devices_title'),
           drawerLabel: t('story_devices_title'),
+          drawerIcon: drawerIcon('bulb-outline'),
           // The screen stays registered when the setting is off so a direct navigation
           // or a help link does not break; only the menu item disappears.
           drawerItemStyle: {
@@ -405,7 +488,11 @@ const StorySelectionNavigator = () => {
       <Drawer.Screen
         name="HelpDrawer"
         component={HelpStackNavigator}
-        options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+        options={{
+          title: t('help_title'),
+          drawerLabel: t('help_title'),
+          drawerIcon: drawerIcon('help-circle-outline'),
+        }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
             e.preventDefault();
@@ -419,6 +506,7 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('settings_title'),
           drawerLabel: t('settings_title'),
+          drawerIcon: drawerIcon('settings-outline'),
         }}
       />
     </Drawer.Navigator>

@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": 18,
+    "timelineEpochSeconds": 72000,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -868,7 +876,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Growth"
     },
     {
@@ -879,7 +887,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Duty"
     },
     {
@@ -890,7 +898,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Discovery"
     },
     {
@@ -901,7 +909,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
+      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
       "value": "Reconciliation"
     },
     {
@@ -912,7 +920,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Promise"
     },
     {
@@ -923,7 +931,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Threshold"
     },
     {
@@ -934,7 +942,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Transformation"
     },
     {
@@ -945,7 +953,7 @@
       "version": 1,
       "isDeleted": false,
       "deletedAt": null,
-      "type": "custom:57RFNCNR9NQAKB9MZ3JKMHRQG3",
+      "type": "custom:2RRGMVMF7KFKS51AJQ7V9YVRS0",
       "value": "Return"
     },
     {
@@ -1089,6 +1097,112 @@
       "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
       "relationType": "In love"
+    }
+  ],
+  "chapterAnchors": [
+    {
+      "id": "51F33JM6WE13M3TMKAQFBXN89T",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "chapterId": "06D75D8WYKM42APDSDZ80TTE47",
+      "order": 1,
+      "startSceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "startPosition": "start",
+      "startOffset": null,
+      "startOffsetUnit": null,
+      "endSceneId": "0JTCMRWH0QHMEVBVVPAEBXXV0B",
+      "endPosition": "end",
+      "endOffset": null,
+      "endOffsetUnit": null
+    },
+    {
+      "id": "46T9D6YBDFGRZHKVM2MF2AVWV0",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "chapterId": "4TAEB6B6YJWZR96RTDS031AN0R",
+      "order": 1,
+      "startSceneId": "4NWHXAHMB4APXXVE8158T0ZM0V",
+      "startPosition": "start",
+      "startOffset": 1,
+      "startOffsetUnit": "days",
+      "endSceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR",
+      "endPosition": "end",
+      "endOffset": null,
+      "endOffsetUnit": null
+    }
+  ],
+  "storyCalendars": [
+    {
+      "id": "0VV00GR4ANZTDJTFDBJFZJ4QFF",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "name": "Ball Calendar",
+      "isPrimary": true,
+      "description": "The calendar that measures the approach of midnight.",
+      "extraNotes": null,
+      "definition": {
+        "secondsPerMinute": 60,
+        "minutesPerHour": 60,
+        "hoursPerDay": 24,
+        "daysPerWeek": 6,
+        "weekdayNames": ["Moon", "Venus", "Mars", "Mercury", "Jupiter", "Saturn"],
+        "unitNames": {},
+        "months": [
+          {
+            "name": "Ashes",
+            "days": 30
+          },
+          {
+            "name": "Pumpkins",
+            "days": 30
+          },
+          {
+            "name": "Ball",
+            "days": 30
+          },
+          {
+            "name": "Glass",
+            "days": 30
+          }
+        ],
+        "eras": [
+          {
+            "name": "Kingdom Era",
+            "abbreviation": "KE",
+            "startYear": 1,
+            "direction": "forward"
+          }
+        ],
+        "moons": [
+          {
+            "name": "Godmother Moon",
+            "periodDays": 29.5,
+            "referenceDay": 1
+          }
+        ],
+        "seasons": [
+          {
+            "name": "Preparation",
+            "startDayOfYear": 1
+          },
+          {
+            "name": "Celebration",
+            "startDayOfYear": 61
+          }
+        ]
+      }
     }
   ],
   "characterScenes": [
@@ -1467,7 +1581,26 @@
       "sceneId": "1VQNRTTEPVZAFA3R1EHCXKSMGR"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "4CWCX1GDSXKKGP8PJ2KWE9EA1W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "6cb20d20beca510b23faca8d8d50ec93",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/Cinderella",
+      "title": "Public story source",
+      "isFavorite": false,
+      "extraNotes": "A link to the public source used as editorial reference for this example."
+    }
+  ],
   "items": [
     {
       "id": "01KYXKHJQYQDRD87YKKB9WJXDY",
@@ -1747,10 +1880,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Character",
-      "name": "Arc",
-      "key": "arc",
-      "description": "Controlled arc value",
-      "type": "suggestion",
+      "name": "Date of destiny",
+      "key": "date_of_destiny",
+      "description": "A date recorded in the story’s own calendar.",
+      "type": "story_date",
       "targetEntityType": null,
       "isRequired": false,
       "defaultValue": null,
@@ -1765,10 +1898,10 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Character",
-      "name": "Motifs",
-      "key": "motifs",
-      "description": "Several controlled motifs",
-      "type": "suggestion_list",
+      "name": "Arc",
+      "key": "arc",
+      "description": "Controlled arc value",
+      "type": "suggestion",
       "targetEntityType": null,
       "isRequired": false,
       "defaultValue": null,
@@ -1783,6 +1916,24 @@
       "isDeleted": false,
       "deletedAt": null,
       "entityType": "Character",
+      "name": "Motifs",
+      "key": "motifs",
+      "description": "Several controlled motifs",
+      "type": "suggestion_list",
+      "targetEntityType": null,
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 7
+    },
+    {
+      "id": "6WVTHNM69NXM0VZFJ8JZMGZ6R1",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "entityType": "Character",
       "name": "Reference place",
       "key": "reference_place",
       "description": "Related location",
@@ -1790,7 +1941,7 @@
       "targetEntityType": "Location",
       "isRequired": false,
       "defaultValue": null,
-      "order": 7
+      "order": 8
     }
   ],
   "attributeValues": [
@@ -1935,7 +2086,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": "7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
-      "value": "Growth"
+      "value": "18"
     },
     {
       "id": "2XP4K527WPGMGTXTHXN74PA6K5",
@@ -1948,7 +2099,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
       "fieldId": "7CK9Y2VVNZ8GVV2HZ7AN1J2QKZ",
-      "value": "Duty"
+      "value": "79"
     },
     {
       "id": "70VP8YDSYZZF7BNPA8EKYB5XWJ",
@@ -1961,7 +2112,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": "57RFNCNR9NQAKB9MZ3JKMHRQG3",
-      "value": "[\"Promise\",\"Transformation\"]"
+      "value": "Growth"
     },
     {
       "id": "3CBDFDF8CCHZAH5NTBGRV5VN2B",
@@ -1974,7 +2125,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
       "fieldId": "57RFNCNR9NQAKB9MZ3JKMHRQG3",
-      "value": "[\"Threshold\",\"Return\"]"
+      "value": "Duty"
     },
     {
       "id": "1J50ED8EN355BP6GERHW2EZ4C3",
@@ -1987,7 +2138,7 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
       "fieldId": "2RRGMVMF7KFKS51AJQ7V9YVRS0",
-      "value": "01KYXBHD0JDW8Z6SWRWC3D7Y3C"
+      "value": "[\"Promise\",\"Transformation\"]"
     },
     {
       "id": "5MAAGV07DPHSKNXVV414CKDAR0",
@@ -2000,6 +2151,32 @@
       "entityType": "Character",
       "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
       "fieldId": "2RRGMVMF7KFKS51AJQ7V9YVRS0",
+      "value": "[\"Threshold\",\"Return\"]"
+    },
+    {
+      "id": "2R0CBF7NVB1RZ9ZYT2CKSQ4VVY",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "entityType": "Character",
+      "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "fieldId": "6WVTHNM69NXM0VZFJ8JZMGZ6R1",
+      "value": "01KYXBHD0JDW8Z6SWRWC3D7Y3C"
+    },
+    {
+      "id": "38BA2P98JQVH1K7QBDQ6J5VP6A",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "entityType": "Character",
+      "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "fieldId": "6WVTHNM69NXM0VZFJ8JZMGZ6R1",
       "value": "01KYXBHD0J0KFKQ2J5PYWHQ58Z"
     }
   ],
@@ -2280,7 +2457,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 8,
   "stats": [
     {
       "id": "3RKMCE7M176WMZ9M36KZVYZA2D",
@@ -3161,5 +3338,20 @@
       "note": "Resolves it"
     }
   ],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "35BDSEDDF8RPBC3K9V0W8FFQSJ",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "4CWCX1GDSXKKGP8PJ2KWE9EA1W",
+      "ownerId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [],
+  "storyLocationMaps": []
 }

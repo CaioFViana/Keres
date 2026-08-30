@@ -9,6 +9,7 @@ import SuggestionListInput from '@/src/components/common/inputs/SuggestionListIn
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
+import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 
 interface AttributeValueInputProps {
@@ -87,6 +88,9 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           style={style}
         />
       );
+
+    case AttributeType.STORY_DATE:
+      return <StoryDateInput value={value || null} onChange={onChange} />;
 
     case AttributeType.SUGGESTION:
       if (storyId && suggestionFieldId) {

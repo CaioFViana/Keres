@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import {
@@ -14,6 +15,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
@@ -102,8 +104,9 @@ const FriendDetailScreen = () => {
     }
   }, [friendshipService, serverService, friendshipId, navigation, showNotification, t]);
 
+  useEntityInitialLoad(load);
+
   useEffect(() => {
-    load();
     const unsubscribeFocus = navigation.addListener('focus', load);
     entityEventEmitter.on('friendship_changed', load);
     return () => {
@@ -236,7 +239,7 @@ const FriendDetailScreen = () => {
 
       <View style={styles.actionsContainer}>
         {isPendingReceived && (
-          <>
+          <FormActions stackOnCompact>
             <Button
               onPress={() => handleAccept(friendship.id, friendship.serverId)}
               style={styles.actionButton}
@@ -255,7 +258,7 @@ const FriendDetailScreen = () => {
             >
               {t('blacklist_confirmation_title')}
             </Button>
-          </>
+          </FormActions>
         )}
 
         {isPendingSent && (
@@ -268,7 +271,7 @@ const FriendDetailScreen = () => {
         )}
 
         {isFriend && (
-          <>
+          <FormActions stackOnCompact>
             <Button
               onPress={() => handleUnfriend(friendship.id, friendship.serverId)}
               style={[styles.actionButton, styles.destructiveButton]}
@@ -281,7 +284,7 @@ const FriendDetailScreen = () => {
             >
               {t('blacklist_confirmation_title')}
             </Button>
-          </>
+          </FormActions>
         )}
 
         {isBlacklisted && isBlockedByMe && (

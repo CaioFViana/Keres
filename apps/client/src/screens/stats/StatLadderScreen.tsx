@@ -12,7 +12,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
+import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { createStatStrengthService } from '../../services/storymanagement/StatStrengthService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -23,7 +23,10 @@ import { useDocumentTitle } from '../../utils/documentTitle';
 import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
 
-type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;
+type StatLadderNavigationProp = NativeStackNavigationProp<
+  CustomizationStackParamList,
+  'StatLadder'
+>;
 
 interface DraftTier {
   /** A draft-only key; already-saved tiers also carry the database id. */
@@ -49,7 +52,7 @@ const StatLadderScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatLadderNavigationProp>();
-  const route = useRoute<RouteProp<StatsStackParamList, 'StatLadder'>>();
+  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatLadder'>>();
   const statId = route.params?.statId ?? null;
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
@@ -77,7 +80,7 @@ const StatLadderScreen = () => {
   useDocumentTitle(title);
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ title });
+      navigation.getParent()?.setOptions({ title, headerRight: undefined });
     }, [navigation, title]),
   );
 

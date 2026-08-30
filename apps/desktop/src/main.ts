@@ -593,6 +593,17 @@ export function registerMediaIpcHandlers() {
     }
     return results;
   });
+
+  // Hands the file to the OS (the PDF reader, Word, the browser) instead of opening it inside
+  // this window. `openPath` is the local-file counterpart of `openExternal`; `file:` URLs are
+  // refused by the outbound-link guard on purpose.
+  ipcMain.handle('media:open', async (_event, relativePath: string) => {
+    const filePath = resolveMediaPath(relativePath);
+    const error = await shell.openPath(filePath);
+    if (error) {
+      throw new Error(error);
+    }
+  });
 }
 
 app.whenReady().then(async () => {

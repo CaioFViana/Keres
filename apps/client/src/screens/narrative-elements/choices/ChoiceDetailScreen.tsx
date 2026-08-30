@@ -21,6 +21,7 @@ import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 're
 import { useDrizzle } from '../../../db';
 import type { ChoiceSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
@@ -226,14 +227,15 @@ const ChoiceDetailScreen = () => {
     }
   }, [choice?.storyId]);
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchChoice);
+
+  // The choice is loaded above; this effect owns only event subscriptions.
   useEffect(() => {
-    fetchChoice();
     entityEventEmitter.on('choice_changed', handleChoiceChange);
     return () => {
       entityEventEmitter.off('choice_changed', handleChoiceChange);
     };
-  }, [choiceId, fetchChoice, handleChoiceChange]);
+  }, [handleChoiceChange]);
 
   useEffect(() => {
     if (choice && isBranching) {

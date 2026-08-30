@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'No capítulo “A viagem”, a cena “Partida da estação” acontece no local Estação Central, reúne Lia e Omar e usa a chave como item importante. Cada informação pode ser aberta e revista sem duplicar a descrição.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Capítulos ou Cenas'] },
+    { type: 'path', segments: ['Menu da história', 'Elementos narrativos'] },
     {
       type: 'steps',
       items: [

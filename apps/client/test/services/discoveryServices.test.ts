@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { AttributeType } from '@keres/shared';
 import { createGlobalSearchService } from '../../src/services/storymanagement/GlobalSearchService';
@@ -96,6 +97,13 @@ describe('discovery services', () => {
       name: 'Personagem isolado',
       ...entityBase,
     });
+    // "Not referenced anywhere" is an opinion, so it is behind the story's own switch. Turning it on
+    // here is also what proves the column reaches the checks - the flag travels from this row into
+    // `StoryAnalysisInput`, not from a default in the code.
+    await database.db
+      .update(schema.stories)
+      .set({ completenessChecks: true })
+      .where(eq(schema.stories.id, TEST_STORY_ID));
 
     const report = await createStoryAnalysisService(database.db).analyzeStoryFull(TEST_STORY_ID);
     expect(report.generatedAt).toBeInstanceOf(Date);

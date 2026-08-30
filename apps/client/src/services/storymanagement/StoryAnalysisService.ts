@@ -60,6 +60,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       tags,
       tagRelations,
       chapters,
+      chapterAnchors,
       notes,
       worldRules,
       storySchemaFields,
@@ -163,14 +164,36 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         .select({ tagId: schema.tagRelations.tagId })
         .from(schema.tagRelations)
         .where(belongsToStory(schema.tagRelations)),
+      /**
+       * Both kinds, each carrying its own.
+       *
+       * The partition belongs in the check rather than here: the chapter numbering is the spine's
+       * alone, but scenes are numbered inside every container - an event's scenes are as ordered as
+       * a chapter's, and dropping events here would stop checking them at all. See
+       * `docs/events_feature_plan.md` section 7.1.
+       */
       db
         .select({
           id: schema.chapters.id,
           name: schema.chapters.name,
           index: schema.chapters.index,
+          type: schema.chapters.type,
         })
         .from(schema.chapters)
         .where(belongsToStory(schema.chapters)),
+      db
+        .select({
+          chapterId: schema.chapterAnchors.chapterId,
+          order: schema.chapterAnchors.order,
+          startSceneId: schema.chapterAnchors.startSceneId,
+          startPosition: schema.chapterAnchors.startPosition,
+          endSceneId: schema.chapterAnchors.endSceneId,
+          endPosition: schema.chapterAnchors.endPosition,
+        })
+        .from(schema.chapterAnchors)
+        .where(
+          and(belongsToStory(schema.chapterAnchors), eq(schema.chapterAnchors.isDeleted, false)),
+        ),
       db
         .select({ id: schema.notes.id, name: schema.notes.title })
         .from(schema.notes)
@@ -206,6 +229,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
 
     return {
       storyType: story.type,
+      includeCompletenessChecks: story.completenessChecks,
       characters,
       characterScenes,
       characterRelations,
@@ -221,6 +245,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       tags,
       tagRelations,
       chapters,
+      chapterAnchors,
       notes,
       worldRules,
       storySchemaFields,

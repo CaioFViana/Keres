@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +21,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type {
   MainSystemDrawerParamList,
-  SuggestionsStackParamList,
+  CustomizationStackParamList,
 } from '../../navigation/MainSystemStack';
 import type { SuggestionUsage } from '../../services/storymanagement/SuggestionService';
 import {
@@ -59,7 +60,7 @@ const SuggestionUsageScreen = () => {
   const navigation = useNavigation<any>();
   useBackButtonHandler({ showWebBackButton: true, onBack: () => navigation.goBack() });
   const route = useRoute<any>();
-  const { type, value } = route.params as SuggestionsStackParamList['SuggestionUsage'];
+  const { type, value } = route.params as CustomizationStackParamList['SuggestionUsage'];
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const { userId } = useUserSettingsStore();
   const { canEdit } = useStoryRole(storyId);
@@ -188,7 +189,7 @@ const SuggestionUsageScreen = () => {
     if (usage.entityType === 'CharacterRelation') return;
     navigateToEntityDetail(drawerNavigation, usage.entityType as GlobalSearchEntityType, usage.id, {
       onReturn: () =>
-        drawerNavigation.navigate('SuggestionsStack', {
+        drawerNavigation.navigate('CustomizationStack', {
           screen: 'SuggestionUsage',
           params: { type, value },
         }),
@@ -241,7 +242,7 @@ const SuggestionUsageScreen = () => {
                               onReturn: () =>
                                 (
                                   navigation.getParent() as DrawerNavigationProp<MainSystemDrawerParamList>
-                                ).navigate('SuggestionsStack', {
+                                ).navigate('CustomizationStack', {
                                   screen: 'SuggestionUsage',
                                   params: { type, value },
                                 }),
@@ -303,7 +304,7 @@ const SuggestionUsageScreen = () => {
               : t('suggestion_rename_usages_warning')}
           </Text>
         )}
-        <View style={stylesForScreen.modalActions}>
+        <FormActions>
           <Button onPress={() => setRenaming(false)}>{t('cancel')}</Button>
           <Button
             onPress={saveRename}
@@ -311,7 +312,7 @@ const SuggestionUsageScreen = () => {
           >
             {t('save')}
           </Button>
-        </View>
+        </FormActions>
       </ResponsiveModal>
     </View>
   );

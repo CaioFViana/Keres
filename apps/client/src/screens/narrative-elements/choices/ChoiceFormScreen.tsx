@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/inputs/Select/Select';
@@ -975,14 +976,14 @@ const ChoiceFormScreen = () => {
         </View>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton}>
-        {t('save_choice')}
-      </Button>
-      {isEditing && (
-        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-          {t('delete_choice_title')}
-        </Button>
-      )}
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave}>{t('save_choice')}</Button>
+        {isEditing && (
+          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
+            {t('delete_choice_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

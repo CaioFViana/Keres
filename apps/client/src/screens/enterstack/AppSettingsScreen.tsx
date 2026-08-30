@@ -11,6 +11,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
+import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
 import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
@@ -44,11 +45,13 @@ const SettingsScreen = () => {
     username,
     language,
     use24HourTime,
+    dateDisplayFormat,
     showContextualHelp,
     suggestLiteraryDevices,
     setUsername,
     setLanguage,
     setUse24HourTime,
+    setDateDisplayFormat,
     setShowContextualHelp,
     setSuggestLiteraryDevices,
     resetSettings,
@@ -72,6 +75,12 @@ const SettingsScreen = () => {
 
   const handleTimeFormatToggle = (value: boolean) => {
     setUse24HourTime(drizzleClient, value);
+  };
+
+  const handleDateDisplayFormatChange = (value: string | null) => {
+    if (value === 'iso' || value === 'dmy' || value === 'mdy') {
+      setDateDisplayFormat(drizzleClient, value as GregorianDateDisplayFormat);
+    }
   };
 
   const handleContextualHelpToggle = (value: boolean) => {
@@ -191,6 +200,29 @@ const SettingsScreen = () => {
         <View style={styles.settingItem}>
           <View style={styles.settingTextWrap}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('date_display_format')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {t('date_display_format_hint')}
+            </Text>
+          </View>
+          <View style={styles.dateFormatSelectWrapper}>
+            <Select
+              options={[
+                { label: t('date_display_format_iso'), value: 'iso' },
+                { label: t('date_display_format_dmy'), value: 'dmy' },
+                { label: t('date_display_format_mdy'), value: 'mdy' },
+              ]}
+              value={dateDisplayFormat}
+              onValueChange={handleDateDisplayFormatChange}
+              placeholder={t('date_display_format')}
+            />
+          </View>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
               {t('suggest_literary_devices')}
             </Text>
             <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
@@ -290,6 +322,11 @@ const styles = StyleSheet.create({
     width: 150, // Fixed width for the select component
     marginLeft: 10, // Add margin to separate from label
     height: 50, // Explicitly set height to match TextInput
+  },
+  dateFormatSelectWrapper: {
+    width: 250,
+    marginLeft: 10,
+    height: 50,
   },
   branding: {
     alignItems: 'center',

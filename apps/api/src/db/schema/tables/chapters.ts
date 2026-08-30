@@ -1,4 +1,5 @@
 import { relations } from 'drizzle-orm';
+import type { ChapterType } from '@keres/shared';
 import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 import { scenes } from './scenes';
@@ -10,6 +11,12 @@ export const chapters = table('chapters', {
     .references(() => stories.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
+  /**
+   * Chapter or event. The reorder handler filters on this: each kind owns an independent 1..N
+   * index space inside this table, because a chapter's index is narrative order and an event's is
+   * not. Defaulted so existing rows need no data step.
+   */
+  type: text('type').$type<ChapterType>().notNull().default('chapter'),
   summary: text('summary'),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),

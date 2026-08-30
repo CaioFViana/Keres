@@ -11,6 +11,7 @@ import {
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../../db';
 import type { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -25,6 +26,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
+import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
@@ -40,6 +42,9 @@ import type { CharactersScreenNavigationProp } from '../../navigation/navigation
 
 /** Above that the relation type on each edge pollutes more than it informs; the person can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
+
+/** Cap on the focus filter - the same ceiling as the presence matrix series. */
+const MAX_SELECTED_CHARACTERS = 12;
 
 interface CharacterRelationNodeConnection {
   relationId: string;
@@ -67,6 +72,8 @@ const CharacterRelationGraphScreen = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
   const [exporting, setExporting] = useState(false);
+  /** Empty means the whole map; the focus filter only narrows it. */
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const storyId = selectedStory?.id;
 
@@ -115,14 +122,19 @@ const CharacterRelationGraphScreen = () => {
     }, [navigation, t]),
   );
 
+  const filtered = useMemo(
+    () => filterCharacterRelationGraph(characters, relations, selectedIds),
+    [characters, relations, selectedIds],
+  );
+
   const layout = useMemo(
     () =>
       buildCharacterRelationGraphLayout(
-        characters,
-        relations,
+        filtered.characters,
+        filtered.relations,
         isCompact ? 'top-to-bottom' : 'left-to-right',
       ),
-    [characters, relations, isCompact],
+    [filtered, isCompact],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
@@ -183,6 +195,7 @@ const CharacterRelationGraphScreen = () => {
         title: selectedStory.title,
         subtitle: mapSubtitle,
         showEdgeLabels,
+        highlightedNodeIds: selectedIds,
         labels: {
           isolated: t('character_relation_map_badge_isolated'),
         },
@@ -193,6 +206,7 @@ const CharacterRelationGraphScreen = () => {
           textSecondary: colors.textSecondary,
           border: colors.border,
           primaryContainer: colors.primaryContainer,
+          primary: colors.primary,
         },
       });
 
@@ -221,7 +235,16 @@ const CharacterRelationGraphScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
+  }, [
+    colors,
+    layout,
+    mapSubtitle,
+    selectedIds,
+    selectedStory,
+    showEdgeLabels,
+    showNotification,
+    t,
+  ]);
 
   const styles = useMemo(
     () =>
@@ -246,6 +269,20 @@ const CharacterRelationGraphScreen = () => {
           paddingHorizontal: 12,
           marginTop: 1,
         },
+        filterActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 12,
+          paddingBottom: 8,
+        },
+        filterHint: {
+          color: colors.textSecondary,
+          fontSize: 12,
+          flex: 1,
+        },
+        filterAction: { paddingVertical: 5 },
+        filterActionText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
         controls: {
           position: 'absolute',
           right: 14,
@@ -299,11 +336,33 @@ const CharacterRelationGraphScreen = () => {
         </Text>
       </View>
 
+      <MultiSelectPill
+        options={characters.map((character) => ({
+          label: character.name,
+          value: character.id,
+        }))}
+        selectedValues={selectedIds}
+        onSelectionChange={(next) => setSelectedIds(next.slice(0, MAX_SELECTED_CHARACTERS))}
+        maxSelections={MAX_SELECTED_CHARACTERS}
+        placeholder={t('characters_title')}
+        searchPlaceholder={t('search')}
+        triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
+      />
+      {selectedIds.length > 0 && (
+        <View style={styles.filterActions}>
+          <Text style={styles.filterHint}>{t('character_relation_map_filter_hint')}</Text>
+          <TouchableOpacity style={styles.filterAction} onPress={() => setSelectedIds([])}>
+            <Text style={styles.filterActionText}>{t('character_relation_map_clear_filter')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <CharacterRelationGraphCanvas
         ref={canvasRef}
         layout={layout}
         showEdgeLabels={showEdgeLabels}
         selectedNodeId={selectedNodeId}
+        highlightedNodeIds={selectedIds}
         onSelectNode={handleSelectNode}
       />
 

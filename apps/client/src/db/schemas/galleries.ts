@@ -13,12 +13,14 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 export const galleries = sqliteTable('galleries', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  mediaType: text('media_type').notNull(), // 'image' | 'video' | 'audio'
+  mediaType: text('media_type').notNull(), // 'image' | 'video' | 'audio' | 'document' | 'link'
   mimeType: text('mime_type').notNull(),
   fileName: text('file_name').notNull(),
   /** The content's checksum; it is by this that the file is located here and on the server. */
   hash: text('hash').notNull(),
   sizeBytes: integer('size_bytes').notNull().default(0),
+  /** External URL for `mediaType: 'link'`. Never fetched by Keres. */
+  sourceUrl: text('source_url'),
   title: text('title'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),

@@ -21,7 +21,7 @@ const page: HelpPage = {
       text: 'With the ladder F starting at 0, C at 50 and A at 400, a character with 100 in Strength sits inside C, one third of the way to A. Someone above the last tier is drawn in the dashed band outside the chart.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Settings', 'Stat system'] },
+    { type: 'path', segments: ['Story menu', 'Story Settings', 'Stat system'] },
     {
       type: 'steps',
       items: [

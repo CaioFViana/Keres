@@ -4,8 +4,9 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 export const scenes = sqliteTable('scenes', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  chapterId: text('chapter_id').notNull(),
-  locationId: text('location_id').notNull(), // Assuming locationId is always present
+  chapterId: text('chapter_id'),
+  /** Nullable: a scene may happen nowhere in particular. See `SceneSchemas.ts`. */
+  locationId: text('location_id'),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),

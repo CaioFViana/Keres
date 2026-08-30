@@ -81,6 +81,11 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
       - run: bun run --cwd apps/api test:integration:coverage
+      # The same suite over SQLite, which is what the Keres Server home binary actually runs. It is
+      # also the only thing that executes `test/db/migrationParity.integration.test.ts`: that test
+      # skips itself under Postgres, and without this step a column added to `drizzle/` and forgotten
+      # in `drizzle-sqlite/` reaches a release green, breaking every home server on its first boot.
+      - run: bun run --cwd apps/api test:integration:sqlite
       # The critical API floors use the union of unit and integration coverage. Produce the small unit
       # report here as well so the sync/export ratchets cannot be hidden by either suite in isolation.
       - run: bun run --cwd apps/api test:coverage

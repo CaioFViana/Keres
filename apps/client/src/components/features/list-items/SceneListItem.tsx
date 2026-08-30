@@ -40,7 +40,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
     <ListItemTitle
       // The scene's index is already the human count: 1..N within the chapter, the same convention
       // as the chapters (see `StoryIndexService`).
-      text={storyType === 'linear' ? `${scn.index}. ${scn.name}` : scn.name}
+      text={storyType === 'linear' && scn.chapterId ? `${scn.index}. ${scn.name}` : scn.name}
       headerLeftStyle={styles.headerLeft}
       nameStyle={styles.name}
     />

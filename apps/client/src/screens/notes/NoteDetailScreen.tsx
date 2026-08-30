@@ -22,6 +22,7 @@ import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
 import type { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -249,12 +250,18 @@ const NoteDetailScreen = () => {
     [noteId, fetchTagsForNote],
   );
 
+  const loadInitialNoteData = useCallback(() => {
+    if (noteServiceRef.current && selectedStory?.id) {
+      void fetchNote();
+      void fetchNoteRelations();
+    }
+  }, [fetchNote, fetchNoteRelations, selectedStory?.id]);
+
+  useEntityInitialLoad(loadInitialNoteData);
+
+  // Subscribing is intentionally separate from the initial loads above.
   useEffect(() => {
     if (noteServiceRef.current && selectedStory?.id) {
-      // Ensure selectedStory.id is available
-      fetchNote();
-      fetchNoteRelations(); // Fetch relations when the screen loads
-
       entityEventEmitter.on('note_changed', handleNoteChange);
       entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
@@ -265,15 +272,7 @@ const NoteDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [
-    noteId,
-    fetchNote,
-    handleNoteChange,
-    handleTagRelationChange,
-    selectedStory?.id,
-    fetchNoteRelations,
-    handleNoteRelationChange,
-  ]); // Add selectedStory?.id and fetchNoteRelations to dependencies
+  }, [handleNoteChange, handleTagRelationChange, selectedStory?.id, handleNoteRelationChange]);
 
   useEffect(() => {
     if (note) {

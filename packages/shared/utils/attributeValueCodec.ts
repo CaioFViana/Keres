@@ -68,7 +68,10 @@ export function encodeAttributeValue(
   switch (type) {
     case AttributeType.BOOLEAN:
       return (typeof raw === 'boolean' ? raw : raw === 'true' || raw === '1') ? 'true' : 'false';
-    case AttributeType.NUMBER: {
+    case AttributeType.NUMBER:
+    // A day number, so the same encoding - and deliberately not a formatted date, which would stop
+    // meaning anything the moment the calendar it was written against changed.
+    case AttributeType.STORY_DATE: {
       const numeric = typeof raw === 'number' ? raw : Number(raw);
       return Number.isFinite(numeric) ? String(numeric) : null;
     }
@@ -95,7 +98,8 @@ export function decodeAttributeValue(
   switch (type) {
     case AttributeType.BOOLEAN:
       return stored === 'true';
-    case AttributeType.NUMBER: {
+    case AttributeType.NUMBER:
+    case AttributeType.STORY_DATE: {
       const numeric = Number(stored);
       return Number.isFinite(numeric) ? numeric : null;
     }

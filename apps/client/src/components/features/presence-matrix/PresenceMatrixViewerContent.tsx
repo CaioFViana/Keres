@@ -64,6 +64,14 @@ const PresenceMatrixViewerContent: React.FC<{
   const [characters, setCharacters] = useState<CharacterSelect[]>([]);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
+  /**
+   * Events are out by default.
+   *
+   * "Who fought in the war" is a real question, but it is not the one this matrix answers -
+   * mixed in, the grid stops meaning "who is present as the story is told" and starts meaning two
+   * things at once. Available, not assumed.
+   */
+  const [includeEvents, setIncludeEvents] = useState(false);
   const [presence, setPresence] = useState<{ characterId: string; sceneId: string }[]>([]);
   const [items, setItems] = useState<ItemSelect[]>([]);
   const [itemIds, setItemIds] = useState<string[]>(
@@ -99,7 +107,9 @@ const PresenceMatrixViewerContent: React.FC<{
         const [cs, ss, hs, ps, loadedItems] = await Promise.all([
           createCharacterService(db).getAllByStoryId(story.id),
           createSceneService(db).getAllByStoryId(story.id),
-          createChapterService(db).getAllByStoryId(story.id),
+          // Both kinds: the matrix needs to *know* about events even while leaving them out,
+          // or a scene inside one is drawn with no container name and sorted to the front.
+          createChapterService(db).getAllByStoryId(story.id, null),
           createCharacterSceneService(db).getRelationsByStoryId(story.id),
           createItemService(db).getAllByStoryId(story.id),
         ]);
@@ -158,11 +168,24 @@ const PresenceMatrixViewerContent: React.FC<{
   const isCompleteView =
     availableIds.length > MAX_VISIBLE_SERIES && activeIds.length === availableIds.length;
   const orderedScenes = useMemo(() => {
-    const byChapter = new Map(chapters.map((x) => [x.id, x]));
-    const colorsByChapter = buildChapterColors(chapters);
+    const shown = includeEvents ? chapters : chapters.filter((chapter) => chapter.type !== 'event');
+    const byChapter = new Map(shown.map((x) => [x.id, x]));
+    const colorsByChapter = buildChapterColors(shown);
+    /*
+     * Chapters first, then events, each block in its own numbering.
+     *
+     * The two kinds keep separate 1..N spaces, so sorting by index alone interleaves chapter 1 with
+     * event 1 and the columns stop reading as the order of anything. A scene whose container is not
+     * shown is dropped rather than drawn nameless.
+     */
+    const kindRank = (chapterId: string) => (byChapter.get(chapterId)?.type === 'event' ? 1 : 0);
     return [...scenes]
+      .filter((scene): scene is typeof scene & { chapterId: string } =>
+        Boolean(scene.chapterId && byChapter.has(scene.chapterId)),
+      )
       .sort(
         (a, b) =>
+          kindRank(a.chapterId) - kindRank(b.chapterId) ||
           (byChapter.get(a.chapterId)?.index ?? 0) - (byChapter.get(b.chapterId)?.index ?? 0) ||
           a.index - b.index,
       )
@@ -172,7 +195,10 @@ const PresenceMatrixViewerContent: React.FC<{
         chapterName: byChapter.get(scene.chapterId)?.name ?? '',
         chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
       }));
-  }, [chapters, colors.border, scenes]);
+  }, [chapters, colors.border, scenes, includeEvents]);
+
+  /** Only worth offering when the story has one. */
+  const hasEvents = useMemo(() => chapters.some((chapter) => chapter.type === 'event'), [chapters]);
   const applyBulkOrder = async (order: BulkOrder) => {
     const sceneOrder = new Map(orderedScenes.map((scene, index) => [scene.id, index]));
     const compareByNameThenCreation = <T extends CharacterSelect | ItemSelect>(a: T, b: T) =>
@@ -438,6 +464,22 @@ const PresenceMatrixViewerContent: React.FC<{
         />
       )}
       <View style={styles.bulkActions}>
+        {/*
+          Only offered when the story has an event. The matrix answers "who is present as the story
+          is told"; folding in eras makes it answer two questions at once, so it is a choice rather
+          than a default.
+        */}
+        {hasEvents && (
+          <TouchableOpacity
+            style={styles.bulkAction}
+            onPress={() => setIncludeEvents((previous) => !previous)}
+            testID="toggle-matrix-events"
+          >
+            <Text style={styles.bulkActionText}>
+              {includeEvents ? t('presence_matrix_hide_events') : t('presence_matrix_show_events')}
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.bulkAction}
           onPress={isCompleteView ? selectCompactView : () => setBulkOrderVisible(true)}

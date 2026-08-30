@@ -17,7 +17,7 @@
  */
 
 export interface AttributeDateParts {
-  /** 1 a 9999. */
+  /** 1 to 9999 for attribute-date input; Gregorian story-coordinate helpers additionally support astronomical years. */
   year: number;
   /** 1 to 12 (not JS's month index). */
   month: number;
@@ -32,6 +32,108 @@ const CANONICAL_DATE_REGEX = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?$/
 
 export const MIN_ATTRIBUTE_DATE_YEAR = 1;
 export const MAX_ATTRIBUTE_DATE_YEAR = 9999;
+export type GregorianDateDisplayFormat = 'iso' | 'dmy' | 'mdy';
+
+/** Gregorian leap-year rule, kept here with the civil-date value rather than device `Date` maths. */
+export const isGregorianLeapYear = (year: number): boolean =>
+  year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+
+const daysBeforeGregorianYear = (year: number): number => {
+  const completedYears = year - 1;
+  return (
+    completedYears * 365 +
+    Math.floor(completedYears / 4) -
+    Math.floor(completedYears / 100) +
+    Math.floor(completedYears / 400)
+  );
+};
+
+const gregorianDaysInMonth = (year: number, month: number): number => {
+  if (month === 2) return isGregorianLeapYear(year) ? 29 : 28;
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+};
+
+/**
+ * A timezone-free Gregorian day coordinate. Day zero is 0001-01-01.
+ *
+ * Story epochs use this coordinate when their primary calendar is the built-in Gregorian one; it
+ * is deliberately not a Unix timestamp, because story dates are civil dates rather than instants.
+ */
+export function gregorianDayNumber(
+  parts: Pick<AttributeDateParts, 'year' | 'month' | 'day'>,
+): number {
+  if (
+    !Number.isInteger(parts.year) ||
+    parts.month < 1 ||
+    parts.month > 12 ||
+    parts.day < 1 ||
+    parts.day > gregorianDaysInMonth(parts.year, parts.month)
+  ) {
+    throw new RangeError('Invalid Gregorian calendar date.');
+  }
+  let beforeMonth = 0;
+  for (let month = 1; month < parts.month; month += 1) {
+    beforeMonth += gregorianDaysInMonth(parts.year, month);
+  }
+  return daysBeforeGregorianYear(parts.year) + beforeMonth + parts.day - 1;
+}
+
+/**
+ * Inverse of `gregorianDayNumber`.
+ *
+ * The picker deliberately accepts only years 1–9999, but a timeline may contain an eon-sized
+ * duration. Displaying that scene must not crash merely because it lies beyond what can be typed.
+ */
+export function gregorianPartsFromDayNumber(
+  dayNumber: number,
+): Pick<AttributeDateParts, 'year' | 'month' | 'day'> {
+  if (!Number.isInteger(dayNumber)) {
+    throw new RangeError('Invalid Gregorian day number.');
+  }
+  let low = Math.min(1, Math.floor(dayNumber / 366) - 2);
+  let high = Math.max(1, Math.ceil(dayNumber / 365) + 2);
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (daysBeforeGregorianYear(middle) <= dayNumber) low = middle;
+    else high = middle - 1;
+  }
+  // Binary-search arithmetic can produce JavaScript's distinct `-0`. Civil year zero is one
+  // value, however (the astronomical spelling of 1 BCE), so never let that implementation detail
+  // escape into state, equality checks, or formatting.
+  const year = low === 0 ? 0 : low;
+  let remaining = dayNumber - daysBeforeGregorianYear(year);
+  let month = 1;
+  while (remaining >= gregorianDaysInMonth(year, month) && month < 12) {
+    remaining -= gregorianDaysInMonth(year, month);
+    month += 1;
+  }
+  return { year, month, day: remaining + 1 };
+}
+
+/** The Gregorian day of an elapsed timeline offset, including an opening time within its day. */
+export const gregorianDayNumberForElapsed = (
+  epochDay: number,
+  elapsedSeconds: number,
+  epochSeconds = 0,
+): number => epochDay + Math.floor((epochSeconds + elapsedSeconds) / 86_400);
+
+/** A civil Gregorian date for story displays, including years before the common era. */
+export function formatGregorianDate(
+  parts: Pick<AttributeDateParts, 'year' | 'month' | 'day'>,
+  format: GregorianDateDisplayFormat = 'iso',
+): string {
+  const eraYear = parts.year <= 0 ? 1 - parts.year : parts.year;
+  const year = String(eraYear).padStart(4, '0');
+  const day = String(parts.day).padStart(2, '0');
+  const month = String(parts.month).padStart(2, '0');
+  const core =
+    format === 'dmy'
+      ? `${day}/${month}/${year}`
+      : format === 'mdy'
+        ? `${month}/${day}/${year}`
+        : `${year}-${month}-${day}`;
+  return parts.year <= 0 ? `${core} BCE` : core;
+}
 
 /**
  * A `Date` in UTC representing the given components. Kept separate because it is the only safe way
@@ -215,12 +317,13 @@ export function formatAttributeDateMonthLabel(
   language: string,
 ): string {
   const utc = toUtcDate({ year, month, day: 1, hour: null, minute: null });
-  return safeFormat(
+  const label = safeFormat(
     language,
     { year: 'numeric', month: 'long' },
     utc,
-    `${pad(year, 4)}-${pad(month, 2)}`,
+    `${String(year <= 0 ? 1 - year : year).padStart(4, '0')}-${pad(month, 2)}`,
   );
+  return year <= 0 ? `${label} BCE` : label;
 }
 
 /**

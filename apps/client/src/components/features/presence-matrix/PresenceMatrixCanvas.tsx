@@ -1,6 +1,6 @@
-import React, { forwardRef, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Line, Rect } from 'react-native-svg';
+import React, { forwardRef, useCallback, useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import CanvasLine from '../graphs/CanvasLine/CanvasLine';
 import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '../../../hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '../../../hooks/usePanZoomCanvas';
@@ -13,7 +13,6 @@ import {
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   MATRIX_ROW_HEIGHT,
-  MATRIX_THREAD_GAP_DASH,
   MATRIX_THREAD_OPACITY,
   MATRIX_THREAD_WIDTH,
   matrixRowCenterY,
@@ -30,11 +29,36 @@ export type PresenceMatrixCanvasHandle = PanZoomCanvasHandle;
 const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
   ({ layout, onPressScene, onPressRow, showRowCoverage }, ref) => {
     const { colors } = useTheme();
+    const gridTop = MATRIX_PADDING + MATRIX_HEADER_HEIGHT;
+    const gridLeft = MATRIX_PADDING + MATRIX_LABEL_WIDTH;
+    /**
+     * Every point of the drawing means something, so every point answers: the label band opens the
+     * series, and the rest of a column opens that column's scene - a series is only present in a few
+     * scenes, and the rest of the grid had nothing for the finger to land on. Hit-tested here instead
+     * of layered with touch targets, which would take the responder and leave the pinch dead (see
+     * `onTap`).
+     */
+    const handleTap = useCallback(
+      (point: { x: number; y: number }) => {
+        const rowIndex = Math.floor((point.y - gridTop) / MATRIX_ROW_HEIGHT);
+        const row = point.y >= gridTop && rowIndex >= 0 ? layout.rows[rowIndex] : undefined;
+        if (row && point.x < gridLeft) {
+          onPressRow(row.id);
+          return;
+        }
+        const sceneIndex = Math.floor((point.x - gridLeft) / layout.sceneWidth);
+        const scene = point.x >= gridLeft ? layout.scenes[sceneIndex] : undefined;
+        if (scene && point.y >= MATRIX_PADDING) onPressScene(scene.id);
+      },
+      [gridLeft, gridTop, layout.rows, layout.sceneWidth, layout.scenes, onPressRow, onPressScene],
+    );
     const panZoom = usePanZoomCanvas(ref, layout, {
       minScale: 0.08,
       maxScale: 3,
       fitVerticalAlignment: 'top',
       refitOnLayoutChange: false,
+      freePan: true,
+      onTap: handleTap,
     });
     const styles = useMemo(
       () =>
@@ -48,6 +72,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
             textAlignVertical: 'center',
           },
           rowPresence: { fontSize: 10, marginTop: 2 },
+          column: { position: 'absolute', borderWidth: 0.5 },
           cell: {
             position: 'absolute',
             borderRadius: 7,
@@ -74,8 +99,6 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
       });
       return groups;
     }, [layout.scenes]);
-    // A flat list of rows, rather than a Fragment per band: native react-native-svg walks the Svg's direct
-    // children, and grouping is the kind of thing that works on the web and fails on the device.
     const threads = useMemo(
       () =>
         layout.rows.flatMap((row, rowIndex) =>
@@ -90,50 +113,55 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
         ),
       [layout.rows, layout.sceneWidth, layout.scenes],
     );
+    const gridHeight = layout.rows.length * MATRIX_ROW_HEIGHT;
     return (
       <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
-        <Svg width={layout.width} height={layout.height}>
-          {layout.scenes.map((scene, index) => {
-            const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth;
-            return (
-              <React.Fragment key={scene.id}>
-                <Rect
-                  x={x}
-                  y={MATRIX_PADDING + MATRIX_HEADER_HEIGHT}
-                  width={layout.sceneWidth}
-                  height={layout.rows.length * MATRIX_ROW_HEIGHT}
-                  fill={index % 2 ? colors.surface : colors.background}
-                  stroke={colors.border}
-                  strokeWidth={0.5}
-                />
-                <Rect
-                  x={x}
-                  y={MATRIX_PADDING + MATRIX_HEADER_HEIGHT - 6}
-                  width={layout.sceneWidth}
-                  height={4}
-                  fill={scene.chapterColor}
-                />
-              </React.Fragment>
-            );
-          })}
-          {threads.map((thread) => (
-            <Line
-              key={thread.key}
-              x1={thread.x1}
-              y1={thread.y}
-              x2={thread.x2}
-              y2={thread.y}
-              stroke={thread.color}
-              strokeWidth={MATRIX_THREAD_WIDTH}
-              strokeOpacity={MATRIX_THREAD_OPACITY}
-              strokeLinecap="round"
-              strokeDasharray={thread.isGap ? MATRIX_THREAD_GAP_DASH : undefined}
-            />
-          ))}
-        </Svg>
+        {layout.scenes.map((scene, index) => {
+          const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth;
+          return (
+            <React.Fragment key={scene.id}>
+              <View
+                style={[
+                  styles.column,
+                  {
+                    left: x,
+                    top: gridTop,
+                    width: layout.sceneWidth,
+                    height: gridHeight,
+                    backgroundColor: index % 2 ? colors.surface : colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
+              />
+              <View
+                style={{
+                  position: 'absolute',
+                  left: x,
+                  top: gridTop - 6,
+                  width: layout.sceneWidth,
+                  height: 4,
+                  backgroundColor: scene.chapterColor,
+                }}
+              />
+            </React.Fragment>
+          );
+        })}
+        {threads.map((thread) => (
+          <CanvasLine
+            key={thread.key}
+            left={thread.x1}
+            top={thread.y - MATRIX_THREAD_WIDTH / 2}
+            length={thread.x2 - thread.x1}
+            thickness={MATRIX_THREAD_WIDTH}
+            color={thread.color}
+            opacity={MATRIX_THREAD_OPACITY}
+            dashed={thread.isGap}
+          />
+        ))}
         {chapterGroups.map((chapter) => (
           <View
             key={`${chapter.start}-${chapter.name}`}
+            pointerEvents="none"
             style={{
               position: 'absolute',
               left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + chapter.start * layout.sceneWidth + 5,
@@ -150,9 +178,9 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
           </View>
         ))}
         {layout.scenes.map((scene, index) => (
-          <TouchableOpacity
+          <View
             key={`scene-${scene.id}`}
-            onPress={() => onPressScene(scene.id)}
+            pointerEvents="none"
             style={{
               position: 'absolute',
               left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth + 4,
@@ -177,16 +205,16 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
             >
               {`${index + 1}. ${scene.name}`}
             </Text>
-          </TouchableOpacity>
+          </View>
         ))}
         {layout.rows.map((row, rowIndex) => (
           <React.Fragment key={row.id}>
-            <TouchableOpacity
-              onPress={() => onPressRow(row.id)}
+            <View
+              pointerEvents="none"
               style={{
                 position: 'absolute',
                 left: MATRIX_PADDING,
-                top: MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT,
+                top: gridTop + rowIndex * MATRIX_ROW_HEIGHT,
                 width: MATRIX_LABEL_WIDTH - 8,
                 height: MATRIX_ROW_HEIGHT,
                 justifyContent: 'center',
@@ -213,14 +241,14 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                   </Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </View>
             {layout.scenes.map((scene, sceneIndex) => {
               const value = row.cells.get(scene.id);
               if (!value) return null;
               return (
-                <TouchableOpacity
+                <View
                   key={`${row.id}-${scene.id}`}
-                  onPress={() => onPressScene(scene.id)}
+                  pointerEvents="none"
                   style={[
                     styles.cell,
                     {
@@ -229,8 +257,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                         MATRIX_LABEL_WIDTH +
                         sceneIndex * layout.sceneWidth +
                         MATRIX_CELL_INSET,
-                      top:
-                        MATRIX_PADDING + MATRIX_HEADER_HEIGHT + rowIndex * MATRIX_ROW_HEIGHT + 10,
+                      top: gridTop + rowIndex * MATRIX_ROW_HEIGHT + 10,
                       width: layout.sceneWidth - MATRIX_CELL_INSET * 2,
                       height: MATRIX_ROW_HEIGHT - 20,
                       borderColor: row.color,
@@ -251,7 +278,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
                   >
                     {value}
                   </Text>
-                </TouchableOpacity>
+                </View>
               );
             })}
           </React.Fragment>

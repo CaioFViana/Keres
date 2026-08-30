@@ -73,6 +73,50 @@ describe('getEntityName', () => {
     expect(name).toBe('character - Keres');
   });
 
+  it('names a board by its name', async () => {
+    await seedStory();
+    await database.db.insert(schema.boards).values({
+      id: 'board-1',
+      storyId: STORY_ID,
+      name: 'Mapa da cidade',
+      description: null,
+      content: { nodes: [], edges: [] },
+      ...base,
+    });
+
+    await expect(
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Board,
+        'board-1',
+        STORY_ID,
+        t,
+      ),
+    ).resolves.toBe('board - Mapa da cidade');
+  });
+
+  it('names a location map by its name', async () => {
+    await seedStory();
+    await database.db.insert(schema.locationMaps).values({
+      id: 'map-1',
+      storyId: STORY_ID,
+      name: 'Continente',
+      description: null,
+      content: { images: [], nodes: [] },
+      ...base,
+    });
+
+    await expect(
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.LocationMap,
+        'map-1',
+        STORY_ID,
+        t,
+      ),
+    ).resolves.toBe('location_map - Continente');
+  });
+
   it.each([
     ['note', OperationLogEntityType.Note, schema.notes, { title: 'Ideia' }, 'note - Ideia'],
     [

@@ -1,9 +1,11 @@
+import { useBoardDraftStore } from './boardDraftStore';
 import { useChapterStore } from './chapterStore';
 import { useCharacterStore } from './characterStore';
 import { useConnectivityStore } from './connectivityStore';
 import { useGalleryMediaViewerStore } from './galleryMediaViewerStore';
 import { useGalleryStore } from './galleryStore';
 import { useItemStore } from './itemStore';
+import { useLocationMapDraftStore } from './locationMapDraftStore';
 import { useLocationStore } from './locationStore';
 import { useNoteStore } from './noteStore';
 import { useNotificationStore } from './notificationStore';
@@ -21,6 +23,8 @@ export function resetAllClientStores(): void {
   useStoryListStore.getState().setStories([]);
   useSummaryStore.getState().clearSummary();
   useSyncConflictStore.getState().reset();
+  useBoardDraftStore.getState().reset();
+  useLocationMapDraftStore.getState().reset();
   useConnectivityStore.getState().reset();
   useNotificationStore.getState().clearAll();
   useGalleryMediaViewerStore.getState().close();

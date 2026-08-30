@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { extensionForMimeType } from '../schemas/GallerySchemas';
+import { extensionForMimeType, galleryHasFile } from '../schemas/GallerySchemas';
 import type { FullStoryExportType } from '../schemas/FullStorySchemas';
 import type { GalleryType } from '../schemas/GallerySchemas';
 
@@ -53,7 +53,9 @@ export async function buildStoryZipBytes(
   const zip = new JSZip();
   zip.file(STORY_JSON_ENTRY, JSON.stringify(storyExport, null, 2), { compression: 'STORE' });
 
-  const galleryItems: GalleryType[] = storyExport.galleryItems || [];
+  const galleryItems: GalleryType[] = (storyExport.galleryItems || []).filter((item) =>
+    galleryHasFile(item.mediaType),
+  );
   let includedCount = 0;
 
   for (const item of galleryItems) {

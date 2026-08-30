@@ -1,10 +1,16 @@
 import { z } from 'zod';
+import { CHAPTER_TYPES, DEFAULT_CHAPTER_TYPE } from '../metadata/ChapterType';
 
 export const ChapterSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   name: z.string(),
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
+  /**
+   * Chapter or event. Defaulted rather than required because every row written before this existed
+   * has no value for it, and every one of those is a chapter.
+   */
+  type: z.enum(CHAPTER_TYPES).default(DEFAULT_CHAPTER_TYPE),
   summary: z.string().nullable(),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
@@ -26,11 +32,13 @@ export const CreateChapterDataSchema = ChapterSchema.omit({
 }).extend({
   name: z.string().min(1, 'Chapter name cannot be empty'),
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
+  type: z.enum(CHAPTER_TYPES).default(DEFAULT_CHAPTER_TYPE),
   isFavorite: z.boolean().default(false),
 });
 
 export const PartialChapterSchema = CreateChapterDataSchema.partial();
 
 export type CreateChapterDataType = z.infer<typeof CreateChapterDataSchema>;
-export type ChapterType = z.infer<typeof ChapterSchema>;
+/** The row. Named `...Row` because `ChapterType` is the chapter-or-event discriminator. */
+export type ChapterRowType = z.infer<typeof ChapterSchema>;
 export type PartialChapterType = z.infer<typeof PartialChapterSchema>;

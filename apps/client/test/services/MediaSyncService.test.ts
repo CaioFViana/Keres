@@ -235,6 +235,16 @@ describe('uploading', () => {
     });
   });
 
+  it('does not try to upload a link because a URL has no blob', async () => {
+    mockGalleryService.getPendingUploads.mockResolvedValue([
+      media('link', { mediaType: 'link', mimeType: 'text/uri-list' }),
+    ]);
+    const client = fakeClient();
+    const summary = await service().syncStoryMedia(client, SERVER, STORY_ID);
+    expect(summary.uploaded).toBe(0);
+    expect((client as any).post).not.toHaveBeenCalled();
+  });
+
   it('caps how many blobs it sends in a single cycle', async () => {
     const pending = Array.from({ length: 9 }, (_, index) => media(`m${index}`));
     mockGalleryService.getPendingUploads.mockResolvedValue(pending);

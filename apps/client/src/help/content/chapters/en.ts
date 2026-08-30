@@ -17,7 +17,7 @@ const page: HelpPage = {
       text: 'A prologue can be the first chapter read or only for the author’s own organization, even when it shows an event from twenty years earlier. Order records reading or world chronology.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Chapters', '+'] },
+    { type: 'path', segments: ['Story menu', 'Narrative Elements', '+'] },
     {
       type: 'steps',
       items: [

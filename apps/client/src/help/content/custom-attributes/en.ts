@@ -17,7 +17,7 @@ const page: HelpPage = {
       text: 'Create “Suspicion level” for Characters, with Number type and a default value of 0.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Custom attributes', '+'] },
+    { type: 'path', segments: ['Story menu', 'Customization', 'Custom Attributes', '+'] },
     {
       type: 'steps',
       items: [

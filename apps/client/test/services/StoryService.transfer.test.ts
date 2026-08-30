@@ -4,6 +4,7 @@ jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
 
+import { AttributeType } from '@keres/shared';
 import { FullStoryExportSchema } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import { mediaFileService } from '../../src/services/MediaFileService';
@@ -56,7 +57,7 @@ it('round-trips portable story data after a permanent local purge and clears sta
     entityType: 'Character',
     name: 'Poder',
     key: 'power',
-    type: 'text',
+    type: AttributeType.TEXT,
     order: 0,
     ...entityBase,
   });
@@ -123,7 +124,7 @@ it('round-trips portable story data after a permanent local purge and clears sta
     entityType: 'Character',
     name: 'Obsoleto',
     key: 'power',
-    type: 'text',
+    type: AttributeType.TEXT,
     order: 0,
     ...entityBase,
   });

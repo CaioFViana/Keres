@@ -18,6 +18,7 @@ import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-na
 import { useDrizzle } from '../../db';
 import type { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -139,10 +140,11 @@ const WorldRuleDetailScreen = () => {
     [worldRuleId, setWorldRule],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchWorldRule);
+
+  // Subscription lifecycle is independent from loading the entity.
   useEffect(() => {
     if (worldRuleServiceRef.current) {
-      fetchWorldRule();
       entityEventEmitter.on('worldrule_changed', handleWorldRuleChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
@@ -151,7 +153,7 @@ const WorldRuleDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, handleTagRelationChange]);
+  }, [handleWorldRuleChange, handleTagRelationChange]);
 
   const renderHeaderRight = useCallback(
     () =>

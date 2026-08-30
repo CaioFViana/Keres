@@ -5,26 +5,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
-import { useDrizzle } from '@/src/db';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useTheme } from '@/src/theme';
-import {
-  formatChapterUniverseDuration,
-  formatSceneGap,
-  formatSceneUniverseDuration,
-} from '@/src/utils/sceneTiming';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
-import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
-import type { StoryTimelineScaleMode } from '@keres/shared/graphs/storyTimelineLayout';
-import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
-import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
+import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
+import { useTheme } from '@/src/theme';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { setDocumentTitle } from '../../../utils/documentTitle';
@@ -40,19 +26,36 @@ const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const db = useDrizzle();
-  const story = useStoryStore((state) => state.selectedStory);
-  const notify = useNotificationStore((state) => state.showNotification);
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'StoryTimeline'>>();
   const canvas = useRef<StoryTimelineCanvasHandle>(null);
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
-  const [scenes, setScenes] = useState<SceneSelect[]>([]);
-  const [chapterIds, setChapterIds] = useState<string[]>([]);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
-  const [scaleMode, setScaleMode] = useState<StoryTimelineScaleMode>('compact');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const timeline = useStoryTimeline();
+  const {
+    story,
+    loading,
+    saving,
+    chapters,
+    scenes,
+    events,
+    anchors,
+    chapterIds,
+    setChapterIds,
+    scaleMode,
+    setScaleMode,
+    eventPlacement,
+    setEventPlacement,
+    showEvents,
+    setShowEvents,
+    showSceneNames,
+    setShowSceneNames,
+    layout,
+    dateForRow,
+    describeSceneDay,
+    storyDurationLabel,
+    exportTimeline,
+  } = timeline;
 
   useFocusEffect(
     useCallback(() => {
@@ -62,135 +65,9 @@ const StoryTimelineScreen = () => {
         ?.setOptions({ title: t('story_timeline_title'), headerRight: undefined });
     }, [navigation, t]),
   );
-
-  useEffect(() => {
-    if (!story) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const [loadedChapters, loadedScenes] = await Promise.all([
-          createChapterService(db).getAllByStoryId(story.id),
-          createSceneService(db).getAllByStoryId(story.id),
-        ]);
-        if (cancelled) return;
-        const visibleChapters = loadedChapters
-          .filter((chapter) => !chapter.isDeleted)
-          .sort((a, b) => a.index - b.index);
-        setChapters(visibleChapters);
-        setScenes(loadedScenes.filter((scene) => !scene.isDeleted));
-        setChapterIds(visibleChapters.map((chapter) => chapter.id));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, story]);
-
-  const orderedScenes = useMemo(() => {
-    const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
-    const colorsByChapter = buildChapterColors(chapters);
-    let previousChapterIndex: number | undefined;
-    return scenes
-      .filter((scene) => chapterIds.includes(scene.chapterId))
-      .sort(
-        (a, b) =>
-          (chapterById.get(a.chapterId)?.index ?? 0) - (chapterById.get(b.chapterId)?.index ?? 0) ||
-          a.index - b.index,
-      )
-      .map((scene) => {
-        const chapterIndex = chapterById.get(scene.chapterId)?.index;
-        const hideGapBefore =
-          previousChapterIndex !== undefined &&
-          chapterIndex !== previousChapterIndex &&
-          chapterIndex !== previousChapterIndex + 1;
-        previousChapterIndex = chapterIndex;
-        return {
-          ...scene,
-          hideGapBefore,
-          chapterName: chapterById.get(scene.chapterId)?.name ?? t('common_na'),
-          chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
-          gapLabel: formatSceneGap(scene, t),
-          durationLabel: formatSceneUniverseDuration(scene, t),
-        };
-      });
-  }, [chapterIds, chapters, colors.border, scenes, t]);
-  const chapterDurationLabels = useMemo(
-    () =>
-      new Map(
-        chapters.map((chapter) => [
-          chapter.id,
-          formatChapterUniverseDuration(
-            orderedScenes.filter((scene) => scene.chapterId === chapter.id),
-            t,
-          ),
-        ]),
-      ),
-    [chapters, orderedScenes, t],
-  );
-  const storyDurationLabel = useMemo(
-    () => formatChapterUniverseDuration(orderedScenes, t),
-    [orderedScenes, t],
-  );
-  const timelineScenes = useMemo(
-    () =>
-      orderedScenes.map((scene) => ({
-        ...scene,
-        chapterDurationLabel: chapterDurationLabels.get(scene.chapterId),
-      })),
-    [chapterDurationLabels, orderedScenes],
-  );
-  const layout = useMemo(
-    () => buildStoryTimelineLayout(timelineScenes, scaleMode),
-    [scaleMode, timelineScenes],
-  );
   useEffect(() => {
     canvas.current?.fitToScreen();
-  }, [scaleMode]);
-  const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? null;
-  const selectedChapter =
-    chapters.find((chapter) => chapter.id === selectedScene?.chapterId) ?? null;
-
-  const exportTimeline = useCallback(async () => {
-    if (!story || !layout.rows.length) return;
-    setSaving(true);
-    try {
-      const svg = renderStoryTimelineSvg(layout, {
-        title: story.title,
-        subtitle: t('story_timeline_subtitle', { count: layout.rows.length }),
-        labels: {
-          gap: t('story_timeline_gap'),
-          duration: t('story_timeline_duration'),
-          compressed:
-            scaleMode === 'compact'
-              ? t('story_timeline_compressed')
-              : t('story_timeline_proportional_legend'),
-        },
-        storyDuration: { title: t('story_timeline_story_duration'), value: storyDurationLabel },
-        colors: {
-          background: colors.background,
-          surface: colors.surface,
-          text: colors.text,
-          textSecondary: colors.textSecondary,
-          border: colors.border,
-        },
-      });
-      const result = await deliverSvgMap(svg, buildStoryTimelineFileName(story.title));
-      notify(
-        result.delivered
-          ? t('story_timeline_export_success', { fileName: result.fileName })
-          : t('story_timeline_export_no_share_target', { path: result.uri || result.fileName }),
-        result.delivered ? 'success' : 'warning',
-      );
-    } catch (error) {
-      console.log('StoryTimelineScreen: failed to export timeline.', error);
-      notify(t('story_timeline_export_failed'), 'error');
-    } finally {
-      setSaving(false);
-    }
-  }, [colors, layout, notify, scaleMode, story, storyDurationLabel, t]);
+  }, [eventPlacement, scaleMode]);
 
   const styles = useMemo(
     () =>
@@ -314,7 +191,76 @@ const StoryTimelineScreen = () => {
             </TouchableOpacity>
           );
         })}
+        <TouchableOpacity
+          onPress={() => setShowEvents((shown) => !shown)}
+          style={[
+            styles.scaleModeButton,
+            { borderLeftWidth: 1, borderLeftColor: colors.border },
+            showEvents && { backgroundColor: colors.primaryContainer },
+          ]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showEvents }}
+        >
+          <Text
+            style={[
+              styles.scaleModeText,
+              { color: showEvents ? colors.onPrimaryContainer : colors.textSecondary },
+            ]}
+          >
+            {t('story_timeline_show_events')}
+          </Text>
+        </TouchableOpacity>
+        {showEvents && (
+          <TouchableOpacity
+            onPress={() =>
+              setEventPlacement((current) => (current === 'overlay' ? 'inline' : 'overlay'))
+            }
+            style={[
+              styles.scaleModeButton,
+              { borderLeftWidth: 1, borderLeftColor: colors.border },
+              eventPlacement === 'inline' && { backgroundColor: colors.primaryContainer },
+            ]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: eventPlacement === 'inline' }}
+          >
+            <Text
+              style={[
+                styles.scaleModeText,
+                {
+                  color:
+                    eventPlacement === 'inline' ? colors.onPrimaryContainer : colors.textSecondary,
+                },
+              ]}
+            >
+              {t('story_timeline_events_inline')}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={() => setShowSceneNames((shown) => !shown)}
+          style={[
+            styles.scaleModeButton,
+            { borderLeftWidth: 1, borderLeftColor: colors.border },
+            showSceneNames && { backgroundColor: colors.primaryContainer },
+          ]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showSceneNames }}
+        >
+          <Text
+            style={[
+              styles.scaleModeText,
+              { color: showSceneNames ? colors.onPrimaryContainer : colors.textSecondary },
+            ]}
+          >
+            {t('story_timeline_show_names')}
+          </Text>
+        </TouchableOpacity>
       </View>
+      {showEvents && layout.unanchoredNames.length > 0 && (
+        <Text style={[styles.warning, { color: colors.textSecondary }]}>
+          {t('story_timeline_unanchored')}: {layout.unanchoredNames.join(', ')}
+        </Text>
+      )}
       {layout.hasProportionalScaleWarning && (
         <Text style={styles.warning}>{t('story_timeline_proportional_warning')}</Text>
       )}
@@ -322,7 +268,16 @@ const StoryTimelineScreen = () => {
         <StoryTimelineCanvas
           ref={canvas}
           layout={layout}
-          onPressScene={setSelectedSceneId}
+          onPressScene={(id) => {
+            setSelectedEventId(null);
+            setSelectedSceneId(id);
+          }}
+          onPressEvent={(id) => {
+            setSelectedSceneId(null);
+            setSelectedEventId(id);
+          }}
+          showSceneNames={showSceneNames}
+          dateForRow={dateForRow}
           storyDurationTitle={t('story_timeline_story_duration')}
           storyDurationLabel={storyDurationLabel}
         />
@@ -349,26 +304,18 @@ const StoryTimelineScreen = () => {
           </TouchableOpacity>
         ))}
       </View>
-      {selectedScene && (
-        <GraphNodeSheet
-          title={selectedScene.name}
-          subtitle={{ text: selectedChapter?.name ?? '' }}
-          badges={[
-            {
-              label: `${t('story_timeline_gap')}: ${formatSceneGap(selectedScene, t)}`,
-              color: colors.textSecondary,
-            },
-            {
-              label: `${t('story_timeline_duration')}: ${formatSceneUniverseDuration(selectedScene, t)}`,
-              color: colors.primary,
-            },
-          ]}
-          sections={[{ title: t('summary'), description: selectedScene.summary || t('common_na') }]}
-          actionLabel={t('close')}
-          onAction={() => setSelectedSceneId(null)}
-          onClose={() => setSelectedSceneId(null)}
-        />
-      )}
+      <StoryTimelineSheets
+        scenes={scenes}
+        chapters={chapters}
+        events={events}
+        anchors={anchors}
+        selectedSceneId={selectedSceneId}
+        selectedEventId={selectedEventId}
+        onSelectScene={setSelectedSceneId}
+        onSelectEvent={setSelectedEventId}
+        onOpenEvent={(eventId) => navigation.navigate('ChapterDetail', { chapterId: eventId })}
+        describeSceneDay={describeSceneDay}
+      />
     </View>
   );
 };

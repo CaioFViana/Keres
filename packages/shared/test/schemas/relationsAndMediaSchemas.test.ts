@@ -6,8 +6,10 @@ import {
   CreateLocationRelationDataSchema,
   CreateItemDataSchema,
   extensionForMimeType,
+  galleryHasFile,
   isSupportedMediaMimeType,
   mediaTypeForMimeType,
+  normalizeGalleryLink,
   MediaBlobStatusRequestSchema,
   MediaBlobStatusResponseSchema,
   PartialCharacterRelationSchema,
@@ -70,15 +72,34 @@ describe('relation and media contracts', () => {
         hash: 'a'.repeat(32),
         sizeBytes: 0,
       }),
-    ).toMatchObject({ isFavorite: false, title: null, extraNotes: null });
+    ).toMatchObject({ isFavorite: false, title: null, extraNotes: null, sourceUrl: null });
+  });
+
+  it('accepts document and link gallery rows and only stores http(s) URLs', () => {
+    expect(galleryHasFile('document')).toBe(true);
+    expect(galleryHasFile('link')).toBe(false);
+    expect(normalizeGalleryLink(' https://notes.example/lore ')).toBe('https://notes.example/lore');
+    expect(normalizeGalleryLink('javascript:alert(1)')).toBeNull();
+    expect(normalizeGalleryLink('ftp://files.example/doc')).toBeNull();
+    expect(
+      CreateGalleryDataSchema.parse({
+        mediaType: 'link',
+        mimeType: 'text/uri-list',
+        fileName: 'notes.example',
+        hash: 'b'.repeat(32),
+        sizeBytes: 0,
+        sourceUrl: 'https://notes.example/lore',
+      }),
+    ).toMatchObject({ mediaType: 'link', sourceUrl: 'https://notes.example/lore' });
   });
 
   it('maps supported media types and rejects malformed blob status requests', () => {
     expect(isSupportedMediaMimeType('IMAGE/PNG')).toBe(true);
-    expect(isSupportedMediaMimeType('application/pdf')).toBe(false);
+    expect(isSupportedMediaMimeType('application/pdf')).toBe(true);
     expect(isSupportedMediaMimeType(null)).toBe(false);
     expect(mediaTypeForMimeType('audio/mpeg')).toBe('audio');
-    expect(mediaTypeForMimeType('application/pdf')).toBeNull();
+    expect(mediaTypeForMimeType('application/pdf')).toBe('document');
+    expect(mediaTypeForMimeType('application/zip')).toBeNull();
     expect(extensionForMimeType('video/quicktime')).toBe('mov');
     expect(extensionForMimeType(undefined)).toBe('bin');
     expect(MediaBlobStatusRequestSchema.parse({ hashes: ['a'.repeat(32)] })).toEqual({

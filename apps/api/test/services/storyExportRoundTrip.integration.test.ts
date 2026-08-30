@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   attributeValues,
+  boards,
+  chapterAnchors,
+  storyCalendars,
   chapters,
   characterRelations,
   characterScenes,
@@ -18,6 +21,7 @@ import {
   itemJourneys,
   items,
   locationRelations,
+  locationMaps,
   locations,
   modes,
   noteRelations,
@@ -54,6 +58,11 @@ const IMPORTER = newId();
 const id = {
   story: '',
   chapter: '',
+  event: '',
+  chapterAnchor: '',
+  storyCalendar: '',
+  board: '',
+  locationMap: '',
   location: '',
   otherLocation: '',
   sceneA: '',
@@ -91,6 +100,92 @@ const id = {
   modeValue: '',
 };
 
+/**
+ * Importing intentionally restamps persistence metadata. It must not, however, change the
+ * portable story payload: every collection, value and reference survives a preserve-id import.
+ * Collections are sorted by their stable ids because database row order is not part of the format.
+ */
+function comparableExport(pkg: Record<string, any>) {
+  const stripPersistenceMetadata = (value: any): any => {
+    if (Array.isArray(value)) return value.map(stripPersistenceMetadata);
+    if (!value || typeof value !== 'object') return value;
+    const normalized = Object.fromEntries(
+      Object.entries(value)
+        .filter(
+          ([key]) => !['createdAt', 'updatedAt', 'version', 'isDeleted', 'deletedAt'].includes(key),
+        )
+        .map(([key, child]) => [key, stripPersistenceMetadata(child)]),
+    );
+    // Character relations are an unordered pair. The importer canonically persists the lower id
+    // first, so the two equivalent serializations must compare as the same portable relation.
+    if (
+      typeof normalized.character1Id === 'string' &&
+      typeof normalized.character2Id === 'string' &&
+      normalized.character1Id > normalized.character2Id
+    ) {
+      [normalized.character1Id, normalized.character2Id] = [
+        normalized.character2Id,
+        normalized.character1Id,
+      ];
+    }
+    return normalized;
+  };
+
+  return Object.fromEntries(
+    Object.entries(pkg)
+      .filter(([key]) => key !== 'serverLastOperationVersion')
+      .map(([key, value]) => [
+        key,
+        Array.isArray(value)
+          ? value
+              .map(stripPersistenceMetadata)
+              .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+          : stripPersistenceMetadata(value),
+      ]),
+  );
+}
+
+/** The duplicate/import path deliberately creates new row ids and changes authorship. */
+function comparableRemappedExport(pkg: Record<string, any>) {
+  const stripRemappedIdentity = (value: any, isExportRow = false): any => {
+    if (Array.isArray(value)) return value.map((child) => stripRemappedIdentity(child));
+    if (!value || typeof value !== 'object') return value;
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(
+          ([key]) =>
+            ![
+              'createdAt',
+              'updatedAt',
+              'version',
+              'isDeleted',
+              'deletedAt',
+              'userId',
+              'authorUserId',
+            ].includes(key),
+        )
+        // `id` is a database id only on the story and top-level collection rows. Board/map local
+        // node ids are content, so they deliberately remain in the comparison.
+        .filter(([key]) => !(isExportRow && key === 'id'))
+        .filter(([key]) => !key.endsWith('Id'))
+        .map(([key, child]) => [key, stripRemappedIdentity(child)]),
+    );
+  };
+
+  return Object.fromEntries(
+    Object.entries(pkg)
+      .filter(([key]) => key !== 'serverLastOperationVersion')
+      .map(([key, value]) => [
+        key,
+        Array.isArray(value)
+          ? value
+              .map((row) => stripRemappedIdentity(row, true))
+              .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
+          : stripRemappedIdentity(value, true),
+      ]),
+  );
+}
+
 beforeEach(async () => {
   await truncateAll();
   for (const key of Object.keys(id) as Array<keyof typeof id>) id[key] = newId();
@@ -110,9 +205,12 @@ beforeEach(async () => {
     statNotation: 'letter',
   } as never);
 
-  await db
-    .insert(chapters)
-    .values({ id: id.chapter, storyId, name: 'Primeira noite', index: 1 } as never);
+  await db.insert(chapters).values([
+    { id: id.chapter, storyId, name: 'Primeira noite', index: 1 },
+    // An event, so the package carries both kinds of container and a chronology between them.
+    { id: id.event, storyId, name: 'A guerra de trezentos anos', index: 1, type: 'event' },
+  ] as never);
+
   await db.insert(locations).values([
     { id: id.location, storyId, name: 'O farol' },
     { id: id.otherLocation, storyId, name: 'A enseada' },
@@ -143,6 +241,43 @@ beforeEach(async () => {
       index: 2,
     },
   ] as never);
+  // The event is placed against the spine, which is what the anchor is for.
+  await db.insert(chapterAnchors).values({
+    id: id.chapterAnchor,
+    storyId,
+    chapterId: id.event,
+    order: 1,
+    startSceneId: id.sceneA,
+    startPosition: 'start',
+    startOffset: -300,
+    startOffsetUnit: 'years',
+    endSceneId: id.sceneB,
+    endPosition: 'end',
+  } as never);
+  // The only collection that references nothing: a calendar is a pure copy on import.
+  await db.insert(storyCalendars).values({
+    id: id.storyCalendar,
+    storyId,
+    name: 'Reckoning of the Realm',
+    isPrimary: true,
+    description: null,
+    definition: {
+      secondsPerMinute: 60,
+      minutesPerHour: 60,
+      hoursPerDay: 24,
+      daysPerWeek: 6,
+      weekdayNames: ['Sun', 'Moon', 'Ash', 'Oak', 'Iron', 'Rest'],
+      unitNames: { weeks: 'cycle' },
+      months: [
+        { name: 'Thaw', days: 30 },
+        { name: 'Harvest', days: 30 },
+      ],
+      eras: [{ name: 'Third Age', abbreviation: 'T.A.', startYear: 1 }],
+      moons: [{ name: 'Selene', periodDays: 29.5, referenceDay: 0 }],
+      seasons: [{ name: 'Cold', startDayOfYear: 1 }],
+    },
+    extraNotes: null,
+  } as never);
   await db.insert(choices).values({
     id: id.choice,
     storyId,
@@ -157,6 +292,62 @@ beforeEach(async () => {
     { id: id.characterA, storyId, name: 'Ilda' },
     { id: id.characterB, storyId, name: 'Bento' },
   ] as never);
+  // Pins live inside `content`; import must rewrite entityId after the character is remapped.
+  await db.insert(boards).values({
+    id: id.board,
+    storyId,
+    name: 'The lantern watch',
+    description: 'Who holds the light',
+    content: {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity',
+          x: 40,
+          y: 20,
+          entityType: 'Character',
+          entityId: id.characterA,
+          labelAtPin: '',
+        },
+        {
+          id: '01HJKMNP',
+          kind: 'note',
+          x: 200,
+          y: 20,
+          title: 'The wick',
+          body: 'Needs oil.',
+        },
+      ],
+      edges: [
+        {
+          id: '01QRSTVW',
+          from: '01ABCDEF',
+          to: '01HJKMNP',
+          directed: true,
+          label: 'tends',
+        },
+      ],
+    },
+  } as never);
+  // Map content uses foreign ids too, so the export/import path has to carry and rewrite it.
+  await db.insert(locationMaps).values({
+    id: id.locationMap,
+    storyId,
+    name: 'A costa',
+    content: {
+      images: [{ id: '01ABCDEF', galleryId: id.gallery, x: 0, y: 0, width: 800, height: 600 }],
+      nodes: [
+        {
+          id: '01HJKMNP',
+          locationId: id.location,
+          x: 50,
+          y: 70,
+          icon: 'location',
+          color: '#8BC34A',
+        },
+      ],
+    },
+  } as never);
   await db.insert(items).values({ id: id.item, storyId, name: 'A lanterna' } as never);
   await db.insert(choiceChecks).values({
     id: id.check,
@@ -344,6 +535,8 @@ async function childrenOf(storyId: string) {
     statStrengths: await rows(statStrengths),
     statRelations: await rows(statRelations),
     modes: await rows(modes),
+    storyBoards: await rows(boards),
+    storyLocationMaps: await rows(locationMaps),
   };
 }
 
@@ -454,6 +647,14 @@ describe('import of a package with one row of every kind', () => {
       after.characterRelations[0].character2Id,
     ]).toEqual([character.id, otherCharacter.id].sort());
     expect(after.characterScenes[0].characterId).toBe(character.id);
+
+    const boardPin = after.storyBoards[0].content.nodes.find(
+      (node: { kind: string }) => node.kind === 'entity',
+    );
+    expect(boardPin.entityId).toBe(character.id);
+    expect(boardPin.id).toBe('01ABCDEF');
+    expect(after.storyLocationMaps[0].content.images[0].galleryId).toBe(after.galleries[0].id);
+    expect(after.storyLocationMaps[0].content.nodes[0].locationId).toBe(location.id);
   });
 
   it('keeps every original id when the client asks to preserve them', async () => {
@@ -477,6 +678,35 @@ describe('import of a package with one row of every kind', () => {
     expect(after.galleryRelations[0].ownerId).toBe(id.location);
     expect(after.seeAlsoRelations[0].entityBId).toBe(id.location);
     expect(after.itemJourneys[0].newCharacterOwnerId).toBe(id.characterB);
+    expect(after.storyBoards[0].id).toBe(id.board);
+    expect(after.storyLocationMaps[0].id).toBe(id.locationMap);
+    expect(
+      after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
+        .entityId,
+    ).toBe(id.characterA);
+  });
+
+  it('re-exports every collection and reference after a preserve-id import', async () => {
+    const exported = await service.exportStory(id.story, OWNER);
+
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    await service.importStory(OWNER, JSON.parse(JSON.stringify(exported)), id.story);
+    const reExported = await service.exportStory(id.story, OWNER);
+
+    expect(comparableExport(reExported)).toEqual(comparableExport(exported));
+  });
+
+  it('re-exports the same portable shape after regenerating ids', async () => {
+    const exported = await service.exportStory(id.story, OWNER);
+    const importedId = await service.importStory(IMPORTER, JSON.parse(JSON.stringify(exported)));
+    const reExported = await service.exportStory(importedId, IMPORTER);
+
+    expect(comparableRemappedExport(reExported)).toEqual(comparableRemappedExport(exported));
   });
 
   it('makes the importer the owner of the favorites and the comments', async () => {

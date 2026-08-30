@@ -1,5 +1,6 @@
 import type { StoryTimelineLayout } from './storyTimelineLayout';
 import {
+  TIMELINE_EVENT_LANE_HEIGHT,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
@@ -9,8 +10,10 @@ import {
 interface StoryTimelineSvgOptions {
   title: string;
   subtitle: string;
-  labels: { gap: string; duration: string; compressed: string };
+  labels: { gap: string; duration: string; compressed: string; unanchored?: string };
   storyDuration: { title: string; value: string };
+  /** Write the scene name next to its number, so a pan across a wide bar still names it. */
+  showSceneNames?: boolean;
   colors: {
     background: string;
     surface: string;
@@ -24,7 +27,9 @@ export function renderStoryTimelineSvg(
   layout: StoryTimelineLayout,
   options: StoryTimelineSvgOptions,
 ) {
-  const startY = TIMELINE_PADDING + layout.headerHeight;
+  // The bands occupy their own strip between the header and the first scene row.
+  const bandsY = TIMELINE_PADDING + layout.headerHeight;
+  const startY = bandsY + layout.eventLaneCount * TIMELINE_EVENT_LANE_HEIGHT;
   const body = [
     `<rect width="${layout.width}" height="${layout.height}" fill="${options.colors.background}"/>`,
     `<text x="${TIMELINE_PADDING}" y="28" font-size="18" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
@@ -33,29 +38,57 @@ export function renderStoryTimelineSvg(
     `<rect x="${TIMELINE_PADDING + 88}" y="59" width="18" height="10" rx="3" fill="${options.colors.textSecondary}"/><text x="${TIMELINE_PADDING + 113}" y="68" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.labels.duration)}</text>`,
     `<text x="${TIMELINE_PADDING + 208}" y="68" font-size="10" fill="${options.colors.textSecondary}">⋯ ${escapeXml(options.labels.compressed)}</text>`,
   ];
+  const headerBaseY = bandsY;
   if (layout.scaleMode === 'proportional') {
     body.push(
-      `<line x1="${TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}" y1="${startY - 10}" x2="${layout.width - TIMELINE_PADDING}" y2="${startY - 10}" stroke="${options.colors.border}"/>`,
+      `<line x1="${TIMELINE_PADDING + TIMELINE_LABEL_WIDTH}" y1="${headerBaseY - 10}" x2="${layout.width - TIMELINE_PADDING}" y2="${headerBaseY - 10}" stroke="${options.colors.border}"/>`,
     );
     layout.rulerTicks.forEach((tick) =>
       body.push(
-        `<line x1="${tick.x}" y1="${startY - 15}" x2="${tick.x}" y2="${startY - 5}" stroke="${options.colors.textSecondary}"/>`,
-        `<text x="${tick.x}" y="${startY - 20}" font-size="10" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(tick.label)}</text>`,
+        `<line x1="${tick.x}" y1="${headerBaseY - 15}" x2="${tick.x}" y2="${headerBaseY - 5}" stroke="${options.colors.textSecondary}"/>`,
+        `<text x="${tick.x}" y="${headerBaseY - 20}" font-size="10" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(tick.label)}</text>`,
       ),
     );
   } else {
     body.push(
       // Below the legend, never on top of it: with few chapters the line rose to the header's 68px footer
       // and the two sentences overlapped.
-      `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_PADDING}" y="${Math.max(86, startY - 20 - layout.chapterLaneCount * 18)}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.storyDuration.title)}${options.storyDuration.value ? `: ${escapeXml(options.storyDuration.value)}` : ''}</text>`,
+      `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_PADDING}" y="${Math.max(86, headerBaseY - 20 - layout.chapterLaneCount * 18)}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(options.storyDuration.title)}${options.storyDuration.value ? `: ${escapeXml(options.storyDuration.value)}` : ''}</text>`,
     );
     layout.chapters.forEach((chapter) =>
       body.push(
-        `<line x1="${chapter.start}" y1="${startY - 10 - chapter.lane * 18}" x2="${chapter.end}" y2="${startY - 10 - chapter.lane * 18}" stroke="${chapter.color}" stroke-width="3"/>`,
-        `<text x="${(chapter.start + chapter.end) / 2}" y="${startY - 20 - chapter.lane * 18}" font-size="10" text-anchor="middle" fill="${chapter.color}">${escapeXml(chapter.durationLabel ?? '')}</text>`,
+        `<line x1="${chapter.start}" y1="${headerBaseY - 10 - chapter.lane * 18}" x2="${chapter.end}" y2="${headerBaseY - 10 - chapter.lane * 18}" stroke="${chapter.color}" stroke-width="3"/>`,
+        `<text x="${(chapter.start + chapter.end) / 2}" y="${headerBaseY - 20 - chapter.lane * 18}" font-size="10" text-anchor="middle" fill="${chapter.color}">${escapeXml(chapter.durationLabel ?? '')}</text>`,
       ),
     );
   }
+  /*
+   * The anchored containers, each as a band across the scenes it covers.
+   *
+   * Drawn before the rows so a band never sits on top of a scene bar, and labelled inside the band
+   * when it is wide enough and to its right when it is not - an event pinned to a single moment is a
+   * band four pixels wide, and a name centred in it would be unreadable.
+   */
+  layout.eventSpans.forEach((span) => {
+    const y = bandsY + span.lane * TIMELINE_EVENT_LANE_HEIGHT;
+    const midY = y + TIMELINE_EVENT_LANE_HEIGHT / 2;
+    if (span.instant) {
+      body.push(diamond(span.start, midY, 6, span.color));
+    } else {
+      const width = Math.max(4, span.end - span.start);
+      body.push(
+        `<rect x="${span.start}" y="${y + 3}" width="${width}" height="${TIMELINE_EVENT_LANE_HEIGHT - 8}" rx="4" fill="${span.color}" fill-opacity="${span.isEvent ? 0.34 : 0.18}" stroke="${span.color}" stroke-width="1" ${span.isEvent ? '' : 'stroke-dasharray="4 3"'}/>`,
+      );
+    }
+    // Only the first stretch is named; the rest are the same container resuming.
+    if (span.stretchIndex > 0) return;
+    const label = truncate(span.name, 28);
+    const width = Math.max(span.instant ? 0 : 4, span.end - span.start);
+    const fitsInside = !span.instant && width > label.length * 6;
+    body.push(
+      `<text x="${fitsInside ? span.start + width / 2 : span.end + 6}" y="${midY + 2}" font-size="10" font-weight="bold" text-anchor="${fitsInside ? 'middle' : 'start'}" fill="${span.color}">${escapeXml(label)}</text>`,
+    );
+  });
   layout.rows.forEach((row, index) => {
     const y = startY + index * TIMELINE_ROW_HEIGHT;
     const centerY = y + TIMELINE_ROW_HEIGHT / 2;
@@ -79,17 +112,23 @@ export function renderStoryTimelineSvg(
           `<text x="${TIMELINE_PADDING + TIMELINE_LABEL_WIDTH - 8}" y="${centerY + 4}" font-size="9" text-anchor="end" fill="${row.chapterColor}">${escapeXml(chapterLabel)}</text>`,
         ];
       })(),
-      `<text x="${row.barStart}" y="${y + 13}" font-size="9" text-anchor="middle" fill="${options.colors.textSecondary}">${row.sequence}</text>`,
+      row.sequence > 0
+        ? `<text x="${row.barStart}" y="${y + 13}" font-size="9" text-anchor="${options.showSceneNames ? 'start' : 'middle'}" fill="${options.colors.textSecondary}">${escapeXml(barCaption(row, options.showSceneNames))}</text>`
+        : '',
     );
     if (row.gapStart !== undefined && row.gapEnd !== undefined) {
       body.push(
         `<line x1="${row.gapStart}" y1="${centerY}" x2="${row.gapEnd}" y2="${centerY}" stroke="${row.chapterColor}" stroke-width="1.6" stroke-dasharray="5 4"/>`,
       );
     }
-    body.push(
-      `<rect x="${barX}" y="${centerY - 10}" width="${barWidth}" height="20" rx="5" fill="${row.chapterColor}" fill-opacity="0.82"/>`,
-    );
-    if (row.duration)
+    if (row.instant) {
+      body.push(diamond(row.barStart, centerY, 7, row.chapterColor));
+    } else {
+      body.push(
+        `<rect x="${barX}" y="${centerY - 10}" width="${barWidth}" height="20" rx="5" fill="${row.chapterColor}" fill-opacity="0.82"/>`,
+      );
+    }
+    if (row.duration && !row.instant)
       body.push(
         `<text x="${barX + barWidth / 2}" y="${centerY + 4}" font-size="9" text-anchor="middle" fill="#fff">${escapeXml(row.duration.label)}</text>`,
       );
@@ -98,7 +137,27 @@ export function renderStoryTimelineSvg(
         `<text x="${(row.gapStart! + row.gapEnd!) / 2}" y="${centerY - 13}" font-size="9" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(row.gap.label)}</text>`,
       );
   });
+  /*
+   * The containers no scene on screen could place, named along the bottom.
+   *
+   * Listed rather than dropped: an anchor pointing at a scene the reader filtered out is still a
+   * statement the writer made, and silently omitting it would read as the app having lost it.
+   */
+  if (layout.unanchoredNames.length > 0 && options.labels.unanchored)
+    body.push(
+      `<text x="${TIMELINE_PADDING}" y="${layout.height - TIMELINE_PADDING / 2}" font-size="9" fill="${options.colors.textSecondary}">${escapeXml(options.labels.unanchored)}: ${escapeXml(layout.unanchoredNames.join(', '))}</text>`,
+    );
   return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" font-family="Helvetica, Arial, sans-serif"><title>${escapeXml(options.title)}</title>${body.join('')}</svg>`;
+}
+
+function barCaption(row: StoryTimelineLayout['rows'][number], withName?: boolean) {
+  if (row.sequence <= 0) return '';
+  if (!withName) return String(row.sequence);
+  return truncate(`${row.sequence}. ${row.name}`, 36);
+}
+
+function diamond(x: number, y: number, size: number, color: string) {
+  return `<polygon points="${x},${y - size} ${x + size},${y} ${x},${y + size} ${x - size},${y}" fill="${color}"/>`;
 }
 
 function truncate(value: string, max: number) {

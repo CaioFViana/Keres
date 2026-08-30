@@ -8,7 +8,7 @@ import {
   STORY_OWNER_ONLY_FIELDS,
 } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
+import type { AppDrizzleClient } from '../../db';
 import type {
   AttributeValueInsert,
   ChapterInsert,
@@ -54,6 +54,9 @@ import type {
 import {
   attributeValues,
   chapters,
+  chapterAnchors,
+  boards,
+  storyCalendars,
   characterRelations,
   characters,
   characterScenes,
@@ -68,24 +71,22 @@ import {
   itemJourneys,
   items,
   locations,
+  locationMaps,
   locationRelations,
   noteRelations,
   notes,
-  operationLogs,
   plots,
   plotScenes,
   scenes,
   seeAlsoRelations,
   servers,
   stories,
-  storyPermissions,
   modes,
   statRelations,
   stats,
   statStrengths,
   storySchemaFields,
   suggestions,
-  syncConflicts,
   tagRelations,
   tags,
   worldRules,
@@ -109,6 +110,7 @@ import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import { createFavoriteService } from './FavoriteService';
 import { cloneStoryForLocalImport } from './cloneStoryForLocalImport';
+import { deleteStoryChildRows, purgeStoryLocally } from './storyLocalPurge';
 import type { LinearCompatibilityResult } from './storyTypeConversion';
 import {
   checkLinearCompatibility as checkLinearCompatibilityGraph,
@@ -134,51 +136,6 @@ import {
  * `locationRelations`/`attributeValues`/`storySchemaFields` were missing from this list until
  * now - could still have left orphaned child rows behind under the same ID).
  */
-async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string): Promise<void> {
-  await tx.delete(attributeValues).where(eq(attributeValues.storyId, storyId)).run();
-  await tx.delete(comments).where(eq(comments.storyId, storyId)).run();
-  await tx.delete(favorites).where(eq(favorites.storyId, storyId)).run();
-  await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
-  await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
-  await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
-  await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
-  await tx.delete(choiceChecks).where(eq(choiceChecks.storyId, storyId)).run();
-  await tx.delete(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, storyId)).run();
-  await tx.delete(choices).where(eq(choices.storyId, storyId)).run();
-  await tx.delete(effects).where(eq(effects.storyId, storyId)).run();
-  await tx.delete(galleryRelations).where(eq(galleryRelations.storyId, storyId)).run();
-  await tx.delete(galleries).where(eq(galleries.storyId, storyId)).run();
-  await tx.delete(itemJourneys).where(eq(itemJourneys.storyId, storyId)).run();
-  await tx.delete(items).where(eq(items.storyId, storyId)).run();
-  await tx.delete(locationRelations).where(eq(locationRelations.storyId, storyId)).run();
-  await tx.delete(locations).where(eq(locations.storyId, storyId)).run();
-  await tx.delete(noteRelations).where(eq(noteRelations.storyId, storyId)).run();
-  await tx.delete(notes).where(eq(notes.storyId, storyId)).run();
-  await tx.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
-  await tx.delete(plotScenes).where(eq(plotScenes.storyId, storyId)).run();
-  await tx.delete(plots).where(eq(plots.storyId, storyId)).run();
-  await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
-  await tx.delete(seeAlsoRelations).where(eq(seeAlsoRelations.storyId, storyId)).run();
-  await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
-  await tx.delete(statRelations).where(eq(statRelations.storyId, storyId)).run();
-  await tx.delete(statStrengths).where(eq(statStrengths.storyId, storyId)).run();
-  await tx.delete(stats).where(eq(stats.storyId, storyId)).run();
-  await tx.delete(modes).where(eq(modes.storyId, storyId)).run();
-  await tx.delete(storySchemaFields).where(eq(storySchemaFields.storyId, storyId)).run();
-  await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
-  await tx.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
-  await tx.delete(tagRelations).where(eq(tagRelations.storyId, storyId)).run();
-  await tx.delete(tags).where(eq(tags.storyId, storyId)).run();
-  await tx.delete(worldRules).where(eq(worldRules.storyId, storyId)).run();
-}
-
-async function purgeStoryLocally(db: AppDrizzleClient, storyId: string): Promise<void> {
-  await db.transaction(async (tx) => {
-    await deleteStoryChildRows(tx, storyId);
-    await tx.delete(stories).where(eq(stories.id, storyId)).run();
-  });
-}
-
 export interface StoryService {
   getAllStories(currentLocalUserId?: string): Promise<StorySelect[]>;
   getStoryById(storyId: string, currentLocalUserId?: string): Promise<StorySelect | undefined>;
@@ -1159,6 +1116,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyTags,
         storyTagRelations,
         storySuggestions,
+        storyChapterAnchors,
+        storyOwnCalendars,
+        storyBoards,
+        storyLocationMaps,
         storyCharacterRelations,
         storyCharacterScenes,
         storyGalleryItems,
@@ -1192,6 +1153,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.tags.findMany({ where: belongsToStory(tags) }),
         db.query.tagRelations.findMany({ where: belongsToStory(tagRelations) }),
         db.query.suggestions.findMany({ where: belongsToStory(suggestions) }),
+        db.query.chapterAnchors.findMany({ where: belongsToStory(chapterAnchors) }),
+        db.query.storyCalendars.findMany({ where: belongsToStory(storyCalendars) }),
+        db.query.boards.findMany({ where: belongsToStory(boards) }),
+        db.query.locationMaps.findMany({ where: belongsToStory(locationMaps) }),
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
         db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
         db.query.galleries.findMany({ where: belongsToStory(galleries) }),
@@ -1232,6 +1197,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           tags: storyTags,
           tagRelations: storyTagRelations,
           suggestions: storySuggestions,
+          chapterAnchors: storyChapterAnchors,
+          storyCalendars: storyOwnCalendars,
+          storyBoards,
+          storyLocationMaps,
           characterRelations: storyCharacterRelations,
           characterScenes: storyCharacterScenes,
           galleryItems: storyGalleryItems,
@@ -1506,6 +1475,83 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             deletedAt: null,
           };
           await tx.insert(suggestions).values(suggestionToInsert).run();
+        }
+
+        /*
+         * Timeline anchors. Optional in the package: one written before format V7 has none, and
+         * `migrateStoryExport` fills in the empty list rather than leaving it undefined - the
+         * `?? []` here is for a caller that skipped the migration.
+         */
+        /*
+         * The story's calendars. Nothing to remap - a calendar references no other row, which is
+         * the same property that makes it safe to carry between stories at all.
+         */
+        for (const calendar of fullStoryData.storyCalendars ?? []) {
+          await tx
+            .insert(storyCalendars)
+            .values({
+              ...calendar,
+              storyId: calendar.storyId,
+              createdAt: new Date(calendar.createdAt),
+              updatedAt: new Date(),
+              version: calendar.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
+        /*
+         * Boards. `content.entityId` has already been remapped by cloneStoryForLocalImport.
+         * Ghost pins (an id that was never in the package) stay as they were.
+         */
+        for (const board of fullStoryData.storyBoards ?? []) {
+          await tx
+            .insert(boards)
+            .values({
+              ...board,
+              storyId: board.storyId,
+              createdAt: new Date(board.createdAt),
+              updatedAt: new Date(),
+              version: board.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
+        /*
+         * Location maps. `content.locationId`/`content.galleryId` have already been remapped by
+         * cloneStoryForLocalImport; ids that were never in the package stay as they were.
+         */
+        for (const map of fullStoryData.storyLocationMaps ?? []) {
+          await tx
+            .insert(locationMaps)
+            .values({
+              ...map,
+              storyId: map.storyId,
+              createdAt: new Date(map.createdAt),
+              updatedAt: new Date(),
+              version: map.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
+        for (const anchor of fullStoryData.chapterAnchors ?? []) {
+          await tx
+            .insert(chapterAnchors)
+            .values({
+              ...anchor,
+              storyId: anchor.storyId,
+              createdAt: new Date(anchor.createdAt),
+              updatedAt: new Date(),
+              version: anchor.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
         }
 
         // 11. Process CharacterRelations

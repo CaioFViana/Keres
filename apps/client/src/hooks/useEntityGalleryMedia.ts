@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import type { GallerySelect } from '../db/schema';
 import { importPickedMediaAssets } from '../services/galleryMediaImport';
+import { createGalleryLink } from '../services/galleryLink';
 import { mediaFileService } from '../services/MediaFileService';
 import { createGalleryRelationService } from '../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../services/storymanagement/GalleryService';
@@ -70,32 +71,66 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     };
   }, [storyId, refresh]);
 
-  /** Opens the picker, imports what was chosen and links it all to this entity straight away. */
-  const addMedia = useCallback(async () => {
-    if (!services || !storyId || !userId || !ownerId) {
-      return null;
-    }
-
-    const assets = await mediaFileService.pick();
-    if (!assets) {
-      return null;
-    }
-
-    setImporting(true);
-    try {
-      const summary = await importPickedMediaAssets(services.gallery, storyId, userId, assets);
-      for (const galleryId of summary.galleryIds) {
+  const linkImported = useCallback(
+    async (galleryIds: string[]) => {
+      if (!services || !storyId || !userId || !ownerId) return;
+      for (const galleryId of galleryIds) {
         await services.relation.linkGalleryToOwner(userId, storyId, galleryId, {
           ownerId,
           ownerType,
         });
       }
-      await refresh();
-      return summary;
-    } finally {
-      setImporting(false);
-    }
-  }, [services, storyId, userId, ownerId, ownerType, refresh]);
+    },
+    [ownerId, ownerType, services, storyId, userId],
+  );
+
+  const importFromPicker = useCallback(
+    async (picker: () => Promise<Awaited<ReturnType<typeof mediaFileService.pick>>>) => {
+      if (!services || !storyId || !userId || !ownerId) return null;
+      const assets = await picker();
+      if (!assets) return null;
+      setImporting(true);
+      try {
+        const summary = await importPickedMediaAssets(services.gallery, storyId, userId, assets);
+        await linkImported(summary.galleryIds);
+        await refresh();
+        return summary;
+      } finally {
+        setImporting(false);
+      }
+    },
+    [linkImported, ownerId, refresh, services, storyId, userId],
+  );
+
+  const addPlayableMedia = useCallback(
+    () => importFromPicker(() => mediaFileService.pick()),
+    [importFromPicker],
+  );
+  const addDocuments = useCallback(
+    () => importFromPicker(() => mediaFileService.pickDocuments()),
+    [importFromPicker],
+  );
+  const addLink = useCallback(
+    async (url: string, title: string | null) => {
+      if (!services || !storyId || !userId || !ownerId) return null;
+      setImporting(true);
+      try {
+        const result = await createGalleryLink(services.gallery, storyId, userId, url, title);
+        if (!result) return null;
+        await linkImported([result.gallery.id]);
+        await refresh();
+        return {
+          added: result.duplicate ? 0 : 1,
+          duplicates: result.duplicate ? 1 : 0,
+          rejected: 0,
+          galleryIds: [result.gallery.id],
+        };
+      } finally {
+        setImporting(false);
+      }
+    },
+    [linkImported, ownerId, refresh, services, storyId, userId],
+  );
 
   /** It removes only the link with this entity; the medium carries on existing in the gallery. */
   const removeMedia = useCallback(
@@ -112,5 +147,15 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     [services, storyId, userId, ownerId, ownerType],
   );
 
-  return { media, loading, importing, storyId, addMedia, removeMedia, refresh };
+  return {
+    media,
+    loading,
+    importing,
+    storyId,
+    addPlayableMedia,
+    addDocuments,
+    addLink,
+    removeMedia,
+    refresh,
+  };
 }

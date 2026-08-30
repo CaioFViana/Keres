@@ -4,6 +4,7 @@ import { useDrizzle } from '../db';
 import type { StorySchemaFieldSelect } from '../db/schema';
 import { createStorySchemaFieldService } from '../services/storymanagement/StorySchemaFieldService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**
  * A Story Schema's custom fields for an `entityType` within a story, already sorted by `order` - used
@@ -32,8 +33,9 @@ export function useStorySchemaFields(
     }
   }, [drizzleDb, storyId, entityType]);
 
+  useEntityInitialLoad(fetchFields);
+
   useEffect(() => {
-    fetchFields();
     entityEventEmitter.on('story_schema_field_changed', fetchFields);
     return () => {
       entityEventEmitter.off('story_schema_field_changed', fetchFields);

@@ -20,6 +20,12 @@ interface SyncConflictState {
     chosenValues?: Record<string, any>,
   ) => Promise<void>;
   keepServer: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
+  keepServerAndCloneBoard: (
+    db: AppDrizzleClient,
+    conflictId: string,
+    currentUserId: string,
+    cloneName: string,
+  ) => Promise<void>;
   dismiss: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   reset: () => void;
 }
@@ -82,6 +88,26 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
       await createSyncConflictService(db).resolveKeepServer(conflictId);
     } catch (error) {
       console.log('useSyncConflictStore: failed to keep server values.', error);
+    } finally {
+      set((state) => ({
+        isResolving: false,
+        selectedConflictId:
+          state.selectedConflictId === conflictId ? null : state.selectedConflictId,
+      }));
+      await get().refresh(db);
+    }
+  },
+
+  keepServerAndCloneBoard: async (db, conflictId, currentUserId, cloneName) => {
+    set({ isResolving: true });
+    try {
+      await createSyncConflictService(db).resolveKeepServerAndCloneBoard(
+        conflictId,
+        currentUserId,
+        cloneName,
+      );
+    } catch (error) {
+      console.log('useSyncConflictStore: failed to clone the local board.', error);
     } finally {
       set((state) => ({
         isResolving: false,

@@ -3,11 +3,12 @@ import { fileURLToPath } from 'node:url';
 import { generateDocRegistry } from './lib/docRegistry';
 import { generateExampleStoriesIndex } from './lib/exampleStoriesIndex';
 import { generateMigrationsIndex } from './lib/migrationsIndex';
+import { generateShippedPacksIndex } from './lib/shippedPacksIndex';
 
 /**
- * The four indexes the app needs written before it compiles.
+ * The five indexes the app needs written before it compiles.
  *
- * Migrations, example stories, help pages and literary devices live in content folders, and Metro only
+ * Migrations, example stories, shipped packs, help pages and literary devices live in content folders, and Metro only
  * bundles what is statically imported - there is no folder to scan on the device. Each of these
  * generators scans the folder here, on the build machine, and writes a file with one `import` per item
  * found.
@@ -18,6 +19,7 @@ const clientRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 generateMigrationsIndex(clientRoot);
 generateExampleStoriesIndex(clientRoot);
+generateShippedPacksIndex(clientRoot);
 generateDocRegistry({
   contentDir: join(clientRoot, 'src/help/content'),
   outputFile: join(clientRoot, 'src/help/generated/registry.ts'),

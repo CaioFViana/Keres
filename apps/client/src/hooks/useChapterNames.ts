@@ -3,6 +3,7 @@ import { useDrizzle } from '../db';
 import type { SceneSelect } from '../db/schema';
 import { createChapterService } from '../services/storymanagement/ChapterService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**
  * A scene's chapter name, for the lists that show scenes outside their own chapter.
@@ -14,7 +15,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  */
 export function useChapterNames(
   scenes: Pick<SceneSelect, 'storyId'>[],
-): (chapterId: string) => string | undefined {
+): (chapterId: string | null | undefined) => string | undefined {
   const drizzleDb = useDrizzle();
   const storyId = scenes[0]?.storyId;
   const [names, setNames] = useState<Map<string, string>>(new Map());
@@ -33,11 +34,15 @@ export function useChapterNames(
     }
   }, [drizzleDb, storyId]);
 
+  useEntityInitialLoad(reload);
+
   useEffect(() => {
-    reload();
     entityEventEmitter.on('chapter_changed', reload);
     return () => entityEventEmitter.off('chapter_changed', reload);
   }, [reload]);
 
-  return useCallback((chapterId: string) => names.get(chapterId), [names]);
+  return useCallback(
+    (chapterId: string | null | undefined) => (chapterId ? names.get(chapterId) : undefined),
+    [names],
+  );
 }

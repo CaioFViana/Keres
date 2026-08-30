@@ -31,6 +31,7 @@ import { useDrizzle } from '../../db';
 import type { SceneSelect } from '../../db/schema'; // For available scenes
 import type { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -357,10 +358,11 @@ const CharacterDetailScreen = () => {
     [character?.storyId, fetchAllLocationsInStory],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchCharacter);
+
+  // Keep subscription changes from ever triggering a fresh entity load.
   useEffect(() => {
     if (characterServiceRef.current) {
-      fetchCharacter();
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for character relation changes
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
@@ -378,8 +380,6 @@ const CharacterDetailScreen = () => {
       };
     }
   }, [
-    characterId,
-    fetchCharacter,
     handleCharacterChange,
     handleCharacterRelationChange,
     handleCharacterSceneChange,
@@ -587,6 +587,8 @@ const CharacterDetailScreen = () => {
       {(() => {
         const commentableFieldProps = {
           storyId: character.storyId,
+          // Mentions of other entities in this one's text become links; it never links to itself.
+          mentionSourceId: character.id,
           canComment,
           isStoryOwner,
           currentUserId,
@@ -761,7 +763,7 @@ const CharacterDetailScreen = () => {
             data={statData}
             notation={(selectedStory?.statNotation ?? 'letter') as StatNotation}
             onCompare={(modeId) =>
-              navigation.navigate('StatsDrawer', {
+              navigation.navigate('CustomizationStack', {
                 screen: 'StatComparison',
                 params: { characterId, modeId: modeId ?? undefined },
               })

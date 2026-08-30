@@ -26,6 +26,7 @@ const SETTINGS = {
   localUsername: 'ana',
   language: 'pt-BR',
   use24HourTime: true,
+  dateDisplayFormat: 'dmy' as const,
   showContextualHelp: false,
 };
 
@@ -49,6 +50,7 @@ describe('initializeSettings', () => {
 
     expect(store()).toMatchObject({ userId: 'local-user-1', username: 'ana', language: 'pt-BR' });
     expect(store().showContextualHelp).toBe(false);
+    expect(store().dateDisplayFormat).toBe('dmy');
     expect(settings).toEqual(SETTINGS);
   });
 
@@ -109,6 +111,17 @@ describe('setLanguage', () => {
 
     await expect(store().setLanguage(db, 'en')).rejects.toThrow();
     expect(store().language).toBeNull();
+  });
+});
+
+describe('setDateDisplayFormat', () => {
+  it('persists the chosen Gregorian date presentation before updating the UI state', async () => {
+    await store().setDateDisplayFormat(db, 'mdy');
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      dateDisplayFormat: 'mdy',
+    });
+    expect(store().dateDisplayFormat).toBe('mdy');
   });
 });
 

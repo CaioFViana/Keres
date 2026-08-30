@@ -27,6 +27,7 @@ describe('preload bridge', () => {
       deleteFile: expect.any(Function),
       deleteDirectory: expect.any(Function),
       listAllFiles: expect.any(Function),
+      openInOs: expect.any(Function),
     });
   });
 
@@ -39,6 +40,7 @@ describe('preload bridge', () => {
     await media.deleteFile('media/story-1/a.png');
     await media.deleteDirectory('media/story-1');
     await media.listAllFiles();
+    await media.openInOs('media/story-1/a.png');
 
     expect(electronMocks.invoke.mock.calls).toEqual([
       ['media:write', 'media/story-1/a.png', bytes],
@@ -46,6 +48,7 @@ describe('preload bridge', () => {
       ['media:delete-file', 'media/story-1/a.png'],
       ['media:delete-directory', 'media/story-1'],
       ['media:list-all'],
+      ['media:open', 'media/story-1/a.png'],
     ]);
   });
 

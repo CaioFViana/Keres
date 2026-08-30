@@ -28,6 +28,7 @@ import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -432,10 +433,11 @@ const LocationDetailsScreen = () => {
     [userId, t],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchLocationDetails);
+
+  // Keep subscription churn independent from the location's initial load.
   useEffect(() => {
     if (locationServiceRef.current) {
-      fetchLocationDetails();
       entityEventEmitter.on('location_changed', handleLocationChange);
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange);
@@ -455,8 +457,6 @@ const LocationDetailsScreen = () => {
       };
     }
   }, [
-    locationId,
-    fetchLocationDetails,
     handleLocationChange,
     handleCharacterChange,
     handleCharacterSceneChange,
@@ -537,6 +537,8 @@ const LocationDetailsScreen = () => {
       {(() => {
         const commentableFieldProps = {
           storyId: location.storyId,
+          // Mentions of other entities in this one's text become links; it never links to itself.
+          mentionSourceId: location.id,
           canComment,
           isStoryOwner,
           currentUserId,

@@ -1,3 +1,4 @@
+import { AttributeType } from '@keres/shared';
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Platform } from 'react-native';
@@ -89,7 +90,7 @@ export async function runSqliteWebSmokeProbe(database: SQLiteDatabase): Promise<
       entityType: 'Character',
       name: 'Sobrou de uma importação interrompida',
       key: 'stale-field',
-      type: 'text',
+      type: AttributeType.TEXT,
       isRequired: false,
       order: 0,
       createdAt: new Date(),

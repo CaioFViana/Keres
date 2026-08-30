@@ -139,7 +139,7 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
             and(
               eq(attributeValues.storyId, storyId),
               eq(attributeValues.isDeleted, false),
-              ne(storySchemaFields.type, 'entity'),
+              ne(storySchemaFields.type, AttributeType.ENTITY),
               sql`${attributeValues.value} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
             ),
           )
@@ -209,7 +209,7 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           .where(
             and(
               eq(storySchemaFields.storyId, storyId),
-              eq(storySchemaFields.type, 'entity'),
+              eq(storySchemaFields.type, AttributeType.ENTITY),
               eq(storySchemaFields.isDeleted, false),
             ),
           )

@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Escolhas. Esse menu só está disponível em histórias ramificadas.',
+        'Abra Menu da história › Elementos narrativos. As escolhas só aparecem ali em histórias ramificadas.',
         'Toque em + para criar uma escolha, ou abra uma existente para editar.',
         'Escolha a Cena de origem e a Cena de destino, escreva o Texto e acrescente Anotações da escolha se precisar.',
         'Salve. Depois de salvar uma nova escolha, você pode adicionar etiquetas, notas, Veja também, condições e efeitos.',

@@ -103,6 +103,7 @@ const ColdInstallScreen = () => {
       language: selectedLanguage || 'en', // Default to English if not selected
       darkMode: false, // Default to light mode
       use24HourTime: true, // Default to 24-hour clock
+      dateDisplayFormat: 'iso',
       showContextualHelp: true,
       suggestLiteraryDevices: true,
     });

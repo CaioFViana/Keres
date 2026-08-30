@@ -1,8 +1,9 @@
 /**
  * Version of the story export format (`FullStoryExportType`), independent of the app's version
- * number (client/api/package.json are not a single source of truth today).
+ * number.
  *
- * It is only bumped manually when an official release changes the exported package's format - not on
- * every commit/build.
+ * The number itself lives in `metadata/ReleaseVersions.ts` alongside the other constants a release
+ * bumps by hand, so the release checklist has one file to read. It is re-exported here because this
+ * is where importers expect to find it, and where the format it describes is defined.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 6;
+export { CURRENT_STORY_FORMAT_VERSION } from '../metadata/ReleaseVersions';

@@ -17,6 +17,8 @@ export interface LocationGraphSvgOptions {
   title: string;
   /** Context line under the title (counts). */
   subtitle: string;
+  /** Locations drawn with an emphasised outline - the ones the focus filter selected. */
+  highlightedNodeIds?: string[];
   labels: {
     isolated: string;
     contains: string;
@@ -50,6 +52,7 @@ export function renderLocationGraphMapSvg(
   ).length;
   const headerHeight = HEADER_TOP + 44 + legendRows * LEGEND_ROW_HEIGHT + 8;
   const totalHeight = headerHeight + layout.height;
+  const highlightedIds = new Set(options.highlightedNodeIds ?? []);
 
   const body = [
     `<rect x="0" y="0" width="${canvasWidth}" height="${totalHeight}" fill="${options.colors.background}"/>`,
@@ -57,7 +60,7 @@ export function renderLocationGraphMapSvg(
     `<g transform="translate(0 ${round(headerHeight)})">`,
     // Edges first: passing under the nodes keeps a line from striking through a Location's name.
     ...layout.edges.map((edge) => renderEdge(edge, options)),
-    ...layout.nodes.map((node) => renderNode(node, options)),
+    ...layout.nodes.map((node) => renderNode(node, options, highlightedIds)),
     '</g>',
   ].join('\n');
 
@@ -121,12 +124,21 @@ function renderEdge(edge: LocationGraphEdge, options: LocationGraphSvgOptions): 
   return `<path d="${edge.path}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-opacity="${opacity}"${dash}/>`;
 }
 
-function renderNode(node: LocationGraphNode, options: LocationGraphSvgOptions): string {
+function renderNode(
+  node: LocationGraphNode,
+  options: LocationGraphSvgOptions,
+  highlightedIds: Set<string>,
+): string {
   const fill = node.isIsolated ? options.colors.surface : options.colors.primaryContainer;
   const dash = node.isIsolated ? ' stroke-dasharray="4 3"' : '';
+  const highlighted = highlightedIds.has(node.id);
+  // The focused locations keep their own outline (same as the interactive canvas), so the exported
+  // file shows the same selection the screen does.
+  const stroke = highlighted ? options.colors.primary : options.colors.border;
+  const strokeWidth = highlighted ? 2.5 : 1.2;
 
   const parts = [
-    `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="8" fill="${fill}" stroke="${options.colors.border}" stroke-width="1.2"${dash}/>`,
+    `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${dash}/>`,
   ];
 
   const centerX = node.x + node.width / 2;

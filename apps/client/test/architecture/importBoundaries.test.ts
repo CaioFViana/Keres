@@ -55,6 +55,26 @@ function valueImportsOf(path: string): string[] {
     .filter((target): target is string => target !== null);
 }
 
+/** Bodies of the simple `useEffect(() => { ... })` form used by screen data lifecycles. */
+function effectBodies(source: string): string[] {
+  const marker = 'useEffect(() => {';
+  const bodies: string[] = [];
+  let start = 0;
+  while (true) {
+    const effectStart = source.indexOf(marker, start);
+    if (effectStart === -1) return bodies;
+    const bodyStart = effectStart + marker.length;
+    let depth = 1;
+    let cursor = bodyStart;
+    for (; cursor < source.length && depth > 0; cursor += 1) {
+      if (source[cursor] === '{') depth += 1;
+      else if (source[cursor] === '}') depth -= 1;
+    }
+    if (depth === 0) bodies.push(source.slice(bodyStart, cursor - 1));
+    start = cursor;
+  }
+}
+
 const sourceFiles = listSourceFiles(SOURCE_ROOT);
 const relativeOf = (path: string) => relative(SOURCE_ROOT, path).replace(/\\/g, '/');
 const graph = new Map(sourceFiles.map((path) => [path, valueImportsOf(path)]));
@@ -81,6 +101,33 @@ const COMPONENTS_THAT_STILL_FETCH = [
   'components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet.tsx',
   'components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet.tsx',
 ];
+
+/**
+ * Detail screens own their initial fetch, but must do it through the lifecycle hook. This keeps
+ * the fetch independent from live-event subscriptions, preventing a refresh from recreating the
+ * listener and recursively requesting the same entity.
+ */
+const ENTITY_DETAIL_SCREEN =
+  /^screens\/(?:characters|items|itemJourneys|locations|notes|tags|worldrules)\/.*Detail.*Screen\.tsx$|^screens\/narrative-elements\/(?:scenes|chapters|choices)\/.*Detail.*Screen\.tsx$/;
+
+/** Shared lifecycle owners that refresh visible data from local entity events. */
+const SHARED_REFRESH_LIFECYCLE_OWNERS = [
+  'components/common/forms/CustomAttributeFields/CustomAttributeDetailFields.tsx',
+  'components/features/app/SyncInitializer.tsx',
+  'components/features/comments/CommentList/CommentList.tsx',
+  'components/features/favorites/FavoritedByList/FavoritedByList.tsx',
+  'components/features/operation-log/OperationLogList/OperationLogList.tsx',
+  'hooks/useChapterNames.ts',
+  'hooks/useEntityComments.ts',
+  'hooks/useSeeAlsoRelations.ts',
+  'hooks/useStoryCalendar.ts',
+  'hooks/useStoryPlots.ts',
+  'hooks/useStoryRole.ts',
+  'hooks/useStorySchemaFields.ts',
+  'hooks/useStoryStats.ts',
+  'mentions/MentionMatcherProvider.tsx',
+  'screens/enterstack/FriendDetailScreen.tsx',
+] as const;
 
 /** Components that draw story content - the basis of the site's static showcase. */
 const PRESENTATIONAL_SEEDS = [
@@ -142,5 +189,44 @@ describe('import boundaries', () => {
 
     const reached = [...seen].map(relativeOf).sort();
     expect(reached.filter((path) => /^(db|services|state)\//.test(path))).toEqual([]);
+  });
+
+  it('never combines an entity subscription with an initial load in one screen effect', () => {
+    const screens = sourceFiles.filter((path) => ENTITY_DETAIL_SCREEN.test(relativeOf(path)));
+    const offenders = screens
+      .filter((path) => {
+        const source = readFileSync(path, 'utf8');
+        // This deliberately checks the body of one `useEffect`, not merely a file containing both
+        // words. A screen may load data and subscribe to events, but those lifecycles must be in
+        // different effects (or use `useEntityInitialLoad` + `useEntityEventSubscriptions`).
+        return effectBodies(source).some((body) =>
+          // An initial loader starts a statement. Calls nested inside an event handler are the
+          // intended refresh path and must remain allowed.
+          /(?:^|\n)\s*(?:void\s+)?(?:fetch|load|reload|refresh)\w*\([^)]*\);[\s\S]{0,900}entityEventEmitter\.on/.test(
+            body,
+          ),
+        );
+      })
+      .map(relativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('uses the entity initial-load lifecycle in every protected refresh owner', () => {
+    const missingDetailLifecycle = sourceFiles
+      .filter((path) => ENTITY_DETAIL_SCREEN.test(relativeOf(path)))
+      .filter((path) => !readFileSync(path, 'utf8').includes('useEntityInitialLoad('))
+      .map(relativeOf)
+      .sort();
+
+    const missingSharedLifecycle = SHARED_REFRESH_LIFECYCLE_OWNERS.filter(
+      (path) => !readFileSync(join(SOURCE_ROOT, path), 'utf8').includes('useEntityInitialLoad('),
+    ).sort();
+
+    expect({ missingDetailLifecycle, missingSharedLifecycle }).toEqual({
+      missingDetailLifecycle: [],
+      missingSharedLifecycle: [],
+    });
   });
 });

@@ -1,6 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { APP_RELEASE, canTalkToServer } from '@keres/shared';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
@@ -204,6 +206,28 @@ const ServerRegistrationScreen = () => {
       ) {
         AppAlert.alert(t('error'), t('invalid_keres_server'));
         setLoading(false); // Ensure loading is reset on error
+        return;
+      }
+
+      /**
+       * A server that cannot speak this build's synchronization protocol is refused here rather
+       * than after the account exists.
+       *
+       * The server refuses the sync itself - that is the half which protects old apps, since they
+       * do not have this check - but finding out at registration is the difference between "this
+       * will not work, here is why" and an account that appears to work until the first sync fails
+       * forever. It gates on the protocol, not the release: two versions that never changed the
+       * wire stay compatible, which is the whole reason the two numbers are separate.
+       */
+      if (!canTalkToServer(checkResponse.data.syncProtocol)) {
+        AppAlert.alert(
+          t('error'),
+          t('server_version_mismatch', {
+            serverVersion: checkResponse.data.version,
+            appVersion: APP_RELEASE.version,
+          }),
+        );
+        setLoading(false);
         return;
       }
       // 2. Auth (/auth/login or /auth/register) - only for new registration or if password is provided for update.
@@ -687,31 +711,34 @@ const ServerRegistrationScreen = () => {
         </>
       )}
 
-      <Button
-        onPress={mode === 'recover' ? handleRecover : handleSave}
-        style={styles.registerButton}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={colors.onPrimary} />
-        ) : serverId ? (
-          t('update_server')
-        ) : mode === 'recover' ? (
-          t('reset_password_button')
-        ) : mode === 'register' ? (
-          t('create_account')
-        ) : (
-          t('register_server')
-        )}
-      </Button>
-
-      {serverId && (
+      {serverId ? (
+        <FormActions stackOnCompact>
+          <Button onPress={handleSave} disabled={loading}>
+            {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
+          </Button>
+          <Button
+            onPress={handleDeleteServer}
+            style={{ backgroundColor: colors.error }}
+            disabled={loading}
+          >
+            {t('delete_server')}
+          </Button>
+        </FormActions>
+      ) : (
         <Button
-          onPress={handleDeleteServer}
-          style={[styles.registerButton, styles.deleteButton, { backgroundColor: colors.error }]}
+          onPress={mode === 'recover' ? handleRecover : handleSave}
+          style={styles.registerButton}
           disabled={loading}
         >
-          {t('delete_server')}
+          {loading ? (
+            <ActivityIndicator color={colors.onPrimary} />
+          ) : mode === 'recover' ? (
+            t('reset_password_button')
+          ) : mode === 'register' ? (
+            t('create_account')
+          ) : (
+            t('register_server')
+          )}
         </Button>
       )}
 

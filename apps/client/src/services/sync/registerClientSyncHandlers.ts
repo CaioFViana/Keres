@@ -1,6 +1,9 @@
 import { AttributeValueClientSyncHandler } from '../entity-sync-handlers/AttributeValueClientSyncHandler';
 import { ChapterClientSyncHandler } from '../entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from '../entity-sync-handlers/CharacterClientSyncHandler';
+import { ChapterAnchorClientSyncHandler } from '../entity-sync-handlers/ChapterAnchorClientSyncHandler';
+import { BoardClientSyncHandler } from '../entity-sync-handlers/BoardClientSyncHandler';
+import { StoryCalendarClientSyncHandler } from '../entity-sync-handlers/StoryCalendarClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from '../entity-sync-handlers/CharacterRelationClientSyncHandler';
 import { CharacterSceneClientSyncHandler } from '../entity-sync-handlers/CharacterSceneClientSyncHandler';
 import { ChoiceCheckClientSyncHandler } from '../entity-sync-handlers/ChoiceCheckClientSyncHandler';
@@ -15,6 +18,7 @@ import { GalleryRelationClientSyncHandler } from '../entity-sync-handlers/Galler
 import { ItemClientSyncHandler } from '../entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from '../entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from '../entity-sync-handlers/LocationClientSyncHandler';
+import { LocationMapClientSyncHandler } from '../entity-sync-handlers/LocationMapClientSyncHandler';
 import { LocationRelationClientSyncHandler } from '../entity-sync-handlers/LocationRelationClientSyncHandler';
 import { NoteClientSyncHandler } from '../entity-sync-handlers/NoteClientSyncHandler';
 import { NoteRelationClientSyncHandler } from '../entity-sync-handlers/NoteRelationClientSyncHandler';
@@ -43,8 +47,12 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new NoteClientSyncHandler(),
     new NoteRelationClientSyncHandler(),
     new WorldRuleClientSyncHandler(),
+    new ChapterAnchorClientSyncHandler(),
+    new StoryCalendarClientSyncHandler(),
+    new BoardClientSyncHandler(),
     new CharacterRelationClientSyncHandler(),
     new LocationClientSyncHandler(),
+    new LocationMapClientSyncHandler(),
     new LocationRelationClientSyncHandler(),
     new ChapterClientSyncHandler(),
     new CharacterSceneClientSyncHandler(),

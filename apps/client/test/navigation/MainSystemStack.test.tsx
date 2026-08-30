@@ -50,11 +50,22 @@ jest.mock('@react-navigation/native', () => ({
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
-  return { __esModule: true, useTranslation: () => ({ t }) };
+  return {
+    __esModule: true,
+    useTranslation: () => ({ t }),
+    // `utils/i18n.ts` calls `i18n.use(initReactI18next)`; without the export the
+    // module crashes with "undefined module" whenever a screen pulls in `syncUtils`.
+    initReactI18next: { type: '3rdParty', init: jest.fn() },
+  };
 });
 jest.mock('../../src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { surface: '#fff', text: '#111', primary: '#00f' } }),
+  // `ColorPickerModal` (pulled in by the location map node sheet) calls these at module load.
+  hsvToRgb: (h: number, s: number, v: number) => ({ r: 0, g: 0, b: 0 }),
+  rgbToHex: () => '#000000',
+  hexToRgb: () => ({ r: 0, g: 0, b: 0 }),
+  rgbToHsv: () => ({ h: 0, s: 0, v: 0 }),
 }));
 jest.mock('../../src/state/storyStore', () => ({
   __esModule: true,
@@ -86,7 +97,10 @@ jest.mock(
 );
 jest.mock(
   '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
-  () => ({ __esModule: true, default: () => null }),
+  () => {
+    const { View } = jest.requireActual('react-native');
+    return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
+  },
 );
 jest.mock(
   '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay',
@@ -152,6 +166,14 @@ jest.mock('../../src/screens/gallery/GalleryDetailScreen', () => ({
   default: () => null,
 }));
 jest.mock('../../src/screens/gallery/GalleryListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/boards/BoardListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/boards/BoardCanvasScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -232,6 +254,42 @@ jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () =>
   default: () => null,
 }));
 jest.mock('../../src/screens/narrative-elements/scenes/SceneFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatLadderScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatComparisonScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/stats/StatRankingScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/customization/CustomizationIndexScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storycalendars/StoryAgendaScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storycalendars/StoryCalendarListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storycalendars/StoryCalendarFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -322,7 +380,8 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(21);
+  // Three entries (story schema, suggestions, stats) became one: the Customization drawer.
+  expect(mockDrawerScreens).toHaveLength(20);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -334,10 +393,40 @@ it('configures a compact, front drawer and preserves the current story as its da
   });
 
   expect(navigator).toMatchObject({ defaultStatus: 'closed', backBehavior: 'history' });
-  expect(options).toMatchObject({ drawerType: 'front', swipeEnabled: true });
+  expect(options).toMatchObject({
+    drawerType: 'front',
+    swipeEnabled: true,
+    swipeEdgeWidth: 28,
+    swipeMinDistance: 24,
+  });
   expect(options.drawerStyle).toMatchObject({ minWidth: 280, width: 360 });
   expect(drawerScreen('MainDashboard')?.options).toMatchObject({ title: 'A jornada' });
   expect(drawerScreen('ChoicesStack')).toBeUndefined();
+});
+
+it('keeps both back and menu controls on a nested compact screen', async () => {
+  mockResponsiveLayout.isCompact = true;
+  mockResponsiveLayout.isWide = false;
+  mockResponsiveLayout.width = 500;
+  await renderDrawer();
+  const navigator = mockDrawerNavigatorProps.at(-1);
+  const options = navigator?.screenOptions({
+    navigation: { getState: () => ({ routes: [] }) },
+    route: {
+      key: 'items-key',
+      name: 'ItemsStack',
+      state: {
+        type: 'stack',
+        key: 'items-stack',
+        index: 1,
+        routes: [{ name: 'ItemList' }, { name: 'ItemDetail' }],
+      },
+    },
+  });
+  const { getByTestId } = await render(<>{options.headerLeft()}</>);
+
+  expect(getByTestId('navigation-back-button')).toBeTruthy();
+  expect(getByTestId('drawer-menu-button')).toBeTruthy();
 });
 
 it.each([
@@ -349,10 +438,10 @@ it.each([
   ['WorldRulesStack', 'WorldRules'],
   ['NotesStack', 'Notes'],
   ['GalleryStack', 'GalleryList'],
-  ['StorySchemaStack', 'StorySchemaList'],
+  ['BoardsStack', 'BoardList'],
+  ['CustomizationStack', 'CustomizationIndex'],
   ['CommentsStack', 'CommentsList'],
   ['OperationLogStack', 'OperationLog'],
-  ['StatsDrawer', 'StatList'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {

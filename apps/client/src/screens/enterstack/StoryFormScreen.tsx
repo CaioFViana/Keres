@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -14,6 +15,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -64,6 +67,10 @@ const StoryFormScreen = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Packs are offered only while creating: applying one to an existing story would mean writing its
+  // contents as ordinary edits, which is exactly the operation-log flood the design avoids.
+  const [packs, setPacks] = useState<PackSummary[]>([]);
+  const [selectedPackIds, setSelectedPackIds] = useState<string[]>([]);
 
   useEffect(() => {
     const loadStory = async () => {
@@ -99,6 +106,14 @@ const StoryFormScreen = () => {
     };
     loadStory();
   }, [storyId, storyService, userId, t, applyTheme]);
+
+  useEffect(() => {
+    if (storyId) return;
+    createPackService(drizzleDb)
+      .listPacks()
+      .then(setPacks)
+      .catch((err) => console.error('StoryFormScreen: failed to list packs.', err));
+  }, [drizzleDb, storyId]);
 
   const handleSave = async () => {
     if (!canEdit) return;
@@ -150,8 +165,18 @@ const StoryFormScreen = () => {
           favoriteBehavior,
           extraNotes,
           theme,
+          timelineEpochDay: null,
+          timelineEpochSeconds: null,
           normalizeSceneTiming: false,
           allowReaderComments: false,
+          // On for a new story, unlike the switches around it: linking mentions makes no judgement
+          // about the writer's work, it only saves a tap while reading. It is also invisible until
+          // the story has both entities and prose, so it cannot surprise anyone early. Existing
+          // stories stay off - see migration 0016.
+          autoLinkMentions: true,
+          // Off, like every existing story: whether an element must be referenced somewhere is the
+          // writer's judgement. Story Analysis keeps reporting broken references either way.
+          completenessChecks: false,
           // The stats system is turned on later, in Story Settings: a new story
           // never comes into the world with it.
           statSystem: false,
@@ -159,7 +184,27 @@ const StoryFormScreen = () => {
           lastOperationLog: 0,
           lastServerSyncedLog: 0,
         };
-        await storyService().createStory(userId, storyData);
+        if (selectedPackIds.length > 0) {
+          const packService = createPackService(drizzleDb);
+          const conflicts = await packService.findConflicts(selectedPackIds);
+          if (conflicts.length > 0) {
+            // Named here rather than left to the import's integrity check, whose message describes a
+            // corrupt file and not two packs somebody chose.
+            AppAlert.alert(
+              t('packs_conflict_title'),
+              conflicts
+                .map((conflict) =>
+                  t(`packs_conflict_${conflict.kind}`, { detail: conflict.detail }),
+                )
+                .join('\n'),
+            );
+            setLoading(false);
+            return;
+          }
+          await packService.createStoryWithPacks(userId, storyData, selectedPackIds);
+        } else {
+          await storyService().createStory(userId, storyData);
+        }
         AppAlert.alert(t('success'), t('story_created_successfully'));
       }
       navigation.goBack(); // Go back to the previous screen (StorySelection)
@@ -281,19 +326,43 @@ const StoryFormScreen = () => {
         editable={canEdit}
       />
 
-      <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
-        {storyId ? t('update_story') : t('create_story')}
-      </Button>
-
-      {storyId && (
-        <Button
-          onPress={handleDelete}
-          style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
-          disabled={!canManageStoryPolicy}
-        >
-          {t('delete_story_title')}
-        </Button>
+      {!storyId && (
+        <>
+          <Text style={[styles.sectionLabel, { color: colors.text }]}>
+            {t('packs_apply_title')}
+          </Text>
+          <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+            {t('packs_apply_hint')}
+          </Text>
+          {packs.length > 0 ? (
+            <MultiSelectPill
+              options={packs.map((pack) => ({ label: pack.name, value: pack.id }))}
+              selectedValues={selectedPackIds}
+              onSelectionChange={setSelectedPackIds}
+              placeholder={t('packs_apply_title')}
+            />
+          ) : (
+            <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+              {t('packs_apply_none')}
+            </Text>
+          )}
+        </>
       )}
+
+      <FormActions stackOnCompact style={styles.saveButton}>
+        <Button onPress={handleSave} disabled={!canEdit}>
+          {storyId ? t('update_story') : t('create_story')}
+        </Button>
+        {storyId && (
+          <Button
+            onPress={handleDelete}
+            style={{ backgroundColor: colors.error }}
+            disabled={!canManageStoryPolicy}
+          >
+            {t('delete_story_title')}
+          </Button>
+        )}
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };
@@ -302,6 +371,12 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     padding: 20,
     flexGrow: 1,
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 4,
   },
   title: {
     fontSize: 24,

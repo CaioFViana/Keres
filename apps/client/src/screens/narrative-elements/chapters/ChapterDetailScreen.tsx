@@ -8,22 +8,30 @@ import {
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
+import ConvertContainerModal from '@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { ChapterType } from '@keres/shared';
+import { AppAlert } from '@/src/utils/AppAlert';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { useChapterStore } from '@/src/state/chapterStore';
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
 import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
@@ -81,6 +89,8 @@ const ChapterDetailScreen = () => {
 
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
   const { canEdit } = useStoryRole(chapter?.storyId);
+  const { definition: calendar } = useStoryCalendar();
+  const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
   const {
     commentsByField,
     canComment,
@@ -203,10 +213,11 @@ const ChapterDetailScreen = () => {
     [selectedStory?.id, fetchAllLocationsInStory],
   );
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
+  useEntityInitialLoad(fetchChapter);
+
+  // Re-subscribing after a callback changes must not reload the chapter.
   useEffect(() => {
     if (chapterServiceRef.current) {
-      fetchChapter();
       entityEventEmitter.on('chapter_changed', handleChapterChange);
       entityEventEmitter.on('scene_changed', handleSceneChange); // Listen for scene changes
       entityEventEmitter.on('location_changed', handleLocationChange); // Listen for location changes
@@ -217,7 +228,7 @@ const ChapterDetailScreen = () => {
         entityEventEmitter.off('location_changed', handleLocationChange); // Cleanup listener
       };
     }
-  }, [chapterId, fetchChapter, handleChapterChange, handleSceneChange, handleLocationChange]);
+  }, [handleChapterChange, handleSceneChange, handleLocationChange]);
 
   useEffect(() => {
     if (chapter) {
@@ -226,17 +237,57 @@ const ChapterDetailScreen = () => {
     }
   }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 
+  const [isConvertVisible, setIsConvertVisible] = useState(false);
+  const [spine, setSpine] = useState<{ id: string; name: string }[]>([]);
+  const convertChapterType = useChapterStore((state) => state.convertChapterType);
+
+  /** The spine as it stands, so the modal can offer the slots a returning chapter may take. */
+  useEffect(() => {
+    if (!isConvertVisible || !chapter) return;
+    createChapterService(drizzleDb)
+      .getAllByStoryId(chapter.storyId, 'chapter')
+      .then((rows) =>
+        setSpine(
+          rows.filter((row) => row.id !== chapterId).map((row) => ({ id: row.id, name: row.name })),
+        ),
+      )
+      .catch((error) => console.error('ChapterDetailScreen: failed to read the spine.', error));
+  }, [isConvertVisible, chapter, chapterId, drizzleDb]);
+
   const renderHeaderRight = useCallback(
     () =>
       canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/*
+            Changing the kind is not an edit to a field: it moves the container between two index
+            spaces and renumbers both. It sits beside the pencil rather than inside the form for
+            that reason - see `ChapterService.convertChapterType`.
+          */}
+          <TouchableOpacity
+            onPress={() => setIsConvertVisible(true)}
+            style={{ marginRight: 15 }}
+            accessibilityLabel={
+              chapter?.type === 'event'
+                ? t('chapter_convert_to_chapter')
+                : t('chapter_convert_to_event')
+            }
+            testID="convert-container"
+          >
+            <Ionicons
+              name={chapter?.type === 'event' ? 'book-outline' : 'hourglass-outline'}
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="pencil-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
       ) : null,
-    [navigation, chapterId, colors.text, canEdit],
+    [navigation, chapterId, colors.text, canEdit, chapter?.type, t],
   );
 
   useFocusEffect(
@@ -291,16 +342,31 @@ const ChapterDetailScreen = () => {
         onUpdateComment={updateComment}
       />
       {selectedStory?.type === 'linear' && (
-        <DetailField
-          label={t('in_universe_duration')}
-          value={formatChapterUniverseDuration(
-            allScenes
-              .filter((scene) => scene.chapterId === chapterId)
-              .sort((a, b) => a.index - b.index),
-            t,
-            selectedStory.normalizeSceneTiming,
-          )}
-        />
+        <>
+          {allScenes
+            .filter((scene) => scene.chapterId === chapterId)
+            .sort((a, b) => a.index - b.index)
+            .slice(0, 1)
+            .map((scene) =>
+              dateForScene(scene) ? (
+                <DetailField
+                  key="calendar-date"
+                  label={t('calendar_chapter_date')}
+                  value={dateForScene(scene)!.date}
+                />
+              ) : null,
+            )}
+          <DetailField
+            label={t('in_universe_duration')}
+            value={formatChapterUniverseDuration(
+              allScenes
+                .filter((scene) => scene.chapterId === chapterId)
+                .sort((a, b) => a.index - b.index),
+              t,
+              { normalize: selectedStory.normalizeSceneTiming, calendar },
+            )}
+          />
+        </>
       )}
 
       <CustomAttributeDetailFields
@@ -331,6 +397,13 @@ const ChapterDetailScreen = () => {
         onUpdateComment={updateComment}
       />
 
+      <AnchorManager
+        storyId={chapter.storyId}
+        chapterId={chapterId}
+        currentUserId={currentUserId}
+        editable={false}
+      />
+
       <RelatedScenesList
         showChapter={false}
         scenes={allScenes}
@@ -343,9 +416,14 @@ const ChapterDetailScreen = () => {
           if (hasSceneUniverseDuration(scene)) {
             details.push({
               label: t('in_universe_duration'),
-              value: formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming),
+              value: formatSceneUniverseDuration(scene, t, {
+                normalize: selectedStory?.normalizeSceneTiming,
+                calendar,
+              }),
             });
           }
+          const sceneDate = dateForScene(scene);
+          if (sceneDate) details.push({ label: t('calendar_scene_date'), value: sceneDate.date });
           const locationName = allLocations.find(
             (location) => location.id === scene.locationId,
           )?.name;
@@ -384,6 +462,25 @@ const ChapterDetailScreen = () => {
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>
+
+      <ConvertContainerModal
+        visible={isConvertVisible}
+        name={chapter.name}
+        currentType={chapter.type}
+        chapterNames={spine}
+        onCancel={() => setIsConvertVisible(false)}
+        onConfirm={async (targetType: ChapterType, position?: number) => {
+          setIsConvertVisible(false);
+          try {
+            await convertChapterType(chapterId, targetType, position);
+          } catch (error) {
+            // The store swallows and records the error; without this the writer sees the modal
+            // close and nothing else happen, which reads as the app ignoring them.
+            console.error('ChapterDetailScreen: failed to convert the container.', error);
+            AppAlert.alert(t('error'), t('chapter_convert_failed'));
+          }
+        }}
+      />
     </ScrollView>
   );
 };

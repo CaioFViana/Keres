@@ -1,4 +1,5 @@
 import { Button, Select } from '@/src/components/common';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -52,8 +53,8 @@ const StorySettingsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      // Direct Drawer screen (no nested Stack), so this is its own leaf-level title -
-      // navigation.setOptions() here is correct, not navigation.getParent()?.setOptions().
+      // A leaf `Drawer.Screen` again, now that the calendars have their own drawer entry - so this
+      // is its own title, not the parent's.
       navigation.setOptions({ title: t('story_settings_title') });
       setDocumentTitle(t('story_settings_title'));
     }, [navigation, t]),
@@ -73,6 +74,8 @@ const StorySettingsScreen = () => {
   const [statSystem, setStatSystem] = useState(false);
   const [statNotation, setStatNotation] = useState<StatNotation>('letter');
   const [allowReaderComments, setAllowReaderComments] = useState(false);
+  const [autoLinkMentions, setAutoLinkMentions] = useState(false);
+  const [completenessChecks, setCompletenessChecks] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -119,6 +122,8 @@ const StorySettingsScreen = () => {
         setStatSystem(fetchedStory.statSystem);
         setStatNotation(fetchedStory.statNotation as StatNotation);
         setAllowReaderComments(fetchedStory.allowReaderComments);
+        setAutoLinkMentions(fetchedStory.autoLinkMentions);
+        setCompletenessChecks(fetchedStory.completenessChecks);
         applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
@@ -252,6 +257,9 @@ const StorySettingsScreen = () => {
         extraNotes,
         theme,
         normalizeSceneTiming,
+        // Preferences about this story, not owner policy: a writer may turn either on or off.
+        autoLinkMentions,
+        completenessChecks,
         statSystem,
         statNotation,
         // `type` / `favoriteBehavior` / `allowReaderComments` are owner policy - a
@@ -711,6 +719,32 @@ const StorySettingsScreen = () => {
 
       <View style={styles.switchContainer}>
         <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={[styles.label, { color: colors.text }]}>{t('auto_link_mentions')}</Text>
+          <Text style={{ color: colors.textSecondary }}>{t('auto_link_mentions_description')}</Text>
+        </View>
+        <ThemedSwitch
+          value={autoLinkMentions}
+          onValueChange={setAutoLinkMentions}
+          disabled={!canEdit}
+        />
+      </View>
+
+      <View style={styles.switchContainer}>
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={[styles.label, { color: colors.text }]}>{t('completeness_checks')}</Text>
+          <Text style={{ color: colors.textSecondary }}>
+            {t('completeness_checks_description')}
+          </Text>
+        </View>
+        <ThemedSwitch
+          value={completenessChecks}
+          onValueChange={setCompletenessChecks}
+          disabled={!canEdit}
+        />
+      </View>
+
+      <View style={styles.switchContainer}>
+        <View style={{ flex: 1, marginRight: 12 }}>
           <Text style={[styles.label, { color: colors.text }]}>{t('stat_system')}</Text>
           <Text style={{ color: colors.textSecondary }}>{t('stat_system_description')}</Text>
         </View>
@@ -869,17 +903,18 @@ const StorySettingsScreen = () => {
         </>
       )}
 
-      <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
-        {t('update_story')}
-      </Button>
-
-      <Button
-        onPress={handleDelete}
-        style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
-        disabled={!canManageStoryPolicy}
-      >
-        {t('delete_story_title')}
-      </Button>
+      <FormActions stackOnCompact>
+        <Button onPress={handleSave} disabled={!canEdit}>
+          {t('update_story')}
+        </Button>
+        <Button
+          onPress={handleDelete}
+          style={{ backgroundColor: colors.error }}
+          disabled={!canManageStoryPolicy}
+        >
+          {t('delete_story_title')}
+        </Button>
+      </FormActions>
     </KeyboardAwareScreen>
   );
 };

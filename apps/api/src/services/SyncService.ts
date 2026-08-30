@@ -29,6 +29,9 @@ import { SyncConflictError } from './entity-sync-handlers/BaseSyncEntityHandler'
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { AttributeValueSyncHandler } from './entity-sync-handlers/AttributeValueSyncHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
+import { ChapterAnchorSyncHandler } from './entity-sync-handlers/ChapterAnchorSyncHandler';
+import { BoardSyncHandler } from './entity-sync-handlers/BoardSyncHandler';
+import { StoryCalendarSyncHandler } from './entity-sync-handlers/StoryCalendarSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
@@ -43,6 +46,7 @@ import { PlotSyncHandler } from './entity-sync-handlers/PlotSyncHandler';
 import { PlotSceneSyncHandler } from './entity-sync-handlers/PlotSceneSyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationRelationSyncHandler } from './entity-sync-handlers/LocationRelationSyncHandler';
+import { LocationMapSyncHandler } from './entity-sync-handlers/LocationMapSyncHandler';
 import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
 import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler';
 import { NoteSyncHandler } from './entity-sync-handlers/NoteSyncHandler';
@@ -91,6 +95,10 @@ export class SyncService {
     this.registerEntityHandler(new ChoiceCheckSyncHandler());
     this.registerEntityHandler(new EffectSyncHandler());
     this.registerEntityHandler(new CharacterSceneSyncHandler());
+    this.registerEntityHandler(new ChapterAnchorSyncHandler());
+    this.registerEntityHandler(new StoryCalendarSyncHandler());
+    this.registerEntityHandler(new BoardSyncHandler());
+    this.registerEntityHandler(new LocationMapSyncHandler());
     this.registerEntityHandler(new CharacterRelationSyncHandler());
     this.registerEntityHandler(new ItemSyncHandler());
     this.registerEntityHandler(new ItemJourneySyncHandler());
@@ -302,11 +310,30 @@ export class SyncService {
 
           if (update.type === 'create') {
             if (currentEntity) {
-              // An idempotent resend only if the payload describes the same row. A create with the same id and
-              // different data is not a retry, it is a collision.
-              if (
-                !handler.createPayloadMatches(currentEntity, (update as CreateStoryUpdate).data)
-              ) {
+              const createData = (update as CreateStoryUpdate).data;
+              // The entity may have changed since its creation, so its current row is not always
+              // the correct reference for a retried create. The server's operation log preserves
+              // the original accepted create payload and is the authoritative idempotency record.
+              const [recordedCreate] = await db
+                .select({ payload: operationLog.payload })
+                .from(operationLog)
+                .where(
+                  and(
+                    eq(operationLog.storyId, storyId),
+                    eq(operationLog.entityType, update.entity),
+                    eq(operationLog.entityId, entityId),
+                    eq(operationLog.operationType, 'create'),
+                  ),
+                )
+                .limit(1);
+              const matchesCurrent = handler.createPayloadMatches(currentEntity, createData);
+              const matchesRecordedCreate =
+                !!recordedCreate &&
+                handler.createPayloadMatches(
+                  recordedCreate.payload as Record<string, any>,
+                  createData,
+                );
+              if (!matchesCurrent && !matchesRecordedCreate) {
                 throw new SyncConflictError(
                   'validation',
                   `An entity with ID ${entityId} already exists with different data.`,

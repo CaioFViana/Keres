@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { AttributeType } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
@@ -178,7 +179,7 @@ it('keeps every dashboard count scoped to live entities and identifies real bran
     entityType: 'Character',
     name: 'Origem',
     key: 'origin',
-    type: 'text',
+    type: AttributeType.TEXT,
     order: 0,
     ...entityBase,
   });

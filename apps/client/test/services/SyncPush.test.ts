@@ -253,6 +253,54 @@ describe('push result handling', () => {
     );
   });
 
+  it('does not put an accepted create into a later update conflict for the same entity', async () => {
+    const create = operation('board-create', 'create', {
+      entityType: 'Board',
+      entityId: 'board-1',
+      payload: JSON.stringify({ name: 'Board', content: { nodes: [], edges: [] }, version: 1 }),
+    });
+    const update = operation('board-update', 'update', {
+      entityType: 'Board',
+      entityId: 'board-1',
+      operationVersion: 2,
+      payload: JSON.stringify({ content: { nodes: [], edges: [] }, version: 2 }),
+    });
+    await seedOperation(create);
+    await seedOperation(update);
+
+    await push.applyPushResult(
+      {
+        applied: [{ clientOperationId: 'board-create', operationVersion: 11 }],
+        conflicts: [
+          {
+            clientOperationId: 'board-update',
+            entity: 'Board',
+            entityId: 'board-1',
+            type: 'update',
+            reason: 'validation',
+            message: 'invalid update',
+          },
+        ],
+      } as never,
+      [create, update],
+    );
+
+    expect(
+      await database.db.query.operationLogs.findFirst({
+        where: eq(schema.operationLogs.id, 'board-create'),
+      }),
+    ).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 11,
+    });
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationType: 'update',
+        localOperationIds: ['board-update'],
+      }),
+    );
+  });
+
   it('uses attempted changes when the refused operation is absent locally', async () => {
     await push.applyPushResult(
       {

@@ -39,6 +39,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'A warning changes nothing on its own. Correcting an element updates scenes, choices, maps, and searches that use it.',
     },
+    { type: 'heading', level: 2, text: 'What Keres reports, and what it leaves to you' },
+    {
+      type: 'paragraph',
+      text: 'Some findings are about your story being broken: a choice pointing at a scene that no longer exists, a scene nothing can reach, a chapter numbering the app cannot reorder. Those are always reported.',
+    },
+    {
+      type: 'paragraph',
+      text: 'Others are about elements that exist without being used anywhere - a location in no scene, a character with no relationships, an unused tag. Whether those are problems is your call, not Keres’s: in a world bible, a place nobody has visited yet is simply a place. They are off by default and turned on with Report unreferenced elements, in Story Settings.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'A field you marked as required is still reported when empty, whatever that setting says: that is a rule you set, not an opinion of the app.',
+    },
     { type: 'seeAlso', pages: ['scenes', 'choices', 'story-map', 'story-type'] },
   ],
 };

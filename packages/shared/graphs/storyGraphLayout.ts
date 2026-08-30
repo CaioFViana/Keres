@@ -20,7 +20,7 @@ import type { GraphLayoutDirection } from './graphLayoutDirection';
 export interface GraphScene {
   id: string;
   name: string;
-  chapterId: string;
+  chapterId: string | null;
   index: number;
   isStart: boolean;
   isFinish: boolean;
@@ -87,7 +87,7 @@ export interface GraphNode {
   scene: GraphScene;
   /** The name broken into lines - both renderers need the same wrapping. */
   labelLines: string[];
-  chapterId: string;
+  chapterId: string | null;
   chapterName: string;
   chapterColor: string;
   isStart: boolean;
@@ -249,7 +249,9 @@ export function buildStoryGraphLayout(
   for (const scene of scenes) {
     nodeById.set(scene.id, {
       scene,
-      chapterIndex: chapterById.get(scene.chapterId)?.index ?? Number.MAX_SAFE_INTEGER,
+      chapterIndex: scene.chapterId
+        ? (chapterById.get(scene.chapterId)?.index ?? Number.MAX_SAFE_INTEGER)
+        : Number.MAX_SAFE_INTEGER,
       outgoing: [],
       incoming: [],
       layer: 0,
@@ -317,8 +319,10 @@ export function buildStoryGraphLayout(
     scene: node.scene,
     labelLines: wrapLabel(node.scene.name),
     chapterId: node.scene.chapterId,
-    chapterName: chapterById.get(node.scene.chapterId)?.name ?? '',
-    chapterColor: chapterColorById.get(node.scene.chapterId) ?? CHAPTER_PALETTE[0],
+    chapterName: node.scene.chapterId ? (chapterById.get(node.scene.chapterId)?.name ?? '') : '',
+    chapterColor: node.scene.chapterId
+      ? (chapterColorById.get(node.scene.chapterId) ?? CHAPTER_PALETTE[0])
+      : CHAPTER_PALETTE[0],
     isStart: node.scene.isStart,
     isFinish: node.scene.isFinish,
     layer: node.layer,
@@ -387,7 +391,10 @@ function buildLegend(
   colors: Map<string, string>,
 ): GraphChapterLegendEntry[] {
   const counts = new Map<string, number>();
-  for (const scene of scenes) counts.set(scene.chapterId, (counts.get(scene.chapterId) ?? 0) + 1);
+  for (const scene of scenes) {
+    if (!scene.chapterId) continue;
+    counts.set(scene.chapterId, (counts.get(scene.chapterId) ?? 0) + 1);
+  }
 
   return [...chapters]
     .sort((a, b) => a.index - b.index || a.id.localeCompare(b.id))

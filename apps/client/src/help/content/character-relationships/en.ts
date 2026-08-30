@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › Character relationships to see the map.',
+        'Open Story menu › Characters and tap the relationships icon in the header to see the map.',
         'To create or change a relationship, open a saved character profile.',
         'Choose the other character and enter the relationship type.',
         'Save the profile and return to the map to check the link.',

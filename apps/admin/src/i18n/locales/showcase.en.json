@@ -34,7 +34,74 @@
   },
   "nav": {
     "stories": "Stories",
-    "about": "About"
+    "about": "About",
+    "packs": "Packs"
+  },
+  "pack": {
+    "back": "← All packs",
+    "version": "v{{version}}",
+    "sharedBy": "shared by {{username}}#{{tag}}",
+    "sharedThis": "shared this pack",
+    "sharedThisShort": "shared this",
+    "loading": "Loading pack...",
+    "loadFailed": "Could not load this pack.",
+    "author": "Author",
+    "language": "Language",
+    "statSystem": "Stat system",
+    "statSystemOff": "Not used",
+    "contentsTitle": "What is inside",
+    "contentsIntro": "Everything this pack carries is listed here. There is nothing else to unlock.",
+    "fields": "Custom fields",
+    "stats": "Stat axes",
+    "tags": "Tags",
+    "suggestions": "Suggestion lists",
+    "required": "required",
+    "secondaryStat": "secondary",
+    "defaultLadder": "Default ladder",
+    "fieldCount_one": "{{count}} field",
+    "fieldCount_other": "{{count}} fields",
+    "statCount_one": "{{count}} stat axis",
+    "statCount_other": "{{count}} stat axes",
+    "tagCount_one": "{{count}} tag",
+    "tagCount_other": "{{count}} tags",
+    "suggestionCount_one": "{{count}} suggestion",
+    "suggestionCount_other": "{{count}} suggestions",
+    "entryCount_one": "{{count}} entry",
+    "entryCount_other": "{{count}} entries",
+    "howtoTitle": "Using this pack",
+    "howtoBody": "In Keres, add this server under your account, then pick the pack when creating a story. Its structure is applied to the new story and is yours to change from there.",
+    "notation": {
+      "letter": "Letter ladder",
+      "number": "Number ladder"
+    },
+    "entity": {
+      "Character": "Characters",
+      "Location": "Locations",
+      "Item": "Items",
+      "Scene": "Scenes",
+      "Chapter": "Chapters",
+      "Note": "Notes",
+      "WorldRule": "World rules"
+    },
+    "attributeType": {
+      "text": "Text",
+      "long_text": "Long text",
+      "number": "Number",
+      "boolean": "Yes or no",
+      "date": "Date",
+      "suggestion": "Suggestion",
+      "suggestion_list": "Suggestion list",
+      "entity": "Link to an entity"
+    }
+  },
+  "packs": {
+    "eyebrow": "Shared structure",
+    "title": "Packs on this server",
+    "intro": "A pack is the reusable shape of a story - custom fields, stat axes, tag sets, suggestion lists - offered for anyone to start a new story with. It carries no characters, no scenes and no prose: nobody's story travels in one.",
+    "sharedPacks": "Shared packs",
+    "loading": "Loading packs...",
+    "loadFailed": "Could not load the packs.",
+    "empty": "Nobody has shared a pack here yet."
   },
   "story": {
     "back": "← All stories",

@@ -13,6 +13,7 @@ import { createStatRelationService } from '../services/storymanagement/StatRelat
 import { createStatService } from '../services/storymanagement/StatService';
 import { createStatStrengthService } from '../services/storymanagement/StatStrengthService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { indexStatValues, type StatValueIndex } from '../utils/statValues';
 
@@ -76,8 +77,9 @@ export function useStoryStats(storyId: string | undefined | null): StoryStatsDat
     }
   }, [drizzleDb, storyId]);
 
+  useEntityInitialLoad(reload);
+
   useEffect(() => {
-    reload();
     const events = [
       'stat_changed',
       'stat_strength_changed',

@@ -19,7 +19,35 @@ export const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap>
   image: 'image-outline',
   video: 'videocam-outline',
   audio: 'musical-notes-outline',
+  document: 'document-outline',
+  link: 'link-outline',
 };
+
+/** File-kind icon: PDFs/text vs spreadsheets vs slides, rather than one generic document glyph. */
+export function iconForGalleryMedia(
+  mediaType: MediaType,
+  mimeType?: string | null,
+): keyof typeof Ionicons.glyphMap {
+  if (mediaType !== 'document') {
+    return MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline';
+  }
+  const mime = mimeType?.toLowerCase() ?? '';
+  if (mime.includes('spreadsheet') || mime.includes('excel') || mime === 'text/csv') {
+    return 'grid-outline';
+  }
+  if (mime.includes('presentation') || mime.includes('powerpoint')) {
+    return 'easel-outline';
+  }
+  if (
+    mime === 'application/pdf' ||
+    mime.startsWith('text/') ||
+    mime.includes('word') ||
+    mime.includes('opendocument.text')
+  ) {
+    return 'document-text-outline';
+  }
+  return 'document-outline';
+}
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '';
@@ -128,7 +156,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
           />
         ) : (
           <Ionicons
-            name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+            name={iconForGalleryMedia(mediaType, media.mimeType)}
             size={48}
             color={colors.textSecondary}
           />
@@ -143,7 +171,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
         <View style={styles.badgeRow}>
           <View style={styles.badge}>
             <Ionicons
-              name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+              name={iconForGalleryMedia(mediaType, media.mimeType)}
               size={14}
               color={colors.text}
             />

@@ -1,28 +1,12 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { GalleryOwnerEntity } from '@keres/shared';
-import { GALLERY_OWNER_ENTITIES } from '@keres/shared';
+import { GALLERY_OWNER_ENTITIES, getEntityAppearance } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
 import * as schema from '../db/schema';
-
-/** The same icon and colour used for each entity type in the Story Overview's blocks (`SummaryCard`). */
-const OWNER_TYPE_ICON: Record<GalleryOwnerEntity, keyof typeof Ionicons.glyphMap> = {
-  Character: 'people',
-  Location: 'map',
-  Note: 'document',
-  Scene: 'easel',
-  Item: 'cube',
-};
-const OWNER_TYPE_COLOR: Record<GalleryOwnerEntity, string> = {
-  Character: '#37afa5',
-  Location: '#8BC34A',
-  Note: '#FFEB3B',
-  Scene: '#a13fb3',
-  Item: '#795548',
-};
 
 /**
  * The story's entities a media file can be linked to, ready for a picker.
@@ -153,8 +137,8 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({
       key: ownerType,
       label: t(`${ownerType.toLowerCase()}s`),
-      icon: OWNER_TYPE_ICON[ownerType],
-      color: OWNER_TYPE_COLOR[ownerType],
+      icon: getEntityAppearance(ownerType).icon as keyof typeof Ionicons.glyphMap,
+      color: getEntityAppearance(ownerType).color,
       options: options
         .filter((option) => option.ownerType === ownerType)
         .map((option) => ({ label: option.name, value: option.value })),

@@ -1,8 +1,15 @@
+import {
+  isProtocolSupported,
+  MIN_SUPPORTED_SYNC_PROTOCOL,
+  SYNC_PROTOCOL_HEADER,
+  SYNC_PROTOCOL_VERSION,
+} from '@keres/shared';
 import { StoryUpdatesArraySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { syncService } from '../../services/SyncService';
 import { logger } from '../../utils/logger';
+import { AppError } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 
 const syncAttemptLimiter = createAttemptLimiter({ maxAttempts: 120, windowMs: 60 * 1000 });
@@ -34,11 +41,42 @@ const SyncAppliedOperationResponseSchema = t.Object({
   entityId: t.String(),
 });
 
+/**
+ * Sync is refused across an incompatible synchronization protocol.
+ *
+ * This is the half of the gate that protects anybody, because the other half lives in the client and
+ * an old client does not have it. A newer server can send a row an older client's local schema
+ * refuses - a null in a `NOT NULL` column - and that insert fails on the device, wedging the story's
+ * sync in a retry loop the writer cannot escape from inside the app. Refusing here turns that into
+ * one clear message.
+ *
+ * It gates on the protocol rather than the release, so two releases that did not change the wire
+ * keep working together. A request with no protocol header is refused: a client old enough not to
+ * announce one predates the announcement, which is exactly the case being guarded against.
+ *
+ * Only `/sync` is gated. A mismatched client must still reach `/kerescheck` to find out why, and log
+ * in so the app can say something better than "unauthorized".
+ */
+function assertProtocolCompatible(headers: Record<string, string | undefined>): void {
+  const announced = headers[SYNC_PROTOCOL_HEADER];
+  if (isProtocolSupported(announced)) return;
+
+  logger.warn(
+    `Sync refused: client protocol ${announced ?? '(none)'} against server ${MIN_SUPPORTED_SYNC_PROTOCOL}..${SYNC_PROTOCOL_VERSION}.`,
+  );
+  throw new AppError(
+    426,
+    `This app speaks synchronization protocol ${announced ?? '(none)'} and this server supports ` +
+      `${MIN_SUPPORTED_SYNC_PROTOCOL} to ${SYNC_PROTOCOL_VERSION}. Update whichever is behind.`,
+  );
+}
+
 export const syncRoute = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
   .post(
     '/:storyId',
-    async ({ params, body, user, set }) => {
+    async ({ params, body, user, set, headers }) => {
+      assertProtocolCompatible(headers);
       // Destructure 'user' and 'set'
       if (!user || !user.userId) {
         set.status = 401;
@@ -120,7 +158,8 @@ export const syncRoute = new Elysia()
   )
   .get(
     '/:storyId/pull',
-    async ({ params, query, user, set }) => {
+    async ({ params, query, user, set, headers }) => {
+      assertProtocolCompatible(headers);
       // Destructure 'user' and 'set'
       if (!user || !user.userId) {
         set.status = 401;
@@ -184,7 +223,8 @@ export const syncRoute = new Elysia()
   )
   .get(
     '/pullpreviews',
-    async ({ user, set }) => {
+    async ({ user, set, headers }) => {
+      assertProtocolCompatible(headers);
       if (!user || !user.userId) {
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');

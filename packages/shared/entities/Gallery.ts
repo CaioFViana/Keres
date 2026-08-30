@@ -1,7 +1,7 @@
 import type { MediaType } from '../schemas/GallerySchemas';
 
 /**
- * A media file belonging to the story (image, video or audio).
+ * A media item belonging to the story (image, video, audio, document or link).
  *
  * The file is identified by its content (`hash`), not by its path: that is what lets the same
  * media be reused by several entities and what makes it possible to detect, during
@@ -17,6 +17,8 @@ export interface Gallery {
   /** Checksum of the content in hex (see `MediaHashSchema`). */
   hash: string;
   sizeBytes: number;
+  /** Present only for `mediaType: 'link'`. Never fetched by Keres. */
+  sourceUrl: string | null;
   title: string | null;
   isFavorite: boolean;
   extraNotes: string | null;

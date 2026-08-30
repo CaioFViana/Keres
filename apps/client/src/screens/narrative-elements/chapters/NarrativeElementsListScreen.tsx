@@ -17,7 +17,9 @@ import ChapterListItem from '@/src/components/features/list-items/ChapterListIte
 import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
 import { useDrizzle } from '../../../db';
+import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
+import { AppAlert } from '../../../utils/AppAlert';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../../hooks/useStoryRole';
@@ -31,6 +33,7 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { setDocumentTitle } from '../../../utils/documentTitle';
+import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -50,8 +53,11 @@ const matchesSceneQuery = (scene: SceneSelect, query: string) =>
 const matchesChoiceQuery = (choice: ChoiceSelect, query: string) =>
   [choice.text, choice.notes].some((value) => value?.toLocaleLowerCase().includes(query));
 
+const sceneBelongsToGroup = (scene: SceneSelect, groupId: string) =>
+  isUnchapteredGroup(groupId) ? !scene.chapterId : scene.chapterId === groupId;
+
 const scenesShownForChapter = (chapterId: string, allScenes: SceneSelect[], query: string) => {
-  const chapterScenes = allScenes.filter((scene) => scene.chapterId === chapterId);
+  const chapterScenes = allScenes.filter((scene) => sceneBelongsToGroup(scene, chapterId));
   if (!query) return chapterScenes;
   const matchingScenes = chapterScenes.filter((scene) => matchesSceneQuery(scene, query));
   return matchingScenes.length > 0 ? matchingScenes : chapterScenes;
@@ -111,7 +117,8 @@ const NarrativeElementsListScreen = () => {
   // Reordering isn't part of the shared list wiring, so it comes straight from the store.
   const reorderChapters = useChapterStore((state) => state.reorderChapters);
 
-  const [isReorderModalVisible, setIsReorderModalVisible] = useState(false);
+  /** Which space the reorder modal is editing - the two are numbered independently. */
+  const [reorderingType, setReorderingType] = useState<ChapterType | null>(null);
   const [outlineChapters, setOutlineChapters] = useState<ChapterSelect[]>([]);
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
@@ -125,7 +132,8 @@ const NarrativeElementsListScreen = () => {
   const loadOutline = useCallback(async () => {
     if (!storyId) return;
     const [loadedChapters, loadedScenes, loadedChoices] = await Promise.all([
-      createChapterService(db).getAllByStoryId(storyId),
+      // Both kinds: the outline is the story's containers, and the service groups them.
+      createChapterService(db).getAllByStoryId(storyId, null),
       createSceneService(db).getAllByStoryId(storyId),
       createChoiceService(db).getAllByStoryId(storyId),
     ]);
@@ -291,7 +299,10 @@ const NarrativeElementsListScreen = () => {
     [navigation],
   );
   const handleAddScene = useCallback(
-    (chapterId: string) => navigation.navigate('SceneForm', { chapterId }),
+    (chapterId: string) =>
+      navigation.navigate('SceneForm', {
+        chapterId: isUnchapteredGroup(chapterId) ? undefined : chapterId,
+      }),
     [navigation],
   );
   const handleToggleSceneFavorite = useCallback(
@@ -362,7 +373,7 @@ const NarrativeElementsListScreen = () => {
       );
     });
     const direction = sortDirection === 'desc' ? -1 : 1;
-    return [...filtered]
+    const sorted = [...filtered]
       .sort((a, b) => {
         const by =
           activeSort === 'name'
@@ -378,6 +389,53 @@ const NarrativeElementsListScreen = () => {
         ...chapter,
         isFavorite: chapter.isFavorite,
       }));
+
+    const unchapteredScenes = scenesWithFavoriteState.filter((scene) => !scene.chapterId);
+    const unchapteredHasFavorite = unchapteredScenes.some((scene) => scene.isFavorite);
+    const unchapteredPassesFavorite =
+      favoriteFilterState === 'all' ||
+      (favoriteFilterState === 'favorite' && unchapteredHasFavorite) ||
+      (favoriteFilterState === 'not-favorite' && !unchapteredHasFavorite);
+    const unchapteredPassesAdvanced =
+      !advancedMatches || unchapteredScenes.some((scene) => advancedMatches.sceneIds.has(scene.id));
+    const unchapteredPassesTags =
+      activeTagIds.length === 0 ||
+      unchapteredScenes.some((scene) =>
+        (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
+      );
+    const unchapteredPassesQuery =
+      !query || unchapteredScenes.some((scene) => matchesSceneQuery(scene, query));
+    const showEmptyUnchaptered =
+      canEdit &&
+      !query &&
+      !advancedMatches &&
+      activeTagIds.length === 0 &&
+      favoriteFilterState === 'all';
+    if (
+      (unchapteredScenes.length > 0 &&
+        unchapteredPassesFavorite &&
+        unchapteredPassesAdvanced &&
+        unchapteredPassesTags &&
+        unchapteredPassesQuery) ||
+      (showEmptyUnchaptered && unchapteredScenes.length === 0 && storyId)
+    ) {
+      sorted.push({
+        id: UNCHAPTERED_GROUP_ID,
+        storyId: unchapteredScenes[0]?.storyId ?? storyId ?? '',
+        name: t('unchaptered_scenes'),
+        index: Number.MAX_SAFE_INTEGER,
+        type: 'chapter',
+        summary: null,
+        extraNotes: null,
+        isFavorite: false,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      });
+    }
+    return sorted;
   }, [
     activeSort,
     activeTagIds,
@@ -390,13 +448,16 @@ const NarrativeElementsListScreen = () => {
     sortDirection,
     tagsByChapterId,
     tagsBySceneId,
+    t,
+    canEdit,
+    storyId,
   ]);
 
   const memoizedChapterListItem = useCallback(
     ({ item }: { item: ChapterSelect }) => {
       const query = searchQuery.trim().toLocaleLowerCase();
-      const allChapterScenes = scenesWithFavoriteState.filter(
-        (scene) => scene.chapterId === item.id,
+      const allChapterScenes = scenesWithFavoriteState.filter((scene) =>
+        sceneBelongsToGroup(scene, item.id),
       );
       const queryScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
       const choiceMatchedSceneIds = new Set(
@@ -430,7 +491,7 @@ const NarrativeElementsListScreen = () => {
           : filteredByFavorite;
       const hasSceneMatch = query
         ? scenesWithFavoriteState.some(
-            (scene) => scene.chapterId === item.id && matchesSceneQuery(scene, query),
+            (scene) => sceneBelongsToGroup(scene, item.id) && matchesSceneQuery(scene, query),
           ) || choiceMatchedSceneIds.size > 0
         : chapterScenes.length !== allChapterScenes.length;
 
@@ -452,6 +513,9 @@ const NarrativeElementsListScreen = () => {
               onToggleFavorite={handleToggleSceneFavorite}
               onAddScene={() => handleAddScene(item.id)}
               onReorderScenes={() => setReorderChapterId(item.id)}
+              unchaptered={isUnchapteredGroup(item.id)}
+              sortBy={activeSort}
+              sortDirection={sortDirection}
               expandedSceneIds={expandedSceneIds}
               onSceneExpandedChange={onSceneExpandedChange}
               tagsBySceneId={tagsBySceneId}
@@ -471,6 +535,8 @@ const NarrativeElementsListScreen = () => {
       handleToggleFavorite,
       handleToggleSceneFavorite,
       handleViewDetails,
+      activeSort,
+      sortDirection,
       scenesWithFavoriteState,
       selectedStory?.type,
       searchQuery,
@@ -508,16 +574,42 @@ const NarrativeElementsListScreen = () => {
     );
   }, [scenesWithFavoriteState, searchQuery, visibleChapters]);
 
+  /**
+   * Reordering asks which space when both exist.
+   *
+   * Chapters and events are numbered independently, so one drag list cannot hold both: the server
+   * validates each 1..N on its own and a mixed payload is a validation error whichever kind it is
+   * judged against. With only one kind present there is nothing to ask.
+   */
   const handleReorderPress = useCallback(() => {
-    setIsReorderModalVisible(true);
-  }, []);
+    const hasEvents = outlineChapters.some((chapter) => chapter.type === 'event');
+    const hasChapters = outlineChapters.some((chapter) => chapter.type !== 'event');
+
+    if (!hasEvents) return setReorderingType('chapter');
+    if (!hasChapters) return setReorderingType('event');
+
+    AppAlert.alert(t('chapter_reorder_which'), '', [
+      { text: t('chapter_reorder_chapters'), onPress: () => setReorderingType('chapter') },
+      { text: t('chapter_reorder_events'), onPress: () => setReorderingType('event') },
+      { text: t('cancel'), style: 'cancel' },
+    ]);
+  }, [outlineChapters, t]);
 
   const handleReorderConfirm = useCallback(
     async (newOrder: { id: string; newIndex: number }[]) => {
-      await reorderChapters(newOrder);
-      setIsReorderModalVisible(false);
+      await reorderChapters(newOrder, reorderingType ?? 'chapter');
+      setReorderingType(null);
     },
-    [reorderChapters],
+    [reorderChapters, reorderingType],
+  );
+
+  /** Only one space at a time reaches the drag list, for the reason above. */
+  const reorderableContainers = useMemo(
+    () =>
+      reorderingType === null
+        ? []
+        : outlineChapters.filter((chapter) => (chapter.type ?? 'chapter') === reorderingType),
+    [outlineChapters, reorderingType],
   );
 
   const styles = StyleSheet.create({
@@ -551,6 +643,7 @@ const NarrativeElementsListScreen = () => {
               <TouchableOpacity
                 onPress={() => navigation.navigate('StoryTimeline')}
                 style={styles.headerButton}
+                accessibilityLabel={t('story_timeline_title')}
               >
                 <Ionicons name="bar-chart-outline" size={26} color={colors.text} />
               </TouchableOpacity>
@@ -628,9 +721,9 @@ const NarrativeElementsListScreen = () => {
         )}
       />
       <ChapterReorderModal
-        isVisible={isReorderModalVisible}
-        onClose={() => setIsReorderModalVisible(false)}
-        chapters={outlineChapters}
+        isVisible={reorderingType !== null}
+        onClose={() => setReorderingType(null)}
+        chapters={reorderableContainers}
         onReorderConfirm={handleReorderConfirm}
       />
       <SceneReorderModal

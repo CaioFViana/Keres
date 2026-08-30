@@ -375,6 +375,30 @@ describe('buildConflictSummaries - entity display name fallbacks', () => {
     expect(summary.title).toBe('Aria');
     expect(summary.title).not.toBe('char-1');
   });
+
+  it('offers a board clone instead of a field-by-field JSON diff when content clashes', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Board',
+          entityId: 'board-1',
+          localValues: { name: 'Royal family', content: { nodes: [], edges: [] } },
+          serverValues: {
+            name: 'Royal family',
+            content: { nodes: [{ id: '01ABCDEF' }], edges: [] },
+          },
+          contestedFields: ['content'],
+        }),
+      ],
+      noSnapshots,
+      new Map(),
+      t,
+    );
+
+    expect(summary.offerBoardClone).toBe(true);
+    expect(summary.canQuickResolve).toBe(true);
+    expect(summary.diffFields).toEqual([]);
+  });
 });
 
 describe('buildConflictSummaries - diff field labels and id resolution', () => {

@@ -24,24 +24,35 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
+  /**
+   * `locationId` is nullable: a scene may happen nowhere in particular.
+   *
+   * Absent is accepted; **named but missing is not** - the second means the package or the client
+   * is referring to a location this story does not have, which is the failure this check exists
+   * for. Collapsing the two would let a broken reference through as "no place".
+   */
   private async validateRelatedEntities(
     storyId: string,
-    chapterId: string,
-    locationId: string,
+    chapterId: string | null | undefined,
+    locationId: string | null | undefined,
   ): Promise<void> {
-    const chapter = await db.query.chapters.findFirst({
-      where: and(
-        eq(chapters.id, chapterId),
-        eq(chapters.storyId, storyId),
-        eq(chapters.isDeleted, false),
-      ),
-    });
-    if (!chapter) {
-      throw new SyncConflictError(
-        'referenced_entity_deleted',
-        `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
-      );
+    if (chapterId) {
+      const chapter = await db.query.chapters.findFirst({
+        where: and(
+          eq(chapters.id, chapterId),
+          eq(chapters.storyId, storyId),
+          eq(chapters.isDeleted, false),
+        ),
+      });
+      if (!chapter) {
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
+          `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
+        );
+      }
     }
+
+    if (!locationId) return;
 
     const location = await db.query.locations.findFirst({
       where: and(
@@ -135,10 +146,14 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    // If chapterId or locationId are being updated, validate them
-    if (validatedChanges.chapterId || validatedChanges.locationId) {
-      const newChapterId = validatedChanges.chapterId || currentEntity.chapterId;
-      const newLocationId = validatedChanges.locationId || currentEntity.locationId;
+    if (validatedChanges.chapterId !== undefined || validatedChanges.locationId !== undefined) {
+      // `??` not `||`: clearing chapter or place sends `null`, which `||` would replace with the
+      // previous value and skip the validation this branch exists for.
+      const newChapterId =
+        validatedChanges.chapterId !== undefined
+          ? validatedChanges.chapterId
+          : currentEntity.chapterId;
+      const newLocationId = validatedChanges.locationId ?? currentEntity.locationId;
       await this.validateRelatedEntities(storyId, newChapterId, newLocationId);
     }
 

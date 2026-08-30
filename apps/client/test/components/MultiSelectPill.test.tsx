@@ -132,6 +132,44 @@ describe('MultiSelectPill flat mode (options)', () => {
 
     expect(onSelectionChange).not.toHaveBeenCalled();
   });
+
+  it('uses the placeholder as the modal title instead of the generic "Select Tags"', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={[]}
+        onSelectionChange={jest.fn()}
+        placeholder="Choose tags"
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+
+    expect(screen.queryByText('Select Tags')).toBeNull();
+    // The placeholder appears twice: inside the pill and as the modal title (a flat list would
+    // otherwise show an empty header).
+    expect(screen.getAllByText('Choose tags').length).toBe(2);
+  });
+
+  it('renders the label above the pill and as the modal title', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={[]}
+        onSelectionChange={jest.fn()}
+        placeholder="Choose tags"
+        label="World Rule Tags"
+      />,
+    );
+
+    // The label is a persistent title above the field, before the modal is opened.
+    expect(screen.getAllByText('World Rule Tags').length).toBe(1);
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+
+    // With the modal open, the label is both above the pill and the modal title.
+    expect(screen.getAllByText('World Rule Tags').length).toBe(2);
+  });
 });
 
 /**

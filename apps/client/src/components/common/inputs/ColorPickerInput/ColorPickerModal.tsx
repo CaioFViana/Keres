@@ -1,3 +1,4 @@
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -327,9 +328,6 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       color: colors.onPrimary,
       fontWeight: 'bold',
     },
-    buttonWrapper: {
-      width: '47%',
-    },
     standardColorsContainer: {
       width: standardColorsWidth,
       marginTop: sideBySideLayout ? 0 : 10,
@@ -428,21 +426,17 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       <Text style={styles.hexText}>{currentPickedColorHex().toUpperCase()}</Text>
 
       {/* Action Buttons */}
-      <View style={styles.buttonContainer}>
-        <View style={styles.buttonWrapper}>
-          <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
-            {t('cancel')}
-          </Button>
-        </View>
-        <View style={styles.buttonWrapper}>
-          <Button
-            onPress={() => onSelectColor(currentPickedColorHex())}
-            style={{ backgroundColor: colors.primary }}
-          >
-            {t('select')}
-          </Button>
-        </View>
-      </View>
+      <FormActions>
+        <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
+          {t('cancel')}
+        </Button>
+        <Button
+          onPress={() => onSelectColor(currentPickedColorHex())}
+          style={{ backgroundColor: colors.primary }}
+        >
+          {t('select')}
+        </Button>
+      </FormActions>
     </ScrollView>
   );
 };

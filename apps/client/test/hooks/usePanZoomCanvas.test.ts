@@ -104,6 +104,29 @@ describe('fitting on layout', () => {
 
     expect(transformOf(result.current)).toEqual(fitted);
   });
+
+  it('keeps the world stationary when the canvas grows above or to the left', async () => {
+    const ref = createRef<PanZoomCanvasHandle>();
+    let layout = { ...LAYOUT, originX: 0, originY: 0 };
+    const view = await renderHook(() =>
+      usePanZoomCanvas(ref, layout, { freePan: true, refitOnLayoutChange: false }),
+    );
+    (view.result.current.containerRef as any).current = {
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) =>
+        callback(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height),
+    };
+    view.result.current.handleLayout();
+    const before = transformOf(view.result.current);
+
+    layout = { width: 1240, height: 1040, originX: -240, originY: -240 };
+    await view.rerender(undefined as never);
+    const after = transformOf(view.result.current);
+
+    // World point (0, 0) has moved 240 canvas units in each axis. The pan moves by the inverse
+    // amount, so its visible position stays exactly where the drag left it.
+    expect(after.x + after.scale * 240).toBeCloseTo(before.x, 4);
+    expect(after.y + after.scale * 240).toBeCloseTo(before.y, 4);
+  });
 });
 
 describe('the handle exposed to the screen', () => {
@@ -232,6 +255,28 @@ describe('gesture decisions', () => {
     ).toBe(true);
   });
 
+  it('does not steal a pin that is already dragging', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas();
+    const config = create.mock.calls.at(-1)![0] as any;
+    result.current.setChildDragging(true);
+
+    expect(
+      config.onMoveShouldSetPanResponderCapture(
+        { nativeEvent: { touches: [{}] } },
+        { dx: 20, dy: 0 },
+      ),
+    ).toBe(false);
+  });
+
+  it('treats a mouse event without a touches list as a one-finger drag', async () => {
+    const config = await configOf();
+
+    expect(config.onMoveShouldSetPanResponderCapture({ nativeEvent: {} }, { dx: 20, dy: 0 })).toBe(
+      true,
+    );
+  });
+
   it('takes over immediately for a second finger, however small the movement', async () => {
     const config = await configOf();
 
@@ -241,6 +286,29 @@ describe('gesture decisions', () => {
         { dx: 0, dy: 0 },
       ),
     ).toBe(true);
+  });
+
+  /**
+   * The canvas owns whatever no child claimed. Without this a tap on the drawing itself is dropped
+   * for want of an owner, and covering the drawing with touch targets to get it back would take the
+   * responder on the way down and kill the pinch.
+   */
+  it('takes a touch that no child claimed', async () => {
+    const config = await configOf();
+
+    expect(config.onStartShouldSetPanResponder()).toBe(true);
+  });
+
+  it('does not take the background while a pin is dragging', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas();
+    const config = create.mock.calls.at(-1)![0] as any;
+    result.current.setChildDragging(true);
+
+    expect(config.onStartShouldSetPanResponder()).toBe(false);
+    expect(
+      config.onMoveShouldSetPanResponder({ nativeEvent: { touches: [{}] } }, { dx: 20, dy: 0 }),
+    ).toBe(false);
   });
 
   /** Releasing the canvas mid-drag would make the map jump on the next interaction. */
@@ -278,6 +346,24 @@ describe('panning', () => {
     expect(after.y).toBeLessThan(before.y);
   });
 
+  it('slides a drawing that still fits the window when freePan is on', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas({ width: 100, height: 100 }, VIEWPORT, {
+      maxScale: 1,
+      freePan: true,
+    });
+    const config = create.mock.calls.at(-1)![0] as any;
+    const before = transformOf(result.current);
+
+    config.onPanResponderGrant();
+    config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: 40, dy: 25 });
+    jest.restoreAllMocks();
+
+    const after = transformOf(result.current);
+    expect(after.x).toBeGreaterThan(before.x);
+    expect(after.y).toBeGreaterThan(before.y);
+  });
+
   it('treats the gesture delta as cumulative, not incremental', async () => {
     const oneStep = await moveWith([{ dx: -60, dy: 0 }]);
     const twoSteps = await moveWith([
@@ -299,5 +385,81 @@ describe('panning', () => {
     const { before, after } = await moveWith([{ dx: -500, dy: -500 }], 1);
 
     expect(after).toEqual(before);
+  });
+});
+
+/** `onTap` reports where on the drawing the finger landed, undoing the pan and the zoom. */
+describe('tapping', () => {
+  const tapAfter = async (
+    steps: { dx: number; dy: number; touches?: number }[],
+    release: { pageX: number; pageY: number; dx: number; dy: number },
+    zoom = 1,
+  ) => {
+    const onTap = jest.fn();
+    const create = jest.spyOn(PanResponder, 'create');
+    const { ref, result } = await renderCanvas(LAYOUT, VIEWPORT, { onTap });
+    const config = create.mock.calls.at(-1)![0] as any;
+    if (zoom !== 1) ref.current!.zoomBy(zoom);
+
+    config.onPanResponderGrant({ nativeEvent: { touches: [{}] } });
+    for (const step of steps) {
+      config.onPanResponderMove(
+        { nativeEvent: { touches: Array.from({ length: step.touches ?? 1 }, () => ({})) } },
+        step,
+      );
+    }
+    config.onPanResponderRelease(
+      { nativeEvent: { pageX: release.pageX, pageY: release.pageY } },
+      { dx: release.dx, dy: release.dy },
+    );
+    jest.restoreAllMocks();
+    return { onTap, transform: transformOf(result.current) };
+  };
+
+  /** The point of the screen, undoing the framing the canvas is currently showing. */
+  const drawingPointOf = (
+    page: { pageX: number; pageY: number },
+    transform: { x: number; y: number; scale: number },
+  ) => ({
+    x: (page.pageX - transform.x) / transform.scale,
+    y: (page.pageY - transform.y) / transform.scale,
+  });
+
+  it('reports the point of the drawing under the finger', async () => {
+    const page = { pageX: 40, pageY: 30 };
+    const { onTap, transform } = await tapAfter([], { ...page, dx: 0, dy: 0 });
+
+    expect(onTap).toHaveBeenCalledWith(drawingPointOf(page, transform));
+  });
+
+  it('undoes the zoom, so a point further right on screen is further right on the drawing', async () => {
+    const { onTap, transform } = await tapAfter([], { pageX: 200, pageY: 150, dx: 0, dy: 0 }, 2);
+
+    const [point] = onTap.mock.calls.at(-1)!;
+    expect(transform.scale).toBeGreaterThan(0);
+    expect(point).toEqual(drawingPointOf({ pageX: 200, pageY: 150 }, transform));
+    expect(point.x).toBeGreaterThan(200);
+  });
+
+  it('does not read a drag as a tap', async () => {
+    const { onTap } = await tapAfter([{ dx: -60, dy: 0 }], {
+      pageX: 40,
+      pageY: 30,
+      dx: -60,
+      dy: 0,
+    });
+
+    expect(onTap).not.toHaveBeenCalled();
+  });
+
+  it('does not read the end of a pinch as a tap', async () => {
+    const { onTap } = await tapAfter([{ dx: 0, dy: 0, touches: 2 }], {
+      pageX: 40,
+      pageY: 30,
+      dx: 0,
+      dy: 0,
+    });
+
+    expect(onTap).not.toHaveBeenCalled();
   });
 });

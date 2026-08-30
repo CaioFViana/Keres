@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Relações de personagens para ver o mapa.',
+        'Abra Menu da história › Personagens e toque no ícone de relações no cabeçalho para ver o mapa.',
         'Para criar ou alterar uma relação, abra a ficha de um personagem salvo.',
         'Escolha o outro personagem e informe o tipo de relação.',
         'Salve a ficha e volte ao mapa para conferir a ligação.',

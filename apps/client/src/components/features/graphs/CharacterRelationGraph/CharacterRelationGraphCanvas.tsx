@@ -24,15 +24,17 @@ interface CharacterRelationGraphCanvasProps {
   layout: CharacterRelationGraphLayout;
   showEdgeLabels: boolean;
   selectedNodeId: string | null;
+  /** Characters the focus filter chose - drawn with the primary outline. */
+  highlightedNodeIds?: string[];
   onSelectNode: (node: RelationGraphNode) => void;
 }
 
 const CharacterRelationGraphCanvas = forwardRef<
   CharacterRelationGraphCanvasHandle,
   CharacterRelationGraphCanvasProps
->(({ layout, showEdgeLabels, selectedNodeId, onSelectNode }, ref) => {
+>(({ layout, showEdgeLabels, selectedNodeId, highlightedNodeIds, onSelectNode }, ref) => {
   const { colors } = useTheme();
-  const panZoom = usePanZoomCanvas(ref, layout);
+  const panZoom = usePanZoomCanvas(ref, layout, { freePan: true });
 
   const styles = useMemo(
     () =>
@@ -113,11 +115,13 @@ const CharacterRelationGraphCanvas = forwardRef<
 
       {layout.nodes.map((node) => {
         const isSelected = node.id === selectedNodeId;
-        const borderColor = isSelected
-          ? colors.primary
-          : node.isIsolated
-            ? colors.textSecondary
-            : colors.border;
+        const isHighlighted = highlightedNodeIds?.includes(node.id) ?? false;
+        const borderColor =
+          isSelected || isHighlighted
+            ? colors.primary
+            : node.isIsolated
+              ? colors.textSecondary
+              : colors.border;
 
         return (
           <TouchableOpacity
@@ -133,7 +137,7 @@ const CharacterRelationGraphCanvas = forwardRef<
               style={[
                 styles.nodeInner,
                 node.isIsolated && styles.nodeInnerIsolated,
-                { borderColor, borderWidth: isSelected ? 2.5 : 1.2 },
+                { borderColor, borderWidth: isSelected || isHighlighted ? 2.5 : 1.2 },
               ]}
             >
               {node.labelLines.map((line, index) => (

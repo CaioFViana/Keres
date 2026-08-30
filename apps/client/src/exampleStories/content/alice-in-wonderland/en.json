@@ -16,7 +16,15 @@
     "isDeleted": false,
     "deletedAt": null,
     "statSystem": true,
-    "statNotation": "letter"
+    "statNotation": "letter",
+    "favoriteBehavior": "individual",
+    "theme": null,
+    "timelineEpochDay": null,
+    "timelineEpochSeconds": null,
+    "normalizeSceneTiming": false,
+    "allowReaderComments": true,
+    "autoLinkMentions": true,
+    "completenessChecks": true
   },
   "chapters": [
     {
@@ -1284,6 +1292,8 @@
       "relationType": "Accuser"
     }
   ],
+  "chapterAnchors": [],
+  "storyCalendars": [],
   "characterScenes": [
     {
       "id": "688PWJDVTNEPW03RVSMEWPF67P",
@@ -1627,7 +1637,26 @@
       "sceneId": "2GDBQ0K0RXF6724TJBMYACS80B"
     }
   ],
-  "galleryItems": [],
+  "galleryItems": [
+    {
+      "id": "2EPGKVARHKYK228NGX8KEVBDQZ",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "mediaType": "link",
+      "mimeType": "text/uri-list",
+      "fileName": "public-story-source.url",
+      "hash": "ccb20f40717dc042b0d2c5edace98b54",
+      "sizeBytes": 0,
+      "sourceUrl": "https://en.wikisource.org/wiki/Alice%27s_Adventures_in_Wonderland",
+      "title": "Public story source",
+      "isFavorite": false,
+      "extraNotes": "A link to the public source used as editorial reference for this example."
+    }
+  ],
   "items": [
     {
       "id": "01KYXK1XAWEGTPCV26S9PJ23HR",
@@ -2604,7 +2633,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 6,
+  "formatVersion": 8,
   "stats": [
     {
       "id": "7NYM3XF0FN7TFK8K1F5HPJ6FGF",
@@ -3235,5 +3264,94 @@
   ],
   "plots": [],
   "plotScenes": [],
-  "galleryRelations": []
+  "galleryRelations": [
+    {
+      "id": "79V206RKAFKZ6BVJS0P8PAP5YW",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "galleryId": "2EPGKVARHKYK228NGX8KEVBDQZ",
+      "ownerId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "ownerType": "Location"
+    }
+  ],
+  "storyBoards": [
+    {
+      "id": "08PY6CPQWRJA4QHHEXGXVQ36CV",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "name": "Decision threads",
+      "description": "A view of characters, clues, and choices that change the path.",
+      "content": {
+        "nodes": [
+          {
+            "id": "A1CE0001",
+            "kind": "entity",
+            "x": 80,
+            "y": 100,
+            "entityType": "Character",
+            "entityId": "01KYXBHD0BESDGG77MG3F2A721",
+            "labelAtPin": "Alice"
+          },
+          {
+            "id": "A1CE0002",
+            "kind": "entity",
+            "x": 360,
+            "y": 80,
+            "entityType": "Scene",
+            "entityId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+            "labelAtPin": "The grinning cat"
+          },
+          {
+            "id": "A1CE0003",
+            "kind": "entity",
+            "x": 350,
+            "y": 300,
+            "entityType": "Item",
+            "entityId": "01KYXK1XAWEGTPCV26S9PJ23HR",
+            "labelAtPin": "Bottle labeled \"DRINK ME\""
+          },
+          {
+            "id": "A1CE0004",
+            "kind": "note",
+            "x": 100,
+            "y": 310,
+            "title": "Revision question",
+            "body": "The choice should make clear what Alice knows before she decides."
+          }
+        ],
+        "edges": [
+          {
+            "id": "A1CE1001",
+            "from": "A1CE0001",
+            "to": "A1CE0002",
+            "directed": true,
+            "label": null
+          },
+          {
+            "id": "A1CE1002",
+            "from": "A1CE0002",
+            "to": "A1CE0003",
+            "directed": true,
+            "label": null
+          },
+          {
+            "id": "A1CE1003",
+            "from": "A1CE0004",
+            "to": "A1CE0002",
+            "directed": false,
+            "label": null
+          }
+        ]
+      }
+    }
+  ],
+  "storyLocationMaps": []
 }

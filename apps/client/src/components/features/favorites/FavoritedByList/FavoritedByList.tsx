@@ -10,6 +10,7 @@ import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import type { ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
 import { useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import Avatar from '../../../common/display/Avatar/Avatar';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
 
@@ -65,8 +66,9 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     }
   }, [db, entityId, entityType, resolveProfile, storyId]);
 
+  useEntityInitialLoad(fetchFavoriters);
+
   useEffect(() => {
-    fetchFavoriters();
     const handleFavoriteChange = (
       changedStoryId: string,
       changedEntityType: FavoriteEntityType,

@@ -21,7 +21,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Escolhas e crie ou edite uma escolha em uma história ramificada.',
+        'Abra Menu da história › Elementos narrativos e abra uma escolha em uma história ramificada.',
         'Salve a escolha primeiro. A seção Condições aparece depois que ela existe.',
         'Toque em Adicionar grupo de condições. Dentro de um grupo, escolha Todas (E) para exigir cada condição ou Qualquer uma (OU) para aceitar uma delas.',
         'Toque em Adicionar condição e escolha o Tipo: Visitas à cena, Inventário ou Marcador. Preencha a cena e o número de visitas, o item e se deve ter/não ter, ou o nome e estado do marcador.',

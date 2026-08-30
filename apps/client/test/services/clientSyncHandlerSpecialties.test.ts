@@ -241,6 +241,29 @@ describe('GalleryClientSyncHandler', () => {
     deletedAt: null,
   });
 
+  it('treats a remote link as complete because it has no bytes to download', async () => {
+    const handler = new GalleryClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Gallery', 'gallery-link', {
+        ...media('gallery-link'),
+        mediaType: 'link',
+        mimeType: 'text/uri-list',
+        fileName: 'notes.example',
+        sourceUrl: 'https://notes.example/lore',
+      }),
+    );
+
+    expect(await handler.getById('gallery-link')).toMatchObject({
+      mediaType: 'link',
+      sourceUrl: 'https://notes.example/lore',
+      localPath: null,
+      uploadState: 'uploaded',
+      downloadState: 'downloaded',
+    });
+  });
+
   it('never accepts device-local transfer state from the remote payload', async () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);

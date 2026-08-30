@@ -37,6 +37,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'The relation appears in the details of both elements and lets you navigate between them. Removing the link does not delete either element, note, tag, or media item.',
     },
+    {
+      type: 'heading',
+      level: 2,
+      text: 'Automatic links are not the same thing',
+    },
+    {
+      type: 'paragraph',
+      text: 'A story can also link element names wherever they appear in its text, without you marking anything. That is a separate setting - Link mentions automatically, in Story Settings - and it only changes how text is read: nothing is saved, and turning it off returns every mention to plain text.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'See also is a link you made on purpose and it lives on both profiles. An automatic link is Keres noticing a name while you read, and it disappears the moment the setting is off or the name changes.',
+    },
     { type: 'seeAlso', pages: ['notes', 'tags', 'gallery', 'character-relationships'] },
   ],
 };

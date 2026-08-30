@@ -297,14 +297,14 @@ describe('uploadNewStoryToServer', () => {
     expect(seen).toEqual([]);
   });
 
-  it('links the story to the server and rebases the sync cursor on what it just sent', async () => {
+  it('links the story and starts its server-operation cursor at the empty imported log', async () => {
     await seedLocalStory({ lastOperationLog: 4 });
 
     await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
 
     expect(mockStoryService.updateStory).toHaveBeenCalledWith(LOCAL_USER, STORY_ID, {
       serverId: SERVER.id,
-      lastServerSyncedLog: 4,
+      lastServerSyncedLog: 0,
       lastPublicFavoriteLog: 0,
       myRole: 'owner',
     });
@@ -327,29 +327,19 @@ describe('uploadNewStoryToServer', () => {
     );
   });
 
-  /**
-   * Favourites and comments already travel inside the imported package. Resending them would carry the
-   * local identity, which does not exist on the server, and would duplicate the comment.
-   */
-  it('marks the favourite and comment operations as already sent', async () => {
+  it('marks every operation included in the imported snapshot as already sent', async () => {
     await seedLocalStory({ lastOperationLog: 4 });
     await seedOperation('op-favorite', { entityType: 'Favorite', operationVersion: 2 });
     await seedOperation('op-comment', { entityType: 'Comment', operationVersion: 3 });
     await seedOperation('op-character', { entityType: 'Character', operationVersion: 4 });
+    await seedOperation('op-board', { entityType: 'Board', operationVersion: 4 });
 
     await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
 
     expect((await readOperation('op-favorite'))!.isSynced).toBe(true);
     expect((await readOperation('op-comment'))!.isSynced).toBe(true);
-  });
-
-  it('leaves the other entities to be pushed normally', async () => {
-    await seedLocalStory({ lastOperationLog: 4 });
-    await seedOperation('op-character', { entityType: 'Character', operationVersion: 4 });
-
-    await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
-
-    expect((await readOperation('op-character'))!.isSynced).toBe(false);
+    expect((await readOperation('op-character'))!.isSynced).toBe(true);
+    expect((await readOperation('op-board'))!.isSynced).toBe(true);
   });
 
   it('does not touch operations newer than the snapshot it sent', async () => {

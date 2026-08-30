@@ -28,7 +28,7 @@ const page: HelpPage = {
       text: 'Rather than typing “Navigator” with different spellings on every profile, save it as an occupation suggestion. For colors, weapons, or other vocabularies that are not a built-in field, create a named list and copy values into the lists that should share them.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Suggestions'] },
+    { type: 'path', segments: ['Story menu', 'Customization', 'Standard Suggestions'] },
     {
       type: 'steps',
       items: [

@@ -2,6 +2,9 @@
 export const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Story: 'story_changed',
   Character: 'character_changed',
+  ChapterAnchor: 'chapter_anchor_changed',
+  Board: 'board_changed',
+  StoryCalendar: 'story_calendar_changed',
   CharacterRelation: 'character_relation_changed',
   CharacterScene: 'character_scene_changed',
   Tag: 'tag_changed',
@@ -10,6 +13,7 @@ export const SYNC_ENTITY_EVENTS: Record<string, string> = {
   NoteRelation: 'note_relation_changed',
   WorldRule: 'worldrule_changed',
   Location: 'location_changed',
+  LocationMap: 'location_map_changed',
   LocationRelation: 'location_relation_changed',
   Chapter: 'chapter_changed',
   Scene: 'scene_changed',

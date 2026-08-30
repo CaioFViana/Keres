@@ -3,6 +3,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,8 +62,8 @@ const PlotMatrixScreen = () => {
   const notify = useNotificationStore((state) => state.showNotification);
   const { selectedStory } = useStoryStore();
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
-  // The cell and the header open the Scene in another stack: the way back is registered so the back
-  // button brings the matrix again, and not the Scenes list.
+  // Opens the Scene in another stack: the way back is registered so the back button brings the
+  // matrix again, and not the Scenes list.
   const openScene = useCallback(
     (sceneId: string) =>
       navigateToDetail('Scene', sceneId, {
@@ -71,11 +72,16 @@ const PlotMatrixScreen = () => {
     [navigateToDetail, navigation],
   );
 
-  const { plots, relations, scenes, chapters, loading } = useStoryPlots(
+  const { plots, relations, scenes, chapters, loading, chapterNameOf, coverageOf } = useStoryPlots(
     selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  // A tap answers with a sheet, and not by leaving the screen. Every point of the matrix is
+  // touchable so that panning and pinching never land on dead space, which also means a
+  // mis-aimed finger used to throw the reader into another screen.
+  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+  const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null);
 
   // The first batch of plots comes selected: an empty matrix on the first opening looks like a broken
   // screen, not a choice to make.
@@ -103,8 +109,10 @@ const PlotMatrixScreen = () => {
     const matrixScenes = scenes.map((scene) => ({
       id: scene.id,
       name: scene.name,
-      chapterName: chapterName.get(scene.chapterId) ?? '',
-      chapterColor: chapterColors.get(scene.chapterId) ?? colors.border,
+      chapterName: scene.chapterId ? (chapterName.get(scene.chapterId) ?? '') : '',
+      chapterColor: scene.chapterId
+        ? (chapterColors.get(scene.chapterId) ?? colors.border)
+        : colors.border,
     }));
     const rows: PresenceMatrixRow[] = selectedIds
       .map((plotId) => plots.find((plot) => plot.id === plotId))
@@ -121,6 +129,9 @@ const PlotMatrixScreen = () => {
       }));
     return buildPresenceMatrixLayout(matrixScenes, rows);
   }, [chapters, colorOf, colors.border, plots, relations, scenes, selectedIds]);
+
+  const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
+  const selectedPlot = plots.find((plot) => plot.id === selectedPlotId);
 
   useFocusEffect(
     useCallback(() => {
@@ -261,8 +272,8 @@ const PlotMatrixScreen = () => {
           ref={canvas}
           layout={layout}
           showRowCoverage
-          onPressScene={openScene}
-          onPressRow={(plotId) => navigation.navigate('PlotDetail', { plotId })}
+          onPressScene={setSelectedSceneId}
+          onPressRow={setSelectedPlotId}
         />
       ) : (
         <View style={styles.emptyState}>
@@ -297,6 +308,73 @@ const PlotMatrixScreen = () => {
             </TouchableOpacity>
           ))}
         </View>
+      )}
+      {selectedScene && (
+        <GraphNodeSheet
+          title={selectedScene.name}
+          subtitle={{
+            text: chapterNameOf(selectedScene.chapterId) ?? t('unchaptered_scenes'),
+          }}
+          sections={[
+            { title: t('summary'), description: selectedScene.summary || t('common_na') },
+            {
+              title: t('plots_title'),
+              emptyMessage: t('no_plots'),
+              items: relations
+                .filter((relation) => relation.sceneId === selectedScene.id)
+                .map((relation) => ({
+                  id: relation.id,
+                  icon: 'git-branch-outline' as const,
+                  label: plots.find((plot) => plot.id === relation.plotId)?.name ?? '',
+                  detail: relation.note || undefined,
+                  onPress: () => {
+                    setSelectedSceneId(null);
+                    setSelectedPlotId(relation.plotId);
+                  },
+                })),
+            },
+          ]}
+          actionLabel={t('story_map_open_scene')}
+          onAction={() => {
+            setSelectedSceneId(null);
+            openScene(selectedScene.id);
+          }}
+          onClose={() => setSelectedSceneId(null)}
+        />
+      )}
+      {selectedPlot && (
+        <GraphNodeSheet
+          title={selectedPlot.name}
+          subtitle={{
+            text: t('plot_coverage_value', coverageOf(selectedPlot.id)),
+            color: colorOf(selectedPlot.id),
+          }}
+          sections={[
+            { title: t('plot_details'), description: selectedPlot.details || t('common_na') },
+            {
+              title: t('scenes_title'),
+              emptyMessage: t('no_plot_scenes'),
+              items: relations
+                .filter((relation) => relation.plotId === selectedPlot.id)
+                .map((relation) => ({
+                  id: relation.id,
+                  icon: 'document-text-outline' as const,
+                  label: scenes.find((scene) => scene.id === relation.sceneId)?.name ?? '',
+                  detail: relation.note || undefined,
+                  onPress: () => {
+                    setSelectedPlotId(null);
+                    setSelectedSceneId(relation.sceneId);
+                  },
+                })),
+            },
+          ]}
+          actionLabel={t('plot_matrix_open_plot')}
+          onAction={() => {
+            setSelectedPlotId(null);
+            navigation.navigate('PlotDetail', { plotId: selectedPlot.id });
+          }}
+          onClose={() => setSelectedPlotId(null)}
+        />
       )}
     </View>
   );

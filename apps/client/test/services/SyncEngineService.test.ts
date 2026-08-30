@@ -306,7 +306,11 @@ describe('pull', () => {
 
     await runOneCycle();
 
-    expect(await database.db.query.favorites.findFirst({ where: eq(schema.favorites.id, 'favorite-remote') })).toMatchObject({
+    expect(
+      await database.db.query.favorites.findFirst({
+        where: eq(schema.favorites.id, 'favorite-remote'),
+      }),
+    ).toMatchObject({
       entityId: 'character-remote',
       userId: 'other-user',
       version: 3,

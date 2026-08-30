@@ -26,7 +26,10 @@ jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
-    useNavigation: () => ({ goBack: mockGoBack, getParent: () => ({ setOptions: mockSetOptions }) }),
+    useNavigation: () => ({
+      goBack: mockGoBack,
+      getParent: () => ({ setOptions: mockSetOptions }),
+    }),
     useRoute: () => ({ params: { mapId: 'map-1' } }),
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
@@ -47,7 +50,10 @@ jest.mock('../../src/hooks/useStoryRole', () => ({
 }));
 jest.mock('../../src/state/storyStore', () => {
   const state = { selectedStory: { id: 'story-1' } };
-  return { __esModule: true, useStoryStore: (selector: (value: typeof state) => unknown) => selector(state) };
+  return {
+    __esModule: true,
+    useStoryStore: (selector: (value: typeof state) => unknown) => selector(state),
+  };
 });
 jest.mock('../../src/state/userSettingsStore', () => ({
   __esModule: true,
@@ -140,7 +146,10 @@ jest.mock('../../src/components/features/location-maps/LocationMapTools', () => 
   return {
     __esModule: true,
     default: (props: any) => (
-      <TouchableOpacity testID="map-add-location" onPress={() => props.onAddLocations(['location-2'])}>
+      <TouchableOpacity
+        testID="map-add-location"
+        onPress={() => props.onAddLocations(['location-2'])}
+      >
         <Text>add location</Text>
       </TouchableOpacity>
     ),
@@ -229,9 +238,8 @@ describe('LocationMapScreen', () => {
 
     await fireEvent.press(view.getByTestId('map-add-location'));
     await waitFor(() => expect(mockCanvasProps.content.nodes).toHaveLength(2));
-    expect(mockCanvasProps.content.nodes.map((node: { locationId: string }) => node.locationId)).toEqual([
-      'location-1',
-      'location-2',
-    ]);
+    expect(
+      mockCanvasProps.content.nodes.map((node: { locationId: string }) => node.locationId),
+    ).toEqual(['location-1', 'location-2']);
   });
 });

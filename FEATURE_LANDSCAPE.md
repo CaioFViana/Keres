@@ -1,7 +1,7 @@
 # Keres product landscape
 
 **Status:** living product decision document  
-**Last audited:** 2026-08-30  
+**Last audited:** 2026-08-31
 **Purpose:** describe the product Keres is building, distinguish delivered capability from proposals, and make strategic trade-offs explicit. It is not a release plan or a competitor feature checklist.
 
 ## How to read this document
@@ -95,7 +95,7 @@ These are the places where Keres should be honest rather than letting a nearby f
 | Story shape | A Story is linear or branching; there is no neutral world-bible mode. | A reference setting must still choose a narrative shape. |
 | Vocabulary | Per-story vocabulary changes visible entity terminology and packs may provide a vocabulary seed. | It improves fit across media without inventing a separate comic, RPG or game model. |
 | Branching | Choices, checks, effects, graph analysis, Plot membership, Routes and an in-memory Story Navigator exist. | Keres now plans and inspects branching paths, but deliberately does not publish or execute a player-facing runtime. |
-| Time in branching | Event data and anchors can exist, but the narrative Timeline intentionally renders only linear stories. | Chronology needs a graph-aware presentation before it is first-class in branching. |
+| Time in branching | The global narrative Timeline intentionally renders only linear stories. A valid Route has its own derived Timeline, ordered by RouteSteps and able to show gaps, durations and calendar dates. | A route describes one authored traversal, not a universal chronology for every branch. |
 | Plot views | Linear views use narrative order; branching views use labelled graph/catalogue distribution. | Plot membership now works honestly across both story shapes; route-specific reading remains explicit. |
 | Knowledge graph | Forward auto-links, manual see-also relations and a derived mentioned-in panel exist. | Discovery is purposeful for narrative entities, but remains narrower than a general connected-notes ecosystem. |
 | Maps | Location graph and Gallery exist; no map-image coordinates, layers or region navigation. | Do not position Location Maps as an alternative to interactive cartography. |
@@ -125,7 +125,7 @@ Worldbuilding and writing products have had years to accumulate categories, temp
 | --- | --- | --- | --- |
 | Plan a conventional book quickly | [Plottr](https://plottr.com/features/) | Mature drag-and-drop timeline, scene cards, plotlines, templates, filtering and series planning. | Behind in focused linear-planning polish and series workflows. Keres is more structurally connected, not faster for the ordinary outline. |
 | Build and present a large world or campaign | [World Anvil](https://www.worldanvil.com/about), [Kanka](https://kanka.io/features) | Broad object catalogues, interactive maps, calendars, timelines, permissions and presentation/community surfaces. | Behind by a large margin in breadth, map tooling, public discovery and RPG-specific workflows. Keres can win for private, local-first structured authoring. |
-| Manage exact chronology | [Aeon Timeline](https://release.aeontimeline.com/version1/manuals/AeonTimeline_UserManualMac.pdf) | Chronology-centered events, arcs and custom calendars with historical ranges. | Keres has calendars and timeline foundations, but the branching/time intersection and mature chronology tooling remain incomplete. |
+| Manage exact chronology | [Aeon Timeline](https://release.aeontimeline.com/version1/manuals/AeonTimeline_UserManualMac.pdf) | Chronology-centered events, arcs and custom calendars with historical ranges. | Keres has calendars, timeline foundations and route-scoped branching chronology, but remains behind in mature chronology tooling and deliberately has no universal date order for a branching graph. |
 | Create interactive branching content | [articy:draft](https://www.articy.com/en/articydraft/feature-list/), [Twine](https://twinery.org/) | Visual flow, execution/simulation, variables or scripting, and publishing/engine paths. | Keres has a useful planning graph and story-bible context, but is not yet an interactive-fiction authoring or runtime tool. |
 | Draft, revise and compile prose | Scrivener, Dabble, Novelcrafter and similar | Manuscript editing, revision workflow, targets and publishing export. | Deliberately outside Keres's scope. The right relationship is coexistence or integration, not feature parity. |
 | Build a linked personal knowledge base | Obsidian and similar tools | Backlinks, graph navigation, local files and ecosystem extensibility. | Keres is stronger in first-class narrative entities and rules; it is weaker in backlink discovery and general-purpose extensibility. |
@@ -172,6 +172,11 @@ Completed: Plot membership extends to branching stories and each view is adapted
 - conversion between linear and branching preserves ordinary PlotScene membership.
 
 This has more strategic value than adding another isolated entity: it repairs a contradiction in the current model.
+
+A valid Route can also be inspected as its own Timeline. Its axis follows RouteSteps, so revisiting a
+Scene remains a distinct visit; gaps, durations, the story start and scene date overrides are read
+through the existing calendar model. This is deliberately a derived, read-only projection: it does
+not create a global chronological order for scenes outside that Route and does not persist dates.
 
 ### Priority 3 — improve connected discovery
 
@@ -238,11 +243,14 @@ Update this file in the same change that materially changes a capability or stra
 - Re-audit competitor statements when a roadmap decision depends on them.
 - Keep release notes, roadmap and this document separate: one records change, one schedules work, and this one explains why the product exists.
 
-## 9. 2026-08-30 capability record
+## 9. 2026-08-31 capability record
 
 Today's completed work tightened the boundary between linear and branching authoring as well as the reliability checks behind it:
 
 - Routes, route steps and the Story Navigator support an explicit possible path through a branching story. The reader can use that path without pretending that the graph has one inherent order.
+- A valid Route has a dedicated, calendar-aware Timeline. It uses route-step order rather than the
+  chapter spine, so loops are visible and the global Timeline remains honest about branching
+  ambiguity.
 - Plot membership is available across story shapes, while the server now rejects stale Plot and PlotScene sync writes after a story is converted to branching. This protects conversion from offline operation-log resurrection.
 - Example stories are rebuilt in the current export format, including routes collections, vocabulary and scene calendar-override fields; the example-package test guards this contract.
 - The calendar, vocabulary and backlinks work described above is covered by client/shared/API lifecycle and architectural tests rather than being treated as UI-only capability.

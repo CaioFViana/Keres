@@ -69,6 +69,12 @@ export default function RouteDetailScreen() {
               >
                 <Ionicons name="book-outline" size={24} color={colors.text} />
               </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('RouteTimeline', { routeId })}
+                accessibilityLabel={t('route_timeline')}
+              >
+                <Ionicons name="git-branch-outline" size={24} color={colors.text} />
+              </TouchableOpacity>
               {canEdit ? (
                 <TouchableOpacity
                   onPress={() => navigation.navigate('RouteSteps', { routeId })}
@@ -144,6 +150,12 @@ export default function RouteDetailScreen() {
           {t('edit_route_steps')}
         </Button>
       ) : null}
+      <Button
+        onPress={() => navigation.navigate('RouteTimeline', { routeId })}
+        style={{ marginTop: 12 }}
+      >
+        {t('route_timeline')}
+      </Button>
     </ScrollView>
   );
 }

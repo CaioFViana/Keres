@@ -58,8 +58,20 @@ export default function RouteReaderScreen() {
     useCallback(() => {
       const title = route ? t('route_reader_title', { route: route.name }) : t('route_reader');
       setDocumentTitle(title);
-      navigation.getParent()?.setOptions({ title, headerRight: undefined });
-    }, [navigation, route, t]),
+      navigation.getParent()?.setOptions({
+        title,
+        headerRight: () =>
+          route ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('RouteTimeline', { routeId })}
+              accessibilityLabel={t('route_timeline')}
+              style={{ marginRight: 15 }}
+            >
+              <Text style={{ color: colors.text, fontSize: 20 }}>◷</Text>
+            </TouchableOpacity>
+          ) : null,
+      });
+    }, [colors.text, navigation, route, routeId, t]),
   );
   if (loading) return <ScreenLoading message={t('loading_routes')} />;
   if (!route)

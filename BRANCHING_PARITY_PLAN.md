@@ -41,8 +41,9 @@ product so a later change does not mistake a proposal for delivered behaviour.
 - [x] Navigator persistence boundary: the author can save the simulated traversal as a new Route
   or replace a selected Route, with an explicit confirmation before writing.
 - [x] Route global-search entry and direct entity navigation from search.
-- [ ] Route-scoped chronology/date presentation, only after the persistence and usage model has
-  been exercised.
+- [x] Route-scoped chronology/date presentation: a read-only Timeline projection is available
+      from a Route and its Reader. It uses RouteStep order (including repeated Scene visits), keeps
+      the global branching timeline unavailable, and never persists derived dates.
 - [x] Final cross-layer audit: client Route and RouteStep pull handlers have full
   create/update/tombstone coverage; server handlers cover create/update/delete, validation and
   stale-version conflicts; offline Plot/Route creation retains its links through push; conversion

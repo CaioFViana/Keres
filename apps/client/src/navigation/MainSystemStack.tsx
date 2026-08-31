@@ -83,6 +83,7 @@ import RouteFormScreen from '../screens/routes/RouteFormScreen';
 import RouteDetailScreen from '../screens/routes/RouteDetailScreen';
 import RouteStepsScreen from '../screens/routes/RouteStepsScreen';
 import RouteReaderScreen from '../screens/routes/RouteReaderScreen';
+import RouteTimelineScreen from '../screens/routes/RouteTimelineScreen';
 import StoryNavigatorScreen from '../screens/routes/StoryNavigatorScreen';
 import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
 import StatFormScreen from '../screens/stats/StatFormScreen';
@@ -181,6 +182,7 @@ export type PlotsStackParamList = {
   RouteForm: { routeId?: string };
   RouteSteps: { routeId: string };
   RouteReader: { routeId: string };
+  RouteTimeline: { routeId: string };
   StoryNavigator: undefined;
 };
 const PlotsStackNavigator = () => {
@@ -201,6 +203,7 @@ const PlotsStackNavigator = () => {
       <PlotsStack.Screen name="RouteDetail" component={RouteDetailScreen} />
       <PlotsStack.Screen name="RouteSteps" component={RouteStepsScreen} />
       <PlotsStack.Screen name="RouteReader" component={RouteReaderScreen} />
+      <PlotsStack.Screen name="RouteTimeline" component={RouteTimelineScreen} />
       <PlotsStack.Screen name="StoryNavigator" component={StoryNavigatorScreen} />
     </PlotsStack.Navigator>
   );

@@ -34,6 +34,9 @@ describe('collaboration services', () => {
 
     expect(await permissionService.getUserPermissionForStory(bia.userId, storyId)).toBeUndefined();
     expect(await friendshipService.getFriendships(ana.userId)).toEqual([]);
+    await expect(
+      permissionService.upsertStoryPermission(ana.userId, storyId, bia.userId, 'reader'),
+    ).rejects.toThrow('Permission can only be granted to friends.');
   });
 
   it('makes blacklisting idempotent and revokes collaboration when it replaces a friendship', async () => {

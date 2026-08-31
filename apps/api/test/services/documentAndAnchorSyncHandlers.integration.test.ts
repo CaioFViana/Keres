@@ -59,6 +59,25 @@ describe('JSON-document sync handlers', () => {
     await handler.delete(userId, storyId, { type: 'delete', entity, id, version: 2 }, updated);
     expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 3 });
   });
+
+  it.each(documentCases)('%s lets only one concurrent edit based on the same version land', async (entity, build, data) => {
+    const handler = build();
+    const id = newId();
+    await handler.create(userId, storyId, create(entity, id, data));
+    const current = await handler.findById(id);
+    const results = await Promise.allSettled([
+      handler.update(userId, storyId, {
+        type: 'update', entity, id, changes: { name: 'First edit', version: 1 },
+      }, current),
+      handler.update(userId, storyId, {
+        type: 'update', entity, id, changes: { name: 'Second edit', version: 1 },
+      }, current),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    expect(await handler.findById(id)).toMatchObject({ version: 2 });
+  });
 });
 
 describe('ChapterAnchorSyncHandler', () => {
@@ -89,5 +108,28 @@ describe('ChapterAnchorSyncHandler', () => {
       chapterId, order: 1, startSceneId: newId(), startPosition: 'start', startOffset: null,
       startOffsetUnit: null, endSceneId: null, endPosition: null, endOffset: null, endOffsetUnit: null,
     }))).rejects.toBeInstanceOf(SyncConflictError);
+  });
+
+  it('turns the losing concurrent anchor edit into a version conflict', async () => {
+    const handler = new ChapterAnchorSyncHandler();
+    const id = newId();
+    const data = {
+      chapterId, order: 1, startSceneId: sceneId, startPosition: 'start', startOffset: null,
+      startOffsetUnit: null, endSceneId: null, endPosition: null, endOffset: null, endOffsetUnit: null,
+    };
+    await handler.create(userId, storyId, create('ChapterAnchor', id, data));
+    const current = await handler.findById(id);
+    const results = await Promise.allSettled([
+      handler.update(userId, storyId, {
+        type: 'update', entity: 'ChapterAnchor', id, changes: { order: 2, version: 1 },
+      } as never, current),
+      handler.update(userId, storyId, {
+        type: 'update', entity: 'ChapterAnchor', id, changes: { order: 3, version: 1 },
+      } as never, current),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    expect(await handler.findById(id)).toMatchObject({ version: 2 });
   });
 });

@@ -48,4 +48,17 @@ describe('RecoveryCodeService', () => {
     expect(await service.countRemaining(user.userId)).toBe(8);
     await expect(service.redeemCode(user.username, user.recoveryCodes[0], 'senha-nova-123')).rejects.toBeInstanceOf(InvalidRecoveryCodeError);
   });
+
+  it('allows exactly one of two simultaneous attempts to redeem the same code', async () => {
+    const user = await registerWithCodes();
+    const service = new RecoveryCodeService();
+    const results = await Promise.allSettled([
+      service.redeemCode(user.username, user.recoveryCodes[0], 'senha-a-123'),
+      service.redeemCode(user.username, user.recoveryCodes[0], 'senha-b-123'),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    expect(await service.countRemaining(user.userId)).toBe(7);
+  });
 });

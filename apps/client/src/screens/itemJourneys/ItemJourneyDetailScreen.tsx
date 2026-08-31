@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,

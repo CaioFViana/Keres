@@ -1,7 +1,7 @@
 # Keres product landscape
 
 **Status:** living product decision document  
-**Last audited:** 2026-08-29  
+**Last audited:** 2026-08-30  
 **Purpose:** describe the product Keres is building, distinguish delivered capability from proposals, and make strategic trade-offs explicit. It is not a release plan or a competitor feature checklist.
 
 ## How to read this document
@@ -36,9 +36,7 @@ The first is usually aligned with Keres. The second is acceptable only as an opt
 
 ### 1.2 The claim Keres still has to earn
 
-"Usable by any medium" is directionally right, but not yet fully true in the product. The model and custom schema are flexible; the visible vocabulary is still prose-shaped: Chapter, Scene, Character and Location. A comic creator still sees chapters where they expect issues or pages; an RPG creator still sees scenes where they might expect sessions or encounters.
-
-Per-story vocabulary is therefore not cosmetic. It is the lowest-cost proof that the product can serve more than one medium without duplicating the data model.
+"Usable by any medium" is directionally right, but not yet fully true in the product. Per-story vocabulary now lets a creator rename the visible default terms without duplicating the data model; it is a meaningful proof for comics, RPGs and game narrative. It does not create medium-specific workflows by itself: an issue is still stored through the same general container model, and a session is not yet a dedicated RPG entity.
 
 ---
 
@@ -54,8 +52,9 @@ Per-story vocabulary is therefore not cosmetic. It is the lowest-cost proof that
 
 ### 2.2 Time, spatial and visual surfaces
 
-- Custom and standard calendars can express in-world dates, eras, time of day, seasons and moons; stories can choose a primary calendar or use calendar views in parallel.
-- The agenda renders calendar dates and scenes/events placed on them.
+- Custom and standard calendars can express in-world dates, negative years, eras, time of day, seasons and moons; stories can choose a primary calendar, no primary calendar, or use calendar views in parallel.
+- The agenda renders calendar dates and scenes/events placed on them. Calendar edits preview the current and newly interpreted anchored values before confirmation, and each calendar exposes its anchors for later inspection and navigation.
+- A Scene can retain its relative gap or declare a calendar coordinate override. The coordinate remains independent of calendar labels so it stays recoverable when a calendar definition changes; an invalid interpretation is reviewable rather than silently rewritten.
 - The linear timeline separates narrative order from anchored Events and chronology.
 - Boards provide freeform entity pins, notes and arrows.
 - Location Maps provide a structured location graph and saved layouts.
@@ -68,7 +67,7 @@ These are authoring and inspection surfaces. A Location Map is **not** yet an up
 - The client stores data locally and synchronizes through an operation log.
 - The server supports roles, asynchronous collaboration, optimistic concurrency and user-facing conflict resolution.
 - Stories, relations and supported media can be exported and imported as packages.
-- Comments are field-anchored and can be reviewed across entities.
+- Comments are field-anchored and can be reviewed across entities. Automatic prose links now also provide a derived, navigable mentioned-in/backlinks panel, counting referring entities separately from total mentions.
 
 This is a meaningful architectural differentiator, but it is not a license to claim perfect reliability. Sync, conflict and import/export are critical infrastructure: every new persisted feature must prove its full lifecycle before it is described as production-ready.
 
@@ -94,11 +93,11 @@ These are the places where Keres should be honest rather than letting a nearby f
 | Area | Current reality | Product consequence |
 | --- | --- | --- |
 | Story shape | A Story is linear or branching; there is no neutral world-bible mode. | A reference setting must still choose a narrative shape. |
-| Vocabulary | Labels remain Chapter/Scene/Character/Location. | The multi-medium thesis is not visible to the creator. |
-| Branching | Choices, checks, effects and a graph exist. Plot is currently restricted to linear stories. | Keres plans branching; it does not yet model a plot across a graph. |
+| Vocabulary | Per-story vocabulary changes visible entity terminology and packs may provide a vocabulary seed. | It improves fit across media without inventing a separate comic, RPG or game model. |
+| Branching | Choices, checks, effects, graph analysis, Plot membership, Routes and an in-memory Story Navigator exist. | Keres now plans and inspects branching paths, but deliberately does not publish or execute a player-facing runtime. |
 | Time in branching | Event data and anchors can exist, but the narrative Timeline intentionally renders only linear stories. | Chronology needs a graph-aware presentation before it is first-class in branching. |
-| Plot views | Detail, matrix, reader and coverage assume a single narrative ordering. | Enabling Plot in branching is a design task, not merely removing a guard. |
-| Knowledge graph | Forward auto-links and manual see-also relations exist; there is no derived mentioned-in panel. | Discovery remains weaker than a mature connected-notes tool. |
+| Plot views | Linear views use narrative order; branching views use labelled graph/catalogue distribution. | Plot membership now works honestly across both story shapes; route-specific reading remains explicit. |
+| Knowledge graph | Forward auto-links, manual see-also relations and a derived mentioned-in panel exist. | Discovery is purposeful for narrative entities, but remains narrower than a general connected-notes ecosystem. |
 | Maps | Location graph and Gallery exist; no map-image coordinates, layers or region navigation. | Do not position Location Maps as an alternative to interactive cartography. |
 | Series | Story is the top-level ownership boundary. | Shared canon across books or campaigns requires copying/importing today. |
 
@@ -160,23 +159,25 @@ No visual novelty compensates for losing work or leaving a user unable to synchr
 
 ### Priority 1 — make the multi-medium promise visible
 
-Add per-story vocabulary over the existing model. This is low-cost relative to a new entity and unlocks a clearer Comic, RPG, game and screenplay experience without fragmenting services, sync or export.
+Completed: per-story vocabulary now overrides the visible default terms while keeping the shared model, services, sync and export intact. Packs can offer a vocabulary seed. The remaining work is medium-specific workflow polish, not another terminology layer.
 
 ### Priority 2 — make branching a first-class planning mode
 
-Extend Plot membership to branching stories, then adapt each view honestly:
+Completed: Plot membership extends to branching stories and each view is adapted honestly:
 
 - plots highlight scenes/nodes in the Choice graph;
 - detail and matrix use a labelled catalogue order, not a fictional reading order;
 - coverage is described as scene coverage/distribution, not path progress;
-- the linear Reader remains unavailable unless a real route model exists;
+- the branching Reader uses an explicit, valid Route; the linear Reader keeps its derived spine;
 - conversion between linear and branching preserves ordinary PlotScene membership.
 
 This has more strategic value than adding another isolated entity: it repairs a contradiction in the current model.
 
 ### Priority 3 — improve connected discovery
 
-Add a derived, non-persisted mentioned-in panel for auto-links and make it navigable. It fits the story-bible premise, imposes no ontology and gives the user a meaningful reason to keep structured notes in Keres rather than a generic notebook.
+Completed first step: auto-links now expose a derived, non-persisted mentioned-in panel with entity navigation. It reports both the number of referring entities and the total occurrences, avoiding inflated counts when one entity mentions a name repeatedly.
+
+The next question is discovery breadth: richer graph exploration, filters and cross-story canon remain separate decisions.
 
 ### Priority 4 — choose the next expansion by audience
 
@@ -237,3 +238,11 @@ Update this file in the same change that materially changes a capability or stra
 - Re-audit competitor statements when a roadmap decision depends on them.
 - Keep release notes, roadmap and this document separate: one records change, one schedules work, and this one explains why the product exists.
 
+## 9. 2026-08-30 capability record
+
+Today's completed work tightened the boundary between linear and branching authoring as well as the reliability checks behind it:
+
+- Routes, route steps and the Story Navigator support an explicit possible path through a branching story. The reader can use that path without pretending that the graph has one inherent order.
+- Plot membership is available across story shapes, while the server now rejects stale Plot and PlotScene sync writes after a story is converted to branching. This protects conversion from offline operation-log resurrection.
+- Example stories are rebuilt in the current export format, including routes collections, vocabulary and scene calendar-override fields; the example-package test guards this contract.
+- The calendar, vocabulary and backlinks work described above is covered by client/shared/API lifecycle and architectural tests rather than being treated as UI-only capability.

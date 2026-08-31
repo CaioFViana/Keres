@@ -100,6 +100,10 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
     { name: 'details', label: 'field_details', type: 'string', isSearchable: true },
   ],
+  Route: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'details', label: 'field_details', type: 'string', isSearchable: true },
+  ],
   Mode: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
     { name: 'modeChanges', label: 'field_modeChanges', type: 'string', isSearchable: true },

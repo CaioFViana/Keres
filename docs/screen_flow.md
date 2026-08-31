@@ -31,7 +31,7 @@ A unified drawer gives access to every module of the system, with one screen per
 2. **Global Search** (`GlobalSearch`) - a single search field that searches by text in **any** table, in **any** searchable field (native or a custom attribute), with results grouped by entity type; tapping a result navigates straight to that entity's detail (`utils/entityNavigation.ts`).
 3. **Characters** (`CharactersStack`)
 4. **Narrative elements** (`NarrativeElementsStack`) - it brings together chapters, scenes and choices. Expanding a chapter shows its scenes; linear stories use the scene order and branching stories use layers. Scene/choice details and forms belong to this same stack; the header opens the timeline/Gantt in linear stories (`StoryTimelineScreen`) and the map/graph in branching ones (`ChoiceViewScreen`).
-5. **Plots** (`PlotsStack`) - linear stories only; it brings together the list, detail, form, Plot × Scene matrix, coverage and textual reader.
+5. **Plots** (`PlotsStack`) - Plot list/detail/form and graph-aware distribution in both story shapes; the linear textual reader remains linear-only. For branching stories it also contains Routes and Story Navigator.
 6. **Locations** (`LocationsStack`) - it includes a graph visualization of the relations between locations (`LocationGraphScreen`).
 7. **Items** (`ItemsStack`)
 8. **Tags** (`TagsStack`)
@@ -66,7 +66,7 @@ Exceptions to the pattern:
 - **The Operation Log** is read-only: it has a List and a Detail, with no Form.
 - **Comments** are cross-cutting: they can be opened beside a field on the detail screen and also appear in the centralised list; they have no entity form of their own.
 - **Stats** are a story feature, not an ordinary entity: they have their own list, form, ladder, comparison and ranking screens; the character's detail/form concentrates modes and values.
-- **Plots** follow List→Detail→Form only for the plot's own fields. The N:N association with scenes (`PlotScene`) is edited inside `SceneFormScreen`, and not on a screen of its own. `PlotMatrixScreen` compares the notes per scene, `PlotProgressScreen` shows coverage and the average, and `PlotReaderScreen` presents the scenes' summaries as continuous text. The whole stack is exclusive to linear stories.
+- **Plots** follow List→Detail→Form only for the plot's own fields. The Plot form also owns N:N Scene membership (`PlotScene`) and its one-line notes. `PlotMatrixScreen` and `PlotProgressScreen` use linear order for linear stories and labelled graph distribution for branching stories; `PlotReaderScreen` remains linear-only. The same stack hosts branching-only Route list/detail/form/reader and Story Navigator.
 - **The presence/journey matrix** is opened from the Character or Item lists or details. It compares character presence or item journeys across the scenes of linear stories.
 - **Scenes** have no drawer or list of their own: they appear nested in the chapter, but keep a Detail and Form inside `NarrativeElementsStack`.
 

@@ -91,6 +91,7 @@ export const entityMetadataHelpPages = {
   Choice: 'choices',
   Mode: 'character-modes',
   Plot: 'plots',
+  Route: 'routes',
 } as const;
 
 export const visibleEntityProperties = fieldSources;
@@ -407,6 +408,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'summary',
       'gap',
       'gapType',
+      'calendarDateOverride',
+      'calendarDateOverrideCalendarId',
       'duration',
       'durationType',
       'isStart',

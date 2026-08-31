@@ -1,6 +1,6 @@
 # Branching parity, Routes and Story Navigator
 
-**Status:** implementation in progress  
+**Status:** implemented; chronology follow-up awaits an explicit product decision  
 **Scope:** Priority 2 of `FEATURE_LANDSCAPE.md`  
 **Last updated:** 2026-08-30
 
@@ -43,8 +43,11 @@ product so a later change does not mistake a proposal for delivered behaviour.
 - [x] Route global-search entry and direct entity navigation from search.
 - [ ] Route-scoped chronology/date presentation, only after the persistence and usage model has
   been exercised.
-- [ ] Final cross-layer audit: conversion preservation, offline sync/conflict recovery and
-  branching Plot/Route package round trips need their remaining explicit integration tests.
+- [x] Final cross-layer audit: client Route and RouteStep pull handlers have full
+  create/update/tombstone coverage; server handlers cover create/update/delete, validation and
+  stale-version conflicts; offline Plot/Route creation retains its links through push; conversion
+  retains Plot membership; and branching Plot/Route package export, import and clone round trips
+  retain their data.
 
 ## Product decisions
 

@@ -163,4 +163,17 @@ describe('plot story constraints', () => {
       reason: 'validation',
     });
   });
+
+  it('rejects stale plot-scene writes after the story becomes branching', async () => {
+    await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
+
+    const attempt = new PlotSceneSyncHandler().create(userId, storyId, {
+      type: 'create',
+      entity: 'PlotScene',
+      id: newId(),
+      data: { plotId, sceneId, note: 'Stale linear relation' },
+    } as CreateStoryUpdate);
+
+    await expect(attempt).rejects.toMatchObject({ reason: 'validation' });
+  });
 });

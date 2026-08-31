@@ -29,6 +29,8 @@ import {
   operationLogs,
   plots,
   plotScenes,
+  routes,
+  routeSteps,
   scenes,
   suggestions,
   stories,
@@ -460,6 +462,42 @@ export class EntityService {
           entitySpecificName = `${relatedPlot?.name || t('plots_title')} — ${relatedScene?.name || t('scenes_title')}`;
         }
         translatedEntityType = t('plot_scenes');
+        break;
+      case OperationLogEntityType.Route:
+        const route = await db.query.routes.findFirst({
+          where: and(
+            eq(routes.id, entityId),
+            eq(routes.storyId, storyId),
+            eq(routes.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
+        entitySpecificName = route?.name;
+        translatedEntityType = t('route');
+        break;
+      case OperationLogEntityType.RouteStep:
+        const routeStep = await db.query.routeSteps.findFirst({
+          where: and(
+            eq(routeSteps.id, entityId),
+            eq(routeSteps.storyId, storyId),
+            eq(routeSteps.isDeleted, false),
+          ),
+          columns: { routeId: true, position: true, sceneId: true },
+        });
+        if (routeStep) {
+          const [stepRoute, stepScene] = await Promise.all([
+            db.query.routes.findFirst({
+              where: and(eq(routes.id, routeStep.routeId), eq(routes.isDeleted, false)),
+              columns: { name: true },
+            }),
+            db.query.scenes.findFirst({
+              where: and(eq(scenes.id, routeStep.sceneId), eq(scenes.isDeleted, false)),
+              columns: { name: true },
+            }),
+          ]);
+          entitySpecificName = `${stepRoute?.name || t('unknown_entity')} — ${t('route_step')} ${routeStep.position + 1}: ${stepScene?.name || t('unknown_scene')}`;
+        }
+        translatedEntityType = t('route_step');
         break;
       case OperationLogEntityType.StorySchemaField:
         const schemaField = await db.query.storySchemaFields.findFirst({

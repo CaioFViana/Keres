@@ -19,7 +19,9 @@ function localeFamily(language: string | undefined): 'pt' | 'en' {
 export function useStoryVocabulary() {
   const { t, i18n } = useTranslation();
   const vocabulary = useStoryStore((state) => state.selectedStory?.vocabulary ?? null);
-  const language = localeFamily(i18n.resolvedLanguage ?? i18n.language);
+  // Focused navigation tests provide only `t`; production i18n always exists, but vocabulary must
+  // remain a harmless default when a host intentionally supplies no language object.
+  const language = localeFamily(i18n?.resolvedLanguage ?? i18n?.language ?? 'en');
 
   return useMemo(() => {
     const enabled = vocabulary?.language === language;

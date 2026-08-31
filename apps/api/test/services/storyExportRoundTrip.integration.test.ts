@@ -26,6 +26,8 @@ import {
   modes,
   noteRelations,
   notes,
+  plots,
+  plotScenes,
   scenes,
   routes,
   routeSteps,
@@ -100,6 +102,8 @@ const id = {
   mode: '',
   baseValue: '',
   modeValue: '',
+  plot: '',
+  plotScene: '',
   route: '',
   routeStepA: '',
   routeStepB: '',
@@ -289,6 +293,21 @@ beforeEach(async () => {
     sceneId: id.sceneA,
     nextSceneId: id.sceneB,
     text: 'Descer até a enseada',
+  } as never);
+  // Branching stories can also carry thematic threads. Keeping this alongside a Choice proves
+  // that export/import no longer treats plots as a linear-only collection.
+  await db.insert(plots).values({
+    id: id.plot,
+    storyId,
+    name: 'A luz que falha',
+    details: 'O farol e a maré se encontram nesta trama.',
+  } as never);
+  await db.insert(plotScenes).values({
+    id: id.plotScene,
+    storyId,
+    plotId: id.plot,
+    sceneId: id.sceneA,
+    note: 'A primeira falha da luz.',
   } as never);
   await db.insert(routes).values({
     id: id.route,
@@ -566,6 +585,8 @@ async function childrenOf(storyId: string) {
     modes: await rows(modes),
     storyBoards: await rows(boards),
     storyLocationMaps: await rows(locationMaps),
+    plots: await rows(plots),
+    plotScenes: await rows(plotScenes),
     routes: await rows(routes),
     routeSteps: await rows(routeSteps),
   };
@@ -584,12 +605,6 @@ describe('export of a story with one row of every kind', () => {
     for (const [collection, rows] of Object.entries(pkg)) {
       if (!Array.isArray(rows)) continue;
       expect({ collection, length: rows.length }).toEqual({ collection, length: rows.length });
-      // Plots do not coexist with Choices: this fixture is branching to exercise the branching part of the
-      // package, so the two linear collections must stay empty.
-      if (collection === 'plots' || collection === 'plotScenes') {
-        expect(rows).toHaveLength(0);
-        continue;
-      }
       expect(rows.length).toBeGreaterThan(0);
     }
   });

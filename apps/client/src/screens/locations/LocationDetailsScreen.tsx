@@ -1,4 +1,4 @@
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,

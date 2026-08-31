@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
+import { storyCalendars } from './storyCalendars';
 import { chapters } from './chapters';
 import { locations } from './locations';
 import { choices } from './choices'; // Will be created later
@@ -20,6 +21,10 @@ export const scenes = table('scenes', {
   summary: text('summary'),
   gap: integer('gap'),
   gapType: text('gap_type'),
+  calendarDateOverride: text('calendar_date_override'),
+  calendarDateOverrideCalendarId: text('calendar_date_override_calendar_id').references(
+    () => storyCalendars.id,
+  ),
   duration: integer('duration'),
   durationType: text('duration_type'),
   isStart: boolean('is_start').notNull().default(false),

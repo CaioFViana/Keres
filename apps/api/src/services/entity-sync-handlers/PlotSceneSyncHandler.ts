@@ -40,6 +40,8 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
     ]);
     if (!story)
       throw new SyncConflictError('referenced_entity_deleted', 'Story is no longer active.');
+    if (story.type !== 'linear')
+      throw new SyncConflictError('validation', 'Plots are only available for linear stories.');
     if (!plot || !scene)
       throw new SyncConflictError(
         'referenced_entity_deleted',

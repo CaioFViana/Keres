@@ -7,7 +7,7 @@ import type {
 import { CreateSceneDataSchema, PartialSceneSchema } from '@keres/shared';
 import { and, eq, not, sql } from 'drizzle-orm';
 import { db } from '../../db';
-import { chapters, locations, scenes, stories } from '../../db/schema';
+import { chapters, locations, scenes, stories, storyCalendars } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class SceneSyncHandler extends BaseSyncEntityHandler<
@@ -69,6 +69,23 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
+  private async validateOverrideCalendar(storyId: string, calendarId: string | null | undefined) {
+    if (!calendarId) return;
+    const calendar = await db.query.storyCalendars.findFirst({
+      where: and(
+        eq(storyCalendars.id, calendarId),
+        eq(storyCalendars.storyId, storyId),
+        eq(storyCalendars.isDeleted, false),
+      ),
+    });
+    if (!calendar) {
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Calendar with ID ${calendarId} does not belong to story ${storyId}.`,
+      );
+    }
+  }
+
   private async _isStoryLinear(storyId: string): Promise<boolean> {
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -115,6 +132,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     }
 
     await this.validateRelatedEntities(storyId, validatedData.chapterId, validatedData.locationId);
+    await this.validateOverrideCalendar(storyId, validatedData.calendarDateOverrideCalendarId);
 
     const isLinear = await this._isStoryLinear(storyId);
     if (isLinear && (validatedData.isStart || validatedData.isFinish)) {
@@ -155,6 +173,9 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
           : currentEntity.chapterId;
       const newLocationId = validatedChanges.locationId ?? currentEntity.locationId;
       await this.validateRelatedEntities(storyId, newChapterId, newLocationId);
+    }
+    if (validatedChanges.calendarDateOverrideCalendarId !== undefined) {
+      await this.validateOverrideCalendar(storyId, validatedChanges.calendarDateOverrideCalendarId);
     }
 
     const isLinear = await this._isStoryLinear(storyId);

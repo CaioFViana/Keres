@@ -24,7 +24,8 @@
     "normalizeSceneTiming": false,
     "allowReaderComments": true,
     "autoLinkMentions": true,
-    "completenessChecks": true
+    "completenessChecks": true,
+    "vocabulary": null
   },
   "chapters": [
     {
@@ -91,7 +92,9 @@
       "isFinish": false,
       "isStart": true,
       "isFavorite": true,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FT4ZRD77W22A1SPXT",
@@ -113,7 +116,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0F2WTDYAAN0EMWZA7K",
@@ -135,7 +140,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FY4PN6VXMXA3AAH94",
@@ -157,7 +164,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FP0MCK3BYTQ2F68S3",
@@ -179,7 +188,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FF1H85QR8W0FP4RAY",
@@ -201,7 +212,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
@@ -223,7 +236,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
@@ -245,7 +260,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0FVKWVAB6FKV7FP326",
@@ -267,7 +284,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0F6KZ6K8P86KN8ETRW",
@@ -289,7 +308,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "3M9NCH83JWWPKM939XW84PZ0YH",
@@ -311,7 +332,9 @@
       "durationType": "minutes",
       "isStart": false,
       "isFinish": true,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "7SCSP564TA4EMRC5JHJ8B1S6J9",
@@ -333,7 +356,9 @@
       "durationType": "hours",
       "isStart": false,
       "isFinish": true,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     }
   ],
   "choices": [
@@ -2689,7 +2714,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 8,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "3BTX03KBYDNT42RERRB6BBW4YE",
@@ -3392,5 +3417,7 @@
         ]
       }
     }
-  ]
+  ],
+  "routes": [],
+  "routeSteps": []
 }

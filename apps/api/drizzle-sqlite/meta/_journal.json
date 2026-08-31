@@ -169,6 +169,13 @@
       "when": 1788103959288,
       "tag": "0023_sharp_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1788138291738,
+      "tag": "0024_purple_ozymandias",
+      "breakpoints": true
     }
   ]
 }

@@ -253,6 +253,13 @@
       "when": 1788103957943,
       "tag": "0035_nifty_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1788138290127,
+      "tag": "0036_daffy_slyde",
+      "breakpoints": true
     }
   ]
 }

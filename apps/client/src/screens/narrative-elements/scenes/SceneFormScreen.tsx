@@ -17,6 +17,7 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import type { Effect } from '@keres/shared/entities/Effect';
 import type { Scene } from '@keres/shared/entities/Scene';
+import { parseCalendarDateCoordinate } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,6 +29,7 @@ import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
@@ -75,6 +77,7 @@ const SceneFormScreen = () => {
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
+  const { calendars } = useStoryCalendar(selectedStory?.id);
   const {
     chapters,
     fetchChapters,
@@ -193,6 +196,8 @@ const SceneFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [gapInput, setGapInput] = useState('');
   const [gapType, setGapType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
+  const [calendarDateOverride, setCalendarDateOverride] = useState('');
+  const [calendarDateOverrideCalendarId, setCalendarDateOverrideCalendarId] = useState<string | null>(null);
   const [durationInput, setDurationInput] = useState('');
   const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [isStart, setIsStart] = useState(false);
@@ -367,6 +372,8 @@ const SceneFormScreen = () => {
             setExtraNotes(fetchedScene.extraNotes);
             setGapInput(fetchedScene.gap === null ? '' : String(fetchedScene.gap));
             setGapType(fetchedScene.gapType);
+            setCalendarDateOverride(fetchedScene.calendarDateOverride ?? '');
+            setCalendarDateOverrideCalendarId(fetchedScene.calendarDateOverrideCalendarId);
             setDurationInput(fetchedScene.duration === null ? '' : String(fetchedScene.duration));
             setDurationType(fetchedScene.durationType);
             setIsStart(fetchedScene.isStart);
@@ -432,6 +439,10 @@ const SceneFormScreen = () => {
       AppAlert.alert(t('error'), t('scene_timing_invalid'));
       return;
     }
+    if (calendarDateOverride.trim() && !parseCalendarDateCoordinate(calendarDateOverride.trim())) {
+      AppAlert.alert(t('error'), t('scene_fixed_date_invalid'));
+      return;
+    }
 
     setLoading(true);
 
@@ -455,6 +466,10 @@ const SceneFormScreen = () => {
         extraNotes,
         gap,
         gapType,
+        calendarDateOverride: calendarDateOverride.trim() || null,
+        calendarDateOverrideCalendarId: calendarDateOverride.trim()
+          ? calendarDateOverrideCalendarId
+          : null,
         duration,
         durationType,
         isStart,
@@ -838,6 +853,28 @@ const SceneFormScreen = () => {
       {parseTimingInput(gapInput) !== null && parseTimingInput(gapInput)! < 0 && (
         <Text style={styles.timingHint}>{t('negative_gap_timing_hint')}</Text>
       )}
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('scene_fixed_date')}</Text>
+      <Text style={styles.timingHint}>{t('scene_fixed_date_hint')}</Text>
+      <TextInput
+        placeholder={t('scene_fixed_date_placeholder')}
+        value={calendarDateOverride}
+        onChangeText={setCalendarDateOverride}
+        autoCapitalize="none"
+        style={commonInputStyles.input}
+      />
+      {calendarDateOverride.trim() ? (
+        <Select
+          options={[
+            { label: t('calendar_standard_title'), value: '__gregorian__' },
+            ...calendars.map((calendar) => ({ label: calendar.name, value: calendar.id })),
+          ]}
+          value={calendarDateOverrideCalendarId ?? '__gregorian__'}
+          onValueChange={(value) => setCalendarDateOverrideCalendarId(value === '__gregorian__' ? null : value)}
+          placeholder={t('scene_fixed_date_calendar')}
+          multiple={false}
+        />
+      ) : null}
 
       <Text style={[styles.label, { color: colors.text }]}>{t('duration')}</Text>
       <View style={styles.row}>

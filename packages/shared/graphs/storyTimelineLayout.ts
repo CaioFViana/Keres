@@ -404,13 +404,15 @@ export interface StoryTimelineLayoutOptions {
    * what the tick labels say.
    */
   calendar?: CalendarDefinitionType | null;
+  /** Absolute elapsed positions declared by Scene date overrides; absent entries keep their stored gap. */
+  sceneElapsedOverrides?: Record<string, number>;
 }
 
 export function buildStoryTimelineLayout(
   scenes: StoryTimelineScene[],
   options: StoryTimelineLayoutOptions = {},
 ): StoryTimelineLayout {
-  const { scaleMode = 'compact', anchored = [], placement = 'overlay', calendar = null } = options;
+  const { scaleMode = 'compact', anchored = [], placement = 'overlay', calendar = null, sceneElapsedOverrides = {} } = options;
   /*
    * The scale table, derived per call instead of being a module constant.
    *
@@ -458,10 +460,13 @@ export function buildStoryTimelineLayout(
   let minX = cursor;
   let maxX = cursor;
   const rows = scenes.map((scene, rowIndex) => {
+    const declaredStart = sceneElapsedOverrides[scene.id];
     const gap =
-      rowIndex === 0 || scene.hideGapBefore
-        ? undefined
-        : segment(scene.gap, scene.gapType, scene.gapLabel);
+      declaredStart === undefined
+        ? rowIndex === 0 || scene.hideGapBefore
+          ? undefined
+          : segment(scene.gap, scene.gapType, scene.gapLabel)
+        : { value: declaredStart - timeCursor, unit: 'seconds', label: '' };
     const duration = segment(scene.duration, scene.durationType, scene.durationLabel);
     const gapStart = cursor;
     if (gap) {

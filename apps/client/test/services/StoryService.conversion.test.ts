@@ -71,12 +71,33 @@ afterEach(() => {
 describe('StoryService type conversion', () => {
   it('makes the implicit linear sequence explicit, then restores its ordering and removes choices', async () => {
     const service = createStoryService(database.db);
+    await database.db.insert(schema.plots).values({
+      id: 'plot-redemption',
+      storyId: TEST_STORY_ID,
+      name: 'Redemption',
+      details: null,
+      ...entityBase,
+    });
+    await database.db.insert(schema.plotScenes).values({
+      id: 'plot-scene-opening',
+      storyId: TEST_STORY_ID,
+      plotId: 'plot-redemption',
+      sceneId: FIRST_SCENE_ID,
+      note: 'Starts the thread.',
+      ...entityBase,
+    });
 
     await service.convertStoryType(TEST_USER_ID, TEST_STORY_ID, 'branching');
 
     expect(await service.getStoryById(TEST_STORY_ID)).toEqual(
       expect.objectContaining({ type: 'branching' }),
     );
+    expect(await database.db.query.plots.findFirst({ where: eq(schema.plots.id, 'plot-redemption') })).toEqual(
+      expect.objectContaining({ isDeleted: false }),
+    );
+    expect(
+      await database.db.query.plotScenes.findFirst({ where: eq(schema.plotScenes.id, 'plot-scene-opening') }),
+    ).toEqual(expect.objectContaining({ isDeleted: false, sceneId: FIRST_SCENE_ID }));
     expect(
       (
         await database.db
@@ -105,6 +126,9 @@ describe('StoryService type conversion', () => {
 
     expect(await service.getStoryById(TEST_STORY_ID)).toEqual(
       expect.objectContaining({ type: 'linear' }),
+    );
+    expect(await database.db.query.plots.findFirst({ where: eq(schema.plots.id, 'plot-redemption') })).toEqual(
+      expect.objectContaining({ isDeleted: false }),
     );
     expect(
       await database.db

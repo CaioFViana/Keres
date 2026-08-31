@@ -3,15 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
-import { MentionBacklinksSection } from '@/src/components/features/mentions/MentionBacklinksSection';
-import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 
-interface EntityMetadataProps {
+export interface EntityMetadataProps {
   version: number;
   createdAt: Date;
   updatedAt: Date;
-  entityType?: NavigableEntityType;
-  entityId?: string;
 }
 
 /**
@@ -26,8 +22,6 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({
   version,
   createdAt,
   updatedAt,
-  entityType,
-  entityId,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -53,11 +47,7 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({
     date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
   return (
-    <>
-      {entityType && entityId && (
-        <MentionBacklinksSection entityType={entityType} entityId={entityId} />
-      )}
-      <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>
+    <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>
         <View style={styles.row}>
           <Text style={styles.label}>{t('version')}</Text>
           <Text style={styles.value}>{version}</Text>
@@ -70,8 +60,7 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({
           <Text style={styles.label}>{t('updated_at')}</Text>
           <Text style={styles.value}>{formatDateTime(updatedAt)}</Text>
         </View>
-      </CollapsibleCard>
-    </>
+    </CollapsibleCard>
   );
 };
 

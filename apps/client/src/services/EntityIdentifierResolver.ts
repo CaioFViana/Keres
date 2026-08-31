@@ -37,7 +37,6 @@ import {
   translateStoryNoun,
   unknownStoryNoun,
 } from '../vocabulary/storyVocabularyLookup';
-
 const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   board: OperationLogEntityType.Board,
   locationmap: OperationLogEntityType.LocationMap,

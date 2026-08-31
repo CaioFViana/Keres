@@ -98,5 +98,4 @@ describe('VocabularyScreen draft', () => {
     expect(screen.getByTestId('vocabulary-Character-singular').props.value).toBe('Hero');
     expect(screen.getByTestId('vocabulary-footer-spacer')).toBeTruthy();
   });
-
 });

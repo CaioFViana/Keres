@@ -51,10 +51,7 @@ import { isStoryVocabularyEntityType } from '../vocabulary/resolveStoryTerm';
 import { getEntityIdentifier, resolveRelationEntityName } from './EntityIdentifierResolver';
 import { resolveAdvancedEntityName } from './EntityAdvancedNameResolver';
 
-/**
- * The singular translation key already used in this file for each entity type that can receive a Story
- * Schema - reused instead of a second list of labels.
- */
+/** Reuses the singular translation key for each entity type that can receive a Story Schema. */
 const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'character',
   Location: 'location',
@@ -64,11 +61,6 @@ const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, stri
   Note: 'note',
   WorldRule: 'world_rule',
 };
-
-/**
- * The translation keys for each Effect type's label - used to build an Effect's readable name from its
- * effectType (an entity with no name of its own).
- */
 
 export class EntityService {
   static async getEntityName(
@@ -583,10 +575,9 @@ export class EntityService {
     }
     if (entitySpecificName) {
       return `${translatedEntityType} - ${entitySpecificName}`;
-    } else {
-      // If no specific name found, but entityType is known, return just the translated type
-      return translatedEntityType;
     }
+    // If no specific name found, but entityType is known, return just the translated type.
+    return translatedEntityType;
   }
 
   // Private helper to resolve the name and type of a related entity (e.g., from TagRelation)

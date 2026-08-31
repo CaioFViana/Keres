@@ -525,9 +525,7 @@ const LocationFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {copy.formDescription}
-      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
       <TextInput

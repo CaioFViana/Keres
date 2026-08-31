@@ -147,10 +147,7 @@ const VocabularyTermCard = memo(
          */}
         <Text
           testID={`vocabulary-${type}-default-hint`}
-          style={[
-            styles.empty,
-            term.singular || term.plural ? { opacity: 0 } : null,
-          ]}
+          style={[styles.empty, term.singular || term.plural ? { opacity: 0 } : null]}
           accessibilityElementsHidden={Boolean(term.singular || term.plural)}
         >
           {t('vocabulary_default_term_hint')}

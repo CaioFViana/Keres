@@ -93,7 +93,7 @@ const MyProfileScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('my_profile_title') });
+      navigation.setOptions({ title: t('my_profile_title'), headerRight: undefined });
     }, [navigation, t]),
   );
 

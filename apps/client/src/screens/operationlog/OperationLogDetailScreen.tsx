@@ -144,6 +144,7 @@ const OperationLogDetailScreen: React.FC = () => {
     useCallback(() => {
       navigation.setOptions({
         title: t('operation_log_detail_title'),
+        headerRight: undefined,
       });
     }, [navigation, t]),
   );

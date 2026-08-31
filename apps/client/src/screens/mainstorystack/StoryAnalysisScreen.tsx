@@ -111,7 +111,7 @@ const StoryAnalysisScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('story_analysis_title') });
+      navigation.setOptions({ title: t('story_analysis_title'), headerRight: undefined });
       setDocumentTitle(t('story_analysis_title'));
     }, [navigation, t]),
   );

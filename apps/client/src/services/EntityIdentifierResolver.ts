@@ -75,7 +75,6 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   statrelation: OperationLogEntityType.StatRelation,
   mode: OperationLogEntityType.Mode,
 };
-
 export async function resolveRelationEntityName(
   db: AppDrizzleClient,
   relationType: OperationLogEntityType,
@@ -89,7 +88,6 @@ export async function resolveRelationEntityName(
   // terminology-aware noun, so avoid reading the story unless one is actually encountered.
   let vocabularyPromise: Promise<StoryVocabulary | null> | undefined;
   const vocabulary = () => (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
-
   switch (relationType) {
     case OperationLogEntityType.Board:
       const board = await db.query.boards.findFirst({
@@ -586,7 +584,6 @@ export async function getEntityIdentifier(
   t: TFunction,
 ): Promise<string | undefined> {
   const operationLogEntityType = ENTITY_LOOKUP_MAP[entityTypeString.toLowerCase()];
-
   if (operationLogEntityType === undefined) {
     throw new Error(`Invalid entityTypeString: ${entityTypeString}`);
   }

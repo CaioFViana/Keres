@@ -55,7 +55,7 @@ const StorySettingsScreen = () => {
     useCallback(() => {
       // A leaf `Drawer.Screen` again, now that the calendars have their own drawer entry - so this
       // is its own title, not the parent's.
-      navigation.setOptions({ title: t('story_settings_title') });
+      navigation.setOptions({ title: t('story_settings_title'), headerRight: undefined });
       setDocumentTitle(t('story_settings_title'));
     }, [navigation, t]),
   );

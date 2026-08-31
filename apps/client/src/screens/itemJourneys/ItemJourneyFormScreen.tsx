@@ -36,6 +36,7 @@ import {
 } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
 type ItemJourneyFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemJourneyForm'>;
 type ItemJourneyFormScreenNavigationProp = NativeStackNavigationProp<
@@ -50,6 +51,7 @@ const ItemJourneyFormScreen = () => {
   const route = useRoute<ItemJourneyFormScreenRouteProp>();
   const { itemJourneyId: initialItemJourneyId, itemId: prefilledItemId } = route.params || {};
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
 
@@ -341,12 +343,12 @@ const ItemJourneyFormScreen = () => {
         allowDeselect={true}
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('scene')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{sceneCopy.entity}</Text>
       <Select
         options={sceneOptions}
         value={sceneId}
         onValueChange={setSceneId}
-        placeholder={t('select_scene')}
+        placeholder={sceneCopy.select}
         multiple={false}
         allowDeselect={true}
       />

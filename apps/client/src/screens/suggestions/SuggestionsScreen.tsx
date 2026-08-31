@@ -29,6 +29,8 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
+import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
 type StorySuggestion = [value: string, usageCount: number];
@@ -60,6 +62,7 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
 const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
   useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -102,7 +105,9 @@ const SuggestionsScreen = () => {
             entityLabels: [],
             fieldLabels: [],
           };
-          const entityLabel = t(ENTITY_LABELS[entity] ?? entity);
+          const entityLabel = isStoryVocabularyEntityType(entity)
+            ? label(entity, true)
+            : t(ENTITY_LABELS[entity] ?? entity);
           const fieldLabel = t(field.label);
           if (!current.entityLabels.includes(entityLabel)) current.entityLabels.push(entityLabel);
           if (!current.fieldLabels.includes(fieldLabel)) current.fieldLabels.push(fieldLabel);
@@ -126,7 +131,11 @@ const SuggestionsScreen = () => {
         .map((field) => ({
           type: customAttributeSuggestionType(field.id),
           key: field.key,
-          label: `${t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]])} · ${field.name}`,
+          label: `${
+            isStoryVocabularyEntityType(STORY_SCHEMA_ENTITY_TYPES[index])
+              ? label(STORY_SCHEMA_ENTITY_TYPES[index], true)
+              : t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]])
+          } · ${field.name}`,
         })),
     );
     const named = (await suggestionService.listNamedLists(storyId)).map((list) => ({
@@ -140,7 +149,7 @@ const SuggestionsScreen = () => {
     setSelectedType((current) =>
       current && next.some((group) => group.type === current) ? current : (next[0]?.type ?? null),
     );
-  }, [db, storyId, suggestionService, t]);
+  }, [db, label, storyId, suggestionService, t]);
 
   const loadValues = useCallback(async () => {
     if (!storyId || !selectedType) {

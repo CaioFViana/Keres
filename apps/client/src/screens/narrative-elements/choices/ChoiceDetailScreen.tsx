@@ -39,6 +39,7 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 export type ChoiceDetailScreenParamList = {
@@ -55,6 +56,7 @@ const ChoiceDetailScreen = () => {
   const route = useRoute<ChoiceDetailScreenRouteProp>();
   const { choiceId } = route.params;
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -299,7 +301,7 @@ const ChoiceDetailScreen = () => {
       >
         <View style={{ flex: 1 }}>
           <DetailField
-            label={t('from_scene')}
+            label={sceneCopy.fromEntity}
             value={sceneNamesById[choice.sceneId] || t('common_na')}
           />
         </View>

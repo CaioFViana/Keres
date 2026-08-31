@@ -8,6 +8,7 @@ import { useDrizzle } from '../db';
 import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
 import { loadEntityOptions } from '../utils/entityOptions';
 import { ENTITY_TYPE_ICONS } from '../utils/entityTypeIcons';
+import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 
 export interface SeeAlsoEntityOption {
   label: string;
@@ -42,6 +43,7 @@ export function useSeeAlsoEntityOptions(
 ) {
   const db = useDrizzle();
   const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
   const [options, setOptions] = useState<SeeAlsoEntityOption[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -66,7 +68,7 @@ export function useSeeAlsoEntityOptions(
           if (entityType === excludeEntityType && row.id === excludeEntityId) continue;
           const name = row.name || t('unnamed');
           collected.push({
-            label: `${t(entityType.toLowerCase())}: ${name}`,
+            label: `${label(entityType)}: ${name}`,
             name,
             value: encodeSeeAlsoValue(entityType, row.id),
             entityType,
@@ -82,7 +84,7 @@ export function useSeeAlsoEntityOptions(
     } finally {
       setLoading(false);
     }
-  }, [db, storyId, excludeEntityType, excludeEntityId, t]);
+  }, [db, storyId, excludeEntityType, excludeEntityId, t, label]);
 
   useEffect(() => {
     load();
@@ -96,13 +98,13 @@ export function useSeeAlsoEntityOptions(
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return SEE_ALSO_ENTITY_TYPES.map((entityType) => ({
       key: entityType,
-      label: t(`${entityType.toLowerCase()}s`),
+      label: label(entityType, true),
       icon: ENTITY_TYPE_ICONS[entityType] as keyof typeof Ionicons.glyphMap,
       options: options
         .filter((option) => option.entityType === entityType)
         .map((option) => ({ label: option.name, value: option.value })),
     }));
-  }, [options, t]);
+  }, [label, options, t]);
 
   return { options, optionsByValue, groupedOptions, loading, reload: load };
 }

@@ -16,6 +16,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getDistinctSeriesColor } from '@keres/shared';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
@@ -53,6 +54,7 @@ const MATRIX_CONTROL_LABELS = {
 const PlotMatrixScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const navigateToDetail = useNavigateToEntityDetail();
@@ -346,7 +348,7 @@ const PlotMatrixScreen = () => {
           sections={[
             { title: t('plot_details'), description: selectedPlot.details || t('common_na') },
             {
-              title: t('scenes_title'),
+              title: term('Scene', true),
               emptyMessage: t('no_plot_scenes'),
               items: relations
                 .filter((relation) => relation.plotId === selectedPlot.id)

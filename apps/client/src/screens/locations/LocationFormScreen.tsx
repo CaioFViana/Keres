@@ -44,6 +44,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;
 type LocationFormScreenNavigationProp = NativeStackNavigationProp<
@@ -76,6 +77,7 @@ const LocationFormScreen = () => {
   const route = useRoute<LocationFormScreenRouteProp>();
   const { locationId: initialLocationId } = route.params || {};
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Location');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
 
@@ -134,6 +136,7 @@ const LocationFormScreen = () => {
   >([]);
 
   const isEditing = !!currentLocationId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   const fetchAllLocationsInStory = useCallback(async () => {
     if (!locationServiceRef.current || !selectedStory?.id) {
@@ -281,12 +284,12 @@ const LocationFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_location_title') : t('create_location_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_location_title') : t('create_location_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -377,13 +380,13 @@ const LocationFormScreen = () => {
           currentLocationId!,
           locationData,
         );
-        AppAlert.alert(t('success'), t('location_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         savedLocation = await locationServiceRef.current!.createLocation(userId, {
           ...locationData,
           storyId: selectedStory.id,
         });
-        AppAlert.alert(t('success'), t('location_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
         setCurrentLocationId(savedLocation.id);
       }
 
@@ -410,7 +413,7 @@ const LocationFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save location:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_location'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -428,9 +431,12 @@ const LocationFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_location_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_location_message',
-      successKey: 'location_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_location',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await locationServiceRef.current!.deleteLocation(userId, currentLocationId);
@@ -519,7 +525,7 @@ const LocationFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_location_title') : t('create_location_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('location_form_description')}
@@ -652,10 +658,10 @@ const LocationFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_location')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_location_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

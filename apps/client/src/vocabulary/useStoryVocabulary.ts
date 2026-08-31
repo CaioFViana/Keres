@@ -2,18 +2,13 @@ import type { GrammaticalGender, StoryVocabularyEntityType } from '@keres/shared
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryStore } from '../state/storyStore';
-
-const DEFAULT_TERM_KEYS: Record<StoryVocabularyEntityType, { singular: string; plural: string }> = {
-  Character: { singular: 'character', plural: 'characters' },
-  Location: { singular: 'location', plural: 'locations' },
-  Chapter: { singular: 'chapter', plural: 'chapters' },
-  Scene: { singular: 'scene', plural: 'scenes' },
-  Event: { singular: 'event', plural: 'events' },
-};
-
-function localeFamily(language: string | undefined): 'pt' | 'en' {
-  return language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
-}
+import {
+  agreeStoryTerm,
+  isStoryVocabularyEntityType,
+  localeFamily,
+  resolveStoryGender,
+  resolveStoryTerm,
+} from './resolveStoryTerm';
 
 /** Resolves optional story terminology without changing any canonical entity model. */
 export function useStoryVocabulary() {
@@ -24,21 +19,31 @@ export function useStoryVocabulary() {
   const language = localeFamily(i18n?.resolvedLanguage ?? i18n?.language ?? 'en');
 
   return useMemo(() => {
-    const enabled = vocabulary?.language === language;
     return {
       language,
-      isCustomVocabularyActive: enabled,
+      isCustomVocabularyActive: vocabulary?.language === language,
       term(type: StoryVocabularyEntityType, plural = false): string {
-        const override = enabled ? vocabulary?.terms[type] : undefined;
-        if (override) return plural ? override.plural : override.singular;
-        return t(plural ? DEFAULT_TERM_KEYS[type].plural : DEFAULT_TERM_KEYS[type].singular);
+        return resolveStoryTerm(vocabulary, language, t, type, plural);
       },
       gender(type: StoryVocabularyEntityType): GrammaticalGender {
-        const override = enabled ? vocabulary?.terms[type] : undefined;
-        return (
-          override?.grammaticalGender ??
-          (type === 'Scene' || type === 'Location' ? 'feminine' : 'masculine')
-        );
+        return resolveStoryGender(vocabulary, language, type);
+      },
+      /** Gives surrounding Portuguese copy the ending that agrees with the configured noun. */
+      agree(
+        type: StoryVocabularyEntityType,
+        forms: { masculine: string; feminine: string; neutral?: string },
+      ): string {
+        return agreeStoryTerm(language, resolveStoryGender(vocabulary, language, type), forms);
+      },
+      /**
+       * Labels a mixed entity-type string. Vocabulary types use the story's terms; everything
+       * else keeps the existing lowercase translation key (`character` → still `term('Character')`).
+       */
+      label(type: string, plural = false): string {
+        if (isStoryVocabularyEntityType(type)) {
+          return resolveStoryTerm(vocabulary, language, t, type, plural);
+        }
+        return t(plural ? `${type.toLowerCase()}s` : type.toLowerCase());
       },
     };
   }, [language, t, vocabulary]);

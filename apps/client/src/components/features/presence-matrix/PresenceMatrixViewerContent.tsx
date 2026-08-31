@@ -23,6 +23,7 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
+import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
@@ -56,6 +57,7 @@ const PresenceMatrixViewerContent: React.FC<{
   onClose: () => void;
 }> = ({ request, onClose }) => {
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
@@ -435,7 +437,7 @@ const PresenceMatrixViewerContent: React.FC<{
           selectedValues={ids}
           onSelectionChange={(next) => setIds(next.slice(0, MAX_VISIBLE_SERIES))}
           maxSelections={MAX_VISIBLE_SERIES}
-          placeholder={t('characters_title')}
+          placeholder={term('Character', true)}
           searchPlaceholder={t('search')}
           selectionSummary={
             isCompleteView ? t('presence_matrix_selected_all', { count: ids.length }) : undefined
@@ -586,7 +588,7 @@ const PresenceMatrixViewerContent: React.FC<{
                 scenes.find((scene) => scene.id === selectedSceneId)?.summary || t('common_na'),
             },
             {
-              title: t('characters_title'),
+              title: term('Character', true),
               items: characters
                 .filter((character) =>
                   presence.some(
@@ -625,7 +627,7 @@ const PresenceMatrixViewerContent: React.FC<{
               description: t('presence_matrix_presence_value', selectedCharacterPresence),
             },
             {
-              title: t('scenes_title'),
+              title: term('Scene', true),
               items: scenes
                 .filter((scene) =>
                   presence.some(
@@ -667,7 +669,7 @@ const PresenceMatrixViewerContent: React.FC<{
                 ]
               : []),
             {
-              title: t('scenes_title'),
+              title: term('Scene', true),
               items: journeys
                 .filter((journey) => journey.itemId === selectedItemDetailsId)
                 .map((journey) => {

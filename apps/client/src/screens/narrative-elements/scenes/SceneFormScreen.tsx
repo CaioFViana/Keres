@@ -53,6 +53,7 @@ import {
 import { AppAlert } from '../../../utils/AppAlert';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 
 type SceneFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<
@@ -75,6 +76,9 @@ const SceneFormScreen = () => {
   const route = useRoute<SceneFormScreenRouteProp>();
   const { sceneId: initialSceneId, chapterId: initialChapterId } = route.params || {};
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Scene');
+  const chapterCopy = useVocabularyEntityCopy('Chapter');
+  const locationCopy = useVocabularyEntityCopy('Location');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const { calendars } = useStoryCalendar(selectedStory?.id);
@@ -230,15 +234,16 @@ const SceneFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentSceneId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_scene_title') : t('create_scene_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_scene_title') : t('create_scene_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   const fetchCharacterSceneRelations = useCallback(async () => {
@@ -481,7 +486,7 @@ const SceneFormScreen = () => {
       if (isEditing && currentSceneId) {
         const originalScene = await sceneServiceRef.current!.getById(currentSceneId);
         if (!originalScene) {
-          throw new Error(t('scene_not_found'));
+          throw new Error(copy.notFound);
         }
 
         // Changing chapter (the position in the new queue and closing the hole in the old one) is the
@@ -492,7 +497,7 @@ const SceneFormScreen = () => {
           sceneData,
         );
         savedSceneId = savedScene.id;
-        AppAlert.alert(t('success'), t('scene_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         // --- CREATE NEW SCENE LOGIC ---
         const allScenesInChapter = (
@@ -511,7 +516,7 @@ const SceneFormScreen = () => {
         });
         savedSceneId = savedScene.id;
         setCurrentSceneId(savedScene.id);
-        AppAlert.alert(t('success'), t('scene_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
       }
 
       if (savedSceneId) {
@@ -536,7 +541,7 @@ const SceneFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save scene:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_scene'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -554,9 +559,12 @@ const SceneFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_scene_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_scene_message',
-      successKey: 'scene_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_scene',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await sceneServiceRef.current!.deleteScene(userId, currentSceneId);
@@ -756,18 +764,18 @@ const SceneFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_scene_title') : t('create_scene_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('scene_form_description')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('chapter')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{chapterCopy.entity}</Text>
       <Select
         options={chapterOptions}
         value={chapterId}
         onValueChange={setChapterId}
-        placeholder={t('select_chapter_optional')}
+        placeholder={chapterCopy.selectOptional}
         multiple={false}
         allowDeselect
       />
@@ -775,7 +783,7 @@ const SceneFormScreen = () => {
         {t('scene_chapter_optional_hint')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('location')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{locationCopy.entity}</Text>
       {/*
         Optional since 1.6. An era, a war, a rumour heard in three cities is a scene with no single
         place, and requiring one was Keres deciding something about the story on the writer's
@@ -785,7 +793,7 @@ const SceneFormScreen = () => {
         options={locationOptions}
         value={locationId}
         onValueChange={setLocationId}
-        placeholder={t('select_location_optional')}
+        placeholder={locationCopy.selectOptional}
         multiple={false}
         allowDeselect
       />
@@ -1057,10 +1065,10 @@ const SceneFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_scene')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_scene_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

@@ -22,6 +22,7 @@ import { createCharacterRelationService } from '../../services/storymanagement/C
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
@@ -56,6 +57,7 @@ interface CharacterRelationNodeConnection {
 const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const drizzleDb = useDrizzle();
@@ -344,7 +346,7 @@ const CharacterRelationGraphScreen = () => {
         selectedValues={selectedIds}
         onSelectionChange={(next) => setSelectedIds(next.slice(0, MAX_SELECTED_CHARACTERS))}
         maxSelections={MAX_SELECTED_CHARACTERS}
-        placeholder={t('characters_title')}
+        placeholder={term('Character', true)}
         searchPlaceholder={t('search')}
         triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
       />

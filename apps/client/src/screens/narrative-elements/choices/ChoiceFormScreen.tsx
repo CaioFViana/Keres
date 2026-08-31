@@ -32,6 +32,7 @@ import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import {
   commonFormStyleDefs,
   getCommonContainerStyles,
@@ -54,6 +55,7 @@ const ChoiceFormScreen = () => {
   const route = useRoute<ChoiceFormScreenRouteProp>();
   const { choiceId: initialChoiceId, sceneId: initialSceneId } = route.params || {};
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const {
@@ -234,7 +236,7 @@ const ChoiceFormScreen = () => {
       return;
     }
     if (!sceneId) {
-      AppAlert.alert(t('error'), t('scene_required'));
+      AppAlert.alert(t('error'), sceneCopy.required);
       return;
     }
     if (!nextSceneId) {
@@ -666,7 +668,7 @@ const ChoiceFormScreen = () => {
         options={sceneOptions}
         value={sceneId}
         onValueChange={setSceneId}
-        placeholder={t('select_parent_scene')}
+        placeholder={sceneCopy.select}
         multiple={false}
       />
 
@@ -675,7 +677,7 @@ const ChoiceFormScreen = () => {
         options={sceneOptions}
         value={nextSceneId}
         onValueChange={setNextSceneId}
-        placeholder={t('select_next_scene')}
+        placeholder={sceneCopy.select}
         multiple={false}
       />
 
@@ -772,7 +774,7 @@ const ChoiceFormScreen = () => {
                             onValueChange={(value) =>
                               handleUpdateCheck(check.id, { sceneId: value })
                             }
-                            placeholder={t('select_scene')}
+                            placeholder={sceneCopy.select}
                             multiple={false}
                             allowDeselect={true}
                           />

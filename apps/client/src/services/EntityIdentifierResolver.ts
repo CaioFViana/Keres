@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '@keres/shared';
+import type { StoryVocabulary } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
@@ -31,6 +32,11 @@ import {
   tags,
   worldRules,
 } from '../db/schemas';
+import {
+  loadStoryVocabulary,
+  translateStoryNoun,
+  unknownStoryNoun,
+} from '../vocabulary/storyVocabularyLookup';
 
 const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   board: OperationLogEntityType.Board,
@@ -80,6 +86,11 @@ export async function resolveRelationEntityName(
 ): Promise<{ name: string | undefined; type: string | undefined }> {
   let name: string | undefined;
   let type: string | undefined;
+  // Relation labels are often resolved in batches. Only a handful of relations use a
+  // terminology-aware noun, so avoid reading the story unless one is actually encountered.
+  let vocabularyPromise: Promise<StoryVocabulary | null> | undefined;
+  const vocabulary = () =>
+    (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
 
   switch (relationType) {
     case OperationLogEntityType.Board:
@@ -136,7 +147,7 @@ export async function resolveRelationEntityName(
           where: and(eq(scenes.id, routeStep.sceneId), eq(scenes.isDeleted, false)),
           columns: { name: true },
         });
-        name = `${routeForStep?.name || t('unknown_entity')} · ${routeStep.position}: ${sceneForStep?.name || t('unknown_scene')}`;
+        name = `${routeForStep?.name || t('unknown_entity')} · ${routeStep.position}: ${sceneForStep?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
       }
       type = t('route_step');
       break;
@@ -150,7 +161,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = character?.name;
-      type = t('character');
+      type = translateStoryNoun(t, await vocabulary(), 'Character');
       break;
     case OperationLogEntityType.Note:
       const note = await db.query.notes.findFirst({
@@ -174,7 +185,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = location?.name;
-      type = t('location');
+      type = translateStoryNoun(t, await vocabulary(), 'Location');
       break;
     case OperationLogEntityType.WorldRule:
       const worldRule = await db.query.worldRules.findFirst({
@@ -207,10 +218,10 @@ export async function resolveRelationEntityName(
           eq(chapters.storyId, storyId),
           eq(chapters.isDeleted, false),
         ),
-        columns: { name: true },
+        columns: { name: true, type: true },
       });
       name = chapter?.name;
-      type = t('chapter');
+      type = translateStoryNoun(t, await vocabulary(), chapter?.type === 'event' ? 'Event' : 'Chapter');
       break;
     case OperationLogEntityType.Scene:
       const scene = await db.query.scenes.findFirst({
@@ -222,7 +233,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = scene?.name;
-      type = t('scene');
+      type = translateStoryNoun(t, await vocabulary(), 'Scene');
       break;
     case OperationLogEntityType.Item:
       const item = await db.query.items.findFirst({
@@ -286,7 +297,7 @@ export async function resolveRelationEntityName(
           where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
           columns: { name: true },
         });
-        name = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || t('unknown_scene')}`;
+        name = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
       }
       type = t('item_journey');
       break;
@@ -432,7 +443,7 @@ export async function resolveRelationEntityName(
         });
         name = t('character_attributed_to_scene', {
           characterName: relatedCharacter?.name || t('unknown_character'),
-          sceneName: relatedScene?.name || t('unknown_scene'),
+          sceneName: relatedScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene'),
         });
       }
       type = t('character_scene_relation');
@@ -461,7 +472,7 @@ export async function resolveRelationEntityName(
             columns: { name: true },
           }),
         ]);
-        name = `${plotForRelation?.name || t('plots_title')} — ${sceneForRelation?.name || t('scenes_title')}`;
+        name = `${plotForRelation?.name || t('plots_title')} — ${sceneForRelation?.name || translateStoryNoun(t, await vocabulary(), 'Scene', true)}`;
       }
       type = t('plot_scenes');
       break;

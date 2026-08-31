@@ -22,6 +22,7 @@ import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
 import { StoryAnalysisCancelledError } from '../../utils/storyAnalysisChecks';
@@ -59,6 +60,7 @@ const CATEGORY_TITLE_KEYS: Record<StoryAnalysisCategory, string> = {
 
 const StoryAnalysisScreen = () => {
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<StoryAnalysisNavigationProp>();
   useBackButtonHandler({ showWebBackButton: true });
@@ -351,7 +353,15 @@ const StoryAnalysisScreen = () => {
         return (
           <CollapsibleCard
             key={category}
-            title={`${t(CATEGORY_TITLE_KEYS[category])} (${findings.length})`}
+            title={`${
+              category === 'characters'
+                ? term('Character', true)
+                : category === 'locations'
+                  ? term('Location', true)
+                  : category === 'scenes'
+                    ? term('Scene', true)
+                    : t(CATEGORY_TITLE_KEYS[category])
+            } (${findings.length})`}
           >
             {findings.map((finding) => (
               <TouchableOpacity

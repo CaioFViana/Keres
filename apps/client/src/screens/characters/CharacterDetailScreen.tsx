@@ -61,6 +61,7 @@ import { CharacterStatPanel } from '../../components/features/stats/CharacterSta
 import { ModeManager } from '../../components/features/stats/ModeManager/ModeManager';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { useStoryStore } from '../../state/storyStore';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
 
 // Define the parameter list for this screen
@@ -82,6 +83,9 @@ const CharacterDetailScreen = () => {
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Character');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
+  const locationCopy = useVocabularyEntityCopy('Location');
   const { userId } = useUserSettingsStore(); // Get userId from store
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -178,21 +182,21 @@ const CharacterDetailScreen = () => {
       const fetchedCharacter = await characterServiceRef.current.getById(characterId);
       if (fetchedCharacter && !fetchedCharacter.isDeleted) {
         setCharacter(fetchedCharacter);
-        setHeaderTitle(fetchedCharacter.name || t('character_details_title'));
+        setHeaderTitle(fetchedCharacter.name || copy.detailsTitle);
       } else if (fetchedCharacter && fetchedCharacter.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('character_not_found'));
-        setHeaderTitle(t('character_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch character details:', err);
-      setError(t('failed_to_load_character'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, t]);
+  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, copy]);
 
   const fetchRelationsForCharacter = useCallback(async () => {
     if (!characterRelationServiceRef.current || !character?.storyId || !characterId) {
@@ -305,12 +309,12 @@ const CharacterDetailScreen = () => {
             navigation.goBack();
           } else {
             setCharacter(updatedCharacter);
-            setHeaderTitle(updatedCharacter.name || t('character_details_title'));
+            setHeaderTitle(updatedCharacter.name || copy.detailsTitle);
           }
         }
       }
     },
-    [characterId, navigation, setCharacter, setHeaderTitle, t],
+    [characterId, navigation, setCharacter, setHeaderTitle, copy],
   );
 
   const handleCharacterRelationChange = useCallback(
@@ -558,7 +562,7 @@ const CharacterDetailScreen = () => {
   }, [allLocations, allScenes, characterId, characterSceneRelations]);
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_character_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
   if (error) {
@@ -569,7 +573,7 @@ const CharacterDetailScreen = () => {
     return (
       <ScreenError
         padded
-        message={t('character_data_missing')}
+        message={copy.dataMissing}
         onGoBack={() => navigation.goBack()}
       />
     );
@@ -809,10 +813,10 @@ const CharacterDetailScreen = () => {
 
       <ScenePresenceList
         entries={characterLocationEntries}
-        title={t('character_locations_title')}
+        title={locationCopy.entities}
         noItemsMessage="no_locations_assigned_to_character"
         entityType="Location"
-        sceneLabel={t('scene')}
+        sceneLabel={sceneCopy.entity}
       />
 
       <NoteManager

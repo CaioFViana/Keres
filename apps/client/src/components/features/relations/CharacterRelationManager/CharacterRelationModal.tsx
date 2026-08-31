@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import Button from '@/src/components/common/controls/Button/Button';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -35,6 +36,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const characterCopy = useVocabularyEntityCopy('Character');
 
   const [relatedCharId, setRelatedCharId] = useState<string>('');
   const [relationType, setRelationType] = useState<string>('');
@@ -75,7 +77,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   };
 
   const getCharacterName = (charId: string) => {
-    return characters.find((char) => char.id === charId)?.name || t('select_character');
+    return characters.find((char) => char.id === charId)?.name || characterCopy.select;
   };
 
   const relatedCharacterIdSet = new Set(relatedCharacterIds);
@@ -185,7 +187,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
             disabled={!!initialRelation}
           >
             <Text style={styles.pickerText}>
-              {relatedCharId ? getCharacterName(relatedCharId) : t('select_character')}
+              {relatedCharId ? getCharacterName(relatedCharId) : characterCopy.select}
             </Text>
             <Ionicons
               name="caret-down"

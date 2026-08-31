@@ -41,6 +41,7 @@ import {
 import { AppAlert } from '../../../utils/AppAlert';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 
 type ChapterFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChapterForm'>;
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -100,15 +101,17 @@ const ChapterFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentChapterId;
+  const copy = useVocabularyEntityCopy(isEvent ? 'Event' : 'Chapter');
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_chapter_title') : t('create_chapter_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_chapter_title') : t('create_chapter_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -200,7 +203,7 @@ const ChapterFormScreen = () => {
           currentChapterId!,
           chapterData,
         );
-        AppAlert.alert(t('success'), t('chapter_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         // The next index within its own kind: chapters and events number independently, so the two
         // spaces would collide if this counted across both.
@@ -217,7 +220,7 @@ const ChapterFormScreen = () => {
           index: nextIndex,
           type: containerType,
         });
-        AppAlert.alert(t('success'), t('chapter_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
         setCurrentChapterId(savedChapter.id);
       }
 
@@ -243,7 +246,7 @@ const ChapterFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save chapter:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_chapter'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -261,9 +264,12 @@ const ChapterFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_chapter_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_chapter_message',
-      successKey: 'chapter_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_chapter',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await chapterServiceRef.current!.deleteChapter(userId, currentChapterId);
@@ -313,7 +319,7 @@ const ChapterFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_chapter_title') : t('create_chapter_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('chapter_form_description')}
@@ -444,10 +450,10 @@ const ChapterFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_chapter')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_chapter_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

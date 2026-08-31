@@ -9,6 +9,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { AppAlert } from '../../../../utils/AppAlert';
 import { createULID } from '../../../../utils/entityUtils';
 import ScenePlotModal from './ScenePlotModal';
@@ -37,6 +38,7 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRelation, setEditingRelation] = useState<PlotScene | null>(null);
 
@@ -142,7 +144,7 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
                 }
                 onRemove={editable ? () => handleDelete(relation.id) : undefined}
               >
-                <Text style={styles.relationText}>{scene?.name ?? t('scene_not_found')}</Text>
+                <Text style={styles.relationText}>{scene?.name ?? sceneCopy.notFound}</Text>
                 {chapterName ? <Text style={styles.noteText}>{chapterName}</Text> : null}
                 <Text style={styles.noteText}>{relation.note}</Text>
               </RelationRow>

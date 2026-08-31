@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
 interface SceneOption {
@@ -36,6 +37,7 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const commonInputStyles = getCommonInputStyles(colors);
   const [sceneId, setSceneId] = useState<string | null>(null);
   const [note, setNote] = useState('');
@@ -59,7 +61,7 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
   const handleSave = () => {
     const trimmedNote = note.trim();
     const nextErrors: { sceneId?: string; note?: string } = {};
-    if (!sceneId) nextErrors.sceneId = t('scene_required');
+    if (!sceneId) nextErrors.sceneId = sceneCopy.required;
     if (!trimmedNote) nextErrors.note = t('plot_scene_note_required');
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -96,12 +98,12 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
       </Text>
       <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
-          <Text style={styles.label}>{t('scene')}</Text>
+          <Text style={styles.label}>{sceneCopy.entity}</Text>
           <Select
             options={selectableScenes.map((scene) => ({ label: scene.label, value: scene.id }))}
             value={sceneId}
             onValueChange={setSceneId}
-            placeholder={t('select_scene')}
+            placeholder={sceneCopy.select}
             multiple={false}
             allowDeselect
           />

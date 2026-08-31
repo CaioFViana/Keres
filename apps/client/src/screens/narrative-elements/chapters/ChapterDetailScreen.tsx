@@ -36,6 +36,7 @@ import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import {
   formatChapterUniverseDuration,
   formatSceneUniverseDuration,
@@ -64,6 +65,9 @@ const ChapterDetailScreen = () => {
   const route = useRoute<ChapterDetailScreenRouteProp>();
   const { chapterId } = route.params;
   const { t } = useTranslation();
+  const locationCopy = useVocabularyEntityCopy('Location');
+  const eventCopy = useVocabularyEntityCopy('Event');
+  const chapterNounCopy = useVocabularyEntityCopy('Chapter');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -88,6 +92,7 @@ const ChapterDetailScreen = () => {
   }, [drizzleDb]);
 
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
+  const copy = useVocabularyEntityCopy(chapter?.type === 'event' ? 'Event' : 'Chapter');
   const { canEdit } = useStoryRole(chapter?.storyId);
   const { definition: calendar } = useStoryCalendar();
   const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
@@ -136,21 +141,21 @@ const ChapterDetailScreen = () => {
       const fetchedChapter = await chapterServiceRef.current.getById(chapterId);
       if (fetchedChapter && !fetchedChapter.isDeleted) {
         setChapter(fetchedChapter);
-        setHeaderTitle(fetchedChapter.name || t('chapter_details_title'));
+        setHeaderTitle(fetchedChapter.name || copy.detailsTitle);
       } else if (fetchedChapter && fetchedChapter.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('chapter_not_found'));
-        setHeaderTitle(t('chapter_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch chapter details:', err);
-      setError(t('failed_to_load_chapter'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, t]);
+  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, copy]);
 
   const fetchAllScenesInStory = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id) {
@@ -187,7 +192,7 @@ const ChapterDetailScreen = () => {
             navigation.goBack();
           } else {
             setChapter(updatedChapter);
-            setHeaderTitle(updatedChapter.name || t('chapter_details_title'));
+            setHeaderTitle(updatedChapter.name || copy.detailsTitle);
           }
         }
       }
@@ -267,9 +272,7 @@ const ChapterDetailScreen = () => {
             onPress={() => setIsConvertVisible(true)}
             style={{ marginRight: 15 }}
             accessibilityLabel={
-              chapter?.type === 'event'
-                ? t('chapter_convert_to_chapter')
-                : t('chapter_convert_to_event')
+              chapter?.type === 'event' ? chapterNounCopy.convertTo : eventCopy.convertTo
             }
             testID="convert-container"
           >
@@ -287,7 +290,7 @@ const ChapterDetailScreen = () => {
           </TouchableOpacity>
         </View>
       ) : null,
-    [navigation, chapterId, colors.text, canEdit, chapter?.type, t],
+    [navigation, chapterId, colors.text, canEdit, chapter?.type, chapterNounCopy.convertTo, eventCopy.convertTo],
   );
 
   useFocusEffect(
@@ -301,7 +304,7 @@ const ChapterDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_chapter_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
   if (error) {
@@ -312,7 +315,7 @@ const ChapterDetailScreen = () => {
     return (
       <ScreenError
         padded
-        message={t('chapter_data_missing')}
+        message={copy.dataMissing}
         onGoBack={() => navigation.goBack()}
       />
     );
@@ -428,7 +431,7 @@ const ChapterDetailScreen = () => {
             (location) => location.id === scene.locationId,
           )?.name;
           return locationName
-            ? [...details, { label: t('location'), value: locationName }]
+            ? [...details, { label: locationCopy.entity, value: locationName }]
             : details;
         }}
       />

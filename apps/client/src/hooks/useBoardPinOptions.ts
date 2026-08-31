@@ -7,6 +7,7 @@ import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelec
 import { useDrizzle } from '../db';
 import { chapters, galleries } from '../db/schema';
 import { loadEntityOptions } from '../utils/entityOptions';
+import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 
 export interface BoardPinOption {
   entityType:
@@ -50,6 +51,7 @@ export function decodeBoardPinValue(
 export function useBoardPinOptions(storyId: string | undefined) {
   const db = useDrizzle();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const [options, setOptions] = useState<BoardPinOption[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -149,11 +151,11 @@ export function useBoardPinOptions(storyId: string | undefined) {
       label: string;
       appearanceType: string;
     }[] = [
-      { key: 'character', label: t('character_plural'), appearanceType: 'Character' },
-      { key: 'location', label: t('location_plural'), appearanceType: 'Location' },
-      { key: 'scene', label: t('scene_plural'), appearanceType: 'Scene' },
-      { key: 'chapter', label: t('chapter_plural'), appearanceType: 'Chapter' },
-      { key: 'event', label: t('event_plural'), appearanceType: 'Event' },
+      { key: 'character', label: term('Character', true), appearanceType: 'Character' },
+      { key: 'location', label: term('Location', true), appearanceType: 'Location' },
+      { key: 'scene', label: term('Scene', true), appearanceType: 'Scene' },
+      { key: 'chapter', label: term('Chapter', true), appearanceType: 'Chapter' },
+      { key: 'event', label: term('Event', true), appearanceType: 'Event' },
       { key: 'item', label: t('item_plural'), appearanceType: 'Item' },
       { key: 'note', label: t('note_plural'), appearanceType: 'Note' },
       { key: 'worldrule', label: t('world_rules_title'), appearanceType: 'WorldRule' },

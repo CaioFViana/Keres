@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 /**
  * Turning a chapter into an event, or an event back into a chapter.
@@ -38,6 +39,8 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const chapterCopy = useVocabularyEntityCopy('Chapter');
+  const eventCopy = useVocabularyEntityCopy('Event');
 
   const becomingChapter = currentType === 'event';
   const lastSlot = chapterNames.length + 1;
@@ -90,7 +93,7 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
       maxHeight="86%"
     >
       <Text style={styles.modalTitle}>
-        {becomingChapter ? t('chapter_convert_to_chapter') : t('chapter_convert_to_event')}
+        {becomingChapter ? chapterCopy.convertTo : eventCopy.convertTo}
       </Text>
       <Text style={styles.subtitle}>
         {becomingChapter

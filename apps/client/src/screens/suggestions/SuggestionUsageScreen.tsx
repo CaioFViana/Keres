@@ -35,6 +35,8 @@ import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { ENTITY_TYPE_ICONS } from '../../utils/entityTypeIcons';
+import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 type UsageSection = { title: string; data: SuggestionUsage[] };
 
@@ -56,6 +58,7 @@ const SECTION_LABELS: Record<SuggestionUsage['entityType'], string> = {
 
 const SuggestionUsageScreen = () => {
   const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
   const { colors } = useTheme();
   const db = useDrizzle();
   const navigation = useNavigation<any>();
@@ -149,10 +152,14 @@ const SuggestionUsageScreen = () => {
       grouped.set(usage.entityType, entries);
     });
     return Array.from(grouped.entries()).map(([entityType, data]) => ({
-      title: `${t(SECTION_LABELS[entityType as SuggestionUsage['entityType']])} (${data.length})`,
+      title: `${
+        isStoryVocabularyEntityType(entityType)
+          ? label(entityType, true)
+          : t(SECTION_LABELS[entityType as SuggestionUsage['entityType']])
+      } (${data.length})`,
       data,
     }));
-  }, [t, usages]);
+  }, [label, t, usages]);
   const isMerging =
     newValue.trim() !== value &&
     storedValues.some((storedValue) => storedValue === newValue.trim());
@@ -252,7 +259,7 @@ const SuggestionUsageScreen = () => {
                         }
                       >
                         <Text style={stylesForScreen.relationLink}>
-                          {item.characterNames?.[index] ?? t('characters_title')}
+                          {item.characterNames?.[index] ?? label('Character', true)}
                         </Text>
                       </TouchableOpacity>
                     ))}

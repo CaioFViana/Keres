@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { useStoryVocabulary } from '../../../../vocabulary/useStoryVocabulary';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard'; // Import CollapsibleCard
 import ResponsiveGrid from '@/src/components/layout/ResponsiveGrid/ResponsiveGrid';
 
@@ -148,12 +149,13 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   analysisSummary,
 }) => {
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
 
   const tilesData = [
-    { label: t('chapters'), count: chapterCount, ...getEntityAppearance('Chapter') },
-    { label: t('scenes'), count: sceneCount, ...getEntityAppearance('Scene') },
-    { label: t('locations'), count: locationCount, ...getEntityAppearance('Location') },
-    { label: t('characters'), count: characterCount, ...getEntityAppearance('Character') },
+    { label: term('Chapter', true), count: chapterCount, ...getEntityAppearance('Chapter') },
+    { label: term('Scene', true), count: sceneCount, ...getEntityAppearance('Scene') },
+    { label: term('Location', true), count: locationCount, ...getEntityAppearance('Location') },
+    { label: term('Character', true), count: characterCount, ...getEntityAppearance('Character') },
     { label: t('notes'), count: noteCount, ...getEntityAppearance('Note') },
     { label: t('world_rules'), count: worldRuleCount, ...getEntityAppearance('WorldRule') },
     { label: t('items'), count: itemCount, ...getEntityAppearance('Item') },

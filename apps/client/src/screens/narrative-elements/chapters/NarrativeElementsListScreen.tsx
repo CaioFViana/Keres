@@ -591,11 +591,11 @@ const NarrativeElementsListScreen = () => {
     if (!hasChapters) return setReorderingType('event');
 
     AppAlert.alert(t('chapter_reorder_which'), '', [
-      { text: t('chapter_reorder_chapters'), onPress: () => setReorderingType('chapter') },
-      { text: t('chapter_reorder_events'), onPress: () => setReorderingType('event') },
+      { text: term('Chapter', true), onPress: () => setReorderingType('chapter') },
+      { text: term('Event', true), onPress: () => setReorderingType('event') },
       { text: t('cancel'), style: 'cancel' },
     ]);
-  }, [outlineChapters, t]);
+  }, [outlineChapters, t, term]);
 
   const handleReorderConfirm = useCallback(
     async (newOrder: { id: string; newIndex: number }[]) => {
@@ -682,7 +682,9 @@ const NarrativeElementsListScreen = () => {
   // source for this composite Chapter + Scene screen, so a debounced scene-name search must not
   // temporarily replace the whole screen (and its focused search field) with a loading state.
   if (loading && outlineChapters.length === 0) {
-    return <ScreenLoading message={t('loading_chapters')} />;
+    return (
+      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Chapter', true) })} />
+    );
   }
 
   if (error) {

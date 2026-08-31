@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
+import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 import * as schema from '../db/schema';
 
 /**
@@ -49,6 +50,7 @@ export function decodeOwnerValue(
 export function useGalleryOwnerOptions(storyId: string | undefined) {
   const db = useDrizzle();
   const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
   const [options, setOptions] = useState<GalleryOwnerOption[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -101,7 +103,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
           collected.push({
             // The type goes into the label because the flat list mixes all five: without it, two identical names
             // on different entities would be indistinguishable.
-            label: `${t(ownerType.toLowerCase())}: ${name}`,
+            label: `${label(ownerType)}: ${name}`,
             name,
             value: encodeOwnerValue(ownerType, row.id),
             ownerId: row.id,
@@ -117,7 +119,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
     } finally {
       setLoading(false);
     }
-  }, [db, storyId, t]);
+  }, [db, label, storyId, t]);
 
   useEffect(() => {
     load();
@@ -136,14 +138,14 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({
       key: ownerType,
-      label: t(`${ownerType.toLowerCase()}s`),
+      label: label(ownerType, true),
       icon: getEntityAppearance(ownerType).icon as keyof typeof Ionicons.glyphMap,
       color: getEntityAppearance(ownerType).color,
       options: options
         .filter((option) => option.ownerType === ownerType)
         .map((option) => ({ label: option.name, value: option.value })),
     }));
-  }, [options, t]);
+  }, [label, options, t]);
 
   return { options, optionsByValue, groupedOptions, loading, reload: load };
 }

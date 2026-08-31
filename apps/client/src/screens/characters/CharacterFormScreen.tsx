@@ -50,6 +50,7 @@ import {
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
 type CharacterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -64,6 +65,7 @@ const CharacterFormScreen = () => {
   const route = useRoute<CharacterFormScreenRouteProp>();
   const { characterId: initialCharacterId } = route.params || {}; // Renamed to initialCharacterId
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Character');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
 
@@ -144,15 +146,16 @@ const CharacterFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentCharacterId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_character_title') : t('create_character_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_character_title') : t('create_character_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   const fetchAllCharactersInStory = useCallback(async () => {
@@ -296,13 +299,13 @@ const CharacterFormScreen = () => {
           currentCharacterId!,
           characterData,
         );
-        AppAlert.alert(t('success'), t('character_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         savedCharacter = await characterServiceRef.current!.createCharacter(userId, {
           ...characterData,
           storyId: selectedStory.id,
         });
-        AppAlert.alert(t('success'), t('character_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
         setCurrentCharacterId(savedCharacter.id); // Set the ID for the newly created character
       }
 
@@ -335,7 +338,7 @@ const CharacterFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save character:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_character'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -353,9 +356,12 @@ const CharacterFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_character_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_character_message',
-      successKey: 'character_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_character',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await characterServiceRef.current!.deleteCharacter(userId, currentCharacterId);
@@ -489,7 +495,7 @@ const CharacterFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_character_title') : t('create_character_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('character_form_description')}
@@ -731,10 +737,10 @@ const CharacterFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_character')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_character_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

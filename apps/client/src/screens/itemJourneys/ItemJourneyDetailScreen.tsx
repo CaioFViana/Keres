@@ -32,6 +32,7 @@ import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -52,6 +53,7 @@ const ItemJourneyDetailScreen = () => {
   const route = useRoute<ItemJourneyDetailScreenRouteProp>();
   const { itemJourneyId } = route.params;
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -312,7 +314,7 @@ const ItemJourneyDetailScreen = () => {
           activeOpacity={0.7}
         >
           <View style={{ flex: 1 }}>
-            <DetailField label={t('scene')} value={relatedScene.name} />
+            <DetailField label={sceneCopy.entity} value={relatedScene.name} />
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>

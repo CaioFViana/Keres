@@ -25,6 +25,8 @@ import type { FavoriteFilterState } from '../../types/entityFilters';
 import { debounce } from '../../utils/debounce';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
@@ -60,6 +62,7 @@ interface ResultSection {
 const GlobalSearchScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<GlobalSearchScreenNavigationProp>();
   const drizzleDb = useDrizzle();
@@ -144,10 +147,10 @@ const GlobalSearchScreen = () => {
       ({ entityType }) => (byEntityType.get(entityType)?.length ?? 0) > 0,
     ).map(({ entityType, titleKey }) => ({
       entityType,
-      title: `${t(titleKey)} (${byEntityType.get(entityType)!.length})`,
+      title: `${isStoryVocabularyEntityType(entityType) ? term(entityType, true) : t(titleKey)} (${byEntityType.get(entityType)!.length})`,
       data: byEntityType.get(entityType)!,
     }));
-  }, [favoriteFilterState, results, t]);
+  }, [favoriteFilterState, results, t, term]);
 
   const handleFavoriteFilterToggle = useCallback(() => {
     setFavoriteFilterState((current) =>

@@ -52,6 +52,7 @@ import { createLocationService } from '../../../services/storymanagement/Locatio
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../../state/storyStore';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
 import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
@@ -75,6 +76,8 @@ const SceneDetailScreen = () => {
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId } = route.params;
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Scene');
+  const locationCopy = useVocabularyEntityCopy('Location');
   const { selectedStory } = useStoryStore();
   const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
   const scrollBottomPadding = useFormScrollBottomPadding();
@@ -209,21 +212,21 @@ const SceneDetailScreen = () => {
       const fetchedScene = await sceneServiceRef.current.getById(sceneId);
       if (fetchedScene && !fetchedScene.isDeleted) {
         setScene(fetchedScene);
-        setHeaderTitle(fetchedScene.name || t('scene_details_title'));
+        setHeaderTitle(fetchedScene.name || copy.detailsTitle);
       } else if (fetchedScene && fetchedScene.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('scene_not_found'));
-        setHeaderTitle(t('scene_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch scene details:', err);
-      setError(t('failed_to_load_scene'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, t]);
+  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, copy]);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current || !scene?.chapterId) {
@@ -446,7 +449,7 @@ const SceneDetailScreen = () => {
             navigation.goBack();
           } else {
             setScene(updatedScene);
-            setHeaderTitle(updatedScene.name || t('scene_details_title'));
+            setHeaderTitle(updatedScene.name || copy.detailsTitle);
           }
         }
         fetchChapter();
@@ -463,7 +466,7 @@ const SceneDetailScreen = () => {
       navigation,
       setScene,
       setHeaderTitle,
-      t,
+      copy,
       fetchChapter,
       selectedStory?.type,
       fetchPreviousNextScenes,
@@ -591,7 +594,7 @@ const SceneDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_scene_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
   if (error) {
@@ -600,7 +603,7 @@ const SceneDetailScreen = () => {
 
   if (!scene) {
     return (
-      <ScreenError padded message={t('scene_data_missing')} onGoBack={() => navigation.goBack()} />
+      <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />
     );
   }
 
@@ -700,7 +703,7 @@ const SceneDetailScreen = () => {
 
       {location && (
         <>
-          <Text style={styles.sectionTitle}>{t('location')}</Text>
+          <Text style={styles.sectionTitle}>{locationCopy.entity}</Text>
           <TouchableOpacity
             onPress={handleLocationPress}
             style={styles.locationLink}

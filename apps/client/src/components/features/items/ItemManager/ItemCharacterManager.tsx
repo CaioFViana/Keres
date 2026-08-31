@@ -7,6 +7,7 @@ import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntity
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 // Type Guards
 const isItemJourney = (entity: Item | ItemJourney): entity is ItemJourney => {
@@ -31,6 +32,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
   currentCharacterId,
 }) => {
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
 
@@ -89,7 +91,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
               )}
               {allScenes?.find((scene) => scene.id === entity.sceneId)?.name && (
                 <RelationAttributeLine
-                  label={t('scene')}
+                  label={sceneCopy.entity}
                   value={allScenes.find((scene) => scene.id === entity.sceneId)!.name}
                 />
               )}

@@ -24,6 +24,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;
@@ -35,6 +36,7 @@ type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;
 const PlotDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const chapterCopy = useVocabularyEntityCopy('Chapter');
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const route = useRoute<PlotDetailScreenRouteProp>();
@@ -142,7 +144,7 @@ const PlotDetailScreen = () => {
             <Text style={styles.relationText}>{scene.name}</Text>
             {chapterNameOf(scene.chapterId) ? (
               <RelationAttributeLine
-                label={t('chapter')}
+                label={chapterCopy.entity}
                 value={chapterNameOf(scene.chapterId) as string}
               />
             ) : null}

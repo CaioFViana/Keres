@@ -186,7 +186,9 @@ const LocationsScreen = () => {
   }, [t]);
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_locations')} />;
+    return (
+      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Location', true) })} />
+    );
   }
 
   if (error) {
@@ -201,7 +203,7 @@ const LocationsScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_locations')}
+        searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
         currentSearchTerm={searchQuery}
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterTagsChange}

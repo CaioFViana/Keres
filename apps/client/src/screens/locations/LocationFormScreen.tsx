@@ -526,7 +526,7 @@ const LocationFormScreen = () => {
     >
       <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {t('location_form_description')}
+        {copy.formDescription}
       </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>

@@ -46,6 +46,7 @@ export function useVocabularyEntityCopy(type: StoryVocabularyEntityType) {
       failedToLoad: t('vocabulary_failed_to_load_entity', { entity }),
       failedToSave: t('vocabulary_failed_to_save_entity', { entity }),
       failedToDelete: t('vocabulary_failed_to_delete_entity', { entity }),
+      formDescription: t('vocabulary_form_description', { entity }),
     }),
     [ending, entities, entity, t],
   );

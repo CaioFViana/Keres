@@ -141,9 +141,20 @@ const VocabularyTermCard = memo(
             </View>
           )}
         </View>
-        {!term.singular && !term.plural && (
-          <Text style={styles.empty}>{t('vocabulary_default_term_hint')}</Text>
-        )}
+        {/*
+         * Keep this node mounted. On web, inserting it when the first character is typed made the
+         * controlled native input lose its DOM focus. Visibility is presentation, not structure.
+         */}
+        <Text
+          testID={`vocabulary-${type}-default-hint`}
+          style={[
+            styles.empty,
+            term.singular || term.plural ? { opacity: 0 } : null,
+          ]}
+          accessibilityElementsHidden={Boolean(term.singular || term.plural)}
+        >
+          {t('vocabulary_default_term_hint')}
+        </Text>
       </View>
     );
   },

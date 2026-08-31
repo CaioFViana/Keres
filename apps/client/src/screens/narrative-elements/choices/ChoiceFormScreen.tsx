@@ -654,7 +654,7 @@ const ChoiceFormScreen = () => {
     >
       <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {t('choice_form_description')}
+        {copy.formDescription}
       </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('text')}</Text>
@@ -666,7 +666,9 @@ const ChoiceFormScreen = () => {
         multiline
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('parent_scene')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {t('vocabulary_parent_entity', { entity: sceneCopy.entity })}
+      </Text>
       <Select
         options={sceneOptions}
         value={sceneId}
@@ -675,7 +677,9 @@ const ChoiceFormScreen = () => {
         multiple={false}
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('next_scene')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {t('vocabulary_next_entity', { entity: sceneCopy.entity })}
+      </Text>
       <Select
         options={sceneOptions}
         value={nextSceneId}

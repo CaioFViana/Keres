@@ -768,7 +768,7 @@ const SceneFormScreen = () => {
     >
       <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {t('scene_form_description')}
+        {copy.formDescription}
       </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{chapterCopy.entity}</Text>

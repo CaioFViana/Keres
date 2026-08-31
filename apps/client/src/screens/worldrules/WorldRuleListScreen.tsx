@@ -28,6 +28,7 @@ import { createTagService } from '../../services/storymanagement/TagService'; //
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'WorldRulesStack'>,
@@ -37,6 +38,7 @@ export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
 const WorldRulesScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
@@ -100,9 +102,9 @@ const WorldRulesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('world_rules_title'));
+      setDocumentTitle(term('WorldRule', true));
       navigation.getParent()?.setOptions({
-        title: t('world_rules_title'),
+        title: term('WorldRule', true),
         headerRight: canEdit
           ? () => (
               <TouchableOpacity
@@ -114,7 +116,7 @@ const WorldRulesScreen = () => {
             )
           : undefined,
       });
-    }, [navigation, colors.text, t, canEdit]),
+    }, [navigation, colors.text, t, canEdit, term]),
   );
 
   const handleToggleFavorite = useCallback(
@@ -159,7 +161,7 @@ const WorldRulesScreen = () => {
   });
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_world_rules')} />;
+    return <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('WorldRule', true) })} />;
   }
 
   if (error) {
@@ -174,7 +176,7 @@ const WorldRulesScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_world_rules')}
+        searchPlaceholder={t('vocabulary_search_entities', { entities: term('WorldRule', true) })}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterTagsChange}

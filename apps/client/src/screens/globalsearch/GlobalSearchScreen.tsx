@@ -62,7 +62,7 @@ interface ResultSection {
 const GlobalSearchScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { term } = useStoryVocabulary();
+  const { label } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<GlobalSearchScreenNavigationProp>();
   const drizzleDb = useDrizzle();
@@ -147,10 +147,14 @@ const GlobalSearchScreen = () => {
       ({ entityType }) => (byEntityType.get(entityType)?.length ?? 0) > 0,
     ).map(({ entityType, titleKey }) => ({
       entityType,
-      title: `${isStoryVocabularyEntityType(entityType) ? term(entityType, true) : t(titleKey)} (${byEntityType.get(entityType)!.length})`,
+      title: `${
+        isStoryVocabularyEntityType(entityType) || entityType === 'ItemJourney'
+          ? label(entityType, true)
+          : t(titleKey)
+      } (${byEntityType.get(entityType)!.length})`,
       data: byEntityType.get(entityType)!,
     }));
-  }, [favoriteFilterState, results, t, term]);
+  }, [favoriteFilterState, results, t, label]);
 
   const handleFavoriteFilterToggle = useCallback(() => {
     setFavoriteFilterState((current) =>

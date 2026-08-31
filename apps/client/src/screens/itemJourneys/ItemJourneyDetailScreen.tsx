@@ -53,6 +53,7 @@ const ItemJourneyDetailScreen = () => {
   const route = useRoute<ItemJourneyDetailScreenRouteProp>();
   const { itemJourneyId } = route.params;
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
@@ -156,22 +157,22 @@ const ItemJourneyDetailScreen = () => {
         // Display item name + new state as title
         const relatedItem = items.find((item) => item.id === fetchedItemJourney.itemId);
         setHeaderTitle(
-          `${relatedItem?.name || t('unknown_item')} - ${fetchedItemJourney.newState}`,
+          `${relatedItem?.name || itemCopy.unknown} - ${fetchedItemJourney.newState}`,
         );
       } else if (fetchedItemJourney && fetchedItemJourney.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('item_journey_not_found'));
-        setHeaderTitle(t('item_journey_not_found'));
+        setError(t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }));
+        setHeaderTitle(t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }));
       }
     } catch (err) {
       console.error('Failed to fetch item journey details:', err);
-      setError(t('failed_to_load_item_journey'));
+      setError(t('vocabulary_failed_to_load_entity', { entity: itemCopy.itemJourney }));
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [itemJourneyId, navigation, t, items]);
+  }, [itemJourneyId, navigation, t, items, itemCopy]);
 
   const handleItemJourneyChange = useCallback(
     async (changedStoryId: string, changedItemJourneyId: string) => {
@@ -183,12 +184,12 @@ const ItemJourneyDetailScreen = () => {
           setItemJourney(updatedItemJourney);
           const relatedItem = items.find((item) => item.id === updatedItemJourney.itemId);
           setHeaderTitle(
-            `${relatedItem?.name || t('unknown_item')} - ${updatedItemJourney.newState}`,
+            `${relatedItem?.name || itemCopy.unknown} - ${updatedItemJourney.newState}`,
           );
         }
       }
     },
-    [itemJourneyId, navigation, t, items],
+    [itemJourneyId, navigation, t, items, itemCopy],
   );
 
   useEntityInitialLoad(fetchItemJourney);
@@ -243,7 +244,7 @@ const ItemJourneyDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_item_journey_details')} />;
+    return <ScreenLoading padded message={t('vocabulary_loading_entity_details', { entity: itemCopy.itemJourney })} />;
   }
   if (error) {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
@@ -252,7 +253,7 @@ const ItemJourneyDetailScreen = () => {
     return (
       <ScreenError
         padded
-        message={t('item_journey_data_missing')}
+        message={t('vocabulary_entity_data_missing', { entity: itemCopy.itemJourney })}
         onGoBack={() => navigation.goBack()}
       />
     );
@@ -268,7 +269,7 @@ const ItemJourneyDetailScreen = () => {
       {relatedItem && (
         <TouchableOpacity onPress={handleItemPress} style={styles.relationLink} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
-            <DetailField label={t('item')} value={relatedItem.name} />
+            <DetailField label={itemCopy.entity} value={relatedItem.name} />
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>

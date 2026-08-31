@@ -157,8 +157,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     { label: term('Location', true), count: locationCount, ...getEntityAppearance('Location') },
     { label: term('Character', true), count: characterCount, ...getEntityAppearance('Character') },
     { label: t('notes'), count: noteCount, ...getEntityAppearance('Note') },
-    { label: t('world_rules'), count: worldRuleCount, ...getEntityAppearance('WorldRule') },
-    { label: t('items'), count: itemCount, ...getEntityAppearance('Item') },
+    { label: term('WorldRule', true), count: worldRuleCount, ...getEntityAppearance('WorldRule') },
+    { label: term('Item', true), count: itemCount, ...getEntityAppearance('Item') },
     { label: t('gallery'), count: galleryCount, ...getEntityAppearance('Gallery') },
     { label: t('tags_title'), count: tagCount, ...getEntityAppearance('Tag') },
     {
@@ -172,7 +172,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   // The specific tile will only render if its count is provided and not undefined.
   if (isBranchingStory || (branchingStories && branchingStories > 0)) {
     tilesData.unshift({
-      label: t('choices'),
+      label: term('Choice', true),
       count: choiceCount,
       ...getEntityAppearance('Choice'),
     });

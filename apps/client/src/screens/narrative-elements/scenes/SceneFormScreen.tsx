@@ -79,6 +79,7 @@ const SceneFormScreen = () => {
   const copy = useVocabularyEntityCopy('Scene');
   const chapterCopy = useVocabularyEntityCopy('Chapter');
   const locationCopy = useVocabularyEntityCopy('Location');
+  const itemCopy = useVocabularyEntityCopy('Item');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const { calendars } = useStoryCalendar(selectedStory?.id);
@@ -1019,7 +1020,7 @@ const SceneFormScreen = () => {
               {(effect.effectType === 'itemGrant' || effect.effectType === 'itemTake') && (
                 <View style={styles.cardRow}>
                   <View style={styles.fieldFlex}>
-                    <Text style={styles.cardRowLabel}>{t('item')}</Text>
+                    <Text style={styles.cardRowLabel}>{itemCopy.entity}</Text>
                     <Select
                       options={itemOptions}
                       value={effect.itemId}

@@ -39,6 +39,9 @@ const EMPTY_TERMS: DraftTerms = {
   Chapter: { singular: '', plural: '', grammaticalGender: 'masculine' },
   Scene: { singular: '', plural: '', grammaticalGender: 'feminine' },
   Event: { singular: '', plural: '', grammaticalGender: 'masculine' },
+  Item: { singular: '', plural: '', grammaticalGender: 'masculine' },
+  WorldRule: { singular: '', plural: '', grammaticalGender: 'feminine' },
+  Choice: { singular: '', plural: '', grammaticalGender: 'feminine' },
 };
 
 function languageFamily(language: string | undefined): 'pt' | 'en' {

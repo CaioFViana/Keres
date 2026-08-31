@@ -39,6 +39,8 @@ export function useVocabularyEntityCopy(type: StoryVocabularyEntityType) {
       selectOptional: t('vocabulary_select_entity_optional', { entity }),
       required: t('vocabulary_entity_required', { entity, ending }),
       unknown: t('vocabulary_unknown_entity', { entity, ending }),
+      itemJourney: t('vocabulary_item_journey', { item: entity }),
+      itemJourneys: t('vocabulary_item_journeys', { items: entities }),
       fromEntity: t('vocabulary_from_entity', { entity }),
       convertTo: t('vocabulary_convert_to_entity', { entity }),
       failedToLoad: t('vocabulary_failed_to_load_entity', { entity }),

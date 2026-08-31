@@ -197,7 +197,7 @@ export async function resolveRelationEntityName(
         columns: { title: true },
       });
       name = worldRule?.title;
-      type = t('world_rule');
+      type = translateStoryNoun(t, await vocabulary(), 'WorldRule');
       break;
     case OperationLogEntityType.LocationMap:
       const locationMap = await db.query.locationMaps.findFirst({
@@ -245,7 +245,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = item?.name;
-      type = t('item');
+      type = translateStoryNoun(t, await vocabulary(), 'Item');
       break;
     case OperationLogEntityType.Choice:
       const relatedChoice = await db.query.choices.findFirst({
@@ -257,7 +257,7 @@ export async function resolveRelationEntityName(
         columns: { text: true },
       });
       name = relatedChoice?.text;
-      type = t('choice');
+      type = translateStoryNoun(t, await vocabulary(), 'Choice');
       break;
     case OperationLogEntityType.Tag:
       const relatedTag = await db.query.tags.findFirst({
@@ -297,7 +297,7 @@ export async function resolveRelationEntityName(
           where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
           columns: { name: true },
         });
-        name = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
+        name = `${relatedItem?.name || unknownStoryNoun(t, await vocabulary(), 'Item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
       }
       type = t('item_journey');
       break;

@@ -38,6 +38,7 @@ import {
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
 type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
 
@@ -47,6 +48,7 @@ const WorldRuleFormScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<WorldRuleFormScreenRouteProp>();
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('WorldRule');
   const { userId } = useUserSettingsStore();
   const { worldRuleId: initialWorldRuleId } = route.params || {}; // Renamed to initialWorldRuleId
   const { selectedStory } = useStoryStore();
@@ -92,15 +94,16 @@ const WorldRuleFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentWorldRuleId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -147,7 +150,7 @@ const WorldRuleFormScreen = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      AppAlert.alert(t('error'), t('world_rule_title_required'));
+      AppAlert.alert(t('error'), copy.required);
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
@@ -184,13 +187,13 @@ const WorldRuleFormScreen = () => {
           currentWorldRuleId!,
           worldRuleData,
         );
-        AppAlert.alert(t('success'), t('world_rule_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, {
           ...worldRuleData,
           storyId: selectedStory.id,
         });
-        AppAlert.alert(t('success'), t('world_rule_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
         setCurrentWorldRuleId(savedWorldRule.id);
       }
 
@@ -218,7 +221,7 @@ const WorldRuleFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save world rule:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_world_rule'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -235,9 +238,12 @@ const WorldRuleFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_world_rule_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_world_rule_message',
-      successKey: 'world_rule_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_world_rule',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await worldRuleServiceRef.current!.deleteWorldRule(userId, currentWorldRuleId);
@@ -296,7 +302,7 @@ const WorldRuleFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_world_rule_title') : t('create_world_rule_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('world_rule_form_description')}
@@ -389,11 +395,11 @@ const WorldRuleFormScreen = () => {
 
       <FormActions stackOnCompact style={styles.saveButton}>
         <Button onPress={handleSave}>
-          {isEditing ? t('save_changes') : t('create_world_rule')}
+          {copy.saveLabel}
         </Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_world_rule_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

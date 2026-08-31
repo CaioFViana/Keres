@@ -19,6 +19,9 @@ const comicPt: StoryVocabulary = {
     Character: { singular: 'Heroína', plural: 'Heroínas', grammaticalGender: 'feminine' },
     Scene: { singular: 'Página', plural: 'Páginas', grammaticalGender: 'feminine' },
     Location: { singular: 'Cenário', plural: 'Cenários', grammaticalGender: 'masculine' },
+    Item: { singular: 'Artefato', plural: 'Artefatos', grammaticalGender: 'masculine' },
+    WorldRule: { singular: 'Lei arcana', plural: 'Leis arcanas', grammaticalGender: 'feminine' },
+    Choice: { singular: 'Decisão', plural: 'Decisões', grammaticalGender: 'feminine' },
   },
 };
 
@@ -27,6 +30,15 @@ describe('resolveStoryTerm', () => {
     expect(resolveStoryTerm(comicPt, 'pt', t, 'Character')).toBe('Heroína');
     expect(resolveStoryTerm(comicPt, 'pt', t, 'Character', true)).toBe('Heroínas');
     expect(resolveStoryTerm(comicPt, 'en', t, 'Character')).toBe('character');
+  });
+
+  it.each([
+    ['Item', 'Artefato', 'Artefatos'],
+    ['WorldRule', 'Lei arcana', 'Leis arcanas'],
+    ['Choice', 'Decisão', 'Decisões'],
+  ] as const)('resolves the added core noun %s', (type, singular, plural) => {
+    expect(resolveStoryTerm(comicPt, 'pt', t, type)).toBe(singular);
+    expect(resolveStoryTerm(comicPt, 'pt', t, type, true)).toBe(plural);
   });
 
   it('falls back to the translated default when that type was left blank', () => {
@@ -51,6 +63,8 @@ describe('resolveStoryGender', () => {
   it('follows the override, including a swapped gender', () => {
     expect(resolveStoryGender(comicPt, 'pt', 'Location')).toBe('masculine');
     expect(resolveStoryGender(comicPt, 'en', 'Location')).toBe('feminine');
+    expect(resolveStoryGender(comicPt, 'pt', 'WorldRule')).toBe('feminine');
+    expect(resolveStoryGender(comicPt, 'pt', 'Choice')).toBe('feminine');
   });
 });
 

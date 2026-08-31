@@ -42,6 +42,7 @@ import {
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
 type ItemFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemForm'>;
 type ItemFormScreenNavigationProp = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;
@@ -53,6 +54,7 @@ const ItemFormScreen = () => {
   const route = useRoute<ItemFormScreenRouteProp>();
   const { itemId: initialItemId } = route.params || {}; // Changed from choiceId
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Item');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const {
@@ -119,15 +121,16 @@ const ItemFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentItemId; // Changed
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_item_title') : t('create_item_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_item_title') : t('create_item_title'), // Changed
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -176,7 +179,7 @@ const ItemFormScreen = () => {
   const handleSave = async () => {
     if (!name.trim()) {
       // Changed from text.trim()
-      AppAlert.alert(t('error'), t('item_name_required')); // Changed
+      AppAlert.alert(t('error'), copy.required);
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
@@ -212,7 +215,7 @@ const ItemFormScreen = () => {
         // Changed
         const savedItem = await itemServiceRef.current!.updateItem(userId, currentItemId, itemData); // Changed
         savedItemId = savedItem.id;
-        AppAlert.alert(t('success'), t('item_updated_successfully')); // Changed
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         const savedItem = await itemServiceRef.current!.createItem(userId, {
           ...itemData,
@@ -220,7 +223,7 @@ const ItemFormScreen = () => {
         }); // Changed
         savedItemId = savedItem.id;
         setCurrentItemId(savedItem.id);
-        AppAlert.alert(t('success'), t('item_created_successfully')); // Changed
+        AppAlert.alert(t('success'), copy.created);
       }
 
       if (savedItemId) {
@@ -245,7 +248,7 @@ const ItemFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save item:', err); // Changed
-      AppAlert.alert(t('error'), t('failed_to_save_item')); // Changed
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -262,9 +265,12 @@ const ItemFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_item_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_item_message',
-      successKey: 'item_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_item',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await itemServiceRef.current!.deleteItem(userId, currentItemId);
@@ -303,15 +309,15 @@ const ItemFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_item_title') : t('create_item_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('item_form_description')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('item_name')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{copy.entity}</Text>
       <TextInput
-        placeholder={t('item_name_placeholder')}
+        placeholder={copy.entity}
         value={name}
         onChangeText={setName}
         style={commonInputStyles.input}
@@ -424,10 +430,10 @@ const ItemFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_item')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_item_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

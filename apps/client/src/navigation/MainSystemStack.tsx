@@ -774,8 +774,8 @@ const MainSystemNavigator = () => {
           name="ItemsStack"
           component={ItemStackNavigator}
           options={{
-            title: t('items_title'),
-            drawerLabel: t('items_title'),
+            title: term('Item', true),
+            drawerLabel: term('Item', true),
             drawerIcon: drawerIcon('cube-outline'),
           }}
           listeners={({ navigation }) => ({
@@ -804,8 +804,8 @@ const MainSystemNavigator = () => {
           name="WorldRulesStack"
           component={WorldRuleStackNavigator}
           options={{
-            title: t('world_rules_title'),
-            drawerLabel: t('world_rules_title'),
+            title: term('WorldRule', true),
+            drawerLabel: term('WorldRule', true),
             drawerIcon: drawerIcon('globe-outline'),
           }}
           listeners={({ navigation }) => ({

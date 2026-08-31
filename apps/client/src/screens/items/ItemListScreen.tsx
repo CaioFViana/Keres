@@ -43,6 +43,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -52,6 +53,7 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 const ItemListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -254,9 +256,9 @@ const ItemListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('items_title'));
+      setDocumentTitle(term('Item', true));
       navigation.getParent()?.setOptions({
-        title: t('items_title'),
+        title: term('Item', true),
         headerRight:
           selectedStory?.type === 'linear' || canEdit
             ? () => (
@@ -286,11 +288,12 @@ const ItemListScreen = () => {
       canEdit,
       openItemList,
       selectedStory?.type,
+      term,
     ]),
   );
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_items')} />;
+    return <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Item', true) })} />;
   }
 
   if (error) {
@@ -305,7 +308,7 @@ const ItemListScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_items')}
+        searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
         currentSearchTerm={searchQuery}
         filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
         onFilterChange={setActiveTagIds}

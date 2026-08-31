@@ -25,6 +25,7 @@ import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 interface ItemJourneyTimelineProps {
   item: ItemSelect;
@@ -43,6 +44,7 @@ interface ItemJourneyTimelineProps {
  */
 const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId, storyType }) => {
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
@@ -179,7 +181,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>{t('item_journeys_title')}</Text>
+      <Text style={styles.sectionTitle}>{itemCopy.itemJourneys}</Text>
       {loading ? (
         <Text style={{ color: colors.textSecondary }}>{t('loading')}</Text>
       ) : (

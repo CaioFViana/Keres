@@ -55,6 +55,7 @@ const ChoiceFormScreen = () => {
   const route = useRoute<ChoiceFormScreenRouteProp>();
   const { choiceId: initialChoiceId, sceneId: initialSceneId } = route.params || {};
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Choice');
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
@@ -149,15 +150,16 @@ const ChoiceFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentChoiceId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_choice_title') : t('create_choice_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_choice_title') : t('create_choice_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -270,7 +272,7 @@ const ChoiceFormScreen = () => {
           choiceData,
         );
         savedChoiceId = savedChoice.id;
-        AppAlert.alert(t('success'), t('choice_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         const savedChoice = await choiceServiceRef.current!.createChoice(userId, {
           ...choiceData,
@@ -278,7 +280,7 @@ const ChoiceFormScreen = () => {
         });
         savedChoiceId = savedChoice.id;
         setCurrentChoiceId(savedChoice.id);
-        AppAlert.alert(t('success'), t('choice_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
       }
 
       if (savedChoiceId) {
@@ -295,7 +297,7 @@ const ChoiceFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save choice:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_choice'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -312,9 +314,12 @@ const ChoiceFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_choice_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_choice_message',
-      successKey: 'choice_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_choice',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await choiceServiceRef.current!.deleteChoice(userId, currentChoiceId);
@@ -648,7 +653,7 @@ const ChoiceFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_choice_title') : t('create_choice_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('choice_form_description')}
@@ -979,10 +984,10 @@ const ChoiceFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_choice')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_choice_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

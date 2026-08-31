@@ -12,6 +12,9 @@ const DEFAULT_TERM_KEYS: Record<StoryVocabularyEntityType, { singular: string; p
   Chapter: { singular: 'chapter', plural: 'chapters' },
   Scene: { singular: 'scene', plural: 'scenes' },
   Event: { singular: 'event', plural: 'events' },
+  Item: { singular: 'item', plural: 'items' },
+  WorldRule: { singular: 'world_rule', plural: 'world_rules' },
+  Choice: { singular: 'choice', plural: 'choices' },
 };
 
 export function localeFamily(language: string | undefined): 'pt' | 'en' {
@@ -23,7 +26,9 @@ export function isStoryVocabularyEntityType(type: string): type is StoryVocabula
 }
 
 export function defaultGrammaticalGender(type: StoryVocabularyEntityType): GrammaticalGender {
-  return type === 'Scene' || type === 'Location' ? 'feminine' : 'masculine';
+  return type === 'Scene' || type === 'Location' || type === 'WorldRule' || type === 'Choice'
+    ? 'feminine'
+    : 'masculine';
 }
 
 function vocabularyApplies(vocabulary: StoryVocabulary | null, language: 'pt' | 'en'): boolean {

@@ -29,6 +29,7 @@ import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
 
 // Define the parameter list for this screen
@@ -48,6 +49,7 @@ const WorldRuleDetailScreen = () => {
   const drizzleDb = useDrizzle();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('WorldRule');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -95,21 +97,21 @@ const WorldRuleDetailScreen = () => {
       const fetchedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
       if (fetchedWorldRule && !fetchedWorldRule.isDeleted) {
         setWorldRule(fetchedWorldRule);
-        setHeaderTitle(fetchedWorldRule.title || t('world_rule_details_title'));
+        setHeaderTitle(fetchedWorldRule.title || copy.detailsTitle);
       } else if (fetchedWorldRule && fetchedWorldRule.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('world_rule_not_found'));
-        setHeaderTitle(t('world_rule_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch world rule details:', err);
-      setError(t('failed_to_load_world_rule'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, t]);
+  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy]);
 
   const handleWorldRuleChange = useCallback(
     async (changedStoryId: string, changedWorldRuleId: string) => {
@@ -120,12 +122,12 @@ const WorldRuleDetailScreen = () => {
             navigation.goBack();
           } else {
             setWorldRule(updatedWorldRule);
-            setHeaderTitle(updatedWorldRule.title || t('world_rule_details_title'));
+            setHeaderTitle(updatedWorldRule.title || copy.detailsTitle);
           }
         }
       }
     },
-    [worldRuleId, navigation, setWorldRule, setHeaderTitle, t],
+    [worldRuleId, navigation, setWorldRule, setHeaderTitle, copy],
   );
 
   const handleTagRelationChange = useCallback(
@@ -179,7 +181,7 @@ const WorldRuleDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_world_rule_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
   if (error) {
@@ -190,7 +192,7 @@ const WorldRuleDetailScreen = () => {
     return (
       <ScreenError
         padded
-        message={t('world_rule_data_missing')}
+        message={copy.dataMissing}
         onGoBack={() => navigation.goBack()}
       />
     );

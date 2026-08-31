@@ -25,6 +25,9 @@ export const StoryVocabularySchema: z.ZodType<StoryVocabulary> = z.object({
     Chapter: StoryVocabularyTermSchema.optional(),
     Scene: StoryVocabularyTermSchema.optional(),
     Event: StoryVocabularyTermSchema.optional(),
+    Item: StoryVocabularyTermSchema.optional(),
+    WorldRule: StoryVocabularyTermSchema.optional(),
+    Choice: StoryVocabularyTermSchema.optional(),
   }),
 });
 

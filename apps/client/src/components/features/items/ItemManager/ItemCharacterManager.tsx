@@ -32,6 +32,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
   currentCharacterId,
 }) => {
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
@@ -114,7 +115,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
       getItemDisplayName={(item) => item.name}
       noItemsMessage={'no_items_assigned_to_character'}
       renderItemExtraContent={renderItemExtraContent}
-      title={t('items_title')}
+      title={itemCopy.entities}
       onItemPress={handleItemPress}
     />
   );

@@ -7,6 +7,7 @@ import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntity
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 interface ItemSceneManagerProps {
   itemJourneys: ItemJourney[];
@@ -22,6 +23,7 @@ const ItemSceneManager: React.FC<ItemSceneManagerProps> = ({
   currentSceneId,
 }) => {
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
 
@@ -73,7 +75,7 @@ const ItemSceneManager: React.FC<ItemSceneManagerProps> = ({
       getItemDisplayName={getItemDisplayName}
       noItemsMessage={'no_items_assigned_to_scene'}
       renderItemExtraContent={renderItemJourneyExtraContent}
-      title={t('items_title')}
+      title={itemCopy.entities}
       onItemPress={handleItemPress}
     />
   );

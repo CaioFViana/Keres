@@ -35,6 +35,7 @@ import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {
@@ -52,6 +53,7 @@ const ItemDetailScreen = () => {
   const route = useRoute<ItemDetailScreenRouteProp>();
   const { itemId } = route.params;
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Item');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -106,21 +108,21 @@ const ItemDetailScreen = () => {
       const fetchedItem = await itemServiceRef.current.getById(itemId);
       if (fetchedItem && !fetchedItem.isDeleted) {
         setItem(fetchedItem);
-        setHeaderTitle(fetchedItem.name || t('item_details_title'));
+        setHeaderTitle(fetchedItem.name || copy.detailsTitle);
       } else if (fetchedItem && fetchedItem.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('item_not_found'));
-        setHeaderTitle(t('item_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch item details:', err);
-      setError(t('failed_to_load_item'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [itemId, navigation, t]);
+  }, [itemId, navigation, copy]);
 
   const fetchAllCharacters = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) return;
@@ -140,11 +142,11 @@ const ItemDetailScreen = () => {
           navigation.goBack();
         } else {
           setItem(updatedItem);
-          setHeaderTitle(updatedItem.name || t('item_details_title'));
+          setHeaderTitle(updatedItem.name || copy.detailsTitle);
         }
       }
     },
-    [itemId, navigation, t],
+    [itemId, navigation, copy],
   );
 
   useEntityInitialLoad(fetchItem);
@@ -192,14 +194,14 @@ const ItemDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_item_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
   if (error) {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!item) {
     return (
-      <ScreenError padded message={t('item_data_missing')} onGoBack={() => navigation.goBack()} />
+      <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />
     );
   }
 

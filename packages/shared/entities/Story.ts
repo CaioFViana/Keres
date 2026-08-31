@@ -14,6 +14,9 @@ export const STORY_VOCABULARY_ENTITY_TYPES = [
   'Chapter',
   'Scene',
   'Event',
+  'Item',
+  'WorldRule',
+  'Choice',
 ] as const;
 
 export type StoryVocabularyEntityType = (typeof STORY_VOCABULARY_ENTITY_TYPES)[number];

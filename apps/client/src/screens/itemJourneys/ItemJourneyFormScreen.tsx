@@ -51,6 +51,7 @@ const ItemJourneyFormScreen = () => {
   const route = useRoute<ItemJourneyFormScreenRouteProp>();
   const { itemJourneyId: initialItemJourneyId, itemId: prefilledItemId } = route.params || {};
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
@@ -143,15 +144,19 @@ const ItemJourneyFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentItemJourneyId;
+  const journey = itemCopy.itemJourney;
+  const formTitle = t(isEditing ? 'vocabulary_edit_entity' : 'vocabulary_create_entity', {
+    entity: journey,
+  });
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_item_journey_title') : t('create_item_journey_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_item_journey_title') : t('create_item_journey_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -187,7 +192,7 @@ const ItemJourneyFormScreen = () => {
 
   const handleSave = async () => {
     if (!itemId) {
-      AppAlert.alert(t('error'), t('item_required'));
+      AppAlert.alert(t('error'), itemCopy.required);
       return;
     }
     if (!sceneId) {
@@ -227,7 +232,7 @@ const ItemJourneyFormScreen = () => {
           itemJourneyData,
         );
         savedItemJourneyId = savedItemJourney.id;
-        AppAlert.alert(t('success'), t('item_journey_updated_successfully'));
+        AppAlert.alert(t('success'), t('vocabulary_entity_updated', { entity: journey, ending: 'a' }));
       } else {
         const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(
           userId,
@@ -235,7 +240,7 @@ const ItemJourneyFormScreen = () => {
         );
         savedItemJourneyId = savedItemJourney.id;
         setCurrentItemJourneyId(savedItemJourney.id);
-        AppAlert.alert(t('success'), t('item_journey_created_successfully'));
+        AppAlert.alert(t('success'), t('vocabulary_entity_created', { entity: journey, ending: 'a' }));
       }
 
       if (savedItemJourneyId) {
@@ -254,7 +259,7 @@ const ItemJourneyFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save item journey:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_item_journey'));
+      AppAlert.alert(t('error'), t('vocabulary_failed_to_save_entity', { entity: journey }));
     } finally {
       setLoading(false);
     }
@@ -271,9 +276,12 @@ const ItemJourneyFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_item_journey_title',
+      title: t('vocabulary_delete_entity', { entity: journey }),
       messageKey: 'delete_item_journey_message',
-      successKey: 'item_journey_deleted_successfully',
+      message: t('vocabulary_delete_entity_message', { entity: journey }),
+      successMessage: t('vocabulary_entity_deleted', { entity: journey, ending: 'a' }),
       failureKey: 'failed_to_delete_item_journey',
+      failureMessage: t('vocabulary_failed_to_delete_entity', { entity: journey }),
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await itemJourneyServiceRef.current!.deleteItemJourney(userId, currentItemJourneyId);
@@ -327,18 +335,18 @@ const ItemJourneyFormScreen = () => {
       contentContainerStyle={styles.scrollViewContent}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_item_journey_title') : t('create_item_journey_title')}
+        {formTitle}
       </Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('item_journey_form_description')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('item')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{itemCopy.entity}</Text>
       <Select
         options={itemOptions}
         value={itemId}
         onValueChange={setItemId}
-        placeholder={t('select_item')}
+        placeholder={itemCopy.select}
         multiple={false}
         allowDeselect={true}
       />
@@ -427,10 +435,10 @@ const ItemJourneyFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_item_journey')}</Button>
+        <Button onPress={handleSave}>{t('vocabulary_save_entity', { entity: journey })}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_item_journey_title')}
+            {t('vocabulary_delete_entity', { entity: journey })}
           </Button>
         )}
       </FormActions>

@@ -149,7 +149,7 @@ export class EntityService {
           columns: { title: true },
         });
         entitySpecificName = worldRule?.title;
-        translatedEntityType = t('world_rule');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'WorldRule');
         break;
       case OperationLogEntityType.Tag:
         const tag = await db.query.tags.findFirst({
@@ -201,7 +201,7 @@ export class EntityService {
         } else {
           entitySpecificName = `${t('unknown_choice')} ${t('id')}: ${entityId}`;
         }
-        translatedEntityType = t('choice');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Choice');
         break;
       case OperationLogEntityType.Gallery:
         const gallery = await db.query.galleries.findFirst({
@@ -271,7 +271,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = item?.name;
-        translatedEntityType = t('item');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Item');
         break;
       case OperationLogEntityType.ItemJourney:
         const itemJourney = await db.query.itemJourneys.findFirst({
@@ -287,7 +287,7 @@ export class EntityService {
             where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
             columns: { name: true },
           });
-          entitySpecificName = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
+          entitySpecificName = `${relatedItem?.name || unknownStoryNoun(t, await vocabulary(), 'Item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
         }
         translatedEntityType = t('item_journey');
         break;

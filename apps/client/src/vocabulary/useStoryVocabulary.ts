@@ -43,6 +43,12 @@ export function useStoryVocabulary() {
         if (isStoryVocabularyEntityType(type)) {
           return resolveStoryTerm(vocabulary, language, t, type, plural);
         }
+        if (type === 'ItemJourney') {
+          const item = resolveStoryTerm(vocabulary, language, t, 'Item', plural);
+          return t(plural ? 'vocabulary_item_journeys' : 'vocabulary_item_journey', {
+            [plural ? 'items' : 'item']: item,
+          });
+        }
         return t(plural ? `${type.toLowerCase()}s` : type.toLowerCase());
       },
     };

@@ -455,7 +455,7 @@ const PresenceMatrixViewerContent: React.FC<{
           selectedValues={itemIds}
           onSelectionChange={(next) => setItemIds(next.slice(0, MAX_VISIBLE_SERIES))}
           maxSelections={MAX_VISIBLE_SERIES}
-          placeholder={t('items_title')}
+          placeholder={term('Item', true)}
           searchPlaceholder={t('search')}
           selectionSummary={
             isCompleteView

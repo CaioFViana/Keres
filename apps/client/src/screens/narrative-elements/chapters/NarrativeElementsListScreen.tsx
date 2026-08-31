@@ -561,7 +561,7 @@ const NarrativeElementsListScreen = () => {
       { entityName: 'Chapter' as const, prefix: 'chapter', label: term('Chapter', true) },
       { entityName: 'Scene' as const, prefix: 'scene', label: term('Scene', true) },
       ...(selectedStory?.type === 'branching'
-        ? [{ entityName: 'Choice' as const, prefix: 'choice', label: t('choices_title') }]
+        ? [{ entityName: 'Choice' as const, prefix: 'choice', label: term('Choice', true) }]
         : []),
     ],
     [selectedStory?.type, t, term],

@@ -341,6 +341,26 @@ describe('Mode', () => {
 
     expect(await modeHandler.findById(modeId)).toBeDefined();
   });
+
+  it('does not let an update retarget a mode to a character that is absent or from another story', async () => {
+    const modeId = newId();
+    await modeHandler.create(
+      userId,
+      storyId,
+      create('Mode', modeId, { characterId, name: 'Ferida' }),
+    );
+    const current = await modeHandler.findById(modeId);
+
+    await expect(
+      modeHandler.update(
+        userId,
+        storyId,
+        change('Mode', modeId, { characterId: newId(), version: current.version }),
+        current,
+      ),
+    ).rejects.toThrow(SyncConflictError);
+    expect(await modeHandler.findById(modeId)).toMatchObject({ characterId, version: 1 });
+  });
 });
 
 describe('stats belong to their story', () => {

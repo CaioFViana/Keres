@@ -28,7 +28,8 @@ export default function RouteReaderScreen() {
   const { routeId } = useRoute<ScreenRoute>().params;
   const { selectedStory } = useStoryStore();
   const navigate = useNavigateToEntityDetail();
-  const { routes, stepsOf, sceneById, validationOf, loading } = useStoryRoutes(selectedStory?.id);
+  const { routes, stepsOf, sceneById, executionValidationOf, loading } =
+    useStoryRoutes(selectedStory?.id);
   const route = routes.find((entry) => entry.id === routeId);
   const steps = stepsOf(routeId);
   const styles = useMemo(
@@ -76,9 +77,17 @@ export default function RouteReaderScreen() {
   if (loading) return <ScreenLoading message={t('loading_routes')} />;
   if (!route)
     return <ScreenError message={t('route_not_found')} onGoBack={() => navigation.goBack()} />;
-  if (validationOf(routeId).length)
+  const execution = executionValidationOf(routeId);
+  if (!execution.valid)
     return (
-      <ScreenError message={t('route_cannot_read_invalid')} onGoBack={() => navigation.goBack()} />
+      <ScreenError
+        message={t(
+          execution.issues.some((issue) => issue.kind === 'choice_unavailable')
+            ? 'route_cannot_read_unavailable'
+            : 'route_cannot_read_invalid',
+        )}
+        onGoBack={() => navigation.goBack()}
+      />
     );
   return (
     <View style={styles.container}>

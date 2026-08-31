@@ -41,6 +41,7 @@ type StoryAnalysisNavigationProp = DrawerNavigationProp<MainSystemDrawerParamLis
 const CATEGORY_ORDER: StoryAnalysisCategory[] = [
   'scenes',
   'choices',
+  'routes',
   'characters',
   'locations',
   'items',
@@ -51,6 +52,7 @@ const CATEGORY_ORDER: StoryAnalysisCategory[] = [
 const CATEGORY_TITLE_KEYS: Record<StoryAnalysisCategory, string> = {
   scenes: 'analysis_category_scenes',
   choices: 'analysis_category_choices',
+  routes: 'analysis_category_routes',
   characters: 'analysis_category_characters',
   locations: 'analysis_category_locations',
   items: 'analysis_category_items',

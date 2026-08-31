@@ -301,6 +301,11 @@ export class SyncService {
         // call made during `withTransaction`, including inside the entity handlers - they do not need to
         // know about it.
         await withTransaction(async () => {
+          // Creation handlers historically own their insert timestamps, and several of them do not
+          // call BaseSyncEntityHandler.parseOperationTime(). Validate at the protocol boundary as
+          // well, so a client clock cannot place *any* operation ahead of the server's history.
+          this.assertOperationTimeIsValid(update.operationTime);
+
           // A read inside the transaction: the create-vs-alreadyApplied / not_found decision has to see the
           // same row the write is going to touch.
           currentEntity = await handler.findById(entityId);
@@ -504,6 +509,18 @@ export class SyncService {
       .from(operationLog)
       .where(eq(operationLog.storyId, storyId));
     return result.at(0)?.maxVersion || 0;
+  }
+
+  /** Reject malformed or materially future client clocks for every operation kind, including creates. */
+  private assertOperationTimeIsValid(operationTime: string | undefined): void {
+    if (!operationTime) return;
+    const timestamp = new Date(operationTime);
+    if (Number.isNaN(timestamp.getTime())) {
+      throw new SyncConflictError('validation', `Operation time ${operationTime} is invalid.`);
+    }
+    if (timestamp.getTime() > Date.now() + 1000) {
+      throw new SyncConflictError('validation', `Operation time ${operationTime} cannot be in the future.`);
+    }
   }
 
   /**

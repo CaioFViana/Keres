@@ -11,6 +11,7 @@ import {
   type RecordConflictInput,
 } from '../../src/services/SyncConflictService';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const ENTITY_ID = 'char-1';
@@ -168,6 +169,18 @@ describe('recordConflict', () => {
     await service.recordConflict(baseConflict({ reason: 'not_found', serverValues: null }));
 
     expect((await service.getPendingConflicts())[0].serverValues).toBeNull();
+  });
+
+  it('notifies the review UI both when a conflict is recorded and when it is resolved', async () => {
+    await seedCharacter();
+    const emitted = jest.spyOn(entityEventEmitter, 'emit');
+
+    await service.recordConflict(baseConflict());
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    expect(emitted).toHaveBeenCalledWith('sync_conflicts_changed', STORY_ID);
+    expect(emitted).toHaveBeenCalledWith('operation_log_updated', STORY_ID);
   });
 });
 

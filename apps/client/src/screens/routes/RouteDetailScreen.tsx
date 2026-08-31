@@ -31,7 +31,8 @@ export default function RouteDetailScreen() {
   const navigation = useNavigation<Navigation>();
   const { routeId } = useRoute<ScreenRoute>().params;
   const { selectedStory } = useStoryStore();
-  const { routes, stepsOf, sceneById, validationOf, loading } = useStoryRoutes(selectedStory?.id);
+  const { routes, stepsOf, sceneById, validationOf, executionValidationOf, loading } =
+    useStoryRoutes(selectedStory?.id);
   const route = routes.find((entry) => entry.id === routeId);
   const { canEdit } = useStoryRole(selectedStory?.id);
   const navigateToDetail = useNavigateToEntityDetail();
@@ -103,6 +104,8 @@ export default function RouteDetailScreen() {
     );
   const steps = stepsOf(routeId);
   const issues = validationOf(routeId);
+  const execution = executionValidationOf(routeId);
+  const unavailableIssue = execution.issues.find((issue) => issue.kind === 'choice_unavailable');
   return (
     <ScrollView style={container.container} contentContainerStyle={{ paddingBottom: 28 }}>
       <Text style={styles.mainTitle}>{route.name}</Text>
@@ -110,6 +113,13 @@ export default function RouteDetailScreen() {
       {issues.length ? (
         <Text style={styles.invalid}>
           {t('route_invalid_detail', { issues: issues.join(', ') })}
+        </Text>
+      ) : null}
+      {unavailableIssue ? (
+        <Text style={styles.invalid}>
+          {t('route_choice_no_longer_available', {
+            step: steps.find((step) => step.id === unavailableIssue.stepId)?.position ?? '?',
+          })}
         </Text>
       ) : null}
       <DetailField label={t('route_details')} value={route.details || t('common_na')} />

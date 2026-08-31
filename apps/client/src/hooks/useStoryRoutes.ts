@@ -9,17 +9,29 @@ import type {
 } from '../db/schema';
 import { createChapterService } from '../services/storymanagement/ChapterService';
 import { createChoiceService } from '../services/storymanagement/ChoiceService';
+import { createChoiceCheckGroupService } from '../services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '../services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '../services/storymanagement/EffectService';
 import { createRouteService } from '../services/storymanagement/RouteService';
 import { createSceneService } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
-import { validateRouteSteps } from '@keres/shared';
+import {
+  type ChoiceCheck,
+  type ChoiceCheckGroup,
+  type Effect,
+  validateRouteSteps,
+  validateRouteTraversal,
+} from '@keres/shared';
 
 interface RouteData {
   routes: RouteSelect[];
   scenes: SceneSelect[];
   choices: ChoiceSelect[];
   chapters: ChapterSelect[];
+  groups: ChoiceCheckGroup[];
+  checks: ChoiceCheck[];
+  effects: Effect[];
   stepsByRouteId: Map<string, RouteStepSelect[]>;
 }
 
@@ -28,6 +40,9 @@ const emptyData = (): RouteData => ({
   scenes: [],
   choices: [],
   chapters: [],
+  groups: [],
+  checks: [],
+  effects: [],
   stepsByRouteId: new Map(),
 });
 
@@ -48,16 +63,28 @@ export function useStoryRoutes(storyId: string | undefined | null) {
     }
     try {
       const service = createRouteService(db);
-      const [routes, scenes, choices, chapters] = await Promise.all([
+      const [routes, scenes, choices, chapters, groups, checks, effects] = await Promise.all([
         service.getAllByStoryId(storyId),
         createSceneService(db).getAllByStoryId(storyId),
         createChoiceService(db).getAllByStoryId(storyId),
         createChapterService(db).getAllByStoryId(storyId),
+        createChoiceCheckGroupService(db).getAllByStoryId(storyId),
+        createChoiceCheckService(db).getAllByStoryId(storyId),
+        createEffectService(db).getAllByStoryId(storyId),
       ]);
       const allSteps = await Promise.all(
         routes.map(async (route) => [route.id, await service.getSteps(route.id)] as const),
       );
-      setData({ routes, scenes, choices, chapters, stepsByRouteId: new Map(allSteps) });
+      setData({
+        routes,
+        scenes,
+        choices,
+        chapters,
+        groups,
+        checks,
+        effects,
+        stepsByRouteId: new Map(allSteps),
+      });
     } catch (error) {
       console.error('Failed to load story routes:', error);
       setData(emptyData());
@@ -74,6 +101,9 @@ export function useStoryRoutes(storyId: string | undefined | null) {
       'route_step_changed',
       'scene_changed',
       'choice_changed',
+      'choice_check_group_changed',
+      'choice_check_changed',
+      'effect_changed',
     ]) {
       entityEventEmitter.on(event, reload);
     }
@@ -83,6 +113,9 @@ export function useStoryRoutes(storyId: string | undefined | null) {
         'route_step_changed',
         'scene_changed',
         'choice_changed',
+        'choice_check_group_changed',
+        'choice_check_changed',
+        'effect_changed',
       ]) {
         entityEventEmitter.off(event, reload);
       }
@@ -105,6 +138,15 @@ export function useStoryRoutes(storyId: string | undefined | null) {
           data.scenes.map((scene) => scene.id),
           data.choices,
         ),
+      executionValidationOf: (routeId: string) =>
+        validateRouteTraversal({
+          steps: data.stepsByRouteId.get(routeId) ?? [],
+          sceneIds: data.scenes.map((scene) => scene.id),
+          choices: data.choices,
+          groups: data.groups,
+          checks: data.checks,
+          effects: data.effects,
+        }),
     }),
     [data, loading, reload],
   );

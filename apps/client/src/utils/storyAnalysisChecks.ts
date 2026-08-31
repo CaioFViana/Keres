@@ -3,6 +3,7 @@ import {
   type ChapterType,
   decodeAttributeValue,
   isValidAttributeDate,
+  validateRouteTraversal,
 } from '@keres/shared';
 import type { NavigableEntityType } from './entityNavigation';
 
@@ -22,6 +23,7 @@ export type StoryAnalysisCategory =
   | 'tags'
   | 'scenes'
   | 'choices'
+  | 'routes'
   | 'storySchema';
 export type StoryAnalysisSeverity = 'warning' | 'error';
 
@@ -110,6 +112,16 @@ export interface AnalysisChoice {
   text: string;
 }
 
+export interface AnalysisRoute extends AnalysisEntityRef {}
+
+export interface AnalysisRouteStep {
+  id: string;
+  routeId: string;
+  position: number;
+  sceneId: string;
+  selectedChoiceId: string | null;
+}
+
 export type ChoiceCheckCombinator = 'AND' | 'OR';
 export type ChoiceCheckMode = 'block' | 'enable';
 export type ChoiceCheckType = 'sceneCount' | 'inventory' | 'trigger';
@@ -172,6 +184,8 @@ export interface StoryAnalysisInput {
   locationRelations: { locationAId: string; locationBId: string; relationType: string }[];
   scenes: AnalysisScene[];
   choices: AnalysisChoice[];
+  routes?: AnalysisRoute[];
+  routeSteps?: AnalysisRouteStep[];
   choiceCheckGroups: AnalysisChoiceCheckGroup[];
   choiceChecks: AnalysisChoiceCheck[];
   effects: AnalysisEffect[];
@@ -268,9 +282,17 @@ export async function buildStoryAnalysisReport(
     await checkChoiceSatisfiability(input, options);
   throwIfAborted(options.signal);
   const reachabilityFindings = checkSceneReachability(input, unsatisfiableChoiceIds);
+  const deadEndFindings = checkBranchingDeadEnds(input, unsatisfiableChoiceIds);
+  const routeFindings = checkRouteTraversal(input);
   options.onProgress?.({ fraction: 1 });
 
-  return [...cheapFindings, ...reachabilityFindings, ...satisfiabilityFindings];
+  return [
+    ...cheapFindings,
+    ...reachabilityFindings,
+    ...satisfiabilityFindings,
+    ...deadEndFindings,
+    ...routeFindings,
+  ];
 }
 
 function checkCharacters(input: StoryAnalysisInput): StoryAnalysisFinding[] {
@@ -506,6 +528,74 @@ function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFi
     .map((scene) =>
       buildFinding('scenes', 'warning', 'Scene', scene, 'analysis_scene_finish_with_choices'),
     );
+}
+
+/**
+ * A non-final scene with no viable outgoing Choice strands a route. This is deliberately a full
+ * branching check: a Choice known to be unsatisfiable is not an exit, while a regular graph view
+ * cannot make that distinction. It does not judge an explicitly marked ending.
+ */
+function checkBranchingDeadEnds(
+  input: StoryAnalysisInput,
+  unsatisfiableChoiceIds: Set<string>,
+): StoryAnalysisFinding[] {
+  const viableOutgoing = new Set(
+    input.choices
+      .filter((choice) => !unsatisfiableChoiceIds.has(choice.id))
+      .map((choice) => choice.sceneId),
+  );
+  const declaredOutgoing = new Set(input.choices.map((choice) => choice.sceneId));
+  return input.scenes
+    // A scene with no choices at all can be an unfinished fragment; report the stronger case where
+    // the author did declare exits, but every one is impossible under the current checks.
+    .filter(
+      (scene) =>
+        !scene.isFinish && declaredOutgoing.has(scene.id) && !viableOutgoing.has(scene.id),
+    )
+    .map((scene) =>
+      buildFinding('scenes', 'warning', 'Scene', scene, 'analysis_scene_dead_end'),
+    );
+}
+
+/** Saved routes are author intent, so edits never rewrite them; analysis makes a stale route visible. */
+function checkRouteTraversal(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const routes = input.routes ?? [];
+  const steps = input.routeSteps ?? [];
+  return routes.flatMap((route) => {
+    const result = validateRouteTraversal({
+      steps: steps
+        .filter((step) => step.routeId === route.id)
+        .map((step) => ({ ...step, isDeleted: false })),
+      sceneIds: input.scenes.map((scene) => scene.id),
+      choices: input.choices.map((choice) => ({ ...choice, isDeleted: false })),
+      groups: input.choiceCheckGroups.map((group, index) => ({
+        ...group,
+        order: index,
+        isDeleted: false,
+      })),
+      checks: input.choiceChecks.map((check, index) => ({
+        ...check,
+        order: index,
+        isDeleted: false,
+      })),
+      effects: input.effects.map((effect, index) => ({
+        ...effect,
+        id: `analysis-effect-${index}`,
+        isDeleted: false,
+      })),
+    });
+    if (result.valid) return [];
+    const isUnavailable = result.issues.some((issue) => issue.kind === 'choice_unavailable');
+    return [
+      buildFinding(
+        'routes',
+        isUnavailable ? 'warning' : 'error',
+        'Route',
+        route,
+        isUnavailable ? 'analysis_route_choice_unavailable' : 'analysis_route_invalid',
+      ),
+    ];
+  });
 }
 
 /** `null` when the list is already a contiguous 1..N; otherwise, what is wrong with it. */

@@ -325,6 +325,59 @@ describe('pull', () => {
     expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'character-remote');
   });
 
+  it('does not redraw entities again when the public favorite snapshot has not changed', async () => {
+    await seedStory();
+    const favorite = {
+      id: 'favorite-remote',
+      storyId: STORY_ID,
+      entityId: 'character-remote',
+      entityType: 'Character',
+      userId: 'other-user',
+      createdAt: NOW.toISOString(),
+      updatedAt: NOW.toISOString(),
+      version: 3,
+      isDeleted: false,
+      deletedAt: null,
+    };
+    pullResponse = {
+      updates: [],
+      publicFavorites: [favorite],
+      serverMaxOperationVersion: 0,
+      role: 'owner',
+    };
+    await runOneCycle();
+    const emit = jest.spyOn(entityEventEmitter, 'emit').mockClear();
+
+    await runOneCycle();
+
+    expect(emit).not.toHaveBeenCalledWith(
+      'favorite_changed',
+      STORY_ID,
+      'Character',
+      'character-remote',
+      'other-user',
+    );
+  });
+
+  it('keeps the cursor behind an invalid remote payload and shows one actionable error', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        {
+          ...remoteCreate('invalid-character', 'Keres', 5),
+          data: { ...remoteCreate('invalid-character', 'Keres', 5).data, name: undefined },
+        },
+      ],
+      serverMaxOperationVersion: 5,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect((await readStory())!.lastServerSyncedLog).toBe(0);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+
   /**
    * The cursor advances to the highest operation that actually arrived, never to the response's
    * `serverMaxOperationVersion`: the two are read in separate queries on the
@@ -956,6 +1009,49 @@ describe('guards before a cycle runs', () => {
   it('does nothing when the story is not in the local database', async () => {
     await expect(runOneCycle()).resolves.toBe(false);
     expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
+  });
+
+  it('stops before reaching the network when a story is configured without a server URL', async () => {
+    (engine as any).storyId = STORY_ID;
+    (engine as any).client.defaults.baseURL = undefined;
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect((engine as any).storyId).toBeNull();
+    expect(seen).toEqual([]);
+  });
+
+  it('stops before reaching the network when its local database was cleared', async () => {
+    (engine as any)._db = null;
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect((engine as any).storyId).toBeNull();
+    expect(seen).toEqual([]);
+  });
+});
+
+describe('engine control surface', () => {
+  it('forwards an explicit sync request to the scheduler', () => {
+    const request = jest.spyOn((engine as any).scheduler, 'request');
+
+    engine.requestSync('local-change');
+
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it('reset clears every connection-bound dependency so a later story cannot inherit it', async () => {
+    const resetScheduler = jest
+      .spyOn((engine as any).scheduler, 'reset')
+      .mockResolvedValue(undefined);
+    const resetMedia = jest.spyOn((engine as any).media, 'reset');
+
+    await engine.reset();
+
+    expect(resetScheduler).toHaveBeenCalledTimes(1);
+    expect(resetMedia).toHaveBeenCalledTimes(1);
+    expect((engine as any).storyId).toBeNull();
+    expect((engine as any).activeServer).toBeNull();
+    expect((engine as any)._db).toBeNull();
+    expect((engine as any).client.defaults.baseURL).toBeUndefined();
   });
 });
 

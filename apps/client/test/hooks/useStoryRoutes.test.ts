@@ -16,6 +16,18 @@ jest.mock('../../src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
+jest.mock('../../src/services/storymanagement/ChoiceCheckGroupService', () => ({
+  __esModule: true,
+  createChoiceCheckGroupService: jest.fn(),
+}));
+jest.mock('../../src/services/storymanagement/ChoiceCheckService', () => ({
+  __esModule: true,
+  createChoiceCheckService: jest.fn(),
+}));
+jest.mock('../../src/services/storymanagement/EffectService', () => ({
+  __esModule: true,
+  createEffectService: jest.fn(),
+}));
 jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
@@ -30,6 +42,9 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createChapterService } from '../../src/services/storymanagement/ChapterService';
 import { createChoiceService } from '../../src/services/storymanagement/ChoiceService';
+import { createChoiceCheckGroupService } from '../../src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '../../src/services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '../../src/services/storymanagement/EffectService';
 import { createRouteService } from '../../src/services/storymanagement/RouteService';
 import { createSceneService } from '../../src/services/storymanagement/SceneService';
 import { useStoryRoutes } from '../../src/hooks/useStoryRoutes';
@@ -78,6 +93,15 @@ beforeEach(() => {
   (createChapterService as jest.Mock).mockReturnValue({
     getAllByStoryId: jest.fn().mockResolvedValue([]),
   });
+  (createChoiceCheckGroupService as jest.Mock).mockReturnValue({
+    getAllByStoryId: jest.fn().mockResolvedValue([]),
+  });
+  (createChoiceCheckService as jest.Mock).mockReturnValue({
+    getAllByStoryId: jest.fn().mockResolvedValue([]),
+  });
+  (createEffectService as jest.Mock).mockReturnValue({
+    getAllByStoryId: jest.fn().mockResolvedValue([]),
+  });
 });
 
 describe('useStoryRoutes', () => {
@@ -88,6 +112,7 @@ describe('useStoryRoutes', () => {
     expect(view.result.current.sceneById('scene-a')).toBe(sceneA);
     expect(view.result.current.choicesFrom('scene-a')).toEqual([choice]);
     expect(view.result.current.validationOf('route')).toEqual([]);
+    expect(view.result.current.executionValidationOf('route')).toMatchObject({ valid: true });
   });
 
   it('reloads the route model after a graph change and unsubscribes on unmount', async () => {

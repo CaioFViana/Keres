@@ -15,7 +15,23 @@ export const emptyStorySimulationState = (): StorySimulationState => ({
   triggers: new Set(),
 });
 
-function matches(check: ChoiceCheck, state: StorySimulationState) {
+type SimulatedCheck = Pick<
+  ChoiceCheck,
+    | 'groupId'
+    | 'id'
+    | 'order'
+  | 'mode'
+  | 'type'
+  | 'sceneId'
+  | 'minVisits'
+  | 'itemId'
+  | 'itemPresence'
+  | 'triggerName'
+  | 'triggerState'
+  | 'isDeleted'
+>;
+
+function matches(check: SimulatedCheck, state: StorySimulationState) {
   if (check.type === 'sceneCount')
     return (
       Boolean(check.sceneId) &&
@@ -39,8 +55,8 @@ function matches(check: ChoiceCheck, state: StorySimulationState) {
 /** Evaluates runtime availability using the same block/enable and AND/OR semantics as analysis. */
 export function evaluateSimulatedChoice(
   choice: Pick<Choice, 'id'>,
-  groups: ChoiceCheckGroup[],
-  checks: ChoiceCheck[],
+  groups: Pick<ChoiceCheckGroup, 'id' | 'choiceId' | 'combinator' | 'isDeleted' | 'order'>[],
+  checks: SimulatedCheck[],
   state: StorySimulationState,
 ) {
   const outcomes = groups
@@ -66,7 +82,10 @@ export function evaluateSimulatedChoice(
 
 export function applySimulationEffects(
   state: StorySimulationState,
-  effects: Effect[],
+  effects: Pick<
+    Effect,
+    'id' | 'entityType' | 'entityId' | 'effectType' | 'itemId' | 'triggerName' | 'isDeleted'
+  >[],
 ): StorySimulationState {
   const inventory = new Set(state.inventory);
   const triggers = new Set(state.triggers);
@@ -83,7 +102,10 @@ export function applySimulationEffects(
 export function enterSimulatedScene(
   state: StorySimulationState,
   sceneId: string,
-  effects: Effect[],
+  effects: Pick<
+    Effect,
+    'id' | 'entityType' | 'entityId' | 'effectType' | 'itemId' | 'triggerName' | 'isDeleted'
+  >[],
 ): StorySimulationState {
   const next = applySimulationEffects(state, effects);
   const visits = new Map(next.sceneVisits);

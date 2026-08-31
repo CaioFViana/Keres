@@ -205,4 +205,59 @@ describe('schema and see-also sync entity handlers', () => {
     await handler.delete(userId, storyId, remove('SeeAlsoRelation', id, 1), created);
     expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
   });
+
+  it('rejects self-links, duplicate links in reverse order, and attempts to retarget an existing link', async () => {
+    const handler = new SeeAlsoRelationSyncHandler();
+    const relationId = newId();
+
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Character',
+          entityAId: characterId,
+          entityBType: 'Character',
+          entityBId: characterId,
+        }),
+      ),
+    ).rejects.toThrow(/itself/i);
+
+    await handler.create(
+      userId,
+      storyId,
+      create('SeeAlsoRelation', relationId, {
+        entityAType: 'Character',
+        entityAId: characterId,
+        entityBType: 'Location',
+        entityBId: locationId,
+      }),
+    );
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Location',
+          entityAId: locationId,
+          entityBType: 'Character',
+          entityBId: characterId,
+        }),
+      ),
+    ).rejects.toThrow(/already exists/i);
+
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'SeeAlsoRelation',
+          id: relationId,
+          changes: { entityAId: locationId, version: 1 },
+        } as UpdateStoryUpdate,
+        await handler.findById(relationId),
+      ),
+    ).rejects.toThrow(/cannot change the linked entities/i);
+  });
 });

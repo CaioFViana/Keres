@@ -1,12 +1,14 @@
 /**
  * @jest-environment node
  */
+import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
 import {
   createServerService,
+  ServerHasOwnedStoriesError,
   ServerUrlAlreadyRegisteredError,
 } from '../../src/services/ServerService';
 import { mediaFileService } from '../../src/services/MediaFileService';
@@ -207,4 +209,31 @@ it('purges reader and writer stories with their local sync state when leaving a 
   expect(await database.db.select().from(schema.storyPublications).all()).toEqual([]);
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('writer-story');
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('reader-story');
+});
+
+it('blocks removing a server with a live owner story, but purges that story after its local tombstone', async () => {
+  await database.db.insert(schema.servers).values({
+    id: 'server',
+    idUser: 'local-user',
+    userName: 'Caio',
+    tag: 'caio',
+    name: 'Principal',
+    url: 'https://principal.test',
+    ...entityBase,
+  });
+  const service = createServerService(database.db);
+
+  await expect(service.deleteServer('server')).rejects.toBeInstanceOf(ServerHasOwnedStoriesError);
+  expect(await service.getOwnedStories('server')).toEqual([{ id: TEST_STORY_ID, title: 'A Queda' }]);
+
+  await database.db
+    .update(schema.stories)
+    .set({ isDeleted: true, deletedAt: TEST_NOW })
+    .where(eq(schema.stories.id, TEST_STORY_ID));
+  await service.deleteServer('server');
+
+  expect(
+    await database.db.query.stories.findFirst({ where: eq(schema.stories.id, TEST_STORY_ID) }),
+  ).toBeUndefined();
+  expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith(TEST_STORY_ID);
 });

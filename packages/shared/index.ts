@@ -125,6 +125,7 @@ export * from './utils/narrativeProjection';
 export * from './utils/routeValidation';
 export * from './utils/routeChronology';
 export * from './utils/storySimulation';
+export * from './utils/routeTraversal';
 export * from './rules/reorderIndices';
 export * from './rules/storyExportIntegrity';
 export * from './rules/storyOwnerFields';

@@ -418,7 +418,7 @@ const StoryCalendarListScreen = () => {
                 <Ionicons name="git-branch-outline" size={17} color={colors.primary} />
                 <Text style={styles.actionText}>{t('calendar_view_anchors')}</Text>
               </TouchableOpacity>
-        {canEdit && (
+              {canEdit && (
                 <>
                   <TouchableOpacity
                     style={styles.action}

@@ -41,7 +41,8 @@ const page: HelpPage = {
         {
           key: 'details',
           label: 'Notas',
-          whatToWrite: 'Descreva a intenção narrativa, o final ou o público deste caminho. Pode ficar vazio.',
+          whatToWrite:
+            'Descreva a intenção narrativa, o final ou o público deste caminho. Pode ficar vazio.',
           note: 'Não muda as cenas ou escolhas.',
         },
         {

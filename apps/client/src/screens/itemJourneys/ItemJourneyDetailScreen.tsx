@@ -156,14 +156,14 @@ const ItemJourneyDetailScreen = () => {
         setItemJourney(fetchedItemJourney);
         // Display item name + new state as title
         const relatedItem = items.find((item) => item.id === fetchedItemJourney.itemId);
-        setHeaderTitle(
-          `${relatedItem?.name || itemCopy.unknown} - ${fetchedItemJourney.newState}`,
-        );
+        setHeaderTitle(`${relatedItem?.name || itemCopy.unknown} - ${fetchedItemJourney.newState}`);
       } else if (fetchedItemJourney && fetchedItemJourney.isDeleted) {
         navigation.goBack();
       } else {
         setError(t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }));
-        setHeaderTitle(t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }));
+        setHeaderTitle(
+          t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }),
+        );
       }
     } catch (err) {
       console.error('Failed to fetch item journey details:', err);
@@ -244,7 +244,12 @@ const ItemJourneyDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('vocabulary_loading_entity_details', { entity: itemCopy.itemJourney })} />;
+    return (
+      <ScreenLoading
+        padded
+        message={t('vocabulary_loading_entity_details', { entity: itemCopy.itemJourney })}
+      />
+    );
   }
   if (error) {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;

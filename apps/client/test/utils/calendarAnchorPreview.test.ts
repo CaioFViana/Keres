@@ -21,22 +21,48 @@ describe('buildCalendarAnchorPreview', () => {
   it('keeps the anchored story-time point while a changed calendar reinterprets its date', () => {
     const inputs = {
       story: { timelineEpochDay: 0, timelineEpochSeconds: 0 } as never,
-      chapters: [{ id: 'chapter', name: 'Act one', type: 'chapter', index: 1, isDeleted: false }] as never,
+      chapters: [
+        { id: 'chapter', name: 'Act one', type: 'chapter', index: 1, isDeleted: false },
+      ] as never,
       scenes: [
         {
-          id: 'start', storyId: 'story', chapterId: 'chapter', name: 'Opening', index: 1,
-          duration: 30, durationType: 'days', gap: null, gapType: null, isDeleted: false,
+          id: 'start',
+          storyId: 'story',
+          chapterId: 'chapter',
+          name: 'Opening',
+          index: 1,
+          duration: 30,
+          durationType: 'days',
+          gap: null,
+          gapType: null,
+          isDeleted: false,
         },
         {
-          id: 'arrival', storyId: 'story', chapterId: 'chapter', name: 'Arrival', index: 2,
-          duration: 0, durationType: 'days', gap: 1, gapType: 'days', isDeleted: false,
+          id: 'arrival',
+          storyId: 'story',
+          chapterId: 'chapter',
+          name: 'Arrival',
+          index: 2,
+          duration: 0,
+          durationType: 'days',
+          gap: 1,
+          gapType: 'days',
+          isDeleted: false,
         },
       ] as never,
       anchors: [
         {
-          id: 'anchor', chapterId: 'chapter', startSceneId: 'arrival', startPosition: 'start',
-          startOffset: null, startOffsetUnit: null, endSceneId: null, endPosition: null,
-          endOffset: null, endOffsetUnit: null, isDeleted: false,
+          id: 'anchor',
+          chapterId: 'chapter',
+          startSceneId: 'arrival',
+          startPosition: 'start',
+          startOffset: null,
+          startOffsetUnit: null,
+          endSceneId: null,
+          endPosition: null,
+          endOffset: null,
+          endOffsetUnit: null,
+          isDeleted: false,
         },
       ] as never,
     };
@@ -51,9 +77,34 @@ describe('buildCalendarAnchorPreview', () => {
   it('does not manufacture a date before the story opening is anchored', () => {
     const rows = buildCalendarAnchorPreview({
       story: { timelineEpochDay: null, timelineEpochSeconds: null } as never,
-      chapters: [{ id: 'chapter', name: 'Act one', type: 'chapter', index: 1, isDeleted: false }] as never,
-      scenes: [{ id: 'scene', storyId: 'story', chapterId: 'chapter', name: 'Opening', index: 1, isDeleted: false }] as never,
-      anchors: [{ id: 'anchor', chapterId: 'chapter', startSceneId: 'scene', startPosition: 'start', startOffset: null, startOffsetUnit: null, endSceneId: null, endPosition: null, endOffset: null, endOffsetUnit: null, isDeleted: false }] as never,
+      chapters: [
+        { id: 'chapter', name: 'Act one', type: 'chapter', index: 1, isDeleted: false },
+      ] as never,
+      scenes: [
+        {
+          id: 'scene',
+          storyId: 'story',
+          chapterId: 'chapter',
+          name: 'Opening',
+          index: 1,
+          isDeleted: false,
+        },
+      ] as never,
+      anchors: [
+        {
+          id: 'anchor',
+          chapterId: 'chapter',
+          startSceneId: 'scene',
+          startPosition: 'start',
+          startOffset: null,
+          startOffsetUnit: null,
+          endSceneId: null,
+          endPosition: null,
+          endOffset: null,
+          endOffsetUnit: null,
+          isDeleted: false,
+        },
+      ] as never,
       definition: calendar(30),
     });
 

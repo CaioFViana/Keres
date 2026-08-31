@@ -41,7 +41,8 @@ const page: HelpPage = {
         {
           key: 'details',
           label: 'Notes',
-          whatToWrite: 'Describe the narrative intention, ending, or audience for this path. It can stay empty.',
+          whatToWrite:
+            'Describe the narrative intention, ending, or audience for this path. It can stay empty.',
           note: 'It does not change Scenes or Choices.',
         },
         {
@@ -53,7 +54,8 @@ const page: HelpPage = {
         {
           key: 'selectedChoiceId',
           label: 'Choice taken',
-          whatToWrite: 'Select the Choice that takes this Scene to the next one, or end the Route here.',
+          whatToWrite:
+            'Select the Choice that takes this Scene to the next one, or end the Route here.',
           note: 'The screen does not allow jumping to a Scene without a valid Choice between them.',
         },
       ],

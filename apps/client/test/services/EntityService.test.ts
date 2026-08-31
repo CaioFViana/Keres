@@ -153,7 +153,13 @@ describe('getEntityName', () => {
     });
 
     await expect(
-      EntityService.getEntityName(database.db, OperationLogEntityType.Route, 'route-1', STORY_ID, t),
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Route,
+        'route-1',
+        STORY_ID,
+        t,
+      ),
     ).resolves.toBe('route - Mercy path');
     await expect(
       EntityService.getEntityName(

@@ -101,7 +101,11 @@ export default function RouteDetailScreen() {
     <ScrollView style={container.container} contentContainerStyle={{ paddingBottom: 28 }}>
       <Text style={styles.mainTitle}>{route.name}</Text>
       <Text style={styles.count}>{t('route_step_count', { count: steps.length })}</Text>
-      {issues.length ? <Text style={styles.invalid}>{t('route_invalid_detail', { issues: issues.join(', ') })}</Text> : null}
+      {issues.length ? (
+        <Text style={styles.invalid}>
+          {t('route_invalid_detail', { issues: issues.join(', ') })}
+        </Text>
+      ) : null}
       <DetailField label={t('route_details')} value={route.details || t('common_na')} />
       <Text style={styles.sectionTitle}>{t('route_steps')}</Text>
       {steps.length ? (

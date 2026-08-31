@@ -652,9 +652,7 @@ const ChoiceFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {formTitle}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('choice_form_description')}
       </Text>

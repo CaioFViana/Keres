@@ -37,9 +37,7 @@ export function useCalendarAnchorPreview(definition: CalendarDefinitionType, ena
   }, [reload]);
   const rows = useMemo(
     () =>
-      story
-        ? buildCalendarAnchorPreview({ story, chapters, scenes, anchors, definition })
-        : [],
+      story ? buildCalendarAnchorPreview({ story, chapters, scenes, anchors, definition }) : [],
     [anchors, chapters, definition, scenes, story],
   );
   return { rows, loading };

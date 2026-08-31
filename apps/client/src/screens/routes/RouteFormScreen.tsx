@@ -142,10 +142,10 @@ export default function RouteFormScreen() {
       />
       {routeId ? (
         <FormActions stackOnCompact>
-            <Button onPress={save}>{t('save_changes')}</Button>
-            <Button onPress={remove} style={{ backgroundColor: colors.error }}>
-              {t('delete_route_title')}
-            </Button>
+          <Button onPress={save}>{t('save_changes')}</Button>
+          <Button onPress={remove} style={{ backgroundColor: colors.error }}>
+            {t('delete_route_title')}
+          </Button>
         </FormActions>
       ) : (
         <FormActions stackOnCompact>

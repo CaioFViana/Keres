@@ -293,7 +293,9 @@ const ItemListScreen = () => {
   );
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Item', true) })} />;
+    return (
+      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Item', true) })} />
+    );
   }
 
   if (error) {

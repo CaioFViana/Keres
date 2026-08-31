@@ -77,7 +77,7 @@ export const helpSections: HelpSection[] = [
     id: 'annotate',
     titleKey: 'help_section_annotate',
     icon: 'create-outline',
-    pageIds: ['comments', 'see-also', 'custom-attributes', 'suggestions'],
+    pageIds: ['comments', 'see-also', 'custom-attributes', 'vocabulary', 'suggestions'],
   },
   {
     id: 'preferences',

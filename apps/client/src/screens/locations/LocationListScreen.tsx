@@ -187,7 +187,9 @@ const LocationsScreen = () => {
 
   if (isInitialLoading) {
     return (
-      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Location', true) })} />
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('Location', true) })}
+      />
     );
   }
 

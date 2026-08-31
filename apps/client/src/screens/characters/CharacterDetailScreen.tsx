@@ -570,13 +570,7 @@ const CharacterDetailScreen = () => {
   }
 
   if (!character) {
-    return (
-      <ScreenError
-        padded
-        message={copy.dataMissing}
-        onGoBack={() => navigation.goBack()}
-      />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   return (

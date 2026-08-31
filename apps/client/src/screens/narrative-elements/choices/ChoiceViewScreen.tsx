@@ -24,7 +24,13 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../../db';
-import type { ChapterSelect, ChoiceSelect, PlotSceneSelect, PlotSelect, SceneSelect } from '../../../db/schema';
+import type {
+  ChapterSelect,
+  ChoiceSelect,
+  PlotSceneSelect,
+  PlotSelect,
+  SceneSelect,
+} from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -182,7 +188,12 @@ const ChoiceViewScreen = () => {
 
   const graphChoices = useMemo(() => {
     if (!isLinearFlow) return choices;
-    return buildNarrativeProjection({ storyType: 'linear', scenes, choices: [], chapters }).implicitEdges.map((edge, index) => ({
+    return buildNarrativeProjection({
+      storyType: 'linear',
+      scenes,
+      choices: [],
+      chapters,
+    }).implicitEdges.map((edge, index) => ({
       id: `linear-flow-${index}-${edge.sceneId}-${edge.nextSceneId}`,
       sceneId: edge.sceneId,
       nextSceneId: edge.nextSceneId,

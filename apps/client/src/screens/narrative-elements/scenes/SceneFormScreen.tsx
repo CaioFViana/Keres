@@ -202,7 +202,9 @@ const SceneFormScreen = () => {
   const [gapInput, setGapInput] = useState('');
   const [gapType, setGapType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [calendarDateOverride, setCalendarDateOverride] = useState('');
-  const [calendarDateOverrideCalendarId, setCalendarDateOverrideCalendarId] = useState<string | null>(null);
+  const [calendarDateOverrideCalendarId, setCalendarDateOverrideCalendarId] = useState<
+    string | null
+  >(null);
   const [durationInput, setDurationInput] = useState('');
   const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [isStart, setIsStart] = useState(false);
@@ -764,9 +766,7 @@ const SceneFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {formTitle}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('scene_form_description')}
       </Text>
@@ -879,7 +879,9 @@ const SceneFormScreen = () => {
             ...calendars.map((calendar) => ({ label: calendar.name, value: calendar.id })),
           ]}
           value={calendarDateOverrideCalendarId ?? '__gregorian__'}
-          onValueChange={(value) => setCalendarDateOverrideCalendarId(value === '__gregorian__' ? null : value)}
+          onValueChange={(value) =>
+            setCalendarDateOverrideCalendarId(value === '__gregorian__' ? null : value)
+          }
           placeholder={t('scene_fixed_date_calendar')}
           multiple={false}
         />

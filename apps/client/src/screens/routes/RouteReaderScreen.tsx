@@ -65,7 +65,9 @@ export default function RouteReaderScreen() {
   if (!route)
     return <ScreenError message={t('route_not_found')} onGoBack={() => navigation.goBack()} />;
   if (validationOf(routeId).length)
-    return <ScreenError message={t('route_cannot_read_invalid')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError message={t('route_cannot_read_invalid')} onGoBack={() => navigation.goBack()} />
+    );
   return (
     <View style={styles.container}>
       <View style={styles.header}>

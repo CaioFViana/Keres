@@ -283,9 +283,7 @@ const ChoiceDetailScreen = () => {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!choice) {
-    return (
-      <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   return (

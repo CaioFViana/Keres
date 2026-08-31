@@ -301,9 +301,7 @@ const WorldRuleFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {formTitle}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('world_rule_form_description')}
       </Text>
@@ -394,9 +392,7 @@ const WorldRuleFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {copy.saveLabel}
-        </Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
             {copy.deleteLabel}

@@ -412,7 +412,13 @@ export function buildStoryTimelineLayout(
   scenes: StoryTimelineScene[],
   options: StoryTimelineLayoutOptions = {},
 ): StoryTimelineLayout {
-  const { scaleMode = 'compact', anchored = [], placement = 'overlay', calendar = null, sceneElapsedOverrides = {} } = options;
+  const {
+    scaleMode = 'compact',
+    anchored = [],
+    placement = 'overlay',
+    calendar = null,
+    sceneElapsedOverrides = {},
+  } = options;
   /*
    * The scale table, derived per call instead of being a module constant.
    *

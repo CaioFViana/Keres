@@ -209,7 +209,9 @@ const CharactersScreen = () => {
 
   if (isInitialLoading) {
     return (
-      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Character', true) })} />
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('Character', true) })}
+      />
     );
   }
 

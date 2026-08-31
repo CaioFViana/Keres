@@ -92,11 +92,13 @@ describe('StoryService type conversion', () => {
     expect(await service.getStoryById(TEST_STORY_ID)).toEqual(
       expect.objectContaining({ type: 'branching' }),
     );
-    expect(await database.db.query.plots.findFirst({ where: eq(schema.plots.id, 'plot-redemption') })).toEqual(
-      expect.objectContaining({ isDeleted: false }),
-    );
     expect(
-      await database.db.query.plotScenes.findFirst({ where: eq(schema.plotScenes.id, 'plot-scene-opening') }),
+      await database.db.query.plots.findFirst({ where: eq(schema.plots.id, 'plot-redemption') }),
+    ).toEqual(expect.objectContaining({ isDeleted: false }));
+    expect(
+      await database.db.query.plotScenes.findFirst({
+        where: eq(schema.plotScenes.id, 'plot-scene-opening'),
+      }),
     ).toEqual(expect.objectContaining({ isDeleted: false, sceneId: FIRST_SCENE_ID }));
     expect(
       (
@@ -127,9 +129,9 @@ describe('StoryService type conversion', () => {
     expect(await service.getStoryById(TEST_STORY_ID)).toEqual(
       expect.objectContaining({ type: 'linear' }),
     );
-    expect(await database.db.query.plots.findFirst({ where: eq(schema.plots.id, 'plot-redemption') })).toEqual(
-      expect.objectContaining({ isDeleted: false }),
-    );
+    expect(
+      await database.db.query.plots.findFirst({ where: eq(schema.plots.id, 'plot-redemption') }),
+    ).toEqual(expect.objectContaining({ isDeleted: false }));
     expect(
       await database.db
         .select({ id: schema.choices.id, isDeleted: schema.choices.isDeleted })

@@ -89,8 +89,7 @@ export async function resolveRelationEntityName(
   // Relation labels are often resolved in batches. Only a handful of relations use a
   // terminology-aware noun, so avoid reading the story unless one is actually encountered.
   let vocabularyPromise: Promise<StoryVocabulary | null> | undefined;
-  const vocabulary = () =>
-    (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
+  const vocabulary = () => (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
 
   switch (relationType) {
     case OperationLogEntityType.Board:
@@ -221,7 +220,11 @@ export async function resolveRelationEntityName(
         columns: { name: true, type: true },
       });
       name = chapter?.name;
-      type = translateStoryNoun(t, await vocabulary(), chapter?.type === 'event' ? 'Event' : 'Chapter');
+      type = translateStoryNoun(
+        t,
+        await vocabulary(),
+        chapter?.type === 'event' ? 'Event' : 'Chapter',
+      );
       break;
     case OperationLogEntityType.Scene:
       const scene = await db.query.scenes.findFirst({

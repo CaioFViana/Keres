@@ -636,7 +636,9 @@ const NarrativeElementsListScreen = () => {
               <TouchableOpacity
                 onPress={() => navigation.navigate('ChoiceView')}
                 style={styles.headerButton}
-                accessibilityLabel={selectedStory.type === 'linear' ? t('story_flow_title') : t('story_map_title')}
+                accessibilityLabel={
+                  selectedStory.type === 'linear' ? t('story_flow_title') : t('story_map_title')
+                }
               >
                 <Ionicons name="git-network-outline" size={26} color={colors.text} />
               </TouchableOpacity>
@@ -683,7 +685,9 @@ const NarrativeElementsListScreen = () => {
   // temporarily replace the whole screen (and its focused search field) with a loading state.
   if (loading && outlineChapters.length === 0) {
     return (
-      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Chapter', true) })} />
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('Chapter', true) })}
+      />
     );
   }
 

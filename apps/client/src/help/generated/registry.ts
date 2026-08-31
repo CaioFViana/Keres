@@ -119,6 +119,8 @@ import troubleshooting_en from '../content/troubleshooting/en';
 import troubleshooting_pt from '../content/troubleshooting/pt';
 import usingThisHelp_en from '../content/using-this-help/en';
 import usingThisHelp_pt from '../content/using-this-help/pt';
+import vocabulary_en from '../content/vocabulary/en';
+import vocabulary_pt from '../content/vocabulary/pt';
 import whatIsAServer_en from '../content/what-is-a-server/en';
 import whatIsAServer_pt from '../content/what-is-a-server/pt';
 import whatIsKeres_en from '../content/what-is-keres/en';
@@ -188,6 +190,7 @@ export type GeneratedHelpPageId =
   | 'tags'
   | 'troubleshooting'
   | 'using-this-help'
+  | 'vocabulary'
   | 'what-is-a-server'
   | 'what-is-keres'
   | 'world-rules'
@@ -429,6 +432,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'using-this-help': {
     en: usingThisHelp_en,
     pt: usingThisHelp_pt,
+  },
+  vocabulary: {
+    en: vocabulary_en,
+    pt: vocabulary_pt,
   },
   'what-is-a-server': {
     en: whatIsAServer_en,

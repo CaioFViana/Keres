@@ -525,9 +525,7 @@ const LocationDetailsScreen = () => {
   }
 
   if (!location) {
-    return (
-      <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />
-    );
+    return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;
   }
 
   return (

@@ -161,7 +161,8 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
                   styles.nodeInner,
                   {
                     borderColor: isHighlighted && !isSelected ? colors.primary : borderColor,
-                    borderWidth: isSelected || node.isStart || node.isFinish || isHighlighted ? 2.5 : 1.2,
+                    borderWidth:
+                      isSelected || node.isStart || node.isFinish || isHighlighted ? 2.5 : 1.2,
                   },
                 ]}
               >

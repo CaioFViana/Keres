@@ -46,10 +46,12 @@ const PlotFormScreen = () => {
   const scrollBottomPadding = useFormScrollBottomPadding();
   const plotService = useCallback(() => createPlotService(drizzleDb), [drizzleDb]);
   const plotSceneService = useCallback(() => createPlotSceneService(drizzleDb), [drizzleDb]);
-  const { scenes, relationsOf, chapterNameOf, reload: reloadPlotData } = useStoryPlots(
-    selectedStory?.id,
-    selectedStory?.type,
-  );
+  const {
+    scenes,
+    relationsOf,
+    chapterNameOf,
+    reload: reloadPlotData,
+  } = useStoryPlots(selectedStory?.id, selectedStory?.type);
 
   const [name, setName] = useState('');
   const [details, setDetails] = useState('');
@@ -151,9 +153,9 @@ const PlotFormScreen = () => {
     });
   };
 
-  const handleSavePlotScene = async (relation: Parameters<
-    ReturnType<typeof createPlotSceneService>['save']
-  >[1]) => {
+  const handleSavePlotScene = async (
+    relation: Parameters<ReturnType<typeof createPlotSceneService>['save']>[1],
+  ) => {
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;

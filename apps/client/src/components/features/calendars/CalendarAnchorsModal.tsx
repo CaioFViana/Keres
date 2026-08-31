@@ -10,7 +10,14 @@ import { Ionicons } from '@expo/vector-icons';
 import type { TFunction } from 'i18next';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -91,15 +98,24 @@ const CalendarAnchorsModal = ({
   };
 
   return (
-    <ResponsiveModal visible={visible} onClose={onClose} placement="adaptive" contentStyle={styles.content}>
+    <ResponsiveModal
+      visible={visible}
+      onClose={onClose}
+      placement="adaptive"
+      contentStyle={styles.content}
+    >
       <Text style={styles.title}>
-        {reviewing ? t('calendar_change_preview_title') : t('calendar_anchors_title', { name: calendarName })}
+        {reviewing
+          ? t('calendar_change_preview_title')
+          : t('calendar_anchors_title', { name: calendarName })}
       </Text>
       <Text style={styles.hint}>
         {reviewing ? t('calendar_change_preview_hint') : t('calendar_anchors_hint')}
       </Text>
       {loading ? (
-        <View style={styles.loading}><ActivityIndicator color={colors.primary} /></View>
+        <View style={styles.loading}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
       ) : currentRows.length === 0 ? (
         <Text style={styles.empty}>{t('calendar_anchors_empty')}</Text>
       ) : (
@@ -138,7 +154,11 @@ const CalendarAnchorsModal = ({
       )}
       <FormActions>
         <Button onPress={onClose}>{reviewing ? t('cancel') : t('close')}</Button>
-        {onConfirm && <Button onPress={onConfirm} disabled={confirming}>{t('calendar_change_confirm')}</Button>}
+        {onConfirm && (
+          <Button onPress={onConfirm} disabled={confirming}>
+            {t('calendar_change_confirm')}
+          </Button>
+        )}
       </FormActions>
     </ResponsiveModal>
   );

@@ -318,9 +318,7 @@ const ChapterFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {formTitle}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('chapter_form_description')}
       </Text>

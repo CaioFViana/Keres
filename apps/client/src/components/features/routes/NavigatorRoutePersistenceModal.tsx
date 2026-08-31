@@ -80,11 +80,18 @@ export default function NavigatorRoutePersistenceModal({
   });
 
   return (
-    <ResponsiveModal visible={visible} onClose={onClose} contentStyle={styles.sheet} maxHeight="86%">
+    <ResponsiveModal
+      visible={visible}
+      onClose={onClose}
+      contentStyle={styles.sheet}
+      maxHeight="86%"
+    >
       <Text style={styles.title}>
         {mode === 'new' ? t('navigator_save_as_route') : t('navigator_replace_route')}
       </Text>
-      <Text style={styles.description}>{t('navigator_route_steps_ready', { count: stepCount })}</Text>
+      <Text style={styles.description}>
+        {t('navigator_route_steps_ready', { count: stepCount })}
+      </Text>
       {mode === 'new' ? (
         <View style={styles.field}>
           <Text style={styles.label}>{t('route_name')}</Text>

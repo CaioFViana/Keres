@@ -1182,14 +1182,7 @@
         "minutesPerHour": 60,
         "hoursPerDay": 24,
         "daysPerWeek": 6,
-        "weekdayNames": [
-          "Lua",
-          "Vênus",
-          "Marte",
-          "Mercúrio",
-          "Júpiter",
-          "Saturno"
-        ],
+        "weekdayNames": ["Lua", "Vênus", "Marte", "Mercúrio", "Júpiter", "Saturno"],
         "unitNames": {},
         "months": [
           {

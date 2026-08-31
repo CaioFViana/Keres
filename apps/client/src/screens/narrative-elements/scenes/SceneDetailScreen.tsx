@@ -602,9 +602,7 @@ const SceneDetailScreen = () => {
   }
 
   if (!scene) {
-    return (
-      <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   const describeEffect = (effect: Effect): string => {

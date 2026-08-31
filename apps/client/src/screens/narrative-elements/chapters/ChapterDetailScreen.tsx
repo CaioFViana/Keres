@@ -290,7 +290,15 @@ const ChapterDetailScreen = () => {
           </TouchableOpacity>
         </View>
       ) : null,
-    [navigation, chapterId, colors.text, canEdit, chapter?.type, chapterNounCopy.convertTo, eventCopy.convertTo],
+    [
+      navigation,
+      chapterId,
+      colors.text,
+      canEdit,
+      chapter?.type,
+      chapterNounCopy.convertTo,
+      eventCopy.convertTo,
+    ],
   );
 
   useFocusEffect(
@@ -312,13 +320,7 @@ const ChapterDetailScreen = () => {
   }
 
   if (!chapter) {
-    return (
-      <ScreenError
-        padded
-        message={copy.dataMissing}
-        onGoBack={() => navigation.goBack()}
-      />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   return (

@@ -118,7 +118,9 @@ jest.mock('../../src/components/features/calendars/CalendarAnchorsModal', () => 
   __esModule: true,
   default: ({ visible, onConfirm }: { visible: boolean; onConfirm: () => void }) => {
     const { TouchableOpacity } = require('react-native') as typeof import('react-native');
-    return visible ? <TouchableOpacity testID="calendar-change-preview-confirm" onPress={onConfirm} /> : null;
+    return visible ? (
+      <TouchableOpacity testID="calendar-change-preview-confirm" onPress={onConfirm} />
+    ) : null;
   },
 }));
 

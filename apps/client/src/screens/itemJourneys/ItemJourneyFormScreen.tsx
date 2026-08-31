@@ -232,7 +232,10 @@ const ItemJourneyFormScreen = () => {
           itemJourneyData,
         );
         savedItemJourneyId = savedItemJourney.id;
-        AppAlert.alert(t('success'), t('vocabulary_entity_updated', { entity: journey, ending: 'a' }));
+        AppAlert.alert(
+          t('success'),
+          t('vocabulary_entity_updated', { entity: journey, ending: 'a' }),
+        );
       } else {
         const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(
           userId,
@@ -240,7 +243,10 @@ const ItemJourneyFormScreen = () => {
         );
         savedItemJourneyId = savedItemJourney.id;
         setCurrentItemJourneyId(savedItemJourney.id);
-        AppAlert.alert(t('success'), t('vocabulary_entity_created', { entity: journey, ending: 'a' }));
+        AppAlert.alert(
+          t('success'),
+          t('vocabulary_entity_created', { entity: journey, ending: 'a' }),
+        );
       }
 
       if (savedItemJourneyId) {
@@ -334,9 +340,7 @@ const ItemJourneyFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {formTitle}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
         {t('item_journey_form_description')}
       </Text>

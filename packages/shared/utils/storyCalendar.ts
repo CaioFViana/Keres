@@ -196,7 +196,9 @@ export interface CalendarDateCoordinate {
 const CALENDAR_COORDINATE = /^(-?\d+)-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
 /** Parses the ISO-like storage notation without involving JavaScript Date or a time zone. */
-export function parseCalendarDateCoordinate(value: string | null | undefined): CalendarDateCoordinate | null {
+export function parseCalendarDateCoordinate(
+  value: string | null | undefined,
+): CalendarDateCoordinate | null {
   if (!value) return null;
   const match = CALENDAR_COORDINATE.exec(value);
   if (!match) return null;
@@ -208,7 +210,10 @@ export function parseCalendarDateCoordinate(value: string | null | undefined): C
 
 /** Canonical, sortable, timezone-free representation used by Scene date overrides. */
 export function formatCalendarDateCoordinate(parts: CalendarDateCoordinate): string {
-  const year = parts.year < 0 ? `-${String(Math.abs(parts.year)).padStart(4, '0')}` : String(parts.year).padStart(4, '0');
+  const year =
+    parts.year < 0
+      ? `-${String(Math.abs(parts.year)).padStart(4, '0')}`
+      : String(parts.year).padStart(4, '0');
   return `${year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}T${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`;
 }
 

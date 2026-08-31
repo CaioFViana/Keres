@@ -161,7 +161,11 @@ const WorldRulesScreen = () => {
   });
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('WorldRule', true) })} />;
+    return (
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('WorldRule', true) })}
+      />
+    );
   }
 
   if (error) {

@@ -18,11 +18,7 @@ export interface EntityMetadataProps {
  * Reusable across every entity because those three fields (and their meaning) are identical
  * everywhere; only the values change.
  */
-const EntityMetadata: React.FC<EntityMetadataProps> = ({
-  version,
-  createdAt,
-  updatedAt,
-}) => {
+const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, updatedAt }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -48,18 +44,18 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({
 
   return (
     <CollapsibleCard title={t('metadata_title')} initialExpanded={false}>
-        <View style={styles.row}>
-          <Text style={styles.label}>{t('version')}</Text>
-          <Text style={styles.value}>{version}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>{t('created_at')}</Text>
-          <Text style={styles.value}>{formatDateTime(createdAt)}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>{t('updated_at')}</Text>
-          <Text style={styles.value}>{formatDateTime(updatedAt)}</Text>
-        </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>{t('version')}</Text>
+        <Text style={styles.value}>{version}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>{t('created_at')}</Text>
+        <Text style={styles.value}>{formatDateTime(createdAt)}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>{t('updated_at')}</Text>
+        <Text style={styles.value}>{formatDateTime(updatedAt)}</Text>
+      </View>
     </CollapsibleCard>
   );
 };

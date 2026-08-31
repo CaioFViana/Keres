@@ -83,8 +83,7 @@ export class EntityService {
     // Operation-log rows are resolved independently. Most entity types do not need custom
     // terminology, so keep the extra story read lazy and share it for a composite name.
     let vocabularyPromise: Promise<StoryVocabulary | null> | undefined;
-    const vocabulary = () =>
-      (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
+    const vocabulary = () => (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
 
     switch (entityType) {
       case OperationLogEntityType.Board:

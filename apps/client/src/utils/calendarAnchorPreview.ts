@@ -61,7 +61,9 @@ export function buildCalendarAnchorPreview({
   const activeChapters = chapters
     .filter((chapter) => !chapter.isDeleted && chapter.type === 'chapter')
     .sort((left, right) => left.index - right.index);
-  const chapterById = new Map(chapters.filter((chapter) => !chapter.isDeleted).map((chapter) => [chapter.id, chapter]));
+  const chapterById = new Map(
+    chapters.filter((chapter) => !chapter.isDeleted).map((chapter) => [chapter.id, chapter]),
+  );
   const chapterIndex = new Map(activeChapters.map((chapter) => [chapter.id, chapter.index]));
   let previousChapterIndex: number | undefined;
   const spineScenes = scenes
@@ -90,7 +92,9 @@ export function buildCalendarAnchorPreview({
     });
   const layout = buildStoryTimelineLayout(spineScenes, { calendar: definition });
   const rowByScene = new Map(layout.rows.map((row) => [row.id, row]));
-  const sceneById = new Map(scenes.filter((scene) => !scene.isDeleted).map((scene) => [scene.id, scene]));
+  const sceneById = new Map(
+    scenes.filter((scene) => !scene.isDeleted).map((scene) => [scene.id, scene]),
+  );
   const units = calendarUnitDays(definition);
   const secondsPerDay = calendarSecondsPerDay(definition);
   const asDate = (elapsedSeconds: number) => {
@@ -117,7 +121,9 @@ export function buildCalendarAnchorPreview({
         ? offset * ((units[offsetUnit as keyof typeof units] ?? 0) * secondsPerDay)
         : 0;
     return asDate(
-      row.elapsedSeconds + durationSeconds * (SCENE_POSITION_FRACTION[position] ?? 0) + offsetSeconds,
+      row.elapsedSeconds +
+        durationSeconds * (SCENE_POSITION_FRACTION[position] ?? 0) +
+        offsetSeconds,
     );
   };
 
@@ -147,7 +153,12 @@ export function buildCalendarAnchorPreview({
       sceneId: startScene?.id ?? null,
       sceneName: startScene?.name ?? null,
       position: anchor.startPosition,
-      date: pointDate(anchor.startSceneId, anchor.startPosition, anchor.startOffset, anchor.startOffsetUnit),
+      date: pointDate(
+        anchor.startSceneId,
+        anchor.startPosition,
+        anchor.startOffset,
+        anchor.startOffsetUnit,
+      ),
     });
     if (anchor.endSceneId && anchor.endPosition) {
       const endScene = sceneById.get(anchor.endSceneId);
@@ -160,7 +171,12 @@ export function buildCalendarAnchorPreview({
         sceneId: endScene?.id ?? null,
         sceneName: endScene?.name ?? null,
         position: anchor.endPosition,
-        date: pointDate(anchor.endSceneId, anchor.endPosition, anchor.endOffset, anchor.endOffsetUnit),
+        date: pointDate(
+          anchor.endSceneId,
+          anchor.endPosition,
+          anchor.endOffset,
+          anchor.endOffsetUnit,
+        ),
       });
     }
   }

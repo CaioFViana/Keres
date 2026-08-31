@@ -55,7 +55,9 @@ export default function StoryNavigatorScreen() {
   const [state, setState] = useState<StorySimulationState>(emptyStorySimulationState());
   const [activity, setActivity] = useState<string[]>([]);
   const [simulatedSteps, setSimulatedSteps] = useState<SimulatedRouteStep[]>([]);
-  const [persistenceMode, setPersistenceMode] = useState<NavigatorRoutePersistenceMode | null>(null);
+  const [persistenceMode, setPersistenceMode] = useState<NavigatorRoutePersistenceMode | null>(
+    null,
+  );
   const current = scenes.find((scene) => scene.id === currentSceneId);
   const sceneEffects = useCallback(
     (id: string) =>
@@ -164,9 +166,14 @@ export default function StoryNavigatorScreen() {
     const replacing = Boolean(value.routeId);
     AppAlert.alert(
       t(replacing ? 'navigator_replace_route_confirm_title' : 'navigator_save_route_confirm_title'),
-      t(replacing ? 'navigator_replace_route_confirm_message' : 'navigator_save_route_confirm_message', {
-        count: simulatedSteps.length,
-      }),
+      t(
+        replacing
+          ? 'navigator_replace_route_confirm_message'
+          : 'navigator_save_route_confirm_message',
+        {
+          count: simulatedSteps.length,
+        },
+      ),
       [
         { text: t('cancel'), style: 'cancel' },
         {

@@ -445,7 +445,11 @@ describe('push loop', () => {
       entityType: 'RouteStep',
       entityId: 'route-step-1',
       payload: JSON.stringify({
-        routeId: 'route-1', position: 1, sceneId: 'scene-1', selectedChoiceId: null, version: 1,
+        routeId: 'route-1',
+        position: 1,
+        sceneId: 'scene-1',
+        selectedChoiceId: null,
+        version: 1,
       }),
     });
     await Promise.all([plot, plotScene, route, routeStep].map(seedOperation));
@@ -464,13 +468,31 @@ describe('push loop', () => {
     expect(post).toHaveBeenCalledWith(
       `/sync/${STORY_ID}`,
       expect.arrayContaining([
-        expect.objectContaining({ entity: 'Plot', id: 'plot-1', data: { name: 'The thread', details: null, version: 1 } }),
-        expect.objectContaining({ entity: 'PlotScene', id: 'plot-scene-1', data: expect.objectContaining({ plotId: 'plot-1', sceneId: 'scene-1' }) }),
-        expect.objectContaining({ entity: 'Route', id: 'route-1', data: expect.objectContaining({ name: 'Possible path' }) }),
-        expect.objectContaining({ entity: 'RouteStep', id: 'route-step-1', data: expect.objectContaining({ routeId: 'route-1', sceneId: 'scene-1' }) }),
+        expect.objectContaining({
+          entity: 'Plot',
+          id: 'plot-1',
+          data: { name: 'The thread', details: null, version: 1 },
+        }),
+        expect.objectContaining({
+          entity: 'PlotScene',
+          id: 'plot-scene-1',
+          data: expect.objectContaining({ plotId: 'plot-1', sceneId: 'scene-1' }),
+        }),
+        expect.objectContaining({
+          entity: 'Route',
+          id: 'route-1',
+          data: expect.objectContaining({ name: 'Possible path' }),
+        }),
+        expect.objectContaining({
+          entity: 'RouteStep',
+          id: 'route-step-1',
+          data: expect.objectContaining({ routeId: 'route-1', sceneId: 'scene-1' }),
+        }),
       ]),
     );
-    expect((await database.db.query.operationLogs.findMany()).every((entry) => entry.isSynced)).toBe(true);
+    expect(
+      (await database.db.query.operationLogs.findMany()).every((entry) => entry.isSynced),
+    ).toBe(true);
   });
 
   it('leaves an unsafe operation pending without sending an empty batch', async () => {

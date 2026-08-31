@@ -204,18 +204,25 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
       scenes.flatMap((scene) => {
         const coordinate = parseCalendarDateCoordinate(scene.calendarDateOverride);
         const source = scene.calendarDateOverrideCalendarId
-          ? calendars.find((candidate) => candidate.id === scene.calendarDateOverrideCalendarId)?.definition
+          ? calendars.find((candidate) => candidate.id === scene.calendarDateOverrideCalendarId)
+              ?.definition
           : null;
-        if (!coordinate || (source && !isCalendarDateCoordinateInBounds(source, coordinate))) return [];
-        const day = source
-          ? partsToDayNumber(source, coordinate)
-          : gregorianDayNumber(coordinate);
+        if (!coordinate || (source && !isCalendarDateCoordinateInBounds(source, coordinate)))
+          return [];
+        const day = source ? partsToDayNumber(source, coordinate) : gregorianDayNumber(coordinate);
         const sourceSecondsPerDay = source ? calendarSecondsPerDay(source) : 86400;
         const timeFraction =
           (coordinate.hour * (source?.minutesPerHour ?? 60) * (source?.secondsPerMinute ?? 60) +
             coordinate.minute * (source?.secondsPerMinute ?? 60)) /
           sourceSecondsPerDay;
-        return [[scene.id, (day - epochDay) * currentSecondsPerDay + timeFraction * currentSecondsPerDay - (story?.timelineEpochSeconds ?? 0)]];
+        return [
+          [
+            scene.id,
+            (day - epochDay) * currentSecondsPerDay +
+              timeFraction * currentSecondsPerDay -
+              (story?.timelineEpochSeconds ?? 0),
+          ],
+        ];
       }),
     );
   }, [calendar, calendars, scenes, story?.timelineEpochDay, story?.timelineEpochSeconds]);
@@ -291,7 +298,14 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         calendar,
         sceneElapsedOverrides,
       }),
-    [anchoredContainers, calendar, eventPlacement, scaleMode, sceneElapsedOverrides, timelineScenes],
+    [
+      anchoredContainers,
+      calendar,
+      eventPlacement,
+      scaleMode,
+      sceneElapsedOverrides,
+      timelineScenes,
+    ],
   );
 
   /** The same conversion as `dateForRow`, but returning the season and the moons with it. */

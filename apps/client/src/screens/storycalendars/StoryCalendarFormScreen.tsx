@@ -211,7 +211,11 @@ const StoryCalendarFormScreen = () => {
     if (!parsed.success) return;
     // Names and descriptions are metadata; every definition change is reviewed because even a
     // renamed month is worth making visible beside the facts that calendar currently interprets.
-    if (calendarId && savedDefinition && JSON.stringify(savedDefinition) !== JSON.stringify(parsed.data)) {
+    if (
+      calendarId &&
+      savedDefinition &&
+      JSON.stringify(savedDefinition) !== JSON.stringify(parsed.data)
+    ) {
       setReviewingCalendarChange(true);
       return;
     }

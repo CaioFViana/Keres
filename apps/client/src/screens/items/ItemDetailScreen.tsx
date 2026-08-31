@@ -200,9 +200,7 @@ const ItemDetailScreen = () => {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!item) {
-    return (
-      <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   const owner = item.characterOwnerId

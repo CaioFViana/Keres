@@ -97,7 +97,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
    */
   CustomizationIndex: 'custom-attributes',
   CustomizationStack: 'custom-attributes',
-  Vocabulary: 'custom-attributes',
+  Vocabulary: 'vocabulary',
   StorySchemaFieldForm: 'custom-attributes',
   Suggestions: 'suggestions',
   SuggestionUsage: 'suggestions',

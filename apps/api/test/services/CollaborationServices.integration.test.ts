@@ -51,4 +51,14 @@ describe('collaboration services', () => {
       { id: first.id, status: 'blacklisted', blockedById: ana.userId },
     ]);
   });
+
+  it('never leaves a permission behind when a grant races with unfriending', async () => {
+    await Promise.allSettled([
+      permissionService.upsertStoryPermission(ana.userId, storyId, bia.userId, 'writer'),
+      friendshipService.unfriendUser(ana.userId, bia.userId),
+    ]);
+
+    expect(await permissionService.getUserPermissionForStory(bia.userId, storyId)).toBeUndefined();
+    expect(await friendshipService.getFriendships(ana.userId)).toEqual([]);
+  });
 });

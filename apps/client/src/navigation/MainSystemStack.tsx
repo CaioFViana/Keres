@@ -426,7 +426,9 @@ const WorldRulesStack = createNativeStackNavigator<WorldRulesStackParamList>();
 
 export type WorldRulesStackParamList = {
   WorldIndex: undefined;
-  WorldRules: { section?: import('@keres/shared/entities/WorldRule').WorldPieceSection } | undefined;
+  WorldRules:
+    | { section?: import('@keres/shared/entities/WorldRule').WorldPieceSection }
+    | undefined;
   WorldRuleDetail: WorldRuleDetailScreenParamList['WorldRuleDetail'];
   WorldRuleForm: { worldRuleId?: string };
 };

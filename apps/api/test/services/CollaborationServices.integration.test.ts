@@ -28,7 +28,9 @@ beforeEach(async () => {
 describe('collaboration services', () => {
   it('removes a collaborator permission immediately when the friendship is removed', async () => {
     await permissionService.upsertStoryPermission(ana.userId, storyId, bia.userId, 'writer');
-    expect(await permissionService.getUserPermissionForStory(bia.userId, storyId)).toMatchObject({ permissionType: 'writer' });
+    expect(await permissionService.getUserPermissionForStory(bia.userId, storyId)).toMatchObject({
+      permissionType: 'writer',
+    });
 
     await friendshipService.unfriendUser(bia.userId, ana.userId);
 

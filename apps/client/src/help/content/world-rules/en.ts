@@ -2,7 +2,8 @@ import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'world-rules',
   title: 'World and world pieces',
-  summary: 'Organize the rules, creatures, flora, mythology, peoples, and knowledge of your setting.',
+  summary:
+    'Organize the rules, creatures, flora, mythology, peoples, and knowledge of your setting.',
   keywords: ['world', 'bestiary', 'herbarium', 'mythology', 'creature', 'continuity'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
@@ -39,7 +40,8 @@ const page: HelpPage = {
         {
           key: 'section',
           label: 'Section',
-          whatToWrite: 'The fixed group: Rules, Bestiary, Herbarium, Mythology, Peoples & cultures, World knowledge, or Other.',
+          whatToWrite:
+            'The fixed group: Rules, Bestiary, Herbarium, Mythology, Peoples & cultures, World knowledge, or Other.',
           note: 'It organizes the World drawer; use All world pieces to search across groups.',
         },
         {
@@ -54,10 +56,30 @@ const page: HelpPage = {
           whatToWrite: 'What the piece is, how it works, or why it matters.',
           note: 'It is the main text for consultation and comments.',
         },
-        { key: 'category', label: 'Category', whatToWrite: 'An optional complementary classification.', note: 'Reuses story suggestions.' },
-        { key: 'behavior', label: 'Behavior', whatToWrite: 'How the creature, people, system, or concept acts.', note: 'Optional.' },
-        { key: 'usability', label: 'Usability', whatToWrite: 'How it can be used, explored, or applied.', note: 'Optional; useful for resources, flora, magic, and technology.' },
-        { key: 'danger', label: 'Danger', whatToWrite: 'The risk, cost, or threat it presents.', note: 'Optional; not every piece is dangerous.' },
+        {
+          key: 'category',
+          label: 'Category',
+          whatToWrite: 'An optional complementary classification.',
+          note: 'Reuses story suggestions.',
+        },
+        {
+          key: 'behavior',
+          label: 'Behavior',
+          whatToWrite: 'How the creature, people, system, or concept acts.',
+          note: 'Optional.',
+        },
+        {
+          key: 'usability',
+          label: 'Usability',
+          whatToWrite: 'How it can be used, explored, or applied.',
+          note: 'Optional; useful for resources, flora, magic, and technology.',
+        },
+        {
+          key: 'danger',
+          label: 'Danger',
+          whatToWrite: 'The risk, cost, or threat it presents.',
+          note: 'Optional; not every piece is dangerous.',
+        },
         {
           key: 'isFavorite',
           label: 'Favorite',

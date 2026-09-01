@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { InvalidRecoveryCodeError, RecoveryCodeService } from '../../src/services/RecoveryCodeService';
+import {
+  InvalidRecoveryCodeError,
+  RecoveryCodeService,
+} from '../../src/services/RecoveryCodeService';
 import { newId, request } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -26,16 +29,24 @@ describe('RecoveryCodeService', () => {
     const service = new RecoveryCodeService();
 
     expect(await service.countRemaining(user.userId)).toBe(8);
-    await expect(service.redeemCode(user.username, user.recoveryCodes[0], 'senha-nova-123')).resolves.toMatchObject({
+    await expect(
+      service.redeemCode(user.username, user.recoveryCodes[0], 'senha-nova-123'),
+    ).resolves.toMatchObject({
       id: user.userId,
       username: user.username,
     });
     expect(await service.countRemaining(user.userId)).toBe(7);
-    await expect(service.redeemCode(user.username, user.recoveryCodes[0], 'outra-senha-123')).rejects.toBeInstanceOf(InvalidRecoveryCodeError);
+    await expect(
+      service.redeemCode(user.username, user.recoveryCodes[0], 'outra-senha-123'),
+    ).rejects.toBeInstanceOf(InvalidRecoveryCodeError);
 
-    expect((await request('POST', '/auth/login', {
-      body: { username: user.username, password: 'senha-nova-123' },
-    })).status).toBe(200);
+    expect(
+      (
+        await request('POST', '/auth/login', {
+          body: { username: user.username, password: 'senha-nova-123' },
+        })
+      ).status,
+    ).toBe(200);
   });
 
   it('replaces the entire old batch when codes are regenerated', async () => {
@@ -46,7 +57,9 @@ describe('RecoveryCodeService', () => {
     expect(regenerated).toHaveLength(8);
     expect(regenerated).not.toContain(user.recoveryCodes[0]);
     expect(await service.countRemaining(user.userId)).toBe(8);
-    await expect(service.redeemCode(user.username, user.recoveryCodes[0], 'senha-nova-123')).rejects.toBeInstanceOf(InvalidRecoveryCodeError);
+    await expect(
+      service.redeemCode(user.username, user.recoveryCodes[0], 'senha-nova-123'),
+    ).rejects.toBeInstanceOf(InvalidRecoveryCodeError);
   });
 
   it('allows exactly one of two simultaneous attempts to redeem the same code', async () => {

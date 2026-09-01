@@ -545,16 +545,16 @@ function checkBranchingDeadEnds(
       .map((choice) => choice.sceneId),
   );
   const declaredOutgoing = new Set(input.choices.map((choice) => choice.sceneId));
-  return input.scenes
-    // A scene with no choices at all can be an unfinished fragment; report the stronger case where
-    // the author did declare exits, but every one is impossible under the current checks.
-    .filter(
-      (scene) =>
-        !scene.isFinish && declaredOutgoing.has(scene.id) && !viableOutgoing.has(scene.id),
-    )
-    .map((scene) =>
-      buildFinding('scenes', 'warning', 'Scene', scene, 'analysis_scene_dead_end'),
-    );
+  return (
+    input.scenes
+      // A scene with no choices at all can be an unfinished fragment; report the stronger case where
+      // the author did declare exits, but every one is impossible under the current checks.
+      .filter(
+        (scene) =>
+          !scene.isFinish && declaredOutgoing.has(scene.id) && !viableOutgoing.has(scene.id),
+      )
+      .map((scene) => buildFinding('scenes', 'warning', 'Scene', scene, 'analysis_scene_dead_end'))
+  );
 }
 
 /** Saved routes are author intent, so edits never rewrite them; analysis makes a stale route visible. */

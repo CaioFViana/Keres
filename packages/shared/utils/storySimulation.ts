@@ -17,9 +17,9 @@ export const emptyStorySimulationState = (): StorySimulationState => ({
 
 type SimulatedCheck = Pick<
   ChoiceCheck,
-    | 'groupId'
-    | 'id'
-    | 'order'
+  | 'groupId'
+  | 'id'
+  | 'order'
   | 'mode'
   | 'type'
   | 'sceneId'

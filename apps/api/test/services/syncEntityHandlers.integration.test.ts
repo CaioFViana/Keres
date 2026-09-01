@@ -125,13 +125,18 @@ describe('idempotent create comparison and log payloads', () => {
     expect(
       handler.sanitizePayloadForLog(
         {
-          type: 'reorder', entity: 'Story', id: STORY_ID,
-          reorderItems: [{ id: 'chapter-1', newIndex: 1 }], reorderTarget: 'Event',
+          type: 'reorder',
+          entity: 'Story',
+          id: STORY_ID,
+          reorderItems: [{ id: 'chapter-1', newIndex: 1 }],
+          reorderTarget: 'Event',
         } as any,
         USER_ID,
       ),
     ).toEqual({
-      reorderItems: [{ id: 'chapter-1', newIndex: 1 }], reorderTarget: 'Event', schemaEntityType: undefined,
+      reorderItems: [{ id: 'chapter-1', newIndex: 1 }],
+      reorderTarget: 'Event',
+      schemaEntityType: undefined,
     });
   });
 });

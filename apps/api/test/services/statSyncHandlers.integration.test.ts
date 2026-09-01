@@ -346,7 +346,11 @@ describe('StatRelation', () => {
         current,
       ),
     ).rejects.toMatchObject({ reason: 'validation' });
-    expect(await valueHandler.findById(currentId)).toMatchObject({ characterId, value: 10, version: 1 });
+    expect(await valueHandler.findById(currentId)).toMatchObject({
+      characterId,
+      value: 10,
+      version: 1,
+    });
   });
 
   it('allows a new value once the previous value for that exact key is tombstoned', async () => {

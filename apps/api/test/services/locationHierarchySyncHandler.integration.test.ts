@@ -173,7 +173,6 @@ describe('location hierarchy sync handler', () => {
         }),
       ),
     ).rejects.toThrow(/already exists/i);
-
   });
 
   it('rejects invalid endpoints and prevents an update from assigning a second parent', async () => {

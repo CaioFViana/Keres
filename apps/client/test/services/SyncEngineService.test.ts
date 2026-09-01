@@ -54,7 +54,7 @@ let pullResponse: {
   role: string;
 };
 /** More than one page is used only by pagination tests. */
-let pullPages: typeof pullResponse[] | null;
+let pullPages: (typeof pullResponse)[] | null;
 let pullPageIndex: number;
 /** Resposta do push. */
 let pushResponse: any;
@@ -102,7 +102,7 @@ function installAdapter() {
     }
 
     let data = isPull
-      ? pullPages?.[pullPageIndex++] ?? pullResponse
+      ? (pullPages?.[pullPageIndex++] ?? pullResponse)
       : method === 'POST'
         ? pushResponse
         : {};
@@ -1060,7 +1060,13 @@ describe('when the server cannot be reached', () => {
 
     await expect(runOneCycle()).resolves.toBe(false);
 
-    expect((await database.db.query.operationLogs.findFirst({ where: eq(schema.operationLogs.id, operation.id) }))?.isSynced).toBe(false);
+    expect(
+      (
+        await database.db.query.operationLogs.findFirst({
+          where: eq(schema.operationLogs.id, operation.id),
+        })
+      )?.isSynced,
+    ).toBe(false);
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
 });
@@ -1235,7 +1241,9 @@ describe('remote-operation safety boundaries', () => {
 
     await runOneCycle();
 
-    expect(await database.db.query.stories.findFirst({ where: eq(schema.stories.id, 'story-outra') })).toBeUndefined();
+    expect(
+      await database.db.query.stories.findFirst({ where: eq(schema.stories.id, 'story-outra') }),
+    ).toBeUndefined();
     const log = await database.db.query.operationLogs.findFirst({
       where: eq(schema.operationLogs.serverOperationVersion, 1),
     });

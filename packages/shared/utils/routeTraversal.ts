@@ -30,7 +30,10 @@ export interface RouteTraversalResult {
 }
 
 type TraversalChoice = Pick<Choice, 'id' | 'sceneId' | 'nextSceneId' | 'isDeleted'>;
-type TraversalStep = Pick<RouteStep, 'id' | 'position' | 'sceneId' | 'selectedChoiceId' | 'isDeleted'>;
+type TraversalStep = Pick<
+  RouteStep,
+  'id' | 'position' | 'sceneId' | 'selectedChoiceId' | 'isDeleted'
+>;
 type TraversalGroup = Pick<
   ChoiceCheckGroup,
   'id' | 'choiceId' | 'combinator' | 'isDeleted' | 'order'
@@ -82,9 +85,13 @@ export function validateRouteTraversal(input: {
   const activeSteps = input.steps
     .filter((step) => !step.isDeleted)
     .sort((left, right) => left.position - right.position);
-  const choiceById = new Map(input.choices.filter((choice) => !choice.isDeleted).map((choice) => [choice.id, choice]));
+  const choiceById = new Map(
+    input.choices.filter((choice) => !choice.isDeleted).map((choice) => [choice.id, choice]),
+  );
   const effectsFor = (entityType: 'Scene' | 'Choice', entityId: string) =>
-    input.effects.filter((effect) => effect.entityType === entityType && effect.entityId === entityId);
+    input.effects.filter(
+      (effect) => effect.entityType === entityType && effect.entityId === entityId,
+    );
 
   let state = emptyStorySimulationState();
   for (let index = 0; index < activeSteps.length; index++) {
@@ -97,7 +104,9 @@ export function validateRouteTraversal(input: {
     if (!choice) {
       return {
         valid: false,
-        issues: [{ kind: 'structure', issue: 'choice_missing', stepId: step.id, sceneId: step.sceneId }],
+        issues: [
+          { kind: 'structure', issue: 'choice_missing', stepId: step.id, sceneId: step.sceneId },
+        ],
         finalState: null,
       };
     }

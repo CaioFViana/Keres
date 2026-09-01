@@ -178,7 +178,10 @@ describe('note relation sync handler', () => {
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
-    await db.update(notes).set({ isDeleted: true, deletedAt: new Date() }).where(eq(notes.id, noteId));
+    await db
+      .update(notes)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(notes.id, noteId));
     await expect(
       handler.create(
         userId,

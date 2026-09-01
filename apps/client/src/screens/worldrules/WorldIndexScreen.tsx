@@ -27,7 +27,8 @@ const WorldIndexScreen = () => {
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<WorldRulesStackParamList, 'WorldIndex'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<WorldRulesStackParamList, 'WorldIndex'>>();
 
   useFocusEffect(
     useCallback(() => {
@@ -43,8 +44,15 @@ const WorldIndexScreen = () => {
         content: { padding: 14, paddingBottom: 40 },
         intro: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 14 },
         card: {
-          flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card,
-          borderRadius: 8, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          backgroundColor: colors.card,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 14,
+          marginBottom: 10,
         },
         body: { flexGrow: 1, flexShrink: 1 },
         title: { fontSize: 16, fontWeight: '700', color: colors.text },
@@ -74,7 +82,9 @@ const WorldIndexScreen = () => {
             <Ionicons name={SECTION_ICONS[section]} size={24} color={colors.primary} />
             <View style={styles.body}>
               <Text style={styles.title}>{t(`world_piece_section_${section}`)}</Text>
-              <Text style={styles.description}>{t(`world_piece_section_${section}_description`)}</Text>
+              <Text style={styles.description}>
+                {t(`world_piece_section_${section}_description`)}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>

@@ -297,7 +297,11 @@ describe('choice and inventory sync entity handlers', () => {
       groups.create(
         userId,
         storyId,
-        create('ChoiceCheckGroup', groupId, { choiceId: 'missing-choice', combinator: 'AND', order: 0 }),
+        create('ChoiceCheckGroup', groupId, {
+          choiceId: 'missing-choice',
+          combinator: 'AND',
+          order: 0,
+        }),
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(

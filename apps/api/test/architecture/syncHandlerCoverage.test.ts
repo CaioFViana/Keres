@@ -25,8 +25,15 @@ describe('sync handler test coverage', () => {
       .map((path) => readFileSync(path, 'utf8'))
       .join('\n');
     const handlerNames = filesUnder(HANDLERS_ROOT)
-      .filter((path) => path.endsWith('SyncHandler.ts') && !path.endsWith('BaseSyncEntityHandler.ts'))
-      .flatMap((path) => Array.from(readFileSync(path, 'utf8').matchAll(/export class (\w+SyncHandler)/g), (match) => match[1]));
+      .filter(
+        (path) => path.endsWith('SyncHandler.ts') && !path.endsWith('BaseSyncEntityHandler.ts'),
+      )
+      .flatMap((path) =>
+        Array.from(
+          readFileSync(path, 'utf8').matchAll(/export class (\w+SyncHandler)/g),
+          (match) => match[1],
+        ),
+      );
     const untested = handlerNames.filter((name) => !testSource.includes(name));
 
     expect(untested).toEqual([]);

@@ -28,8 +28,9 @@ export default function RouteReaderScreen() {
   const { routeId } = useRoute<ScreenRoute>().params;
   const { selectedStory } = useStoryStore();
   const navigate = useNavigateToEntityDetail();
-  const { routes, stepsOf, sceneById, executionValidationOf, loading } =
-    useStoryRoutes(selectedStory?.id);
+  const { routes, stepsOf, sceneById, executionValidationOf, loading } = useStoryRoutes(
+    selectedStory?.id,
+  );
   const route = routes.find((entry) => entry.id === routeId);
   const steps = stepsOf(routeId);
   const styles = useMemo(

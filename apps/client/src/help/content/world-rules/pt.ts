@@ -39,7 +39,8 @@ const page: HelpPage = {
         {
           key: 'section',
           label: 'Seção',
-          whatToWrite: 'O grupo fixo: Regras, Bestiário, Herbário, Mitologia, Povos e culturas, Conhecimento ou Outros.',
+          whatToWrite:
+            'O grupo fixo: Regras, Bestiário, Herbário, Mitologia, Povos e culturas, Conhecimento ou Outros.',
           note: 'Organiza o drawer Mundo; use Todas as peças para pesquisar todos os grupos.',
         },
         {

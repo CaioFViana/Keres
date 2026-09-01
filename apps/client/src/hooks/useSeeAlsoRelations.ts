@@ -135,12 +135,21 @@ export function useSeeAlsoRelations(
         };
         return allowed.has(target.entityType) ? [{ relation, target }] : [];
       });
-      const desired = new Map(targets.map((target) => [`${target.entityType}:${target.entityId}`, target]));
-      const existing = new Set(currentAllowed.map(({ target }) => `${target.entityType}:${target.entityId}`));
+      const desired = new Map(
+        targets.map((target) => [`${target.entityType}:${target.entityId}`, target]),
+      );
+      const existing = new Set(
+        currentAllowed.map(({ target }) => `${target.entityType}:${target.entityId}`),
+      );
 
       for (const target of desired.values()) {
         if (!existing.has(`${target.entityType}:${target.entityId}`)) {
-          await service.addSeeAlsoLink(userId, storyId, { entityType, entityId: targetEntityId }, target);
+          await service.addSeeAlsoLink(
+            userId,
+            storyId,
+            { entityType, entityId: targetEntityId },
+            target,
+          );
         }
       }
       for (const { relation, target } of currentAllowed) {
@@ -155,7 +164,9 @@ export function useSeeAlsoRelations(
   const save = useCallback(
     async (targets: SeeAlsoEntityRef[]) => {
       const allowed = allowedEntityTypes ? new Set(allowedEntityTypes) : null;
-      const allowedTargets = allowed ? targets.filter((target) => allowed.has(target.entityType)) : targets;
+      const allowedTargets = allowed
+        ? targets.filter((target) => allowed.has(target.entityType))
+        : targets;
       if (!entityId) {
         pendingTargetsRef.current = allowedTargets;
         setPendingTargets(allowedTargets);
@@ -169,15 +180,24 @@ export function useSeeAlsoRelations(
       }
       await syncAllowedTargets(entityId, allowed, allowedTargets);
     },
-    [service, storyId, userId, entityType, entityId, allowedEntityTypes, applyLocalTargets, syncAllowedTargets],
+    [
+      service,
+      storyId,
+      userId,
+      entityType,
+      entityId,
+      allowedEntityTypes,
+      applyLocalTargets,
+      syncAllowedTargets,
+    ],
   );
 
   const remove = useCallback(
     async (relationId: string) => {
       if (!entityId) {
         const next = (pendingTargetsRef.current ?? []).filter(
-            (target) => `pending:${target.entityType}:${target.entityId}` !== relationId,
-          );
+          (target) => `pending:${target.entityType}:${target.entityId}` !== relationId,
+        );
         pendingTargetsRef.current = next;
         setPendingTargets(next);
         return;

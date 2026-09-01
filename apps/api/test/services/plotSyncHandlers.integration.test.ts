@@ -151,16 +151,27 @@ describe('PlotSceneSyncHandler', () => {
     const handler = new PlotSceneSyncHandler();
     const id = newId();
     await handler.create(userId, storyId, {
-      type: 'create', entity: 'PlotScene', id, data: { plotId, sceneId, note: 'Antes' },
+      type: 'create',
+      entity: 'PlotScene',
+      id,
+      data: { plotId, sceneId, note: 'Antes' },
     } as CreateStoryUpdate);
     const current = await handler.findById(id);
-    await db.update(scenes).set({ isDeleted: true, deletedAt: new Date() }).where(eq(scenes.id, sceneId));
+    await db
+      .update(scenes)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(scenes.id, sceneId));
 
     await expect(
       handler.update(
         userId,
         storyId,
-        { type: 'update', entity: 'PlotScene', id, changes: { note: 'Tarde', version: 1 } } as UpdateStoryUpdate,
+        {
+          type: 'update',
+          entity: 'PlotScene',
+          id,
+          changes: { note: 'Tarde', version: 1 },
+        } as UpdateStoryUpdate,
         current,
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
@@ -213,7 +224,12 @@ describe('plot story constraints', () => {
       handler.update(
         userId,
         storyId,
-        { type: 'update', entity: 'Plot', id: plotId, changes: { name: 'Tarde', version: 1 } } as UpdateStoryUpdate,
+        {
+          type: 'update',
+          entity: 'Plot',
+          id: plotId,
+          changes: { name: 'Tarde', version: 1 },
+        } as UpdateStoryUpdate,
         current,
       ),
     ).rejects.toMatchObject({ reason: 'validation' });

@@ -6,7 +6,16 @@ import {
   type UpdateStoryUpdate,
 } from '@keres/shared';
 import { db } from '../../src/db';
-import { chapters, choices, itemJourneys, items, scenes, stories, users, worldRules } from '../../src/db/schema';
+import {
+  chapters,
+  choices,
+  itemJourneys,
+  items,
+  scenes,
+  stories,
+  users,
+  worldRules,
+} from '../../src/db/schema';
 import { AttributeValueSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueSyncHandler';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
@@ -278,7 +287,12 @@ describe('schema and see-also sync entity handlers', () => {
 
     const locations = new LocationSyncHandler();
     const current = await locations.findById(locationId);
-    await locations.delete(userId, storyId, remove('Location', locationId, current.version), current);
+    await locations.delete(
+      userId,
+      storyId,
+      remove('Location', locationId, current.version),
+      current,
+    );
     await expect(
       handler.create(
         userId,
@@ -301,26 +315,45 @@ describe('schema and see-also sync entity handlers', () => {
     const journeyId = newId();
     const ruleId = newId();
     const choiceId = newId();
-    await db.insert(chapters).values({ id: chapterId, storyId, name: 'Capítulo', index: 1 } as never);
-    await db.insert(scenes).values({ id: sceneId, storyId, chapterId, name: 'Cena', index: 1 } as never);
+    await db
+      .insert(chapters)
+      .values({ id: chapterId, storyId, name: 'Capítulo', index: 1 } as never);
+    await db
+      .insert(scenes)
+      .values({ id: sceneId, storyId, chapterId, name: 'Cena', index: 1 } as never);
     await db.insert(items).values({ id: itemId, storyId, name: 'Chave' } as never);
     await db.insert(itemJourneys).values({
-      id: journeyId, storyId, itemId, sceneId, newState: 'encontrada',
+      id: journeyId,
+      storyId,
+      itemId,
+      sceneId,
+      newState: 'encontrada',
     } as never);
     await db.insert(worldRules).values({ id: ruleId, storyId, title: 'Regra' } as never);
     await db.insert(choices).values({
-      id: choiceId, storyId, sceneId, nextSceneId: sceneId, text: 'Seguir',
+      id: choiceId,
+      storyId,
+      sceneId,
+      nextSceneId: sceneId,
+      text: 'Seguir',
     } as never);
 
     for (const [type, id] of [
-      ['Chapter', chapterId], ['Scene', sceneId], ['Item', itemId], ['ItemJourney', journeyId],
-      ['WorldRule', ruleId], ['Choice', choiceId],
+      ['Chapter', chapterId],
+      ['Scene', sceneId],
+      ['Item', itemId],
+      ['ItemJourney', journeyId],
+      ['WorldRule', ruleId],
+      ['Choice', choiceId],
     ] as const) {
       await handler.create(
         userId,
         storyId,
         create('SeeAlsoRelation', newId(), {
-          entityAType: 'Character', entityAId: characterId, entityBType: type, entityBId: id,
+          entityAType: 'Character',
+          entityAId: characterId,
+          entityBType: type,
+          entityBId: id,
         }),
       );
     }

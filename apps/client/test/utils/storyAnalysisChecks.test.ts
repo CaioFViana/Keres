@@ -786,13 +786,34 @@ describe('branching dead ends', () => {
   it('reports a non-final scene only when every declared exit is impossible', async () => {
     const input = baseInput();
     input.choices.push({ id: 'blocked', sceneId: 'start', nextSceneId: 'next', text: 'Continue' });
-    input.scenes.push({ id: 'next', name: 'Next', locationId: null, isStart: false, isFinish: true, chapterId: null, index: 2 });
+    input.scenes.push({
+      id: 'next',
+      name: 'Next',
+      locationId: null,
+      isStart: false,
+      isFinish: true,
+      chapterId: null,
+      index: 2,
+    });
     input.choiceCheckGroups.push({ id: 'group', choiceId: 'blocked', combinator: 'AND' });
-    input.choiceChecks.push({ id: 'check', groupId: 'group', mode: 'enable', type: 'trigger', sceneId: null, minVisits: null, itemId: null, itemPresence: null, triggerName: 'never-set', triggerState: 'set' });
+    input.choiceChecks.push({
+      id: 'check',
+      groupId: 'group',
+      mode: 'enable',
+      type: 'trigger',
+      sceneId: null,
+      minVisits: null,
+      itemId: null,
+      itemPresence: null,
+      triggerName: 'never-set',
+      triggerState: 'set',
+    });
 
-    expect(await buildStoryAnalysisReport(input)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ entityId: 'start', messageKey: 'analysis_scene_dead_end' }),
-    ]));
+    expect(await buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ entityId: 'start', messageKey: 'analysis_scene_dead_end' }),
+      ]),
+    );
   });
 
   it('does not call an explicitly marked ending a dead end', async () => {
@@ -800,9 +821,22 @@ describe('branching dead ends', () => {
     input.scenes[0]!.isFinish = true;
     input.choices.push({ id: 'blocked', sceneId: 'start', nextSceneId: 'start', text: 'Loop' });
     input.choiceCheckGroups.push({ id: 'group', choiceId: 'blocked', combinator: 'AND' });
-    input.choiceChecks.push({ id: 'check', groupId: 'group', mode: 'enable', type: 'trigger', sceneId: null, minVisits: null, itemId: null, itemPresence: null, triggerName: 'never-set', triggerState: 'set' });
+    input.choiceChecks.push({
+      id: 'check',
+      groupId: 'group',
+      mode: 'enable',
+      type: 'trigger',
+      sceneId: null,
+      minVisits: null,
+      itemId: null,
+      itemPresence: null,
+      triggerName: 'never-set',
+      triggerState: 'set',
+    });
 
-    expect((await buildStoryAnalysisReport(input)).map((finding) => finding.messageKey)).not.toContain('analysis_scene_dead_end');
+    expect(
+      (await buildStoryAnalysisReport(input)).map((finding) => finding.messageKey),
+    ).not.toContain('analysis_scene_dead_end');
   });
 });
 
@@ -834,7 +868,13 @@ describe('saved route traversal', () => {
     });
     input.routes = [{ id: 'route', name: 'Main route' }];
     input.routeSteps = [
-      { id: 'first', routeId: 'route', position: 1, sceneId: 'start', selectedChoiceId: 'continue' },
+      {
+        id: 'first',
+        routeId: 'route',
+        position: 1,
+        sceneId: 'start',
+        selectedChoiceId: 'continue',
+      },
       { id: 'last', routeId: 'route', position: 2, sceneId: 'end', selectedChoiceId: null },
     ];
 

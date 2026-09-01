@@ -264,7 +264,12 @@ describe('buildConflictSummaries - relation conflicts', () => {
     ],
     [
       'SeeAlsoRelation',
-      { entityAId: 'character-1', entityAType: 'Character', entityBId: 'item-1', entityBType: 'Item' },
+      {
+        entityAId: 'character-1',
+        entityAType: 'Character',
+        entityBId: 'item-1',
+        entityBType: 'Item',
+      },
       [
         ['Character:character-1', 'Ari'],
         ['Item:item-1', 'Chave'],

@@ -67,16 +67,14 @@ export function useSeeAlsoEntityOptions(
       const [optionsByType, worldPieceRows] = await Promise.all([
         Promise.all(
           SEE_ALSO_ENTITY_TYPES.map(
-          async (entityType) =>
-            [entityType, await loadEntityOptions(db, storyId, entityType)] as const,
+            async (entityType) =>
+              [entityType, await loadEntityOptions(db, storyId, entityType)] as const,
           ),
         ),
         db
           .select({ id: worldRules.id, section: worldRules.section })
           .from(worldRules)
-          .where(
-            and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)),
-          )
+          .where(and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)))
           .all(),
       ]);
       const sectionByWorldPieceId = new Map(

@@ -208,7 +208,10 @@ const WorldRuleDetailScreen = () => {
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
         onAddComment={(input) =>
-          addComment({ fieldKey: 'section' }, { ...input, contentSnapshot: t(`world_piece_section_${worldRule.section}`) })
+          addComment(
+            { fieldKey: 'section' },
+            { ...input, contentSnapshot: t(`world_piece_section_${worldRule.section}`) },
+          )
         }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
@@ -225,7 +228,10 @@ const WorldRuleDetailScreen = () => {
           isStoryOwner={isStoryOwner}
           currentUserId={currentUserId}
           onAddComment={(input) =>
-            addComment({ fieldKey: field }, { ...input, contentSnapshot: worldRule[field] || t('common_na') })
+            addComment(
+              { fieldKey: field },
+              { ...input, contentSnapshot: worldRule[field] || t('common_na') },
+            )
           }
           onDeleteComment={deleteComment}
           onUpdateComment={updateComment}

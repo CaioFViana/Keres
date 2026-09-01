@@ -442,9 +442,19 @@ describe('collaboration sync entity handlers', () => {
     });
     await db.update(scenes).set({ isFinish: true }).where(eq(scenes.id, sceneId));
 
-    await scenesHandler.create(userId, storyId, create('Scene', nextLinearId, sceneData(nextLinearId)));
-    expect(await scenesHandler.findById(sceneId)).toMatchObject({ isStart: false, isFinish: false });
-    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({ isStart: true, isFinish: true });
+    await scenesHandler.create(
+      userId,
+      storyId,
+      create('Scene', nextLinearId, sceneData(nextLinearId)),
+    );
+    expect(await scenesHandler.findById(sceneId)).toMatchObject({
+      isStart: false,
+      isFinish: false,
+    });
+    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({
+      isStart: true,
+      isFinish: true,
+    });
 
     await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
     const branchSceneId = newId();
@@ -453,7 +463,13 @@ describe('collaboration sync entity handlers', () => {
       storyId,
       create('Scene', branchSceneId, sceneData(branchSceneId)),
     );
-    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({ isStart: true, isFinish: true });
-    expect(await scenesHandler.findById(branchSceneId)).toMatchObject({ isStart: true, isFinish: true });
+    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({
+      isStart: true,
+      isFinish: true,
+    });
+    expect(await scenesHandler.findById(branchSceneId)).toMatchObject({
+      isStart: true,
+      isFinish: true,
+    });
   });
 });

@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
 import { characters, operationLog, stories } from '../../src/db/schema';
 import { SyncService, syncService } from '../../src/services/SyncService';
-import { TierLimitExceededError, tierEnforcementService } from '../../src/services/TierEnforcementService';
+import {
+  TierLimitExceededError,
+  tierEnforcementService,
+} from '../../src/services/TierEnforcementService';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -170,14 +173,22 @@ describe('SyncService defensive protocol paths', () => {
         message: expect.stringContaining('No sync handler'),
       }),
     ]);
-    expect(await db.query.characters.findFirst({ where: eq(characters.id, characterId) })).toBeUndefined();
+    expect(
+      await db.query.characters.findFirst({ where: eq(characters.id, characterId) }),
+    ).toBeUndefined();
   });
 
   it('treats a delete for an absent entity as an idempotent successful outcome', async () => {
     const characterId = newId();
 
     const { data } = await push(ana.token, storyId, [
-      { type: 'delete', entity: 'Character', id: characterId, version: 1, clientOperationId: 'gone' },
+      {
+        type: 'delete',
+        entity: 'Character',
+        id: characterId,
+        version: 1,
+        clientOperationId: 'gone',
+      },
     ]);
 
     expect(data.conflicts).toEqual([]);
@@ -226,12 +237,20 @@ describe('SyncService defensive protocol paths', () => {
       orderBy: (table, { asc }) => [asc(table.operationVersion)],
     });
     expect(rows).toEqual([
-      expect.objectContaining({ operationType: 'delete', entityId: deletedId, payload: { id: deletedId } }),
+      expect.objectContaining({
+        operationType: 'delete',
+        entityId: deletedId,
+        payload: { id: deletedId },
+      }),
       expect.objectContaining({
         operationType: 'reorder',
         payload: expect.objectContaining({ reorderItems: [{ id: deletedId, newIndex: 1 }] }),
       }),
-      expect.objectContaining({ operationType: 'update', entityId: expect.any(String), payload: {} }),
+      expect.objectContaining({
+        operationType: 'update',
+        entityId: expect.any(String),
+        payload: {},
+      }),
     ]);
     expect(rows[2].entityId).not.toBe('');
   });
@@ -260,7 +279,11 @@ describe('SyncService defensive protocol paths', () => {
 
     expect(result.applied).toEqual([]);
     expect(result.conflicts).toEqual([
-      expect.objectContaining({ entityId: characterId, reason: 'validation', message: expect.stringContaining('invalid') }),
+      expect.objectContaining({
+        entityId: characterId,
+        reason: 'validation',
+        message: expect.stringContaining('invalid'),
+      }),
     ]);
   });
 
@@ -277,9 +300,7 @@ describe('SyncService defensive protocol paths', () => {
     expect(result.conflicts).toEqual([
       expect.objectContaining({ entityId: invalidId, reason: 'validation' }),
     ]);
-    expect(result.applied).toEqual([
-      expect.objectContaining({ entityId: validId }),
-    ]);
+    expect(result.applied).toEqual([expect.objectContaining({ entityId: validId })]);
   });
 
   it('returns a tier refusal as a recoverable limit conflict and leaves no entity behind', async () => {
@@ -297,7 +318,9 @@ describe('SyncService defensive protocol paths', () => {
       expect(result.conflicts).toEqual([
         expect.objectContaining({ entityId: characterId, reason: 'limit_exceeded' }),
       ]);
-      expect(await db.query.characters.findFirst({ where: eq(characters.id, characterId) })).toBeUndefined();
+      expect(
+        await db.query.characters.findFirst({ where: eq(characters.id, characterId) }),
+      ).toBeUndefined();
     } finally {
       limit.mockRestore();
     }

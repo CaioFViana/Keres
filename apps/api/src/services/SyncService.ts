@@ -520,7 +520,10 @@ export class SyncService {
       throw new SyncConflictError('validation', `Operation time ${operationTime} is invalid.`);
     }
     if (timestamp.getTime() > Date.now() + 1000) {
-      throw new SyncConflictError('validation', `Operation time ${operationTime} cannot be in the future.`);
+      throw new SyncConflictError(
+        'validation',
+        `Operation time ${operationTime} cannot be in the future.`,
+      );
     }
   }
 

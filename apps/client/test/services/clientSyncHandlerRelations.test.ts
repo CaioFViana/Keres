@@ -185,7 +185,11 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
     const handler = withHandler();
     await handler.applyCreate(
       STORY_ID,
-      createUpdate('LocationRelation', 'local', relation('local', { updatedAt: '2026-08-11T12:00:00.000Z' })),
+      createUpdate(
+        'LocationRelation',
+        'local',
+        relation('local', { updatedAt: '2026-08-11T12:00:00.000Z' }),
+      ),
     );
 
     await handler.applyCreate(
@@ -200,7 +204,10 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
 
   it('replaces an older local connection when the incoming duplicate is newer', async () => {
     const handler = withHandler();
-    await handler.applyCreate(STORY_ID, createUpdate('LocationRelation', 'local', relation('local')));
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('LocationRelation', 'local', relation('local')),
+    );
 
     await handler.applyCreate(
       STORY_ID,
@@ -284,31 +291,34 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
 
   it('ignores malformed, misaddressed, and missing local operations without mutating a relation', async () => {
     const handler = withHandler();
-    await handler.applyCreate(STORY_ID, createUpdate('LocationRelation', 'relation-1', relation('relation-1')));
-
     await handler.applyCreate(
       STORY_ID,
-      {
-        type: 'create',
-        entity: 'LocationRelation',
-        data: relation('missing-id'),
-      } as unknown as CreateStoryUpdate,
+      createUpdate('LocationRelation', 'relation-1', relation('relation-1')),
     );
-    await handler.applyUpdate(
-      STORY_ID,
-      { type: 'update', entity: 'LocationRelation', id: 'relation-1' } as UpdateStoryUpdate,
-    );
+
+    await handler.applyCreate(STORY_ID, {
+      type: 'create',
+      entity: 'LocationRelation',
+      data: relation('missing-id'),
+    } as unknown as CreateStoryUpdate);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'LocationRelation',
+      id: 'relation-1',
+    } as UpdateStoryUpdate);
     await handler.applyUpdate(
       STORY_ID,
       updateUpdate('LocationRelation', 'unknown', { relationType: 'contains' }),
     );
-    await handler.applyDelete(
-      STORY_ID,
-      { type: 'delete', entity: 'LocationRelation' } as DeleteStoryUpdate,
-    );
+    await handler.applyDelete(STORY_ID, {
+      type: 'delete',
+      entity: 'LocationRelation',
+    } as DeleteStoryUpdate);
     await handler.applyDelete(STORY_ID, deleteUpdate('OtherEntity', 'relation-1'));
 
-    expect(await handler.getById('relation-1')).toEqual(expect.objectContaining({ isDeleted: false }));
+    expect(await handler.getById('relation-1')).toEqual(
+      expect.objectContaining({ isDeleted: false }),
+    );
     expect(await database.db.select().from(schema.locationRelations).all()).toHaveLength(1);
   });
 });

@@ -224,7 +224,9 @@ it('blocks removing a server with a live owner story, but purges that story afte
   const service = createServerService(database.db);
 
   await expect(service.deleteServer('server')).rejects.toBeInstanceOf(ServerHasOwnedStoriesError);
-  expect(await service.getOwnedStories('server')).toEqual([{ id: TEST_STORY_ID, title: 'A Queda' }]);
+  expect(await service.getOwnedStories('server')).toEqual([
+    { id: TEST_STORY_ID, title: 'A Queda' },
+  ]);
 
   await database.db
     .update(schema.stories)

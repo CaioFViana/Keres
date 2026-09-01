@@ -1,7 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { chapters, characters, favorites, operationLog, scenes, stories } from '../../src/db/schema';
+import {
+  chapters,
+  characters,
+  favorites,
+  operationLog,
+  scenes,
+  stories,
+} from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -284,9 +291,9 @@ describe('POST /sync/:storyId', () => {
         }),
       ]),
     );
-    expect((await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name).toBe(
-      'Keres',
-    );
+    expect(
+      (await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name,
+    ).toBe('Keres');
   });
 
   it('accepts a resent create after later edits by comparing it with the recorded create payload', async () => {
@@ -303,22 +310,24 @@ describe('POST /sync/:storyId', () => {
     expect(retried.data.applied).toEqual([
       expect.objectContaining({ entityId: characterId, entityVersion: 2 }),
     ]);
-    expect((await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name).toBe(
-      'Keres, a Deusa',
-    );
+    expect(
+      (await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name,
+    ).toBe('Keres, a Deusa');
   });
 
   it('refuses a second create with the same id when neither the live row nor its original log payload matches', async () => {
     const characterId = newId();
     await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
 
-    const { data } = await push(ana.token, storyId, [
-      createCharacter(characterId, 'Outra pessoa'),
-    ]);
+    const { data } = await push(ana.token, storyId, [createCharacter(characterId, 'Outra pessoa')]);
 
     expect(data.applied).toEqual([]);
     expect(data.conflicts).toEqual([
-      expect.objectContaining({ entityId: characterId, reason: 'validation', message: expect.stringContaining('different data') }),
+      expect.objectContaining({
+        entityId: characterId,
+        reason: 'validation',
+        message: expect.stringContaining('different data'),
+      }),
     ]);
   });
 
@@ -340,11 +349,17 @@ describe('POST /sync/:storyId', () => {
         type: 'update',
         entity: 'Character',
         id: characterId,
-        changes: { name: 'Keres voltou', isDeleted: false, version: deleted.data.applied[0].entityVersion },
+        changes: {
+          name: 'Keres voltou',
+          isDeleted: false,
+          version: deleted.data.applied[0].entityVersion,
+        },
       },
     ]);
     expect(restored.data.conflicts).toEqual([]);
-    expect((await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))).toMatchObject({
+    expect(
+      await db.query.characters.findFirst({ where: eq(characters.id, characterId) }),
+    ).toMatchObject({
       name: 'Keres voltou',
       isDeleted: false,
       deletedAt: null,
@@ -552,7 +567,10 @@ describe('GET /sync/:storyId/pull', () => {
   it('publishes legacy favorites exactly once when a story becomes public', async () => {
     const bia = await registerUser('bia');
     const favoriteId = newId();
-    await db.update(stories).set({ favoriteBehavior: 'individual_public' }).where(eq(stories.id, storyId));
+    await db
+      .update(stories)
+      .set({ favoriteBehavior: 'individual_public' })
+      .where(eq(stories.id, storyId));
     await db.insert(favorites).values({
       id: favoriteId,
       storyId,
@@ -600,38 +618,104 @@ describe('GET /sync/:storyId/pull', () => {
     const sceneB = newId();
     const now = new Date();
     await db.insert(chapters).values([
-      { id: chapterA, storyId, name: 'Um', index: 1, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
-      { id: chapterB, storyId, name: 'Dois', index: 2, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
+      {
+        id: chapterA,
+        storyId,
+        name: 'Um',
+        index: 1,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+      {
+        id: chapterB,
+        storyId,
+        name: 'Dois',
+        index: 2,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
     ] as never);
     await db.insert(scenes).values([
-      { id: sceneA, storyId, chapterId: chapterA, name: 'Cena um', index: 1, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
-      { id: sceneB, storyId, chapterId: chapterA, name: 'Cena dois', index: 2, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
+      {
+        id: sceneA,
+        storyId,
+        chapterId: chapterA,
+        name: 'Cena um',
+        index: 1,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+      {
+        id: sceneB,
+        storyId,
+        chapterId: chapterA,
+        name: 'Cena dois',
+        index: 2,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
     ] as never);
 
-    const chapterPush = await push(ana.token, storyId, [{
-      type: 'reorder', entity: 'Chapter', id: chapterA, version: 1,
-      reorderItems: [{ id: sceneA, newIndex: 2 }, { id: sceneB, newIndex: 1 }],
-      clientOperationId: 'chapter-reorder',
-    }]);
+    const chapterPush = await push(ana.token, storyId, [
+      {
+        type: 'reorder',
+        entity: 'Chapter',
+        id: chapterA,
+        version: 1,
+        reorderItems: [
+          { id: sceneA, newIndex: 2 },
+          { id: sceneB, newIndex: 1 },
+        ],
+        clientOperationId: 'chapter-reorder',
+      },
+    ]);
     expect(chapterPush.data.conflicts).toEqual([]);
-    const storyPush = await push(ana.token, storyId, [{
-      type: 'reorder', entity: 'Story', id: storyId, version: 1,
-      reorderItems: [{ id: chapterA, newIndex: 2 }, { id: chapterB, newIndex: 1 }],
-      clientOperationId: 'story-reorder',
-    }]);
+    const storyPush = await push(ana.token, storyId, [
+      {
+        type: 'reorder',
+        entity: 'Story',
+        id: storyId,
+        version: 1,
+        reorderItems: [
+          { id: chapterA, newIndex: 2 },
+          { id: chapterB, newIndex: 1 },
+        ],
+        clientOperationId: 'story-reorder',
+      },
+    ]);
     expect(storyPush.data.conflicts).toEqual([]);
 
     const { data } = await pull(ana.token, storyId);
-    expect(data.updates).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        type: 'reorder', entity: 'Chapter', id: chapterA,
-        reorderItems: [{ id: sceneA, newIndex: 2 }, { id: sceneB, newIndex: 1 }],
-      }),
-      expect.objectContaining({
-        type: 'reorder', entity: 'Story', id: storyId,
-        reorderItems: [{ id: chapterA, newIndex: 2 }, { id: chapterB, newIndex: 1 }],
-      }),
-    ]));
+    expect(data.updates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'reorder',
+          entity: 'Chapter',
+          id: chapterA,
+          reorderItems: [
+            { id: sceneA, newIndex: 2 },
+            { id: sceneB, newIndex: 1 },
+          ],
+        }),
+        expect.objectContaining({
+          type: 'reorder',
+          entity: 'Story',
+          id: storyId,
+          reorderItems: [
+            { id: chapterA, newIndex: 2 },
+            { id: chapterB, newIndex: 1 },
+          ],
+        }),
+      ]),
+    );
   });
 
   it('rejects a pull with no version, since the server cannot guess it', async () => {
@@ -818,7 +902,12 @@ describe('sync authorization hardening', () => {
     await grantWriter(ana, bia, storyId);
 
     const { data } = await push(bia.token, storyId, [
-      { type: 'update', entity: 'Story', id: storyId, changes: { title: 'Título colaborativo', version: 1 } },
+      {
+        type: 'update',
+        entity: 'Story',
+        id: storyId,
+        changes: { title: 'Título colaborativo', version: 1 },
+      },
     ]);
 
     expect(data.conflicts).toEqual([]);
@@ -1042,7 +1131,7 @@ describe('sync authorization hardening', () => {
     expect(deleted.data.applied).toHaveLength(1);
   });
 
-  it('does not let one writer delete another writer\'s comment', async () => {
+  it("does not let one writer delete another writer's comment", async () => {
     const bia = await registerUser('bia');
     const caio = await registerUser('caio');
     await grantWriter(ana, bia, storyId);
@@ -1070,7 +1159,12 @@ describe('sync authorization hardening', () => {
     ]);
 
     const deletion = await push(caio.token, storyId, [
-      { type: 'delete', entity: 'Comment', id: commentId, version: created.data.applied[0].entityVersion },
+      {
+        type: 'delete',
+        entity: 'Comment',
+        id: commentId,
+        version: created.data.applied[0].entityVersion,
+      },
     ]);
 
     expect(deletion.data.applied).toEqual([]);

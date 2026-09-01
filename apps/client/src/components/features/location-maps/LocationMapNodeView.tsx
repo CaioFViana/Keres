@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
 
@@ -11,6 +11,7 @@ interface Props {
   node: LocationMapNodeType;
   name: string;
   selected: boolean;
+  layoutEditing: boolean;
   scale: number;
   /** Surface translation for the world-coordinate canvas. */
   positionOffsetX?: number;
@@ -19,6 +20,8 @@ interface Props {
   onMove: (nodeId: string, x: number, y: number) => void;
   onDragStart: (nodeId: string) => void;
   onDragEnd: (nodeId: string) => void;
+  onBringToFront: (nodeId: string) => void;
+  onSendToBack: (nodeId: string) => void;
 }
 
 /**
@@ -29,6 +32,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   node,
   name,
   selected,
+  layoutEditing,
   scale,
   positionOffsetX = 0,
   positionOffsetY = 0,
@@ -36,6 +40,8 @@ const LocationMapNodeView: React.FC<Props> = ({
   onMove,
   onDragStart,
   onDragEnd,
+  onBringToFront,
+  onSendToBack,
 }) => {
   const { colors } = useTheme();
   const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
@@ -46,19 +52,26 @@ const LocationMapNodeView: React.FC<Props> = ({
   position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
-  const handlers = useRef({ onSelect, onMove, onDragStart, onDragEnd });
-  handlers.current = { onSelect, onMove, onDragStart, onDragEnd };
+  const layoutEditingRef = useRef(layoutEditing);
+  layoutEditingRef.current = layoutEditing;
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  const handlers = useRef({ onSelect, onMove, onDragStart, onDragEnd, onBringToFront, onSendToBack });
+  handlers.current = { onSelect, onMove, onDragStart, onDragEnd, onBringToFront, onSendToBack };
 
   const pan = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponderCapture: () => true,
+        onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
+          if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
-        onMoveShouldSetPanResponderCapture: () => dragging.current,
+        onMoveShouldSetPanResponderCapture: () =>
+          dragging.current && !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !(layoutEditingRef.current && selectedRef.current) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
@@ -148,6 +161,19 @@ const LocationMapNodeView: React.FC<Props> = ({
           textShadowRadius: 3,
           textShadowOffset: { width: 0, height: 0 },
         },
+        layerButton: {
+          position: 'absolute',
+          top: -12,
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.primary,
+          zIndex: 3,
+        },
       }),
     [colors, node.color, node.x, node.y, positionOffsetX, positionOffsetY, selected],
   );
@@ -161,6 +187,24 @@ const LocationMapNodeView: React.FC<Props> = ({
           color={node.color}
         />
       </View>
+      {layoutEditing && selected && (
+        <>
+          <TouchableOpacity
+            style={[styles.layerButton, { left: -12 }]}
+            onPress={() => handlers.current.onSendToBack(nodeId.current)}
+            accessibilityLabel="Send location point to back"
+          >
+            <Ionicons name="layers-outline" size={15} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.layerButton, { right: -12 }]}
+            onPress={() => handlers.current.onBringToFront(nodeId.current)}
+            accessibilityLabel="Bring location point to front"
+          >
+            <Ionicons name="layers" size={15} color={colors.primary} />
+          </TouchableOpacity>
+        </>
+      )}
       <Text
         style={styles.label}
         numberOfLines={Platform.OS === 'web' ? 1 : undefined}

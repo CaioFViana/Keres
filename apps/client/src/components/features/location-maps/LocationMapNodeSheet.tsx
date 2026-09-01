@@ -51,8 +51,6 @@ interface Props {
   onRemoveNode: () => void;
   onOpenLocation: () => void;
   onClose: () => void;
-  onBringToFront: () => void;
-  onSendToBack: () => void;
 }
 
 /**
@@ -83,8 +81,6 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   onRemoveNode,
   onOpenLocation,
   onClose,
-  onBringToFront,
-  onSendToBack,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -189,17 +185,6 @@ const LocationMapNodeSheet: React.FC<Props> = ({
             ) : (
               <Text style={styles.hint}>{t('common_na')}</Text>
             )}
-          </View>
-        )}
-
-        {canEdit && (
-          <View style={cardStyles.cardContainer}>
-            <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('canvas_layer')}</Text>
-            <View style={styles.openRow}>
-              <Button onPress={onSendToBack}>{t('canvas_send_to_back')}</Button>
-              <View style={{ width: 8 }} />
-              <Button onPress={onBringToFront}>{t('canvas_bring_to_front')}</Button>
-            </View>
           </View>
         )}
 

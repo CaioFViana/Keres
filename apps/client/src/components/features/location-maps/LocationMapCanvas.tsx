@@ -1,5 +1,6 @@
 import type { LocationMapContentType } from '@keres/shared';
 import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Svg, { G, Path, Polygon } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
@@ -36,8 +37,16 @@ interface Props {
   contains: LocationMapContains[];
   selectedImageId: string | null;
   selectedNodeId: string | null;
+  layoutEditing: boolean;
   onSelectImage: (imageId: string) => void;
   onMoveImage: (imageId: string, x: number, y: number) => void;
+  onResizeImage: (imageId: string, width: number, height: number) => void;
+  onBringImageToFront: (imageId: string) => void;
+  onSendImageToBack: (imageId: string) => void;
+  onToggleImageLock: (imageId: string) => void;
+  onRemoveImage: (imageId: string) => void;
+  onBringNodeToFront: (nodeId: string) => void;
+  onSendNodeToBack: (nodeId: string) => void;
   onSelectNode: (nodeId: string) => void;
   onMoveNode: (nodeId: string, x: number, y: number) => void;
 }
@@ -138,8 +147,16 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       contains,
       selectedImageId,
       selectedNodeId,
+      layoutEditing,
       onSelectImage,
       onMoveImage,
+      onResizeImage,
+      onBringImageToFront,
+      onSendImageToBack,
+      onToggleImageLock,
+      onRemoveImage,
+      onBringNodeToFront,
+      onSendNodeToBack,
       onSelectNode,
       onMoveNode,
     },
@@ -357,27 +374,35 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
-        {stackedImages.map((image) => (
-          <LocationMapImageView
-            key={image.id}
-            image={image}
-            uri={imageUris[image.galleryId] ?? null}
-            selected={selectedImageId === image.id}
-            scale={scale}
-            positionOffsetX={-size.originX}
-            positionOffsetY={-size.originY}
-            locked={image.locked}
-            onSelect={onSelectImage}
-            onMove={handleImageDragMove}
-            onDragStart={handleImageDragStart}
-            onDragEnd={handleImageDragEnd}
-          />
-        ))}
+        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
+          {stackedImages.map((image) => (
+            <LocationMapImageView
+              key={image.id}
+              image={image}
+              uri={imageUris[image.galleryId] ?? null}
+              selected={selectedImageId === image.id}
+              layoutEditing={layoutEditing}
+              scale={scale}
+              positionOffsetX={-size.originX}
+              positionOffsetY={-size.originY}
+              locked={image.locked}
+              onSelect={onSelectImage}
+              onMove={handleImageDragMove}
+              onResize={onResizeImage}
+              onDragStart={handleImageDragStart}
+              onDragEnd={handleImageDragEnd}
+              onBringToFront={onBringImageToFront}
+              onSendToBack={onSendImageToBack}
+              onToggleLock={onToggleImageLock}
+              onRemove={onRemoveImage}
+            />
+          ))}
+        </View>
         <Svg
           width={size.width}
           height={size.height}
           pointerEvents="none"
-          style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0 }}
+          style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0, zIndex: 1 }}
         >
           <G transform={`translate(${-size.originX} ${-size.originY})`}>
             {connectionPaths.map((connection) => (
@@ -392,21 +417,26 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             ))}
           </G>
         </Svg>
-        {stackedNodes.map((node) => (
-          <LocationMapNodeView
-            key={node.id}
-            node={node}
-            name={nodeNames[node.locationId] ?? node.locationId}
-            selected={selectedNodeId === node.id}
-            scale={scale}
-            positionOffsetX={-size.originX}
-            positionOffsetY={-size.originY}
-            onSelect={onSelectNode}
-            onMove={handleNodeDragMove}
-            onDragStart={handleNodeDragStart}
-            onDragEnd={handleNodeDragEnd}
-          />
-        ))}
+        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
+          {stackedNodes.map((node) => (
+            <LocationMapNodeView
+              key={node.id}
+              node={node}
+              name={nodeNames[node.locationId] ?? node.locationId}
+              selected={selectedNodeId === node.id}
+              layoutEditing={layoutEditing}
+              scale={scale}
+              positionOffsetX={-size.originX}
+              positionOffsetY={-size.originY}
+              onSelect={onSelectNode}
+              onMove={handleNodeDragMove}
+              onDragStart={handleNodeDragStart}
+              onDragEnd={handleNodeDragEnd}
+              onBringToFront={onBringNodeToFront}
+              onSendToBack={onSendNodeToBack}
+            />
+          ))}
+        </View>
       </GraphCanvasFrame>
     );
   },

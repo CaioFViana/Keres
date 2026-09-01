@@ -9,15 +9,31 @@ interface Props {
   saving: boolean;
   onRevert: () => void;
   onSave: () => void;
+  layoutEditing?: boolean;
+  onToggleLayout?: () => void;
 }
 
 /** The map header's two document actions, kept together so their enabled state cannot drift apart. */
-const LocationMapHeaderActions: React.FC<Props> = ({ dirty, saving, onRevert, onSave }) => {
+const LocationMapHeaderActions: React.FC<Props> = ({
+  dirty,
+  saving,
+  onRevert,
+  onSave,
+  layoutEditing = false,
+  onToggleLayout = () => undefined,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}>
+      <TouchableOpacity onPress={onToggleLayout} accessibilityLabel={t('board_edit_layout')}>
+        <Ionicons
+          name={layoutEditing ? 'checkmark-circle-outline' : 'move-outline'}
+          size={24}
+          color={layoutEditing ? colors.primary : colors.text}
+        />
+      </TouchableOpacity>
       <TouchableOpacity
         testID="location-map-revert"
         onPress={onRevert}

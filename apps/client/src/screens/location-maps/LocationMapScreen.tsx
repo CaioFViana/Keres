@@ -12,7 +12,6 @@ import {
 import LocationMapCanvas, {
   type LocationMapCanvasHandle,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import LocationMapImageSheet from '@/src/components/features/location-maps/LocationMapImageSheet';
 import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
@@ -79,6 +78,8 @@ const LocationMapScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [openedNodeId, setOpenedNodeId] = useState<string | null>(null);
+  const [layoutEditing, setLayoutEditing] = useState(false);
   const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -177,11 +178,16 @@ const LocationMapScreen = () => {
                 saving={saving}
                 onRevert={revert}
                 onSave={() => void save()}
+                layoutEditing={layoutEditing}
+                onToggleLayout={() => {
+                  setLayoutEditing((current) => !current);
+                  setOpenedNodeId(null);
+                }}
               />
             )
           : undefined,
       });
-    }, [canEdit, dirty, map?.name, navigation, revert, save, saving, t]),
+    }, [canEdit, dirty, layoutEditing, map?.name, navigation, revert, save, saving, t]),
   );
 
   const galleryMediaById = useMemo(() => {
@@ -393,56 +399,47 @@ const LocationMapScreen = () => {
     setContent((current) => appendLocationsToMap(current, values));
   };
 
-  const selectedImage = useMemo(
-    () => content.images.find((image) => image.id === selectedImageId) ?? null,
-    [content.images, selectedImageId],
+  const openedNode = useMemo(
+    () => content.nodes.find((node) => node.id === openedNodeId) ?? null,
+    [content.nodes, openedNodeId],
   );
 
-  const handleResizeImage = useCallback(
-    (factor: number) => {
-      if (!selectedImageId) return;
-      setContent((current) => ({
-        ...current,
-        images: current.images.map((image) =>
-          image.id === selectedImageId
-            ? {
-                ...image,
-                width: clamp(image.width * factor, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
-                height: clamp(
-                  image.height * factor,
-                  LOCATION_MAP_IMAGE_MIN,
-                  LOCATION_MAP_IMAGE_MAX,
-                ),
-              }
-            : image,
-        ),
-      }));
-    },
-    [selectedImageId],
-  );
-
-  const handleRemoveImage = useCallback(() => {
-    if (!selectedImageId) return;
-    setContent((current) => ({
-      ...current,
-      images: current.images.filter((image) => image.id !== selectedImageId),
-    }));
-    setSelectedImageId(null);
-  }, [selectedImageId]);
-
-  const handleToggleImageLock = useCallback(() => {
-    if (!selectedImageId) return;
+  const handleResizeImageDirect = useCallback((imageId: string, width: number, height: number) => {
     setContent((current) => ({
       ...current,
       images: current.images.map((image) =>
-        image.id === selectedImageId ? { ...image, locked: !image.locked } : image,
+        image.id === imageId
+          ? {
+              ...image,
+              width: clamp(width, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
+              height: clamp(height, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
+            }
+          : image,
       ),
     }));
-  }, [selectedImageId]);
+  }, []);
+
+  const handleRemoveImage = useCallback((imageId: string) => {
+    setContent((current) => ({
+      ...current,
+      images: current.images.filter((image) => image.id !== imageId),
+    }));
+    setSelectedImageId(null);
+  }, []);
+
+  const handleToggleImageLock = useCallback((imageId: string) => {
+    setContent((current) => ({
+      ...current,
+      images: current.images.map((image) =>
+        image.id === imageId ? { ...image, locked: !image.locked } : image,
+      ),
+    }));
+  }, []);
 
   const handleSelectImage = useCallback((imageId: string) => {
     setSelectedNodeId(null);
     setSelectedImageId(imageId);
+    setOpenedNodeId(null);
   }, []);
 
   const handleMoveImage = useCallback((imageId: string, x: number, y: number) => {
@@ -455,7 +452,8 @@ const LocationMapScreen = () => {
   const handleSelectNode = useCallback((nodeId: string) => {
     setSelectedImageId(null);
     setSelectedNodeId(nodeId);
-  }, []);
+    if (!layoutEditing) setOpenedNodeId(nodeId);
+  }, [layoutEditing]);
 
   const handleMoveNode = useCallback((nodeId: string, x: number, y: number) => {
     setContent((current) => ({
@@ -526,8 +524,16 @@ const LocationMapScreen = () => {
         contains={contains}
         selectedImageId={selectedImageId}
         selectedNodeId={selectedNodeId}
+        layoutEditing={layoutEditing}
         onSelectImage={handleSelectImage}
         onMoveImage={handleMoveImage}
+        onResizeImage={handleResizeImageDirect}
+        onBringImageToFront={(id) => moveImageLayer(id, 'front')}
+        onSendImageToBack={(id) => moveImageLayer(id, 'back')}
+        onToggleImageLock={handleToggleImageLock}
+        onRemoveImage={handleRemoveImage}
+        onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
+        onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
         onSelectNode={handleSelectNode}
         onMoveNode={handleMoveNode}
       />
@@ -539,24 +545,12 @@ const LocationMapScreen = () => {
         exporting={exporting}
         exportLabel={t('location_map_export')}
       />
-      {selectedImage && (
-        <LocationMapImageSheet
-          visible
-          onClose={() => setSelectedImageId(null)}
-          onResize={handleResizeImage}
-          onRemove={handleRemoveImage}
-          locked={selectedImage.locked}
-          onToggleLock={handleToggleImageLock}
-          onBringToFront={() => moveImageLayer(selectedImage.id, 'front')}
-          onSendToBack={() => moveImageLayer(selectedImage.id, 'back')}
-        />
-      )}
-      {selectedNode && (
+      {openedNode && (
         <LocationMapNodeSheet
-          name={nodeNames[selectedNode.locationId] ?? selectedNode.locationId}
+          name={nodeNames[openedNode.locationId] ?? openedNode.locationId}
           summary={selectedNodeSummary}
-          icon={selectedNode.icon}
-          color={selectedNode.color}
+          icon={openedNode.icon}
+          color={openedNode.color}
           parent={nodeParent}
           childLocations={nodeChildren}
           connections={nodeConnections}
@@ -568,7 +562,7 @@ const LocationMapScreen = () => {
             setContent((current) => ({
               ...current,
               nodes: current.nodes.map((node) =>
-                node.id === selectedNode.id ? { ...node, icon } : node,
+                node.id === openedNode.id ? { ...node, icon } : node,
               ),
             }))
           }
@@ -576,7 +570,7 @@ const LocationMapScreen = () => {
             setContent((current) => ({
               ...current,
               nodes: current.nodes.map((node) =>
-                node.id === selectedNode.id ? { ...node, color } : node,
+                node.id === openedNode.id ? { ...node, color } : node,
               ),
             }))
           }
@@ -589,17 +583,19 @@ const LocationMapScreen = () => {
           onRemoveNode={() => {
             setContent((current) => ({
               ...current,
-              nodes: current.nodes.filter((node) => node.id !== selectedNode.id),
+              nodes: current.nodes.filter((node) => node.id !== openedNode.id),
             }));
             setSelectedNodeId(null);
+            setOpenedNodeId(null);
           }}
           onOpenLocation={() => {
             setSelectedNodeId(null);
-            navigateToEntity('Location', selectedNode.locationId);
+            navigateToEntity('Location', openedNode.locationId);
           }}
-          onClose={() => setSelectedNodeId(null)}
-          onBringToFront={() => moveNodeLayer(selectedNode.id, 'front')}
-          onSendToBack={() => moveNodeLayer(selectedNode.id, 'back')}
+          onClose={() => {
+            setOpenedNodeId(null);
+            setSelectedNodeId(null);
+          }}
         />
       )}
     </View>

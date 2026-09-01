@@ -37,7 +37,6 @@ import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
 type StorySuggestion = [value: string, usageCount: number];
-
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
   'character_relation_changed',
@@ -46,7 +45,6 @@ const SUGGESTION_SOURCE_EVENTS = [
   'worldrule_changed',
   'attribute_value_changed',
 ] as const;
-
 const ENTITY_LABELS: Record<string, string> = {
   Character: 'characters_title',
   CharacterRelation: 'character_relations_title',
@@ -354,13 +352,7 @@ const SuggestionsScreen = () => {
   const styles = StyleSheet.create({
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
     description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
-    // Compact: a strip of chips with horizontal scrolling (it fits well on narrow screens). Wide: a fixed
-    // left-hand column with the complete list of groups, without depending on horizontal scrolling to reach
-    // groups "off screen" - the original problem on this screen.
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    // Vertical scrolling with line wrapping, not horizontal scrolling - in a list with many groups, a chip
-    // "off screen" to the side gave no visual clue that there was more to scroll to; with wrapping,
-    // everything is reachable just by going down.
     groups: { maxHeight: 160, marginBottom: 16 },
     groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
     chip: {

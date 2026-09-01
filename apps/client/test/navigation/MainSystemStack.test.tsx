@@ -435,7 +435,7 @@ it.each([
   ['LocationsStack', 'Locations'],
   ['ItemsStack', 'Items'],
   ['TagsStack', 'Tags'],
-  ['WorldRulesStack', 'WorldRules'],
+  ['WorldRulesStack', 'WorldIndex'],
   ['NotesStack', 'Notes'],
   ['GalleryStack', 'GalleryList'],
   ['BoardsStack', 'BoardList'],

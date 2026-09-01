@@ -223,7 +223,9 @@ const LocationMapNodeSheet: React.FC<Props> = ({
         )}
 
         <View style={cardStyles.cardContainer}>
-          <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('location_map_destination')}</Text>
+          <Text style={[cardStyles.cardText, styles.cardTitle]}>
+            {t('location_map_destination')}
+          </Text>
           {canEdit && (
             <Select
               options={destinationOptions}
@@ -235,7 +237,9 @@ const LocationMapNodeSheet: React.FC<Props> = ({
             />
           )}
           {destinationMapId ? (
-            destinationUnavailable ? <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text> : (
+            destinationUnavailable ? (
+              <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text>
+            ) : (
               <Button onPress={onOpenDestination}>{t('location_map_open_destination')}</Button>
             )
           ) : canEdit ? (

@@ -103,9 +103,14 @@ const mockGetById = jest.fn();
 const mockGetLocations = jest.fn();
 const mockGetGalleries = jest.fn();
 const mockGetRelations = jest.fn();
+const mockGetMaps = jest.fn();
 jest.mock('../../src/services/storymanagement/LocationMapService', () => ({
   __esModule: true,
-  createLocationMapService: () => ({ getById: mockGetById, updateMap: jest.fn() }),
+  createLocationMapService: () => ({
+    getById: mockGetById,
+    getMapsForStory: mockGetMaps,
+    updateMap: jest.fn(),
+  }),
 }));
 jest.mock('../../src/services/storymanagement/LocationService', () => ({
   __esModule: true,
@@ -171,7 +176,7 @@ jest.mock('../../src/components/features/location-maps/LocationMapNodeSheet', ()
     ),
   };
 });
-jest.mock('../../src/components/features/location-maps/LocationMapImageSheet', () => ({
+jest.mock('../../src/components/features/location-maps/LocationMapMarkerSheet', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -217,6 +222,7 @@ beforeEach(() => {
   ]);
   mockGetGalleries.mockResolvedValue([]);
   mockGetRelations.mockResolvedValue([]);
+  mockGetMaps.mockResolvedValue([map]);
 });
 
 describe('LocationMapScreen', () => {

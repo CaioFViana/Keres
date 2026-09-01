@@ -577,7 +577,6 @@ export async function resolveRelationEntityName(
   }
   return { name, type };
 }
-
 export async function getEntityIdentifier(
   db: AppDrizzleClient,
   entityTypeString: string,

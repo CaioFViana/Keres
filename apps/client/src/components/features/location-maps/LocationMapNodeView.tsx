@@ -3,12 +3,15 @@ import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
-import { LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
 
 interface Props {
-  node: Pick<LocationMapNodeType | LocationMapMarkerType, 'id' | 'x' | 'y' | 'icon' | 'color' | 'zIndex' | 'destinationMapId'>;
+  node: Pick<
+    LocationMapNodeType | LocationMapMarkerType,
+    'id' | 'x' | 'y' | 'icon' | 'color' | 'zIndex' | 'destinationMapId'
+  >;
   name: string;
   selected: boolean;
   layoutEditing: boolean;
@@ -69,7 +72,15 @@ const LocationMapNodeView: React.FC<Props> = ({
     onSendToBack,
     onOpenDestination,
   });
-  handlers.current = { onSelect, onMove, onDragStart, onDragEnd, onBringToFront, onSendToBack, onOpenDestination };
+  handlers.current = {
+    onSelect,
+    onMove,
+    onDragStart,
+    onDragEnd,
+    onBringToFront,
+    onSendToBack,
+    onOpenDestination,
+  };
 
   const pan = useMemo(
     () =>

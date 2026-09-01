@@ -186,7 +186,7 @@ describe('getEntityName', () => {
       OperationLogEntityType.WorldRule,
       schema.worldRules,
       { title: 'Magia' },
-      'world_rule - Magia',
+      'world_piece_section_rule - Magia',
     ],
     ['tag', OperationLogEntityType.Tag, schema.tags, { name: 'Vilões' }, 'tag - Vilões'],
   ])('names a %s', async (_label, entityType, table, columns, expected) => {

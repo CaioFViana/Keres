@@ -6,8 +6,11 @@ import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
-import { interpolateColor, pointOnCircleBoundary } from '../../../utils/locationMapColors';
-import { locationMapCanvasBounds, LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
+import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
+import {
+  locationMapCanvasBounds,
+  LOCATION_MAP_NODE_SIZE,
+} from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
@@ -204,12 +207,13 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           ),
         };
       }
-      if (activeDrag.kind === 'node') return {
-        ...content,
-        nodes: content.nodes.map((node) =>
-          node.id === activeDrag.id ? { ...node, x: activeDrag.x, y: activeDrag.y } : node,
-        ),
-      };
+      if (activeDrag.kind === 'node')
+        return {
+          ...content,
+          nodes: content.nodes.map((node) =>
+            node.id === activeDrag.id ? { ...node, x: activeDrag.x, y: activeDrag.y } : node,
+          ),
+        };
       return {
         ...content,
         markers: (content.markers ?? []).map((marker) =>
@@ -408,12 +412,18 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [layoutContent.markers],
     );
     const stackedPoints = useMemo(
-      () => [
-        ...stackedNodes.map((node, order) => ({ kind: 'node' as const, point: node, order })),
-        ...stackedMarkers.map((marker, order) => ({ kind: 'marker' as const, point: marker, order: order + stackedNodes.length })),
-      ].sort((left, right) =>
-        (left.point.zIndex ?? 0) - (right.point.zIndex ?? 0) || left.order - right.order,
-      ),
+      () =>
+        [
+          ...stackedNodes.map((node, order) => ({ kind: 'node' as const, point: node, order })),
+          ...stackedMarkers.map((marker, order) => ({
+            kind: 'marker' as const,
+            point: marker,
+            order: order + stackedNodes.length,
+          })),
+        ].sort(
+          (left, right) =>
+            (left.point.zIndex ?? 0) - (right.point.zIndex ?? 0) || left.order - right.order,
+        ),
       [stackedMarkers, stackedNodes],
     );
 
@@ -472,8 +482,12 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             <LocationMapNodeView
               key={point.id}
               node={point}
-              name={kind === 'node' ? nodeNames[point.locationId] ?? point.locationId : point.title}
-              selected={kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id}
+              name={
+                kind === 'node' ? (nodeNames[point.locationId] ?? point.locationId) : point.title
+              }
+              selected={
+                kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
+              }
               layoutEditing={layoutEditing}
               scale={scale}
               positionOffsetX={-size.originX}

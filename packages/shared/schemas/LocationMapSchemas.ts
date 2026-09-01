@@ -178,7 +178,9 @@ export function remapLocationMapContent(
     nodes: content.nodes.map((node) => ({
       ...node,
       locationId: remapId(node.locationId),
-      destinationMapId: node.destinationMapId ? remapId(node.destinationMapId) : node.destinationMapId,
+      destinationMapId: node.destinationMapId
+        ? remapId(node.destinationMapId)
+        : node.destinationMapId,
     })),
     markers: content.markers?.map((marker) => ({
       ...marker,

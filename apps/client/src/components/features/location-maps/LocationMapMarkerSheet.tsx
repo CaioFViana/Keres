@@ -24,7 +24,12 @@ interface Props {
   destinationUnavailable: boolean;
   destinationOptions: { label: string; value: string }[];
   canEdit: boolean;
-  onChange: (changes: { title?: string; note?: string | null; icon?: string; color?: string }) => void;
+  onChange: (changes: {
+    title?: string;
+    note?: string | null;
+    icon?: string;
+    color?: string;
+  }) => void;
   onCreateDestination: () => void;
   onOpenDestination: () => void;
   onClearDestination: () => void;
@@ -77,7 +82,13 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
       paddingBottom: 16,
     },
     label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
-    input: { borderWidth: 1, borderColor: colors.border, color: colors.text, borderRadius: 8, padding: 10 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+      borderRadius: 8,
+      padding: 10,
+    },
     note: { minHeight: 96, textAlignVertical: 'top' },
     hint: { color: colors.textSecondary, marginTop: 8 },
     destination: { color: colors.primary, fontWeight: '600', marginTop: 8 },
@@ -100,30 +111,77 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.label}>{t('name')}</Text>
-        <TextInput value={title} editable={canEdit} onChangeText={(value) => onChange({ title: value })} style={styles.input} />
+        <TextInput
+          value={title}
+          editable={canEdit}
+          onChangeText={(value) => onChange({ title: value })}
+          style={styles.input}
+        />
         <Text style={styles.label}>{t('location_map_marker_note')}</Text>
-        <TextInput value={note ?? ''} editable={canEdit} multiline onChangeText={(value) => onChange({ note: value || null })} style={[styles.input, styles.note]} />
-        {canEdit && <>
-          <Text style={styles.label}>{t('location_map_node_icon')}</Text>
-          <IconPickerInput currentIcon={icon} onSelectIcon={(value) => onChange({ icon: value })} placeholder={t('location_map_node_icon')} iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]} />
-          <Text style={styles.label}>{t('location_map_node_color')}</Text>
-          <ColorPickerInput currentColor={color} onSelectColor={(value) => onChange({ color: value })} placeholder={t('location_map_node_color')} />
-        </>}
+        <TextInput
+          value={note ?? ''}
+          editable={canEdit}
+          multiline
+          onChangeText={(value) => onChange({ note: value || null })}
+          style={[styles.input, styles.note]}
+        />
+        {canEdit && (
+          <>
+            <Text style={styles.label}>{t('location_map_node_icon')}</Text>
+            <IconPickerInput
+              currentIcon={icon}
+              onSelectIcon={(value) => onChange({ icon: value })}
+              placeholder={t('location_map_node_icon')}
+              iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]}
+            />
+            <Text style={styles.label}>{t('location_map_node_color')}</Text>
+            <ColorPickerInput
+              currentColor={color}
+              onSelectColor={(value) => onChange({ color: value })}
+              placeholder={t('location_map_node_color')}
+            />
+          </>
+        )}
         <Text style={styles.label}>{t('location_map_destination')}</Text>
-        {canEdit && <Select options={destinationOptions} value={destinationMapId ?? ''} onValueChange={(value) => onChangeDestination(value || null)} placeholder={t('location_map_destination_none')} multiple={false} allowDeselect />}
-        {destinationMapId ? <>
-          <Text style={destinationUnavailable ? styles.hint : styles.destination}>{destinationUnavailable ? t('location_map_destination_unavailable') : destinationName}</Text>
-          <View testID="location-map-marker-destination-actions" style={styles.actionGroup}>
-            {!destinationUnavailable && <Button onPress={onOpenDestination}>{t('location_map_open_destination')}</Button>}
-            {canEdit && <Button onPress={onClearDestination}>{t('location_map_clear_destination')}</Button>}
-          </View>
-        </> : canEdit ? (
+        {canEdit && (
+          <Select
+            options={destinationOptions}
+            value={destinationMapId ?? ''}
+            onValueChange={(value) => onChangeDestination(value || null)}
+            placeholder={t('location_map_destination_none')}
+            multiple={false}
+            allowDeselect
+          />
+        )}
+        {destinationMapId ? (
+          <>
+            <Text style={destinationUnavailable ? styles.hint : styles.destination}>
+              {destinationUnavailable ? t('location_map_destination_unavailable') : destinationName}
+            </Text>
+            <View testID="location-map-marker-destination-actions" style={styles.actionGroup}>
+              {!destinationUnavailable && (
+                <Button onPress={onOpenDestination}>{t('location_map_open_destination')}</Button>
+              )}
+              {canEdit && (
+                <Button onPress={onClearDestination}>{t('location_map_clear_destination')}</Button>
+              )}
+            </View>
+          </>
+        ) : canEdit ? (
           <View testID="location-map-marker-empty-destination-actions" style={styles.actionGroup}>
             <Button onPress={onCreateDestination}>{t('location_map_create_destination')}</Button>
-            <Button onPress={onRemove} style={styles.removeInGroup}>{t('location_map_remove_marker')}</Button>
+            <Button onPress={onRemove} style={styles.removeInGroup}>
+              {t('location_map_remove_marker')}
+            </Button>
           </View>
-        ) : <Text style={styles.hint}>{t('location_map_destination_none')}</Text>}
-        {canEdit && destinationMapId && <Button onPress={onRemove} style={styles.remove}>{t('location_map_remove_marker')}</Button>}
+        ) : (
+          <Text style={styles.hint}>{t('location_map_destination_none')}</Text>
+        )}
+        {canEdit && destinationMapId && (
+          <Button onPress={onRemove} style={styles.remove}>
+            {t('location_map_remove_marker')}
+          </Button>
+        )}
       </ScrollView>
     </ResponsiveModal>
   );

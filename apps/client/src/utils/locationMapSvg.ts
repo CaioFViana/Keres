@@ -3,8 +3,8 @@ import type {
   LocationMapConnection,
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import { interpolateColor, pointOnCircleBoundary } from './locationMapColors';
-import { LOCATION_MAP_NODE_SIZE } from './locationMapLayout';
+import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 import { LOCATION_MAP_ICON_PATHS } from './locationMapIconPaths';
 
 export interface LocationMapSvgOptions {
@@ -81,7 +81,11 @@ export function renderLocationMapSvg(
     maxX = Math.max(maxX, marker.x + NODE_RADIUS);
     maxY = Math.max(maxY, marker.y + NODE_RADIUS + 18);
   }
-  if (content.images.length === 0 && content.nodes.length === 0 && (content.markers?.length ?? 0) === 0) {
+  if (
+    content.images.length === 0 &&
+    content.nodes.length === 0 &&
+    (content.markers?.length ?? 0) === 0
+  ) {
     minX = 0;
     minY = 0;
     maxX = 0;
@@ -180,7 +184,9 @@ export function renderLocationMapSvg(
     const iconY = p.y - iconSize / 2;
     return [
       `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(marker.color)}" stroke-width="2"/>`,
-      iconPaths ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${ICON_SCALE})" fill="${escapeXml(marker.color)}">${iconPaths}</g>` : '',
+      iconPaths
+        ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${ICON_SCALE})" fill="${escapeXml(marker.color)}">${iconPaths}</g>`
+        : '',
       `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
       `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');

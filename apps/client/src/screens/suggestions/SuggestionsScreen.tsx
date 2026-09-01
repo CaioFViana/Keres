@@ -5,6 +5,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
+import { WORLD_PIECE_SECTIONS } from '@keres/shared/entities/WorldRule';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -21,6 +22,8 @@ import {
   customAttributeSuggestionType,
   isNamedListType,
   namedListDisplayKey,
+  WORLD_PIECE_CATEGORY_TYPE,
+  WORLD_PIECE_TYPE_PREFIX,
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -40,6 +43,7 @@ const SUGGESTION_SOURCE_EVENTS = [
   'character_relation_changed',
   'item_changed',
   'item_journey_changed',
+  'worldrule_changed',
   'attribute_value_changed',
 ] as const;
 
@@ -119,6 +123,18 @@ const SuggestionsScreen = () => {
       key: group.key,
       label: `${group.entityLabels.join(' + ')} · ${group.fieldLabels.join(' / ')}`,
     }));
+    const worldPiece = [
+      ...WORLD_PIECE_SECTIONS.map((section) => ({
+        type: `${WORLD_PIECE_TYPE_PREFIX}${section}`,
+        key: `world_piece_type_${section}`,
+        label: `${t(`world_piece_section_${section}`)} · ${t('world_piece_type')}`,
+      })),
+      {
+        type: WORLD_PIECE_CATEGORY_TYPE,
+        key: 'world_piece_category',
+        label: `${t('world_title')} · ${t('category')}`,
+      },
+    ];
     const schemaService = createStorySchemaFieldService(db);
     const batches = await Promise.all(
       STORY_SCHEMA_ENTITY_TYPES.map((entityType) =>
@@ -144,7 +160,9 @@ const SuggestionsScreen = () => {
       name: list.name,
       label: `${t('suggestion_named_list')} · ${list.name}`,
     }));
-    const next = [...native, ...custom, ...named].sort((a, b) => a.label.localeCompare(b.label));
+    const next = [...native, ...worldPiece, ...custom, ...named].sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
     setGroups(next);
     setSelectedType((current) =>
       current && next.some((group) => group.type === current) ? current : (next[0]?.type ?? null),

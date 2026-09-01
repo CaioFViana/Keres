@@ -201,6 +201,39 @@ const WorldRuleDetailScreen = () => {
 
       <CommentableDetailField
         storyId={worldRule.storyId}
+        label={t('world_piece_section')}
+        value={t(`world_piece_section_${worldRule.section}`)}
+        comments={commentsByField['section'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) =>
+          addComment({ fieldKey: 'section' }, { ...input, contentSnapshot: t(`world_piece_section_${worldRule.section}`) })
+        }
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
+
+      {(['type', 'category', 'behavior', 'usability', 'danger'] as const).map((field) => (
+        <CommentableDetailField
+          key={field}
+          storyId={worldRule.storyId}
+          label={t(field === 'category' ? 'category' : `world_piece_${field}`)}
+          value={worldRule[field] || t('common_na')}
+          comments={commentsByField[field] ?? []}
+          canComment={canComment}
+          isStoryOwner={isStoryOwner}
+          currentUserId={currentUserId}
+          onAddComment={(input) =>
+            addComment({ fieldKey: field }, { ...input, contentSnapshot: worldRule[field] || t('common_na') })
+          }
+          onDeleteComment={deleteComment}
+          onUpdateComment={updateComment}
+        />
+      ))}
+
+      <CommentableDetailField
+        storyId={worldRule.storyId}
         label={t('description')}
         value={worldRule.description || t('common_na')}
         comments={commentsByField['description'] ?? []}

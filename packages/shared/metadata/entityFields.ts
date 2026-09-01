@@ -89,6 +89,12 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   WorldRule: [
     { name: 'title', label: 'field_title', type: 'string', isSearchable: true },
     { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
+    { name: 'section', label: 'world_piece_section', type: 'string', isSearchable: true },
+    { name: 'type', label: 'world_piece_type', type: 'string', isSearchable: true },
+    { name: 'category', label: 'category', type: 'string', isSearchable: true },
+    { name: 'behavior', label: 'world_piece_behavior', type: 'string', isSearchable: true },
+    { name: 'usability', label: 'world_piece_usability', type: 'string', isSearchable: true },
+    { name: 'danger', label: 'world_piece_danger', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],

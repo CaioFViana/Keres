@@ -7,12 +7,18 @@ import CustomAttributeFields, {
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import Select from '@/src/components/common/inputs/Select/Select';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import type { WorldRule } from '@keres/shared/entities/WorldRule';
+import {
+  WORLD_PIECE_SECTIONS,
+  type WorldPieceSection,
+  type WorldRule,
+} from '@keres/shared/entities/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -72,6 +78,12 @@ const WorldRuleFormScreen = () => {
   ); // State to manage worldRuleId
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string | null>(null);
+  const [section, setSection] = useState<WorldPieceSection>('rule');
+  const [type, setType] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const [behavior, setBehavior] = useState<string | null>(null);
+  const [usability, setUsability] = useState<string | null>(null);
+  const [danger, setDanger] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
@@ -121,6 +133,12 @@ const WorldRuleFormScreen = () => {
           if (fetchedWorldRule) {
             setTitle(fetchedWorldRule.title);
             setDescription(fetchedWorldRule.description);
+            setSection(fetchedWorldRule.section as WorldPieceSection);
+            setType(fetchedWorldRule.type);
+            setCategory(fetchedWorldRule.category);
+            setBehavior(fetchedWorldRule.behavior);
+            setUsability(fetchedWorldRule.usability);
+            setDanger(fetchedWorldRule.danger);
             setIsFavorite(fetchedWorldRule.isFavorite);
             setExtraNotes(fetchedWorldRule.extraNotes);
 
@@ -176,6 +194,12 @@ const WorldRuleFormScreen = () => {
       > = {
         title: title.trim(),
         description: description,
+        section,
+        type,
+        category,
+        behavior,
+        usability,
+        danger,
         isFavorite: isFavorite,
         extraNotes: extraNotes,
       };
@@ -312,6 +336,31 @@ const WorldRuleFormScreen = () => {
         style={commonInputStyles.input}
       />
 
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_section')}</Text>
+      <Select
+        options={WORLD_PIECE_SECTIONS.map((value) => ({
+          value,
+          label: t(`world_piece_section_${value}`),
+        }))}
+        value={section}
+        onValueChange={(next) => {
+          const nextSection = (next ?? 'rule') as WorldPieceSection;
+          if (nextSection !== section && type) setType(null);
+          setSection(nextSection);
+        }}
+        placeholder={t('world_piece_section')}
+        multiple={false}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_type')}</Text>
+      <SuggestionTextInput
+        placeholder={t('world_piece_type_placeholder')}
+        value={type || ''}
+        onChangeText={setType}
+        type={`world_piece_type:${section}`}
+        storyId={selectedStory?.id || ''}
+      />
+
       <View style={styles.switchContainer}>
         <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
           {t('is_favorite')}
@@ -330,6 +379,39 @@ const WorldRuleFormScreen = () => {
         onChangeText={setDescription}
         style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
         multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
+      <SuggestionTextInput
+        placeholder={t('category_placeholder')}
+        value={category || ''}
+        onChangeText={setCategory}
+        type="world_piece_category"
+        storyId={selectedStory?.id || ''}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_behavior')}</Text>
+      <TextInput
+        placeholder={t('world_piece_behavior_placeholder')}
+        value={behavior || ''}
+        onChangeText={setBehavior}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_usability')}</Text>
+      <TextInput
+        placeholder={t('world_piece_usability_placeholder')}
+        value={usability || ''}
+        onChangeText={setUsability}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_danger')}</Text>
+      <TextInput
+        placeholder={t('world_piece_danger_placeholder')}
+        value={danger || ''}
+        onChangeText={setDanger}
+        style={commonInputStyles.input}
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>

@@ -3,7 +3,7 @@ import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,7 @@ import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'WorldRulesStack'>,
@@ -42,6 +43,8 @@ const WorldRulesScreen = () => {
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
+  const route = useRoute();
+  const section = (route.params as { section?: WorldPieceSection } | undefined)?.section;
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
@@ -102,9 +105,10 @@ const WorldRulesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(term('WorldRule', true));
+      const title = section ? t(`world_piece_section_${section}`) : t('world_title');
+      setDocumentTitle(title);
       navigation.getParent()?.setOptions({
-        title: term('WorldRule', true),
+        title,
         headerRight: canEdit
           ? () => (
               <TouchableOpacity
@@ -116,7 +120,7 @@ const WorldRulesScreen = () => {
             )
           : undefined,
       });
-    }, [navigation, colors.text, t, canEdit, term]),
+    }, [navigation, colors.text, t, canEdit, term, section]),
   );
 
   const handleToggleFavorite = useCallback(
@@ -175,7 +179,11 @@ const WorldRulesScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
-        data={worldRules}
+        data={
+          section
+            ? worldRules.filter((piece: WorldRuleWithTags) => piece.section === section)
+            : worldRules
+        }
         renderItem={memoizedWorldRuleListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}

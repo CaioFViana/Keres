@@ -176,6 +176,13 @@
       "when": 1788138291738,
       "tag": "0024_purple_ozymandias",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1788269972501,
+      "tag": "0025_youthful_solo",
+      "breakpoints": true
     }
   ]
 }

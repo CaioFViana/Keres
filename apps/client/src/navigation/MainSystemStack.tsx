@@ -104,6 +104,7 @@ import TagsScreen from '../screens/tags/TagListScreen';
 import type { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
+import WorldIndexScreen from '../screens/worldrules/WorldIndexScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
@@ -425,7 +426,8 @@ const NoteStackNavigator = () => {
 const WorldRulesStack = createNativeStackNavigator<WorldRulesStackParamList>();
 
 export type WorldRulesStackParamList = {
-  WorldRules: undefined;
+  WorldIndex: undefined;
+  WorldRules: { section?: import('@keres/shared/entities/WorldRule').WorldPieceSection } | undefined;
   WorldRuleDetail: WorldRuleDetailScreenParamList['WorldRuleDetail'];
   WorldRuleForm: { worldRuleId?: string };
 };
@@ -434,6 +436,7 @@ const WorldRuleStackNavigator = () => {
   useBackButtonHandler();
   return (
     <WorldRulesStack.Navigator screenOptions={{ headerShown: false }}>
+      <WorldRulesStack.Screen name="WorldIndex" component={WorldIndexScreen} />
       <WorldRulesStack.Screen name="WorldRules" component={WorldRulesScreen} />
       <WorldRulesStack.Screen name="WorldRuleDetail" component={WorldRuleDetailScreen} />
       <WorldRulesStack.Screen name="WorldRuleForm" component={WorldRuleFormScreen} />
@@ -807,14 +810,14 @@ const MainSystemNavigator = () => {
           name="WorldRulesStack"
           component={WorldRuleStackNavigator}
           options={{
-            title: term('WorldRule', true),
-            drawerLabel: term('WorldRule', true),
+            title: t('world_title'),
+            drawerLabel: t('world_title'),
             drawerIcon: drawerIcon('globe-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
-              navigation.navigate('WorldRulesStack', { screen: 'WorldRules' });
+              navigation.navigate('WorldRulesStack', { screen: 'WorldIndex' });
             },
           })}
         />

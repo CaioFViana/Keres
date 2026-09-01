@@ -206,7 +206,7 @@ Do not pursue all of these simultaneously:
 
 ## 6. Story packs: the permanent rule
 
-Packs are creation-time seeds, not frameworks installed over an existing story. They may create existing rows such as custom fields, suggestions, tags, chapters, scenes, stats, world rules and notes. The creator may then edit or delete every one of them.
+Packs are creation-time seeds, not frameworks installed over an existing story. They may create existing rows such as custom fields, suggestions, tags, chapters, scenes, stats, World Pieces and notes. The creator may then edit or delete every one of them.
 
 This preserves three properties:
 

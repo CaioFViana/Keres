@@ -84,7 +84,16 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
   },
   WorldRule: {
     titleField: 'title',
-    searchFields: ['title', 'description', 'extraNotes'],
+    searchFields: [
+      'title',
+      'description',
+      'type',
+      'category',
+      'behavior',
+      'usability',
+      'danger',
+      'extraNotes',
+    ],
   },
   // A Mode has no screen of its own: the result carries the owning character's id, and opening it
   // goes to that character's detail, where the modes are listed (see ENTITY_ROUTES in the client).

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
@@ -21,6 +22,7 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({
   onViewDetails,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const descriptionSummary = truncate(worldRule.description, 150);
 
@@ -32,6 +34,10 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({
 
   const renderExpandedContent = (rule: WorldRuleWithTags) => (
     <View>
+      <Text style={[styles.descriptionText, { fontWeight: '600' }]}>
+        {t(`world_piece_section_${rule.section}`)}
+        {rule.type ? ` · ${rule.type}` : ''}
+      </Text>
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
       {rule.tags && rule.tags.length > 0 && <TagList tags={rule.tags} />}
     </View>

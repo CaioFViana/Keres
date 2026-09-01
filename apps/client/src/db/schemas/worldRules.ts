@@ -1,5 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import type { TagSelect } from './tags'; // Import TagSelect
 
 export const worldRules = sqliteTable('world_rules', {
@@ -7,6 +8,12 @@ export const worldRules = sqliteTable('world_rules', {
   storyId: text('story_id').notNull(),
   title: text('title').notNull(),
   description: text('description'),
+  section: text('section').$type<WorldPieceSection>().notNull().default('rule'),
+  type: text('type'),
+  category: text('category'),
+  behavior: text('behavior'),
+  usability: text('usability'),
+  danger: text('danger'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

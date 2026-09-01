@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
@@ -79,6 +80,8 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
       )}
       title={title}
       onItemPress={handleScenePress}
+      icon="easel"
+      color={getEntityAppearance('Scene').color}
     />
   );
 };

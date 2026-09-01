@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useTheme } from '../../../../theme';
 import { createULID } from '../../../../utils/entityUtils';
@@ -67,17 +67,6 @@ const NoteRelationManager: React.FC<Props> = ({
   );
 
   const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowLast: { borderBottomWidth: 0 },
-    icon: { marginRight: 10 },
-    name: { flex: 1, fontSize: 15, color: colors.text },
-    empty: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
     overlay: {
       flex: 1,
       justifyContent: 'center',
@@ -105,38 +94,19 @@ const NoteRelationManager: React.FC<Props> = ({
             noOptionsText={t('no_notes_assigned')}
           />
         )}
-        {noteRelations.length === 0 ? (
-          <Text style={styles.empty}>{t('no_notes_assigned')}</Text>
-        ) : (
-          noteRelations.map((relation, index) => {
+        <EntityRelationList
+          emptyText={t('no_notes_assigned')}
+          items={noteRelations.map((relation) => {
             const note = byId.get(relation.noteId);
-            const content = (
-              <>
-                <Ionicons name="document" size={20} color={noteColor} style={styles.icon} />
-                <Text style={styles.name} numberOfLines={1}>
-                  {note?.title || relation.noteId}
-                </Text>
-                {!editable && (
-                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-                )}
-              </>
-            );
-            const style = [styles.row, index === noteRelations.length - 1 && styles.rowLast];
-            return editable ? (
-              <View key={relation.id} style={style}>
-                {content}
-              </View>
-            ) : (
-              <TouchableOpacity
-                key={relation.id}
-                style={style}
-                onPress={() => note && setOpenedNote(note)}
-              >
-                {content}
-              </TouchableOpacity>
-            );
-          })
-        )}
+            return {
+              id: relation.id,
+              title: note?.title || relation.noteId,
+              icon: 'document',
+              color: noteColor,
+              onPress: editable ? undefined : () => note && setOpenedNote(note),
+            };
+          })}
+        />
       </CollapsibleCard>
       {openedNote && (
         <Modal animationType="fade" transparent visible onRequestClose={() => setOpenedNote(null)}>

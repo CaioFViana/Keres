@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -111,6 +112,8 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
       }}
       title={sceneCopy.entities}
       onItemPress={handleScenePress}
+      itemIcon="easel"
+      itemColor={getEntityAppearance('Scene').color}
     />
   );
 };

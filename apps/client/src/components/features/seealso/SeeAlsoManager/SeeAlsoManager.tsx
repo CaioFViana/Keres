@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { SeeAlsoEntityType } from '@keres/shared';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   decodeSeeAlsoValue,
@@ -12,7 +11,6 @@ import {
 } from '../../../../hooks/useSeeAlsoEntityOptions';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useSeeAlsoRelations } from '../../../../hooks/useSeeAlsoRelations';
-import { useTheme } from '../../../../theme';
 import { ENTITY_TYPE_ICONS } from '../../../../utils/entityTypeIcons';
 
 interface SeeAlsoManagerProps {
@@ -46,7 +44,6 @@ export interface SeeAlsoManagerHandle {
 const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
   ({ storyId, entityType, entityId, editable, title, allowedEntityTypes }, ref) => {
     const { t } = useTranslation();
-    const { colors } = useTheme();
     const navigateToDetail = useNavigateToEntityDetail();
     const { relations, save, persistSeeAlsoRelations } = useSeeAlsoRelations(
       storyId,
@@ -97,19 +94,22 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
       [navigateToDetail],
     );
 
-    const styles = StyleSheet.create({
-      row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
-      },
-      rowLast: { borderBottomWidth: 0 },
-      icon: { marginRight: 10 },
-      name: { flex: 1, fontSize: 15, color: colors.text },
-      emptyText: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
-    });
+    const listItems = useMemo(
+      () =>
+        relations.map((relation) => {
+          const option = optionsByValue.get(
+            encodeSeeAlsoValue(relation.otherType, relation.otherId),
+          );
+          return {
+            id: relation.relationId,
+            title: option?.name || relation.otherId,
+            icon: ENTITY_TYPE_ICONS[relation.otherType],
+            color: option?.color || '#607D8B',
+            onPress: editable ? undefined : () => handlePress(relation.otherType, relation.otherId),
+          };
+        }),
+      [editable, handlePress, optionsByValue, relations],
+    );
 
     return (
       <CollapsibleCard
@@ -125,47 +125,7 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
             noOptionsText={t('see_also_no_entities_available')}
           />
         )}
-        {relations.length === 0 ? (
-          <Text style={styles.emptyText}>{t('see_also_empty')}</Text>
-        ) : (
-          relations.map((relation, index) => {
-            const option = optionsByValue.get(
-              encodeSeeAlsoValue(relation.otherType, relation.otherId),
-            );
-            const rowStyle = [styles.row, index === relations.length - 1 && styles.rowLast];
-            const rowContent = (
-              <>
-                <Ionicons
-                  name={ENTITY_TYPE_ICONS[relation.otherType]}
-                  size={20}
-                  color={option?.color || colors.primary}
-                  style={styles.icon}
-                />
-                <Text style={styles.name} numberOfLines={1}>
-                  {option?.name || relation.otherId}
-                </Text>
-                {!editable && (
-                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-                )}
-              </>
-            );
-            // On Forms (editable), the row does not navigate - leaving the screen would lose the form's
-            // unsaved changes. Only the detail screens (view-only) navigate on tap.
-            return editable ? (
-              <View key={relation.relationId} style={rowStyle}>
-                {rowContent}
-              </View>
-            ) : (
-              <TouchableOpacity
-                key={relation.relationId}
-                style={rowStyle}
-                onPress={() => handlePress(relation.otherType, relation.otherId)}
-              >
-                {rowContent}
-              </TouchableOpacity>
-            );
-          })
-        )}
+        <EntityRelationList items={listItems} emptyText={t('see_also_empty')} />
       </CollapsibleCard>
     );
   },

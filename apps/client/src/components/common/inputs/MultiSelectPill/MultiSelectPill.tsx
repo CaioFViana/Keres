@@ -36,7 +36,7 @@ interface MultiSelectPillProps {
   options?: MultiSelectOption[];
   /**
    * Selection in two steps: the type first, then the entity - good when there are hundreds of options of
-   * different types (the `EntityPickerInput`, say). Exactly one of the two (`options` or `groups`) has to
+   * different types (an entity selector, say). Exactly one of the two (`options` or `groups`) has to
    * be passed.
    */
   groups?: MultiSelectGroup[];
@@ -66,7 +66,7 @@ const FLAT_GROUP_KEY = '__flat__';
  * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 duplicated lines of style/animation): `options`
  * flattens the list straight into one modal; `groups` asks for the type first. When there is only one
  * group (a flat `options`, or `groups` with a single item), the type-picking step is skipped - the same
- * path `EntityPickerInput` already used in `singleSelect` mode.
+ * path used by a one-type entity selector in `singleSelect` mode.
  */
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   options,

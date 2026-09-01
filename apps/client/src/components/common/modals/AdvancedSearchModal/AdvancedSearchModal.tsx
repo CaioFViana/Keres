@@ -1,5 +1,5 @@
-import type { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance, type StorySchemaEntityType } from '@keres/shared';
 import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -17,7 +17,8 @@ import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/Date
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
-import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
 
 interface AdvancedSearchModalProps {
   entityName: string;
@@ -34,6 +35,32 @@ export interface AdvancedSearchScope {
   prefix: string;
   label: string;
 }
+
+/** Local adapter: advanced-search fields have a dynamic target type, but selection remains MultiSelectPill. */
+const AdvancedEntityPicker: React.FC<{
+  storyId: string;
+  entityType: StorySchemaEntityType;
+  value: string | null;
+  onChange: (value: string | null) => void;
+  placeholder: string;
+}> = ({ storyId, entityType, value, onChange, placeholder }) => {
+  const { t } = useTranslation();
+  const { options, loading } = useEntityPickerOptions(storyId, entityType);
+  return (
+    <MultiSelectPill
+      options={options.map((option) => ({
+        label: option.name || t('unnamed'),
+        value: option.id,
+        color: getEntityAppearance(entityType).color,
+      }))}
+      selectedValues={value ? [value] : []}
+      onSelectionChange={(selected) => onChange(selected[0] ?? null)}
+      singleSelect
+      placeholder={placeholder}
+      noOptionsText={loading ? t('loading') : t('attribute_entity_none')}
+    />
+  );
+};
 
 const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   entityName,
@@ -203,7 +230,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           return (
             <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
               {fieldLabelText}
-              <EntityPickerInput
+              <AdvancedEntityPicker
                 storyId={storyId}
                 entityType={field.entityTargetType as StorySchemaEntityType}
                 value={value ?? null}

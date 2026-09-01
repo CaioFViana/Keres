@@ -1,10 +1,11 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
-import RelationRow from '@/src/components/features/relations/RelationManager/RelationRow';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import type { PlotScene } from '@keres/shared/entities/PlotScene';
 import type { SceneSelect } from '@/src/db/schema';
 import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -120,37 +121,40 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
             <Button onPress={handleAdd}>{t('add_scene_to_plot')}</Button>
           </View>
         ) : null}
-        {activeRelations.length === 0 ? (
-          <Text style={styles.emptyText}>{t('no_plot_scenes')}</Text>
-        ) : (
-          activeRelations.map((relation) => {
+        <EntityRelationList
+          emptyText={t('no_plot_scenes')}
+          items={activeRelations.map((relation) => {
             const scene = activeScenes.find((item) => item.id === relation.sceneId);
             const chapterName = scene ? chapterNameOf(scene.chapterId) : undefined;
-            return (
-              <RelationRow
-                key={relation.id}
-                extraActions={
-                  editable ? (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setEditingRelation(relation);
-                        setIsModalVisible(true);
-                      }}
-                      accessibilityLabel={t('edit_plot_scene_relation')}
-                    >
-                      <Ionicons name="create-outline" size={22} color={colors.primary} />
-                    </TouchableOpacity>
-                  ) : undefined
-                }
-                onRemove={editable ? () => handleDelete(relation.id) : undefined}
-              >
-                <Text style={styles.relationText}>{scene?.name ?? sceneCopy.notFound}</Text>
-                {chapterName ? <Text style={styles.noteText}>{chapterName}</Text> : null}
-                <Text style={styles.noteText}>{relation.note}</Text>
-              </RelationRow>
-            );
-          })
-        )}
+            return {
+              id: relation.id,
+              title: scene?.name ?? sceneCopy.notFound,
+              icon: 'easel',
+              color: getEntityAppearance('Scene').color,
+              details: (
+                <View>
+                  {chapterName ? <Text style={styles.noteText}>{chapterName}</Text> : null}
+                  <Text style={styles.noteText}>{relation.note}</Text>
+                </View>
+              ),
+              trailing: editable ? (
+                <View style={styles.actionsRow}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingRelation(relation);
+                      setIsModalVisible(true);
+                    }}
+                  >
+                    <Ionicons name="create-outline" size={22} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDelete(relation.id)}>
+                    <Ionicons name="trash-outline" size={22} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+              ) : undefined,
+            };
+          })}
+        />
       </CollapsibleCard>
 
       <ScenePlotModal

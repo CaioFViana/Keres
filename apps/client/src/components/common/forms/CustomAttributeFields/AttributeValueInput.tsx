@@ -1,6 +1,11 @@
 import type { StorySchemaEntityType } from '@keres/shared';
-import { AttributeType, decodeAttributeValue, encodeAttributeValue } from '@keres/shared';
-import React from 'react';
+import {
+  AttributeType,
+  getEntityAppearance,
+  decodeAttributeValue,
+  encodeAttributeValue,
+} from '@keres/shared';
+import React, { useMemo } from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
@@ -8,9 +13,10 @@ import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
+import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;
@@ -46,6 +52,21 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
 }) => {
   const { colors } = useTheme();
   const commonInputStyles = getCommonInputStyles(colors);
+  const { options: entityOptions, loading: entityOptionsLoading } = useEntityPickerOptions(
+    storyId,
+    targetEntityType,
+  );
+  const entityPillOptions = useMemo(
+    () =>
+      targetEntityType
+        ? entityOptions.map((option) => ({
+            label: option.name || '—',
+            value: option.id,
+            color: getEntityAppearance(targetEntityType).color,
+          }))
+        : [],
+    [entityOptions, targetEntityType],
+  );
 
   switch (type) {
     case AttributeType.LONG_TEXT:
@@ -132,12 +153,13 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
     case AttributeType.ENTITY:
       if (storyId && targetEntityType) {
         return (
-          <EntityPickerInput
-            storyId={storyId}
-            entityType={targetEntityType}
-            value={value || null}
-            onChange={onChange}
+          <MultiSelectPill
+            options={entityPillOptions}
+            selectedValues={value ? [value] : []}
+            onSelectionChange={(selected) => onChange(selected[0] ?? null)}
+            singleSelect
             placeholder={placeholder}
+            noOptionsText={entityOptionsLoading ? '…' : undefined}
           />
         );
       }

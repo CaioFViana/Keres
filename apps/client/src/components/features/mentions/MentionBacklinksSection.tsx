@@ -1,13 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance } from '@keres/shared';
 import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useMentionBacklinks } from '@/src/mentions/MentionContext';
 import { useTheme } from '@/src/theme';
-import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
 
 interface Props {
   entityType: NavigableEntityType;
@@ -24,19 +24,7 @@ export const MentionBacklinksSection: React.FC<Props> = ({ entityType, entityId 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        row: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          paddingVertical: 10,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        },
-        rowLast: { borderBottomWidth: 0 },
-        content: { flex: 1, minWidth: 0 },
-        title: { color: colors.text, fontSize: 15, fontWeight: '600' },
         excerpt: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
-        empty: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
       }),
     [colors],
   );
@@ -45,33 +33,24 @@ export const MentionBacklinksSection: React.FC<Props> = ({ entityType, entityId 
       title={t('backlinks_title', { entities: backlinks.length, mentions: totalMentions })}
       initialExpanded={false}
     >
-      {backlinks.length === 0 ? (
-        <Text style={styles.empty}>{t('backlinks_empty')}</Text>
-      ) : (
-        backlinks.map((entry, index) => (
-          <TouchableOpacity
-            key={`${entry.source.type}:${entry.source.id}`}
-            style={[styles.row, index === backlinks.length - 1 && styles.rowLast]}
-            onPress={() => navigate(entry.source.type, entry.source.id)}
-            accessibilityLabel={t('backlinks_open_source', { name: entry.source.name })}
-          >
-            <Ionicons
-              name={ENTITY_TYPE_ICONS[entry.source.type]}
-              color={colors.primary}
-              size={20}
-            />
-            <View style={styles.content}>
-              <Text style={styles.title} numberOfLines={1}>
-                {entry.source.name}
-              </Text>
+      <EntityRelationList
+        emptyText={t('backlinks_empty')}
+        items={backlinks.map((entry) => {
+          const appearance = getEntityAppearance(entry.source.type);
+          return {
+            id: `${entry.source.type}:${entry.source.id}`,
+            title: entry.source.name,
+            icon: appearance.icon as any,
+            color: appearance.color,
+            details: (
               <Text style={styles.excerpt} numberOfLines={2}>
                 {entry.excerpt}
               </Text>
-            </View>
-            <Ionicons name="chevron-forward" color={colors.textSecondary} size={18} />
-          </TouchableOpacity>
-        ))
-      )}
+            ),
+            onPress: () => navigate(entry.source.type, entry.source.id),
+          };
+        })}
+      />
     </CollapsibleCard>
   );
 };

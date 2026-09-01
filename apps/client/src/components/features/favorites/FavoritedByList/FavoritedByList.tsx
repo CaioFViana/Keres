@@ -1,7 +1,7 @@
 import type { FavoriteEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
 import { servers, stories } from '../../../../db/schema';
@@ -13,6 +13,7 @@ import { useUserProfileResolver } from '../../../../hooks/useUserProfileResolver
 import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import Avatar from '../../../common/display/Avatar/Avatar';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '../../../common/display/EntityRelationList/EntityRelationList';
 
 interface FavoritedByListProps {
   storyId: string;
@@ -106,36 +107,33 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
 
   const styles = StyleSheet.create({
     loading: { paddingVertical: 8 },
-    emptyText: { color: colors.textSecondary },
-    row: { alignItems: 'center', flexDirection: 'row', marginBottom: 10 },
-    rowLast: { marginBottom: 0 },
-    name: { color: colors.text, flex: 1, fontSize: 15, marginLeft: 10 },
+    avatar: { marginRight: 10 },
   });
 
   return (
     <CollapsibleCard title={`${t('favorited_by')} (${profiles.length})`} initialExpanded={false}>
       {loading ? (
         <ActivityIndicator style={styles.loading} color={colors.primary} />
-      ) : profiles.length === 0 ? (
-        <Text style={styles.emptyText}>{t('favorited_by_empty')}</Text>
       ) : (
-        profiles.map((profile, index) => (
-          <View
-            key={profile.id}
-            style={[styles.row, index === profiles.length - 1 && styles.rowLast]}
-          >
-            <Avatar
-              seed={profile.id}
-              color={profile.avatarColor}
-              icon={profile.avatarIcon}
-              size={32}
-            />
-            <Text style={styles.name}>
-              {profile.name}
-              {profile.isCurrentUser ? ` ${t('you_suffix')}` : ''}
-            </Text>
-          </View>
-        ))
+        <EntityRelationList
+          emptyText={t('favorited_by_empty')}
+          items={profiles.map((profile) => ({
+            id: profile.id,
+            title: `${profile.name}${profile.isCurrentUser ? ` ${t('you_suffix')}` : ''}`,
+            icon: 'person',
+            color: profile.avatarColor ?? colors.primary,
+            leading: (
+              <View style={styles.avatar}>
+                <Avatar
+                  seed={profile.id}
+                  color={profile.avatarColor}
+                  icon={profile.avatarIcon}
+                  size={32}
+                />
+              </View>
+            ),
+          }))}
+        />
       )}
     </CollapsibleCard>
   );

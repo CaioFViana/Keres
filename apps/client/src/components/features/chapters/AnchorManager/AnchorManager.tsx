@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import type { ChapterAnchorRow } from '@/src/hooks/useChapterAnchors';
 import { useChapterAnchors } from '@/src/hooks/useChapterAnchors';
 import { useNotificationStore } from '@/src/state/notificationStore';
@@ -125,41 +126,47 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
 
   return (
     <CollapsibleCard title={t('anchor_section_title')} initialExpanded={anchors.length > 0}>
-      {anchors.length === 0 && <Text style={styles.empty}>{t('anchor_empty')}</Text>}
-      {anchors.map((anchor) => (
-        <View key={anchor.id} style={styles.row}>
-          <View style={{ flexGrow: 1, flexShrink: 1 }}>
-            {anchors.length > 1 && (
-              <Text style={styles.order}>{t('anchor_stretch', { order: anchor.order })}</Text>
-            )}
-            <Text style={styles.sentence}>
-              {anchor.endSceneId
-                ? t('anchor_sentence', {
-                    from: describePoint(
-                      anchor.startSceneId,
-                      anchor.startPosition,
-                      anchor.startOffset,
-                      anchor.startOffsetUnit,
-                    ),
-                    to: describePoint(
-                      anchor.endSceneId,
-                      anchor.endPosition ?? 'end',
-                      anchor.endOffset,
-                      anchor.endOffsetUnit,
-                    ),
-                  })
-                : t(hasContents ? 'anchor_sentence_open' : 'anchor_sentence_instant', {
-                    from: describePoint(
-                      anchor.startSceneId,
-                      anchor.startPosition,
-                      anchor.startOffset,
-                      anchor.startOffsetUnit,
-                    ),
-                  })}
-            </Text>
-          </View>
-          {editable && (
-            <>
+      <EntityRelationList
+        emptyText={t('anchor_empty')}
+        items={anchors.map((anchor) => ({
+          id: anchor.id,
+          title: '',
+          icon: 'pin-outline',
+          color: colors.primary,
+          details: (
+            <View>
+              {anchors.length > 1 && (
+                <Text style={styles.order}>{t('anchor_stretch', { order: anchor.order })}</Text>
+              )}
+              <Text style={styles.sentence}>
+                {anchor.endSceneId
+                  ? t('anchor_sentence', {
+                      from: describePoint(
+                        anchor.startSceneId,
+                        anchor.startPosition,
+                        anchor.startOffset,
+                        anchor.startOffsetUnit,
+                      ),
+                      to: describePoint(
+                        anchor.endSceneId,
+                        anchor.endPosition ?? 'end',
+                        anchor.endOffset,
+                        anchor.endOffsetUnit,
+                      ),
+                    })
+                  : t(hasContents ? 'anchor_sentence_open' : 'anchor_sentence_instant', {
+                      from: describePoint(
+                        anchor.startSceneId,
+                        anchor.startPosition,
+                        anchor.startOffset,
+                        anchor.startOffsetUnit,
+                      ),
+                    })}
+              </Text>
+            </View>
+          ),
+          trailing: editable ? (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               <TouchableOpacity
                 onPress={() =>
                   setEditing({
@@ -176,17 +183,16 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
                     },
                   })
                 }
-                accessibilityLabel={t('edit')}
               >
                 <Ionicons name="create-outline" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => remove(anchor)} accessibilityLabel={t('delete')}>
+              <TouchableOpacity onPress={() => remove(anchor)}>
                 <Ionicons name="trash-outline" size={20} color={colors.error} />
               </TouchableOpacity>
-            </>
-          )}
-        </View>
-      ))}
+            </View>
+          ) : undefined,
+        }))}
+      />
       {editable && !anchors.some((anchor) => !anchor.endSceneId) && (
         <TouchableOpacity style={styles.add} onPress={() => setEditing({ id: null })}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />

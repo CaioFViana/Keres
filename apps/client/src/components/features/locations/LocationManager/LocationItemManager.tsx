@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -143,6 +144,8 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
       renderItemExtraContent={renderItemExtraContent}
       title={t('items_in_location_title')}
       onItemPress={handleItemPress}
+      icon="cube"
+      color={getEntityAppearance('Item').color}
     />
   );
 };

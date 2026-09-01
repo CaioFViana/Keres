@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance } from '@keres/shared';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import React, { useCallback, useState } from 'react';
@@ -9,9 +10,9 @@ import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntity
 import { createULID } from '../../../../utils/entityUtils';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
-import RelationRow from '@/src/components/features/relations/RelationManager/RelationRow';
 import { AppAlert } from '../../../../utils/AppAlert';
 
 interface CharacterRelationManagerProps {
@@ -137,35 +138,33 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
             </View>
           )}
 
-          {filteredRelations.length === 0 ? (
-            <Text style={styles.noRelationsText}>{t('no_character_relations_found')}</Text>
-          ) : (
-            <View>
-              {filteredRelations.map((item) => {
-                const relatedChar =
-                  item.character1Id === currentCharacterId ? item.character2Id : item.character1Id;
-                return (
-                  <RelationRow
-                    key={item.id}
-                    // In `editable` (a form) the row does not navigate - leaving the screen would lose the form's
-                    // unsaved changes.
-                    onPress={editable ? undefined : () => handleCharacterPress(relatedChar)}
-                    extraActions={
-                      editable && (
-                        <TouchableOpacity onPress={() => handleEditRelation(item)}>
-                          <Ionicons name="create-outline" size={22} color={colors.primary} />
-                        </TouchableOpacity>
-                      )
-                    }
-                    onRemove={editable ? () => handleDeleteRelation(item.id) : undefined}
-                  >
-                    <Text style={styles.relationText}>{getCharacterName(relatedChar)}</Text>
-                    <Text style={styles.relationTypeText}>{item.relationType}</Text>
-                  </RelationRow>
-                );
-              })}
-            </View>
-          )}
+          <EntityRelationList
+            emptyText={t('no_character_relations_found')}
+            items={filteredRelations.map((relation) => {
+              const relatedId =
+                relation.character1Id === currentCharacterId
+                  ? relation.character2Id
+                  : relation.character1Id;
+              return {
+                id: relation.id,
+                title: getCharacterName(relatedId),
+                icon: 'people',
+                color: getEntityAppearance('Character').color,
+                details: <Text style={styles.relationTypeText}>{relation.relationType}</Text>,
+                onPress: editable ? undefined : () => handleCharacterPress(relatedId),
+                trailing: editable ? (
+                  <View style={{ flexDirection: 'row', gap: 10, marginLeft: 8 }}>
+                    <TouchableOpacity onPress={() => handleEditRelation(relation)}>
+                      <Ionicons name="create-outline" size={22} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteRelation(relation.id)}>
+                      <Ionicons name="trash-outline" size={22} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                ) : undefined,
+              };
+            })}
+          />
         </View>
       </CollapsibleCard>
 

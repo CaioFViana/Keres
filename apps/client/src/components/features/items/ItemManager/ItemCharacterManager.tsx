@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -117,6 +118,8 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
       renderItemExtraContent={renderItemExtraContent}
       title={itemCopy.entities}
       onItemPress={handleItemPress}
+      icon="cube"
+      color={getEntityAppearance('Item').color}
     />
   );
 };

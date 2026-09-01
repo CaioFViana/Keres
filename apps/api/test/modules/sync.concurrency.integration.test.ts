@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
-import { characters, stories } from '../../src/db/schema';
-import { syncService } from '../../src/services/SyncService';
+import { characters, operationLog, stories } from '../../src/db/schema';
+import { SyncService, syncService } from '../../src/services/SyncService';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -144,5 +144,141 @@ describe('operation-log allocation guard', () => {
         update: createCharacter(newId(), 'Sem história') as never,
       }),
     ).rejects.toThrow(/not found while appending/i);
+  });
+});
+
+describe('SyncService defensive protocol paths', () => {
+  it('returns an explicit conflict when a registered entity loses its handler instead of dropping the batch', async () => {
+    // This cannot normally happen because the handler-registration architecture test keeps the
+    // protocol enum in lockstep. It is nevertheless an important containment boundary for a
+    // partial deploy: a malformed registry must not turn into a successful-looking sync.
+    const isolatedService = new SyncService();
+    (isolatedService.getEntityHandlers() as Map<string, unknown>).delete('Character');
+    const characterId = newId();
+
+    const result = await isolatedService.processAndRecordUpdates(ana.userId, storyId, [
+      createCharacter(characterId, 'Keres') as never,
+    ]);
+
+    expect(result.applied).toEqual([]);
+    expect(result.conflicts).toEqual([
+      expect.objectContaining({
+        entity: 'Character',
+        entityId: characterId,
+        reason: 'unknown',
+        message: expect.stringContaining('No sync handler'),
+      }),
+    ]);
+    expect(await db.query.characters.findFirst({ where: eq(characters.id, characterId) })).toBeUndefined();
+  });
+
+  it('treats a delete for an absent entity as an idempotent successful outcome', async () => {
+    const characterId = newId();
+
+    const { data } = await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Character', id: characterId, version: 1, clientOperationId: 'gone' },
+    ]);
+
+    expect(data.conflicts).toEqual([]);
+    expect(data.applied).toEqual([
+      expect.objectContaining({
+        clientOperationId: 'gone',
+        entityId: characterId,
+        operationVersion: 0,
+      }),
+    ]);
+  });
+
+  it('uses safe fallback payloads when administrative recovery logs a delete or reorder without a handler', async () => {
+    const isolatedService = new SyncService();
+    (isolatedService.getEntityHandlers() as Map<string, unknown>).delete('Character');
+    const deletedId = newId();
+
+    const deleted = await isolatedService.appendOperationLog({
+      storyId,
+      userId: ana.userId,
+      entityId: deletedId,
+      update: { type: 'delete', entity: 'Character', id: deletedId, version: 1 } as never,
+    });
+    const reordered = await isolatedService.appendOperationLog({
+      storyId,
+      userId: ana.userId,
+      entityId: storyId,
+      update: {
+        type: 'reorder',
+        entity: 'Character',
+        id: storyId,
+        reorderItems: [{ id: deletedId, newIndex: 1 }],
+      } as never,
+    });
+    const malformed = await isolatedService.appendOperationLog({
+      storyId,
+      userId: ana.userId,
+      entityId: '',
+      // A recovery import is trusted only at its boundary: an unknown operation kind must remain a
+      // non-destructive update in the persistent log, and an empty entity id must never be stored.
+      update: { type: 'not-a-sync-operation', entity: 'Character', id: '' } as never,
+    });
+
+    const rows = await db.query.operationLog.findMany({
+      where: (table, { inArray }) => inArray(table.id, [deleted.id, reordered.id, malformed.id]),
+      orderBy: (table, { asc }) => [asc(table.operationVersion)],
+    });
+    expect(rows).toEqual([
+      expect.objectContaining({ operationType: 'delete', entityId: deletedId, payload: { id: deletedId } }),
+      expect.objectContaining({
+        operationType: 'reorder',
+        payload: expect.objectContaining({ reorderItems: [{ id: deletedId, newIndex: 1 }] }),
+      }),
+      expect.objectContaining({ operationType: 'update', entityId: expect.any(String), payload: {} }),
+    ]);
+    expect(rows[2].entityId).not.toBe('');
+  });
+
+  it('rejects missing stories before it can apply or expose any operation', async () => {
+    const isolatedService = new SyncService();
+    const missingStoryId = newId();
+
+    await expect(
+      isolatedService.processAndRecordUpdates(ana.userId, missingStoryId, [
+        createCharacter(newId(), 'Sem história') as never,
+      ]),
+    ).rejects.toThrow('Story not found');
+    await expect(isolatedService.getUpdatesForStory(ana.userId, missingStoryId, 0)).rejects.toThrow(
+      'Story not found',
+    );
+  });
+
+  it('turns malformed operation times into validation conflicts even when bypassing route parsing', async () => {
+    const isolatedService = new SyncService();
+    const characterId = newId();
+
+    const result = await isolatedService.processAndRecordUpdates(ana.userId, storyId, [
+      { ...createCharacter(characterId, 'Tempo inválido'), operationTime: 'not-a-date' } as never,
+    ]);
+
+    expect(result.applied).toEqual([]);
+    expect(result.conflicts).toEqual([
+      expect.objectContaining({ entityId: characterId, reason: 'validation', message: expect.stringContaining('invalid') }),
+    ]);
+  });
+
+  it('fails loudly when persisted history contains a reorder for an unsupported entity', async () => {
+    await db.insert(operationLog).values({
+      id: newId(),
+      storyId,
+      userId: ana.userId,
+      operationVersion: 1,
+      operationType: 'reorder',
+      entityType: 'Character',
+      entityId: newId(),
+      payload: { reorderItems: [] },
+      entityVersion: 1,
+      createdAt: new Date(),
+    } as never);
+
+    await expect(syncService.getUpdatesForStory(ana.userId, storyId, 0)).rejects.toThrow(
+      'Unhandled reorder entity type: Character',
+    );
   });
 });

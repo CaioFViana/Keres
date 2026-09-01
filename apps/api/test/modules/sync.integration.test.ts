@@ -551,8 +551,12 @@ describe('GET /sync/:storyId/pull', () => {
       updatedAt: new Date(),
     });
 
-    const first = await pull(ana.token, storyId);
-    const second = await pull(ana.token, storyId, 0, 0);
+    // Two first pulls can arrive together when two devices reconnect. The repair must serialize
+    // itself: both callers can receive the row, but only one operation-log create may be born.
+    const [first, second] = await Promise.all([
+      pull(ana.token, storyId),
+      pull(ana.token, storyId, 0, 0),
+    ]);
     const repairLogs = await db.query.operationLog.findMany({
       where: eq(operationLog.entityId, favoriteId),
     });
@@ -649,6 +653,17 @@ describe('GET /sync/pullpreviews', () => {
     expect(data.storyPreviews).toEqual([]);
   });
 
+  it('lists a shared story with the collaborator role rather than treating it as owned', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+
+    const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
+
+    expect(data.storyPreviews).toEqual([
+      expect.objectContaining({ storyId, role: 'writer', lastOperationVersion: 0 }),
+    ]);
+  });
+
   /**
    * `lastOperationVersion` used to come from `stories.version` (the Story row's own
    * optimistic-concurrency counter, bumped only when the Story row itself changes) instead of
@@ -718,6 +733,42 @@ describe('sync authorization hardening', () => {
     expect(data.updates).toEqual(
       expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
     );
+  });
+
+  it('does not leak a private favorite operation to another collaborator on pull', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+    const characterId = newId();
+    const favoriteId = newId();
+    await push(ana.token, storyId, [
+      createCharacter(characterId, 'Keres'),
+      {
+        type: 'create',
+        entity: 'Favorite',
+        id: favoriteId,
+        data: { userId: ana.userId, entityId: characterId, entityType: 'Character' },
+        clientOperationId: 'ana-private-favorite',
+      },
+    ]);
+
+    const { status, data } = await pull(bia.token, storyId);
+
+    expect(status).toBe(200);
+    expect(data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
+    );
+    expect(data.updates).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Favorite', id: favoriteId })]),
+    );
+    expect(data.publicFavorites).toEqual([]);
+  });
+
+  it('rejects a pull from a user with no permission to read the story', async () => {
+    const bia = await registerUser('bia');
+
+    const { status } = await pull(bia.token, storyId);
+
+    expect(status).toBe(403);
   });
 
   it('rejects a push to a story that the user cannot access', async () => {

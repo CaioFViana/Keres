@@ -21,7 +21,7 @@ jest.mock('../../src/services/MediaSyncService', () => ({
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
-import { MAX_SYNC_BATCH_SIZE } from '@keres/shared';
+import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import {
   OFFLINE_RETRY_MS,
   SYNC_INTERVAL_MS,
@@ -53,10 +53,15 @@ let pullResponse: {
   serverMaxOperationVersion: number;
   role: string;
 };
+/** More than one page is used only by pagination tests. */
+let pullPages: typeof pullResponse[] | null;
+let pullPageIndex: number;
 /** Resposta do push. */
 let pushResponse: any;
 /** When set, the adapter fails as if the server were down. */
 let offlineOn: 'pull' | 'push' | null;
+/** A reachable server can still reject a request; that is not an offline retry. */
+let serverFailureOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
 let echoPushApplied: boolean;
 
@@ -85,8 +90,22 @@ function installAdapter() {
       error.request = {};
       throw error;
     }
+    if (
+      (isPull && serverFailureOn === 'pull') ||
+      (!isPull && method === 'POST' && serverFailureOn === 'push')
+    ) {
+      const error: any = new Error('Request failed with status code 500');
+      error.config = config;
+      error.request = {};
+      error.response = { status: 500, data: { message: 'server error' }, config, headers: {} };
+      throw error;
+    }
 
-    let data = isPull ? pullResponse : method === 'POST' ? pushResponse : {};
+    let data = isPull
+      ? pullPages?.[pullPageIndex++] ?? pullResponse
+      : method === 'POST'
+        ? pushResponse
+        : {};
     if (!isPull && method === 'POST' && echoPushApplied && Array.isArray(body)) {
       data = {
         ...pushResponse,
@@ -190,6 +209,9 @@ beforeEach(async () => {
     conflicts: [],
   };
   offlineOn = null;
+  serverFailureOn = null;
+  pullPages = null;
+  pullPageIndex = 0;
   echoPushApplied = false;
   installAdapter();
 
@@ -395,6 +417,31 @@ describe('pull', () => {
     await runOneCycle();
 
     expect((await readStory())!.lastServerSyncedLog).toBe(5);
+  });
+
+  it('drains a remote backlog page by page before it starts pushing local work', async () => {
+    await seedStory();
+    const firstPage = Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) =>
+      remoteCreate(`page-one-${index}`, `Person ${index}`, index + 1),
+    );
+    pullPages = [
+      {
+        updates: firstPage,
+        serverMaxOperationVersion: MAX_SYNC_PULL_BATCH + 1,
+        role: 'owner',
+      },
+      {
+        updates: [remoteCreate('page-two', 'Last person', MAX_SYNC_PULL_BATCH + 1)],
+        serverMaxOperationVersion: MAX_SYNC_PULL_BATCH + 1,
+        role: 'owner',
+      },
+    ];
+
+    await runOneCycle();
+
+    expect(seen.filter((request) => request.url.includes('/pull'))).toHaveLength(2);
+    expect((await readStory())!.lastServerSyncedLog).toBe(MAX_SYNC_PULL_BATCH + 1);
+    expect(await database.db.query.characters.findMany()).toHaveLength(MAX_SYNC_PULL_BATCH + 1);
   });
 
   it('leaves the cursor where it was when the server sent nothing', async () => {
@@ -996,6 +1043,26 @@ describe('when the server cannot be reached', () => {
 
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
+
+  it('reports a reachable-server pull failure instead of treating it as offline', async () => {
+    await seedStory();
+    serverFailureOn = 'pull';
+
+    await expect(runOneCycle()).resolves.toBe(false);
+
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+
+  it('keeps the pull result but reports a rejected push without claiming the operation was sent', async () => {
+    await seedStory({ lastOperationLog: 1 });
+    const operation = await seedPendingOperation();
+    serverFailureOn = 'push';
+
+    await expect(runOneCycle()).resolves.toBe(false);
+
+    expect((await database.db.query.operationLogs.findFirst({ where: eq(schema.operationLogs.id, operation.id) }))?.isSynced).toBe(false);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
 });
 
 describe('guards before a cycle runs', () => {
@@ -1147,5 +1214,56 @@ describe('media reconciliation', () => {
     mockSyncStoryMedia.mockRejectedValueOnce(new Error('disco cheio'));
 
     await expect(runOneCycle()).resolves.toBe(false);
+  });
+});
+
+describe('remote-operation safety boundaries', () => {
+  it('does not create a different story while synchronizing the configured story', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [remoteCreate('foreign-story', 'Não deve entrar', 1)],
+      publicFavorites: [],
+      serverMaxOperationVersion: 1,
+      role: 'owner',
+    };
+    pullResponse.updates[0] = {
+      ...pullResponse.updates[0],
+      entity: 'Story',
+      id: 'story-outra',
+      data: { ...pullResponse.updates[0].data, id: 'story-outra', title: 'Outra história' },
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.stories.findFirst({ where: eq(schema.stories.id, 'story-outra') })).toBeUndefined();
+    const log = await database.db.query.operationLogs.findFirst({
+      where: eq(schema.operationLogs.serverOperationVersion, 1),
+    });
+    expect(log).toBeDefined();
+  });
+
+  it('refuses conflict handling before a database is bound', () => {
+    // The singleton constructor is intentionally private; this prototype-only instance reaches the
+    // getter in the same unconfigured state without weakening that production boundary.
+    const unconfigured = Object.create(SyncEngineService.prototype) as SyncEngineService;
+    expect(() => (unconfigured as any).conflictService).toThrow(/before setDbInstance/i);
+  });
+
+  it('keeps the pull cursor behind a handler failure and reports one actionable error', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [remoteCreate('char-broken', 'Não aplicar', 4)],
+      publicFavorites: [],
+      serverMaxOperationVersion: 4,
+      role: 'owner',
+    };
+    (engine as any).entityHandlers.set('Character', {
+      applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
+    });
+
+    await expect(runOneCycle()).resolves.toBe(false);
+
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
 });

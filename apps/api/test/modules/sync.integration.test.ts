@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { characters, favorites, operationLog, stories } from '../../src/db/schema';
+import { chapters, characters, favorites, operationLog, scenes, stories } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -575,6 +575,47 @@ describe('GET /sync/:storyId/pull', () => {
     expect(data.role).toBe('owner');
   });
 
+  it('serializes chapter and story reorders back into the exact pull operations clients apply', async () => {
+    const chapterA = newId();
+    const chapterB = newId();
+    const sceneA = newId();
+    const sceneB = newId();
+    const now = new Date();
+    await db.insert(chapters).values([
+      { id: chapterA, storyId, name: 'Um', index: 1, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
+      { id: chapterB, storyId, name: 'Dois', index: 2, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
+    ] as never);
+    await db.insert(scenes).values([
+      { id: sceneA, storyId, chapterId: chapterA, name: 'Cena um', index: 1, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
+      { id: sceneB, storyId, chapterId: chapterA, name: 'Cena dois', index: 2, version: 1, createdAt: now, updatedAt: now, isDeleted: false },
+    ] as never);
+
+    const chapterPush = await push(ana.token, storyId, [{
+      type: 'reorder', entity: 'Chapter', id: chapterA, version: 1,
+      reorderItems: [{ id: sceneA, newIndex: 2 }, { id: sceneB, newIndex: 1 }],
+      clientOperationId: 'chapter-reorder',
+    }]);
+    expect(chapterPush.data.conflicts).toEqual([]);
+    const storyPush = await push(ana.token, storyId, [{
+      type: 'reorder', entity: 'Story', id: storyId, version: 1,
+      reorderItems: [{ id: chapterA, newIndex: 2 }, { id: chapterB, newIndex: 1 }],
+      clientOperationId: 'story-reorder',
+    }]);
+    expect(storyPush.data.conflicts).toEqual([]);
+
+    const { data } = await pull(ana.token, storyId);
+    expect(data.updates).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'reorder', entity: 'Chapter', id: chapterA,
+        reorderItems: [{ id: sceneA, newIndex: 2 }, { id: sceneB, newIndex: 1 }],
+      }),
+      expect.objectContaining({
+        type: 'reorder', entity: 'Story', id: storyId,
+        reorderItems: [{ id: chapterA, newIndex: 2 }, { id: chapterB, newIndex: 1 }],
+      }),
+    ]));
+  });
+
   it('rejects a pull with no version, since the server cannot guess it', async () => {
     const { status } = await request('GET', `/sync/${storyId}/pull`, { token: ana.token });
 
@@ -664,6 +705,29 @@ const grantWriter = (owner: TestUser, collaborator: TestUser, story: string) =>
   grantCollaborator(owner, collaborator, story, 'writer');
 
 describe('sync authorization hardening', () => {
+  it('lets a reader pull the shared history while reporting the reader role', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'reader');
+    const characterId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const { status, data } = await pull(bia.token, storyId);
+
+    expect(status).toBe(200);
+    expect(data.role).toBe('reader');
+    expect(data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
+    );
+  });
+
+  it('rejects a push to a story that the user cannot access', async () => {
+    const bia = await registerUser('bia');
+
+    const { status } = await push(bia.token, storyId, [createCharacter(newId(), 'Invasora')]);
+
+    expect(status).toBe(403);
+  });
+
   it('does not let a writer steal story ownership via userId in an update', async () => {
     const bia = await registerUser('bia');
     await grantWriter(ana, bia, storyId);

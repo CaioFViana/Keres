@@ -133,3 +133,16 @@ describe('atomicity between the entity write and the operation log', () => {
     expect(data.applied).toHaveLength(1);
   });
 });
+
+describe('operation-log allocation guard', () => {
+  it('refuses to append an operation for a story that disappeared before the counter could advance', async () => {
+    await expect(
+      syncService.appendOperationLog({
+        storyId: newId(),
+        userId: ana.userId,
+        entityId: newId(),
+        update: createCharacter(newId(), 'Sem história') as never,
+      }),
+    ).rejects.toThrow(/not found while appending/i);
+  });
+});

@@ -235,6 +235,46 @@ describe('collaboration sync entity handlers', () => {
     }
   });
 
+  it('rejects absent CharacterScene endpoints and validates a retarget before updating', async () => {
+    const handler = new CharacterSceneSyncHandler();
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('CharacterScene', newId(), { characterId: newId(), sceneId }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('CharacterScene', newId(), { characterId, sceneId: newId() }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const linkId = newId();
+    await handler.create(
+      userId,
+      storyId,
+      create('CharacterScene', linkId, { characterId, sceneId }),
+    );
+    const current = await handler.findById(linkId);
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'CharacterScene',
+          id: linkId,
+          changes: { characterId: newId(), version: current.version },
+        } as UpdateStoryUpdate,
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    expect(await handler.findById(linkId)).toMatchObject({ characterId, sceneId, version: 1 });
+  });
+
   it('never lets one user create, update, or delete another user’s favorite', async () => {
     const favorites = new FavoriteSyncHandler();
     const outsiderId = newId();
@@ -286,6 +326,45 @@ describe('collaboration sync entity handlers', () => {
       favorites.delete(outsiderId, storyId, remove('Favorite', favoriteId, 1), favorite),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
     expect(await favorites.findById(favoriteId)).toMatchObject({ isDeleted: false, version: 1 });
+  });
+
+  it('keeps a favorite attached to its original user, story and entity even if its owner sends those fields', async () => {
+    const favorites = new FavoriteSyncHandler();
+    const favoriteId = newId();
+    await favorites.create(
+      userId,
+      storyId,
+      create('Favorite', favoriteId, {
+        userId,
+        entityId: characterId,
+        entityType: 'Character',
+      }),
+    );
+    const current = await favorites.findById(favoriteId);
+    await favorites.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Favorite',
+        id: favoriteId,
+        changes: {
+          userId: newId(),
+          storyId: newId(),
+          entityId: newId(),
+          entityType: 'Scene',
+          version: current.version,
+        },
+      } as UpdateStoryUpdate,
+      current,
+    );
+    expect(await favorites.findById(favoriteId)).toMatchObject({
+      userId,
+      storyId,
+      entityId: characterId,
+      entityType: 'Character',
+      version: 2,
+    });
   });
 
   it('enforces scene references while allowing a scene to deliberately have no location', async () => {

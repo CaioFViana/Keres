@@ -630,6 +630,39 @@ describe('reorder conflicts', () => {
     expect(pending.contestedFields).toEqual([]);
   });
 
+  it('closes a reorder conflict safely even when its obsolete operation and server order are both absent', async () => {
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: ['operation-already-purged'],
+      localValues: { reorderItems: [] },
+      serverValues: { reorderItems: [] },
+      clientVersion: 1,
+      serverVersion: 2,
+    });
+    const [pending] = await service.getPendingConflicts();
+
+    await expect(service.resolveKeepLocal(pending.id)).resolves.toBeUndefined();
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: [],
+      localValues: { reorderItems: [] },
+      serverValues: { reorderItems: [] },
+      clientVersion: 1,
+      serverVersion: 2,
+    });
+    const [second] = await service.getPendingConflicts();
+    await expect(service.resolveKeepServer(second.id)).resolves.toBeUndefined();
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
   it('applies the server order to the local Scenes and abandons the pending local reorder', async () => {
     await seedChapterWithScenes();
     const opId = await seedReorderConflict();

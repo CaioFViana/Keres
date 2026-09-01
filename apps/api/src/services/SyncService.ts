@@ -14,6 +14,7 @@ import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
 import { db, withTransaction } from '../db';
+import { usingSqlite } from '../db/dialect';
 import {
   favorites,
   operationLog,
@@ -588,9 +589,14 @@ export class SyncService {
     storyId: string,
   ): Promise<{ count: number; maxOperationVersion: number }> {
     return await db.transaction(async (tx) => {
-      await tx.execute(
-        sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
-      );
+      // SQLite has no `FOR UPDATE` (and its transaction adapter does not expose `execute`). Its
+      // single-writer transaction model already serializes this repair; Postgres still needs the
+      // row lock to coordinate this pull-time repair with concurrent pushes.
+      if (!usingSqlite) {
+        await tx.execute(
+          sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
+        );
+      }
 
       const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
         tx

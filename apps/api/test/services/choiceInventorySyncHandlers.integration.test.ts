@@ -417,4 +417,74 @@ describe('choice and inventory sync entity handlers', () => {
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
+
+  it('revalidates a group and scene when an existing check is retargeted', async () => {
+    const choice = new ChoiceSyncHandler();
+    const groups = new ChoiceCheckGroupSyncHandler();
+    const checks = new ChoiceCheckSyncHandler();
+    const choiceId = newId();
+    const groupId = newId();
+    const checkId = newId();
+    await choice.create(
+      userId,
+      storyId,
+      create('Choice', choiceId, {
+        sceneId: firstSceneId,
+        nextSceneId: secondSceneId,
+        text: 'Continuar',
+        notes: null,
+      }),
+    );
+    await groups.create(
+      userId,
+      storyId,
+      create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+    );
+    await checks.create(
+      userId,
+      storyId,
+      create('ChoiceCheck', checkId, {
+        groupId,
+        mode: 'enable',
+        type: 'sceneCount',
+        order: 0,
+        sceneId: firstSceneId,
+        minVisits: 1,
+        itemId: null,
+        itemPresence: null,
+        triggerName: null,
+        triggerState: null,
+      }),
+    );
+    const groupCurrent = await groups.findById(groupId);
+    await expect(
+      groups.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'ChoiceCheckGroup',
+          id: groupId,
+          changes: { choiceId: 'missing-choice', version: groupCurrent.version },
+        } as UpdateStoryUpdate,
+        groupCurrent,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const checkCurrent = await checks.findById(checkId);
+    await expect(
+      checks.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'ChoiceCheck',
+          id: checkId,
+          changes: { sceneId: 'missing-scene', version: checkCurrent.version },
+        } as UpdateStoryUpdate,
+        checkCurrent,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    expect(await checks.findById(checkId)).toMatchObject({ sceneId: firstSceneId, version: 1 });
+  });
 });

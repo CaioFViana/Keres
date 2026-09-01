@@ -35,7 +35,7 @@ export function locationMapCanvasBounds(
   minWidth = LOCATION_MAP_CANVAS_MIN,
   minHeight = LOCATION_MAP_CANVAS_MIN,
 ): { width: number; height: number; originX: number; originY: number } {
-  if (content.images.length === 0 && content.nodes.length === 0) {
+  if (content.images.length === 0 && content.nodes.length === 0 && (content.markers?.length ?? 0) === 0) {
     return { width: minWidth, height: minHeight, originX: 0, originY: 0 };
   }
   let minX = Number.POSITIVE_INFINITY;
@@ -53,6 +53,12 @@ export function locationMapCanvasBounds(
     minY = Math.min(minY, node.y - LOCATION_MAP_NODE_SIZE / 2);
     maxX = Math.max(maxX, node.x + LOCATION_MAP_NODE_SIZE);
     maxY = Math.max(maxY, node.y + LOCATION_MAP_NODE_SIZE);
+  }
+  for (const marker of content.markers ?? []) {
+    minX = Math.min(minX, marker.x - LOCATION_MAP_NODE_SIZE / 2);
+    minY = Math.min(minY, marker.y - LOCATION_MAP_NODE_SIZE / 2);
+    maxX = Math.max(maxX, marker.x + LOCATION_MAP_NODE_SIZE);
+    maxY = Math.max(maxY, marker.y + LOCATION_MAP_NODE_SIZE);
   }
   const originX = minX < 0 ? minX - LOCATION_MAP_CANVAS_PADDING : 0;
   const originY = minY < 0 ? minY - LOCATION_MAP_CANVAS_PADDING : 0;

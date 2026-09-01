@@ -265,7 +265,11 @@ const LocationMapImageView: React.FC<Props> = ({
             onPress={() => handlers.current.onToggleLock(imageId.current)}
             accessibilityLabel="Toggle map image lock"
           >
-            <Ionicons name={locked ? 'lock-closed-outline' : 'lock-open-outline'} size={16} color={colors.primary} />
+            <Ionicons
+              name={locked ? 'lock-closed-outline' : 'lock-open-outline'}
+              size={16}
+              color={colors.primary}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { left: 12 }]}

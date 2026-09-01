@@ -75,7 +75,13 @@ export function renderLocationMapSvg(
     maxX = Math.max(maxX, node.x + NODE_RADIUS);
     maxY = Math.max(maxY, node.y + NODE_RADIUS + 18);
   }
-  if (content.images.length === 0 && content.nodes.length === 0) {
+  for (const marker of content.markers ?? []) {
+    minX = Math.min(minX, marker.x - NODE_RADIUS);
+    minY = Math.min(minY, marker.y - NODE_RADIUS);
+    maxX = Math.max(maxX, marker.x + NODE_RADIUS);
+    maxY = Math.max(maxY, marker.y + NODE_RADIUS + 18);
+  }
+  if (content.images.length === 0 && content.nodes.length === 0 && (content.markers?.length ?? 0) === 0) {
     minX = 0;
     minY = 0;
     maxX = 0;
@@ -165,6 +171,20 @@ export function renderLocationMapSvg(
       `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
+  const markerElements = (content.markers ?? []).map((marker) => {
+    const p = shift(marker.x, marker.y);
+    const name = escapeXml(marker.title);
+    const iconPaths = LOCATION_MAP_ICON_PATHS[marker.icon] ?? '';
+    const iconSize = 512 * ICON_SCALE;
+    const iconX = p.x - iconSize / 2;
+    const iconY = p.y - iconSize / 2;
+    return [
+      `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(marker.color)}" stroke-width="2"/>`,
+      iconPaths ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${ICON_SCALE})" fill="${escapeXml(marker.color)}">${iconPaths}</g>` : '',
+      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
+      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+    ].join('');
+  });
 
   const body = [
     `<rect x="0" y="0" width="${round(width)}" height="${round(height)}" fill="${options.colors.background}"/>`,
@@ -175,6 +195,7 @@ export function renderLocationMapSvg(
     ...connectionElements,
     ...containsElements,
     ...nodeElements,
+    ...markerElements,
     '</g>',
   ].join('\n');
 

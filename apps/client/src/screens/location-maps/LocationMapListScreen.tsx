@@ -25,6 +25,7 @@ import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { AppAlert } from '../../utils/AppAlert';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -98,11 +99,15 @@ const LocationMapListScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     row: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: 16,
       paddingVertical: 14,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
+    rowText: { flex: 1 },
+    actionButton: { padding: 8, marginLeft: 4 },
     name: { fontSize: 16, fontWeight: '600', color: colors.text },
     description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
     empty: {
@@ -117,6 +122,41 @@ const LocationMapListScreen = () => {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
+  const confirmDuplicateMap = (item: LocationMapSelect) => {
+    AppAlert.alert(t('location_map_duplicate_title'), t('location_map_duplicate_message'), [
+      {
+        text: t('confirm'),
+        onPress: async () => {
+          if (!userId || !storyId) return;
+          try {
+            await createLocationMapService(db).createMap(userId, {
+              storyId,
+              name: t('location_map_copy_name', { name: item.name }),
+              description: item.description,
+              content: item.content,
+            });
+            await reload();
+          } catch (duplicateError) {
+            console.log('LocationMapListScreen: failed to duplicate map.', duplicateError);
+            showNotification(t('location_map_save_failed'), 'error');
+          }
+        },
+      },
+      { text: t('cancel'), style: 'cancel' },
+    ]);
+  };
+  const confirmMapDelete = (item: LocationMapSelect) =>
+    confirmDelete({
+      titleKey: 'location_map_delete_title',
+      messageKey: 'location_map_delete_message',
+      onConfirm: async () => {
+        if (!userId) return;
+        await createLocationMapService(db).deleteMap(userId, item.id);
+        await reload();
+      },
+      failureKey: 'location_map_save_failed',
+    });
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -127,24 +167,29 @@ const LocationMapListScreen = () => {
           <TouchableOpacity
             style={styles.row}
             onPress={() => navigation.navigate('LocationMap', { mapId: item.id })}
-            onLongPress={
-              canEdit
-                ? () =>
-                    confirmDelete({
-                      titleKey: 'location_map_delete_title',
-                      messageKey: 'location_map_delete_message',
-                      onConfirm: async () => {
-                        if (!userId) return;
-                        await createLocationMapService(db).deleteMap(userId, item.id);
-                        await reload();
-                      },
-                      failureKey: 'location_map_save_failed',
-                    })
-                : undefined
-            }
           >
-            <Text style={styles.name}>{item.name}</Text>
-            {!!item.description && <Text style={styles.description}>{item.description}</Text>}
+            <View style={styles.rowText}>
+              <Text style={styles.name}>{item.name}</Text>
+              {!!item.description && <Text style={styles.description}>{item.description}</Text>}
+            </View>
+            {canEdit && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => confirmDuplicateMap(item)}
+                accessibilityLabel={t('duplicate')}
+              >
+                <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+            {canEdit && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => confirmMapDelete(item)}
+                accessibilityLabel={t('delete')}
+              >
+                <Ionicons name="trash-outline" size={21} color={colors.error} />
+              </TouchableOpacity>
+            )}
           </TouchableOpacity>
         )}
       />

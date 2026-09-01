@@ -50,6 +50,16 @@ describe('LocationMapContentSchema', () => {
     expect(content.images[0].locked).toBe(false);
   });
 
+  it('accepts free markers and optional map destinations', () => {
+    const content = LocationMapContentSchema.parse({
+      images: [],
+      nodes: [{ id: nodeId, locationId: 'location-1', x: 100, y: 100, icon: 'pin', destinationMapId: 'map-2' }],
+      markers: [{ id: imageId, x: 20, y: 30, title: 'Hidden key', icon: 'key', destinationMapId: null }],
+    });
+    expect(content.markers?.[0]).toMatchObject({ title: 'Hidden key', destinationMapId: null });
+    expect(content.nodes[0].destinationMapId).toBe('map-2');
+  });
+
   it('rejects duplicate image ids', () => {
     expect(() =>
       LocationMapContentSchema.parse({
@@ -108,6 +118,15 @@ describe('remapLocationMapContent', () => {
 
     expect(remapped.images[0]).toMatchObject({ id: imageId, galleryId: 'gallery-1-copy' });
     expect(remapped.nodes[0]).toMatchObject({ id: nodeId, locationId: 'location-1-copy' });
+  });
+
+  it('also rewrites map destinations and keeps free marker text', () => {
+    const remapped = remapLocationMapContent({
+      images: [], nodes: [{ id: nodeId, locationId: 'location-1', x: 0, y: 0, icon: 'pin', color: '#8BC34A', destinationMapId: 'map-1' }],
+      markers: [{ id: imageId, x: 0, y: 0, title: 'Gate', icon: 'flag', color: '#8BC34A', destinationMapId: 'map-2' }],
+    }, (id) => `${id}-copy`);
+    expect(remapped.nodes[0].destinationMapId).toBe('map-1-copy');
+    expect(remapped.markers?.[0]).toMatchObject({ title: 'Gate', destinationMapId: 'map-2-copy' });
   });
 });
 

@@ -25,6 +25,7 @@ import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { AppAlert } from '../../utils/AppAlert';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'BoardsStack'>,
@@ -95,11 +96,15 @@ const BoardListScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     row: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: 16,
       paddingVertical: 14,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
+    rowText: { flex: 1 },
+    actionButton: { padding: 8, marginLeft: 4 },
     name: { fontSize: 16, fontWeight: '600', color: colors.text },
     description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
     empty: {
@@ -114,6 +119,41 @@ const BoardListScreen = () => {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
+  const confirmDuplicateBoard = (item: BoardSelect) => {
+    AppAlert.alert(t('board_duplicate_title'), t('board_duplicate_message'), [
+      {
+        text: t('confirm'),
+        onPress: async () => {
+          if (!userId || !storyId) return;
+          try {
+            await createBoardService(db).createBoard(userId, {
+              storyId,
+              name: t('board_copy_name', { name: item.name }),
+              description: item.description,
+              content: item.content,
+            });
+            await reload();
+          } catch (duplicateError) {
+            console.log('BoardListScreen: failed to duplicate board.', duplicateError);
+            showNotification(t('board_save_failed'), 'error');
+          }
+        },
+      },
+      { text: t('cancel'), style: 'cancel' },
+    ]);
+  };
+  const confirmBoardDelete = (item: BoardSelect) =>
+    confirmDelete({
+      titleKey: 'board_delete_title',
+      messageKey: 'board_delete_message',
+      onConfirm: async () => {
+        if (!userId) return;
+        await createBoardService(db).deleteBoard(userId, item.id);
+        await reload();
+      },
+      failureKey: 'board_save_failed',
+    });
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -124,24 +164,29 @@ const BoardListScreen = () => {
           <TouchableOpacity
             style={styles.row}
             onPress={() => navigation.navigate('BoardCanvas', { boardId: item.id })}
-            onLongPress={
-              canEdit
-                ? () =>
-                    confirmDelete({
-                      titleKey: 'board_delete_title',
-                      messageKey: 'board_delete_message',
-                      onConfirm: async () => {
-                        if (!userId) return;
-                        await createBoardService(db).deleteBoard(userId, item.id);
-                        await reload();
-                      },
-                      failureKey: 'board_save_failed',
-                    })
-                : undefined
-            }
           >
-            <Text style={styles.name}>{item.name}</Text>
-            {!!item.description && <Text style={styles.description}>{item.description}</Text>}
+            <View style={styles.rowText}>
+              <Text style={styles.name}>{item.name}</Text>
+              {!!item.description && <Text style={styles.description}>{item.description}</Text>}
+            </View>
+            {canEdit && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => confirmDuplicateBoard(item)}
+                accessibilityLabel={t('duplicate')}
+              >
+                <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+            {canEdit && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => confirmBoardDelete(item)}
+                accessibilityLabel={t('delete')}
+              >
+                <Ionicons name="trash-outline" size={21} color={colors.error} />
+              </TouchableOpacity>
+            )}
           </TouchableOpacity>
         )}
       />

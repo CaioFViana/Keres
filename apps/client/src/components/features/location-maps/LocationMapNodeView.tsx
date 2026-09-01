@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { LocationMapNodeType } from '@keres/shared';
+import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
@@ -8,7 +8,7 @@ import { LOCATION_MAP_NODE_SIZE } from '../../../utils/locationMapLayout';
 const DRAG_THRESHOLD = 5;
 
 interface Props {
-  node: LocationMapNodeType;
+  node: Pick<LocationMapNodeType | LocationMapMarkerType, 'id' | 'x' | 'y' | 'icon' | 'color' | 'zIndex' | 'destinationMapId'>;
   name: string;
   selected: boolean;
   layoutEditing: boolean;
@@ -22,11 +22,11 @@ interface Props {
   onDragEnd: (nodeId: string) => void;
   onBringToFront: (nodeId: string) => void;
   onSendToBack: (nodeId: string) => void;
+  onOpenDestination?: (nodeId: string) => void;
 }
 
 /**
- * A location point on the map: a tappable, draggable circle with the location's icon and its
- * name underneath. The drag responder is the same pattern as the board's pin (`BoardNodeView`).
+ * A location or free marker on the map: a tappable, draggable circle with its icon and name.
  */
 const LocationMapNodeView: React.FC<Props> = ({
   node,
@@ -42,12 +42,16 @@ const LocationMapNodeView: React.FC<Props> = ({
   onDragEnd,
   onBringToFront,
   onSendToBack,
+  onOpenDestination,
 }) => {
   const { colors } = useTheme();
   const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
   const dragging = useRef(false);
+  const pressedAt = useRef(0);
   const nodeId = useRef(node.id);
   nodeId.current = node.id;
+  const destinationMapId = useRef(node.destinationMapId);
+  destinationMapId.current = node.destinationMapId;
   const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
   position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
   const scaleRef = useRef(scale);
@@ -56,8 +60,16 @@ const LocationMapNodeView: React.FC<Props> = ({
   layoutEditingRef.current = layoutEditing;
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
-  const handlers = useRef({ onSelect, onMove, onDragStart, onDragEnd, onBringToFront, onSendToBack });
-  handlers.current = { onSelect, onMove, onDragStart, onDragEnd, onBringToFront, onSendToBack };
+  const handlers = useRef({
+    onSelect,
+    onMove,
+    onDragStart,
+    onDragEnd,
+    onBringToFront,
+    onSendToBack,
+    onOpenDestination,
+  });
+  handlers.current = { onSelect, onMove, onDragStart, onDragEnd, onBringToFront, onSendToBack, onOpenDestination };
 
   const pan = useMemo(
     () =>
@@ -76,6 +88,7 @@ const LocationMapNodeView: React.FC<Props> = ({
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
           dragging.current = false;
+          pressedAt.current = Date.now();
           origin.current = { x: position.current.x, y: position.current.y };
           handlers.current.onDragStart(nodeId.current);
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
@@ -101,7 +114,13 @@ const LocationMapNodeView: React.FC<Props> = ({
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
           handlers.current.onDragEnd(nodeId.current);
-          if (!dragging.current) handlers.current.onSelect(nodeId.current);
+          if (!dragging.current) {
+            // A linked marker opens its destination with a normal tap. Holding it keeps the
+            // editor reachable, without adding a second always-visible control to every pin.
+            if (destinationMapId.current && Date.now() - pressedAt.current < 550)
+              handlers.current.onOpenDestination?.(nodeId.current);
+            else handlers.current.onSelect(nodeId.current);
+          }
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
@@ -174,6 +193,19 @@ const LocationMapNodeView: React.FC<Props> = ({
           borderColor: colors.primary,
           zIndex: 3,
         },
+        destinationBadge: {
+          position: 'absolute',
+          right: -3,
+          top: -3,
+          width: 16,
+          height: 16,
+          borderRadius: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.primary,
+          borderWidth: 1,
+          borderColor: colors.surface,
+        },
       }),
     [colors, node.color, node.x, node.y, positionOffsetX, positionOffsetY, selected],
   );
@@ -187,6 +219,11 @@ const LocationMapNodeView: React.FC<Props> = ({
           color={node.color}
         />
       </View>
+      {!!node.destinationMapId && (
+        <View pointerEvents="none" style={styles.destinationBadge}>
+          <Ionicons name="open-outline" size={11} color={colors.surface} />
+        </View>
+      )}
       {layoutEditing && selected && (
         <>
           <TouchableOpacity

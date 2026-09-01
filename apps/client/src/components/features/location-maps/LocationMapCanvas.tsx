@@ -37,6 +37,7 @@ interface Props {
   contains: LocationMapContains[];
   selectedImageId: string | null;
   selectedNodeId: string | null;
+  selectedMarkerId: string | null;
   layoutEditing: boolean;
   onSelectImage: (imageId: string) => void;
   onMoveImage: (imageId: string, x: number, y: number) => void;
@@ -47,8 +48,13 @@ interface Props {
   onRemoveImage: (imageId: string) => void;
   onBringNodeToFront: (nodeId: string) => void;
   onSendNodeToBack: (nodeId: string) => void;
+  onBringMarkerToFront: (markerId: string) => void;
+  onSendMarkerToBack: (markerId: string) => void;
   onSelectNode: (nodeId: string) => void;
   onMoveNode: (nodeId: string, x: number, y: number) => void;
+  onSelectMarker: (markerId: string) => void;
+  onMoveMarker: (markerId: string, x: number, y: number) => void;
+  onOpenMarkerDestination: (markerId: string) => void;
 }
 
 const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
@@ -59,7 +65,7 @@ const CONTAINS_DASH = '6 4';
 const HALO_WIDTH = 6;
 
 type ActiveDrag = {
-  kind: 'image' | 'node';
+  kind: 'image' | 'node' | 'marker';
   id: string;
   x: number;
   y: number;
@@ -147,6 +153,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       contains,
       selectedImageId,
       selectedNodeId,
+      selectedMarkerId,
       layoutEditing,
       onSelectImage,
       onMoveImage,
@@ -157,8 +164,13 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       onRemoveImage,
       onBringNodeToFront,
       onSendNodeToBack,
+      onBringMarkerToFront,
+      onSendMarkerToBack,
       onSelectNode,
       onMoveNode,
+      onSelectMarker,
+      onMoveMarker,
+      onOpenMarkerDestination,
     },
     ref,
   ) => {
@@ -192,10 +204,16 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           ),
         };
       }
-      return {
+      if (activeDrag.kind === 'node') return {
         ...content,
         nodes: content.nodes.map((node) =>
           node.id === activeDrag.id ? { ...node, x: activeDrag.x, y: activeDrag.y } : node,
+        ),
+      };
+      return {
+        ...content,
+        markers: (content.markers ?? []).map((marker) =>
+          marker.id === activeDrag.id ? { ...marker, x: activeDrag.x, y: activeDrag.y } : marker,
         ),
       };
     }, [activeDrag, content]);
@@ -238,6 +256,10 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       (nodeId: string, x: number, y: number) => updateDrag('node', nodeId, x, y),
       [updateDrag],
     );
+    const handleMarkerDragMove = useCallback(
+      (markerId: string, x: number, y: number) => updateDrag('marker', markerId, x, y),
+      [updateDrag],
+    );
 
     const consumeDrag = useCallback((kind: ActiveDrag['kind'], id: string) => {
       if (dragFrameRef.current !== null) {
@@ -274,6 +296,14 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         if (position) onMoveNode(nodeId, position.x, position.y);
       },
       [consumeDrag, onMoveNode, setChildDragging],
+    );
+    const handleMarkerDragEnd = useCallback(
+      (markerId: string) => {
+        setChildDragging(false);
+        const position = consumeDrag('marker', markerId);
+        if (position) onMoveMarker(markerId, position.x, position.y);
+      },
+      [consumeDrag, onMoveMarker, setChildDragging],
     );
 
     const nodesByLocation = useMemo(() => {
@@ -366,6 +396,26 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           .map(({ node }) => node),
       [layoutContent.nodes],
     );
+    const stackedMarkers = useMemo(
+      () =>
+        (layoutContent.markers ?? [])
+          .map((marker, order) => ({ marker, order }))
+          .sort(
+            (left, right) =>
+              (left.marker.zIndex ?? 0) - (right.marker.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ marker }) => marker),
+      [layoutContent.markers],
+    );
+    const stackedPoints = useMemo(
+      () => [
+        ...stackedNodes.map((node, order) => ({ kind: 'node' as const, point: node, order })),
+        ...stackedMarkers.map((marker, order) => ({ kind: 'marker' as const, point: marker, order: order + stackedNodes.length })),
+      ].sort((left, right) =>
+        (left.point.zIndex ?? 0) - (right.point.zIndex ?? 0) || left.order - right.order,
+      ),
+      [stackedMarkers, stackedNodes],
+    );
 
     return (
       <GraphCanvasFrame
@@ -418,22 +468,23 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           </G>
         </Svg>
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
-          {stackedNodes.map((node) => (
+          {stackedPoints.map(({ kind, point }) => (
             <LocationMapNodeView
-              key={node.id}
-              node={node}
-              name={nodeNames[node.locationId] ?? node.locationId}
-              selected={selectedNodeId === node.id}
+              key={point.id}
+              node={point}
+              name={kind === 'node' ? nodeNames[point.locationId] ?? point.locationId : point.title}
+              selected={kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id}
               layoutEditing={layoutEditing}
               scale={scale}
               positionOffsetX={-size.originX}
               positionOffsetY={-size.originY}
-              onSelect={onSelectNode}
-              onMove={handleNodeDragMove}
+              onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
+              onMove={kind === 'node' ? handleNodeDragMove : handleMarkerDragMove}
               onDragStart={handleNodeDragStart}
-              onDragEnd={handleNodeDragEnd}
-              onBringToFront={onBringNodeToFront}
-              onSendToBack={onSendNodeToBack}
+              onDragEnd={kind === 'node' ? handleNodeDragEnd : handleMarkerDragEnd}
+              onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
+              onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
+              onOpenDestination={kind === 'marker' ? onOpenMarkerDestination : undefined}
             />
           ))}
         </View>

@@ -2,6 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import Select from '@/src/components/common/inputs/Select/Select';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import { MAP_ICON_OPTIONS } from '@keres/shared';
@@ -40,6 +41,10 @@ interface Props {
   /** Locations that can still be connected to this one (no `connected_to` yet). */
   connectCandidates: { id: string; name: string }[];
   canEdit: boolean;
+  destinationMapId?: string | null;
+  destinationName?: string | null;
+  destinationUnavailable: boolean;
+  destinationOptions: { label: string; value: string }[];
   onChangeIcon: (icon: string) => void;
   onChangeColor: (color: string) => void;
   onSetParent: (locationId: string) => void;
@@ -49,6 +54,9 @@ interface Props {
   onAddConnection: (locationId: string) => void;
   onRemoveConnection: (relationId: string) => void;
   onRemoveNode: () => void;
+  onChangeDestination: (mapId: string | null) => void;
+  onCreateDestination: () => void;
+  onOpenDestination: () => void;
   onOpenLocation: () => void;
   onClose: () => void;
 }
@@ -70,6 +78,10 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   childCandidates,
   connectCandidates,
   canEdit,
+  destinationMapId,
+  destinationName,
+  destinationUnavailable,
+  destinationOptions,
   onChangeIcon,
   onChangeColor,
   onSetParent,
@@ -79,6 +91,9 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   onAddConnection,
   onRemoveConnection,
   onRemoveNode,
+  onChangeDestination,
+  onCreateDestination,
+  onOpenDestination,
   onOpenLocation,
   onClose,
 }) => {
@@ -206,6 +221,29 @@ const LocationMapNodeSheet: React.FC<Props> = ({
             />
           </>
         )}
+
+        <View style={cardStyles.cardContainer}>
+          <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('location_map_destination')}</Text>
+          {canEdit && (
+            <Select
+              options={destinationOptions}
+              value={destinationMapId ?? ''}
+              onValueChange={(value) => onChangeDestination(value || null)}
+              placeholder={t('location_map_destination_none')}
+              multiple={false}
+              allowDeselect
+            />
+          )}
+          {destinationMapId ? (
+            destinationUnavailable ? <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text> : (
+              <Button onPress={onOpenDestination}>{t('location_map_open_destination')}</Button>
+            )
+          ) : canEdit ? (
+            <Button onPress={onCreateDestination}>{t('location_map_create_destination')}</Button>
+          ) : (
+            <Text style={styles.hint}>{t('location_map_destination_none')}</Text>
+          )}
+        </View>
 
         <View style={cardStyles.cardContainer}>
           <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('parent_location')}</Text>

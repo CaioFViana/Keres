@@ -16,6 +16,7 @@ export const LOCATION_MAP_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 
 export const MAX_LOCATION_MAP_IMAGES = 200;
 export const MAX_LOCATION_MAP_NODES = 500;
+export const MAX_LOCATION_MAP_MARKERS = 500;
 
 /** Default icon color of a map point - the Location entity's own colour. */
 export const DEFAULT_LOCATION_MAP_NODE_COLOR = '#8BC34A';
@@ -62,12 +63,30 @@ const LocationMapNodeSchema = z.object({
   color: z.string().max(20).default(DEFAULT_LOCATION_MAP_NODE_COLOR),
   /** Stacking order among location points. */
   zIndex: z.number().finite().optional(),
+  /** Optional cartographic destination; this is not a LocationRelation. */
+  destinationMapId: z.string().min(1).nullable().optional(),
+  /** Snapshot used to keep a deleted Location point legible. */
+  labelAtPin: z.string().max(200).optional(),
+});
+
+/** A map-only point such as loot, a door, a danger zone or a free annotation. */
+export const LocationMapMarkerSchema = z.object({
+  id: LocationMapLocalIdSchema,
+  x: z.number().finite(),
+  y: z.number().finite(),
+  title: z.string().min(1).max(200),
+  note: z.string().max(8000).nullable().optional(),
+  icon: z.string().min(1).max(60),
+  color: z.string().max(20).default(DEFAULT_LOCATION_MAP_NODE_COLOR),
+  zIndex: z.number().finite().optional(),
+  destinationMapId: z.string().min(1).nullable().optional(),
 });
 
 export const LocationMapContentSchema = z
   .object({
     images: z.array(LocationMapImageSchema).max(MAX_LOCATION_MAP_IMAGES),
     nodes: z.array(LocationMapNodeSchema).max(MAX_LOCATION_MAP_NODES),
+    markers: z.array(LocationMapMarkerSchema).max(MAX_LOCATION_MAP_MARKERS).optional(),
   })
   .superRefine((content, context) => {
     const imageIds = new Set<string>();
@@ -83,6 +102,7 @@ export const LocationMapContentSchema = z
     }
 
     const nodeIds = new Set<string>();
+    const locationIds = new Set<string>();
     for (const [index, node] of content.nodes.entries()) {
       if (nodeIds.has(node.id)) {
         context.addIssue({
@@ -92,6 +112,25 @@ export const LocationMapContentSchema = z
         });
       }
       nodeIds.add(node.id);
+      if (locationIds.has(node.locationId)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['nodes', index, 'locationId'],
+          message: 'A location can only appear once on the same map.',
+        });
+      }
+      locationIds.add(node.locationId);
+    }
+
+    for (const [index, marker] of (content.markers ?? []).entries()) {
+      if (nodeIds.has(marker.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['markers', index, 'id'],
+          message: 'Duplicate node or marker id on this location map.',
+        });
+      }
+      nodeIds.add(marker.id);
     }
   });
 
@@ -120,6 +159,7 @@ export const PartialLocationMapSchema = CreateLocationMapDataSchema.partial();
 
 export type LocationMapImageType = z.infer<typeof LocationMapImageSchema>;
 export type LocationMapNodeType = z.infer<typeof LocationMapNodeSchema>;
+export type LocationMapMarkerType = z.infer<typeof LocationMapMarkerSchema>;
 export type LocationMapContentType = z.infer<typeof LocationMapContentSchema>;
 export type LocationMapRowType = z.infer<typeof LocationMapSchema>;
 export type CreateLocationMapDataType = z.infer<typeof CreateLocationMapDataSchema>;
@@ -135,6 +175,16 @@ export function remapLocationMapContent(
 ): LocationMapContentType {
   return {
     images: content.images.map((image) => ({ ...image, galleryId: remapId(image.galleryId) })),
-    nodes: content.nodes.map((node) => ({ ...node, locationId: remapId(node.locationId) })),
+    nodes: content.nodes.map((node) => ({
+      ...node,
+      locationId: remapId(node.locationId),
+      destinationMapId: node.destinationMapId ? remapId(node.destinationMapId) : node.destinationMapId,
+    })),
+    markers: content.markers?.map((marker) => ({
+      ...marker,
+      destinationMapId: marker.destinationMapId
+        ? remapId(marker.destinationMapId)
+        : marker.destinationMapId,
+    })),
   };
 }

@@ -11,6 +11,11 @@ export interface LocationMapImageEntry {
   height: number;
 }
 
+export interface LocationMapMarkerEntry {
+  title: string;
+  note?: string | null;
+}
+
 /** Adds image bases to the map, each at a staggered position, returning the new content. */
 export function appendImagesToMap(
   current: LocationMapContentType,
@@ -19,6 +24,7 @@ export function appendImagesToMap(
   const existing = new Set([
     ...current.images.map((image) => image.id),
     ...current.nodes.map((node) => node.id),
+    ...(current.markers ?? []).map((marker) => marker.id),
   ]);
   let next = current;
   for (const entry of entries) {
@@ -51,6 +57,7 @@ export function appendLocationsToMap(
   const existing = new Set([
     ...current.images.map((image) => image.id),
     ...current.nodes.map((node) => node.id),
+    ...(current.markers ?? []).map((marker) => marker.id),
   ]);
   let next = current;
   for (const locationId of locationIds) {
@@ -66,10 +73,40 @@ export function appendLocationsToMap(
           y: 120 + (index % 4) * 24,
           icon: getEntityAppearance('Location').icon,
           color: DEFAULT_LOCATION_MAP_NODE_COLOR,
+          destinationMapId: null,
         },
       ],
     };
     existing.add(next.nodes[next.nodes.length - 1].id);
+  }
+  return next;
+}
+
+/** Adds map-only markers without inventing a Location entity. */
+export function appendMarkersToMap(
+  current: LocationMapContentType,
+  entries: LocationMapMarkerEntry[],
+): LocationMapContentType {
+  const existing = new Set([
+    ...current.images.map((image) => image.id),
+    ...current.nodes.map((node) => node.id),
+    ...(current.markers ?? []).map((marker) => marker.id),
+  ]);
+  let next = current;
+  for (const entry of entries) {
+    const index = next.images.length + next.nodes.length + (next.markers?.length ?? 0);
+    const marker = {
+      id: generateLocationMapLocalId(existing),
+      x: 160 + (index % 4) * 24,
+      y: 160 + (index % 4) * 24,
+      title: entry.title,
+      note: entry.note ?? null,
+      icon: 'pin',
+      color: DEFAULT_LOCATION_MAP_NODE_COLOR,
+      destinationMapId: null,
+    };
+    next = { ...next, markers: [...(next.markers ?? []), marker] };
+    existing.add(marker.id);
   }
   return next;
 }

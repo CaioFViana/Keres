@@ -156,3 +156,16 @@ it('draws the default map icon as a path', () => {
   expect(svg).toContain('<g transform="translate(');
   expect(svg).toContain('fill="#8BC34A"><path');
 });
+
+it('draws free markers with their own labels', () => {
+  const svg = renderLocationMapSvg(
+    {
+      images: [],
+      nodes: [],
+      markers: [{ id: 'M1', x: 80, y: 90, title: 'Hidden key', icon: 'key', color: '#8BC34A' }],
+    },
+    options,
+  );
+  expect(svg).toContain('Hidden key');
+  expect(svg).toContain('#8BC34A');
+});

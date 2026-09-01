@@ -14,6 +14,7 @@ import LocationMapCanvas, {
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
+import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
@@ -44,7 +45,7 @@ import {
   LOCATION_MAP_IMAGE_MAX,
   LOCATION_MAP_IMAGE_MIN,
 } from '../../utils/locationMapLayout';
-import { appendImagesToMap, appendLocationsToMap } from '../../utils/locationMapContent';
+import { appendImagesToMap, appendLocationsToMap, appendMarkersToMap } from '../../utils/locationMapContent';
 import { imageSizeOf } from '../../utils/locationMapMedia';
 import { buildLocationMapSvg } from '../../utils/locationMapExport';
 import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -74,11 +75,14 @@ const LocationMapScreen = () => {
   const [locations, setLocations] = useState<LocationSelect[]>([]);
   const [galleries, setGalleries] = useState<GallerySelect[]>([]);
   const [relations, setRelations] = useState<LocationRelationSelect[]>([]);
+  const [maps, setMaps] = useState<LocationMapSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [openedNodeId, setOpenedNodeId] = useState<string | null>(null);
+  const [openedMarkerId, setOpenedMarkerId] = useState<string | null>(null);
   const [layoutEditing, setLayoutEditing] = useState(false);
   const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
@@ -94,13 +98,14 @@ const LocationMapScreen = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [row, loadedLocations, loadedGalleries, loadedRelations] = await Promise.all([
+      const [row, loadedLocations, loadedGalleries, loadedRelations, loadedMaps] = await Promise.all([
         createLocationMapService(db).getById(mapId),
         storyId ? createLocationService(db).getAllByStoryId(storyId) : Promise.resolve([]),
         storyId ? createGalleryService(db).getGalleriesByStoryId(storyId) : Promise.resolve([]),
         storyId
           ? createLocationRelationService(db).getAllRelationsForStory(storyId)
           : Promise.resolve([]),
+        storyId ? createLocationMapService(db).getMapsForStory(storyId) : Promise.resolve([]),
       ]);
       if (!row || row.isDeleted) {
         setError(t('location_map_not_found'));
@@ -116,6 +121,7 @@ const LocationMapScreen = () => {
       setLocations(loadedLocations.filter((x) => !x.isDeleted));
       setGalleries(loadedGalleries.filter((x) => !x.isDeleted));
       setRelations(loadedRelations.filter((x) => !x.isDeleted));
+      setMaps(loadedMaps.filter((x) => !x.isDeleted));
       if (keep && keep.mapId === mapId && keep.storyId === storyId) {
         setContent(keep.content);
         setSavedContent(row.content);
@@ -182,6 +188,7 @@ const LocationMapScreen = () => {
                 onToggleLayout={() => {
                   setLayoutEditing((current) => !current);
                   setOpenedNodeId(null);
+                  setOpenedMarkerId(null);
                 }}
               />
             )
@@ -365,6 +372,10 @@ const LocationMapScreen = () => {
         .map((location) => ({ label: location.name, value: location.id })),
     [locations, usedLocationIds],
   );
+  const destinationOptions = useMemo(
+    () => maps.filter((candidate) => candidate.id !== mapId).map((candidate) => ({ label: candidate.name, value: candidate.id })),
+    [mapId, maps],
+  );
 
   const addImages = async (values: string[]) => {
     // Each image keeps its real aspect ratio: the default size is a bounding box the image is
@@ -398,10 +409,17 @@ const LocationMapScreen = () => {
   const addLocations = (values: string[]) => {
     setContent((current) => appendLocationsToMap(current, values));
   };
+  const addMarker = () => {
+    setContent((current) => appendMarkersToMap(current, [{ title: t('location_map_marker_default_title') }]));
+  };
 
   const openedNode = useMemo(
     () => content.nodes.find((node) => node.id === openedNodeId) ?? null,
     [content.nodes, openedNodeId],
+  );
+  const openedMarker = useMemo(
+    () => (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null,
+    [content.markers, openedMarkerId],
   );
 
   const handleResizeImageDirect = useCallback((imageId: string, width: number, height: number) => {
@@ -438,6 +456,7 @@ const LocationMapScreen = () => {
 
   const handleSelectImage = useCallback((imageId: string) => {
     setSelectedNodeId(null);
+    setSelectedMarkerId(null);
     setSelectedImageId(imageId);
     setOpenedNodeId(null);
   }, []);
@@ -449,16 +468,33 @@ const LocationMapScreen = () => {
     }));
   }, []);
 
-  const handleSelectNode = useCallback((nodeId: string) => {
-    setSelectedImageId(null);
-    setSelectedNodeId(nodeId);
-    if (!layoutEditing) setOpenedNodeId(nodeId);
-  }, [layoutEditing]);
+  const handleSelectNode = useCallback(
+    (nodeId: string) => {
+      setSelectedImageId(null);
+      setSelectedMarkerId(null);
+      setSelectedNodeId(nodeId);
+      if (!layoutEditing) setOpenedNodeId(nodeId);
+    },
+    [layoutEditing],
+  );
 
   const handleMoveNode = useCallback((nodeId: string, x: number, y: number) => {
     setContent((current) => ({
       ...current,
       nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
+    }));
+  }, []);
+  const handleSelectMarker = useCallback((markerId: string) => {
+    setSelectedImageId(null);
+    setSelectedNodeId(null);
+    setSelectedMarkerId(markerId);
+    setOpenedNodeId(null);
+    if (!layoutEditing) setOpenedMarkerId(markerId);
+  }, [layoutEditing]);
+  const handleMoveMarker = useCallback((markerId: string, x: number, y: number) => {
+    setContent((current) => ({
+      ...current,
+      markers: (current.markers ?? []).map((marker) => marker.id === markerId ? { ...marker, x, y } : marker),
     }));
   }, []);
 
@@ -479,6 +515,7 @@ const LocationMapScreen = () => {
   const moveNodeLayer = useCallback((nodeId: string, direction: 'front' | 'back') => {
     setContent((current) => {
       const levels = current.nodes.map((node) => node.zIndex ?? 0);
+      levels.push(...(current.markers ?? []).map((marker) => marker.zIndex ?? 0));
       const zIndex =
         direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
       return {
@@ -487,6 +524,54 @@ const LocationMapScreen = () => {
       };
     });
   }, []);
+  const moveMarkerLayer = useCallback((markerId: string, direction: 'front' | 'back') => {
+    setContent((current) => {
+      const levels = [
+        ...current.nodes.map((node) => node.zIndex ?? 0),
+        ...(current.markers ?? []).map((marker) => marker.zIndex ?? 0),
+      ];
+      const zIndex = direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+      return { ...current, markers: (current.markers ?? []).map((marker) => marker.id === markerId ? { ...marker, zIndex } : marker) };
+    });
+  }, []);
+
+  const destinationName = useCallback((destinationMapId?: string | null) =>
+    maps.find((candidate) => candidate.id === destinationMapId)?.name ?? null,
+  [maps]);
+  const openDestination = useCallback((destinationMapId?: string | null) => {
+    if (!destinationMapId || !maps.some((candidate) => candidate.id === destinationMapId)) return;
+    setOpenedNodeId(null);
+    setOpenedMarkerId(null);
+    navigation.navigate('LocationMap', { mapId: destinationMapId });
+  }, [maps, navigation]);
+  const handleOpenMarkerDestination = useCallback((markerId: string) => {
+    const marker = (content.markers ?? []).find((candidate) => candidate.id === markerId);
+    if (!marker?.destinationMapId || !maps.some((candidate) => candidate.id === marker.destinationMapId)) {
+      handleSelectMarker(markerId);
+      return;
+    }
+    openDestination(marker.destinationMapId);
+  }, [content.markers, handleSelectMarker, maps, openDestination]);
+  const createDestination = useCallback(async (source: { locationId?: string; title: string; note?: string | null }, setDestination: (mapId: string) => void) => {
+    if (!storyId || !userId) return;
+    try {
+      const initial = source.locationId
+        ? appendLocationsToMap({ images: [], nodes: [] }, [source.locationId])
+        : appendMarkersToMap({ images: [], nodes: [] }, [{ title: source.title, note: source.note }]);
+      const created = await createLocationMapService(db).createMap(userId, {
+        storyId,
+        name: `${source.title} — ${t('location_map_destination')}`,
+        description: null,
+        content: initial,
+      });
+      setMaps((current) => [...current, created]);
+      setDestination(created.id);
+      showNotification(t('location_map_destination_created'), 'success');
+    } catch (createError) {
+      console.log('LocationMapScreen: failed to create destination map.', createError);
+      showNotification(t('location_map_save_failed'), 'error');
+    }
+  }, [db, showNotification, storyId, t, userId]);
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -513,6 +598,7 @@ const LocationMapScreen = () => {
             addImages(values);
           }}
           onAddLocations={addLocations}
+          onAddMarker={addMarker}
         />
       )}
       <LocationMapCanvas
@@ -524,6 +610,7 @@ const LocationMapScreen = () => {
         contains={contains}
         selectedImageId={selectedImageId}
         selectedNodeId={selectedNodeId}
+        selectedMarkerId={selectedMarkerId}
         layoutEditing={layoutEditing}
         onSelectImage={handleSelectImage}
         onMoveImage={handleMoveImage}
@@ -534,8 +621,13 @@ const LocationMapScreen = () => {
         onRemoveImage={handleRemoveImage}
         onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
         onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
+        onBringMarkerToFront={(id) => moveMarkerLayer(id, 'front')}
+        onSendMarkerToBack={(id) => moveMarkerLayer(id, 'back')}
         onSelectNode={handleSelectNode}
         onMoveNode={handleMoveNode}
+        onSelectMarker={handleSelectMarker}
+        onMoveMarker={handleMoveMarker}
+        onOpenMarkerDestination={handleOpenMarkerDestination}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -558,6 +650,10 @@ const LocationMapScreen = () => {
           childCandidates={childCandidates}
           connectCandidates={connectCandidates}
           canEdit={canEdit}
+          destinationMapId={openedNode.destinationMapId}
+          destinationName={destinationName(openedNode.destinationMapId)}
+          destinationUnavailable={!!openedNode.destinationMapId && !destinationName(openedNode.destinationMapId)}
+          destinationOptions={destinationOptions}
           onChangeIcon={(icon) =>
             setContent((current) => ({
               ...current,
@@ -588,6 +684,13 @@ const LocationMapScreen = () => {
             setSelectedNodeId(null);
             setOpenedNodeId(null);
           }}
+          onChangeDestination={(destinationMapId) =>
+            setContent((current) => ({ ...current, nodes: current.nodes.map((node) => node.id === openedNode.id ? { ...node, destinationMapId } : node) }))
+          }
+          onCreateDestination={() => void createDestination({ locationId: openedNode.locationId, title: nodeNames[openedNode.locationId] ?? openedNode.locationId }, (destinationMapId) =>
+            setContent((current) => ({ ...current, nodes: current.nodes.map((node) => node.id === openedNode.id ? { ...node, destinationMapId } : node) })),
+          )}
+          onOpenDestination={() => openDestination(openedNode.destinationMapId)}
           onOpenLocation={() => {
             setSelectedNodeId(null);
             navigateToEntity('Location', openedNode.locationId);
@@ -596,6 +699,26 @@ const LocationMapScreen = () => {
             setOpenedNodeId(null);
             setSelectedNodeId(null);
           }}
+        />
+      )}
+      {openedMarker && (
+        <LocationMapMarkerSheet
+          title={openedMarker.title}
+          note={openedMarker.note}
+          icon={openedMarker.icon}
+          color={openedMarker.color}
+          destinationMapId={openedMarker.destinationMapId}
+          destinationName={destinationName(openedMarker.destinationMapId)}
+          destinationUnavailable={!!openedMarker.destinationMapId && !destinationName(openedMarker.destinationMapId)}
+          destinationOptions={destinationOptions}
+          canEdit={canEdit}
+          onChange={(changes) => setContent((current) => ({ ...current, markers: (current.markers ?? []).map((marker) => marker.id === openedMarker.id ? { ...marker, ...changes } : marker) }))}
+          onChangeDestination={(destinationMapId) => setContent((current) => ({ ...current, markers: (current.markers ?? []).map((marker) => marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker) }))}
+          onCreateDestination={() => void createDestination({ title: openedMarker.title, note: openedMarker.note }, (destinationMapId) => setContent((current) => ({ ...current, markers: (current.markers ?? []).map((marker) => marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker) })))}
+          onOpenDestination={() => openDestination(openedMarker.destinationMapId)}
+          onClearDestination={() => setContent((current) => ({ ...current, markers: (current.markers ?? []).map((marker) => marker.id === openedMarker.id ? { ...marker, destinationMapId: null } : marker) }))}
+          onRemove={() => { setContent((current) => ({ ...current, markers: (current.markers ?? []).filter((marker) => marker.id !== openedMarker.id) })); setSelectedMarkerId(null); setOpenedMarkerId(null); }}
+          onClose={() => { setOpenedMarkerId(null); setSelectedMarkerId(null); }}
         />
       )}
     </View>

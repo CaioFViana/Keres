@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { appendImagesToMap, appendLocationsToMap } from '../../src/utils/locationMapContent';
+import { appendImagesToMap, appendLocationsToMap, appendMarkersToMap } from '../../src/utils/locationMapContent';
 import { deriveConnections, deriveContains } from '../../src/utils/locationMapRelations';
 
 const content = { images: [], nodes: [] };
@@ -26,6 +26,12 @@ it('appends location points with the default icon and colour', () => {
   expect(next.nodes[0].locationId).toBe('location-1');
   expect(next.nodes[0].icon).toBe('map');
   expect(next.nodes[0].color).toBe('#8BC34A');
+});
+
+it('appends free markers without creating a location entity', () => {
+  const next = appendMarkersToMap(content, [{ title: 'Hidden key', note: 'Behind the statue' }]);
+  expect(next.nodes).toHaveLength(0);
+  expect(next.markers?.[0]).toMatchObject({ title: 'Hidden key', note: 'Behind the statue', destinationMapId: null });
 });
 
 const relationBase = {

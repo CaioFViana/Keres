@@ -116,6 +116,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           top: node.y + positionOffsetY - LOCATION_MAP_NODE_SIZE / 2,
           width: LOCATION_MAP_NODE_SIZE,
           alignItems: 'center',
+          zIndex: node.zIndex ?? 0,
           ...(Platform.OS === 'web'
             ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
             : {}),

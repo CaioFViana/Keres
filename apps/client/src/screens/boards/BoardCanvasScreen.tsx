@@ -76,6 +76,8 @@ const BoardCanvasScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<BoardNodeType | null>(null);
+  const [layoutSelectedNodeId, setLayoutSelectedNodeId] = useState<string | null>(null);
+  const [layoutEditing, setLayoutEditing] = useState(false);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
   const [livePins, setLivePins] = useState<
     Record<string, { label: string; group: BoardPinOption['group'] }>
@@ -85,6 +87,9 @@ const BoardCanvasScreen = () => {
   const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
   /** Light summary of the selected entity pin, loaded when the sheet opens. */
   const [selectedSummary, setSelectedSummary] = useState<BoardEntitySummary | null>(null);
+  const [summariesByNode, setSummariesByNode] = useState<Record<string, BoardEntitySummary | null>>(
+    {},
+  );
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
@@ -181,6 +186,24 @@ const BoardCanvasScreen = () => {
     };
   }, [db, selected]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const entityNodes = content.nodes.filter(
+      (node): node is Extract<BoardNodeType, { kind: 'entity' }> => node.kind === 'entity',
+    );
+    void Promise.all(
+      entityNodes.map(
+        async (node) =>
+          [node.id, await loadBoardEntitySummary(db, node.entityType, node.entityId)] as const,
+      ),
+    ).then((entries) => {
+      if (!cancelled) setSummariesByNode(Object.fromEntries(entries));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [content.nodes, db]);
+
   const save = useCallback(async () => {
     if (!userId || !board) return;
     try {
@@ -217,6 +240,19 @@ const BoardCanvasScreen = () => {
           ? () => (
               <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
                 <TouchableOpacity
+                  onPress={() => {
+                    setLayoutEditing((current) => !current);
+                    setLayoutSelectedNodeId(null);
+                  }}
+                  accessibilityLabel={t('board_edit_layout')}
+                >
+                  <Ionicons
+                    name={layoutEditing ? 'checkmark-circle-outline' : 'move-outline'}
+                    size={24}
+                    color={layoutEditing ? colors.primary : colors.text}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
                   onPress={revert}
                   disabled={!dirty}
                   accessibilityLabel={t('board_revert')}
@@ -249,6 +285,7 @@ const BoardCanvasScreen = () => {
       colors.text,
       colors.textSecondary,
       dirty,
+      layoutEditing,
       navigation,
       revert,
       save,
@@ -331,6 +368,7 @@ const BoardCanvasScreen = () => {
         titles,
         galleryMediaById,
         galleryImages,
+        summaries: summariesByNode,
       });
       const result = await deliverSvgMap(
         svg,
@@ -350,7 +388,17 @@ const BoardCanvasScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [board?.name, colors, content, galleryMediaById, selectedStory, showNotification, t, titles]);
+  }, [
+    board?.name,
+    colors,
+    content,
+    galleryMediaById,
+    selectedStory,
+    showNotification,
+    summariesByNode,
+    t,
+    titles,
+  ]);
 
   const nodeTitles = useMemo(() => {
     const map: Record<string, string> = {};
@@ -363,6 +411,33 @@ const BoardCanvasScreen = () => {
       ...current,
       nodes: current.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
     }));
+  }, []);
+
+  const handleResizeNode = useCallback((id: string, width: number, height: number) => {
+    setContent((current) => ({
+      ...current,
+      nodes: current.nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              width: Math.min(720, Math.max(148, width)),
+              height: Math.min(720, Math.max(86, height)),
+            }
+          : node,
+      ),
+    }));
+  }, []);
+
+  const moveNodeLayer = useCallback((id: string, direction: 'front' | 'back') => {
+    setContent((current) => {
+      const levels = current.nodes.map((node) => node.zIndex ?? 0);
+      const target =
+        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+      return {
+        ...current,
+        nodes: current.nodes.map((node) => (node.id === id ? { ...node, zIndex: target } : node)),
+      };
+    });
   }, []);
 
   const addEntities = (values: string[]) => {
@@ -390,6 +465,8 @@ const BoardCanvasScreen = () => {
           entityType: decoded.entityType as BoardPinEntity,
           entityId: decoded.entityId,
           labelAtPin: option?.label ?? decoded.entityId,
+          displayMode: 'compact',
+          cardNote: null,
         };
         created.push(node);
         next = { ...next, nodes: [...next.nodes, node] };
@@ -485,10 +562,19 @@ const BoardCanvasScreen = () => {
         ref={canvasRef}
         content={content}
         titles={titles}
-        selectedNodeId={selected?.id ?? null}
+        selectedNodeId={layoutEditing ? layoutSelectedNodeId : null}
+        layoutEditing={layoutEditing}
         galleryMediaById={galleryMediaById}
-        onSelectNode={setSelected}
+        summaries={summariesByNode}
+        onSelectNode={(node) => {
+          if (layoutEditing) setLayoutSelectedNodeId(node.id);
+          else setSelected(node);
+        }}
         onMoveNode={handleMoveNode}
+        onResizeNode={handleResizeNode}
+        onOpenNodeDetails={setSelected}
+        onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
+        onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -515,6 +601,16 @@ const BoardCanvasScreen = () => {
               ...current,
               nodes: current.nodes.map((node) =>
                 node.id === selected.id && node.kind === 'note' ? { ...node, title, body } : node,
+              ),
+            }));
+          }}
+          onChangeEntityPresentation={(displayMode, cardNote) => {
+            setContent((current) => ({
+              ...current,
+              nodes: current.nodes.map((node) =>
+                node.id === selected.id && node.kind === 'entity'
+                  ? { ...node, displayMode, cardNote }
+                  : node,
               ),
             }));
           }}

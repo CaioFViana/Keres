@@ -327,6 +327,28 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       }
       return next;
     }, [contains, nodesByLocation]);
+    const stackedImages = useMemo(
+      () =>
+        layoutContent.images
+          .map((image, order) => ({ image, order }))
+          .sort(
+            (left, right) =>
+              (left.image.zIndex ?? 0) - (right.image.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ image }) => image),
+      [layoutContent.images],
+    );
+    const stackedNodes = useMemo(
+      () =>
+        layoutContent.nodes
+          .map((node, order) => ({ node, order }))
+          .sort(
+            (left, right) =>
+              (left.node.zIndex ?? 0) - (right.node.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ node }) => node),
+      [layoutContent.nodes],
+    );
 
     return (
       <GraphCanvasFrame
@@ -335,7 +357,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
-        {layoutContent.images.map((image) => (
+        {stackedImages.map((image) => (
           <LocationMapImageView
             key={image.id}
             image={image}
@@ -370,7 +392,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             ))}
           </G>
         </Svg>
-        {layoutContent.nodes.map((node) => (
+        {stackedNodes.map((node) => (
           <LocationMapNodeView
             key={node.id}
             node={node}

@@ -47,6 +47,7 @@ describe('BoardContentSchema', () => {
       edges: [],
     });
     expect(content.nodes).toHaveLength(2);
+    expect(content.nodes[0]).toMatchObject({ displayMode: 'compact', cardNote: null });
   });
 
   it('rejects an edge that points at a missing node', () => {
@@ -86,6 +87,8 @@ describe('BoardContentSchema', () => {
             entityType: 'Scene',
             entityId: 'old-scene',
             labelAtPin: 'The dock',
+            displayMode: 'summary-and-note',
+            cardNote: 'Bring the storm motif forward.',
           },
           { id: otherId, kind: 'note', x: 3, y: 4, title: 'TODO', body: null },
         ],
@@ -93,7 +96,12 @@ describe('BoardContentSchema', () => {
       },
       (id) => (id === 'old-scene' ? 'new-scene' : id),
     );
-    expect(remapped.nodes[0]).toMatchObject({ id: nodeId, entityId: 'new-scene' });
+    expect(remapped.nodes[0]).toMatchObject({
+      id: nodeId,
+      entityId: 'new-scene',
+      displayMode: 'summary-and-note',
+      cardNote: 'Bring the storm motif forward.',
+    });
     expect(remapped.nodes[1]).toMatchObject({ id: otherId, kind: 'note' });
     expect(remapped.edges[0].from).toBe(nodeId);
   });

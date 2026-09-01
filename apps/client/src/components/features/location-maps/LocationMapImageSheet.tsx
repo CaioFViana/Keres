@@ -15,6 +15,8 @@ interface Props {
   /** When locked, touching/dragging the image moves the canvas instead of the image. */
   locked: boolean;
   onToggleLock: () => void;
+  onBringToFront: () => void;
+  onSendToBack: () => void;
 }
 
 /**
@@ -28,6 +30,8 @@ const LocationMapImageSheet: React.FC<Props> = ({
   onRemove,
   locked,
   onToggleLock,
+  onBringToFront,
+  onSendToBack,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -97,6 +101,22 @@ const LocationMapImageSheet: React.FC<Props> = ({
         <Text style={styles.hint}>
           {locked ? t('location_map_lock_hint_locked') : t('location_map_image_size_hint')}
         </Text>
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.sizeButton}
+            onPress={onSendToBack}
+            accessibilityLabel={t('canvas_send_to_back')}
+          >
+            <Ionicons name="layers-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.sizeButton}
+            onPress={onBringToFront}
+            accessibilityLabel={t('canvas_bring_to_front')}
+          >
+            <Ionicons name="layers" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
         <Button onPress={onRemove} style={[styles.remove, { backgroundColor: colors.error }]}>
           {t('location_map_remove_image')}
         </Button>

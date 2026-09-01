@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { BoardContentType, BoardNodeType } from '@keres/shared';
+import type { BoardCardDisplayMode, BoardContentType, BoardNodeType } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
@@ -28,6 +29,7 @@ interface Props {
   onChangeContent: (content: BoardContentType) => void;
   onOpenEntity: () => void;
   onChangeNote: (title: string, body: string | null) => void;
+  onChangeEntityPresentation: (displayMode: BoardCardDisplayMode, cardNote: string | null) => void;
 }
 
 const BoardNodeSheet: React.FC<Props> = ({
@@ -43,6 +45,7 @@ const BoardNodeSheet: React.FC<Props> = ({
   onChangeContent,
   onOpenEntity,
   onChangeNote,
+  onChangeEntityPresentation,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -261,6 +264,43 @@ const BoardNodeSheet: React.FC<Props> = ({
               <Text style={styles.summaryText}>{summary.details}</Text>
             ) : (
               <Text style={styles.hint}>{t('common_na')}</Text>
+            )}
+          </View>
+        )}
+
+        {node.kind === 'entity' && canEdit && (
+          <View style={cardStyles.cardContainer}>
+            <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('board_card_content')}</Text>
+            <Select
+              options={[
+                { label: t('board_card_compact'), value: 'compact' },
+                { label: t('board_card_summary'), value: 'summary' },
+                { label: t('board_card_note'), value: 'note' },
+                { label: t('board_card_summary_and_note'), value: 'summary-and-note' },
+              ]}
+              value={node.displayMode ?? 'compact'}
+              onValueChange={(value) =>
+                onChangeEntityPresentation(
+                  (value ?? 'compact') as BoardCardDisplayMode,
+                  node.cardNote ?? null,
+                )
+              }
+              multiple={false}
+              placeholder={t('board_card_content')}
+            />
+            {((node.displayMode ?? 'compact') === 'note' ||
+              (node.displayMode ?? 'compact') === 'summary-and-note') && (
+              <View style={[styles.field, { marginTop: 10 }]}>
+                <TextInput
+                  value={node.cardNote ?? ''}
+                  onChangeText={(value) =>
+                    onChangeEntityPresentation(node.displayMode ?? 'compact', value || null)
+                  }
+                  placeholder={t('board_card_note_placeholder')}
+                  multiline
+                  style={{ minHeight: 100, textAlignVertical: 'top' }}
+                />
+              </View>
             )}
           </View>
         )}

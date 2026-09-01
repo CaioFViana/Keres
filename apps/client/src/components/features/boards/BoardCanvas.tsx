@@ -8,6 +8,7 @@ import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import { boardCanvasBounds, type BoardGalleryMediaById } from '../../../utils/boardLayout';
+import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import BoardNodeView from './BoardNode';
 
 export type BoardCanvasHandle = PanZoomCanvasHandle;
@@ -23,10 +24,16 @@ interface Props {
   content: BoardContentType;
   titles: Record<string, BoardPinTitle>;
   selectedNodeId: string | null;
+  layoutEditing: boolean;
   /** Media of the story's galleries - lets Gallery pins show their image. */
   galleryMediaById?: BoardGalleryMediaById;
+  summaries?: Record<string, BoardEntitySummary | null>;
   onSelectNode: (node: BoardNodeType) => void;
   onMoveNode: (nodeId: string, x: number, y: number) => void;
+  onResizeNode: (nodeId: string, width: number, height: number) => void;
+  onOpenNodeDetails: (node: BoardNodeType) => void;
+  onBringNodeToFront: (nodeId: string) => void;
+  onSendNodeToBack: (nodeId: string) => void;
 }
 
 type ActiveDrag = { id: string; x: number; y: number };
@@ -83,7 +90,23 @@ const BoardEdgeView = React.memo(function BoardEdgeView({
 });
 
 const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
-  ({ content, titles, selectedNodeId, galleryMediaById, onSelectNode, onMoveNode }, ref) => {
+  (
+    {
+      content,
+      titles,
+      selectedNodeId,
+      layoutEditing,
+      galleryMediaById,
+      summaries,
+      onSelectNode,
+      onMoveNode,
+      onResizeNode,
+      onOpenNodeDetails,
+      onBringNodeToFront,
+      onSendNodeToBack,
+    },
+    ref,
+  ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
@@ -194,6 +217,17 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       }
       return next;
     }, [content.edges, galleryMediaById, nodesById]);
+    const stackedNodes = useMemo(
+      () =>
+        layoutNodes
+          .map((node, order) => ({ node, order }))
+          .sort(
+            (left, right) =>
+              (left.node.zIndex ?? 0) - (right.node.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ node }) => node),
+      [layoutNodes],
+    );
 
     return (
       <GraphCanvasFrame
@@ -202,32 +236,6 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         contentOverflow="visible"
         {...frame}
       >
-        {layoutNodes.map((node) => {
-          const meta = titles[node.id];
-          return (
-            <BoardNodeView
-              key={node.id}
-              node={node}
-              title={meta?.title ?? node.kind}
-              typeLabel={meta?.typeLabel ?? node.kind}
-              appearanceType={meta?.appearanceType}
-              ghost={meta?.ghost}
-              selected={selectedNodeId === node.id}
-              scale={scale}
-              positionOffsetX={-size.originX}
-              positionOffsetY={-size.originY}
-              galleryMedia={
-                node.kind === 'entity' && node.entityType === 'Gallery'
-                  ? galleryMediaById?.[node.entityId]
-                  : undefined
-              }
-              onSelect={onSelectNode}
-              onMove={handleNodeDragMove}
-              onDragStart={handleNodeDragStart}
-              onDragEnd={handleNodeDragEnd}
-            />
-          );
-        })}
         <Svg
           width={size.width}
           height={size.height}
@@ -245,6 +253,38 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
             ))}
           </G>
         </Svg>
+        {stackedNodes.map((node) => {
+          const meta = titles[node.id];
+          return (
+            <BoardNodeView
+              key={node.id}
+              node={node}
+              title={meta?.title ?? node.kind}
+              typeLabel={meta?.typeLabel ?? node.kind}
+              appearanceType={meta?.appearanceType}
+              ghost={meta?.ghost}
+              selected={selectedNodeId === node.id}
+              layoutEditing={layoutEditing}
+              scale={scale}
+              positionOffsetX={-size.originX}
+              positionOffsetY={-size.originY}
+              galleryMedia={
+                node.kind === 'entity' && node.entityType === 'Gallery'
+                  ? galleryMediaById?.[node.entityId]
+                  : undefined
+              }
+              summary={summaries?.[node.id]}
+              onSelect={onSelectNode}
+              onMove={handleNodeDragMove}
+              onResize={onResizeNode}
+              onDragStart={handleNodeDragStart}
+              onDragEnd={handleNodeDragEnd}
+              onOpenDetails={onOpenNodeDetails}
+              onBringToFront={onBringNodeToFront}
+              onSendToBack={onSendNodeToBack}
+            />
+          );
+        })}
       </GraphCanvasFrame>
     );
   },

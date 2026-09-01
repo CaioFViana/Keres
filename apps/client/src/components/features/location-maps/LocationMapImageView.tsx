@@ -127,6 +127,7 @@ const LocationMapImageView: React.FC<Props> = ({
           backgroundColor: colors.surface,
           borderWidth: selected ? 2.5 : 1,
           borderColor: selected ? colors.primary : colors.border,
+          zIndex: image.zIndex ?? 0,
           ...(Platform.OS === 'web'
             ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
             : {}),

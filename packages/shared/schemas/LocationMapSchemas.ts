@@ -46,6 +46,8 @@ const LocationMapImageSchema = z.object({
   height: z.number().finite().positive(),
   /** When locked, touching/dragging the image moves the whole canvas instead of the image. */
   locked: z.boolean().default(false),
+  /** Stacking order among image bases. Images always remain below map relations and nodes. */
+  zIndex: z.number().finite().optional(),
 });
 
 const LocationMapNodeSchema = z.object({
@@ -58,6 +60,8 @@ const LocationMapNodeSchema = z.object({
   icon: z.string().min(1).max(60),
   /** Color of the icon on the map, as a hex string. Defaults so older maps without it keep parsing. */
   color: z.string().max(20).default(DEFAULT_LOCATION_MAP_NODE_COLOR),
+  /** Stacking order among location points. */
+  zIndex: z.number().finite().optional(),
 });
 
 export const LocationMapContentSchema = z

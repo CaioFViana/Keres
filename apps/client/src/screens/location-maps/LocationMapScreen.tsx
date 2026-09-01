@@ -464,6 +464,32 @@ const LocationMapScreen = () => {
     }));
   }, []);
 
+  const moveImageLayer = useCallback((imageId: string, direction: 'front' | 'back') => {
+    setContent((current) => {
+      const levels = current.images.map((image) => image.zIndex ?? 0);
+      const zIndex =
+        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+      return {
+        ...current,
+        images: current.images.map((image) =>
+          image.id === imageId ? { ...image, zIndex } : image,
+        ),
+      };
+    });
+  }, []);
+
+  const moveNodeLayer = useCallback((nodeId: string, direction: 'front' | 'back') => {
+    setContent((current) => {
+      const levels = current.nodes.map((node) => node.zIndex ?? 0);
+      const zIndex =
+        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+      return {
+        ...current,
+        nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, zIndex } : node)),
+      };
+    });
+  }, []);
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
   });
@@ -521,6 +547,8 @@ const LocationMapScreen = () => {
           onRemove={handleRemoveImage}
           locked={selectedImage.locked}
           onToggleLock={handleToggleImageLock}
+          onBringToFront={() => moveImageLayer(selectedImage.id, 'front')}
+          onSendToBack={() => moveImageLayer(selectedImage.id, 'back')}
         />
       )}
       {selectedNode && (
@@ -570,6 +598,8 @@ const LocationMapScreen = () => {
             navigateToEntity('Location', selectedNode.locationId);
           }}
           onClose={() => setSelectedNodeId(null)}
+          onBringToFront={() => moveNodeLayer(selectedNode.id, 'front')}
+          onSendToBack={() => moveNodeLayer(selectedNode.id, 'back')}
         />
       )}
     </View>

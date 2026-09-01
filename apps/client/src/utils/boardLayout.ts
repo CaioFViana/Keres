@@ -6,6 +6,8 @@ export const BOARD_NODE_HEIGHT = 86;
 export const BOARD_NOTE_WIDTH = 220;
 export const BOARD_NOTE_HEIGHT = 200;
 export const BOARD_NOTE_BODY_MAX_LINES = 10;
+export const BOARD_NODE_MAX_WIDTH = 720;
+export const BOARD_NODE_MAX_HEIGHT = 720;
 /** Gallery pins with a renderable image become a bigger card that includes it. */
 export const BOARD_GALLERY_WIDTH = 220;
 export const BOARD_GALLERY_HEIGHT = 200;
@@ -135,6 +137,18 @@ export function boardNodeSize(
   node: BoardNodeType,
   galleryMedia?: BoardGalleryMedia | null,
 ): { width: number; height: number } {
+  if (node.width !== undefined || node.height !== undefined) {
+    const fallback =
+      node.kind === 'note'
+        ? noteSizeFor(node.title, node.body)
+        : node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia)
+          ? { width: BOARD_GALLERY_WIDTH, height: BOARD_GALLERY_HEIGHT }
+          : { width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT };
+    return {
+      width: clamp(node.width ?? fallback.width, BOARD_NODE_WIDTH, BOARD_NODE_MAX_WIDTH),
+      height: clamp(node.height ?? fallback.height, BOARD_NODE_HEIGHT, BOARD_NODE_MAX_HEIGHT),
+    };
+  }
   if (node.kind === 'note') {
     return noteSizeFor(node.title, node.body);
   }

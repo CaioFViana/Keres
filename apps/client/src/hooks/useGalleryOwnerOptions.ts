@@ -1,6 +1,5 @@
-import type { Ionicons } from '@expo/vector-icons';
 import type { GalleryOwnerEntity } from '@keres/shared';
-import { GALLERY_OWNER_ENTITIES, getEntityAppearance } from '@keres/shared';
+import { GALLERY_OWNER_ENTITIES } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -139,8 +138,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({
       key: ownerType,
       label: label(ownerType, true),
-      icon: getEntityAppearance(ownerType).icon as keyof typeof Ionicons.glyphMap,
-      color: getEntityAppearance(ownerType).color,
+      entityType: ownerType,
       options: options
         .filter((option) => option.ownerType === ownerType)
         .map((option) => ({ label: option.name, value: option.value })),

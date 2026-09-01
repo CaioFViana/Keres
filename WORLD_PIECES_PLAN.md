@@ -46,6 +46,12 @@ future option only if Keres needs semantics such as *habitat*, *origin* or
 structured one-way links such as a character's species, an item's mythical origin
 or a creature's natural predator without imposing extra native columns.
 
+There is no separate World Content Manager. **See also** is the single visible
+surface for reciprocal relationships, including World Pieces. Its picker groups
+World Pieces by Section, with a distinct icon and colour for each group. This keeps
+all intentional links in one place and avoids duplicated controls or competing
+selection state.
+
 ## Lifecycle and compatibility
 
 The rework covers local and server schemas/migrations, shared Zod contracts,

@@ -20,6 +20,10 @@ interface SeeAlsoManagerProps {
   entityType: SeeAlsoEntityType;
   entityId: string;
   editable: boolean;
+  /** Lets a domain-specific manager reuse the relation lifecycle with its own user-facing name. */
+  title?: string;
+  /** A specialised manager can own one relation subset without removing generic See also links. */
+  allowedEntityTypes?: readonly SeeAlsoEntityType[];
 }
 
 /**
@@ -40,7 +44,7 @@ export interface SeeAlsoManagerHandle {
  * the same pattern as TagChipList/NoteManager/CharacterRelationManager on these same screens.
  */
 const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
-  ({ storyId, entityType, entityId, editable }, ref) => {
+  ({ storyId, entityType, entityId, editable, title, allowedEntityTypes }, ref) => {
     const { t } = useTranslation();
     const { colors } = useTheme();
     const navigateToDetail = useNavigateToEntityDetail();
@@ -48,6 +52,7 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
       storyId,
       entityType,
       entityId,
+      allowedEntityTypes,
     );
 
     useImperativeHandle(ref, () => ({ persistPending: persistSeeAlsoRelations }), [
@@ -57,6 +62,17 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
       storyId,
       entityType,
       entityId,
+    );
+    const visibleGroups = useMemo(
+      () =>
+        allowedEntityTypes
+          ? groupedOptions.filter((group) =>
+              allowedEntityTypes.includes(
+                group.key.startsWith('WorldRule:') ? 'WorldRule' : (group.key as SeeAlsoEntityType),
+              ),
+            )
+          : groupedOptions,
+      [allowedEntityTypes, groupedOptions],
     );
 
     const selectedValues = useMemo(
@@ -97,12 +113,12 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
 
     return (
       <CollapsibleCard
-        title={`${t('see_also_title')} (${relations.length})`}
+        title={`${title ?? t('see_also_title')} (${relations.length})`}
         initialExpanded={false}
       >
         {editable && (
           <MultiSelectPill
-            groups={groupedOptions}
+            groups={visibleGroups}
             selectedValues={selectedValues}
             onSelectionChange={handleSelectionChange}
             placeholder={t('see_also_select_placeholder')}
@@ -122,7 +138,7 @@ const SeeAlsoManager = forwardRef<SeeAlsoManagerHandle, SeeAlsoManagerProps>(
                 <Ionicons
                   name={ENTITY_TYPE_ICONS[relation.otherType]}
                   size={20}
-                  color={colors.primary}
+                  color={option?.color || colors.primary}
                   style={styles.icon}
                 />
                 <Text style={styles.name} numberOfLines={1}>

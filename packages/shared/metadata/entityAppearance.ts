@@ -26,8 +26,20 @@ export const ENTITY_APPEARANCE = {
 export type EntityAppearanceKey = keyof typeof ENTITY_APPEARANCE;
 export type EntityAppearance = { readonly color: string; readonly icon: string };
 
+/** Visual vocabulary for World Piece sections in grouped selectors and relationship managers. */
+export const WORLD_PIECE_SECTION_APPEARANCE: Record<WorldPieceSection, EntityAppearance> = {
+  rule: { color: '#0288D1', icon: 'shield-checkmark-outline' },
+  fauna: { color: '#7CB342', icon: 'paw-outline' },
+  flora: { color: '#2E7D32', icon: 'leaf-outline' },
+  mythology: { color: '#7E57C2', icon: 'sparkles-outline' },
+  people: { color: '#F9A825', icon: 'people-outline' },
+  knowledge: { color: '#546E7A', icon: 'library-outline' },
+  other: { color: '#78909C', icon: 'ellipsis-horizontal-circle-outline' },
+};
+
 const FALLBACK: EntityAppearance = { color: '#607D8B', icon: 'ellipse' };
 
 export function getEntityAppearance(entityType: string): EntityAppearance {
   return ENTITY_APPEARANCE[entityType as EntityAppearanceKey] ?? FALLBACK;
 }
+import type { WorldPieceSection } from '../entities/WorldRule';

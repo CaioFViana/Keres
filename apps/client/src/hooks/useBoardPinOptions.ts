@@ -1,5 +1,4 @@
-import type { Ionicons } from '@expo/vector-icons';
-import { getEntityAppearance } from '@keres/shared';
+import type { EntityAppearanceKey } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -149,7 +148,7 @@ export function useBoardPinOptions(storyId: string | undefined) {
     const groups: {
       key: BoardPinOption['group'];
       label: string;
-      appearanceType: string;
+      appearanceType: EntityAppearanceKey;
     }[] = [
       { key: 'character', label: term('Character', true), appearanceType: 'Character' },
       { key: 'location', label: term('Location', true), appearanceType: 'Location' },
@@ -163,12 +162,10 @@ export function useBoardPinOptions(storyId: string | undefined) {
     ];
     return groups
       .map((group) => {
-        const appearance = getEntityAppearance(group.appearanceType);
         return {
           key: group.key,
           label: group.label,
-          icon: appearance.icon as keyof typeof Ionicons.glyphMap,
-          color: appearance.color,
+          entityType: group.appearanceType,
           options: options
             .filter((option) => option.group === group.key)
             .map((option) => ({

@@ -13,7 +13,7 @@ const DEFAULT_TERM_KEYS: Record<StoryVocabularyEntityType, { singular: string; p
   Scene: { singular: 'scene', plural: 'scenes' },
   Event: { singular: 'event', plural: 'events' },
   Item: { singular: 'item', plural: 'items' },
-  WorldRule: { singular: 'world_rule', plural: 'world_rules' },
+  WorldRule: { singular: 'world_piece', plural: 'world_pieces' },
   Choice: { singular: 'choice', plural: 'choices' },
 };
 

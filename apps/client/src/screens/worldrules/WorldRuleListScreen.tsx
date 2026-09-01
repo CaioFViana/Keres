@@ -37,7 +37,6 @@ export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
 >;
 
 const WorldRulesScreen = () => {
-  useBackButtonHandler();
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -45,6 +44,10 @@ const WorldRulesScreen = () => {
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
   const route = useRoute();
   const section = (route.params as { section?: WorldPieceSection } | undefined)?.section;
+  useBackButtonHandler({
+    showWebBackButton: true,
+    onBack: () => navigation.navigate('WorldIndex'),
+  });
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
@@ -105,7 +108,7 @@ const WorldRulesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const title = section ? t(`world_piece_section_${section}`) : t('world_title');
+      const title = section ? t(`world_piece_section_${section}`) : term('WorldRule', true);
       setDocumentTitle(title);
       navigation.getParent()?.setOptions({
         title,

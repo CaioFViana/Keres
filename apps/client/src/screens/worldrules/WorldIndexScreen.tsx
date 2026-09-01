@@ -9,6 +9,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { WorldRulesStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 
 const SECTION_ICONS: Record<WorldPieceSection, keyof typeof Ionicons.glyphMap> = {
   rule: 'shield-checkmark-outline',
@@ -24,6 +25,7 @@ const SECTION_ICONS: Record<WorldPieceSection, keyof typeof Ionicons.glyphMap> =
 const WorldIndexScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<WorldRulesStackParamList, 'WorldIndex'>>();
 
@@ -55,6 +57,14 @@ const WorldIndexScreen = () => {
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('world_index_description')}</Text>
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('WorldRules')}>
+          <Ionicons name="apps-outline" size={24} color={colors.primary} />
+          <View style={styles.body}>
+            <Text style={styles.title}>{term('WorldRule', true)}</Text>
+            <Text style={styles.description}>{t('world_piece_section_all_description')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
         {WORLD_PIECE_SECTIONS.map((section) => (
           <TouchableOpacity
             key={section}

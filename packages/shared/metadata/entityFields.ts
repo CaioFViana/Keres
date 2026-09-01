@@ -89,7 +89,9 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   WorldRule: [
     { name: 'title', label: 'field_title', type: 'string', isSearchable: true },
     { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
-    { name: 'section', label: 'world_piece_section', type: 'string', isSearchable: true },
+    // The World index already scopes a list to one Section. Keeping it out of Advanced Search
+    // avoids a redundant free-text control which cannot express this fixed enum precisely.
+    { name: 'section', label: 'world_piece_section', type: 'string', isSearchable: false },
     { name: 'type', label: 'world_piece_type', type: 'string', isSearchable: true },
     { name: 'category', label: 'category', type: 'string', isSearchable: true },
     { name: 'behavior', label: 'world_piece_behavior', type: 'string', isSearchable: true },

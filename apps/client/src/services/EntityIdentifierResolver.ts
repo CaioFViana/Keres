@@ -190,10 +190,12 @@ export async function resolveRelationEntityName(
           eq(worldRules.storyId, storyId),
           eq(worldRules.isDeleted, false),
         ),
-        columns: { title: true },
+        columns: { title: true, section: true },
       });
       name = worldRule?.title;
-      type = translateStoryNoun(t, await vocabulary(), 'WorldRule');
+      type = worldRule?.section
+        ? t(`world_piece_section_${worldRule.section}`)
+        : translateStoryNoun(t, await vocabulary(), 'WorldRule');
       break;
     case OperationLogEntityType.LocationMap:
       const locationMap = await db.query.locationMaps.findFirst({

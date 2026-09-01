@@ -1,4 +1,6 @@
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
+import { ENTITY_APPEARANCE, getContrastTextColor, getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
@@ -11,9 +13,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
-import { getContrastTextColor } from '@keres/shared';
 
 export interface MultiSelectOption {
   label: string;
@@ -24,6 +24,8 @@ export interface MultiSelectOption {
 export interface MultiSelectGroup {
   key: string;
   label: string;
+  /** Entity appearance used when the caller does not need an intentional custom colour. */
+  entityType?: keyof typeof ENTITY_APPEARANCE;
   icon?: keyof typeof Ionicons.glyphMap;
   color?: string;
   options: MultiSelectOption[];
@@ -93,6 +95,17 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     () => groups ?? [{ key: FLAT_GROUP_KEY, label: '', options: options ?? [] }],
     [groups, options],
   );
+
+  const groupAppearance = useCallback((group: MultiSelectGroup) => {
+    const appearanceKey = group.entityType ?? group.key;
+    const defaultAppearance = Object.hasOwn(ENTITY_APPEARANCE, appearanceKey)
+      ? getEntityAppearance(appearanceKey)
+      : undefined;
+    return {
+      icon: group.icon ?? (defaultAppearance?.icon as keyof typeof Ionicons.glyphMap | undefined),
+      color: group.color ?? defaultAppearance?.color,
+    };
+  }, []);
 
   const optionsByValue = useMemo(() => {
     const map = new Map<string, MultiSelectOption>();
@@ -192,7 +205,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       padding: 10,
       minHeight: 50,
       alignItems: 'center',
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderWidth: 1,
       // The spacing between pills belongs to the container, not to each pill. With a margin on each one, the
       // last still charged its bottom margin: the field grew when the first option was chosen and the pill
@@ -409,6 +422,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
             {showGroupPicker ? (
               effectiveGroups.map((group) => {
+                const appearance = groupAppearance(group);
                 const selectedCount = group.options.filter((option) =>
                   selectedValues.includes(option.value),
                 ).length;
@@ -420,17 +434,17 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                     onPress={() => !disabled && openGroup(group.key)}
                     disabled={disabled}
                   >
-                    {group.icon && (
+                    {appearance.icon && (
                       <View
                         style={[
                           styles.groupIcon,
-                          { backgroundColor: group.color || colors.primaryContainer },
+                          { backgroundColor: appearance.color || colors.primaryContainer },
                         ]}
                       >
                         <Ionicons
-                          name={group.icon}
+                          name={appearance.icon}
                           size={18}
-                          color={getContrastTextColor(group.color || colors.primaryContainer)}
+                          color={getContrastTextColor(appearance.color || colors.primaryContainer)}
                         />
                       </View>
                     )}

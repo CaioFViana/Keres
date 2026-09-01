@@ -1,5 +1,5 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrizzle } from '../db';
 import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
 import { createSeeAlsoRelationService } from '../services/storymanagement/SeeAlsoRelationService';
@@ -22,6 +22,7 @@ export function useSeeAlsoRelations(
   storyId: string | undefined,
   entityType: SeeAlsoEntityType,
   entityId: string | undefined,
+  allowedEntityTypes?: readonly SeeAlsoEntityType[],
 ) {
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
@@ -37,6 +38,40 @@ export function useSeeAlsoRelations(
   // it holds the chosen target here until `persistSeeAlsoRelations` is called with the real
   // id after the save. `null` = never touched (unlike `[]`, which is "deselected everything").
   const [pendingTargets, setPendingTargets] = useState<SeeAlsoEntityRef[] | null>(null);
+  // Forms can save immediately after the picker is tapped. A ref records that intent
+  // synchronously, so two managers on the same form cannot replay an older React state.
+  const pendingTargetsRef = useRef<SeeAlsoEntityRef[] | null>(null);
+
+  /**
+   * The picker can issue a second tap before a local write emits its refresh event. Keep that
+   * immediate intent locally, otherwise deselect → select looks ignored while the async relation
+   * service is still reconciling (especially when a specialised manager shares the same links).
+   */
+  const applyLocalTargets = useCallback(
+    (targets: SeeAlsoEntityRef[]) => {
+      const allowed = allowedEntityTypes ? new Set(allowedEntityTypes) : null;
+      setRelations((current) => {
+        const preserved = allowed
+          ? current.filter((relation) => !allowed.has(relation.otherType))
+          : [];
+        const next = targets.map((target) => {
+          const existing = current.find(
+            (relation) =>
+              relation.otherType === target.entityType && relation.otherId === target.entityId,
+          );
+          return (
+            existing ?? {
+              relationId: `pending:${target.entityType}:${target.entityId}`,
+              otherType: target.entityType,
+              otherId: target.entityId,
+            }
+          );
+        });
+        return [...preserved, ...next];
+      });
+    },
+    [allowedEntityTypes],
+  );
 
   const refresh = useCallback(async () => {
     if (!service || !storyId || !entityId) {
@@ -79,26 +114,72 @@ export function useSeeAlsoRelations(
     };
   }, [refresh, storyId, entityId]);
 
+  /**
+   * Reconcile only the subset owned by this manager. Do not rebuild the entire relation list:
+   * two managers can be open for the same entity and a full replacement lets one erase the
+   * other's links when their reads overlap.
+   */
+  const syncAllowedTargets = useCallback(
+    async (
+      targetEntityId: string,
+      allowed: ReadonlySet<SeeAlsoEntityType>,
+      targets: SeeAlsoEntityRef[],
+    ) => {
+      if (!service || !storyId || !userId) return;
+      const current = await service.getRelationsForEntity(storyId, entityType, targetEntityId);
+      const currentAllowed = current.flatMap((relation) => {
+        const isA = relation.entityAType === entityType && relation.entityAId === targetEntityId;
+        const target = {
+          entityType: (isA ? relation.entityBType : relation.entityAType) as SeeAlsoEntityType,
+          entityId: isA ? relation.entityBId : relation.entityAId,
+        };
+        return allowed.has(target.entityType) ? [{ relation, target }] : [];
+      });
+      const desired = new Map(targets.map((target) => [`${target.entityType}:${target.entityId}`, target]));
+      const existing = new Set(currentAllowed.map(({ target }) => `${target.entityType}:${target.entityId}`));
+
+      for (const target of desired.values()) {
+        if (!existing.has(`${target.entityType}:${target.entityId}`)) {
+          await service.addSeeAlsoLink(userId, storyId, { entityType, entityId: targetEntityId }, target);
+        }
+      }
+      for (const { relation, target } of currentAllowed) {
+        if (!desired.has(`${target.entityType}:${target.entityId}`)) {
+          await service.removeSeeAlsoLink(userId, relation.id);
+        }
+      }
+    },
+    [service, storyId, userId, entityType],
+  );
+
   const save = useCallback(
     async (targets: SeeAlsoEntityRef[]) => {
+      const allowed = allowedEntityTypes ? new Set(allowedEntityTypes) : null;
+      const allowedTargets = allowed ? targets.filter((target) => allowed.has(target.entityType)) : targets;
       if (!entityId) {
-        setPendingTargets(targets);
+        pendingTargetsRef.current = allowedTargets;
+        setPendingTargets(allowedTargets);
         return;
       }
       if (!service || !storyId || !userId) return;
-      await service.setSeeAlsoTargets(userId, storyId, entityType, entityId, targets);
+      applyLocalTargets(allowedTargets);
+      if (!allowed) {
+        await service.setSeeAlsoTargets(userId, storyId, entityType, entityId, allowedTargets);
+        return;
+      }
+      await syncAllowedTargets(entityId, allowed, allowedTargets);
     },
-    [service, storyId, userId, entityType, entityId],
+    [service, storyId, userId, entityType, entityId, allowedEntityTypes, applyLocalTargets, syncAllowedTargets],
   );
 
   const remove = useCallback(
     async (relationId: string) => {
       if (!entityId) {
-        setPendingTargets((prev) =>
-          (prev ?? []).filter(
+        const next = (pendingTargetsRef.current ?? []).filter(
             (target) => `pending:${target.entityType}:${target.entityId}` !== relationId,
-          ),
-        );
+          );
+        pendingTargetsRef.current = next;
+        setPendingTargets(next);
         return;
       }
       if (!service || !userId) return;
@@ -114,15 +195,26 @@ export function useSeeAlsoRelations(
    */
   const persistSeeAlsoRelations = useCallback(
     async (targetEntityId: string) => {
-      if (!service || !storyId || !userId || pendingTargets === null) return;
-      await service.setSeeAlsoTargets(userId, storyId, entityType, targetEntityId, pendingTargets);
+      const pending = pendingTargetsRef.current;
+      if (!service || !storyId || !userId || pending === null) return;
+      if (!allowedEntityTypes) {
+        await service.setSeeAlsoTargets(userId, storyId, entityType, targetEntityId, pending);
+      } else {
+        const allowed = new Set(allowedEntityTypes);
+        await syncAllowedTargets(targetEntityId, allowed, pending);
+      }
+      pendingTargetsRef.current = null;
       setPendingTargets(null);
     },
-    [service, storyId, userId, entityType, pendingTargets],
+    [service, storyId, userId, entityType, allowedEntityTypes, syncAllowedTargets],
   );
 
   const displayedRelations = useMemo<SeeAlsoLink[]>(() => {
-    if (entityId || pendingTargets === null) return relations;
+    if (entityId || pendingTargets === null) {
+      return allowedEntityTypes
+        ? relations.filter((relation) => allowedEntityTypes.includes(relation.otherType))
+        : relations;
+    }
     return pendingTargets.map((target) => ({
       relationId: `pending:${target.entityType}:${target.entityId}`,
       otherType: target.entityType,

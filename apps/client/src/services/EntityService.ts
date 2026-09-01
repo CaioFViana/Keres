@@ -137,10 +137,12 @@ export class EntityService {
       case OperationLogEntityType.WorldRule:
         const worldRule = await db.query.worldRules.findFirst({
           where: and(eq(worldRules.id, entityId), eq(worldRules.isDeleted, false)),
-          columns: { title: true },
+          columns: { title: true, section: true },
         });
         entitySpecificName = worldRule?.title;
-        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'WorldRule');
+        translatedEntityType = worldRule?.section
+          ? t(`world_piece_section_${worldRule.section}`)
+          : translateStoryNoun(t, await vocabulary(), 'WorldRule');
         break;
       case OperationLogEntityType.Tag:
         const tag = await db.query.tags.findFirst({

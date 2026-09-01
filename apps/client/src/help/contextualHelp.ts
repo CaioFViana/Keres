@@ -76,6 +76,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   TagDetail: 'tags',
   TagForm: 'tags',
   WorldRulesStack: 'world-rules',
+  WorldIndex: 'world-rules',
   WorldRules: 'world-rules',
   WorldRuleDetail: 'world-rules',
   WorldRuleForm: 'world-rules',

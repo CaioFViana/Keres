@@ -181,7 +181,15 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
         ),
         ...notes.map((row) => source('Note', row, { body: row.body, extraNotes: row.extraNotes })),
         ...worldRules.map((row) =>
-          source('WorldRule', row, { description: row.description, extraNotes: row.extraNotes }),
+          source('WorldRule', row, {
+            type: row.type,
+            category: row.category,
+            behavior: row.behavior,
+            usability: row.usability,
+            danger: row.danger,
+            description: row.description,
+            extraNotes: row.extraNotes,
+          }),
         ),
         ...plots.map((row) => source('Plot', row, { details: row.details })),
       ];

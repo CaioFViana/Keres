@@ -1,45 +1,59 @@
-/**
- * Colour and icon for each story-dictionary type, shared by the overview tiles, gallery links,
- * board pins and any other picker that groups by entity.
- *
- * Icon names are Ionicons glyphs. Kept as strings here so this package does not depend on Expo.
- */
+import type { WorldPieceSection } from '../entities/WorldRule';
+
+/** Theme-aware visual vocabulary shared by every entity surface. */
 export const ENTITY_APPEARANCE = {
-  Chapter: { color: '#F44336', icon: 'bookmarks' },
-  Event: { color: '#5C6BC0', icon: 'flag' },
-  Scene: { color: '#a13fb3', icon: 'easel' },
-  Location: { color: '#8BC34A', icon: 'map' },
-  Character: { color: '#37afa5', icon: 'people' },
-  Note: { color: '#FFEB3B', icon: 'document' },
-  WorldRule: { color: '#03A9F4', icon: 'globe' },
-  Item: { color: '#795548', icon: 'cube' },
-  Gallery: { color: '#009688', icon: 'images' },
-  Tag: { color: '#E91E63', icon: 'pricetag' },
-  StorySchemaField: { color: '#673AB7', icon: 'options' },
-  Choice: { color: '#FF9800', icon: 'shuffle' },
-  /** Branching-story forks on the overview card — not a stored entity. */
-  Fork: { color: '#FFD700', icon: 'git-branch' },
-  Plot: { color: '#FFD700', icon: 'git-branch' },
-  Board: { color: '#3D5A80', icon: 'albums' },
+  Chapter: { icon: 'bookmarks', light: '#C62828', dark: '#F44336' },
+  Event: { icon: 'flag', light: '#3949AB', dark: '#5C6BC0' },
+  Scene: { icon: 'easel', light: '#7B1FA2', dark: '#BA68C8' },
+  Location: { icon: 'map', light: '#558B2F', dark: '#8BC34A' },
+  Character: { icon: 'people', light: '#00897B', dark: '#37AFA5' },
+  Note: { icon: 'document', light: '#F9A825', dark: '#FFEB3B' },
+  WorldRule: { icon: 'globe', light: '#0288D1', dark: '#03A9F4' },
+  Item: { icon: 'cube', light: '#6D4C41', dark: '#A1887F' },
+  Gallery: { icon: 'images', light: '#00897B', dark: '#009688' },
+  Tag: { icon: 'pricetag', light: '#C2185B', dark: '#E91E63' },
+  StorySchemaField: { icon: 'options', light: '#5E35B1', dark: '#9575CD' },
+  Choice: { icon: 'shuffle', light: '#EF6C00', dark: '#FF9800' },
+  Fork: { icon: 'git-branch', light: '#B8860B', dark: '#FFD700' },
+  Plot: { icon: 'git-branch', light: '#B8860B', dark: '#FFD700' },
+  Board: { icon: 'albums', light: '#2F4F6F', dark: '#3D5A80' },
 } as const;
 
 export type EntityAppearanceKey = keyof typeof ENTITY_APPEARANCE;
 export type EntityAppearance = { readonly color: string; readonly icon: string };
+export type EntityAppearanceScheme = 'light' | 'dark';
+const FALLBACK: EntityAppearance = { color: '#607D8B', icon: 'ellipse' };
+let activeScheme: EntityAppearanceScheme = 'light';
 
-/** Visual vocabulary for World Piece sections in grouped selectors and relationship managers. */
-export const WORLD_PIECE_SECTION_APPEARANCE: Record<WorldPieceSection, EntityAppearance> = {
-  rule: { color: '#0288D1', icon: 'shield-checkmark-outline' },
-  fauna: { color: '#7CB342', icon: 'paw-outline' },
-  flora: { color: '#2E7D32', icon: 'leaf-outline' },
-  mythology: { color: '#7E57C2', icon: 'sparkles-outline' },
-  people: { color: '#F9A825', icon: 'people-outline' },
-  knowledge: { color: '#546E7A', icon: 'library-outline' },
-  other: { color: '#78909C', icon: 'ellipsis-horizontal-circle-outline' },
+/** Set once by the host theme provider so utility code (SVG/maps) resolves the same palette as React. */
+export function setEntityAppearanceScheme(isDarkMode: boolean): void {
+  activeScheme = isDarkMode ? 'dark' : 'light';
+}
+
+export function getEntityAppearance(entityType: string, isDarkMode?: boolean): EntityAppearance {
+  const appearance = ENTITY_APPEARANCE[entityType as EntityAppearanceKey];
+  const scheme = isDarkMode === undefined ? activeScheme : isDarkMode ? 'dark' : 'light';
+  return appearance ? { icon: appearance.icon, color: appearance[scheme] } : FALLBACK;
+}
+
+export const WORLD_PIECE_SECTION_APPEARANCE: Record<
+  WorldPieceSection,
+  { icon: string; light: string; dark: string }
+> = {
+  rule: { icon: 'shield-checkmark-outline', light: '#0277BD', dark: '#0288D1' },
+  fauna: { icon: 'paw-outline', light: '#558B2F', dark: '#7CB342' },
+  flora: { icon: 'leaf-outline', light: '#2E7D32', dark: '#2E7D32' },
+  mythology: { icon: 'sparkles-outline', light: '#5E35B1', dark: '#7E57C2' },
+  people: { icon: 'people-outline', light: '#C17900', dark: '#F9A825' },
+  knowledge: { icon: 'library-outline', light: '#455A64', dark: '#546E7A' },
+  other: { icon: 'ellipsis-horizontal-circle-outline', light: '#607D8B', dark: '#78909C' },
 };
 
-const FALLBACK: EntityAppearance = { color: '#607D8B', icon: 'ellipse' };
-
-export function getEntityAppearance(entityType: string): EntityAppearance {
-  return ENTITY_APPEARANCE[entityType as EntityAppearanceKey] ?? FALLBACK;
+export function getWorldPieceSectionAppearance(
+  section: WorldPieceSection,
+  isDarkMode?: boolean,
+): EntityAppearance {
+  const appearance = WORLD_PIECE_SECTION_APPEARANCE[section];
+  const scheme = isDarkMode === undefined ? activeScheme : isDarkMode ? 'dark' : 'light';
+  return { icon: appearance.icon, color: appearance[scheme] };
 }
-import type { WorldPieceSection } from '../entities/WorldRule';

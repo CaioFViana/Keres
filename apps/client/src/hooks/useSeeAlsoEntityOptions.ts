@@ -2,6 +2,7 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { SeeAlsoEntityType } from '@keres/shared';
 import {
   getEntityAppearance,
+  getWorldPieceSectionAppearance,
   SEE_ALSO_ENTITY_TYPES,
   WORLD_PIECE_SECTION_APPEARANCE,
 } from '@keres/shared';
@@ -97,7 +98,7 @@ export function useSeeAlsoEntityOptions(
             worldPieceSection,
             // A World Piece section is more specific than its underlying WorldRule entity.
             color: worldPieceSection
-              ? WORLD_PIECE_SECTION_APPEARANCE[worldPieceSection].color
+              ? getWorldPieceSectionAppearance(worldPieceSection).color
               : getEntityAppearance(entityType).color,
           });
         }
@@ -140,7 +141,7 @@ export function useSeeAlsoEntityOptions(
         return;
       }
       (Object.keys(WORLD_PIECE_SECTION_APPEARANCE) as WorldPieceSection[]).forEach((section) => {
-        const appearance = WORLD_PIECE_SECTION_APPEARANCE[section];
+        const appearance = getWorldPieceSectionAppearance(section);
         groups.push({
           key: `WorldRule:${section}`,
           label: t(`world_piece_section_${section}`),

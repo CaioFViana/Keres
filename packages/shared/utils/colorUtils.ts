@@ -28,6 +28,34 @@ export function getColorLuminance(hexColor: string): number | null {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 }
 
+/**
+ * Returns the WCAG relative luminance used when calculating text contrast.
+ * Unlike `getColorLuminance`, this first converts sRGB channels to linear light.
+ */
+export function getRelativeLuminance(hexColor: string): number | null {
+  const hex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor;
+  if (!/^([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6,8})$/.test(hex)) return null;
+
+  const channels =
+    hex.length === 3 || hex.length === 4
+      ? [hex[0] + hex[0], hex[1] + hex[1], hex[2] + hex[2]]
+      : [hex.substring(0, 2), hex.substring(2, 4), hex.substring(4, 6)];
+  const [red, green, blue] = channels.map((channel) => {
+    const value = parseInt(channel, 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+/** Returns the WCAG contrast ratio between two supported hexadecimal colours. */
+export function getContrastRatio(firstColor: string, secondColor: string): number | null {
+  const first = getRelativeLuminance(firstColor);
+  const second = getRelativeLuminance(secondColor);
+  if (first === null || second === null) return null;
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}
+
 /** Whether a color should use a dark foreground for legibility. */
 export function isColorLight(hexColor: string): boolean {
   const luminance = getColorLuminance(hexColor);
@@ -40,8 +68,10 @@ export function isColorLight(hexColor: string): boolean {
  * @returns "black" or "white".
  */
 export function getContrastTextColor(hexColor: string): 'black' | 'white' {
-  const luminance = getColorLuminance(hexColor);
-  return luminance === null || luminance > 0.5 ? 'black' : 'white';
+  const blackContrast = getContrastRatio(hexColor, '#000000');
+  const whiteContrast = getContrastRatio(hexColor, '#FFFFFF');
+  if (blackContrast === null || whiteContrast === null) return 'black';
+  return blackContrast >= whiteContrast ? 'black' : 'white';
 }
 
 /**

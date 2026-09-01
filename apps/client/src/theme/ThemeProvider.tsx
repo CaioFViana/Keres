@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import type { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
-import { themes } from '@keres/shared';
+import { setEntityAppearanceScheme, themes } from '@keres/shared';
 import { ThemeContext } from './ThemeContext';
 
 interface ThemeProviderProps {
@@ -39,6 +39,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     const selectedTheme = themes[currentThemeName];
     return darkMode ? selectedTheme.darkColors : selectedTheme.lightColors;
   }, [darkMode, currentThemeName]);
+
+  setEntityAppearanceScheme(darkMode);
 
   const value = useMemo(
     () => ({

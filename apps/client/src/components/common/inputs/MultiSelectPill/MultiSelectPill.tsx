@@ -84,7 +84,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   pillStyle,
   selectionSummary,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
@@ -96,16 +96,19 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     [groups, options],
   );
 
-  const groupAppearance = useCallback((group: MultiSelectGroup) => {
-    const appearanceKey = group.entityType ?? group.key;
-    const defaultAppearance = Object.hasOwn(ENTITY_APPEARANCE, appearanceKey)
-      ? getEntityAppearance(appearanceKey)
-      : undefined;
-    return {
-      icon: group.icon ?? (defaultAppearance?.icon as keyof typeof Ionicons.glyphMap | undefined),
-      color: group.color ?? defaultAppearance?.color,
-    };
-  }, []);
+  const groupAppearance = useCallback(
+    (group: MultiSelectGroup) => {
+      const appearanceKey = group.entityType ?? group.key;
+      const defaultAppearance = Object.hasOwn(ENTITY_APPEARANCE, appearanceKey)
+        ? getEntityAppearance(appearanceKey, isDarkMode)
+        : undefined;
+      return {
+        icon: group.icon ?? (defaultAppearance?.icon as keyof typeof Ionicons.glyphMap | undefined),
+        color: group.color ?? defaultAppearance?.color,
+      };
+    },
+    [isDarkMode],
+  );
 
   const optionsByValue = useMemo(() => {
     const map = new Map<string, MultiSelectOption>();

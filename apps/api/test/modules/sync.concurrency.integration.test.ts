@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
 import { characters, operationLog, stories } from '../../src/db/schema';
 import { SyncService, syncService } from '../../src/services/SyncService';
+import { TierLimitExceededError, tierEnforcementService } from '../../src/services/TierEnforcementService';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -261,6 +262,45 @@ describe('SyncService defensive protocol paths', () => {
     expect(result.conflicts).toEqual([
       expect.objectContaining({ entityId: characterId, reason: 'validation', message: expect.stringContaining('invalid') }),
     ]);
+  });
+
+  it('contains handler validation failures as conflicts instead of aborting unrelated sync work', async () => {
+    const isolatedService = new SyncService();
+    const invalidId = newId();
+    const validId = newId();
+
+    const result = await isolatedService.processAndRecordUpdates(ana.userId, storyId, [
+      { ...createCharacter(invalidId, 'Inválida'), data: { name: 42 } } as never,
+      createCharacter(validId, 'Válida') as never,
+    ]);
+
+    expect(result.conflicts).toEqual([
+      expect.objectContaining({ entityId: invalidId, reason: 'validation' }),
+    ]);
+    expect(result.applied).toEqual([
+      expect.objectContaining({ entityId: validId }),
+    ]);
+  });
+
+  it('returns a tier refusal as a recoverable limit conflict and leaves no entity behind', async () => {
+    const characterId = newId();
+    const limit = vi
+      .spyOn(tierEnforcementService, 'assertCanCreateEntity')
+      .mockRejectedValueOnce(new TierLimitExceededError('Entity limit reached for this story.'));
+
+    try {
+      const result = await syncService.processAndRecordUpdates(ana.userId, storyId, [
+        createCharacter(characterId, 'Acima do limite') as never,
+      ]);
+
+      expect(result.applied).toEqual([]);
+      expect(result.conflicts).toEqual([
+        expect.objectContaining({ entityId: characterId, reason: 'limit_exceeded' }),
+      ]);
+      expect(await db.query.characters.findFirst({ where: eq(characters.id, characterId) })).toBeUndefined();
+    } finally {
+      limit.mockRestore();
+    }
   });
 
   it('fails loudly when persisted history contains a reorder for an unsupported entity', async () => {

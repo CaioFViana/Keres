@@ -1,5 +1,5 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
@@ -395,6 +395,7 @@ const WorldRuleFormScreen = () => {
         value={behavior || ''}
         onChangeText={setBehavior}
         style={commonInputStyles.input}
+        multiline
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_usability')}</Text>
@@ -403,6 +404,7 @@ const WorldRuleFormScreen = () => {
         value={usability || ''}
         onChangeText={setUsability}
         style={commonInputStyles.input}
+        multiline
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_danger')}</Text>
@@ -411,6 +413,7 @@ const WorldRuleFormScreen = () => {
         value={danger || ''}
         onChangeText={setDanger}
         style={commonInputStyles.input}
+        multiline
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>

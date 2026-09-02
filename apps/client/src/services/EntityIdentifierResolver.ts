@@ -585,9 +585,8 @@ export async function getEntityIdentifier(
   t: TFunction,
 ): Promise<string | undefined> {
   const operationLogEntityType = ENTITY_LOOKUP_MAP[entityTypeString.toLowerCase()];
-  if (operationLogEntityType === undefined) {
+  if (operationLogEntityType === undefined)
     throw new Error(`Invalid entityTypeString: ${entityTypeString}`);
-  }
 
   const { name } = await resolveRelationEntityName(
     db,

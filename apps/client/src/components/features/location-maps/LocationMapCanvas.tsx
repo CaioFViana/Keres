@@ -57,6 +57,7 @@ interface Props {
   onMoveNode: (nodeId: string, x: number, y: number) => void;
   onSelectMarker: (markerId: string) => void;
   onMoveMarker: (markerId: string, x: number, y: number) => void;
+  onOpenNodeDestination: (nodeId: string) => void;
   onOpenMarkerDestination: (markerId: string) => void;
 }
 
@@ -173,6 +174,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       onMoveNode,
       onSelectMarker,
       onMoveMarker,
+      onOpenNodeDestination,
       onOpenMarkerDestination,
     },
     ref,
@@ -498,7 +500,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               onDragEnd={kind === 'node' ? handleNodeDragEnd : handleMarkerDragEnd}
               onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
               onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
-              onOpenDestination={kind === 'marker' ? onOpenMarkerDestination : undefined}
+              onOpenDestination={
+                kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination
+              }
             />
           ))}
         </View>

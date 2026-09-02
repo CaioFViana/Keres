@@ -66,7 +66,14 @@ const BoardNodeSheet: React.FC<Props> = ({
   }, [node.id, noteBodyFromNode, noteTitleFromNode]);
 
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
-  const others = content.nodes.filter((item) => item.id !== node.id);
+  // An edge is a relationship between a pair, irrespective of its direction. Keeping the picker
+  // to unconnected pins makes the UI match the content schema and avoids invalid drafts.
+  const connectedNodeIds = new Set(
+    edges.map((edge) => (edge.from === node.id ? edge.to : edge.from)),
+  );
+  const others = content.nodes.filter(
+    (item) => item.id !== node.id && !connectedNodeIds.has(item.id),
+  );
   const connectOptions = others.map((item) => ({
     label: nodeTitles[item.id] ?? item.id,
     value: item.id,
@@ -178,6 +185,10 @@ const BoardNodeSheet: React.FC<Props> = ({
 
   const addEdge = () => {
     if (!connectTo) return;
+    if (connectedNodeIds.has(connectTo)) {
+      setConnectTo(null);
+      return;
+    }
     const existing = new Set([
       ...content.nodes.map((item) => item.id),
       ...content.edges.map((edge) => edge.id),

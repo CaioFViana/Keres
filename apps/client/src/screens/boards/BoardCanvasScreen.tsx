@@ -6,7 +6,8 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   ScreenError,
@@ -512,6 +513,8 @@ const BoardCanvasScreen = () => {
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
+    toolRow: { flexDirection: 'row', gap: 8 },
+    toolControl: { flex: 1 },
   });
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
@@ -529,33 +532,31 @@ const BoardCanvasScreen = () => {
     <View style={styles.container}>
       {canEdit && (
         <View style={styles.tools}>
-          <MultiSelectPill
-            groups={groupedOptions}
-            selectedValues={pickerValues}
-            onSelectionChange={(values) => {
-              const selectedValue = values[0];
-              if (!selectedValue) {
-                setPickerValues([]);
-                return;
-              }
-              // A board picker is an action, not a persistent filter: every selection creates a
-              // fresh pin, so the same entity must be immediately available for another pin.
-              addEntities([selectedValue]);
-              setPickerValues([selectedValue]);
-              requestAnimationFrame(() => setPickerValues([]));
-            }}
-            placeholder={t('board_add_entity')}
-            noOptionsText={t('board_no_entities')}
-            singleSelect
-          />
-          <TouchableOpacity
-            onPress={addNote}
-            style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-            accessibilityLabel={t('board_add_note')}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 14 }}>{t('board_add_note')}</Text>
-          </TouchableOpacity>
+          <View style={styles.toolRow}>
+            <MultiSelectPill
+              style={styles.toolControl}
+              groups={groupedOptions}
+              selectedValues={pickerValues}
+              onSelectionChange={(values) => {
+                const selectedValue = values[0];
+                if (!selectedValue) {
+                  setPickerValues([]);
+                  return;
+                }
+                // A board picker is an action, not a persistent filter: every selection creates a
+                // fresh pin, so the same entity must be immediately available for another pin.
+                addEntities([selectedValue]);
+                setPickerValues([selectedValue]);
+                requestAnimationFrame(() => setPickerValues([]));
+              }}
+              placeholder={t('board_add_entity')}
+              noOptionsText={t('board_no_entities')}
+              singleSelect
+            />
+            <View style={styles.toolControl}>
+              <Button onPress={addNote}>{t('board_add_note')}</Button>
+            </View>
+          </View>
         </View>
       )}
       <BoardCanvas

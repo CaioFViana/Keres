@@ -9,11 +9,21 @@ import { useTheme } from '../../../theme';
 
 interface Props {
   visible: boolean;
+  initialValues?: { name: string; description: string | null };
+  title?: string;
+  confirmLabel?: string;
   onCancel: () => void;
   onConfirm: (name: string, description: string | null) => void;
 }
 
-const BoardCreateModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) => {
+const BoardCreateModal: React.FC<Props> = ({
+  visible,
+  initialValues,
+  title,
+  confirmLabel,
+  onCancel,
+  onConfirm,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const commonInputStyles = getCommonInputStyles(colors);
@@ -22,10 +32,10 @@ const BoardCreateModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) => 
 
   useEffect(() => {
     if (visible) {
-      setName('');
-      setDescription('');
+      setName(initialValues?.name ?? '');
+      setDescription(initialValues?.description ?? '');
     }
-  }, [visible]);
+  }, [initialValues, visible]);
 
   const styles = StyleSheet.create({
     sheet: {
@@ -57,7 +67,7 @@ const BoardCreateModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) => 
       contentStyle={styles.sheet}
       maxHeight="86%"
     >
-      <Text style={styles.title}>{t('board_create_title')}</Text>
+      <Text style={styles.title}>{title ?? t('board_create_title')}</Text>
       <View style={styles.field}>
         <Text style={styles.label}>{t('name')}</Text>
         <TextInput
@@ -85,7 +95,7 @@ const BoardCreateModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) => 
             disabled={!name.trim()}
             onPress={() => onConfirm(name.trim(), description.trim() || null)}
           >
-            {t('add')}
+            {confirmLabel ?? t('add')}
           </Button>
         </View>
       </View>

@@ -112,6 +112,7 @@ export const BoardContentSchema = z
     }
 
     const edgeIds = new Set<string>();
+    const edgePairs = new Set<string>();
     for (const [index, edge] of content.edges.entries()) {
       if (edgeIds.has(edge.id)) {
         context.addIssue({
@@ -121,6 +122,15 @@ export const BoardContentSchema = z
         });
       }
       edgeIds.add(edge.id);
+      const pair = [edge.from, edge.to].sort().join(':');
+      if (edgePairs.has(pair)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['edges', index],
+          message: 'A board can only have one connection between the same two nodes.',
+        });
+      }
+      edgePairs.add(pair);
       if (!nodeIds.has(edge.from)) {
         context.addIssue({
           code: 'custom',

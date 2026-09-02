@@ -46,6 +46,7 @@ const BoardListScreen = () => {
   const [boards, setBoards] = useState<BoardSelect[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
+  const [editingBoard, setEditingBoard] = useState<BoardSelect | null>(null);
 
   const reload = useCallback(async () => {
     if (!storyId) {
@@ -153,6 +154,17 @@ const BoardListScreen = () => {
       },
       failureKey: 'board_save_failed',
     });
+  const updateBoardDetails = async (name: string, description: string | null) => {
+    if (!editingBoard || !userId) return;
+    try {
+      await createBoardService(db).updateBoard(userId, editingBoard.id, { name, description });
+      setEditingBoard(null);
+      await reload();
+    } catch (updateError) {
+      console.log('BoardListScreen: failed to update board details.', updateError);
+      showNotification(t('board_save_failed'), 'error');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -169,6 +181,15 @@ const BoardListScreen = () => {
               <Text style={styles.name}>{item.name}</Text>
               {!!item.description && <Text style={styles.description}>{item.description}</Text>}
             </View>
+            {canEdit && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setEditingBoard(item)}
+                accessibilityLabel={t('edit')}
+              >
+                <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
             {canEdit && (
               <TouchableOpacity
                 style={styles.actionButton}
@@ -209,6 +230,14 @@ const BoardListScreen = () => {
             showNotification(t('board_save_failed'), 'error');
           }
         }}
+      />
+      <BoardCreateModal
+        visible={!!editingBoard}
+        initialValues={editingBoard ?? undefined}
+        title={t('edit')}
+        confirmLabel={t('save')}
+        onCancel={() => setEditingBoard(null)}
+        onConfirm={(name, description) => void updateBoardDetails(name, description)}
       />
     </View>
   );

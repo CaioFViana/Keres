@@ -6,6 +6,7 @@ import { useTheme } from '../../../theme';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
+const DESTINATION_HOLD_DURATION = 550;
 
 interface Props {
   node: Pick<
@@ -126,9 +127,12 @@ const LocationMapNodeView: React.FC<Props> = ({
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
           handlers.current.onDragEnd(nodeId.current);
           if (!dragging.current) {
-            // A linked marker opens its destination with a normal tap. Holding it keeps the
-            // editor reachable, without adding a second always-visible control to every pin.
-            if (destinationMapId.current && Date.now() - pressedAt.current < 550)
+            // A regular tap always opens the point sheet. Holding a linked point is the deliberate
+            // action that changes maps, which prevents an accidental map switch while editing.
+            if (
+              destinationMapId.current &&
+              Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION
+            )
               handlers.current.onOpenDestination?.(nodeId.current);
             else handlers.current.onSelect(nodeId.current);
           }

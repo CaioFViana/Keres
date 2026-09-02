@@ -192,7 +192,7 @@ const BoardNodeView: React.FC<Props> = ({
     node.kind === 'entity' &&
     (node.displayMode === 'note' || node.displayMode === 'summary-and-note') &&
     !!node.cardNote;
-  const detailLines = Math.max(2, Math.floor((size.height - (hasGalleryImage ? 180 : 66)) / 14));
+  const detailLines = Math.max(2, Math.floor((size.height - (hasGalleryImage ? 180 : 66)) / 18));
   const sizeRef = useRef(size);
   sizeRef.current = size;
   const resizeOrigin = useRef(size);
@@ -257,10 +257,10 @@ const BoardNodeView: React.FC<Props> = ({
           width: 5,
         },
         row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-        title: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.text },
-        typeLabel: { fontSize: 10, fontWeight: '600', marginTop: 3, textTransform: 'uppercase' },
-        body: { fontSize: 11, color: colors.text, marginTop: 6, lineHeight: 14 },
-        cardNote: { fontSize: 11, color: colors.textSecondary, marginTop: 5, lineHeight: 14 },
+        title: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
+        typeLabel: { fontSize: 11, fontWeight: '600', marginTop: 3, textTransform: 'uppercase' },
+        body: { fontSize: 15, color: colors.text, marginTop: 6, lineHeight: 18 },
+        cardNote: { fontSize: 15, color: colors.textSecondary, marginTop: 5, lineHeight: 18 },
         resizeHandle: {
           position: 'absolute',
           right: 3,

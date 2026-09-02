@@ -49,6 +49,7 @@ const LocationMapListScreen = () => {
   const [maps, setMaps] = useState<LocationMapSelect[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
+  const [editingMap, setEditingMap] = useState<LocationMapSelect | null>(null);
 
   const reload = useCallback(async () => {
     if (!storyId) {
@@ -156,6 +157,17 @@ const LocationMapListScreen = () => {
       },
       failureKey: 'location_map_save_failed',
     });
+  const updateMapDetails = async (name: string, description: string | null) => {
+    if (!editingMap || !userId) return;
+    try {
+      await createLocationMapService(db).updateMap(userId, editingMap.id, { name, description });
+      setEditingMap(null);
+      await reload();
+    } catch (updateError) {
+      console.log('LocationMapListScreen: failed to update map details.', updateError);
+      showNotification(t('location_map_save_failed'), 'error');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -172,6 +184,15 @@ const LocationMapListScreen = () => {
               <Text style={styles.name}>{item.name}</Text>
               {!!item.description && <Text style={styles.description}>{item.description}</Text>}
             </View>
+            {canEdit && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setEditingMap(item)}
+                accessibilityLabel={t('edit')}
+              >
+                <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
             {canEdit && (
               <TouchableOpacity
                 style={styles.actionButton}
@@ -212,6 +233,14 @@ const LocationMapListScreen = () => {
             showNotification(t('location_map_save_failed'), 'error');
           }
         }}
+      />
+      <LocationMapCreateModal
+        visible={!!editingMap}
+        initialValues={editingMap ?? undefined}
+        title={t('edit')}
+        confirmLabel={t('save')}
+        onCancel={() => setEditingMap(null)}
+        onConfirm={(name, description) => void updateMapDetails(name, description)}
       />
     </View>
   );

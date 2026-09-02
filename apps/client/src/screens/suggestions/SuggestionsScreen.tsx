@@ -34,7 +34,6 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
@@ -60,7 +59,6 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
   Note: 'notes_title',
   WorldRule: 'world_rules_title',
 };
-
 const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();

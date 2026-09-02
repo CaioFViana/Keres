@@ -584,6 +584,17 @@ const LocationMapScreen = () => {
     },
     [content.markers, handleSelectMarker, maps, openDestination],
   );
+  const handleOpenNodeDestination = useCallback(
+    (nodeId: string) => {
+      const node = content.nodes.find((candidate) => candidate.id === nodeId);
+      if (!node?.destinationMapId || !maps.some((candidate) => candidate.id === node.destinationMapId)) {
+        handleSelectNode(nodeId);
+        return;
+      }
+      openDestination(node.destinationMapId);
+    },
+    [content.nodes, handleSelectNode, maps, openDestination],
+  );
   const createDestination = useCallback(
     async (
       source: { locationId?: string; title: string; note?: string | null },
@@ -667,6 +678,7 @@ const LocationMapScreen = () => {
         onMoveNode={handleMoveNode}
         onSelectMarker={handleSelectMarker}
         onMoveMarker={handleMoveMarker}
+        onOpenNodeDestination={handleOpenNodeDestination}
         onOpenMarkerDestination={handleOpenMarkerDestination}
       />
       <GraphCanvasControls

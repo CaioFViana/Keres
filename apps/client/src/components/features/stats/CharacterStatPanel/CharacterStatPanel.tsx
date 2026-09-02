@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Select from '../../../common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import type { StoryStatsData } from '../../../../hooks/useStoryStats';
 import { useTheme } from '../../../../theme';
@@ -170,7 +170,7 @@ export function CharacterStatPanel({
       <View style={styles.header}>
         {characterModes.length > 0 ? (
           <View style={styles.modeSelect}>
-            <Select
+            <SingleSelectPill
               options={modeOptions}
               value={modeId ?? ''}
               onValueChange={(value) => setModeId(value ? value : null)}

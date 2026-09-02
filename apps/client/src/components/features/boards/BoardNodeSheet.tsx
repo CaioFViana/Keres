@@ -7,7 +7,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
@@ -287,7 +287,7 @@ const BoardNodeSheet: React.FC<Props> = ({
         {node.kind === 'entity' && canEdit && (
           <View style={cardStyles.cardContainer}>
             <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('board_card_content')}</Text>
-            <Select
+            <SingleSelectPill
               options={[
                 { label: t('board_card_compact'), value: 'compact' },
                 { label: t('board_card_summary'), value: 'summary' },

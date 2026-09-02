@@ -7,7 +7,7 @@ import CustomAttributeFields, {
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
@@ -337,7 +337,7 @@ const WorldRuleFormScreen = () => {
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_section')}</Text>
-      <Select
+      <SingleSelectPill
         options={WORLD_PIECE_SECTIONS.map((value) => ({
           value,
           label: t(`world_piece_section_${value}`),

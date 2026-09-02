@@ -14,8 +14,9 @@ import {
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
-import Select from '@/src/components/common/inputs/Select/Select';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
@@ -259,12 +260,14 @@ const GenericFilterSortList = <T,>({
                 }}
               />
             ) : (
-              <Select
-                options={filterOptions || []}
-                value={selectedFilter}
-                onValueChange={handleFilterSelection}
+              <MultiSelectPill
+                options={(filterOptions || []).map((option) => ({
+                  ...option,
+                  color: option.color ?? undefined,
+                }))}
+                selectedValues={selectedFilter}
+                onSelectionChange={handleFilterSelection}
                 placeholder={t('filter_by_tags')}
-                multiple={true}
                 disabled={disableTagFilter}
               />
             )}
@@ -283,7 +286,7 @@ const GenericFilterSortList = <T,>({
         </View>
         <View style={styles(colors).filterSortRow}>
           <View style={styles(colors).selectContainerSort}>
-            <Select
+            <SingleSelectPill
               options={sortOptions || []}
               value={selectedSort}
               onValueChange={handleSortSelection}

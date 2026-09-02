@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import { MAP_ICON_OPTIONS } from '@keres/shared';
@@ -228,7 +228,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
             {t('location_map_destination')}
           </Text>
           {canEdit && (
-            <Select
+            <SingleSelectPill
               options={destinationOptions}
               value={destinationMapId ?? ''}
               onValueChange={(value) => onChangeDestination(value || null)}

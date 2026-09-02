@@ -1,7 +1,7 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -667,7 +667,7 @@ const ChoiceFormScreen = () => {
       <Text style={[styles.label, { color: colors.text }]}>
         {t('vocabulary_parent_entity', { entity: sceneCopy.entity })}
       </Text>
-      <Select
+      <SingleSelectPill
         options={sceneOptions}
         value={sceneId}
         onValueChange={setSceneId}
@@ -678,7 +678,7 @@ const ChoiceFormScreen = () => {
       <Text style={[styles.label, { color: colors.text }]}>
         {t('vocabulary_next_entity', { entity: sceneCopy.entity })}
       </Text>
-      <Select
+      <SingleSelectPill
         options={sceneOptions}
         value={nextSceneId}
         onValueChange={setNextSceneId}
@@ -723,7 +723,7 @@ const ChoiceFormScreen = () => {
                 <View style={styles.cardRow}>
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_group_combinator')}</Text>
-                    <Select
+                    <SingleSelectPill
                       options={combinatorOptions}
                       value={group.combinator}
                       onValueChange={(value) =>
@@ -746,7 +746,7 @@ const ChoiceFormScreen = () => {
                     <View style={styles.cardRow}>
                       <View style={styles.fieldFlex}>
                         <Text style={styles.cardRowLabel}>{t('check_type')}</Text>
-                        <Select
+                        <SingleSelectPill
                           options={checkTypeOptions}
                           value={check.type}
                           onValueChange={(value) =>
@@ -757,7 +757,7 @@ const ChoiceFormScreen = () => {
                       </View>
                       <View style={styles.fieldFlex}>
                         <Text style={styles.cardRowLabel}>{t('check_mode')}</Text>
-                        <Select
+                        <SingleSelectPill
                           options={checkModeOptions}
                           value={check.mode}
                           onValueChange={(value) =>
@@ -773,7 +773,7 @@ const ChoiceFormScreen = () => {
                       <View style={styles.cardRow}>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_scene')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={sceneOptions}
                             value={check.sceneId}
                             onValueChange={(value) =>
@@ -805,7 +805,7 @@ const ChoiceFormScreen = () => {
                       <View style={styles.cardRow}>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_item')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={itemOptions}
                             value={check.itemId}
                             onValueChange={(value) =>
@@ -818,7 +818,7 @@ const ChoiceFormScreen = () => {
                         </View>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_item_presence')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={itemPresenceOptions}
                             value={check.itemPresence}
                             onValueChange={(value) =>
@@ -848,7 +848,7 @@ const ChoiceFormScreen = () => {
                         </View>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_trigger_state')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={triggerStateOptions}
                             value={check.triggerState}
                             onValueChange={(value) =>
@@ -897,7 +897,7 @@ const ChoiceFormScreen = () => {
               <View style={styles.cardRow}>
                 <View style={styles.fieldFlex}>
                   <Text style={styles.cardRowLabel}>{t('effect_type')}</Text>
-                  <Select
+                  <SingleSelectPill
                     options={effectTypeOptions}
                     value={effect.effectType}
                     onValueChange={(value) =>
@@ -912,7 +912,7 @@ const ChoiceFormScreen = () => {
                 <View style={styles.cardRow}>
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_item')}</Text>
-                    <Select
+                    <SingleSelectPill
                       options={itemOptions}
                       value={effect.itemId}
                       onValueChange={(value) => handleUpdateEffect(effect.id, { itemId: value })}

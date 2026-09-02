@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
 import MultiSelectPill from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '../../components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { StatRadarChart } from '../../components/features/stats/StatRadarChart/StatRadarChart';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
@@ -284,7 +284,7 @@ const StatComparisonScreen = () => {
               <Text style={styles.slotTitle}>{nameOf(slot.characterId!)}</Text>
             </View>
             <Text style={styles.modeLabel}>{t('mode')}</Text>
-            <Select
+            <SingleSelectPill
               options={modeOptions}
               value={slot.modeId ?? ''}
               onValueChange={(value) =>

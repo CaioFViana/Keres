@@ -1,6 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { ChapterType } from '@keres/shared';
 import React, { useEffect, useState } from 'react';
@@ -104,7 +104,7 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
       {becomingChapter && (
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t('chapter_convert_position')}</Text>
-          <Select
+          <SingleSelectPill
             options={slotOptions}
             value={position}
             onValueChange={(value) => value && setPosition(value)}

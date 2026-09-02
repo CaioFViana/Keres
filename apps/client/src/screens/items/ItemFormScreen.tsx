@@ -7,7 +7,7 @@ import CustomAttributeFields, {
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
@@ -356,7 +356,7 @@ const ItemFormScreen = () => {
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('character_owner')}</Text>
-      <Select
+      <SingleSelectPill
         options={characterOptions}
         value={characterOwnerId}
         onValueChange={setCharacterOwnerId}

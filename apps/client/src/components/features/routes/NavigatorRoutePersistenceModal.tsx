@@ -1,6 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { Route } from '@keres/shared';
@@ -108,7 +108,7 @@ export default function NavigatorRoutePersistenceModal({
       ) : (
         <View style={styles.field}>
           <Text style={styles.label}>{t('navigator_route_to_replace')}</Text>
-          <Select
+          <SingleSelectPill
             options={routeOptions}
             value={routeId}
             onValueChange={(value) => {

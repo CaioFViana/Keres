@@ -1,6 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { PlotScene } from '@keres/shared/entities/PlotScene';
@@ -99,7 +99,7 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
       <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
           <Text style={styles.label}>{sceneCopy.entity}</Text>
-          <Select
+          <SingleSelectPill
             options={selectableScenes.map((scene) => ({ label: scene.label, value: scene.id }))}
             value={sceneId}
             onValueChange={setSceneId}

@@ -33,6 +33,18 @@ export interface MultiSelectGroup {
   options: MultiSelectOption[];
 }
 
+/** Compatibility shape for places that previously needed a one-value dropdown. */
+export interface SingleSelectPillProps {
+  options: Array<Omit<MultiSelectOption, 'color'> & { color?: string | null }>;
+  value: string | null;
+  onValueChange: (value: string | null) => void;
+  placeholder?: string;
+  /** Kept for call-site readability; this component always chooses one value. */
+  multiple?: false;
+  disabled?: boolean;
+  allowDeselect?: boolean;
+}
+
 interface MultiSelectPillProps {
   /** A flat list in a single modal - good for a handful of options (tags, say). */
   options?: MultiSelectOption[];
@@ -51,8 +63,12 @@ interface MultiSelectPillProps {
   searchPlaceholder?: string;
   /** Limits the selection to one value and closes the modal after the choice. */
   singleSelect?: boolean;
+  /** Lets a selected single value be cleared by choosing it again. */
+  allowDeselect?: boolean;
   /** Maximum number of simultaneous options. Options not yet chosen become unavailable. */
   maxSelections?: number;
+  /** Makes the trigger inert while retaining its current value. */
+  disabled?: boolean;
   /** Ajustes de layout para contextos compactos, como barras de filtro. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
@@ -80,7 +96,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   noOptionsText,
   searchPlaceholder,
   singleSelect = false,
+  allowDeselect = true,
   maxSelections,
+  disabled = false,
   style,
   triggerStyle,
   pillStyle,
@@ -166,7 +184,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         return;
       }
       const newSelection = singleSelect
-        ? selectedValues.includes(value)
+        ? selectedValues.includes(value) && allowDeselect
           ? []
           : [value]
         : selectedValues.includes(value)
@@ -177,7 +195,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         closeModal();
       }
     },
-    [selectedValues, onSelectionChange, singleSelect, maxSelections, closeModal],
+    [selectedValues, onSelectionChange, singleSelect, allowDeselect, maxSelections, closeModal],
   );
 
   const openGroup = useCallback((groupKey: string) => {
@@ -191,6 +209,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   }, []);
 
   const showGroupPicker = !activeGroup && effectiveGroups.length > 1;
+  const singleValueAppearance = singleSelect || maxSelections === 1;
 
   const styles = StyleSheet.create({
     container: {
@@ -216,6 +235,18 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       // last still charged its bottom margin: the field grew when the first option was chosen and the pill
       // sat above the centre, with 8px of slack underneath it.
       gap: 8,
+    },
+    singleValueContainer: {
+      flexWrap: 'nowrap',
+      borderRadius: 5,
+    },
+    singleValueText: {
+      color: colors.text,
+      fontSize: 16,
+      flexShrink: 1,
+    },
+    disabled: {
+      opacity: 0.4,
     },
     pill: {
       flexDirection: 'row',
@@ -366,10 +397,20 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       <TouchableOpacity
         testID="multiselect-trigger"
         onPress={openModal}
-        style={[styles.pillContainer, triggerStyle]}
+        disabled={disabled}
+        style={[
+          styles.pillContainer,
+          singleValueAppearance && styles.singleValueContainer,
+          disabled && styles.disabled,
+          triggerStyle,
+        ]}
       >
         {selectionSummary ? (
           <Text style={styles.selectionSummary}>{selectionSummary}</Text>
+        ) : singleValueAppearance && selectedOptionDetails[0] ? (
+          <Text style={styles.singleValueText} numberOfLines={1}>
+            {selectedOptionDetails[0].label}
+          </Text>
         ) : selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option) => {
             const pillBackgroundColor = option.color || colors.primaryContainer;
@@ -388,7 +429,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
         )}
         <Ionicons
-          name={singleSelect ? 'chevron-down' : 'add-circle'}
+          name={singleValueAppearance ? 'chevron-down' : 'add-circle'}
           size={24}
           color={colors.primary}
           style={{ marginLeft: 'auto' }}
@@ -530,5 +571,25 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     </View>
   );
 };
+
+/** A searchable, text-input-shaped single selector backed by `MultiSelectPill`. */
+export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  allowDeselect = false,
+}) => (
+  <MultiSelectPill
+    options={options.map((option) => ({ ...option, color: option.color ?? undefined }))}
+    selectedValues={value ? [value] : []}
+    onSelectionChange={(values) => onValueChange(values[0] ?? null)}
+    placeholder={placeholder}
+    singleSelect
+    allowDeselect={allowDeselect}
+    disabled={disabled}
+  />
+);
 
 export default MultiSelectPill;

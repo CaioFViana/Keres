@@ -1,6 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { ItemJourney } from '@keres/shared/entities/Item';
@@ -346,7 +346,7 @@ const ItemJourneyFormScreen = () => {
       </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{itemCopy.entity}</Text>
-      <Select
+      <SingleSelectPill
         options={itemOptions}
         value={itemId}
         onValueChange={setItemId}
@@ -356,7 +356,7 @@ const ItemJourneyFormScreen = () => {
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{sceneCopy.entity}</Text>
-      <Select
+      <SingleSelectPill
         options={sceneOptions}
         value={sceneId}
         onValueChange={setSceneId}
@@ -366,7 +366,7 @@ const ItemJourneyFormScreen = () => {
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('new_character_owner')}</Text>
-      <Select
+      <SingleSelectPill
         options={characterOptions}
         value={newCharacterOwnerId}
         onValueChange={setNewCharacterOwnerId}

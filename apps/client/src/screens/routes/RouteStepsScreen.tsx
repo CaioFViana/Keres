@@ -1,5 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -126,7 +126,7 @@ export default function RouteStepsScreen() {
       {steps.length === 0 ? (
         <>
           <Text style={styles.label}>{t('route_start_scene')}</Text>
-          <Select
+          <SingleSelectPill
             options={scenes.map((scene) => ({ value: scene.id, label: label(scene.id) }))}
             value={start}
             onValueChange={selectStart}
@@ -141,7 +141,7 @@ export default function RouteStepsScreen() {
             {choicesFrom(step.sceneId).length ? (
               <>
                 <Text style={styles.label}>{t('route_choice')}</Text>
-                <Select
+                <SingleSelectPill
                   options={[
                     { value: END_ROUTE, label: t('route_end_here_option') },
                     ...choicesFrom(step.sceneId).map((choice) => ({

@@ -20,7 +20,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import Select from '@/src/components/common/inputs/Select/Select';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../../db';
@@ -512,12 +512,11 @@ const ChoiceViewScreen = () => {
         </Text>
         {plots.length ? (
           <View style={{ paddingHorizontal: 12, paddingTop: 8, zIndex: 5 }}>
-            <Select
+            <MultiSelectPill
               options={plots.map((plot) => ({ value: plot.id, label: plot.name }))}
-              value={selectedPlotIds}
-              onValueChange={setSelectedPlotIds}
+              selectedValues={selectedPlotIds}
+              onSelectionChange={setSelectedPlotIds}
               placeholder={t('story_map_filter_plots')}
-              multiple
             />
           </View>
         ) : null}

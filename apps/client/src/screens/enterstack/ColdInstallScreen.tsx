@@ -1,4 +1,4 @@
-import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
+import { Button, FormContainer, SingleSelectPill, TextInput } from '@/src/components/common';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
@@ -155,7 +155,7 @@ const ColdInstallScreen = () => {
       />
       {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
       <View style={styles.pickerContainer}>
-        <Select
+        <SingleSelectPill
           options={languageOptions}
           value={selectedLanguage}
           onValueChange={handleLanguageChange}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { FavoriteBehavior } from '@keres/shared/entities/Story';
@@ -98,7 +98,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('type')}</Text>
-      <Select
+      <SingleSelectPill
         options={storyTypeOptions}
         value={type}
         onValueChange={(value) => onTypeChange(value as 'linear' | 'branching')}
@@ -135,7 +135,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('language')}</Text>
-      <Select
+      <SingleSelectPill
         options={languageOptions}
         value={language}
         onValueChange={onLanguageChange}
@@ -156,7 +156,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
       </View>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('favorite_behavior')}</Text>
-      <Select
+      <SingleSelectPill
         options={[
           { label: t('favorite_behavior_global'), value: 'global' },
           { label: t('favorite_behavior_individual'), value: 'individual' },
@@ -182,7 +182,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
-      <Select
+      <SingleSelectPill
         options={themeOptions}
         value={theme}
         onValueChange={(value) => {

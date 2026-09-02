@@ -1,4 +1,4 @@
-import { Button, Select } from '@/src/components/common';
+import { Button, SingleSelectPill } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
@@ -744,7 +744,7 @@ const StorySettingsScreen = () => {
       {statSystem && (
         <View style={{ marginBottom: 20 }}>
           <Text style={[styles.label, { color: colors.text }]}>{t('stat_notation')}</Text>
-          <Select
+          <SingleSelectPill
             options={[
               { label: t('stat_notation_letter'), value: 'letter' },
               { label: t('stat_notation_number'), value: 'number' },
@@ -783,7 +783,7 @@ const StorySettingsScreen = () => {
             <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
               {t('send_to_server_description')}
             </Text>
-            <Select
+            <SingleSelectPill
               options={uploadServerOptions}
               value={uploadTargetServerId}
               onValueChange={setUploadTargetServerId}
@@ -813,7 +813,7 @@ const StorySettingsScreen = () => {
               {addableFriendOptions.length > 0 ? (
                 <View style={styles.addCollaboratorRow}>
                   <View style={styles.addCollaboratorFriendSelect}>
-                    <Select
+                    <SingleSelectPill
                       options={addableFriendOptions}
                       value={selectedFriendId}
                       onValueChange={setSelectedFriendId}
@@ -821,7 +821,7 @@ const StorySettingsScreen = () => {
                     />
                   </View>
                   <View style={styles.addCollaboratorPermissionSelect}>
-                    <Select
+                    <SingleSelectPill
                       options={permissionTypeOptions}
                       value={selectedPermissionType}
                       onValueChange={(value) =>
@@ -853,7 +853,7 @@ const StorySettingsScreen = () => {
                     {collaborator.user?.username ?? collaborator.userId}
                   </Text>
                   <View style={styles.collaboratorPermissionSelect}>
-                    <Select
+                    <SingleSelectPill
                       options={permissionTypeOptions}
                       value={collaborator.permissionType}
                       onValueChange={(value) => {

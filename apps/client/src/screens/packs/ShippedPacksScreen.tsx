@@ -1,4 +1,4 @@
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -181,7 +181,7 @@ const ShippedPacksScreen = () => {
 
           <View style={styles.installRow}>
             <View style={styles.languageSelect}>
-              <Select
+              <SingleSelectPill
                 options={item.languages.map((language) => ({
                   label: languageLabel(language.language),
                   value: language.language,

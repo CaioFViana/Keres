@@ -6,7 +6,7 @@ import type { SceneSelect } from '../../../../db/schema';
 import { useChapterStore } from '../../../../state/chapterStore';
 import { useTheme } from '../../../../theme';
 import { buildReorderItems } from '@keres/shared';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 
 interface SceneReorderModalProps {
@@ -107,7 +107,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
       headerExtra={
         isChapterLocked ? undefined : (
           <View style={styles.chapterSelectContainer}>
-            <Select
+            <SingleSelectPill
               options={chapterOptions}
               value={selectedChapterId}
               onValueChange={setSelectedChapterId}

@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
-import Select from '../../components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import type {
@@ -141,7 +141,7 @@ const StatRankingScreen = () => {
   return (
     <View style={getCommonContainerStyles(colors).container}>
       <View style={styles.controls}>
-        <Select
+        <SingleSelectPill
           options={data.stats.map((stat) => ({ label: stat.name, value: stat.id }))}
           value={statId}
           onValueChange={setStatId}

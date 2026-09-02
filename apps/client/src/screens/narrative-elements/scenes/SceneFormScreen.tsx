@@ -7,7 +7,7 @@ import CustomAttributeFields, {
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select'; // Import Select component
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
@@ -770,7 +770,7 @@ const SceneFormScreen = () => {
       <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{chapterCopy.entity}</Text>
-      <Select
+      <SingleSelectPill
         options={chapterOptions}
         value={chapterId}
         onValueChange={setChapterId}
@@ -788,7 +788,7 @@ const SceneFormScreen = () => {
         place, and requiring one was Keres deciding something about the story on the writer's
         behalf. `allowDeselect` is what lets them take it back off.
       */}
-      <Select
+      <SingleSelectPill
         options={locationOptions}
         value={locationId}
         onValueChange={setLocationId}
@@ -848,7 +848,7 @@ const SceneFormScreen = () => {
           style={[commonInputStyles.input, styles.numberWidthInput]}
         />
         <View style={{ flex: 1 }}>
-          <Select
+          <SingleSelectPill
             options={gapDurationTypeOptions}
             value={gapType}
             onValueChange={setGapType}
@@ -871,7 +871,7 @@ const SceneFormScreen = () => {
         style={commonInputStyles.input}
       />
       {calendarDateOverride.trim() ? (
-        <Select
+        <SingleSelectPill
           options={[
             { label: t('calendar_standard_title'), value: '__gregorian__' },
             ...calendars.map((calendar) => ({ label: calendar.name, value: calendar.id })),
@@ -895,7 +895,7 @@ const SceneFormScreen = () => {
           style={[commonInputStyles.input, styles.numberWidthInput]}
         />
         <View style={{ flex: 1 }}>
-          <Select
+          <SingleSelectPill
             options={gapDurationTypeOptions}
             value={durationType}
             onValueChange={setDurationType}
@@ -1006,7 +1006,7 @@ const SceneFormScreen = () => {
               <View style={styles.cardRow}>
                 <View style={styles.fieldFlex}>
                   <Text style={styles.cardRowLabel}>{t('effect_type')}</Text>
-                  <Select
+                  <SingleSelectPill
                     options={effectTypeOptions}
                     value={effect.effectType}
                     onValueChange={(value) =>
@@ -1021,7 +1021,7 @@ const SceneFormScreen = () => {
                 <View style={styles.cardRow}>
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{itemCopy.entity}</Text>
-                    <Select
+                    <SingleSelectPill
                       options={itemOptions}
                       value={effect.itemId}
                       onValueChange={(value) => handleUpdateEffect(effect.id, { itemId: value })}

@@ -1,6 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import NavigatorRoutePersistenceModal, {
   type NavigatorRoutePersistenceMode,
 } from '@/src/components/features/routes/NavigatorRoutePersistenceModal';
@@ -251,7 +251,7 @@ export default function StoryNavigatorScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.label}>{t('navigator_start_scene')}</Text>
-      <Select
+      <SingleSelectPill
         options={scenes.map((scene) => ({ value: scene.id, label: scene.name }))}
         value={startSceneId}
         onValueChange={(id) => {

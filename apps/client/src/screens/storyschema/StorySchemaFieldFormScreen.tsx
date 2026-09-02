@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { StorySchemaEntityType } from '@keres/shared';
@@ -236,7 +236,7 @@ const StorySchemaFieldFormScreen = () => {
       />
 
       <Text style={styles.label}>{t('attribute_type_label')}</Text>
-      <Select
+      <SingleSelectPill
         options={typeOptions}
         value={type}
         onValueChange={(value) => setType((value as AttributeType) || AttributeType.TEXT)}
@@ -248,7 +248,7 @@ const StorySchemaFieldFormScreen = () => {
         <>
           <Text style={styles.label}>{t('attribute_target_entity_type')}</Text>
           <Text style={styles.hint}>{t('attribute_target_entity_type_hint')}</Text>
-          <Select
+          <SingleSelectPill
             options={targetEntityTypeOptions}
             value={targetEntityType}
             onValueChange={(value) => setTargetEntityType((value as StorySchemaEntityType) || null)}

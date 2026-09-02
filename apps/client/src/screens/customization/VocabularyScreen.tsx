@@ -1,4 +1,4 @@
-import { Button, Select, TextInput } from '@/src/components/common';
+import { Button, SingleSelectPill, TextInput } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
@@ -126,7 +126,7 @@ const VocabularyTermCard = memo(
           />
           {language === 'pt' && (
             <View style={styles.gender}>
-              <Select
+              <SingleSelectPill
                 value={term.grammaticalGender}
                 onValueChange={(value) =>
                   onChange(type, 'grammaticalGender', (value ?? 'neutral') as GrammaticalGender)
@@ -273,7 +273,7 @@ const VocabularyScreen = () => {
     <KeyboardAwareScreen contentContainerStyle={[common.container, styles.content]}>
       <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
       <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
-      <Select
+      <SingleSelectPill
         value={language}
         onValueChange={(value) => setLanguage((value ?? 'en') as 'pt' | 'en')}
         options={[

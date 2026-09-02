@@ -1,42 +1,24 @@
 import type { LocationMapContentType } from '@keres/shared';
 import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
-import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
 import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
+import LocationMapConnectionLayer, {
+  type LocationMapConnection,
+  type LocationMapContains,
+} from './LocationMapConnectionLayer';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
 export type LocationMapCanvasHandle = PanZoomCanvasHandle;
-
-export interface LocationMapConnection {
-  locationAId: string;
-  locationBId: string;
-  label?: string | null;
-}
-
-/** A `contains` relation: `parentLocationId` contains `childLocationId`. */
-export interface LocationMapContains {
-  parentLocationId: string;
-  childLocationId: string;
-  label?: string | null;
-}
-
-export interface LocationMapMarkerConnection {
-  id: string;
-  fromId: string;
-  toId: string;
-  directed: boolean;
-  label?: string | null;
-}
+export type { LocationMapConnection, LocationMapContains } from './LocationMapConnectionLayer';
 
 interface Props {
   content: LocationMapContentType;
@@ -73,13 +55,6 @@ interface Props {
   onConnectPoints: (fromPointId: string, toPointId: string) => void;
 }
 
-const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
-/** How far the line's tip stays from the node's border - the arrow must not be buried under it. */
-const LINE_END_MARGIN = 3;
-const CONTAINS_DASH = '6 4';
-/** Width of the contrast halo behind every line, so it stays visible over the image bases. */
-const HALO_WIDTH = 6;
-
 type ActiveDrag = {
   kind: 'image' | 'node' | 'marker';
   id: string;
@@ -87,185 +62,6 @@ type ActiveDrag = {
   y: number;
 };
 type ConnectionDrag = { fromNodeId: string; x: number; y: number };
-
-type WorldNode = LocationMapContentType['nodes'][number];
-type ConnectionPath = {
-  id: string;
-  path: string;
-  color: string;
-  label?: string | null;
-  x: number;
-  y: number;
-};
-type ContainsArrow = {
-  id: string;
-  path: string;
-  arrow: string;
-  arrowHalo: string;
-  color: string;
-  label?: string | null;
-  x: number;
-  y: number;
-};
-type MarkerConnectionPath = {
-  id: string;
-  path: string;
-  color: string;
-  directed: boolean;
-  arrow?: string;
-  arrowHalo?: string;
-  label?: string | null;
-  x: number;
-  y: number;
-};
-
-const ConnectionPathView = React.memo(function ConnectionPathView({
-  path,
-  background,
-}: {
-  path: ConnectionPath;
-  background: string;
-}) {
-  return (
-    <>
-      <Path
-        d={path.path}
-        fill="none"
-        stroke={background}
-        strokeWidth={HALO_WIDTH}
-        strokeOpacity={0.9}
-      />
-      <Path d={path.path} fill="none" stroke={path.color} strokeWidth={2} strokeOpacity={0.85} />
-      {!!path.label && (
-        <>
-          <SvgText
-            x={path.x}
-            y={path.y - 6}
-            fill={background}
-            stroke={background}
-            strokeWidth={4}
-            fontSize={11}
-            textAnchor="middle"
-          >
-            {path.label}
-          </SvgText>
-          <SvgText x={path.x} y={path.y - 6} fill={path.color} fontSize={11} textAnchor="middle">
-            {path.label}
-          </SvgText>
-        </>
-      )}
-    </>
-  );
-});
-
-const ContainsArrowView = React.memo(function ContainsArrowView({
-  arrow,
-  background,
-}: {
-  arrow: ContainsArrow;
-  background: string;
-}) {
-  return (
-    <>
-      <Path
-        d={arrow.path}
-        fill="none"
-        stroke={background}
-        strokeWidth={HALO_WIDTH}
-        strokeOpacity={0.9}
-      />
-      <Path
-        d={arrow.path}
-        fill="none"
-        stroke={arrow.color}
-        strokeWidth={2}
-        strokeDasharray={CONTAINS_DASH}
-        strokeOpacity={0.85}
-      />
-      <Polygon points={arrow.arrowHalo} fill={background} />
-      <Polygon points={arrow.arrow} fill={arrow.color} />
-      {!!arrow.label && (
-        <>
-          <SvgText
-            x={arrow.x}
-            y={arrow.y - 6}
-            fill={background}
-            stroke={background}
-            strokeWidth={4}
-            fontSize={11}
-            textAnchor="middle"
-          >
-            {arrow.label}
-          </SvgText>
-          <SvgText x={arrow.x} y={arrow.y - 6} fill={arrow.color} fontSize={11} textAnchor="middle">
-            {arrow.label}
-          </SvgText>
-        </>
-      )}
-    </>
-  );
-});
-
-const MarkerConnectionView = React.memo(function MarkerConnectionView({
-  connection,
-  background,
-}: {
-  connection: MarkerConnectionPath;
-  background: string;
-}) {
-  return (
-    <>
-      <Path d={connection.path} fill="none" stroke={background} strokeWidth={HALO_WIDTH} />
-      <Path
-        d={connection.path}
-        fill="none"
-        stroke={connection.color}
-        strokeWidth={connection.directed ? 2 : 1.6}
-      />
-      {connection.directed && connection.arrow && connection.arrowHalo && (
-        <>
-          <Polygon points={connection.arrowHalo} fill={background} />
-          <Polygon points={connection.arrow} fill={connection.color} />
-        </>
-      )}
-      {!!connection.label && (
-        <>
-          <SvgText
-            x={connection.x}
-            y={connection.y - 6}
-            fill={background}
-            stroke={background}
-            strokeWidth={4}
-            fontSize={11}
-            textAnchor="middle"
-          >
-            {connection.label}
-          </SvgText>
-          <SvgText
-            x={connection.x}
-            y={connection.y - 6}
-            fill={connection.color}
-            fontSize={11}
-            textAnchor="middle"
-          >
-            {connection.label}
-          </SvgText>
-        </>
-      )}
-    </>
-  );
-});
-
-/** A triangle marking the arrow's tip, pointing along `angle` (radians). */
-function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
-  return [
-    [tipX, tipY],
-    [tipX - size * Math.cos(angle - 0.4), tipY - size * Math.sin(angle - 0.4)],
-    [tipX - size * Math.cos(angle + 0.4), tipY - size * Math.sin(angle + 0.4)],
-  ]
-    .map((pair) => pair.join(','))
-    .join(' ');
-}
 
 const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
   (
@@ -307,18 +103,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
-    const connectionCacheRef = useRef(
-      new Map<
-        string,
-        { relation: LocationMapConnection; from: WorldNode; to: WorldNode; path: ConnectionPath }
-      >(),
-    );
-    const containsCacheRef = useRef(
-      new Map<
-        string,
-        { relation: LocationMapContains; from: WorldNode; to: WorldNode; arrow: ContainsArrow }
-      >(),
-    );
     // The drag is measured in the surface coordinates from press time. That surface can gain a
     // negative-world margin while the pointer moves, so do not rebase a running gesture on it.
     const dragWorldOriginRef = useRef({ x: 0, y: 0 });
@@ -441,7 +225,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         );
         if (point) setConnectionDrag({ fromNodeId: nodeId, x: point.x, y: point.y });
       },
-      [content.nodes],
+      [content.markers, content.nodes],
     );
     const handleConnectionMove = useCallback(
       (nodeId: string, dx: number, dy: number) => {
@@ -450,7 +234,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         );
         if (point) setConnectionDrag({ fromNodeId: nodeId, x: point.x + dx, y: point.y + dy });
       },
-      [content.nodes],
+      [content.markers, content.nodes],
     );
     const handleConnectionEnd = useCallback(
       (nodeId: string, dx: number, dy: number) => {
@@ -470,80 +254,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [content.markers, content.nodes, onConnectPoints],
     );
 
-    const nodesByLocation = useMemo(() => {
-      const map = new Map<string, WorldNode>();
-      for (const node of layoutContent.nodes) {
-        map.set(node.locationId, node);
-      }
-      return map;
-    }, [layoutContent.nodes]);
-
-    // `connected_to` is a solid line between the two nodes' borders, coloured halfway between the
-    // two nodes' colours.
-    const connectionPaths = useMemo(() => {
-      const activeIds = new Set<string>();
-      const next = connections.flatMap((connection) => {
-        const from = nodesByLocation.get(connection.locationAId);
-        const to = nodesByLocation.get(connection.locationBId);
-        if (!from || !to) return [];
-        const id = `${connection.locationAId}-${connection.locationBId}`;
-        activeIds.add(id);
-        const cached = connectionCacheRef.current.get(id);
-        if (cached?.relation === connection && cached.from === from && cached.to === to)
-          return [cached.path];
-        const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
-        const end = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
-        const path = {
-          id,
-          path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
-          color: interpolateColor(from.color, to.color),
-          label: connection.label,
-          x: (from.x + to.x) / 2,
-          y: (from.y + to.y) / 2,
-        };
-        connectionCacheRef.current.set(id, { relation: connection, from, to, path });
-        return [path];
-      });
-      for (const id of connectionCacheRef.current.keys()) {
-        if (!activeIds.has(id)) connectionCacheRef.current.delete(id);
-      }
-      return next;
-    }, [connections, nodesByLocation]);
-
-    // `contains` is a dashed arrow from the parent's border to the child's border, so the tip is
-    // visible instead of hidden under the target node.
-    const containsArrows = useMemo(() => {
-      const activeIds = new Set<string>();
-      const next = contains.flatMap((relation) => {
-        const from = nodesByLocation.get(relation.parentLocationId);
-        const to = nodesByLocation.get(relation.childLocationId);
-        if (!from || !to) return [];
-        const id = `${relation.parentLocationId}-${relation.childLocationId}`;
-        activeIds.add(id);
-        const cached = containsCacheRef.current.get(id);
-        if (cached?.relation === relation && cached.from === from && cached.to === to)
-          return [cached.arrow];
-        const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
-        const tip = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
-        const angle = Math.atan2(tip.y - start.y, tip.x - start.x);
-        const arrow = {
-          id,
-          path: `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`,
-          arrow: arrowHeadPoints(tip.x, tip.y, angle, 10),
-          arrowHalo: arrowHeadPoints(tip.x, tip.y, angle, 13),
-          color: interpolateColor(from.color, to.color),
-          label: relation.label,
-          x: (from.x + to.x) / 2,
-          y: (from.y + to.y) / 2,
-        };
-        containsCacheRef.current.set(id, { relation, from, to, arrow });
-        return [arrow];
-      });
-      for (const id of containsCacheRef.current.keys()) {
-        if (!activeIds.has(id)) containsCacheRef.current.delete(id);
-      }
-      return next;
-    }, [contains, nodesByLocation]);
     const stackedImages = useMemo(
       () =>
         layoutContent.images
@@ -592,44 +302,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         ),
       [stackedMarkers, stackedNodes],
     );
-    const connectionPath = useMemo(() => {
-      if (!connectionDrag) return null;
-      const source = [...layoutContent.nodes, ...(layoutContent.markers ?? [])].find(
-        (point) => point.id === connectionDrag.fromNodeId,
-      );
-      return source ? `M ${source.x} ${source.y} L ${connectionDrag.x} ${connectionDrag.y}` : null;
-    }, [connectionDrag, layoutContent.nodes]);
-    const markerConnectionPaths = useMemo(() => {
-      const points = new Map(
-        [...layoutContent.nodes, ...(layoutContent.markers ?? [])].map((point) => [
-          point.id,
-          point,
-        ]),
-      );
-      return (layoutContent.markerConnections ?? []).flatMap((connection) => {
-        const from = points.get(connection.fromId);
-        const to = points.get(connection.toId);
-        if (!from || !to) return [];
-        const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
-        const end = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
-        const angle = Math.atan2(end.y - start.y, end.x - start.x);
-        const color = interpolateColor(from.color, to.color);
-        return [
-          {
-            id: connection.id,
-            path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
-            color,
-            directed: connection.directed,
-            arrow: connection.directed ? arrowHeadPoints(end.x, end.y, angle, 10) : undefined,
-            arrowHalo: connection.directed ? arrowHeadPoints(end.x, end.y, angle, 13) : undefined,
-            label: connection.label,
-            x: (from.x + to.x) / 2,
-            y: (from.y + to.y) / 2,
-          },
-        ];
-      });
-    }, [layoutContent.markers, layoutContent.markerConnections, layoutContent.nodes]);
-
     return (
       <GraphCanvasFrame
         width={size.width}
@@ -661,41 +333,18 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             />
           ))}
         </View>
-        <Svg
+        <LocationMapConnectionLayer
           width={size.width}
           height={size.height}
-          pointerEvents="none"
-          style={{ overflow: 'visible', position: 'absolute', left: 0, top: 0, zIndex: 1 }}
-        >
-          <G transform={`translate(${-size.originX} ${-size.originY})`}>
-            {connectionPaths.map((connection) => (
-              <ConnectionPathView
-                key={connection.id}
-                path={connection}
-                background={colors.background}
-              />
-            ))}
-            {containsArrows.map((arrow) => (
-              <ContainsArrowView key={arrow.id} arrow={arrow} background={colors.background} />
-            ))}
-            {connectionPath && (
-              <Path
-                d={connectionPath}
-                fill="none"
-                stroke={colors.primary}
-                strokeDasharray="6 4"
-                strokeWidth={2}
-              />
-            )}
-            {markerConnectionPaths.map((connection) => (
-              <MarkerConnectionView
-                key={connection.id}
-                connection={connection}
-                background={colors.background}
-              />
-            ))}
-          </G>
-        </Svg>
+          content={layoutContent}
+          connections={connections}
+          contains={contains}
+          connectionDrag={connectionDrag}
+          originX={size.originX}
+          originY={size.originY}
+          background={colors.background}
+          primary={colors.primary}
+        />
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
           {stackedPoints.map(({ kind, point }) => (
             <LocationMapNodeView

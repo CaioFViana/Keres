@@ -5,6 +5,8 @@ import {
   appendImagesToMap,
   appendLocationsToMap,
   appendMarkersToMap,
+  addLocationMapMarkerConnection,
+  removeLocationMapPoint,
   setLocationMapRelationText,
 } from '../../src/utils/locationMapContent';
 import { deriveConnections, deriveContains } from '../../src/utils/locationMapRelations';
@@ -118,4 +120,25 @@ it('keeps relation text inside the map and resolves it for both connection direc
   expect(deriveConnections(relations, map)).toEqual([
     { locationAId: 'a', locationBId: 'b', label: 'A guarded road' },
   ]);
+});
+
+it('keeps marker-involved connections local to the map and removes them with their point', () => {
+  const map = appendMarkersToMap(appendLocationsToMap(content, ['location-1']), [
+    { title: 'Gate' },
+  ]);
+  const markerId = map.markers![0].id;
+  const linked = addLocationMapMarkerConnection(map, {
+    fromId: map.nodes[0].id,
+    toId: markerId,
+    directed: true,
+    label: 'Pass through',
+  });
+
+  expect(linked.markerConnections).toHaveLength(1);
+  expect(linked.markerConnections![0]).toMatchObject({
+    fromId: map.nodes[0].id,
+    toId: markerId,
+    label: 'Pass through',
+  });
+  expect(removeLocationMapPoint(linked, markerId).markerConnections).toEqual([]);
 });

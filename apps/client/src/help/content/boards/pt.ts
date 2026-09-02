@@ -8,7 +8,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Um board é um desenho com nome. Você pinca personagens, locais, cenas e outros itens do dicionário, solta notas livres e liga-os com setas. Essas setas pertencem só ao board — não viram relações de personagem nem “ver também”.',
+      text: 'Um board é um desenho com nome. Você pinca personagens, locais, cenas e outros itens do dicionário, solta notas livres e cria ligações entre eles. Essas ligações pertencem só ao board — não viram relações de personagem nem “ver também”.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
@@ -23,9 +23,16 @@ const page: HelpPage = {
         'Abra Boards no menu da história e crie um board com um nome curto.',
         'Adicione entidades existentes pelo seletor. A mesma entidade pode ser pincada mais de uma vez.',
         'Adicione uma nota para o que ainda não é entidade.',
-        'Arraste um pin para o mover. Toque para ligá-lo a outro pin deste board, ou para abrir a entidade.',
+        'Arraste um pin para o mover. Toque nele para abrir sua ficha ou editar a nota.',
+        'Para criar uma ligação, ative Ligar nós no cabeçalho e arraste de um pin até outro.',
+        'No diálogo, escolha se a ligação é direcionada, o sentido da seta e um texto opcional.',
         'Guarde de propósito. Reverter restaura o último desenho guardado. Abrir uma entidade mantém o desenho por guardar na memória até guardar, fechar a app, ou abrir outro board.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'Ligações no board' },
+    {
+      type: 'paragraph',
+      text: 'Uma ligação simples representa uma associação. Uma ligação direcionada mostra uma seta; escolha A → B ou B → A no diálogo. O texto opcional aparece sobre a linha, por exemplo “protege”, “descobriu” ou “leva a”.',
     },
     {
       type: 'fields',
@@ -58,7 +65,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Boards não alteram o mapa da história, o de locais nem as relações de personagem. As setas ficam no board. Abrir uma entidade pincada mantém o desenho por guardar na memória até guardar, fechar a app, ou abrir outro board. Guardar grava um único update do desenho inteiro; se duas pessoas editarem o mesmo board, escolhe-se o seu, o delas, ou uma cópia — os desenhos não se fundem.',
+      text: 'Boards não alteram o mapa da história, o de locais nem as relações de personagem. As ligações e seus textos ficam no board. Abrir uma entidade pincada mantém o desenho por guardar na memória até guardar, fechar a app, ou abrir outro board. Guardar grava um único update do desenho inteiro; se duas pessoas editarem o mesmo board, escolhe-se o seu, o delas, ou uma cópia — os desenhos não se fundem.',
     },
   ],
 };

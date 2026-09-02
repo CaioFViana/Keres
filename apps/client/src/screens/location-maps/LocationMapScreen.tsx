@@ -16,6 +16,7 @@ import LocationMapHeaderActions from '@/src/components/features/location-maps/Lo
 import LocationMapConnectionModal from '@/src/components/features/location-maps/LocationMapConnectionModal';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
+import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
@@ -44,6 +45,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
+import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -77,16 +79,18 @@ const LocationMapScreen = () => {
   const [layoutEditing, setLayoutEditing] = useState(false);
   const [connectionMode, setConnectionMode] = useState(false);
   const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
+  const [markerConnectionPair, setMarkerConnectionPair] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
-
   useBackButtonHandler({
     showWebBackButton: true,
     onBack: () => navigation.goBack(),
   });
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -130,11 +134,9 @@ const LocationMapScreen = () => {
       setLoading(false);
     }
   }, [db, mapId, storyId, t]);
-
   useEffect(() => {
     void load();
   }, [load]);
-
   useEffect(() => {
     if (!storyId || !map || map.id !== mapId) return;
     useLocationMapDraftStore.getState().remember({
@@ -144,7 +146,6 @@ const LocationMapScreen = () => {
       savedContent,
     });
   }, [map, mapId, content, savedContent, storyId]);
-
   const save = useCallback(async () => {
     if (!userId || !map) return;
     try {
@@ -160,11 +161,9 @@ const LocationMapScreen = () => {
       setSaving(false);
     }
   }, [content, db, map, showNotification, t, userId]);
-
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
-
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(map?.name ?? t('location_map_list_title'));
@@ -208,7 +207,6 @@ const LocationMapScreen = () => {
       t,
     ]),
   );
-
   const galleryMediaById = useMemo(() => {
     const next: Record<
       string,
@@ -229,7 +227,6 @@ const LocationMapScreen = () => {
     }
     return next;
   }, [galleries]);
-
   const imagePaths = useMemo(
     () =>
       content.images.map((image) => {
@@ -248,7 +245,6 @@ const LocationMapScreen = () => {
     });
     return next;
   }, [content.images, imagePaths, resolvedUris]);
-
   const locationNameById = useMemo(
     () => new Map(locations.map((location) => [location.id, location.name])),
     [locations],
@@ -422,10 +418,11 @@ const LocationMapScreen = () => {
         onMoveMarker={handleMoveMarker}
         onOpenNodeDestination={handleOpenNodeDestination}
         onOpenMarkerDestination={handleOpenMarkerDestination}
-        onConnectNodes={(fromNodeId, toNodeId) => {
-          const from = content.nodes.find((node) => node.id === fromNodeId)?.locationId;
-          const to = content.nodes.find((node) => node.id === toNodeId)?.locationId;
-          if (from && to) setConnectionPair({ from, to });
+        onConnectPoints={(from, to) => {
+          const fromLocation = content.nodes.find((node) => node.id === from)?.locationId;
+          const toLocation = content.nodes.find((node) => node.id === to)?.locationId;
+          if (fromLocation && toLocation) setConnectionPair({ from: fromLocation, to: toLocation });
+          else setMarkerConnectionPair({ from, to });
         }}
       />
       <GraphCanvasControls
@@ -478,10 +475,7 @@ const LocationMapScreen = () => {
           onAddConnection={(locationId) => void handleAddConnection(locationId)}
           onRemoveConnection={(relationId) => void handleRemoveConnection(relationId)}
           onRemoveNode={() => {
-            setContent((current) => ({
-              ...current,
-              nodes: current.nodes.filter((node) => node.id !== openedNode.id),
-            }));
+            setContent((current) => removeLocationMapPoint(current, openedNode.id));
             setSelectedNodeId(null);
             setOpenedNodeId(null);
           }}
@@ -569,10 +563,7 @@ const LocationMapScreen = () => {
             }))
           }
           onRemove={() => {
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).filter((marker) => marker.id !== openedMarker.id),
-            }));
+            setContent((current) => removeLocationMapPoint(current, openedMarker.id));
             setSelectedMarkerId(null);
             setOpenedMarkerId(null);
           }}
@@ -590,6 +581,15 @@ const LocationMapScreen = () => {
           onConnect={(from, to) => void handleConnectLocations(from, to)}
           onSetParent={(child, parent) => void handleSetLocationParent(child, parent)}
           onClose={() => setConnectionPair(null)}
+        />
+      )}
+      {markerConnectionPair && (
+        <LocationMapMarkerConnectionModal
+          pair={markerConnectionPair}
+          content={content}
+          locationNames={nodeNames}
+          setContent={setContent}
+          onClose={() => setMarkerConnectionPair(null)}
         />
       )}
     </View>

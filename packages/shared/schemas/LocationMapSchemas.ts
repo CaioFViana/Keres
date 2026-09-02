@@ -18,6 +18,7 @@ export const MAX_LOCATION_MAP_IMAGES = 200;
 export const MAX_LOCATION_MAP_NODES = 500;
 export const MAX_LOCATION_MAP_MARKERS = 500;
 export const MAX_LOCATION_MAP_RELATION_TEXTS = 1000;
+export const MAX_LOCATION_MAP_MARKER_CONNECTIONS = 1000;
 
 /** Default icon color of a map point - the Location entity's own colour. */
 export const DEFAULT_LOCATION_MAP_NODE_COLOR = '#8BC34A';
@@ -90,6 +91,15 @@ export const LocationMapRelationTextSchema = z.object({
   text: z.string().min(1).max(500),
 });
 
+/** A map-only edge when at least one end is a free marker. Point ids are local to the map. */
+export const LocationMapMarkerConnectionSchema = z.object({
+  id: LocationMapLocalIdSchema,
+  fromId: LocationMapLocalIdSchema,
+  toId: LocationMapLocalIdSchema,
+  directed: z.boolean().default(true),
+  label: z.string().min(1).max(500).nullable().optional(),
+});
+
 export const LocationMapContentSchema = z
   .object({
     images: z.array(LocationMapImageSchema).max(MAX_LOCATION_MAP_IMAGES),
@@ -98,6 +108,10 @@ export const LocationMapContentSchema = z
     relationTexts: z
       .array(LocationMapRelationTextSchema)
       .max(MAX_LOCATION_MAP_RELATION_TEXTS)
+      .optional(),
+    markerConnections: z
+      .array(LocationMapMarkerConnectionSchema)
+      .max(MAX_LOCATION_MAP_MARKER_CONNECTIONS)
       .optional(),
   })
   .superRefine((content, context) => {
@@ -157,6 +171,29 @@ export const LocationMapContentSchema = z
       }
       relationTextKeys.add(key);
     }
+
+    const markerConnectionIds = new Set<string>();
+    for (const [index, connection] of (content.markerConnections ?? []).entries()) {
+      if (markerConnectionIds.has(connection.id) || nodeIds.has(connection.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['markerConnections', index, 'id'],
+          message: 'Duplicate marker connection id on this location map.',
+        });
+      }
+      markerConnectionIds.add(connection.id);
+      if (
+        connection.fromId === connection.toId ||
+        !nodeIds.has(connection.fromId) ||
+        !nodeIds.has(connection.toId)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['markerConnections', index],
+          message: 'A marker connection must join two different points on this location map.',
+        });
+      }
+    }
   });
 
 export const EMPTY_LOCATION_MAP_CONTENT = { images: [], nodes: [] } as const;
@@ -186,6 +223,7 @@ export type LocationMapImageType = z.infer<typeof LocationMapImageSchema>;
 export type LocationMapNodeType = z.infer<typeof LocationMapNodeSchema>;
 export type LocationMapMarkerType = z.infer<typeof LocationMapMarkerSchema>;
 export type LocationMapRelationTextType = z.infer<typeof LocationMapRelationTextSchema>;
+export type LocationMapMarkerConnectionType = z.infer<typeof LocationMapMarkerConnectionSchema>;
 export type LocationMapContentType = z.infer<typeof LocationMapContentSchema>;
 export type LocationMapRowType = z.infer<typeof LocationMapSchema>;
 export type CreateLocationMapDataType = z.infer<typeof CreateLocationMapDataSchema>;
@@ -219,5 +257,6 @@ export function remapLocationMapContent(
       sourceLocationId: remapId(relationText.sourceLocationId),
       destinationLocationId: remapId(relationText.destinationLocationId),
     })),
+    markerConnections: content.markerConnections?.map((connection) => ({ ...connection })),
   };
 }

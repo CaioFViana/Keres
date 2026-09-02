@@ -30,6 +30,14 @@ export interface LocationMapContains {
   label?: string | null;
 }
 
+export interface LocationMapMarkerConnection {
+  id: string;
+  fromId: string;
+  toId: string;
+  directed: boolean;
+  label?: string | null;
+}
+
 interface Props {
   content: LocationMapContentType;
   /** Resolved URIs of the gallery media used as image bases, keyed by gallery id. */
@@ -62,7 +70,7 @@ interface Props {
   onMoveMarker: (markerId: string, x: number, y: number) => void;
   onOpenNodeDestination: (nodeId: string) => void;
   onOpenMarkerDestination: (markerId: string) => void;
-  onConnectNodes: (fromNodeId: string, toNodeId: string) => void;
+  onConnectPoints: (fromPointId: string, toPointId: string) => void;
 }
 
 const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
@@ -95,6 +103,17 @@ type ContainsArrow = {
   arrow: string;
   arrowHalo: string;
   color: string;
+  label?: string | null;
+  x: number;
+  y: number;
+};
+type MarkerConnectionPath = {
+  id: string;
+  path: string;
+  color: string;
+  directed: boolean;
+  arrow?: string;
+  arrowHalo?: string;
   label?: string | null;
   x: number;
   y: number;
@@ -187,6 +206,56 @@ const ContainsArrowView = React.memo(function ContainsArrowView({
   );
 });
 
+const MarkerConnectionView = React.memo(function MarkerConnectionView({
+  connection,
+  background,
+}: {
+  connection: MarkerConnectionPath;
+  background: string;
+}) {
+  return (
+    <>
+      <Path d={connection.path} fill="none" stroke={background} strokeWidth={HALO_WIDTH} />
+      <Path
+        d={connection.path}
+        fill="none"
+        stroke={connection.color}
+        strokeWidth={connection.directed ? 2 : 1.6}
+      />
+      {connection.directed && connection.arrow && connection.arrowHalo && (
+        <>
+          <Polygon points={connection.arrowHalo} fill={background} />
+          <Polygon points={connection.arrow} fill={connection.color} />
+        </>
+      )}
+      {!!connection.label && (
+        <>
+          <SvgText
+            x={connection.x}
+            y={connection.y - 6}
+            fill={background}
+            stroke={background}
+            strokeWidth={4}
+            fontSize={11}
+            textAnchor="middle"
+          >
+            {connection.label}
+          </SvgText>
+          <SvgText
+            x={connection.x}
+            y={connection.y - 6}
+            fill={connection.color}
+            fontSize={11}
+            textAnchor="middle"
+          >
+            {connection.label}
+          </SvgText>
+        </>
+      )}
+    </>
+  );
+});
+
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
   return [
@@ -228,7 +297,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       onMoveMarker,
       onOpenNodeDestination,
       onOpenMarkerDestination,
-      onConnectNodes,
+      onConnectPoints,
     },
     ref,
   ) => {
@@ -367,32 +436,38 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     );
     const handleConnectionStart = useCallback(
       (nodeId: string) => {
-        const node = content.nodes.find((candidate) => candidate.id === nodeId);
-        if (node) setConnectionDrag({ fromNodeId: nodeId, x: node.x, y: node.y });
+        const point = [...content.nodes, ...(content.markers ?? [])].find(
+          (candidate) => candidate.id === nodeId,
+        );
+        if (point) setConnectionDrag({ fromNodeId: nodeId, x: point.x, y: point.y });
       },
       [content.nodes],
     );
     const handleConnectionMove = useCallback(
       (nodeId: string, dx: number, dy: number) => {
-        const node = content.nodes.find((candidate) => candidate.id === nodeId);
-        if (node) setConnectionDrag({ fromNodeId: nodeId, x: node.x + dx, y: node.y + dy });
+        const point = [...content.nodes, ...(content.markers ?? [])].find(
+          (candidate) => candidate.id === nodeId,
+        );
+        if (point) setConnectionDrag({ fromNodeId: nodeId, x: point.x + dx, y: point.y + dy });
       },
       [content.nodes],
     );
     const handleConnectionEnd = useCallback(
       (nodeId: string, dx: number, dy: number) => {
-        const source = content.nodes.find((node) => node.id === nodeId);
+        const points = [...content.nodes, ...(content.markers ?? [])];
+        const source = points.find((point) => point.id === nodeId);
         if (!source) return;
         const x = source.x + dx;
         const y = source.y + dy;
-        const target = content.nodes.find(
-          (node) =>
-            node.id !== nodeId && Math.hypot(x - node.x, y - node.y) <= LOCATION_MAP_NODE_SIZE / 2,
+        const target = points.find(
+          (point) =>
+            point.id !== nodeId &&
+            Math.hypot(x - point.x, y - point.y) <= LOCATION_MAP_NODE_SIZE / 2,
         );
         setConnectionDrag(null);
-        if (target) onConnectNodes(nodeId, target.id);
+        if (target) onConnectPoints(nodeId, target.id);
       },
-      [content.nodes, onConnectNodes],
+      [content.markers, content.nodes, onConnectPoints],
     );
 
     const nodesByLocation = useMemo(() => {
@@ -519,9 +594,41 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     );
     const connectionPath = useMemo(() => {
       if (!connectionDrag) return null;
-      const source = layoutContent.nodes.find((node) => node.id === connectionDrag.fromNodeId);
+      const source = [...layoutContent.nodes, ...(layoutContent.markers ?? [])].find(
+        (point) => point.id === connectionDrag.fromNodeId,
+      );
       return source ? `M ${source.x} ${source.y} L ${connectionDrag.x} ${connectionDrag.y}` : null;
     }, [connectionDrag, layoutContent.nodes]);
+    const markerConnectionPaths = useMemo(() => {
+      const points = new Map(
+        [...layoutContent.nodes, ...(layoutContent.markers ?? [])].map((point) => [
+          point.id,
+          point,
+        ]),
+      );
+      return (layoutContent.markerConnections ?? []).flatMap((connection) => {
+        const from = points.get(connection.fromId);
+        const to = points.get(connection.toId);
+        if (!from || !to) return [];
+        const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
+        const end = pointOnCircleBoundary(to, from, NODE_RADIUS + LINE_END_MARGIN);
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        const color = interpolateColor(from.color, to.color);
+        return [
+          {
+            id: connection.id,
+            path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+            color,
+            directed: connection.directed,
+            arrow: connection.directed ? arrowHeadPoints(end.x, end.y, angle, 10) : undefined,
+            arrowHalo: connection.directed ? arrowHeadPoints(end.x, end.y, angle, 13) : undefined,
+            label: connection.label,
+            x: (from.x + to.x) / 2,
+            y: (from.y + to.y) / 2,
+          },
+        ];
+      });
+    }, [layoutContent.markers, layoutContent.markerConnections, layoutContent.nodes]);
 
     return (
       <GraphCanvasFrame
@@ -580,6 +687,13 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
                 strokeWidth={2}
               />
             )}
+            {markerConnectionPaths.map((connection) => (
+              <MarkerConnectionView
+                key={connection.id}
+                connection={connection}
+                background={colors.background}
+              />
+            ))}
           </G>
         </Svg>
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
@@ -594,7 +708,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
                 kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
               }
               layoutEditing={layoutEditing}
-              connectionMode={connectionMode && kind === 'node'}
+              connectionMode={connectionMode}
               scale={scale}
               positionOffsetX={-size.originX}
               positionOffsetY={-size.originY}

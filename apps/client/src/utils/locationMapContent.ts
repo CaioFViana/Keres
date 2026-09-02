@@ -37,6 +37,46 @@ export function setLocationMapRelationText(
   };
 }
 
+/** Adds a map-local edge for any relation that involves at least one free marker. */
+export function addLocationMapMarkerConnection(
+  current: LocationMapContentType,
+  connection: { fromId: string; toId: string; directed: boolean; label: string | null },
+): LocationMapContentType {
+  const existing = new Set([
+    ...current.nodes.map((node) => node.id),
+    ...(current.markers ?? []).map((marker) => marker.id),
+    ...(current.markerConnections ?? []).map((edge) => edge.id),
+  ]);
+  const duplicate = (current.markerConnections ?? []).some(
+    (edge) =>
+      (edge.fromId === connection.fromId && edge.toId === connection.toId) ||
+      (edge.fromId === connection.toId && edge.toId === connection.fromId),
+  );
+  if (duplicate) return current;
+  return {
+    ...current,
+    markerConnections: [
+      ...(current.markerConnections ?? []),
+      { id: generateLocationMapLocalId(existing), ...connection },
+    ],
+  };
+}
+
+/** Removes a point and every map-only marker edge attached to it. */
+export function removeLocationMapPoint(
+  current: LocationMapContentType,
+  pointId: string,
+): LocationMapContentType {
+  return {
+    ...current,
+    nodes: current.nodes.filter((node) => node.id !== pointId),
+    markers: current.markers?.filter((marker) => marker.id !== pointId),
+    markerConnections: current.markerConnections?.filter(
+      (edge) => edge.fromId !== pointId && edge.toId !== pointId,
+    ),
+  };
+}
+
 /** Adds image bases to the map, each at a staggered position, returning the new content. */
 export function appendImagesToMap(
   current: LocationMapContentType,

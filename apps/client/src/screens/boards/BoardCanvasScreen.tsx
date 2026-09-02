@@ -68,7 +68,7 @@ const BoardCanvasScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const navigateToEntity = useNavigateToEntityDetail();
-  const { groupedOptions, options } = useBoardPinOptions(storyId);
+  const { groupedOptions, options } = useBoardPinOptions(storyId, boardId);
   const canvasRef = useRef<BoardCanvasHandle>(null);
 
   const [board, setBoard] = useState<BoardSelect | null>(null);
@@ -620,6 +620,10 @@ const BoardCanvasScreen = () => {
           onOpenEntity={() => {
             if (selected.kind !== 'entity') return;
             setSelected(null);
+            if (selected.entityType === 'Board') {
+              navigation.navigate('BoardCanvas', { boardId: selected.entityId });
+              return;
+            }
             if (selected.entityType === 'Gallery') {
               navigation.getParent()?.navigate('GalleryStack', {
                 screen: 'GalleryDetail',

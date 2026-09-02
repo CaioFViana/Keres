@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
-import { chapters, galleries } from '../db/schema';
+import { boards, chapters, galleries } from '../db/schema';
 import { loadEntityOptions } from '../utils/entityOptions';
 import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 
@@ -17,7 +17,8 @@ export interface BoardPinOption {
     | 'Item'
     | 'Gallery'
     | 'Chapter'
-    | 'WorldRule';
+    | 'WorldRule'
+    | 'Board';
   entityId: string;
   label: string;
   group:
@@ -29,7 +30,8 @@ export interface BoardPinOption {
     | 'gallery'
     | 'chapter'
     | 'event'
-    | 'worldrule';
+    | 'worldrule'
+    | 'board';
 }
 
 export function encodeBoardPinValue(entityType: string, entityId: string): string {
@@ -47,7 +49,7 @@ export function decodeBoardPinValue(
 /**
  * Entities that can be pinned on a board. Events are stored as Chapter; the picker splits them.
  */
-export function useBoardPinOptions(storyId: string | undefined) {
+export function useBoardPinOptions(storyId: string | undefined, excludedBoardId?: string) {
   const db = useDrizzle();
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
@@ -61,7 +63,7 @@ export function useBoardPinOptions(storyId: string | undefined) {
     }
     setLoading(true);
     try {
-      const [character, location, note, scene, item, worldRule, galleryRows, chapterRows] =
+      const [character, location, note, scene, item, worldRule, galleryRows, chapterRows, boardRows] =
         await Promise.all([
           loadEntityOptions(db, storyId, 'Character'),
           loadEntityOptions(db, storyId, 'Location'),
@@ -78,6 +80,11 @@ export function useBoardPinOptions(storyId: string | undefined) {
             .select()
             .from(chapters)
             .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
+            .all(),
+          db
+            .select()
+            .from(boards)
+            .where(and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)))
             .all(),
         ]);
 
@@ -130,6 +137,14 @@ export function useBoardPinOptions(storyId: string | undefined) {
           label: row.name,
           group: row.type === 'event' ? ('event' as const) : ('chapter' as const),
         })),
+        ...boardRows
+          .filter((row) => row.id !== excludedBoardId)
+          .map((row) => ({
+            entityType: 'Board' as const,
+            entityId: row.id,
+            label: row.name,
+            group: 'board' as const,
+          })),
       ];
       setOptions(next);
     } catch (error) {
@@ -138,7 +153,7 @@ export function useBoardPinOptions(storyId: string | undefined) {
     } finally {
       setLoading(false);
     }
-  }, [db, storyId]);
+  }, [db, excludedBoardId, storyId]);
 
   useEffect(() => {
     void load();
@@ -159,6 +174,7 @@ export function useBoardPinOptions(storyId: string | undefined) {
       { key: 'note', label: t('note_plural'), appearanceType: 'Note' },
       { key: 'worldrule', label: t('world_rules_title'), appearanceType: 'WorldRule' },
       { key: 'gallery', label: t('gallery'), appearanceType: 'Gallery' },
+      { key: 'board', label: t('boards_title'), appearanceType: 'Board' },
     ];
     return groups
       .map((group) => {

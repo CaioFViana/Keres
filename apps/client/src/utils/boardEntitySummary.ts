@@ -8,6 +8,7 @@ import { createLocationService } from '../services/storymanagement/LocationServi
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createSceneService } from '../services/storymanagement/SceneService';
 import { createWorldRuleService } from '../services/storymanagement/WorldRuleService';
+import { createBoardService } from '../services/storymanagement/BoardService';
 
 /** A light summary of an entity pin, shown when its board node is opened. */
 export interface BoardEntitySummary {
@@ -57,6 +58,10 @@ export async function loadBoardEntitySummary(
     case 'Note': {
       const row = await createNoteService(db).getById(entityId);
       return row ? { title: row.title, details: row.body } : null;
+    }
+    case 'Board': {
+      const row = await createBoardService(db).getById(entityId);
+      return row ? { title: row.name, details: row.description } : null;
     }
     default:
       return null;

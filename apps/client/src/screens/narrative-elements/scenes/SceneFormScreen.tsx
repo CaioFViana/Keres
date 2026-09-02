@@ -6,8 +6,7 @@ import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';

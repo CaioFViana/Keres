@@ -1,10 +1,10 @@
 import { getEntityAppearance, type LocationMapContentType } from '@keres/shared';
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
-import { useDrizzle } from '../db';
+import type { useDrizzle } from '../db';
 import type { MultiSelectOption } from '../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { GallerySelect, LocationMapSelect, LocationSelect } from '../db/schema';
 import type { LocationStackParamList } from '../navigation/MainSystemStack';

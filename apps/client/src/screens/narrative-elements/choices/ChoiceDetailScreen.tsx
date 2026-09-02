@@ -165,7 +165,7 @@ const ChoiceDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [choiceId, navigation, copy]);
+  }, [choiceId, navigation, copy, t]);
 
   const handleChoiceChange = useCallback(
     async (changedStoryId: string, changedChoiceId: string) => {

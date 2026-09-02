@@ -143,7 +143,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
         .filter((option) => option.ownerType === ownerType)
         .map((option) => ({ label: option.name, value: option.value })),
     }));
-  }, [label, options, t]);
+  }, [label, options]);
 
   return { options, optionsByValue, groupedOptions, loading, reload: load };
 }

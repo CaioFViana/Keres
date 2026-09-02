@@ -155,7 +155,7 @@ const ChapterDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, copy]);
+  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const fetchAllScenesInStory = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id) {
@@ -197,7 +197,7 @@ const ChapterDetailScreen = () => {
         }
       }
     },
-    [chapterId, navigation, setChapter, setHeaderTitle, t],
+    [chapterId, navigation, setChapter, setHeaderTitle, copy.detailsTitle],
   );
 
   const handleSceneChange = useCallback(

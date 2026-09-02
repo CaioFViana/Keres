@@ -311,7 +311,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           zIndex: 4,
         },
       }),
-    [colors, node.color, node.x, node.y, positionOffsetX, positionOffsetY, selected],
+    [colors, node.color, node.x, node.y, node.zIndex, positionOffsetX, positionOffsetY, selected],
   );
 
   return (

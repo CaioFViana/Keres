@@ -1,5 +1,5 @@
 import type { StorySchemaEntityType } from '@keres/shared';
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import {
   AttributeType,
   getEntityAppearance,

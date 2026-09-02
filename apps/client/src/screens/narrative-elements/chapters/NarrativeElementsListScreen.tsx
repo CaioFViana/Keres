@@ -564,7 +564,7 @@ const NarrativeElementsListScreen = () => {
         ? [{ entityName: 'Choice' as const, prefix: 'choice', label: term('Choice', true) }]
         : []),
     ],
-    [selectedStory?.type, t, term],
+    [selectedStory?.type, term],
   );
 
   const visibleSceneCount = useMemo(() => {

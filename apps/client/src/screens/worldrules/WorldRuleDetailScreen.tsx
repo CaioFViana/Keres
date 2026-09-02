@@ -111,7 +111,7 @@ const WorldRuleDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy]);
+  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const handleWorldRuleChange = useCallback(
     async (changedStoryId: string, changedWorldRuleId: string) => {

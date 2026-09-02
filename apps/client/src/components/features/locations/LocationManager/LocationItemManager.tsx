@@ -131,7 +131,7 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
         </View>
       );
     },
-    [availableScenes, availableCharacters, colors.text, t],
+    [availableScenes, availableCharacters, colors.text, sceneCopy.entity, t],
   );
 
   return (

@@ -105,7 +105,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
         </View>
       );
     },
-    [allScenes, colors.text, t],
+    [allScenes, colors.text, sceneCopy.entity, t],
   );
 
   return (

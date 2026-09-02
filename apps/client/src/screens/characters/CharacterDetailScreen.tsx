@@ -196,7 +196,7 @@ const CharacterDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, copy]);
+  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const fetchRelationsForCharacter = useCallback(async () => {
     if (!characterRelationServiceRef.current || !character?.storyId || !characterId) {

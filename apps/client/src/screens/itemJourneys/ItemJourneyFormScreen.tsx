@@ -1,6 +1,5 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { ItemJourney } from '@keres/shared/entities/Item';

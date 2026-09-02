@@ -259,9 +259,6 @@ const BoardCanvasScreen = () => {
     }, [
       board?.name,
       canEdit,
-      colors.primary,
-      colors.text,
-      colors.textSecondary,
       dirty,
       layoutEditing,
       connectionMode,

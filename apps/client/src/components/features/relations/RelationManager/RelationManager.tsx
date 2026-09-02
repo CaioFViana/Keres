@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -60,6 +60,7 @@ interface Props<TItem extends BaseItem, TRelation extends BaseRelation> {
 const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>(
   props: Props<TItem, TRelation>,
 ) => {
+  const { availableItems, filterAvailableItems, getRelationItemId } = props;
   const { t } = useTranslation();
   const { colors } = useTheme();
   const activeRelations = useMemo(
@@ -72,17 +73,17 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
   );
   const availableForPicker = useMemo(
     () =>
-      props.availableItems.filter(
+      availableItems.filter(
         (item) =>
           !item.isDeleted &&
           (selectedValues.includes(item.id) ||
-            props.filterAvailableItems(item, activeRelations, props.getRelationItemId)),
+            filterAvailableItems(item, activeRelations, getRelationItemId)),
       ),
     [
       activeRelations,
-      props.availableItems,
-      props.filterAvailableItems,
-      props.getRelationItemId,
+      availableItems,
+      filterAvailableItems,
+      getRelationItemId,
       selectedValues,
     ],
   );

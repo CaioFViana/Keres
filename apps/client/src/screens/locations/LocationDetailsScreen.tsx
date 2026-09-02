@@ -187,7 +187,7 @@ const LocationDetailsScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, copy]);
+  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, copy, t]);
 
   const fetchAllCharactersInStory = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) {

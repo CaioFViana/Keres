@@ -1,7 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';

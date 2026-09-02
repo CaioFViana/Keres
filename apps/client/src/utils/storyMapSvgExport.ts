@@ -1,4 +1,4 @@
-import type { BoardContentType } from '@keres/shared';
+import type { BoardContentType , LocationMapContentType } from '@keres/shared';
 import type {
   LocationMapConnection,
   LocationMapContains,
@@ -11,7 +11,6 @@ import {
   buildLocationMapSvg as buildLocationMapSvgFile,
   type LocationMapExportMedia,
 } from './locationMapExport';
-import type { LocationMapContentType } from '@keres/shared';
 import { bytesToBase64 } from './locationMapMedia';
 
 type SvgColors = {

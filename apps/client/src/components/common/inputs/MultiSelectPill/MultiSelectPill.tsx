@@ -35,7 +35,7 @@ export interface MultiSelectGroup {
 
 /** Compatibility shape for places that previously needed a one-value dropdown. */
 export interface SingleSelectPillProps {
-  options: Array<Omit<MultiSelectOption, 'color'> & { color?: string | null }>;
+  options: (Omit<MultiSelectOption, 'color'> & { color?: string | null })[];
   value: string | null;
   onValueChange: (value: string | null) => void;
   placeholder?: string;

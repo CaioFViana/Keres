@@ -112,7 +112,7 @@ export interface AnalysisChoice {
   text: string;
 }
 
-export interface AnalysisRoute extends AnalysisEntityRef {}
+export type AnalysisRoute = AnalysisEntityRef;
 
 export interface AnalysisRouteStep {
   id: string;

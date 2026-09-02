@@ -240,7 +240,7 @@ export function useSeeAlsoRelations(
       otherType: target.entityType,
       otherId: target.entityId,
     }));
-  }, [entityId, pendingTargets, relations]);
+  }, [allowedEntityTypes, entityId, pendingTargets, relations]);
 
   return {
     relations: displayedRelations,

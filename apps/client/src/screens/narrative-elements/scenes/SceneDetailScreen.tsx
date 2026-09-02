@@ -226,7 +226,7 @@ const SceneDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, copy]);
+  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current || !scene?.chapterId) {

@@ -122,7 +122,7 @@ const ItemDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [itemId, navigation, copy]);
+  }, [itemId, navigation, copy, t]);
 
   const fetchAllCharacters = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) return;

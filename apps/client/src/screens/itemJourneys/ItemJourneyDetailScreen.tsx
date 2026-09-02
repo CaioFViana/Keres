@@ -189,7 +189,7 @@ const ItemJourneyDetailScreen = () => {
         }
       }
     },
-    [itemJourneyId, navigation, t, items, itemCopy],
+    [itemJourneyId, navigation, items, itemCopy],
   );
 
   useEntityInitialLoad(fetchItemJourney);

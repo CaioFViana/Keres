@@ -17,6 +17,7 @@ export const LOCATION_MAP_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 export const MAX_LOCATION_MAP_IMAGES = 200;
 export const MAX_LOCATION_MAP_NODES = 500;
 export const MAX_LOCATION_MAP_MARKERS = 500;
+export const MAX_LOCATION_MAP_RELATION_TEXTS = 1000;
 
 /** Default icon color of a map point - the Location entity's own colour. */
 export const DEFAULT_LOCATION_MAP_NODE_COLOR = '#8BC34A';
@@ -82,11 +83,22 @@ export const LocationMapMarkerSchema = z.object({
   destinationMapId: z.string().min(1).nullable().optional(),
 });
 
+/** Map-local label for a relation. It never changes the story's shared Location relation itself. */
+export const LocationMapRelationTextSchema = z.object({
+  sourceLocationId: z.string().min(1),
+  destinationLocationId: z.string().min(1),
+  text: z.string().min(1).max(500),
+});
+
 export const LocationMapContentSchema = z
   .object({
     images: z.array(LocationMapImageSchema).max(MAX_LOCATION_MAP_IMAGES),
     nodes: z.array(LocationMapNodeSchema).max(MAX_LOCATION_MAP_NODES),
     markers: z.array(LocationMapMarkerSchema).max(MAX_LOCATION_MAP_MARKERS).optional(),
+    relationTexts: z
+      .array(LocationMapRelationTextSchema)
+      .max(MAX_LOCATION_MAP_RELATION_TEXTS)
+      .optional(),
   })
   .superRefine((content, context) => {
     const imageIds = new Set<string>();
@@ -132,6 +144,19 @@ export const LocationMapContentSchema = z
       }
       nodeIds.add(marker.id);
     }
+
+    const relationTextKeys = new Set<string>();
+    for (const [index, relationText] of (content.relationTexts ?? []).entries()) {
+      const key = `${relationText.sourceLocationId}:${relationText.destinationLocationId}`;
+      if (relationTextKeys.has(key)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['relationTexts', index],
+          message: 'Duplicate relation text on this location map.',
+        });
+      }
+      relationTextKeys.add(key);
+    }
   });
 
 export const EMPTY_LOCATION_MAP_CONTENT = { images: [], nodes: [] } as const;
@@ -160,6 +185,7 @@ export const PartialLocationMapSchema = CreateLocationMapDataSchema.partial();
 export type LocationMapImageType = z.infer<typeof LocationMapImageSchema>;
 export type LocationMapNodeType = z.infer<typeof LocationMapNodeSchema>;
 export type LocationMapMarkerType = z.infer<typeof LocationMapMarkerSchema>;
+export type LocationMapRelationTextType = z.infer<typeof LocationMapRelationTextSchema>;
 export type LocationMapContentType = z.infer<typeof LocationMapContentSchema>;
 export type LocationMapRowType = z.infer<typeof LocationMapSchema>;
 export type CreateLocationMapDataType = z.infer<typeof CreateLocationMapDataSchema>;
@@ -187,6 +213,11 @@ export function remapLocationMapContent(
       destinationMapId: marker.destinationMapId
         ? remapId(marker.destinationMapId)
         : marker.destinationMapId,
+    })),
+    relationTexts: content.relationTexts?.map((relationText) => ({
+      ...relationText,
+      sourceLocationId: remapId(relationText.sourceLocationId),
+      destinationLocationId: remapId(relationText.destinationLocationId),
     })),
   };
 }

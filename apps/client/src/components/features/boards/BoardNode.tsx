@@ -33,6 +33,7 @@ interface Props {
   ghost?: boolean;
   selected: boolean;
   layoutEditing: boolean;
+  connectionMode: boolean;
   scale: number;
   /** Surface translation for the world-coordinate canvas. */
   positionOffsetX?: number;
@@ -48,6 +49,10 @@ interface Props {
   onOpenDetails: (node: BoardNodeType) => void;
   onBringToFront: (nodeId: string) => void;
   onSendToBack: (nodeId: string) => void;
+  onConnectionStart: (node: BoardNodeType) => void;
+  onConnectionMove: (nodeId: string, dx: number, dy: number) => void;
+  onConnectionEnd: (nodeId: string, dx: number, dy: number) => void;
+  onConnectionCancel: () => void;
 }
 
 const BoardNodeView: React.FC<Props> = ({
@@ -59,6 +64,7 @@ const BoardNodeView: React.FC<Props> = ({
   ghost,
   selected,
   layoutEditing,
+  connectionMode,
   scale,
   positionOffsetX = 0,
   positionOffsetY = 0,
@@ -72,6 +78,10 @@ const BoardNodeView: React.FC<Props> = ({
   onOpenDetails,
   onBringToFront,
   onSendToBack,
+  onConnectionStart,
+  onConnectionMove,
+  onConnectionEnd,
+  onConnectionCancel,
 }) => {
   const { colors } = useTheme();
   /**
@@ -90,6 +100,8 @@ const BoardNodeView: React.FC<Props> = ({
   scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
   layoutEditingRef.current = layoutEditing;
+  const connectionModeRef = useRef(connectionMode);
+  connectionModeRef.current = connectionMode;
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
   const handlers = useRef({
@@ -101,6 +113,10 @@ const BoardNodeView: React.FC<Props> = ({
     onOpenDetails,
     onBringToFront,
     onSendToBack,
+    onConnectionStart,
+    onConnectionMove,
+    onConnectionEnd,
+    onConnectionCancel,
   });
   handlers.current = {
     onSelect,
@@ -111,6 +127,10 @@ const BoardNodeView: React.FC<Props> = ({
     onOpenDetails,
     onBringToFront,
     onSendToBack,
+    onConnectionStart,
+    onConnectionMove,
+    onConnectionEnd,
+    onConnectionCancel,
   };
 
   const pan = useMemo(
@@ -120,20 +140,23 @@ const BoardNodeView: React.FC<Props> = ({
         // A selected card in layout mode exposes real controls inside itself. Let those controls
         // own the gesture; otherwise the parent responder steals a resize after a rerender.
         onStartShouldSetPanResponder: () => {
+          if (connectionModeRef.current) return true;
           if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
-          dragging.current && !(layoutEditingRef.current && selectedRef.current),
+          (dragging.current || connectionModeRef.current) &&
+          !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
-          !(layoutEditingRef.current && selectedRef.current) &&
+          (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
           dragging.current = false;
           origin.current = { x: position.current.x, y: position.current.y };
-          handlers.current.onDragStart(nodeId.current);
+          if (connectionModeRef.current) handlers.current.onConnectionStart(nodeRef.current);
+          else handlers.current.onDragStart(nodeId.current);
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             setPointerCapture?: (id: number) => void;
@@ -141,21 +164,31 @@ const BoardNodeView: React.FC<Props> = ({
           if (pointerId != null) target?.setPointerCapture?.(pointerId);
         },
         onPanResponderMove: (_event, gesture) => {
+          const zoom = Math.max(scaleRef.current, 0.01);
+          if (connectionModeRef.current) {
+            handlers.current.onConnectionMove(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
+            return;
+          }
           if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
           dragging.current = true;
-          const zoom = Math.max(scaleRef.current, 0.01);
           handlers.current.onMove(
             nodeId.current,
             origin.current.x + gesture.dx / zoom,
             origin.current.y + gesture.dy / zoom,
           );
         },
-        onPanResponderRelease: (event) => {
+        onPanResponderRelease: (event, gesture) => {
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          if (connectionModeRef.current) {
+            const zoom = Math.max(scaleRef.current, 0.01);
+            handlers.current.onConnectionEnd(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
+            dragging.current = false;
+            return;
+          }
           handlers.current.onDragEnd(nodeId.current);
           if (!dragging.current) handlers.current.onSelect(nodeRef.current);
           dragging.current = false;
@@ -166,7 +199,8 @@ const BoardNodeView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd(nodeId.current);
+          if (connectionModeRef.current) handlers.current.onConnectionCancel();
+          else handlers.current.onDragEnd(nodeId.current);
           dragging.current = false;
         },
       }),

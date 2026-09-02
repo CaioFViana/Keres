@@ -16,6 +16,27 @@ export interface LocationMapMarkerEntry {
   note?: string | null;
 }
 
+/** Stores a label locally to this map, keyed by the relation's displayed source and destination. */
+export function setLocationMapRelationText(
+  current: LocationMapContentType,
+  sourceLocationId: string,
+  destinationLocationId: string,
+  text: string | null,
+): LocationMapContentType {
+  const relationTexts = current.relationTexts ?? [];
+  const withoutCurrent = relationTexts.filter(
+    (entry) =>
+      entry.sourceLocationId !== sourceLocationId ||
+      entry.destinationLocationId !== destinationLocationId,
+  );
+  return {
+    ...current,
+    relationTexts: text
+      ? [...withoutCurrent, { sourceLocationId, destinationLocationId, text }]
+      : withoutCurrent,
+  };
+}
+
 /** Adds image bases to the map, each at a staggered position, returning the new content. */
 export function appendImagesToMap(
   current: LocationMapContentType,

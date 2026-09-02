@@ -18,6 +18,7 @@ interface Props {
   name: string;
   selected: boolean;
   layoutEditing: boolean;
+  connectionMode?: boolean;
   scale: number;
   /** Surface translation for the world-coordinate canvas. */
   positionOffsetX?: number;
@@ -29,6 +30,10 @@ interface Props {
   onBringToFront: (nodeId: string) => void;
   onSendToBack: (nodeId: string) => void;
   onOpenDestination?: (nodeId: string) => void;
+  onConnectionStart?: (nodeId: string) => void;
+  onConnectionMove?: (nodeId: string, dx: number, dy: number) => void;
+  onConnectionEnd?: (nodeId: string, dx: number, dy: number) => void;
+  onConnectionCancel?: () => void;
 }
 
 /**
@@ -39,6 +44,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   name,
   selected,
   layoutEditing,
+  connectionMode = false,
   scale,
   positionOffsetX = 0,
   positionOffsetY = 0,
@@ -49,6 +55,10 @@ const LocationMapNodeView: React.FC<Props> = ({
   onBringToFront,
   onSendToBack,
   onOpenDestination,
+  onConnectionStart,
+  onConnectionMove,
+  onConnectionEnd,
+  onConnectionCancel,
 }) => {
   const { colors } = useTheme();
   const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
@@ -66,6 +76,8 @@ const LocationMapNodeView: React.FC<Props> = ({
   scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
   layoutEditingRef.current = layoutEditing;
+  const connectionModeRef = useRef(connectionMode);
+  connectionModeRef.current = connectionMode;
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
   const handlers = useRef({
@@ -76,6 +88,10 @@ const LocationMapNodeView: React.FC<Props> = ({
     onBringToFront,
     onSendToBack,
     onOpenDestination,
+    onConnectionStart,
+    onConnectionMove,
+    onConnectionEnd,
+    onConnectionCancel,
   });
   handlers.current = {
     onSelect,
@@ -85,6 +101,10 @@ const LocationMapNodeView: React.FC<Props> = ({
     onBringToFront,
     onSendToBack,
     onOpenDestination,
+    onConnectionStart,
+    onConnectionMove,
+    onConnectionEnd,
+    onConnectionCancel,
   };
 
   const clearDestinationHoldHint = () => {
@@ -107,22 +127,25 @@ const LocationMapNodeView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
+          if (connectionModeRef.current) return true;
           if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
-          dragging.current && !(layoutEditingRef.current && selectedRef.current),
+          (dragging.current || connectionModeRef.current) &&
+          !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
-          !(layoutEditingRef.current && selectedRef.current) &&
+          (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
           dragging.current = false;
           pressedAt.current = Date.now();
           origin.current = { x: position.current.x, y: position.current.y };
-          handlers.current.onDragStart(nodeId.current);
-          if (destinationMapId.current) {
+          if (connectionModeRef.current) handlers.current.onConnectionStart?.(nodeId.current);
+          else handlers.current.onDragStart(nodeId.current);
+          if (!connectionModeRef.current && destinationMapId.current) {
             destinationHoldHintTimer.current = setTimeout(() => {
               destinationHoldHintTimer.current = null;
               setShowDestinationHoldHint(true);
@@ -135,22 +158,40 @@ const LocationMapNodeView: React.FC<Props> = ({
           if (pointerId != null) target?.setPointerCapture?.(pointerId);
         },
         onPanResponderMove: (_event, gesture) => {
+          const zoom = Math.max(scaleRef.current, 0.01);
+          if (connectionModeRef.current) {
+            handlers.current.onConnectionMove?.(
+              nodeId.current,
+              gesture.dx / zoom,
+              gesture.dy / zoom,
+            );
+            return;
+          }
           if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
           clearDestinationHoldHint();
           dragging.current = true;
-          const zoom = Math.max(scaleRef.current, 0.01);
           handlers.current.onMove(
             nodeId.current,
             origin.current.x + gesture.dx / zoom,
             origin.current.y + gesture.dy / zoom,
           );
         },
-        onPanResponderRelease: (event) => {
+        onPanResponderRelease: (event, gesture) => {
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          if (connectionModeRef.current) {
+            const zoom = Math.max(scaleRef.current, 0.01);
+            handlers.current.onConnectionEnd?.(
+              nodeId.current,
+              gesture.dx / zoom,
+              gesture.dy / zoom,
+            );
+            dragging.current = false;
+            return;
+          }
           handlers.current.onDragEnd(nodeId.current);
           clearDestinationHoldHint();
           if (!dragging.current) {
@@ -171,7 +212,8 @@ const LocationMapNodeView: React.FC<Props> = ({
             releasePointerCapture?: (id: number) => void;
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
-          handlers.current.onDragEnd(nodeId.current);
+          if (connectionModeRef.current) handlers.current.onConnectionCancel?.();
+          else handlers.current.onDragEnd(nodeId.current);
           clearDestinationHoldHint();
           dragging.current = false;
         },

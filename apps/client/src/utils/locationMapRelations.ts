@@ -8,7 +8,7 @@ import type {
 /** The `connected_to` relations between locations that are actually on the map. */
 export function deriveConnections(
   relations: LocationRelationSelect[],
-  content: Pick<LocationMapContentType, 'nodes'>,
+  content: Pick<LocationMapContentType, 'nodes' | 'relationTexts'>,
 ): LocationMapConnection[] {
   const nodeLocationIds = new Set(content.nodes.map((node) => node.locationId));
   return relations
@@ -18,13 +18,20 @@ export function deriveConnections(
         nodeLocationIds.has(relation.locationAId) &&
         nodeLocationIds.has(relation.locationBId),
     )
-    .map((relation) => ({ locationAId: relation.locationAId, locationBId: relation.locationBId }));
+    .map((relation) => {
+      const label = relationText(content, relation.locationAId, relation.locationBId, true);
+      return {
+        locationAId: relation.locationAId,
+        locationBId: relation.locationBId,
+        ...(label ? { label } : {}),
+      };
+    });
 }
 
 /** The `contains` relations between locations that are actually on the map (parent -> child). */
 export function deriveContains(
   relations: LocationRelationSelect[],
-  content: Pick<LocationMapContentType, 'nodes'>,
+  content: Pick<LocationMapContentType, 'nodes' | 'relationTexts'>,
 ): LocationMapContains[] {
   const nodeLocationIds = new Set(content.nodes.map((node) => node.locationId));
   return relations
@@ -34,10 +41,36 @@ export function deriveContains(
         nodeLocationIds.has(relation.locationAId) &&
         nodeLocationIds.has(relation.locationBId),
     )
-    .map((relation) => ({
-      parentLocationId: relation.locationAId,
-      childLocationId: relation.locationBId,
-    }));
+    .map((relation) => {
+      const label = relationText(content, relation.locationAId, relation.locationBId);
+      return {
+        parentLocationId: relation.locationAId,
+        childLocationId: relation.locationBId,
+        ...(label ? { label } : {}),
+      };
+    });
+}
+
+function relationText(
+  content: Pick<LocationMapContentType, 'relationTexts'>,
+  sourceLocationId: string,
+  destinationLocationId: string,
+  matchReverse = false,
+): string | null {
+  const direct = content.relationTexts?.find(
+    (entry) =>
+      entry.sourceLocationId === sourceLocationId &&
+      entry.destinationLocationId === destinationLocationId,
+  );
+  if (direct) return direct.text;
+  if (!matchReverse) return null;
+  return (
+    content.relationTexts?.find(
+      (entry) =>
+        entry.sourceLocationId === destinationLocationId &&
+        entry.destinationLocationId === sourceLocationId,
+    )?.text ?? null
+  );
 }
 
 export interface LocationMapParentRelation {

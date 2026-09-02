@@ -7,7 +7,11 @@ import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
-import { boardCanvasBounds, type BoardGalleryMediaById } from '../../../utils/boardLayout';
+import {
+  boardCanvasBounds,
+  boardNodeSize,
+  type BoardGalleryMediaById,
+} from '../../../utils/boardLayout';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type { BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import BoardNodeView from './BoardNode';
@@ -27,6 +31,7 @@ interface Props {
   titles: Record<string, BoardPinTitle>;
   selectedNodeId: string | null;
   layoutEditing: boolean;
+  connectionMode: boolean;
   /** Media of the story's galleries - lets Gallery pins show their image. */
   galleryMediaById?: BoardGalleryMediaById;
   summaries?: Record<string, BoardEntitySummary | null>;
@@ -36,9 +41,11 @@ interface Props {
   onOpenNodeDetails: (node: BoardNodeType) => void;
   onBringNodeToFront: (nodeId: string) => void;
   onSendNodeToBack: (nodeId: string) => void;
+  onConnectNodes: (fromNodeId: string, toNodeId: string) => void;
 }
 
 type ActiveDrag = { id: string; x: number; y: number };
+type ConnectionDrag = { fromNodeId: string; x: number; y: number };
 type BoardEdgeGeometry = ReturnType<typeof boardEdgeGeometry>;
 
 /** Individual SVG edges stay mounted; only an edge whose cached geometry changed updates on drag. */
@@ -98,6 +105,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       titles,
       selectedNodeId,
       layoutEditing,
+      connectionMode,
       galleryMediaById,
       summaries,
       onSelectNode,
@@ -106,11 +114,13 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       onOpenNodeDetails,
       onBringNodeToFront,
       onSendNodeToBack,
+      onConnectNodes,
     },
     ref,
   ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+    const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
@@ -189,6 +199,57 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       },
       [consumeNodeDrag, onMoveNode, setChildDragging],
     );
+    const nodeCenter = useCallback(
+      (node: BoardNodeType) => {
+        const nodeSize = boardNodeSize(
+          node,
+          node.kind === 'entity' ? galleryMediaById?.[node.entityId] : undefined,
+        );
+        return { x: node.x + nodeSize.width / 2, y: node.y + nodeSize.height / 2 };
+      },
+      [galleryMediaById],
+    );
+    const handleConnectionStart = useCallback(
+      (node: BoardNodeType) => {
+        const center = nodeCenter(node);
+        setConnectionDrag({ fromNodeId: node.id, ...center });
+      },
+      [nodeCenter],
+    );
+    const handleConnectionMove = useCallback(
+      (nodeId: string, dx: number, dy: number) => {
+        const node = layoutNodes.find((candidate) => candidate.id === nodeId);
+        if (!node) return;
+        const center = nodeCenter(node);
+        setConnectionDrag({ fromNodeId: nodeId, x: center.x + dx, y: center.y + dy });
+      },
+      [layoutNodes, nodeCenter],
+    );
+    const handleConnectionEnd = useCallback(
+      (nodeId: string, dx: number, dy: number) => {
+        const source = layoutNodes.find((node) => node.id === nodeId);
+        if (!source) return;
+        const center = nodeCenter(source);
+        const x = center.x + dx;
+        const y = center.y + dy;
+        const target = layoutNodes.find((node) => {
+          if (node.id === nodeId) return false;
+          const nodeSize = boardNodeSize(
+            node,
+            galleryMediaById?.[node.kind === 'entity' ? node.entityId : ''],
+          );
+          return (
+            x >= node.x &&
+            x <= node.x + nodeSize.width &&
+            y >= node.y &&
+            y <= node.y + nodeSize.height
+          );
+        });
+        setConnectionDrag(null);
+        if (target) onConnectNodes(nodeId, target.id);
+      },
+      [galleryMediaById, layoutNodes, nodeCenter, onConnectNodes],
+    );
     const nodesById = useMemo(() => {
       const map = new Map(layoutNodes.map((node) => [node.id, node]));
       return map;
@@ -230,6 +291,13 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           .map(({ node }) => node),
       [layoutNodes],
     );
+    const connectionPath = useMemo(() => {
+      if (!connectionDrag) return null;
+      const source = layoutNodes.find((node) => node.id === connectionDrag.fromNodeId);
+      if (!source) return null;
+      const start = nodeCenter(source);
+      return `M ${start.x} ${start.y} L ${connectionDrag.x} ${connectionDrag.y}`;
+    }, [connectionDrag, layoutNodes, nodeCenter]);
 
     return (
       <GraphCanvasFrame
@@ -253,6 +321,15 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
                 labelBackground={colors.background}
               />
             ))}
+            {connectionPath && (
+              <Path
+                d={connectionPath}
+                fill="none"
+                stroke={colors.primary}
+                strokeDasharray="6 4"
+                strokeWidth={2}
+              />
+            )}
           </G>
         </Svg>
         {stackedNodes.map((node) => {
@@ -268,6 +345,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               ghost={meta?.ghost}
               selected={selectedNodeId === node.id}
               layoutEditing={layoutEditing}
+              connectionMode={connectionMode}
               scale={scale}
               positionOffsetX={-size.originX}
               positionOffsetY={-size.originY}
@@ -285,6 +363,10 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               onOpenDetails={onOpenNodeDetails}
               onBringToFront={onBringNodeToFront}
               onSendToBack={onSendNodeToBack}
+              onConnectionStart={handleConnectionStart}
+              onConnectionMove={handleConnectionMove}
+              onConnectionEnd={handleConnectionEnd}
+              onConnectionCancel={() => setConnectionDrag(null)}
             />
           );
         })}

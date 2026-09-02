@@ -60,15 +60,8 @@ export function useLocationMapRelations({
 
   // These only care which locations are represented by nodes. Image position, size and locking
   // must not make the relation graph run again.
-  const mapNodes = content.nodes;
-  const connections = useMemo(
-    () => deriveConnections(relations, { nodes: mapNodes }),
-    [mapNodes, relations],
-  );
-  const contains = useMemo(
-    () => deriveContains(relations, { nodes: mapNodes }),
-    [mapNodes, relations],
-  );
+  const connections = useMemo(() => deriveConnections(relations, content), [content, relations]);
+  const contains = useMemo(() => deriveContains(relations, content), [content, relations]);
 
   const nodeConnections = useMemo((): LocationMapNodeConnection[] => {
     if (!selectedNode) return [];
@@ -169,6 +162,25 @@ export function useLocationMapRelations({
     [db, fail, reloadRelations, selectedNode, storyId, userId],
   );
 
+  /** Creates an undirected connection directly from the canvas drag gesture. */
+  const handleConnectLocations = useCallback(
+    async (locationAId: string, locationBId: string) => {
+      if (!storyId || !userId || locationAId === locationBId) return;
+      try {
+        await createLocationRelationService(db).addConnection(
+          userId,
+          storyId,
+          locationAId,
+          locationBId,
+        );
+        await reloadRelations();
+      } catch {
+        fail('LocationMapScreen: failed to connect locations from canvas.');
+      }
+    },
+    [db, fail, reloadRelations, storyId, userId],
+  );
+
   const handleRemoveConnection = useCallback(
     async (relationId: string) => {
       if (!userId) return;
@@ -198,6 +210,25 @@ export function useLocationMapRelations({
       }
     },
     [db, fail, reloadRelations, selectedNode, storyId, userId],
+  );
+
+  /** Makes `parentLocationId` contain `childLocationId`, matching an arrow drawn on the map. */
+  const handleSetLocationParent = useCallback(
+    async (childLocationId: string, parentLocationId: string) => {
+      if (!storyId || !userId || childLocationId === parentLocationId) return;
+      try {
+        await createLocationRelationService(db).setParent(
+          userId,
+          storyId,
+          childLocationId,
+          parentLocationId,
+        );
+        await reloadRelations();
+      } catch {
+        fail('LocationMapScreen: failed to set parent from canvas.');
+      }
+    },
+    [db, fail, reloadRelations, storyId, userId],
   );
 
   const handleRemoveParent = useCallback(async () => {
@@ -256,8 +287,10 @@ export function useLocationMapRelations({
     childCandidates,
     connectCandidates,
     handleAddConnection,
+    handleConnectLocations,
     handleRemoveConnection,
     handleSetParent,
+    handleSetLocationParent,
     handleRemoveParent,
     handleAddChild,
     handleRemoveRelation,

@@ -1,7 +1,7 @@
 import type { LocationMapContentType } from '@keres/shared';
 import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { G, Path, Polygon } from 'react-native-svg';
+import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
 import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
@@ -20,12 +20,14 @@ export type LocationMapCanvasHandle = PanZoomCanvasHandle;
 export interface LocationMapConnection {
   locationAId: string;
   locationBId: string;
+  label?: string | null;
 }
 
 /** A `contains` relation: `parentLocationId` contains `childLocationId`. */
 export interface LocationMapContains {
   parentLocationId: string;
   childLocationId: string;
+  label?: string | null;
 }
 
 interface Props {
@@ -42,6 +44,7 @@ interface Props {
   selectedNodeId: string | null;
   selectedMarkerId: string | null;
   layoutEditing: boolean;
+  connectionMode: boolean;
   onSelectImage: (imageId: string) => void;
   onMoveImage: (imageId: string, x: number, y: number) => void;
   onResizeImage: (imageId: string, width: number, height: number) => void;
@@ -59,6 +62,7 @@ interface Props {
   onMoveMarker: (markerId: string, x: number, y: number) => void;
   onOpenNodeDestination: (nodeId: string) => void;
   onOpenMarkerDestination: (markerId: string) => void;
+  onConnectNodes: (fromNodeId: string, toNodeId: string) => void;
 }
 
 const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
@@ -74,15 +78,26 @@ type ActiveDrag = {
   x: number;
   y: number;
 };
+type ConnectionDrag = { fromNodeId: string; x: number; y: number };
 
 type WorldNode = LocationMapContentType['nodes'][number];
-type ConnectionPath = { id: string; path: string; color: string };
+type ConnectionPath = {
+  id: string;
+  path: string;
+  color: string;
+  label?: string | null;
+  x: number;
+  y: number;
+};
 type ContainsArrow = {
   id: string;
   path: string;
   arrow: string;
   arrowHalo: string;
   color: string;
+  label?: string | null;
+  x: number;
+  y: number;
 };
 
 const ConnectionPathView = React.memo(function ConnectionPathView({
@@ -102,6 +117,24 @@ const ConnectionPathView = React.memo(function ConnectionPathView({
         strokeOpacity={0.9}
       />
       <Path d={path.path} fill="none" stroke={path.color} strokeWidth={2} strokeOpacity={0.85} />
+      {!!path.label && (
+        <>
+          <SvgText
+            x={path.x}
+            y={path.y - 6}
+            fill={background}
+            stroke={background}
+            strokeWidth={4}
+            fontSize={11}
+            textAnchor="middle"
+          >
+            {path.label}
+          </SvgText>
+          <SvgText x={path.x} y={path.y - 6} fill={path.color} fontSize={11} textAnchor="middle">
+            {path.label}
+          </SvgText>
+        </>
+      )}
     </>
   );
 });
@@ -132,6 +165,24 @@ const ContainsArrowView = React.memo(function ContainsArrowView({
       />
       <Polygon points={arrow.arrowHalo} fill={background} />
       <Polygon points={arrow.arrow} fill={arrow.color} />
+      {!!arrow.label && (
+        <>
+          <SvgText
+            x={arrow.x}
+            y={arrow.y - 6}
+            fill={background}
+            stroke={background}
+            strokeWidth={4}
+            fontSize={11}
+            textAnchor="middle"
+          >
+            {arrow.label}
+          </SvgText>
+          <SvgText x={arrow.x} y={arrow.y - 6} fill={arrow.color} fontSize={11} textAnchor="middle">
+            {arrow.label}
+          </SvgText>
+        </>
+      )}
     </>
   );
 });
@@ -159,6 +210,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       selectedNodeId,
       selectedMarkerId,
       layoutEditing,
+      connectionMode,
       onSelectImage,
       onMoveImage,
       onResizeImage,
@@ -176,11 +228,13 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       onMoveMarker,
       onOpenNodeDestination,
       onOpenMarkerDestination,
+      onConnectNodes,
     },
     ref,
   ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+    const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
@@ -311,6 +365,35 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       },
       [consumeDrag, onMoveMarker, setChildDragging],
     );
+    const handleConnectionStart = useCallback(
+      (nodeId: string) => {
+        const node = content.nodes.find((candidate) => candidate.id === nodeId);
+        if (node) setConnectionDrag({ fromNodeId: nodeId, x: node.x, y: node.y });
+      },
+      [content.nodes],
+    );
+    const handleConnectionMove = useCallback(
+      (nodeId: string, dx: number, dy: number) => {
+        const node = content.nodes.find((candidate) => candidate.id === nodeId);
+        if (node) setConnectionDrag({ fromNodeId: nodeId, x: node.x + dx, y: node.y + dy });
+      },
+      [content.nodes],
+    );
+    const handleConnectionEnd = useCallback(
+      (nodeId: string, dx: number, dy: number) => {
+        const source = content.nodes.find((node) => node.id === nodeId);
+        if (!source) return;
+        const x = source.x + dx;
+        const y = source.y + dy;
+        const target = content.nodes.find(
+          (node) =>
+            node.id !== nodeId && Math.hypot(x - node.x, y - node.y) <= LOCATION_MAP_NODE_SIZE / 2,
+        );
+        setConnectionDrag(null);
+        if (target) onConnectNodes(nodeId, target.id);
+      },
+      [content.nodes, onConnectNodes],
+    );
 
     const nodesByLocation = useMemo(() => {
       const map = new Map<string, WorldNode>();
@@ -339,6 +422,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           id,
           path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
           color: interpolateColor(from.color, to.color),
+          label: connection.label,
+          x: (from.x + to.x) / 2,
+          y: (from.y + to.y) / 2,
         };
         connectionCacheRef.current.set(id, { relation: connection, from, to, path });
         return [path];
@@ -371,6 +457,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           arrow: arrowHeadPoints(tip.x, tip.y, angle, 10),
           arrowHalo: arrowHeadPoints(tip.x, tip.y, angle, 13),
           color: interpolateColor(from.color, to.color),
+          label: relation.label,
+          x: (from.x + to.x) / 2,
+          y: (from.y + to.y) / 2,
         };
         containsCacheRef.current.set(id, { relation, from, to, arrow });
         return [arrow];
@@ -428,6 +517,11 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         ),
       [stackedMarkers, stackedNodes],
     );
+    const connectionPath = useMemo(() => {
+      if (!connectionDrag) return null;
+      const source = layoutContent.nodes.find((node) => node.id === connectionDrag.fromNodeId);
+      return source ? `M ${source.x} ${source.y} L ${connectionDrag.x} ${connectionDrag.y}` : null;
+    }, [connectionDrag, layoutContent.nodes]);
 
     return (
       <GraphCanvasFrame
@@ -477,6 +571,15 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             {containsArrows.map((arrow) => (
               <ContainsArrowView key={arrow.id} arrow={arrow} background={colors.background} />
             ))}
+            {connectionPath && (
+              <Path
+                d={connectionPath}
+                fill="none"
+                stroke={colors.primary}
+                strokeDasharray="6 4"
+                strokeWidth={2}
+              />
+            )}
           </G>
         </Svg>
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
@@ -491,6 +594,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
                 kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
               }
               layoutEditing={layoutEditing}
+              connectionMode={connectionMode && kind === 'node'}
               scale={scale}
               positionOffsetX={-size.originX}
               positionOffsetY={-size.originY}
@@ -501,6 +605,10 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
               onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
               onOpenDestination={kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination}
+              onConnectionStart={handleConnectionStart}
+              onConnectionMove={handleConnectionMove}
+              onConnectionEnd={handleConnectionEnd}
+              onConnectionCancel={() => setConnectionDrag(null)}
             />
           ))}
         </View>

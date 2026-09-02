@@ -7,22 +7,36 @@ import { useTheme } from '@/src/theme';
 interface Props {
   dirty: boolean;
   layoutEditing: boolean;
+  connectionMode: boolean;
   onRevert: () => void;
   onSave: () => void;
   onToggleLayout: () => void;
+  onToggleConnectionMode: () => void;
 }
 
 const BoardCanvasHeaderActions: React.FC<Props> = ({
   dirty,
   layoutEditing,
+  connectionMode,
   onRevert,
   onSave,
   onToggleLayout,
+  onToggleConnectionMode,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   return (
     <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
+      <TouchableOpacity
+        onPress={onToggleConnectionMode}
+        accessibilityLabel={t('graph_connection_mode')}
+      >
+        <Ionicons
+          name={connectionMode ? 'git-merge' : 'git-merge-outline'}
+          size={24}
+          color={connectionMode ? colors.primary : colors.text}
+        />
+      </TouchableOpacity>
       <TouchableOpacity onPress={onToggleLayout} accessibilityLabel={t('board_edit_layout')}>
         <Ionicons
           name={layoutEditing ? 'checkmark-circle-outline' : 'move-outline'}

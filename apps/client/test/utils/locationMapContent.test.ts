@@ -5,6 +5,7 @@ import {
   appendImagesToMap,
   appendLocationsToMap,
   appendMarkersToMap,
+  setLocationMapRelationText,
 } from '../../src/utils/locationMapContent';
 import { deriveConnections, deriveContains } from '../../src/utils/locationMapRelations';
 
@@ -98,4 +99,23 @@ it('includes contains relations when both ends are on the map', () => {
   };
 
   expect(deriveContains(relations, map)).toEqual([{ parentLocationId: 'a', childLocationId: 'c' }]);
+});
+
+it('keeps relation text inside the map and resolves it for both connection directions', () => {
+  const map = setLocationMapRelationText(
+    {
+      images: [],
+      nodes: [
+        { id: 'n1', locationId: 'a', x: 0, y: 0, icon: 'pin', color: '#8BC34A' },
+        { id: 'n2', locationId: 'b', x: 0, y: 0, icon: 'pin', color: '#8BC34A' },
+      ],
+    },
+    'b',
+    'a',
+    'A guarded road',
+  );
+
+  expect(deriveConnections(relations, map)).toEqual([
+    { locationAId: 'a', locationBId: 'b', label: 'A guarded road' },
+  ]);
 });

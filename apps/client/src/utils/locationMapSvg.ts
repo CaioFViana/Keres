@@ -128,9 +128,18 @@ export function renderLocationMapSvg(
       const p1 = shift(start.x, start.y);
       const p2 = shift(end.x, end.y);
       const color = interpolateColor(a.color, b.color);
+      const label = connection.label ? escapeXml(connection.label) : null;
+      const labelX = round((p1.x + p2.x) / 2);
+      const labelY = round((p1.y + p2.y) / 2 - 6);
       return [
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85"/>`,
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4">${label}</text>`
+          : '',
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${color}">${label}</text>`
+          : '',
       ];
     });
 
@@ -148,11 +157,20 @@ export function renderLocationMapSvg(
       const p1 = shift(start.x, start.y);
       const p2 = shift(tip.x, tip.y);
       const color = interpolateColor(from.color, to.color);
+      const label = relation.label ? escapeXml(relation.label) : null;
+      const labelX = round((p1.x + p2.x) / 2);
+      const labelY = round((p1.y + p2.y) / 2 - 6);
       return [
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
         `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 13)}" fill="${options.colors.background}"/>`,
         `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 10)}" fill="${color}"/>`,
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4">${label}</text>`
+          : '',
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${color}">${label}</text>`
+          : '',
       ];
     });
 

@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -13,6 +13,7 @@ import LocationMapCanvas, {
   type LocationMapCanvasHandle,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
+import LocationMapConnectionModal from '@/src/components/features/location-maps/LocationMapConnectionModal';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
@@ -27,6 +28,7 @@ import type {
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
+import { useLocationMapExport } from '../../hooks/useLocationMapExport';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -40,11 +42,8 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
-import { buildStandaloneLocationMapSvg } from '../../utils/storyMapSvgExport';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
-
 const LocationMapScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -58,7 +57,6 @@ const LocationMapScreen = () => {
   const { showNotification } = useNotificationStore();
   const navigateToEntity = useNavigateToEntityDetail();
   const canvasRef = useRef<LocationMapCanvasHandle>(null);
-
   const [map, setMap] = useState<LocationMapSelect | null>(null);
   const [content, setContent] = useState<LocationMapContentType>({ images: [], nodes: [] });
   const [savedContent, setSavedContent] = useState<LocationMapContentType>({
@@ -77,10 +75,11 @@ const LocationMapScreen = () => {
   const [openedNodeId, setOpenedNodeId] = useState<string | null>(null);
   const [openedMarkerId, setOpenedMarkerId] = useState<string | null>(null);
   const [layoutEditing, setLayoutEditing] = useState(false);
+  const [connectionMode, setConnectionMode] = useState(false);
+  const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
   const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
   useBackButtonHandler({
@@ -179,8 +178,16 @@ const LocationMapScreen = () => {
                 onRevert={revert}
                 onSave={() => void save()}
                 layoutEditing={layoutEditing}
+                connectionMode={connectionMode}
                 onToggleLayout={() => {
                   setLayoutEditing((current) => !current);
+                  setConnectionMode(false);
+                  setOpenedNodeId(null);
+                  setOpenedMarkerId(null);
+                }}
+                onToggleConnectionMode={() => {
+                  setConnectionMode((current) => !current);
+                  setLayoutEditing(false);
                   setOpenedNodeId(null);
                   setOpenedMarkerId(null);
                 }}
@@ -188,7 +195,18 @@ const LocationMapScreen = () => {
             )
           : undefined,
       });
-    }, [canEdit, dirty, layoutEditing, map?.name, navigation, revert, save, saving, t]),
+    }, [
+      canEdit,
+      connectionMode,
+      dirty,
+      layoutEditing,
+      map?.name,
+      navigation,
+      revert,
+      save,
+      saving,
+      t,
+    ]),
   );
 
   const galleryMediaById = useMemo(() => {
@@ -270,8 +288,10 @@ const LocationMapScreen = () => {
     childCandidates,
     connectCandidates,
     handleAddConnection,
+    handleConnectLocations,
     handleRemoveConnection,
     handleSetParent,
+    handleSetLocationParent,
     handleRemoveParent,
     handleAddChild,
     handleRemoveRelation,
@@ -287,58 +307,18 @@ const LocationMapScreen = () => {
     notify: showNotification,
   });
 
-  const handleExport = useCallback(async () => {
-    if (!map) return;
-    setExporting(true);
-    try {
-      // The exported SVG is standalone, so each image base is embedded as a data URI. Only the
-      // images actually used on the map are read.
-      const svg = await buildStandaloneLocationMapSvg(content, galleryMediaById, {
-        title: map.name,
-        subtitle: t('location_map_export_subtitle', {
-          nodeCount: content.nodes.length,
-          imageCount: content.images.length,
-        }),
-        colors: {
-          background: colors.background,
-          surface: colors.surface,
-          text: colors.text,
-          textSecondary: colors.textSecondary,
-          border: colors.border,
-        },
-        nodeNames,
-        connections,
-        contains,
-      });
-      const result = await deliverSvgMap(svg, buildLocationMapFileName(map.name));
-      if (result.delivered) {
-        showNotification(
-          t('location_map_export_success', { fileName: result.fileName }),
-          'success',
-        );
-      } else {
-        showNotification(
-          t('location_map_export_no_share_target', { path: result.uri ?? result.fileName }),
-          'warning',
-        );
-      }
-    } catch (exportError) {
-      console.log('LocationMapScreen: failed to export map.', exportError);
-      showNotification(t('location_map_export_failed'), 'error');
-    } finally {
-      setExporting(false);
-    }
-  }, [
-    colors,
-    connections,
-    contains,
+  const handleExport = useLocationMapExport({
+    map,
     content,
     galleryMediaById,
-    map,
     nodeNames,
-    showNotification,
+    connections,
+    contains,
+    colors,
     t,
-  ]);
+    showNotification,
+    setExporting,
+  });
 
   const {
     imageOptions,
@@ -387,18 +367,9 @@ const LocationMapScreen = () => {
     showNotification,
   });
 
-  const openedNode = useMemo(
-    () => content.nodes.find((node) => node.id === openedNodeId) ?? null,
-    [content.nodes, openedNodeId],
-  );
-  const openedMarker = useMemo(
-    () => (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null,
-    [content.markers, openedMarkerId],
-  );
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-  });
+  const openedNode = content.nodes.find((node) => node.id === openedNodeId) ?? null;
+  const openedMarker =
+    (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null;
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !map) {
@@ -412,14 +383,12 @@ const LocationMapScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {canEdit && (
         <LocationMapTools
           imageOptions={imageOptions}
           locationOptions={locationOptions}
-          onAddImages={(values) => {
-            addImages(values);
-          }}
+          onAddImages={addImages}
           onAddLocations={addLocations}
           onAddMarker={addMarker}
         />
@@ -435,6 +404,7 @@ const LocationMapScreen = () => {
         selectedNodeId={selectedNodeId}
         selectedMarkerId={selectedMarkerId}
         layoutEditing={layoutEditing}
+        connectionMode={connectionMode}
         onSelectImage={handleSelectImage}
         onMoveImage={handleMoveImage}
         onResizeImage={handleResizeImageDirect}
@@ -452,6 +422,11 @@ const LocationMapScreen = () => {
         onMoveMarker={handleMoveMarker}
         onOpenNodeDestination={handleOpenNodeDestination}
         onOpenMarkerDestination={handleOpenMarkerDestination}
+        onConnectNodes={(fromNodeId, toNodeId) => {
+          const from = content.nodes.find((node) => node.id === fromNodeId)?.locationId;
+          const to = content.nodes.find((node) => node.id === toNodeId)?.locationId;
+          if (from && to) setConnectionPair({ from, to });
+        }}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -605,6 +580,16 @@ const LocationMapScreen = () => {
             setOpenedMarkerId(null);
             setSelectedMarkerId(null);
           }}
+        />
+      )}
+      {connectionPair && (
+        <LocationMapConnectionModal
+          pair={connectionPair}
+          nodeNames={nodeNames}
+          setContent={setContent}
+          onConnect={(from, to) => void handleConnectLocations(from, to)}
+          onSetParent={(child, parent) => void handleSetLocationParent(child, parent)}
+          onClose={() => setConnectionPair(null)}
         />
       )}
     </View>

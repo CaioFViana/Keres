@@ -7,6 +7,7 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvasHeaderActions from '@/src/components/features/boards/BoardCanvasHeaderActions';
+import BoardConnectionModal from '@/src/components/features/boards/BoardConnectionModal';
 import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
@@ -20,6 +21,7 @@ import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useBoardCanvasLayout } from '../../hooks/useBoardCanvasLayout';
 import {
   decodeBoardPinValue,
   useBoardPinOptions,
@@ -73,18 +75,19 @@ const BoardCanvasScreen = () => {
   const [selected, setSelected] = useState<BoardNodeType | null>(null);
   const [layoutSelectedNodeId, setLayoutSelectedNodeId] = useState<string | null>(null);
   const [layoutEditing, setLayoutEditing] = useState(false);
+  const [connectionMode, setConnectionMode] = useState(false);
+  const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
   const [livePins, setLivePins] = useState<
     Record<string, { label: string; group: BoardPinOption['group'] }>
   >({});
   const [exporting, setExporting] = useState(false);
-  /** Media of the story's galleries, keyed by gallery id - lets Gallery pins show their image. */
   const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
-  /** Light summary of the selected entity pin, loaded when the sheet opens. */
   const [selectedSummary, setSelectedSummary] = useState<BoardEntitySummary | null>(null);
   const [summariesByNode, setSummariesByNode] = useState<Record<string, BoardEntitySummary | null>>(
     {},
   );
+  const { handleMoveNode, handleResizeNode, moveNodeLayer } = useBoardCanvasLayout(setContent);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
@@ -236,10 +239,17 @@ const BoardCanvasScreen = () => {
               <BoardCanvasHeaderActions
                 dirty={dirty}
                 layoutEditing={layoutEditing}
+                connectionMode={connectionMode}
                 onRevert={revert}
                 onSave={() => void save()}
                 onToggleLayout={() => {
                   setLayoutEditing((current) => !current);
+                  setConnectionMode(false);
+                  setLayoutSelectedNodeId(null);
+                }}
+                onToggleConnectionMode={() => {
+                  setConnectionMode((current) => !current);
+                  setLayoutEditing(false);
                   setLayoutSelectedNodeId(null);
                 }}
               />
@@ -254,6 +264,7 @@ const BoardCanvasScreen = () => {
       colors.textSecondary,
       dirty,
       layoutEditing,
+      connectionMode,
       navigation,
       revert,
       save,
@@ -374,40 +385,6 @@ const BoardCanvasScreen = () => {
     for (const [id, meta] of Object.entries(titles)) map[id] = meta.title;
     return map;
   }, [titles]);
-
-  const handleMoveNode = useCallback((id: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      nodes: current.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
-    }));
-  }, []);
-
-  const handleResizeNode = useCallback((id: string, width: number, height: number) => {
-    setContent((current) => ({
-      ...current,
-      nodes: current.nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              width: Math.min(720, Math.max(148, width)),
-              height: Math.min(720, Math.max(86, height)),
-            }
-          : node,
-      ),
-    }));
-  }, []);
-
-  const moveNodeLayer = useCallback((id: string, direction: 'front' | 'back') => {
-    setContent((current) => {
-      const levels = current.nodes.map((node) => node.zIndex ?? 0);
-      const target =
-        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
-      return {
-        ...current,
-        nodes: current.nodes.map((node) => (node.id === id ? { ...node, zIndex: target } : node)),
-      };
-    });
-  }, []);
 
   const addEntities = (values: string[]) => {
     let created: BoardNodeType[] = [];
@@ -535,6 +512,7 @@ const BoardCanvasScreen = () => {
         titles={titles}
         selectedNodeId={layoutEditing ? layoutSelectedNodeId : null}
         layoutEditing={layoutEditing}
+        connectionMode={connectionMode}
         galleryMediaById={galleryMediaById}
         summaries={summariesByNode}
         onSelectNode={(node) => {
@@ -546,6 +524,7 @@ const BoardCanvasScreen = () => {
         onOpenNodeDetails={setSelected}
         onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
         onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
+        onConnectNodes={(from, to) => setConnectionPair({ from, to })}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -603,6 +582,14 @@ const BoardCanvasScreen = () => {
             if (!type) return;
             navigateToEntity(type as NavigableEntityType, selected.entityId);
           }}
+        />
+      )}
+      {connectionPair && (
+        <BoardConnectionModal
+          pair={connectionPair}
+          nodeTitles={nodeTitles}
+          setContent={setContent}
+          onClose={() => setConnectionPair(null)}
         />
       )}
     </View>

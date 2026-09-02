@@ -87,7 +87,10 @@ describe('the shipped catalogue', () => {
     for (const entry of shippedPackRegistry) {
       for (const language of entry.languages) {
         const content = PackContentSchema.parse((language.pack as { content: unknown }).content);
-        expect(content.settings.vocabulary).toMatchObject({ version: 1, language: language.language });
+        expect(content.settings.vocabulary).toMatchObject({
+          version: 1,
+          language: language.language,
+        });
         expect(Object.keys(content.settings.vocabulary!.terms).sort()).toEqual(
           [...STORY_VOCABULARY_ENTITY_TYPES].sort(),
         );

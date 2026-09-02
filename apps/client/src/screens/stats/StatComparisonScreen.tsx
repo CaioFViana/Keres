@@ -5,7 +5,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
-import MultiSelectPill, { SingleSelectPill } from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { StatRadarChart } from '../../components/features/stats/StatRadarChart/StatRadarChart';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';

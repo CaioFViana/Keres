@@ -1,4 +1,4 @@
-import type { BoardContentType , LocationMapContentType } from '@keres/shared';
+import type { BoardContentType, LocationMapContentType } from '@keres/shared';
 import type {
   LocationMapConnection,
   LocationMapContains,

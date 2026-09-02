@@ -79,13 +79,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
           (selectedValues.includes(item.id) ||
             filterAvailableItems(item, activeRelations, getRelationItemId)),
       ),
-    [
-      activeRelations,
-      availableItems,
-      filterAvailableItems,
-      getRelationItemId,
-      selectedValues,
-    ],
+    [activeRelations, availableItems, filterAvailableItems, getRelationItemId, selectedValues],
   );
   const changeSelection = useCallback(
     async (ids: string[]) => {

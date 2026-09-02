@@ -256,17 +256,7 @@ const BoardCanvasScreen = () => {
             )
           : undefined,
       });
-    }, [
-      board?.name,
-      canEdit,
-      dirty,
-      layoutEditing,
-      connectionMode,
-      navigation,
-      revert,
-      save,
-      t,
-    ]),
+    }, [board?.name, canEdit, dirty, layoutEditing, connectionMode, navigation, revert, save, t]),
   );
 
   const titles = useMemo(() => {

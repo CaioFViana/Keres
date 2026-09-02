@@ -14,6 +14,7 @@ import {
 import { loadEntityOptions } from '../utils/entityOptions';
 import { buildMentionBacklinkIndex, type MentionTextSource } from './mentionBacklinks';
 import { MentionBacklinksContext, MentionMatcherContext } from './MentionContext';
+import { customAttributeMentionFields } from './customAttributeMentions';
 
 /**
  * The entity types a writer refers to by name in prose.
@@ -44,6 +45,8 @@ const CHANGE_EVENTS = [
   'note_changed',
   'worldrule_changed',
   'plot_changed',
+  'attribute_value_changed',
+  'story_schema_field_changed',
 ] as const;
 
 /**
@@ -89,55 +92,83 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
       const named = perType.flat();
       const nextMatcher = buildMentionMatcher(named);
       const names = new Map(named.map((entity) => [`${entity.type}:${entity.id}`, entity.name]));
-      const [characters, locations, items, scenes, chapters, notes, worldRules, plots] =
-        await Promise.all([
-          drizzleDb
-            .select()
-            .from(schema.characters)
-            .where(
-              and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
-            )
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.locations)
-            .where(
-              and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false)),
-            )
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.items)
-            .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false)))
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.scenes)
-            .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false)))
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.chapters)
-            .where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false)))
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.notes)
-            .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false)))
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.worldRules)
-            .where(
-              and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
-            )
-            .all(),
-          drizzleDb
-            .select()
-            .from(schema.plots)
-            .where(and(eq(schema.plots.storyId, storyId), eq(schema.plots.isDeleted, false)))
-            .all(),
-        ]);
+      const [
+        characters,
+        locations,
+        items,
+        scenes,
+        chapters,
+        notes,
+        worldRules,
+        plots,
+        customFields,
+        customValues,
+      ] = await Promise.all([
+        drizzleDb
+          .select()
+          .from(schema.characters)
+          .where(
+            and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
+          )
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.locations)
+          .where(and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false)))
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.items)
+          .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false)))
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.scenes)
+          .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false)))
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.chapters)
+          .where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false)))
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.notes)
+          .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false)))
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.worldRules)
+          .where(
+            and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
+          )
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.plots)
+          .where(and(eq(schema.plots.storyId, storyId), eq(schema.plots.isDeleted, false)))
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.storySchemaFields)
+          .where(
+            and(
+              eq(schema.storySchemaFields.storyId, storyId),
+              eq(schema.storySchemaFields.isDeleted, false),
+            ),
+          )
+          .all(),
+        drizzleDb
+          .select()
+          .from(schema.attributeValues)
+          .where(
+            and(
+              eq(schema.attributeValues.storyId, storyId),
+              eq(schema.attributeValues.isDeleted, false),
+            ),
+          )
+          .all(),
+      ]);
       const source = (
         type: MentionTextSource['type'],
         row: { id: string },
@@ -146,7 +177,10 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
         type,
         id: row.id,
         name: names.get(`${type}:${row.id}`) ?? '',
-        fields,
+        fields: {
+          ...fields,
+          ...customAttributeMentionFields(type, row.id, customFields, customValues),
+        },
       });
       const sources: MentionTextSource[] = [
         ...characters.map((row) =>

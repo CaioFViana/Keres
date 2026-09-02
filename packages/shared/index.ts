@@ -108,6 +108,7 @@ export * from './metadata/avatar';
 export * from './metadata/mapIcons';
 export * from './utils/attributeKey';
 export * from './utils/attributeValueCodec';
+export * from './utils/base64';
 export * from './utils/attributeDateValue';
 export * from './utils/colorUtils';
 export * from './metadata/TimingUnit';

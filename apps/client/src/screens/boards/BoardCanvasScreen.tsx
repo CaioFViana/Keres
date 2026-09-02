@@ -6,9 +6,9 @@ import {
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
+import BoardCanvasHeaderActions from '@/src/components/features/boards/BoardCanvasHeaderActions';
 import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
-import { Ionicons } from '@expo/vector-icons';
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
@@ -16,7 +16,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -28,7 +28,6 @@ import {
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
-import { mediaFileService } from '../../services/MediaFileService';
 import { createBoardService } from '../../services/storymanagement/BoardService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useBoardDraftStore } from '../../state/boardDraftStore';
@@ -40,21 +39,11 @@ import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boa
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
 import { nextStaggeredPosition } from '../../utils/boardLayout';
 import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
-import { renderBoardSvg } from '../../utils/boardSvg';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
 import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
-
-/** Base64 of the bytes, chunked so a large image does not blow the call stack. */
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-}
+import { buildStandaloneBoardSvg } from '../../utils/storyMapSvgExport';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -239,43 +228,16 @@ const BoardCanvasScreen = () => {
         title: board?.name ?? t('boards_title'),
         headerRight: canEdit
           ? () => (
-              <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setLayoutEditing((current) => !current);
-                    setLayoutSelectedNodeId(null);
-                  }}
-                  accessibilityLabel={t('board_edit_layout')}
-                >
-                  <Ionicons
-                    name={layoutEditing ? 'checkmark-circle-outline' : 'move-outline'}
-                    size={24}
-                    color={layoutEditing ? colors.primary : colors.text}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={revert}
-                  disabled={!dirty}
-                  accessibilityLabel={t('board_revert')}
-                >
-                  <Ionicons
-                    name="arrow-undo-outline"
-                    size={24}
-                    color={dirty ? colors.text : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => void save()}
-                  disabled={!dirty}
-                  accessibilityLabel={t('board_save')}
-                >
-                  <Ionicons
-                    name="checkmark-outline"
-                    size={26}
-                    color={dirty ? colors.primary : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <BoardCanvasHeaderActions
+                dirty={dirty}
+                layoutEditing={layoutEditing}
+                onRevert={revert}
+                onSave={() => void save()}
+                onToggleLayout={() => {
+                  setLayoutEditing((current) => !current);
+                  setLayoutSelectedNodeId(null);
+                }}
+              />
             )
           : undefined,
       });
@@ -334,25 +296,7 @@ const BoardCanvasScreen = () => {
     if (!selectedStory) return;
     setExporting(true);
     try {
-      // The exported SVG is standalone, so each gallery pin's picture is embedded as a data URI.
-      // Only the pinned galleries are read - a story's whole gallery can be large.
-      const galleryImages: Record<string, string> = {};
-      for (const node of content.nodes) {
-        if (node.kind !== 'entity' || node.entityType !== 'Gallery') continue;
-        const media = galleryMediaById[node.entityId];
-        if (!media) continue;
-        const path = media.mediaType === 'image' ? media.localPath : media.thumbnailPath;
-        if (!path) continue;
-        try {
-          const bytes = await mediaFileService.readBytes(path);
-          galleryImages[node.entityId] =
-            `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
-        } catch (readError) {
-          console.log('BoardCanvasScreen: failed to read gallery image for export.', readError);
-        }
-      }
-
-      const svg = renderBoardSvg(content, {
+      const svg = await buildStandaloneBoardSvg(content, {
         title: board?.name ?? t('boards_title'),
         subtitle: t('board_export_subtitle', {
           story: selectedStory.title,
@@ -368,7 +312,6 @@ const BoardCanvasScreen = () => {
         },
         titles,
         galleryMediaById,
-        galleryImages,
         summaries: summariesByNode,
       });
       const result = await deliverSvgMap(

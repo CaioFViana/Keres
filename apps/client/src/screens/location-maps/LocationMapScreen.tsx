@@ -26,6 +26,7 @@ import type {
 } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
+import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -39,20 +40,8 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  LOCATION_MAP_IMAGE_DEFAULT_HEIGHT,
-  LOCATION_MAP_IMAGE_DEFAULT_WIDTH,
-  LOCATION_MAP_IMAGE_MAX,
-  LOCATION_MAP_IMAGE_MIN,
-} from '@keres/shared/graphs/locationMapLayout';
-import {
-  appendImagesToMap,
-  appendLocationsToMap,
-  appendMarkersToMap,
-} from '../../utils/locationMapContent';
-import { imageSizeOf } from '../../utils/locationMapMedia';
-import { buildLocationMapSvg } from '../../utils/locationMapExport';
 import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { buildStandaloneLocationMapSvg } from '../../utils/storyMapSvgExport';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 
@@ -304,7 +293,7 @@ const LocationMapScreen = () => {
     try {
       // The exported SVG is standalone, so each image base is embedded as a data URI. Only the
       // images actually used on the map are read.
-      const svg = await buildLocationMapSvg(content, galleryMediaById, {
+      const svg = await buildStandaloneLocationMapSvg(content, galleryMediaById, {
         title: map.name,
         subtitle: t('location_map_export_subtitle', {
           nodeCount: content.nodes.length,
@@ -351,77 +340,52 @@ const LocationMapScreen = () => {
     t,
   ]);
 
-  const usedGalleryIds = useMemo(
-    () => new Set(content.images.map((image) => image.galleryId)),
-    [content.images],
-  );
-  const imageOptions = useMemo(
-    () =>
-      galleries
-        .filter(
-          (gallery) =>
-            gallery.mediaType === 'image' && !!gallery.localPath && !usedGalleryIds.has(gallery.id),
-        )
-        .map((gallery) => ({ label: gallery.title || gallery.fileName, value: gallery.id })),
-    [galleries, usedGalleryIds],
-  );
-
-  const usedLocationIds = useMemo(
-    () => new Set(content.nodes.map((node) => node.locationId)),
-    [content.nodes],
-  );
-  const locationOptions = useMemo(
-    () =>
-      locations
-        .filter((location) => !usedLocationIds.has(location.id))
-        .map((location) => ({ label: location.name, value: location.id })),
-    [locations, usedLocationIds],
-  );
-  const destinationOptions = useMemo(
-    () =>
-      maps
-        .filter((candidate) => candidate.id !== mapId)
-        .map((candidate) => ({ label: candidate.name, value: candidate.id })),
-    [mapId, maps],
-  );
-
-  const addImages = async (values: string[]) => {
-    // Each image keeps its real aspect ratio: the default size is a bounding box the image is
-    // scaled to fit, so a square picture comes in square instead of stretched rectangular.
-    const sized: { galleryId: string; width: number; height: number }[] = [];
-    for (const galleryId of values) {
-      const media = galleryMediaById[galleryId];
-      let width = LOCATION_MAP_IMAGE_DEFAULT_WIDTH;
-      let height = LOCATION_MAP_IMAGE_DEFAULT_HEIGHT;
-      if (media?.localPath) {
-        try {
-          const { width: naturalWidth, height: naturalHeight } = await imageSizeOf(media.localPath);
-          if (naturalWidth > 0 && naturalHeight > 0) {
-            const scale = Math.min(
-              LOCATION_MAP_IMAGE_DEFAULT_WIDTH / naturalWidth,
-              LOCATION_MAP_IMAGE_DEFAULT_HEIGHT / naturalHeight,
-            );
-            width = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalWidth * scale));
-            height = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalHeight * scale));
-          }
-        } catch (sizeError) {
-          console.log('LocationMapScreen: failed to read image size, using default.', sizeError);
-        }
-      }
-      sized.push({ galleryId, width, height });
-    }
-
-    setContent((current) => appendImagesToMap(current, sized));
-  };
-
-  const addLocations = (values: string[]) => {
-    setContent((current) => appendLocationsToMap(current, values));
-  };
-  const addMarker = () => {
-    setContent((current) =>
-      appendMarkersToMap(current, [{ title: t('location_map_marker_default_title') }]),
-    );
-  };
+  const {
+    imageOptions,
+    locationOptions,
+    destinationOptions,
+    addImages,
+    addLocations,
+    addMarker,
+    handleResizeImageDirect,
+    handleRemoveImage,
+    handleToggleImageLock,
+    handleSelectImage,
+    handleMoveImage,
+    handleSelectNode,
+    handleMoveNode,
+    handleSelectMarker,
+    handleMoveMarker,
+    moveImageLayer,
+    moveNodeLayer,
+    moveMarkerLayer,
+    destinationName,
+    openDestination,
+    createDestination,
+    handleOpenMarkerDestination,
+    handleOpenNodeDestination,
+  } = useLocationMapCanvasActions({
+    content,
+    setContent,
+    galleries,
+    locations,
+    maps,
+    mapId,
+    galleryMediaById,
+    layoutEditing,
+    navigation,
+    t,
+    setSelectedImageId,
+    setSelectedNodeId,
+    setSelectedMarkerId,
+    setOpenedNodeId,
+    setOpenedMarkerId,
+    db,
+    storyId,
+    userId,
+    setMaps,
+    showNotification,
+  });
 
   const openedNode = useMemo(
     () => content.nodes.find((node) => node.id === openedNodeId) ?? null,
@@ -430,201 +394,6 @@ const LocationMapScreen = () => {
   const openedMarker = useMemo(
     () => (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null,
     [content.markers, openedMarkerId],
-  );
-
-  const handleResizeImageDirect = useCallback((imageId: string, width: number, height: number) => {
-    setContent((current) => ({
-      ...current,
-      images: current.images.map((image) =>
-        image.id === imageId
-          ? {
-              ...image,
-              width: clamp(width, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
-              height: clamp(height, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
-            }
-          : image,
-      ),
-    }));
-  }, []);
-
-  const handleRemoveImage = useCallback((imageId: string) => {
-    setContent((current) => ({
-      ...current,
-      images: current.images.filter((image) => image.id !== imageId),
-    }));
-    setSelectedImageId(null);
-  }, []);
-
-  const handleToggleImageLock = useCallback((imageId: string) => {
-    setContent((current) => ({
-      ...current,
-      images: current.images.map((image) =>
-        image.id === imageId ? { ...image, locked: !image.locked } : image,
-      ),
-    }));
-  }, []);
-
-  const handleSelectImage = useCallback((imageId: string) => {
-    setSelectedNodeId(null);
-    setSelectedMarkerId(null);
-    setSelectedImageId(imageId);
-    setOpenedNodeId(null);
-  }, []);
-
-  const handleMoveImage = useCallback((imageId: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      images: current.images.map((image) => (image.id === imageId ? { ...image, x, y } : image)),
-    }));
-  }, []);
-
-  const handleSelectNode = useCallback(
-    (nodeId: string) => {
-      setSelectedImageId(null);
-      setSelectedMarkerId(null);
-      setSelectedNodeId(nodeId);
-      if (!layoutEditing) setOpenedNodeId(nodeId);
-    },
-    [layoutEditing],
-  );
-
-  const handleMoveNode = useCallback((nodeId: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
-    }));
-  }, []);
-  const handleSelectMarker = useCallback(
-    (markerId: string) => {
-      setSelectedImageId(null);
-      setSelectedNodeId(null);
-      setSelectedMarkerId(markerId);
-      setOpenedNodeId(null);
-      if (!layoutEditing) setOpenedMarkerId(markerId);
-    },
-    [layoutEditing],
-  );
-  const handleMoveMarker = useCallback((markerId: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      markers: (current.markers ?? []).map((marker) =>
-        marker.id === markerId ? { ...marker, x, y } : marker,
-      ),
-    }));
-  }, []);
-
-  const moveImageLayer = useCallback((imageId: string, direction: 'front' | 'back') => {
-    setContent((current) => {
-      const levels = current.images.map((image) => image.zIndex ?? 0);
-      const zIndex =
-        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
-      return {
-        ...current,
-        images: current.images.map((image) =>
-          image.id === imageId ? { ...image, zIndex } : image,
-        ),
-      };
-    });
-  }, []);
-
-  const moveNodeLayer = useCallback((nodeId: string, direction: 'front' | 'back') => {
-    setContent((current) => {
-      const levels = current.nodes.map((node) => node.zIndex ?? 0);
-      levels.push(...(current.markers ?? []).map((marker) => marker.zIndex ?? 0));
-      const zIndex =
-        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
-      return {
-        ...current,
-        nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, zIndex } : node)),
-      };
-    });
-  }, []);
-  const moveMarkerLayer = useCallback((markerId: string, direction: 'front' | 'back') => {
-    setContent((current) => {
-      const levels = [
-        ...current.nodes.map((node) => node.zIndex ?? 0),
-        ...(current.markers ?? []).map((marker) => marker.zIndex ?? 0),
-      ];
-      const zIndex =
-        direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
-      return {
-        ...current,
-        markers: (current.markers ?? []).map((marker) =>
-          marker.id === markerId ? { ...marker, zIndex } : marker,
-        ),
-      };
-    });
-  }, []);
-
-  const destinationName = useCallback(
-    (destinationMapId?: string | null) =>
-      maps.find((candidate) => candidate.id === destinationMapId)?.name ?? null,
-    [maps],
-  );
-  const openDestination = useCallback(
-    (destinationMapId?: string | null) => {
-      if (!destinationMapId || !maps.some((candidate) => candidate.id === destinationMapId)) return;
-      setOpenedNodeId(null);
-      setOpenedMarkerId(null);
-      navigation.navigate('LocationMap', { mapId: destinationMapId });
-    },
-    [maps, navigation],
-  );
-  const handleOpenMarkerDestination = useCallback(
-    (markerId: string) => {
-      const marker = (content.markers ?? []).find((candidate) => candidate.id === markerId);
-      if (
-        !marker?.destinationMapId ||
-        !maps.some((candidate) => candidate.id === marker.destinationMapId)
-      ) {
-        handleSelectMarker(markerId);
-        return;
-      }
-      openDestination(marker.destinationMapId);
-    },
-    [content.markers, handleSelectMarker, maps, openDestination],
-  );
-  const handleOpenNodeDestination = useCallback(
-    (nodeId: string) => {
-      const node = content.nodes.find((candidate) => candidate.id === nodeId);
-      if (
-        !node?.destinationMapId ||
-        !maps.some((candidate) => candidate.id === node.destinationMapId)
-      ) {
-        handleSelectNode(nodeId);
-        return;
-      }
-      openDestination(node.destinationMapId);
-    },
-    [content.nodes, handleSelectNode, maps, openDestination],
-  );
-  const createDestination = useCallback(
-    async (
-      source: { locationId?: string; title: string; note?: string | null },
-      setDestination: (mapId: string) => void,
-    ) => {
-      if (!storyId || !userId) return;
-      try {
-        const initial = source.locationId
-          ? appendLocationsToMap({ images: [], nodes: [] }, [source.locationId])
-          : appendMarkersToMap({ images: [], nodes: [] }, [
-              { title: source.title, note: source.note },
-            ]);
-        const created = await createLocationMapService(db).createMap(userId, {
-          storyId,
-          name: `${source.title} — ${t('location_map_destination')}`,
-          description: null,
-          content: initial,
-        });
-        setMaps((current) => [...current, created]);
-        setDestination(created.id);
-        showNotification(t('location_map_destination_created'), 'success');
-      } catch (createError) {
-        console.log('LocationMapScreen: failed to create destination map.', createError);
-        showNotification(t('location_map_save_failed'), 'error');
-      }
-    },
-    [db, showNotification, storyId, t, userId],
   );
 
   const styles = StyleSheet.create({
@@ -841,9 +610,5 @@ const LocationMapScreen = () => {
     </View>
   );
 };
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
 export default LocationMapScreen;

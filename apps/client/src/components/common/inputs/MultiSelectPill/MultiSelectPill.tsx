@@ -19,6 +19,8 @@ export interface MultiSelectOption {
   label: string;
   value: string;
   color?: string;
+  /** Optional entity or section icon displayed beside the option in the modal. */
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 export interface MultiSelectGroup {
@@ -332,6 +334,13 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       borderWidth: 1,
       borderColor: colors.border,
     },
+    optionIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     optionText: {
       fontSize: 16,
       color: colors.text,
@@ -468,6 +477,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
               })
             ) : visibleOptions.length > 0 ? (
               visibleOptions.map((option) => {
+                const groupOptionAppearance = groupAppearance(activeGroup!);
+                const optionIcon = option.icon ?? groupOptionAppearance.icon;
+                const optionColor = option.color ?? groupOptionAppearance.color;
                 const atSelectionLimit =
                   !singleSelect &&
                   maxSelections !== undefined &&
@@ -482,9 +494,23 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                     disabled={atSelectionLimit}
                   >
                     <View style={styles.optionLeading}>
-                      {option.color && (
+                      {optionIcon ? (
+                        <View
+                          testID={`multiselect-option-icon-${option.value}`}
+                          style={[
+                            styles.optionIcon,
+                            { backgroundColor: optionColor || colors.primaryContainer },
+                          ]}
+                        >
+                          <Ionicons
+                            name={optionIcon}
+                            size={16}
+                            color={getContrastTextColor(optionColor || colors.primaryContainer)}
+                          />
+                        </View>
+                      ) : option.color ? (
                         <View style={[styles.optionColor, { backgroundColor: option.color }]} />
-                      )}
+                      ) : null}
                       <Text style={styles.optionText}>{option.label}</Text>
                     </View>
                     <View testID={`multiselect-check-${option.value}`} style={styles.optionCheck}>

@@ -1,9 +1,11 @@
-import type { LocationMapContentType } from '@keres/shared';
+import { getEntityAppearance, type LocationMapContentType } from '@keres/shared';
+import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 import { useDrizzle } from '../db';
+import type { MultiSelectOption } from '../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { GallerySelect, LocationMapSelect, LocationSelect } from '../db/schema';
 import type { LocationStackParamList } from '../navigation/MainSystemStack';
 import { createLocationMapService } from '../services/storymanagement/LocationMapService';
@@ -95,13 +97,17 @@ export function useLocationMapCanvasActions({
     () => new Set(content.nodes.map((node) => node.locationId)),
     [content.nodes],
   );
-  const locationOptions = useMemo(
-    () =>
-      locations
-        .filter((location) => !usedLocationIds.has(location.id))
-        .map((location) => ({ label: location.name, value: location.id })),
-    [locations, usedLocationIds],
-  );
+  const locationOptions = useMemo((): MultiSelectOption[] => {
+    const appearance = getEntityAppearance('Location');
+    return locations
+      .filter((location) => !usedLocationIds.has(location.id))
+      .map((location) => ({
+        label: location.name,
+        value: location.id,
+        color: appearance.color,
+        icon: appearance.icon as keyof typeof Ionicons.glyphMap,
+      }));
+  }, [locations, usedLocationIds]);
   const destinationOptions = useMemo(
     () =>
       maps

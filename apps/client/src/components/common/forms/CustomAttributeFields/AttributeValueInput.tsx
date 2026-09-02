@@ -1,4 +1,5 @@
 import type { StorySchemaEntityType } from '@keres/shared';
+import { Ionicons } from '@expo/vector-icons';
 import {
   AttributeType,
   getEntityAppearance,
@@ -63,6 +64,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
             label: option.name || '—',
             value: option.id,
             color: getEntityAppearance(targetEntityType).color,
+            icon: getEntityAppearance(targetEntityType).icon as keyof typeof Ionicons.glyphMap,
           }))
         : [],
     [entityOptions, targetEntityType],

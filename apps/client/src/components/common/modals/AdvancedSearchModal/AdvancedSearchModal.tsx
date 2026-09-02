@@ -52,6 +52,7 @@ const AdvancedEntityPicker: React.FC<{
         label: option.name || t('unnamed'),
         value: option.id,
         color: getEntityAppearance(entityType).color,
+        icon: getEntityAppearance(entityType).icon as keyof typeof Ionicons.glyphMap,
       }))}
       selectedValues={value ? [value] : []}
       onSelectionChange={(selected) => onChange(selected[0] ?? null)}

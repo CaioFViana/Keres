@@ -78,6 +78,27 @@ describe('MultiSelectPill grouped mode, singleSelect', () => {
   });
 });
 
+it('shows the entity icon beside options that inherit their group appearance', async () => {
+  const screen = await render(
+    <MultiSelectPill
+      groups={[
+        {
+          key: 'Character',
+          label: 'Characters',
+          entityType: 'Character',
+          options: [{ label: 'Atena', value: 'atena' }],
+        },
+      ]}
+      selectedValues={[]}
+      onSelectionChange={jest.fn()}
+    />,
+  );
+
+  await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+
+  expect(screen.getByTestId('multiselect-option-icon-atena')).toBeTruthy();
+});
+
 describe('MultiSelectPill flat mode (options)', () => {
   const options = [
     { label: 'Aventura', value: 'adventure', color: '#f00' },

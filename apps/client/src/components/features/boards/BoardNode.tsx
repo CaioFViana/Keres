@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { getEntityAppearance, type BoardNodeType } from '@keres/shared';
+import type { BoardNodeType } from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import {
   Image,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../../../theme';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
-import { boardPinAppearanceType } from '../../../utils/boardPinAppearance';
+import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import {
   boardNodeSize,
   galleryHasImage,
@@ -29,6 +29,7 @@ interface Props {
   title: string;
   typeLabel: string;
   appearanceType?: string;
+  appearance?: BoardCardAppearance;
   ghost?: boolean;
   selected: boolean;
   layoutEditing: boolean;
@@ -54,6 +55,7 @@ const BoardNodeView: React.FC<Props> = ({
   title,
   typeLabel,
   appearanceType,
+  appearance,
   ghost,
   selected,
   layoutEditing,
@@ -321,12 +323,15 @@ const BoardNodeView: React.FC<Props> = ({
     [colors, ghost, hasGalleryImage, node, positionOffsetX, positionOffsetY, selected, size],
   );
 
-  const appearance = getEntityAppearance(
-    appearanceType ??
-      boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
-  );
-  const accent = appearance.color;
-  const icon = appearance.icon as keyof typeof Ionicons.glyphMap;
+  const cardAppearance =
+    appearance ??
+    getBoardPinAppearance(
+      node.kind,
+      node.kind === 'entity' ? node.entityType : undefined,
+      appearanceType === 'Event' ? 'event' : undefined,
+    );
+  const accent = cardAppearance.color;
+  const icon = cardAppearance.icon as keyof typeof Ionicons.glyphMap;
 
   return (
     <View style={styles.node} {...pan.panHandlers}>

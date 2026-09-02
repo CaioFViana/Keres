@@ -195,7 +195,9 @@ const LocationMapListScreen = () => {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            {searchQuery.trim() ? t('location_map_search_no_results') : t('location_map_list_empty')}
+            {searchQuery.trim()
+              ? t('location_map_search_no_results')
+              : t('location_map_list_empty')}
           </Text>
         }
         renderItem={({ item }) => (

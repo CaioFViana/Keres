@@ -38,7 +38,12 @@ import { useTheme } from '../../theme';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
 import { nextStaggeredPosition } from '../../utils/boardLayout';
-import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
+import {
+  boardPinAppearanceType,
+  boardPinTypeKey,
+  getBoardPinAppearance,
+  worldPieceSectionFromBoardPinGroup,
+} from '../../utils/boardPinAppearance';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
@@ -259,7 +264,13 @@ const BoardCanvasScreen = () => {
   const titles = useMemo(() => {
     const map: Record<
       string,
-      { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }
+      {
+        title: string;
+        typeLabel: string;
+        appearanceType?: string;
+        appearance?: { color: string; icon: string };
+        ghost?: boolean;
+      }
     > = {};
     for (const node of content.nodes) {
       const live =
@@ -269,23 +280,37 @@ const BoardCanvasScreen = () => {
         node.kind === 'entity' ? node.entityType : undefined,
         live?.group,
       );
-      const typeLabel = t(
-        boardPinTypeKey(
-          node.kind,
-          node.kind === 'entity' ? node.entityType : undefined,
-          live?.group,
-        ),
+      const worldPieceSection = worldPieceSectionFromBoardPinGroup(live?.group);
+      const typeLabel = worldPieceSection
+        ? t(`world_piece_section_${worldPieceSection}`)
+        : t(
+            boardPinTypeKey(
+              node.kind,
+              node.kind === 'entity' ? node.entityType : undefined,
+              live?.group,
+            ),
+          );
+      const appearance = getBoardPinAppearance(
+        node.kind,
+        node.kind === 'entity' ? node.entityType : undefined,
+        live?.group,
       );
       if (node.kind === 'note') {
-        map[node.id] = { title: node.title.trim() || t('board_note'), typeLabel, appearanceType };
+        map[node.id] = {
+          title: node.title.trim() || t('board_note'),
+          typeLabel,
+          appearanceType,
+          appearance,
+        };
         continue;
       }
       map[node.id] = live
-        ? { title: live.label, typeLabel, appearanceType }
+        ? { title: live.label, typeLabel, appearanceType, appearance }
         : {
             title: node.labelAtPin || t('board_deleted_entity'),
             typeLabel: `${typeLabel} · ${t('board_deleted_entity')}`,
             appearanceType,
+            appearance,
             ghost: true,
           };
     }

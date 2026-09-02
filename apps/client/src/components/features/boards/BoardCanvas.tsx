@@ -9,6 +9,7 @@ import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import { boardCanvasBounds, type BoardGalleryMediaById } from '../../../utils/boardLayout';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+import type { BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import BoardNodeView from './BoardNode';
 
 export type BoardCanvasHandle = PanZoomCanvasHandle;
@@ -17,6 +18,7 @@ export interface BoardPinTitle {
   title: string;
   typeLabel: string;
   appearanceType?: string;
+  appearance?: BoardCardAppearance;
   ghost?: boolean;
 }
 
@@ -262,6 +264,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               title={meta?.title ?? node.kind}
               typeLabel={meta?.typeLabel ?? node.kind}
               appearanceType={meta?.appearanceType}
+              appearance={meta?.appearance}
               ghost={meta?.ghost}
               selected={selectedNodeId === node.id}
               layoutEditing={layoutEditing}

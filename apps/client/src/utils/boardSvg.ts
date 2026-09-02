@@ -26,7 +26,13 @@ export interface BoardSvgOptions {
   };
   titles: Record<
     string,
-    { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }
+    {
+      title: string;
+      typeLabel: string;
+      appearanceType?: string;
+      appearance?: { color: string };
+      ghost?: boolean;
+    }
   >;
   /** Media of the story's galleries - sizes Gallery pins that show an image. */
   galleryMediaById?: BoardGalleryMediaById;
@@ -76,10 +82,12 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
     `<g transform="translate(0 ${HEADER})">`,
     ...shiftedNodes.map((node) => {
       const meta = options.titles[node.id];
-      const accent = getEntityAppearance(
-        meta?.appearanceType ??
-          boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
-      ).color;
+      const accent =
+        meta?.appearance?.color ??
+        getEntityAppearance(
+          meta?.appearanceType ??
+            boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
+        ).color;
       const galleryMedia =
         node.kind === 'entity' && node.entityType === 'Gallery'
           ? options.galleryMediaById?.[node.entityId]

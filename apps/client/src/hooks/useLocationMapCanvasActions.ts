@@ -118,7 +118,9 @@ export function useLocationMapCanvasActions({
         let height = LOCATION_MAP_IMAGE_DEFAULT_HEIGHT;
         if (media?.localPath) {
           try {
-            const { width: naturalWidth, height: naturalHeight } = await imageSizeOf(media.localPath);
+            const { width: naturalWidth, height: naturalHeight } = await imageSizeOf(
+              media.localPath,
+            );
             if (naturalWidth > 0 && naturalHeight > 0) {
               const scale = Math.min(
                 LOCATION_MAP_IMAGE_DEFAULT_WIDTH / naturalWidth,
@@ -227,7 +229,14 @@ export function useLocationMapCanvasActions({
       setOpenedNodeId(null);
       if (!layoutEditing) setOpenedMarkerId(markerId);
     },
-    [layoutEditing, setOpenedMarkerId, setOpenedNodeId, setSelectedImageId, setSelectedMarkerId, setSelectedNodeId],
+    [
+      layoutEditing,
+      setOpenedMarkerId,
+      setOpenedNodeId,
+      setSelectedImageId,
+      setSelectedMarkerId,
+      setSelectedNodeId,
+    ],
   );
   const handleMoveMarker = useCallback(
     (markerId: string, x: number, y: number) =>
@@ -243,10 +252,13 @@ export function useLocationMapCanvasActions({
     (imageId: string, direction: 'front' | 'back') =>
       setContent((current) => {
         const levels = current.images.map((image) => image.zIndex ?? 0);
-        const zIndex = direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+        const zIndex =
+          direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
         return {
           ...current,
-          images: current.images.map((image) => (image.id === imageId ? { ...image, zIndex } : image)),
+          images: current.images.map((image) =>
+            image.id === imageId ? { ...image, zIndex } : image,
+          ),
         };
       }),
     [setContent],
@@ -256,7 +268,8 @@ export function useLocationMapCanvasActions({
       setContent((current) => {
         const levels = current.nodes.map((node) => node.zIndex ?? 0);
         levels.push(...(current.markers ?? []).map((marker) => marker.zIndex ?? 0));
-        const zIndex = direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+        const zIndex =
+          direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
         return {
           ...current,
           nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, zIndex } : node)),
@@ -271,7 +284,8 @@ export function useLocationMapCanvasActions({
           ...current.nodes.map((node) => node.zIndex ?? 0),
           ...(current.markers ?? []).map((marker) => marker.zIndex ?? 0),
         ];
-        const zIndex = direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+        const zIndex =
+          direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
         return {
           ...current,
           markers: (current.markers ?? []).map((marker) =>
@@ -298,7 +312,10 @@ export function useLocationMapCanvasActions({
   const handleOpenMarkerDestination = useCallback(
     (markerId: string) => {
       const marker = (content.markers ?? []).find((candidate) => candidate.id === markerId);
-      if (!marker?.destinationMapId || !maps.some((candidate) => candidate.id === marker.destinationMapId)) {
+      if (
+        !marker?.destinationMapId ||
+        !maps.some((candidate) => candidate.id === marker.destinationMapId)
+      ) {
         handleSelectMarker(markerId);
         return;
       }
@@ -309,7 +326,10 @@ export function useLocationMapCanvasActions({
   const handleOpenNodeDestination = useCallback(
     (nodeId: string) => {
       const node = content.nodes.find((candidate) => candidate.id === nodeId);
-      if (!node?.destinationMapId || !maps.some((candidate) => candidate.id === node.destinationMapId)) {
+      if (
+        !node?.destinationMapId ||
+        !maps.some((candidate) => candidate.id === node.destinationMapId)
+      ) {
         handleSelectNode(nodeId);
         return;
       }
@@ -326,7 +346,9 @@ export function useLocationMapCanvasActions({
       try {
         const initial = source.locationId
           ? appendLocationsToMap({ images: [], nodes: [] }, [source.locationId])
-          : appendMarkersToMap({ images: [], nodes: [] }, [{ title: source.title, note: source.note }]);
+          : appendMarkersToMap({ images: [], nodes: [] }, [
+              { title: source.title, note: source.note },
+            ]);
         const created = await createLocationMapService(db).createMap(userId, {
           storyId,
           name: `${source.title} — ${t('location_map_destination')}`,

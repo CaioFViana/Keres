@@ -164,6 +164,37 @@ it('keeps entity pins at the standard size', () => {
   expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
 });
 
+it('uses a World Piece section colour for the exported card accent', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity' as const,
+          x: 40,
+          y: 40,
+          entityType: 'WorldRule',
+          entityId: 'rule-1',
+          labelAtPin: 'Magic has a cost',
+        },
+      ],
+      edges: [],
+    },
+    {
+      ...options,
+      titles: {
+        '01ABCDEF': {
+          title: 'Magic has a cost',
+          typeLabel: 'World rules',
+          appearance: { color: '#0277BD' },
+        },
+      },
+    },
+  );
+
+  expect(svg).toContain('width="5" height="86" rx="2" fill="#0277BD"');
+});
+
 it('keeps a short note at the standard width', () => {
   const svg = renderBoardSvg(
     {

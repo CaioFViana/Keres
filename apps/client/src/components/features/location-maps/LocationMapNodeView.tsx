@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
 const DESTINATION_HOLD_DURATION = 550;
+/** The visual confirmation arrives precisely when release starts following the destination link. */
+const DESTINATION_HOLD_HINT_DELAY = DESTINATION_HOLD_DURATION;
 
 interface Props {
   node: Pick<
@@ -52,6 +54,8 @@ const LocationMapNodeView: React.FC<Props> = ({
   const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
   const dragging = useRef(false);
   const pressedAt = useRef(0);
+  const destinationHoldHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDestinationHoldHint, setShowDestinationHoldHint] = useState(false);
   const nodeId = useRef(node.id);
   nodeId.current = node.id;
   const destinationMapId = useRef(node.destinationMapId);
@@ -83,6 +87,21 @@ const LocationMapNodeView: React.FC<Props> = ({
     onOpenDestination,
   };
 
+  const clearDestinationHoldHint = () => {
+    if (destinationHoldHintTimer.current !== null) {
+      clearTimeout(destinationHoldHintTimer.current);
+      destinationHoldHintTimer.current = null;
+    }
+    setShowDestinationHoldHint(false);
+  };
+
+  useEffect(
+    () => () => {
+      if (destinationHoldHintTimer.current !== null) clearTimeout(destinationHoldHintTimer.current);
+    },
+    [],
+  );
+
   const pan = useMemo(
     () =>
       PanResponder.create({
@@ -103,6 +122,12 @@ const LocationMapNodeView: React.FC<Props> = ({
           pressedAt.current = Date.now();
           origin.current = { x: position.current.x, y: position.current.y };
           handlers.current.onDragStart(nodeId.current);
+          if (destinationMapId.current) {
+            destinationHoldHintTimer.current = setTimeout(() => {
+              destinationHoldHintTimer.current = null;
+              setShowDestinationHoldHint(true);
+            }, DESTINATION_HOLD_HINT_DELAY);
+          }
           const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
           const target = event.currentTarget as unknown as {
             setPointerCapture?: (id: number) => void;
@@ -111,6 +136,7 @@ const LocationMapNodeView: React.FC<Props> = ({
         },
         onPanResponderMove: (_event, gesture) => {
           if (Math.hypot(gesture.dx, gesture.dy) <= DRAG_THRESHOLD) return;
+          clearDestinationHoldHint();
           dragging.current = true;
           const zoom = Math.max(scaleRef.current, 0.01);
           handlers.current.onMove(
@@ -126,6 +152,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
           handlers.current.onDragEnd(nodeId.current);
+          clearDestinationHoldHint();
           if (!dragging.current) {
             // A regular tap always opens the point sheet. Holding a linked point is the deliberate
             // action that changes maps, which prevents an accidental map switch while editing.
@@ -145,6 +172,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           };
           if (pointerId != null) target?.releasePointerCapture?.(pointerId);
           handlers.current.onDragEnd(nodeId.current);
+          clearDestinationHoldHint();
           dragging.current = false;
         },
       }),
@@ -221,6 +249,25 @@ const LocationMapNodeView: React.FC<Props> = ({
           borderWidth: 1,
           borderColor: colors.surface,
         },
+        destinationHoldHint: {
+          position: 'absolute',
+          left: LOCATION_MAP_NODE_SIZE / 2 - 19,
+          top: -46,
+          width: 38,
+          height: 38,
+          borderRadius: 19,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.primary,
+          borderWidth: 2,
+          borderColor: colors.surface,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 4,
+          zIndex: 4,
+        },
       }),
     [colors, node.color, node.x, node.y, positionOffsetX, positionOffsetY, selected],
   );
@@ -237,6 +284,15 @@ const LocationMapNodeView: React.FC<Props> = ({
       {!!node.destinationMapId && (
         <View pointerEvents="none" style={styles.destinationBadge}>
           <Ionicons name="open-outline" size={11} color={colors.surface} />
+        </View>
+      )}
+      {showDestinationHoldHint && !!node.destinationMapId && (
+        <View
+          pointerEvents="none"
+          testID={`location-map-destination-hold-hint-${node.id}`}
+          style={styles.destinationHoldHint}
+        >
+          <Ionicons name="open-outline" size={22} color={colors.surface} />
         </View>
       )}
       {layoutEditing && selected && (

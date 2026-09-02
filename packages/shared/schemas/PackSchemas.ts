@@ -33,17 +33,49 @@ export const PackSettingsSchema = z.object({
   vocabulary: StoryVocabularySchema.nullable().optional(),
 });
 
-export const PackContentSchema = z.object({
-  formatVersion: z.number().int().min(1).default(CURRENT_PACK_FORMAT_VERSION),
-  storySchemaFields: z.array(StorySchemaFieldSchema).default([]),
-  suggestions: z.array(SuggestionSchema).default([]),
-  tags: z.array(TagSchema).default([]),
-  stats: z.array(StatSchema).default([]),
-  statStrengths: z.array(StatStrengthSchema).default([]),
-  settings: PackSettingsSchema.default({ statSystem: false, statNotation: 'letter' }),
-});
+export const PackContentSchema = z
+  .object({
+    formatVersion: z.number().int().min(1).default(CURRENT_PACK_FORMAT_VERSION),
+    storySchemaFields: z.array(StorySchemaFieldSchema).default([]),
+    suggestions: z.array(SuggestionSchema).default([]),
+    tags: z.array(TagSchema).default([]),
+    stats: z.array(StatSchema).default([]),
+    statStrengths: z.array(StatStrengthSchema).default([]),
+    settings: PackSettingsSchema.default({ statSystem: false, statNotation: 'letter' }),
+  })
+  .superRefine((content, context) => {
+    const fieldIds = new Set(content.storySchemaFields.map((field) => field.id));
+    for (const [index, suggestion] of content.suggestions.entries()) {
+      if (
+        suggestion.type.startsWith('custom:') &&
+        !fieldIds.has(suggestion.type.slice('custom:'.length))
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['suggestions', index, 'type'],
+          message: 'A custom suggestion must refer to a field carried by this pack.',
+        });
+      }
+    }
+
+    const statIds = new Set(content.stats.map((stat) => stat.id));
+    for (const [index, tier] of content.statStrengths.entries()) {
+      if (tier.statId !== null && !statIds.has(tier.statId)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['statStrengths', index, 'statId'],
+          message: 'A stat tier must refer to a stat carried by this pack.',
+        });
+      }
+    }
+  });
 
 export type PackContentType = z.infer<typeof PackContentSchema>;
+
+/** The one runtime boundary for a Pack's JSON document, shared by client and server. */
+export function validatePackContent(content: unknown): PackContentType {
+  return PackContentSchema.parse(content);
+}
 
 /** What the author chose to extract. Stored so re-extraction can start from the same answers. */
 export const PackSelectionSchema = z.object({

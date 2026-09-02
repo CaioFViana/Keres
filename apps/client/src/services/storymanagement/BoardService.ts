@@ -1,5 +1,5 @@
 import type { BoardContentType } from '@keres/shared';
-import { BoardContentSchema } from '@keres/shared';
+import { validateBoardContent } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { BoardInsert, BoardSelect } from '../../db/schema';
@@ -59,7 +59,7 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
 
     async createBoard(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
-      const content = BoardContentSchema.parse(data.content ?? { nodes: [], edges: [] });
+      const content = validateBoardContent(data.content ?? { nodes: [], edges: [] });
       const board = prepareNewEntityData<BoardInsert>({ ...data, content });
       const result = await db.insert(boards).values(board).returning().get();
       await logOperation(currentUserId, board.storyId, 'create', board.id, { ...result });
@@ -72,7 +72,7 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
       await assertStoryIsWritable(db, original.storyId);
 
       const nextContent =
-        changes.content !== undefined ? BoardContentSchema.parse(changes.content) : undefined;
+        changes.content !== undefined ? validateBoardContent(changes.content) : undefined;
       const normalised = {
         ...changes,
         ...(nextContent !== undefined ? { content: nextContent } : {}),

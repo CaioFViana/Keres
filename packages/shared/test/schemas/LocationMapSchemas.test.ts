@@ -4,6 +4,7 @@ import {
   LocationMapContentSchema,
   generateLocationMapLocalId,
   remapLocationMapContent,
+  validateLocationMapContent,
 } from '../../schemas/LocationMapSchemas';
 
 const imageId = '01ABCDEF';
@@ -11,7 +12,7 @@ const nodeId = '02GHJKMN';
 
 describe('LocationMapContentSchema', () => {
   it('accepts an empty map', () => {
-    expect(LocationMapContentSchema.parse({ images: [], nodes: [] })).toEqual({
+    expect(validateLocationMapContent({ images: [], nodes: [] })).toEqual({
       images: [],
       nodes: [],
     });

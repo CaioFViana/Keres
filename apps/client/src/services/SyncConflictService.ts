@@ -3,7 +3,7 @@ import type {
   StoryReorderingStoryUpdate,
   SyncConflictReason,
 } from '@keres/shared';
-import { BoardContentSchema } from '@keres/shared';
+import { validateBoardContent } from '@keres/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
@@ -612,7 +612,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         where: eq(schema.boards.id, conflict.entityId),
       });
       const rawContent = conflict.localValues.content ?? original?.content;
-      const content = BoardContentSchema.parse(rawContent ?? { nodes: [], edges: [] });
+      const content = validateBoardContent(rawContent ?? { nodes: [], edges: [] });
       await createBoardService(db).createBoard(currentUserId, {
         storyId: conflict.storyId,
         name: cloneName.slice(0, 120),

@@ -196,6 +196,11 @@ export const LocationMapContentSchema = z
     }
   });
 
+/** The one runtime boundary for a Location Map's JSON document, shared by client and server. */
+export function validateLocationMapContent(content: unknown) {
+  return LocationMapContentSchema.parse(content);
+}
+
 export const EMPTY_LOCATION_MAP_CONTENT = { images: [], nodes: [] } as const;
 
 export const LocationMapSchema = z.object({

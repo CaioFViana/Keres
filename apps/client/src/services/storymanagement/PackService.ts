@@ -1,6 +1,6 @@
 import {
   CURRENT_PACK_FORMAT_VERSION,
-  PackContentSchema,
+  validatePackContent,
   type PackContentType,
   type PackSelectionType,
   type PackVisibility,
@@ -131,7 +131,7 @@ export function countPackContent(content: PackContentType): PackContentCounts {
 /** Tolerates a payload written by a future version rather than breaking the whole listing. */
 function parseContent(raw: string): PackContentType | null {
   try {
-    return PackContentSchema.parse(JSON.parse(raw));
+    return validatePackContent(JSON.parse(raw));
   } catch (error) {
     console.error('Failed to parse pack content:', error);
     return null;

@@ -149,6 +149,11 @@ export const BoardContentSchema = z
     }
   });
 
+/** The one runtime boundary for a Board's JSON document, shared by client and server. */
+export function validateBoardContent(content: unknown) {
+  return BoardContentSchema.parse(content);
+}
+
 export const BoardSchema = z.object({
   id: z.string(),
   storyId: z.string(),

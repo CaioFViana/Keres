@@ -4,6 +4,7 @@ import {
   CreateBoardDataSchema,
   generateBoardLocalId,
   remapBoardContent,
+  validateBoardContent,
 } from '../../schemas/BoardSchemas';
 
 const nodeId = '01ABCDEF';
@@ -11,7 +12,7 @@ const otherId = '02GHJKMN';
 
 describe('BoardContentSchema', () => {
   it('accepts an empty drawing', () => {
-    expect(BoardContentSchema.parse({ nodes: [], edges: [] })).toEqual({ nodes: [], edges: [] });
+    expect(validateBoardContent({ nodes: [], edges: [] })).toEqual({ nodes: [], edges: [] });
   });
 
   it('defaults a new board to an empty drawing', () => {

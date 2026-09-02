@@ -1,4 +1,4 @@
-import { PackContentSchema, type PackContentType, type PackVisibility } from '@keres/shared';
+import { type PackContentType, type PackVisibility, validatePackContent } from '@keres/shared';
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -67,7 +67,7 @@ export class PackApiService {
    */
   async download(server: ServerSelect, packId: string): Promise<RemotePackWithContent> {
     const response = await this.clientFor(server).get(`/packs/${packId}`);
-    return { ...response.data, content: PackContentSchema.parse(response.data.content) };
+    return { ...response.data, content: validatePackContent(response.data.content) };
   }
 
   async upload(server: ServerSelect, payload: UploadPackPayload): Promise<RemotePack> {

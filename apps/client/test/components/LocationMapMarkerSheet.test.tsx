@@ -32,7 +32,9 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 });
 jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => () => null);
 jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => () => null);
-jest.mock('../../src/components/common/inputs/Select/Select', () => () => null);
+jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => ({
+  SingleSelectPill: () => null,
+}));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 
 it('keeps inner padding around marker-sheet controls so input borders can render fully', async () => {

@@ -1,7 +1,9 @@
 import JSZip from 'jszip';
 import { extensionForMimeType, galleryHasFile } from '../schemas/GallerySchemas';
-import type { FullStoryExportType } from '../schemas/FullStorySchemas';
+import { FullStoryExportSchema, type FullStoryExportType } from '../schemas/FullStorySchemas';
 import type { GalleryType } from '../schemas/GallerySchemas';
+import { migrateStoryExport, StoryExportVersionError } from '../schemas/storyExportMigrations';
+import { reviveDates } from './reviveDates';
 
 /**
  * Packaging a story together with its gallery media, in the shape client and server share.
@@ -27,6 +29,11 @@ import type { GalleryType } from '../schemas/GallerySchemas';
 export const STORY_JSON_ENTRY = 'story.json';
 export const MEDIA_DIR_PREFIX = 'media/';
 
+/** Removes a UTF-8 BOM from the start of JSON text, if present. */
+export function stripUtf8Bom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
 /**
  * Returns a media file's bytes, or `null` when the packager does not have that file (not downloaded
  * on the device, or absent from the server's storage).
@@ -38,6 +45,30 @@ export interface BuildStoryZipResult {
   /** How many media files went into the package, out of the total the story references. */
   includedCount: number;
   totalCount: number;
+}
+
+export interface ExtractedStoryZipMedia {
+  hash: string;
+  mimeType: string;
+  bytes: Uint8Array;
+}
+
+export interface ExtractedStoryZip {
+  story: FullStoryExportType;
+  media: ExtractedStoryZipMedia[];
+}
+
+export type StoryZipReadErrorReason = 'unreadable' | 'invalid_format' | 'future_format_version';
+
+/** A portable error for a ZIP that cannot be imported as a Keres story package. */
+export class StoryZipReadError extends Error {
+  constructor(
+    readonly reason: StoryZipReadErrorReason,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'StoryZipReadError';
+  }
 }
 
 /**
@@ -70,4 +101,80 @@ export async function buildStoryZipBytes(
 
   const bytes = await zip.generateAsync({ type: 'uint8array', compression: 'STORE' });
   return { bytes, includedCount, totalCount: galleryItems.length };
+}
+
+/**
+ * Reads a Keres story archive produced by {@link buildStoryZipBytes}.
+ *
+ * MIME types come from `story.json`, never from the extension stored in the archive: extensions
+ * are only human-readable labels and are not one-to-one for formats such as HEIC/JPEG.
+ */
+export async function extractStoryZip(
+  bytes: Uint8Array,
+  sourceName: string,
+): Promise<ExtractedStoryZip> {
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(bytes);
+  } catch (error) {
+    throw new StoryZipReadError(
+      'unreadable',
+      `Could not open ${sourceName} as a zip file: ${(error as Error)?.message}`,
+    );
+  }
+
+  const storyEntry = zip.file(STORY_JSON_ENTRY);
+  if (!storyEntry) {
+    throw new StoryZipReadError(
+      'invalid_format',
+      `${sourceName} does not contain a ${STORY_JSON_ENTRY} entry.`,
+    );
+  }
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = reviveDates(JSON.parse(stripUtf8Bom(await storyEntry.async('string'))));
+  } catch {
+    throw new StoryZipReadError(
+      'invalid_format',
+      `${sourceName}'s ${STORY_JSON_ENTRY} is not valid JSON.`,
+    );
+  }
+
+  let migrated: unknown;
+  try {
+    migrated = migrateStoryExport(parsedJson);
+  } catch (error) {
+    if (error instanceof StoryExportVersionError) {
+      throw new StoryZipReadError('future_format_version', error.message);
+    }
+    throw error;
+  }
+
+  const validation = FullStoryExportSchema.safeParse(migrated);
+  if (!validation.success) {
+    throw new StoryZipReadError(
+      'invalid_format',
+      `${sourceName} is not a Keres story export: ${validation.error.message}`,
+    );
+  }
+
+  const story = validation.data;
+  const mimeTypeByHash = new Map(
+    (story.galleryItems || []).map((item) => [item.hash, item.mimeType]),
+  );
+  const media: ExtractedStoryZipMedia[] = [];
+  const mediaEntries = zip.file(new RegExp(`^${MEDIA_DIR_PREFIX}`));
+  for (const entry of mediaEntries) {
+    if (entry.dir) {
+      continue;
+    }
+    const hash = entry.name.slice(MEDIA_DIR_PREFIX.length).split('.')[0];
+    const mimeType = mimeTypeByHash.get(hash);
+    if (mimeType) {
+      media.push({ hash, mimeType, bytes: await entry.async('uint8array') });
+    }
+  }
+
+  return { story, media };
 }

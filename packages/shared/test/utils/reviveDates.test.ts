@@ -1,4 +1,5 @@
-import { reviveDates } from '../../src/utils/reviveDates';
+import { describe, expect, it } from 'vitest';
+import { reviveDates } from '../../utils/reviveDates';
 
 describe('reviveDates', () => {
   it('revives ISO dates recursively without changing other values', () => {

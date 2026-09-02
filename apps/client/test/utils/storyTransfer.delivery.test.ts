@@ -11,7 +11,6 @@ jest.mock('../../src/services/MediaFileService', () => ({
 }));
 jest.mock('../../src/utils/storyMediaBundle', () => ({
   extractStoryZip: jest.fn(),
-  stripUtf8Bom: (text: string) => (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text),
 }));
 
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';

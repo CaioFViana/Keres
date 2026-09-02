@@ -34,7 +34,6 @@
     "@keres/shared": "workspace:*",
     "@libsql/client": "^0.17.4",
     "@sinclair/typebox": "^0.34.41",
-    "@types/pg": "^8.11.6",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
@@ -45,6 +44,7 @@
   },
   "devDependencies": {
     "@types/bun": "^1.1.6",
+    "@types/pg": "^8.11.6",
     "@typescript-eslint/eslint-plugin": "^8.66.0",
     "@typescript-eslint/parser": "^8.66.0",
     "drizzle-kit": "^0.31.6",

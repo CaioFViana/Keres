@@ -8,7 +8,7 @@ jest.mock('../../src/components/common', () => ({
     const native = jest.requireActual('react-native') as typeof import('react-native');
     return react.createElement(native.Text, null, children);
   },
-  Select: () => null,
+  SingleSelectPill: () => null,
   TextInput: (props: import('react-native').TextInputProps) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');

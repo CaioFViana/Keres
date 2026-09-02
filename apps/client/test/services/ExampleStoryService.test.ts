@@ -3,11 +3,11 @@
  */
 import { createExampleStoryService } from '../../src/services/storymanagement/ExampleStoryService';
 import { exampleStoryRegistry } from '../../src/exampleStories/generated/registry';
-import { reviveDates } from '../../src/utils/reviveDates';
 import {
   CURRENT_STORY_FORMAT_VERSION,
   findStoryExportIntegrityViolations,
   FullStoryExportSchema,
+  reviveDates,
   StorySchema,
 } from '@keres/shared';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';

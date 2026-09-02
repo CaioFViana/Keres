@@ -9,7 +9,7 @@ import React from 'react';
  * questions visible at once, no confirming without a server, and a public answer that never
  * survives into the next share.
  *
- * `Select` is a double here: what this asserts is which values the modal hands back, not how a
+ * `SingleSelectPill` is a double here: what this asserts is which values the modal hands back, not how a
  * dropdown opens.
  */
 
@@ -46,11 +46,11 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 /** A dropdown reduced to what the modal reads from it: its value, and a way to change it. */
-jest.mock('../../src/components/common/inputs/Select/Select', () => {
+jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
-    default: ({
+    SingleSelectPill: ({
       options,
       value,
       onValueChange,

@@ -3,10 +3,11 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
@@ -47,6 +48,7 @@ const BoardListScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
   const [editingBoard, setEditingBoard] = useState<BoardSelect | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const reload = useCallback(async () => {
     if (!storyId) {
@@ -96,6 +98,7 @@ const BoardListScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
+    searchContainer: { padding: 10 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -115,6 +118,14 @@ const BoardListScreen = () => {
       paddingHorizontal: 24,
     },
   });
+
+  const filteredBoards = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    if (!query) return boards;
+    return boards.filter(({ name, description }) =>
+      `${name} ${description ?? ''}`.toLocaleLowerCase().includes(query),
+    );
+  }, [boards, searchQuery]);
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -168,10 +179,22 @@ const BoardListScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t('board_search_placeholder')}
+          accessibilityLabel={t('board_search_placeholder')}
+        />
+      </View>
       <FlatList
-        data={boards}
+        data={filteredBoards}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.empty}>{t('board_list_empty')}</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>
+            {searchQuery.trim() ? t('board_search_no_results') : t('board_list_empty')}
+          </Text>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.row}

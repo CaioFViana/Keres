@@ -3,10 +3,11 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import LocationMapCreateModal from '@/src/components/features/location-maps/LocationMapCreateModal';
 import { useDrizzle } from '../../db';
 import type { LocationMapSelect } from '../../db/schema';
@@ -50,6 +51,7 @@ const LocationMapListScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [createVisible, setCreateVisible] = useState(false);
   const [editingMap, setEditingMap] = useState<LocationMapSelect | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const reload = useCallback(async () => {
     if (!storyId) {
@@ -99,6 +101,7 @@ const LocationMapListScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
+    searchContainer: { padding: 10 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -118,6 +121,14 @@ const LocationMapListScreen = () => {
       paddingHorizontal: 24,
     },
   });
+
+  const filteredMaps = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    if (!query) return maps;
+    return maps.filter(({ name, description }) =>
+      `${name} ${description ?? ''}`.toLocaleLowerCase().includes(query),
+    );
+  }, [maps, searchQuery]);
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -171,10 +182,22 @@ const LocationMapListScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t('location_map_search_placeholder')}
+          accessibilityLabel={t('location_map_search_placeholder')}
+        />
+      </View>
       <FlatList
-        data={maps}
+        data={filteredMaps}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.empty}>{t('location_map_list_empty')}</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>
+            {searchQuery.trim() ? t('location_map_search_no_results') : t('location_map_list_empty')}
+          </Text>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.row}

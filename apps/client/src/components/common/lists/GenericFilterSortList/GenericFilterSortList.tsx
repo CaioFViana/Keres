@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
 import {
@@ -269,6 +269,7 @@ const GenericFilterSortList = <T,>({
                 onSelectionChange={handleFilterSelection}
                 placeholder={t('filter_by_tags')}
                 disabled={disableTagFilter}
+                style={styles(colors).compactSelect}
               />
             )}
           </View>
@@ -291,6 +292,7 @@ const GenericFilterSortList = <T,>({
               value={selectedSort}
               onValueChange={handleSortSelection}
               placeholder={t('sort_by')}
+              style={styles(colors).compactSelect}
             />
           </View>
           {!disableFavoriteFilter && (
@@ -391,6 +393,11 @@ const styles = (colors: any) =>
     selectContainerSort: {
       flex: 1,
       paddingRight: 10,
+    },
+    // A regular field keeps space below itself for a following form control. In this toolbar that
+    // margin becomes part of the row's height and shifts the icon buttons down from their select.
+    compactSelect: {
+      marginBottom: 0,
     },
     sortDirectionButton: {
       padding: 12,

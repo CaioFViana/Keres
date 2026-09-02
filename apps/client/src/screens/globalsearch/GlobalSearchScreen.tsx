@@ -265,9 +265,9 @@ const styles = (colors: any) =>
       alignItems: 'center',
       borderRadius: 5,
       justifyContent: 'center',
-      marginBottom: 20,
       marginLeft: 10,
-      padding: 12,
+      height: 50,
+      width: 50,
     },
     loadingIndicator: {
       marginVertical: 8,

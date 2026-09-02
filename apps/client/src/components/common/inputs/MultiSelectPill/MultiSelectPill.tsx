@@ -43,6 +43,9 @@ export interface SingleSelectPillProps {
   multiple?: false;
   disabled?: boolean;
   allowDeselect?: boolean;
+  /** Layout adjustment for compact contexts such as a filter toolbar. */
+  style?: StyleProp<ViewStyle>;
+  triggerStyle?: StyleProp<ViewStyle>;
 }
 
 interface MultiSelectPillProps {
@@ -580,6 +583,8 @@ export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
   placeholder,
   disabled,
   allowDeselect = false,
+  style,
+  triggerStyle,
 }) => (
   <MultiSelectPill
     options={options.map((option) => ({ ...option, color: option.color ?? undefined }))}
@@ -589,6 +594,8 @@ export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
     singleSelect
     allowDeselect={allowDeselect}
     disabled={disabled}
+    style={style}
+    triggerStyle={triggerStyle}
   />
 );
 

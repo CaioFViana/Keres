@@ -300,6 +300,23 @@ describe('MultiSelectPill, pill spacing', () => {
   });
 });
 
+describe('SingleSelectPill layout', () => {
+  it('forwards compact layout styles to its multi-select foundation', async () => {
+    const screen = await render(
+      <SingleSelectPill
+        options={[{ label: 'Name', value: 'name' }]}
+        value={null}
+        onValueChange={jest.fn()}
+        style={{ marginBottom: 0 }}
+        triggerStyle={{ height: 50 }}
+      />,
+    );
+
+    const trigger = StyleSheet.flatten(screen.getByTestId('multiselect-trigger').props.style);
+    expect(trigger.height).toBe(50);
+  });
+});
+
 /**
  * The options list also changed height: the check only existed on the ticked option, and since it is
  * taller than the text, ticking an option pushed the ones below it a few pixels down. The check's space

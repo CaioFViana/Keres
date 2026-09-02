@@ -106,6 +106,7 @@ export const PackContentSummarySchema = z.object({
   suggestionCount: z.number().int(),
   tagCount: z.number().int(),
   statCount: z.number().int(),
+  hasVocabulary: z.boolean(),
   statSystem: z.boolean(),
   statNotation: StatNotationSchema,
 });
@@ -118,6 +119,7 @@ export function summarizePackContent(content: PackContentType): PackContentSumma
     suggestionCount: content.suggestions.length,
     tagCount: content.tags.length,
     statCount: content.stats.length,
+    hasVocabulary: Object.keys(content.settings.vocabulary?.terms ?? {}).length > 0,
     statSystem: content.settings.statSystem,
     statNotation: content.settings.statNotation,
   };

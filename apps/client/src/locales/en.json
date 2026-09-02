@@ -1174,6 +1174,7 @@
   "packs_chip_stats": "{{count}} stats",
   "packs_chip_suggestions": "{{count}} suggestions",
   "packs_chip_tags": "{{count}} tags",
+  "packs_chip_vocabulary": "Vocabulary",
   "packs_conflict_attribute_key": "Two packs define the same custom attribute: {{detail}}",
   "packs_conflict_default_ladder": "More than one pack brings a default stat ladder.",
   "packs_conflict_primary_stat_limit": "Together these packs have {{detail}} primary stats, over the limit.",

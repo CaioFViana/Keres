@@ -36,6 +36,15 @@ describe('the shipped catalogue', () => {
     }
   });
 
+  it('identifies vocabulary in every pack preview', () => {
+    const previews = createShippedPackService(db).previewShippedPacks();
+
+    expect(previews).toHaveLength(6);
+    for (const preview of previews) {
+      expect(preview.counts.hasVocabulary).toBe(true);
+    }
+  });
+
   /** Generated content still has to satisfy the schema the app applies it through. */
   it('carries content that validates', () => {
     for (const entry of shippedPackRegistry) {
@@ -135,7 +144,7 @@ describe('installing a shipped pack', () => {
       visibility: 'private',
       // No source story: it was not extracted here, so it cannot be re-extracted.
       sourceStoryId: null,
-      counts: { stats: 6, customAttributes: 0 },
+      counts: { stats: 6, customAttributes: 0, hasVocabulary: true },
     });
   });
 

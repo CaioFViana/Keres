@@ -1174,6 +1174,7 @@
   "packs_chip_stats": "{{count}} status",
   "packs_chip_suggestions": "{{count}} sugestões",
   "packs_chip_tags": "{{count}} etiquetas",
+  "packs_chip_vocabulary": "Vocabulário",
   "packs_conflict_attribute_key": "Dois pacotes definem o mesmo atributo customizado: {{detail}}",
   "packs_conflict_default_ladder": "Mais de um pacote traz uma escada de status padrão.",
   "packs_conflict_primary_stat_limit": "Juntos, estes pacotes têm {{detail}} status primários, acima do limite.",

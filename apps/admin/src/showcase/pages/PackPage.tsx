@@ -27,6 +27,14 @@ export function PackPage() {
 
   const content = pack?.content ?? null;
 
+  const vocabularyTerms = useMemo(
+    () =>
+      Object.entries(content?.settings.vocabulary?.terms ?? {}).flatMap(([entityType, term]) =>
+        term ? [{ entityType, term }] : [],
+      ),
+    [content],
+  );
+
   /** Fields grouped by the entity they extend, in the order the app itself presents them. */
   const fieldsByEntity = useMemo(() => {
     const groups = new Map<
@@ -220,6 +228,20 @@ export function PackPage() {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {vocabularyTerms.length > 0 && (
+          <div className="pack-section">
+            <h3>{t('pack.vocabulary')}</h3>
+            <ul className="pack-field-list">
+              {vocabularyTerms.map(({ entityType, term }) => (
+                <li key={entityType}>
+                  <span className="pack-field-name">{term.singular}</span>
+                  <span className="pack-field-type">{term.plural}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

@@ -158,6 +158,7 @@ const ShippedPacksScreen = () => {
           t('packs_chip_suggestions', { count: shown.counts.suggestions }),
         shown.counts.tags > 0 && t('packs_chip_tags', { count: shown.counts.tags }),
         shown.counts.stats > 0 && t('packs_chip_stats', { count: shown.counts.stats }),
+        shown.counts.hasVocabulary && t('packs_chip_vocabulary'),
         shown.statSystem && t('shipped_packs_chip_stat_system'),
       ].filter((chip): chip is string => Boolean(chip));
 

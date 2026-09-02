@@ -209,6 +209,7 @@ const PackListScreen = () => {
         t('packs_chip_suggestions', { count: pack.counts.suggestions }),
       pack.counts.tags > 0 && t('packs_chip_tags', { count: pack.counts.tags }),
       pack.counts.stats > 0 && t('packs_chip_stats', { count: pack.counts.stats }),
+      pack.counts.hasVocabulary && t('packs_chip_vocabulary'),
     ].filter((chip): chip is string => Boolean(chip));
 
   const renderPack = ({ item }: { item: PackSummary }) => {

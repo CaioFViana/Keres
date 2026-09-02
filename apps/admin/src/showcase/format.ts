@@ -73,6 +73,9 @@ export function packContentLines(
   if (summary.suggestionCount > 0) {
     lines.push(plural('pack.suggestionCount', summary.suggestionCount));
   }
+  if (summary.hasVocabulary) {
+    lines.push(t('pack.vocabulary'));
+  }
   if (summary.statSystem) {
     lines.push(t(`pack.notation.${summary.statNotation}`));
   }

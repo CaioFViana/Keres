@@ -54,6 +54,7 @@ export interface PackContentCounts {
   suggestions: number;
   tags: number;
   stats: number;
+  hasVocabulary: boolean;
 }
 
 /** A pack as it travels: metadata plus the payload. */
@@ -123,6 +124,7 @@ export function countPackContent(content: PackContentType): PackContentCounts {
     suggestions: content.suggestions.length,
     tags: content.tags.length,
     stats: content.stats.length,
+    hasVocabulary: Object.keys(content.settings.vocabulary?.terms ?? {}).length > 0,
   };
 }
 

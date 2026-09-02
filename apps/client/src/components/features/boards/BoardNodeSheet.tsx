@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardCardDisplayMode, BoardContentType, BoardNodeType } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -71,6 +71,10 @@ const BoardNodeSheet: React.FC<Props> = ({
   const connectedNodeIds = new Set(
     edges.map((edge) => (edge.from === node.id ? edge.to : edge.from)),
   );
+  // State updates are asynchronous, so a fast double tap can call `addEdge` twice before the
+  // picker rerenders. Keep the immediate interaction state in a ref as well as in the UI state.
+  const connectedNodeIdsRef = useRef(connectedNodeIds);
+  connectedNodeIdsRef.current = connectedNodeIds;
   const others = content.nodes.filter(
     (item) => item.id !== node.id && !connectedNodeIds.has(item.id),
   );
@@ -185,10 +189,11 @@ const BoardNodeSheet: React.FC<Props> = ({
 
   const addEdge = () => {
     if (!connectTo) return;
-    if (connectedNodeIds.has(connectTo)) {
+    if (connectedNodeIdsRef.current.has(connectTo)) {
       setConnectTo(null);
       return;
     }
+    connectedNodeIdsRef.current.add(connectTo);
     const existing = new Set([
       ...content.nodes.map((item) => item.id),
       ...content.edges.map((edge) => edge.id),
@@ -367,7 +372,11 @@ const BoardNodeSheet: React.FC<Props> = ({
                   placeholder={t('board_edge_label')}
                 />
               </View>
-              <Button disabled={!connectTo} onPress={addEdge} style={styles.addButton}>
+              <Button
+                disabled={!connectTo || connectedNodeIds.has(connectTo)}
+                onPress={addEdge}
+                style={styles.addButton}
+              >
                 {t('board_add_edge')}
               </Button>
             </>

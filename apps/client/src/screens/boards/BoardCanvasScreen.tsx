@@ -1,3 +1,13 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
+import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
+import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
@@ -7,44 +17,34 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
-import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
-import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
-import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import {
-  useBoardPinOptions,
   decodeBoardPinValue,
+  useBoardPinOptions,
   type BoardPinOption,
 } from '../../hooks/useBoardPinOptions';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
+import { mediaFileService } from '../../services/MediaFileService';
 import { createBoardService } from '../../services/storymanagement/BoardService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { mediaFileService } from '../../services/MediaFileService';
 import { useBoardDraftStore } from '../../state/boardDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { nextStaggeredPosition } from '../../utils/boardLayout';
+import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
+import { nextStaggeredPosition } from '../../utils/boardLayout';
 import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
 import { renderBoardSvg } from '../../utils/boardSvg';
-import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
+import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 
 /** Base64 of the bytes, chunked so a large image does not blow the call stack. */
 function bytesToBase64(bytes: Uint8Array): string {
@@ -554,7 +554,9 @@ const BoardCanvasScreen = () => {
               singleSelect
             />
             <View style={styles.toolControl}>
-              <Button onPress={addNote}>{t('board_add_note')}</Button>
+              <Button onPress={addNote} style={{ height: 50 }}>
+                {t('board_add_note')}
+              </Button>
             </View>
           </View>
         </View>

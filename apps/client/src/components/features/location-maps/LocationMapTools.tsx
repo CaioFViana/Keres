@@ -57,7 +57,9 @@ const LocationMapTools: React.FC<Props> = ({
           searchPlaceholder={t('search')}
         />
         <View style={styles.pointControl}>
-          <Button onPress={onAddMarker}>{t('location_map_add_marker')}</Button>
+          <Button onPress={onAddMarker} style={{ height: 50 }}>
+            {t('location_map_add_marker')}
+          </Button>
         </View>
       </View>
     </View>

@@ -68,6 +68,21 @@ describe('BoardContentSchema', () => {
     ).toThrow(/not on this board/);
   });
 
+  it('rejects a second connection between the same two pins, in either direction', () => {
+    expect(() =>
+      BoardContentSchema.parse({
+        nodes: [
+          { id: nodeId, kind: 'note', x: 0, y: 0, title: 'Theme', body: null },
+          { id: otherId, kind: 'note', x: 40, y: 10, title: 'Conflict', body: null },
+        ],
+        edges: [
+          { id: '03PQRSTV', from: nodeId, to: otherId, directed: true, label: null },
+          { id: '04UVWXYZ', from: otherId, to: nodeId, directed: false, label: null },
+        ],
+      }),
+    ).toThrow(/only have one connection/);
+  });
+
   it('allocates ids that do not collide with ones already on the board', () => {
     const existing = new Set([nodeId]);
     const next = generateBoardLocalId(existing);

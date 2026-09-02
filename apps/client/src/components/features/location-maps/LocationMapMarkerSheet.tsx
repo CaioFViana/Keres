@@ -20,6 +20,7 @@ interface Props {
   icon: string;
   color: string;
   destinationMapId?: string | null;
+  /** Kept for callers that still provide the resolved name; the selector already displays it. */
   destinationName?: string | null;
   destinationUnavailable: boolean;
   destinationOptions: { label: string; value: string }[];
@@ -45,7 +46,6 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
   icon,
   color,
   destinationMapId,
-  destinationName,
   destinationUnavailable,
   destinationOptions,
   canEdit,
@@ -91,7 +91,6 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
     },
     note: { minHeight: 96, textAlignVertical: 'top' },
     hint: { color: colors.textSecondary, marginTop: 8 },
-    destination: { color: colors.primary, fontWeight: '600', marginTop: 8 },
     actionGroup: { gap: 8, marginTop: 8 },
     remove: { backgroundColor: colors.error, marginTop: 20 },
     removeInGroup: { backgroundColor: colors.error },
@@ -155,9 +154,9 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
         )}
         {destinationMapId ? (
           <>
-            <Text style={destinationUnavailable ? styles.hint : styles.destination}>
-              {destinationUnavailable ? t('location_map_destination_unavailable') : destinationName}
-            </Text>
+            {destinationUnavailable && (
+              <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text>
+            )}
             <View testID="location-map-marker-destination-actions" style={styles.actionGroup}>
               {!destinationUnavailable && (
                 <Button onPress={onOpenDestination}>{t('location_map_open_destination')}</Button>

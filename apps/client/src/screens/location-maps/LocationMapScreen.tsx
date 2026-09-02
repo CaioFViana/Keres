@@ -587,7 +587,10 @@ const LocationMapScreen = () => {
   const handleOpenNodeDestination = useCallback(
     (nodeId: string) => {
       const node = content.nodes.find((candidate) => candidate.id === nodeId);
-      if (!node?.destinationMapId || !maps.some((candidate) => candidate.id === node.destinationMapId)) {
+      if (
+        !node?.destinationMapId ||
+        !maps.some((candidate) => candidate.id === node.destinationMapId)
+      ) {
         handleSelectNode(nodeId);
         return;
       }
@@ -779,7 +782,6 @@ const LocationMapScreen = () => {
           icon={openedMarker.icon}
           color={openedMarker.color}
           destinationMapId={openedMarker.destinationMapId}
-          destinationName={destinationName(openedMarker.destinationMapId)}
           destinationUnavailable={
             !!openedMarker.destinationMapId && !destinationName(openedMarker.destinationMapId)
           }

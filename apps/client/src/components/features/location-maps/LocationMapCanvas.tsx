@@ -500,9 +500,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               onDragEnd={kind === 'node' ? handleNodeDragEnd : handleMarkerDragEnd}
               onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
               onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
-              onOpenDestination={
-                kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination
-              }
+              onOpenDestination={kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination}
             />
           ))}
         </View>

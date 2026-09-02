@@ -154,6 +154,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     itemText: { flex: 1, color: colors.text, fontSize: 13 },
     hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
     summaryText: { color: colors.text, fontSize: 13, lineHeight: 19 },
+    destinationAction: { marginTop: 12 },
     removeButton: { marginTop: 16, backgroundColor: colors.error },
     colorMarging: { marginBottom: 20 },
   });
@@ -240,10 +241,14 @@ const LocationMapNodeSheet: React.FC<Props> = ({
             destinationUnavailable ? (
               <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text>
             ) : (
-              <Button onPress={onOpenDestination}>{t('location_map_open_destination')}</Button>
+              <Button style={styles.destinationAction} onPress={onOpenDestination}>
+                {t('location_map_open_destination')}
+              </Button>
             )
           ) : canEdit ? (
-            <Button onPress={onCreateDestination}>{t('location_map_create_destination')}</Button>
+            <Button style={styles.destinationAction} onPress={onCreateDestination}>
+              {t('location_map_create_destination')}
+            </Button>
           ) : (
             <Text style={styles.hint}>{t('location_map_destination_none')}</Text>
           )}

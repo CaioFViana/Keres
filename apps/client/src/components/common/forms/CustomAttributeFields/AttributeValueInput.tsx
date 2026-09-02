@@ -1,23 +1,23 @@
-import type { StorySchemaEntityType } from '@keres/shared';
-import type { Ionicons } from '@expo/vector-icons';
-import {
-  AttributeType,
-  getEntityAppearance,
-  decodeAttributeValue,
-  encodeAttributeValue,
-} from '@keres/shared';
-import React, { useMemo } from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
-import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
+import type { Ionicons } from '@expo/vector-icons';
+import type { StorySchemaEntityType } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  encodeAttributeValue,
+  getEntityAppearance,
+} from '@keres/shared';
+import React, { useMemo } from 'react';
+import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import { useTheme } from '../../../../theme';
+import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;
@@ -78,7 +78,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           onChangeText={onChange}
           placeholder={placeholder}
           multiline
-          style={[commonInputStyles.input, { minHeight: 4 * 20, textAlignVertical: 'top' }, style]}
+          style={[commonInputStyles.multiline, style]}
         />
       );
 

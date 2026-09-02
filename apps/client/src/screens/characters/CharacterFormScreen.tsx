@@ -518,7 +518,7 @@ const CharacterFormScreen = () => {
         placeholder={t('description_placeholder')}
         value={description || ''}
         onChangeText={setDescription}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -554,7 +554,7 @@ const CharacterFormScreen = () => {
         placeholder={t('personality_placeholder')}
         value={personality || ''}
         onChangeText={setPersonality}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -563,7 +563,7 @@ const CharacterFormScreen = () => {
         placeholder={t('motivation_placeholder')}
         value={motivation || ''}
         onChangeText={setMotivation}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -572,7 +572,7 @@ const CharacterFormScreen = () => {
         placeholder={t('qualities_placeholder')}
         value={qualities || ''}
         onChangeText={setQualities}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -581,7 +581,7 @@ const CharacterFormScreen = () => {
         placeholder={t('weaknesses_placeholder')}
         value={weaknesses || ''}
         onChangeText={setWeaknesses}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -590,7 +590,7 @@ const CharacterFormScreen = () => {
         placeholder={t('biography_placeholder')}
         value={biography || ''}
         onChangeText={setBiography}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -599,7 +599,7 @@ const CharacterFormScreen = () => {
         placeholder={t('planned_timeline_placeholder')}
         value={plannedTimeline || ''}
         onChangeText={setPlannedTimeline}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -619,7 +619,7 @@ const CharacterFormScreen = () => {
         placeholder={t('extra_notes_placeholder')}
         value={extraNotes || ''}
         onChangeText={setExtraNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 

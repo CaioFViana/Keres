@@ -240,7 +240,7 @@ const StoryCalendarFormScreen = () => {
         editable={canEdit}
         placeholder={t('calendar_description_placeholder')}
         multiline
-        style={[inputStyles.input, { minHeight: 70, textAlignVertical: 'top' }]}
+        style={[inputStyles.multiline, { minHeight: 70 }]}
       />
 
       <CalendarRowList

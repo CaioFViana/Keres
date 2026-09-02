@@ -659,7 +659,7 @@ const ChoiceFormScreen = () => {
         placeholder={t('text_placeholder')}
         value={text}
         onChangeText={setText}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -690,7 +690,7 @@ const ChoiceFormScreen = () => {
         placeholder={t('choice_notes_placeholder')}
         value={notes || ''}
         onChangeText={setNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 

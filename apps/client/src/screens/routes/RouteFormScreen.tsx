@@ -137,7 +137,7 @@ export default function RouteFormScreen() {
         value={details}
         onChangeText={setDetails}
         placeholder={t('route_details_placeholder')}
-        style={[input.input, { minHeight: 100, textAlignVertical: 'top' }]}
+        style={input.multiline}
         multiline
       />
       {routeId ? (

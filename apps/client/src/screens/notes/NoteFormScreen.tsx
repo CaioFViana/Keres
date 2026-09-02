@@ -272,7 +272,7 @@ const NoteFormScreen = () => {
         placeholder={t('body_placeholder')}
         value={body || ''}
         onChangeText={setBody}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -281,7 +281,7 @@ const NoteFormScreen = () => {
         placeholder={t('extra_notes_placeholder')}
         value={extraNotes || ''}
         onChangeText={setExtraNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 

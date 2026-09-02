@@ -171,7 +171,7 @@ const MyProfileScreen = () => {
         placeholder={t('bio_placeholder')}
         value={bio}
         onChangeText={(text) => setBio(text.slice(0, BIO_MAX_LENGTH))}
-        style={[commonInputStyles.input, { minHeight: 4 * 20, textAlignVertical: 'top' }]}
+        style={[commonInputStyles.multiline, { minHeight: 4 * 20 }]}
         multiline
         maxLength={BIO_MAX_LENGTH}
       />

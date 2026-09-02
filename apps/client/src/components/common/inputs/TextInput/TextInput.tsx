@@ -39,7 +39,7 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
     });
 
     // A multiline field asks to grow taller than the single-line default via `minHeight` in its
-    // own `style` prop (e.g. `{ minHeight: 100, textAlignVertical: 'top' }`) - but every fixed
+    // own `style` prop (normally `commonInputStyles.multiline`) - but every fixed
     // `height` already in the chain (this component's own default above, and the shared
     // `commonInputStyles.input` most callers redundantly re-include alongside their `minHeight`)
     // sits in the very same flattened style object as that `minHeight`. Yoga resolves an explicit

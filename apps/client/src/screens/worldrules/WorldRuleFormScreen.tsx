@@ -376,7 +376,7 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_rule_description_placeholder')}
         value={description || ''}
         onChangeText={setDescription}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -394,7 +394,7 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_piece_behavior_placeholder')}
         value={behavior || ''}
         onChangeText={setBehavior}
-        style={commonInputStyles.input}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -403,7 +403,7 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_piece_usability_placeholder')}
         value={usability || ''}
         onChangeText={setUsability}
-        style={commonInputStyles.input}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -412,7 +412,7 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_piece_danger_placeholder')}
         value={danger || ''}
         onChangeText={setDanger}
-        style={commonInputStyles.input}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -421,7 +421,7 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_rule_extra_notes_placeholder')}
         value={extraNotes || ''}
         onChangeText={setExtraNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 

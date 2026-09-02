@@ -281,7 +281,7 @@ const PackFormScreen = () => {
           value={description}
           onChangeText={setDescription}
           placeholder={t('description')}
-          style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+          style={commonInputStyles.multiline}
           multiline
         />
         <Text style={styles.label}>{t('language')}</Text>

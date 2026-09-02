@@ -212,7 +212,7 @@ const PlotFormScreen = () => {
         placeholder={t('plot_details_placeholder')}
         value={details}
         onChangeText={setDetails}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 

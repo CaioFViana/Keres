@@ -186,6 +186,12 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
           } as any)
         : {}),
     },
+    // The standard text area used by forms. `TextInput` clears the single-line `height` whenever
+    // it receives a `minHeight`, so this is deliberately a minimum rather than a fixed height.
+    multiline: {
+      minHeight: 5 * 20,
+      textAlignVertical: 'top',
+    },
     customComponentInput: {
       paddingHorizontal: 0,
       minHeight: 0,

@@ -334,7 +334,7 @@ const ChapterFormScreen = () => {
         placeholder={t('summary_placeholder')}
         value={summary || ''}
         onChangeText={setSummary}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -380,7 +380,7 @@ const ChapterFormScreen = () => {
         placeholder={t('extra_notes_placeholder')}
         value={extraNotes || ''}
         onChangeText={setExtraNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 

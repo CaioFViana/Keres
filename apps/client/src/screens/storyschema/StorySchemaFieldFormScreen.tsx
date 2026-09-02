@@ -231,7 +231,7 @@ const StorySchemaFieldFormScreen = () => {
         placeholder={t('attribute_description_placeholder')}
         value={description || ''}
         onChangeText={setDescription}
-        style={[commonInputStyles.input, { minHeight: 3 * 20, textAlignVertical: 'top' }]}
+        style={[commonInputStyles.multiline, { minHeight: 3 * 20 }]}
         multiline
       />
 

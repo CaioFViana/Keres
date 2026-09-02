@@ -1,13 +1,13 @@
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { themeDisplayOptions } from '@keres/shared';
+import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { themeDisplayOptions } from '@keres/shared';
 import { getLanguageOptions } from '../../../../utils/i18n';
 
 interface StoryFieldsFormProps {
@@ -111,7 +111,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
         placeholder={t('description_placeholder')}
         value={description || ''}
         onChangeText={onDescriptionChange}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
         editable={editable}
       />
@@ -176,7 +176,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
         placeholder={t('extra_notes_placeholder')}
         value={extraNotes || ''}
         onChangeText={onExtraNotesChange}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
         editable={editable}
       />

@@ -338,7 +338,53 @@
     "statStrengths": [],
     "settings": {
       "statSystem": false,
-      "statNotation": "letter"
+      "statNotation": "letter",
+      "vocabulary": {
+        "version": 1,
+        "language": "en",
+        "terms": {
+          "Character": {
+            "singular": "Character",
+            "plural": "Characters",
+            "grammaticalGender": "neutral"
+          },
+          "Location": {
+            "singular": "Setting",
+            "plural": "Settings",
+            "grammaticalGender": "neutral"
+          },
+          "Chapter": {
+            "singular": "Chapter",
+            "plural": "Chapters",
+            "grammaticalGender": "neutral"
+          },
+          "Scene": {
+            "singular": "Scene",
+            "plural": "Scenes",
+            "grammaticalGender": "neutral"
+          },
+          "Event": {
+            "singular": "Story Event",
+            "plural": "Story Events",
+            "grammaticalGender": "neutral"
+          },
+          "Item": {
+            "singular": "Story Object",
+            "plural": "Story Objects",
+            "grammaticalGender": "neutral"
+          },
+          "WorldRule": {
+            "singular": "Story Rule",
+            "plural": "Story Rules",
+            "grammaticalGender": "neutral"
+          },
+          "Choice": {
+            "singular": "Narrative Choice",
+            "plural": "Narrative Choices",
+            "grammaticalGender": "neutral"
+          }
+        }
+      }
     }
   }
 }

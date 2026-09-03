@@ -37,6 +37,7 @@ type GalleryMediaById = Record<
 interface UseLocationMapCanvasActionsOptions {
   content: LocationMapContentType;
   setContent: Dispatch<SetStateAction<LocationMapContentType>>;
+  placementOrigin?: () => { x: number; y: number };
   galleries: GallerySelect[];
   locations: LocationSelect[];
   maps: LocationMapSelect[];
@@ -61,6 +62,7 @@ interface UseLocationMapCanvasActionsOptions {
 export function useLocationMapCanvasActions({
   content,
   setContent,
+  placementOrigin,
   galleries,
   locations,
   maps,
@@ -142,20 +144,29 @@ export function useLocationMapCanvasActions({
         }
         sized.push({ galleryId, width, height });
       }
-      setContent((current) => appendImagesToMap(current, sized));
+      setContent((current) =>
+        appendImagesToMap(current, sized, placementOrigin?.() ?? { x: 80, y: 80 }),
+      );
     },
-    [galleryMediaById, setContent],
+    [galleryMediaById, placementOrigin, setContent],
   );
   const addLocations = useCallback(
-    (values: string[]) => setContent((current) => appendLocationsToMap(current, values)),
-    [setContent],
+    (values: string[]) =>
+      setContent((current) =>
+        appendLocationsToMap(current, values, placementOrigin?.() ?? { x: 80, y: 80 }),
+      ),
+    [placementOrigin, setContent],
   );
   const addMarker = useCallback(
     () =>
       setContent((current) =>
-        appendMarkersToMap(current, [{ title: t('location_map_marker_default_title') }]),
+        appendMarkersToMap(
+          current,
+          [{ title: t('location_map_marker_default_title') }],
+          placementOrigin?.() ?? { x: 80, y: 80 },
+        ),
       ),
-    [setContent, t],
+    [placementOrigin, setContent, t],
   );
   const handleResizeImageDirect = useCallback(
     (imageId: string, width: number, height: number) => {

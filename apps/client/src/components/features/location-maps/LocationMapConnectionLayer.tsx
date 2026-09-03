@@ -1,4 +1,10 @@
-import type { LocationMapContentType } from '@keres/shared';
+import {
+  clipSpatialSegment,
+  spatialRectIntersects,
+  type LocationMapContentType,
+  type SpatialPoint,
+  type SpatialRect,
+} from '@keres/shared';
 import React, { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
@@ -27,6 +33,8 @@ interface Props {
   connectionDrag: { fromNodeId: string; x: number; y: number } | null;
   originX: number;
   originY: number;
+  contentScale: number;
+  renderWindow: SpatialRect;
   background: string;
   primary: string;
 }
@@ -44,6 +52,8 @@ type ConnectionPath = {
   label?: string | null;
   x: number;
   y: number;
+  start: SpatialPoint;
+  end: SpatialPoint;
 };
 type ContainsArrow = ConnectionPath & { arrow: string; arrowHalo: string };
 type MarkerConnectionPath = ConnectionPath & {
@@ -179,6 +189,8 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   connectionDrag,
   originX,
   originY,
+  contentScale,
+  renderWindow,
   background,
   primary,
 }) => {
@@ -218,6 +230,8 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
         label: connection.label,
         x: (from.x + to.x) / 2,
         y: (from.y + to.y) / 2,
+        start,
+        end,
       };
       connectionCacheRef.current.set(id, { relation: connection, from, to, path });
       return [path];
@@ -249,6 +263,8 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
         label: relation.label,
         x: (from.x + to.x) / 2,
         y: (from.y + to.y) / 2,
+        start,
+        end: tip,
       };
       containsCacheRef.current.set(id, { relation, from, to, arrow });
       return [arrow];
@@ -279,6 +295,8 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
           label: connection.label,
           x: (from.x + to.x) / 2,
           y: (from.y + to.y) / 2,
+          start,
+          end,
         },
       ];
     });
@@ -288,16 +306,63 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
     const source = [...content.nodes, ...(content.markers ?? [])].find(
       (point) => point.id === connectionDrag.fromNodeId,
     );
-    return source ? `M ${source.x} ${source.y} L ${connectionDrag.x} ${connectionDrag.y}` : null;
-  }, [connectionDrag, content.markers, content.nodes]);
+    const segment = source
+      ? clipSpatialSegment(source, { x: connectionDrag.x, y: connectionDrag.y }, renderWindow)
+      : null;
+    return segment
+      ? `M ${segment.from.x} ${segment.from.y} L ${segment.to.x} ${segment.to.y}`
+      : null;
+  }, [connectionDrag, content.markers, content.nodes, renderWindow]);
+  const visibleConnections = useMemo(
+    () => connectionPaths.flatMap((path) => clippedPath(path, renderWindow)),
+    [connectionPaths, renderWindow],
+  );
+  const visibleContains = useMemo(
+    () =>
+      containsArrows.flatMap((arrow) => {
+        const [path] = clippedPath(arrow, renderWindow);
+        if (!path) return [];
+        const angle = Math.atan2(path.end.y - path.start.y, path.end.x - path.start.x);
+        return [
+          {
+            ...path,
+            arrow: arrowHeadPoints(path.end.x, path.end.y, angle, 10),
+            arrowHalo: arrowHeadPoints(path.end.x, path.end.y, angle, 13),
+          },
+        ];
+      }),
+    [containsArrows, renderWindow],
+  );
+  const visibleMarkerConnections = useMemo(
+    () =>
+      markerConnectionPaths.flatMap((connection) => {
+        const [path] = clippedPath(connection, renderWindow);
+        if (!path) return [];
+        const angle = Math.atan2(path.end.y - path.start.y, path.end.x - path.start.x);
+        return [
+          {
+            ...path,
+            ...(connection.directed
+              ? {
+                  arrow: arrowHeadPoints(path.end.x, path.end.y, angle, 10),
+                  arrowHalo: arrowHeadPoints(path.end.x, path.end.y, angle, 13),
+                }
+              : {}),
+          },
+        ];
+      }),
+    [markerConnectionPaths, renderWindow],
+  );
 
   return (
     <Svg width={width} height={height} pointerEvents="none" style={[styles.canvas, { zIndex: 1 }]}>
-      <G transform={`translate(${-originX} ${-originY})`}>
-        {connectionPaths.map((connection) => (
+      <G
+        transform={`translate(${-originX * contentScale} ${-originY * contentScale}) scale(${contentScale})`}
+      >
+        {visibleConnections.map((connection) => (
           <ConnectionPathView key={connection.id} path={connection} background={background} />
         ))}
-        {containsArrows.map((arrow) => (
+        {visibleContains.map((arrow) => (
           <ContainsArrowView key={arrow.id} arrow={arrow} background={background} />
         ))}
         {connectionPath && (
@@ -309,7 +374,7 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
             strokeWidth={2}
           />
         )}
-        {markerConnectionPaths.map((connection) => (
+        {visibleMarkerConnections.map((connection) => (
           <MarkerConnectionView
             key={connection.id}
             connection={connection}
@@ -326,3 +391,18 @@ const styles = StyleSheet.create({
 });
 
 export default LocationMapConnectionLayer;
+
+function clippedPath<T extends ConnectionPath>(path: T, window: SpatialRect): T[] {
+  const segment = clipSpatialSegment(path.start, path.end, window);
+  if (!segment) return [];
+  const labelVisible = spatialRectIntersects({ x: path.x, y: path.y, width: 1, height: 1 }, window);
+  return [
+    {
+      ...path,
+      path: `M ${segment.from.x} ${segment.from.y} L ${segment.to.x} ${segment.to.y}`,
+      start: segment.from,
+      end: segment.to,
+      label: labelVisible ? path.label : null,
+    },
+  ];
+}

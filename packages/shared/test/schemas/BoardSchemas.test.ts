@@ -15,6 +15,17 @@ describe('BoardContentSchema', () => {
     expect(validateBoardContent({ nodes: [], edges: [] })).toEqual({ nodes: [], edges: [] });
   });
 
+  it('rejects a Board whose drawable envelope exceeds the shared safety domain', () => {
+    expect(() =>
+      BoardContentSchema.parse({
+        nodes: [
+          { id: nodeId, kind: 'note', x: 100_000, y: 0, title: 'Far', body: null },
+        ],
+        edges: [],
+      }),
+    ).toThrow(/spatial canvas envelope/);
+  });
+
   it('defaults a new board to an empty drawing', () => {
     expect(CreateBoardDataSchema.parse({ name: 'Royal family' })).toMatchObject({
       name: 'Royal family',

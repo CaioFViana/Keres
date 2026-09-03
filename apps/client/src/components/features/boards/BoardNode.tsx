@@ -38,6 +38,8 @@ interface Props {
   /** Surface translation for the world-coordinate canvas. */
   positionOffsetX?: number;
   positionOffsetY?: number;
+  /** Baked viewport scale so the native surface can stay in screen pixels. */
+  positionScale?: number;
   /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
   galleryMedia?: BoardGalleryMedia | null;
   summary?: BoardEntitySummary | null;
@@ -68,6 +70,7 @@ const BoardNodeView: React.FC<Props> = ({
   scale,
   positionOffsetX = 0,
   positionOffsetY = 0,
+  positionScale = 1,
   galleryMedia,
   summary,
   onSelect,
@@ -260,10 +263,12 @@ const BoardNodeView: React.FC<Props> = ({
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: node.x + positionOffsetX,
-          top: node.y + positionOffsetY,
+          left: (node.x + positionOffsetX) * positionScale,
+          top: (node.y + positionOffsetY) * positionScale,
           width: size.width,
           height: size.height,
+          transform: [{ scale: positionScale }],
+          transformOrigin: 'top left' as const,
           borderRadius: 10,
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -354,7 +359,17 @@ const BoardNodeView: React.FC<Props> = ({
           zIndex: 2,
         },
       }),
-    [colors, ghost, hasGalleryImage, node, positionOffsetX, positionOffsetY, selected, size],
+    [
+      colors,
+      ghost,
+      hasGalleryImage,
+      node,
+      positionOffsetX,
+      positionOffsetY,
+      positionScale,
+      selected,
+      size,
+    ],
   );
 
   const cardAppearance =

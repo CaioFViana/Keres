@@ -1,11 +1,12 @@
 import type { CanvasWorldBounds } from './growingCanvasBounds';
+import { MAX_SPATIAL_WORLD_COORDINATE } from '@keres/shared';
 
 /**
  * A generous guard against a malformed gesture creating an impractically large native surface.
  * Ordinary editing remains effectively unlimited, while one bad pointer value cannot allocate
  * millions of pixels of SVG and React Native layout at once.
  */
-export const MAX_CANVAS_WORLD_COORDINATE = 16_384;
+export const MAX_CANVAS_WORLD_COORDINATE = MAX_SPATIAL_WORLD_COORDINATE;
 
 export interface CanvasDragFootprint {
   /** Distance from the item's position to its left edge. */

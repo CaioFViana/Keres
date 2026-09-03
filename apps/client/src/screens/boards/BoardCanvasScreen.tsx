@@ -378,7 +378,8 @@ const BoardCanvasScreen = () => {
     setContent((current) => {
       let next = current;
       created = [];
-      const origin = { x: 80, y: 80 };
+      const center = canvasRef.current?.viewportWorldCenter() ?? { x: 160, y: 160 };
+      const origin = { x: center.x - 80, y: center.y - 40 };
       for (const value of values) {
         const decoded = decodeBoardPinValue(value);
         if (!decoded) continue;
@@ -422,7 +423,8 @@ const BoardCanvasScreen = () => {
         ...current.nodes.map((node) => node.id),
         ...current.edges.map((edge) => edge.id),
       ]);
-      const position = nextStaggeredPosition(current, { x: 120, y: 120 });
+      const center = canvasRef.current?.viewportWorldCenter() ?? { x: 200, y: 160 };
+      const position = nextStaggeredPosition(current, { x: center.x - 110, y: center.y - 40 });
       created = {
         id: generateBoardLocalId(existing),
         kind: 'note',

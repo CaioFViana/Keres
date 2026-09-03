@@ -23,6 +23,8 @@ interface Props {
   /** Surface translation for the world-coordinate canvas. */
   positionOffsetX?: number;
   positionOffsetY?: number;
+  /** Baked viewport scale so the native surface can stay in screen pixels. */
+  positionScale?: number;
   onSelect: (nodeId: string) => void;
   onMove: (nodeId: string, x: number, y: number) => void;
   onDragStart: (nodeId: string) => void;
@@ -48,6 +50,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   scale,
   positionOffsetX = 0,
   positionOffsetY = 0,
+  positionScale = 1,
   onSelect,
   onMove,
   onDragStart,
@@ -229,9 +232,11 @@ const LocationMapNodeView: React.FC<Props> = ({
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: node.x + positionOffsetX - LOCATION_MAP_NODE_SIZE / 2,
-          top: node.y + positionOffsetY - LOCATION_MAP_NODE_SIZE / 2,
+          left: (node.x + positionOffsetX - LOCATION_MAP_NODE_SIZE / 2) * positionScale,
+          top: (node.y + positionOffsetY - LOCATION_MAP_NODE_SIZE / 2) * positionScale,
           width: LOCATION_MAP_NODE_SIZE,
+          transform: [{ scale: positionScale }],
+          transformOrigin: 'top left' as const,
           alignItems: 'center',
           zIndex: node.zIndex ?? 0,
           ...(Platform.OS === 'web'
@@ -311,7 +316,17 @@ const LocationMapNodeView: React.FC<Props> = ({
           zIndex: 4,
         },
       }),
-    [colors, node.color, node.x, node.y, node.zIndex, positionOffsetX, positionOffsetY, selected],
+    [
+      colors,
+      node.color,
+      node.x,
+      node.y,
+      node.zIndex,
+      positionOffsetX,
+      positionOffsetY,
+      positionScale,
+      selected,
+    ],
   );
 
   return (

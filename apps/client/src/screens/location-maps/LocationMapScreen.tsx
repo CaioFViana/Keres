@@ -343,6 +343,7 @@ const LocationMapScreen = () => {
   } = useLocationMapCanvasActions({
     content,
     setContent,
+    placementOrigin: () => canvasRef.current?.viewportWorldCenter() ?? { x: 80, y: 80 },
     galleries,
     locations,
     maps,

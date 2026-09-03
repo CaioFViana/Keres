@@ -1,17 +1,17 @@
-import type { LocationMapContentType } from '@keres/shared';
-import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
+import { spatialRectIntersects, type LocationMapContentType } from '@keres/shared';
+import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
-import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
-import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
+import {
+  type FreeformCanvasHandle,
+  useFreeformCanvasViewport,
+} from '@/src/hooks/useFreeformCanvasViewport';
 import {
   locationMapCanvasBounds,
-  LOCATION_MAP_CANVAS_PADDING,
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
-import { limitCanvasDragPosition } from '../../../utils/canvasDragBounds';
+import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,
   type LocationMapContains,
@@ -19,18 +19,14 @@ import LocationMapConnectionLayer, {
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
-export type LocationMapCanvasHandle = PanZoomCanvasHandle;
+export type LocationMapCanvasHandle = FreeformCanvasHandle;
 export type { LocationMapConnection, LocationMapContains } from './LocationMapConnectionLayer';
 
 interface Props {
   content: LocationMapContentType;
-  /** Resolved URIs of the gallery media used as image bases, keyed by gallery id. */
   imageUris: Record<string, string | null>;
-  /** Display names of the locations, keyed by location id. */
   nodeNames: Record<string, string>;
-  /** Real `connected_to` relations between locations, drawn as solid lines. */
   connections: LocationMapConnection[];
-  /** Real `contains` relations between locations, drawn as dashed directional arrows. */
   contains: LocationMapContains[];
   selectedImageId: string | null;
   selectedNodeId: string | null;
@@ -57,12 +53,7 @@ interface Props {
   onConnectPoints: (fromPointId: string, toPointId: string) => void;
 }
 
-type ActiveDrag = {
-  kind: 'image' | 'node' | 'marker';
-  id: string;
-  x: number;
-  y: number;
-};
+type ActiveDrag = { kind: 'image' | 'node' | 'marker'; id: string; x: number; y: number };
 type ConnectionDrag = { fromNodeId: string; x: number; y: number };
 
 const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
@@ -105,9 +96,34 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
-    // The drag is measured in the surface coordinates from press time. That surface can gain a
-    // negative-world margin while the pointer moves, so do not rebase a running gesture on it.
-    const dragWorldOriginRef = useRef({ x: 0, y: 0 });
+    const dragLocalOriginRef = useRef({ x: 0, y: 0 });
+    const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
+
+    const publishPendingDrag = useCallback(() => {
+      dragFrameRef.current = null;
+      const next = pendingDragRef.current;
+      pendingDragRef.current = null;
+      if (!next) return;
+      activeDragRef.current = next;
+      setActiveDrag(next);
+    }, []);
+    const scheduleDrag = useCallback(() => {
+      if (dragFrameRef.current === null)
+        dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
+    }, [publishPendingDrag]);
+    const adjustDraggedItemForAutoPan = useCallback(
+      (delta: { x: number; y: number }) => {
+        const current = pendingDragRef.current ?? activeDragRef.current;
+        if (!current) return;
+        dragAutoPanOffsetRef.current = {
+          x: dragAutoPanOffsetRef.current.x + delta.x,
+          y: dragAutoPanOffsetRef.current.y + delta.y,
+        };
+        pendingDragRef.current = { ...current, x: current.x + delta.x, y: current.y + delta.y };
+        scheduleDrag();
+      },
+      [scheduleDrag],
+    );
     const layoutContent = useMemo(() => {
       if (!activeDrag) return content;
       if (activeDrag.kind === 'image') {
@@ -118,13 +134,14 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           ),
         };
       }
-      if (activeDrag.kind === 'node')
+      if (activeDrag.kind === 'node') {
         return {
           ...content,
           nodes: content.nodes.map((node) =>
             node.id === activeDrag.id ? { ...node, x: activeDrag.x, y: activeDrag.y } : node,
           ),
         };
+      }
       return {
         ...content,
         markers: (content.markers ?? []).map((marker) =>
@@ -132,209 +149,185 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         ),
       };
     }, [activeDrag, content]);
-    const requiredSize = locationMapCanvasBounds(layoutContent);
-    const size = useGrowingCanvasBounds(requiredSize);
-    const panZoom = usePanZoomCanvas(ref, size, { refitOnLayoutChange: false, freePan: true });
-    const { setChildDragging, getTransform, ...frame } = panZoom;
-    const scale = getTransform().scale;
-
-    const publishPendingDrag = useCallback(() => {
-      dragFrameRef.current = null;
-      const next = pendingDragRef.current;
-      pendingDragRef.current = null;
-      if (!next) return;
-      activeDragRef.current = next;
-      setActiveDrag(next);
-    }, []);
+    const worldBounds = locationMapCanvasBounds(layoutContent);
+    const viewport = useFreeformCanvasViewport(ref, {
+      bounds: {
+        x: worldBounds.originX,
+        y: worldBounds.originY,
+        width: worldBounds.width,
+        height: worldBounds.height,
+      },
+      onAutoPan: adjustDraggedItemForAutoPan,
+    });
+    const {
+      setChildDragging,
+      width,
+      height,
+      localOrigin,
+      bakedScale,
+      renderWindow,
+      scale,
+      worldToScreen,
+      updateAutoPan,
+      stopAutoPan,
+      containerRef,
+      handleLayout,
+      panHandlers,
+      animatedTransform,
+    } = viewport;
 
     const updateDrag = useCallback(
       (kind: ActiveDrag['kind'], id: string, x: number, y: number) => {
-        const footprint = (() => {
-          if (kind !== 'image') {
-            const point = [...content.nodes, ...(content.markers ?? [])].find(
-              (candidate) => candidate.id === id,
-            );
-            if (!point) return null;
-            return {
-              left: LOCATION_MAP_NODE_SIZE / 2,
-              top: LOCATION_MAP_NODE_SIZE / 2,
-              right: LOCATION_MAP_NODE_SIZE,
-              bottom: LOCATION_MAP_NODE_SIZE,
-            };
-          }
-          const image = content.images.find((candidate) => candidate.id === id);
-          return image ? { left: 0, top: 0, right: image.width, bottom: image.height } : null;
-        })();
-        if (!footprint) return;
-        const position = limitCanvasDragPosition(
-          { x: x + dragWorldOriginRef.current.x, y: y + dragWorldOriginRef.current.y },
-          size,
-          footprint,
-          LOCATION_MAP_CANVAS_PADDING,
-        );
-        pendingDragRef.current = {
-          kind,
-          id,
-          ...position,
+        const image =
+          kind === 'image' ? content.images.find((candidate) => candidate.id === id) : null;
+        const point =
+          kind === 'image'
+            ? image
+            : [...content.nodes, ...(content.markers ?? [])].find(
+                (candidate) => candidate.id === id,
+              );
+        if (!point) return;
+        const position = {
+          x: clampCanvasWorldCoordinate(
+            x + dragLocalOriginRef.current.x + dragAutoPanOffsetRef.current.x,
+          ),
+          y: clampCanvasWorldCoordinate(
+            y + dragLocalOriginRef.current.y + dragAutoPanOffsetRef.current.y,
+          ),
         };
-        if (dragFrameRef.current !== null) return;
-        // Pointer events can arrive more often than a screen can paint. One visual update per
-        // animation frame keeps the moving item and its lines smooth without redrawing the whole
-        // editor for every raw event.
-        dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
+        pendingDragRef.current = { kind, id, ...position };
+        updateAutoPan(
+          worldToScreen(
+            image
+              ? { x: position.x + image.width / 2, y: position.y + image.height / 2 }
+              : position,
+          ),
+        );
+        scheduleDrag();
       },
-      [content.images, content.markers, content.nodes, publishPendingDrag, size],
+      [content.images, content.markers, content.nodes, scheduleDrag, updateAutoPan, worldToScreen],
     );
-    const handleImageDragMove = useCallback(
-      (imageId: string, x: number, y: number) => updateDrag('image', imageId, x, y),
-      [updateDrag],
-    );
-    const handleNodeDragMove = useCallback(
-      (nodeId: string, x: number, y: number) => updateDrag('node', nodeId, x, y),
-      [updateDrag],
-    );
-    const handleMarkerDragMove = useCallback(
-      (markerId: string, x: number, y: number) => updateDrag('marker', markerId, x, y),
-      [updateDrag],
-    );
-
     const consumeDrag = useCallback((kind: ActiveDrag['kind'], id: string) => {
-      if (dragFrameRef.current !== null) {
-        cancelAnimationFrame(dragFrameRef.current);
-        dragFrameRef.current = null;
-      }
+      if (dragFrameRef.current !== null) cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
       const next = pendingDragRef.current ?? activeDragRef.current;
       pendingDragRef.current = null;
       activeDragRef.current = null;
       setActiveDrag(null);
       return next?.kind === kind && next.id === id ? next : null;
     }, []);
-
-    const handleImageDragStart = useCallback(() => {
-      dragWorldOriginRef.current = { x: size.originX, y: size.originY };
-      setChildDragging(true);
-    }, [setChildDragging, size.originX, size.originY]);
-    const handleNodeDragStart = useCallback(() => {
-      dragWorldOriginRef.current = { x: size.originX, y: size.originY };
-      setChildDragging(true);
-    }, [setChildDragging, size.originX, size.originY]);
-    const handleImageDragEnd = useCallback(
-      (imageId: string) => {
-        setChildDragging(false);
-        const position = consumeDrag('image', imageId);
-        if (position) onMoveImage(imageId, position.x, position.y);
+    useEffect(
+      () => () => {
+        if (dragFrameRef.current !== null) cancelAnimationFrame(dragFrameRef.current);
       },
-      [consumeDrag, onMoveImage, setChildDragging],
+      [],
     );
-    const handleNodeDragEnd = useCallback(
-      (nodeId: string) => {
+    const handleDragStart = useCallback(() => {
+      dragLocalOriginRef.current = localOrigin;
+      dragAutoPanOffsetRef.current = { x: 0, y: 0 };
+      setChildDragging(true);
+    }, [localOrigin, setChildDragging]);
+    const handleDragEnd = useCallback(
+      (kind: ActiveDrag['kind'], id: string) => {
+        stopAutoPan();
         setChildDragging(false);
-        const position = consumeDrag('node', nodeId);
-        if (position) onMoveNode(nodeId, position.x, position.y);
+        const position = consumeDrag(kind, id);
+        if (!position) return;
+        if (kind === 'image') onMoveImage(id, position.x, position.y);
+        else if (kind === 'node') onMoveNode(id, position.x, position.y);
+        else onMoveMarker(id, position.x, position.y);
       },
-      [consumeDrag, onMoveNode, setChildDragging],
-    );
-    const handleMarkerDragEnd = useCallback(
-      (markerId: string) => {
-        setChildDragging(false);
-        const position = consumeDrag('marker', markerId);
-        if (position) onMoveMarker(markerId, position.x, position.y);
-      },
-      [consumeDrag, onMoveMarker, setChildDragging],
+      [consumeDrag, onMoveImage, onMoveMarker, onMoveNode, setChildDragging, stopAutoPan],
     );
     const handleConnectionStart = useCallback(
       (nodeId: string) => {
-        const point = [...content.nodes, ...(content.markers ?? [])].find(
+        const point = [...layoutContent.nodes, ...(layoutContent.markers ?? [])].find(
           (candidate) => candidate.id === nodeId,
         );
         if (point) setConnectionDrag({ fromNodeId: nodeId, x: point.x, y: point.y });
       },
-      [content.markers, content.nodes],
+      [layoutContent.markers, layoutContent.nodes],
     );
     const handleConnectionMove = useCallback(
       (nodeId: string, dx: number, dy: number) => {
-        const point = [...content.nodes, ...(content.markers ?? [])].find(
+        const point = [...layoutContent.nodes, ...(layoutContent.markers ?? [])].find(
           (candidate) => candidate.id === nodeId,
         );
         if (point) setConnectionDrag({ fromNodeId: nodeId, x: point.x + dx, y: point.y + dy });
       },
-      [content.markers, content.nodes],
+      [layoutContent.markers, layoutContent.nodes],
     );
     const handleConnectionEnd = useCallback(
       (nodeId: string, dx: number, dy: number) => {
-        const points = [...content.nodes, ...(content.markers ?? [])];
+        const points = [...layoutContent.nodes, ...(layoutContent.markers ?? [])];
         const source = points.find((point) => point.id === nodeId);
         if (!source) return;
-        const x = source.x + dx;
-        const y = source.y + dy;
         const target = points.find(
           (point) =>
             point.id !== nodeId &&
-            Math.hypot(x - point.x, y - point.y) <= LOCATION_MAP_NODE_SIZE / 2,
+            Math.hypot(source.x + dx - point.x, source.y + dy - point.y) <=
+              LOCATION_MAP_NODE_SIZE / 2,
         );
         setConnectionDrag(null);
         if (target) onConnectPoints(nodeId, target.id);
       },
-      [content.markers, content.nodes, onConnectPoints],
+      [layoutContent.markers, layoutContent.nodes, onConnectPoints],
     );
 
-    const stackedImages = useMemo(
+    const visibleImages = useMemo(
       () =>
-        layoutContent.images
-          .map((image, order) => ({ image, order }))
-          .sort(
-            (left, right) =>
-              (left.image.zIndex ?? 0) - (right.image.zIndex ?? 0) || left.order - right.order,
-          )
-          .map(({ image }) => image),
-      [layoutContent.images],
+        layoutContent.images.filter(
+          (image) =>
+            image.id === activeDrag?.id ||
+            spatialRectIntersects(
+              { x: image.x, y: image.y, width: image.width, height: image.height },
+              renderWindow,
+            ),
+        ),
+      [activeDrag?.id, layoutContent.images, renderWindow],
     );
-    const stackedNodes = useMemo(
-      () =>
-        layoutContent.nodes
-          .map((node, order) => ({ node, order }))
-          .sort(
-            (left, right) =>
-              (left.node.zIndex ?? 0) - (right.node.zIndex ?? 0) || left.order - right.order,
-          )
-          .map(({ node }) => node),
-      [layoutContent.nodes],
-    );
-    const stackedMarkers = useMemo(
-      () =>
-        (layoutContent.markers ?? [])
-          .map((marker, order) => ({ marker, order }))
-          .sort(
-            (left, right) =>
-              (left.marker.zIndex ?? 0) - (right.marker.zIndex ?? 0) || left.order - right.order,
-          )
-          .map(({ marker }) => marker),
-      [layoutContent.markers],
-    );
-    const stackedPoints = useMemo(
+    const visiblePoints = useMemo(
       () =>
         [
-          ...stackedNodes.map((node, order) => ({ kind: 'node' as const, point: node, order })),
-          ...stackedMarkers.map((marker, order) => ({
+          ...layoutContent.nodes.map((point, order) => ({ kind: 'node' as const, point, order })),
+          ...(layoutContent.markers ?? []).map((point, order) => ({
             kind: 'marker' as const,
-            point: marker,
-            order: order + stackedNodes.length,
+            point,
+            order: order + layoutContent.nodes.length,
           })),
-        ].sort(
-          (left, right) =>
-            (left.point.zIndex ?? 0) - (right.point.zIndex ?? 0) || left.order - right.order,
-        ),
-      [stackedMarkers, stackedNodes],
+        ]
+          .filter(
+            ({ point }) =>
+              point.id === activeDrag?.id ||
+              spatialRectIntersects(
+                {
+                  x: point.x - LOCATION_MAP_NODE_SIZE / 2,
+                  y: point.y - LOCATION_MAP_NODE_SIZE / 2,
+                  width: LOCATION_MAP_NODE_SIZE,
+                  height: LOCATION_MAP_NODE_SIZE,
+                },
+                renderWindow,
+              ),
+          )
+          .sort(
+            (left, right) =>
+              (left.point.zIndex ?? 0) - (right.point.zIndex ?? 0) || left.order - right.order,
+          ),
+      [activeDrag?.id, layoutContent.markers, layoutContent.nodes, renderWindow],
     );
+
     return (
       <GraphCanvasFrame
-        width={size.width}
-        height={size.height}
-        contentOverflow="visible"
-        {...frame}
+        width={width}
+        height={height}
+        contentOverflow="hidden"
+        containerRef={containerRef}
+        handleLayout={handleLayout}
+        panHandlers={panHandlers}
+        animatedTransform={animatedTransform}
       >
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
-          {stackedImages.map((image) => (
+          {visibleImages.map((image) => (
             <LocationMapImageView
               key={image.id}
               image={image}
@@ -342,14 +335,15 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               selected={selectedImageId === image.id}
               layoutEditing={layoutEditing}
               scale={scale}
-              positionOffsetX={-size.originX}
-              positionOffsetY={-size.originY}
+              positionOffsetX={-localOrigin.x}
+              positionOffsetY={-localOrigin.y}
+              positionScale={bakedScale}
               locked={image.locked}
               onSelect={onSelectImage}
-              onMove={handleImageDragMove}
+              onMove={(id, x, y) => updateDrag('image', id, x, y)}
               onResize={onResizeImage}
-              onDragStart={handleImageDragStart}
-              onDragEnd={handleImageDragEnd}
+              onDragStart={handleDragStart}
+              onDragEnd={(id) => handleDragEnd('image', id)}
               onBringToFront={onBringImageToFront}
               onSendToBack={onSendImageToBack}
               onToggleLock={onToggleImageLock}
@@ -358,19 +352,21 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           ))}
         </View>
         <LocationMapConnectionLayer
-          width={size.width}
-          height={size.height}
+          width={width}
+          height={height}
           content={layoutContent}
           connections={connections}
           contains={contains}
           connectionDrag={connectionDrag}
-          originX={size.originX}
-          originY={size.originY}
+          originX={localOrigin.x}
+          originY={localOrigin.y}
+          contentScale={bakedScale}
+          renderWindow={renderWindow}
           background={colors.background}
           primary={colors.primary}
         />
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
-          {stackedPoints.map(({ kind, point }) => (
+          {visiblePoints.map(({ kind, point }) => (
             <LocationMapNodeView
               key={point.id}
               node={point}
@@ -383,12 +379,13 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               layoutEditing={layoutEditing}
               connectionMode={connectionMode}
               scale={scale}
-              positionOffsetX={-size.originX}
-              positionOffsetY={-size.originY}
+              positionOffsetX={-localOrigin.x}
+              positionOffsetY={-localOrigin.y}
+              positionScale={bakedScale}
               onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
-              onMove={kind === 'node' ? handleNodeDragMove : handleMarkerDragMove}
-              onDragStart={handleNodeDragStart}
-              onDragEnd={kind === 'node' ? handleNodeDragEnd : handleMarkerDragEnd}
+              onMove={(id, x, y) => updateDrag(kind, id, x, y)}
+              onDragStart={handleDragStart}
+              onDragEnd={(id) => handleDragEnd(kind, id)}
               onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
               onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
               onOpenDestination={kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination}

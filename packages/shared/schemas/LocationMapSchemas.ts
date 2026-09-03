@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
 import { BOARD_LOCAL_ID_ALPHABET, BOARD_LOCAL_ID_LENGTH } from './BoardSchemas';
 
 /**
@@ -22,6 +23,7 @@ export const MAX_LOCATION_MAP_MARKER_CONNECTIONS = 1000;
 
 /** Default icon color of a map point - the Location entity's own colour. */
 export const DEFAULT_LOCATION_MAP_NODE_COLOR = '#8BC34A';
+const LOCATION_MAP_POINT_RADIUS = 22;
 
 const LocationMapLocalIdSchema = z
   .string()
@@ -193,6 +195,29 @@ export const LocationMapContentSchema = z
           message: 'A marker connection must join two different points on this location map.',
         });
       }
+    }
+    const pointRectangles = [...content.nodes, ...(content.markers ?? [])].map((point) => ({
+      x: point.x - LOCATION_MAP_POINT_RADIUS,
+      y: point.y - LOCATION_MAP_POINT_RADIUS,
+      width: LOCATION_MAP_POINT_RADIUS * 2,
+      height: LOCATION_MAP_POINT_RADIUS * 2,
+    }));
+    if (
+      !isSpatialEnvelopeSafe([
+        ...content.images.map((image) => ({
+          x: image.x,
+          y: image.y,
+          width: image.width,
+          height: image.height,
+        })),
+        ...pointRectangles,
+      ])
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['images'],
+        message: 'Location map content exceeds the supported spatial canvas envelope.',
+      });
     }
   });
 

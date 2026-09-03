@@ -16,6 +16,19 @@ export interface LocationMapMarkerEntry {
   note?: string | null;
 }
 
+const DEFAULT_PLACEMENT = { x: 80, y: 80 };
+
+function staggeredPoint(
+  index: number,
+  origin: { x: number; y: number },
+  offset = 0,
+): { x: number; y: number } {
+  return {
+    x: origin.x + offset + (index % 4) * 24,
+    y: origin.y + offset + (index % 4) * 24,
+  };
+}
+
 /** Stores a label locally to this map, keyed by the relation's displayed source and destination. */
 export function setLocationMapRelationText(
   current: LocationMapContentType,
@@ -81,6 +94,7 @@ export function removeLocationMapPoint(
 export function appendImagesToMap(
   current: LocationMapContentType,
   entries: LocationMapImageEntry[],
+  origin = DEFAULT_PLACEMENT,
 ): LocationMapContentType {
   const existing = new Set([
     ...current.images.map((image) => image.id),
@@ -97,8 +111,7 @@ export function appendImagesToMap(
         {
           id: generateLocationMapLocalId(existing),
           galleryId: entry.galleryId,
-          x: 80 + (index % 4) * 24,
-          y: 80 + (index % 4) * 24,
+          ...staggeredPoint(index, origin),
           width: entry.width,
           height: entry.height,
           locked: false,
@@ -114,6 +127,7 @@ export function appendImagesToMap(
 export function appendLocationsToMap(
   current: LocationMapContentType,
   locationIds: string[],
+  origin = DEFAULT_PLACEMENT,
 ): LocationMapContentType {
   const existing = new Set([
     ...current.images.map((image) => image.id),
@@ -130,8 +144,7 @@ export function appendLocationsToMap(
         {
           id: generateLocationMapLocalId(existing),
           locationId,
-          x: 120 + (index % 4) * 24,
-          y: 120 + (index % 4) * 24,
+          ...staggeredPoint(index, origin, 40),
           icon: getEntityAppearance('Location').icon,
           color: DEFAULT_LOCATION_MAP_NODE_COLOR,
           destinationMapId: null,
@@ -147,6 +160,7 @@ export function appendLocationsToMap(
 export function appendMarkersToMap(
   current: LocationMapContentType,
   entries: LocationMapMarkerEntry[],
+  origin = DEFAULT_PLACEMENT,
 ): LocationMapContentType {
   const existing = new Set([
     ...current.images.map((image) => image.id),
@@ -158,8 +172,7 @@ export function appendMarkersToMap(
     const index = next.images.length + next.nodes.length + (next.markers?.length ?? 0);
     const marker = {
       id: generateLocationMapLocalId(existing),
-      x: 160 + (index % 4) * 24,
-      y: 160 + (index % 4) * 24,
+      ...staggeredPoint(index, origin, 80),
       title: entry.title,
       note: entry.note ?? null,
       icon: 'pin',

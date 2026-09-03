@@ -27,8 +27,8 @@ export function locationMapCanvasBounds(
   for (const point of [...content.nodes, ...(content.markers ?? [])]) {
     minX = Math.min(minX, point.x - LOCATION_MAP_NODE_SIZE / 2);
     minY = Math.min(minY, point.y - LOCATION_MAP_NODE_SIZE / 2);
-    maxX = Math.max(maxX, point.x + LOCATION_MAP_NODE_SIZE);
-    maxY = Math.max(maxY, point.y + LOCATION_MAP_NODE_SIZE);
+    maxX = Math.max(maxX, point.x + LOCATION_MAP_NODE_SIZE / 2);
+    maxY = Math.max(maxY, point.y + LOCATION_MAP_NODE_SIZE / 2);
   }
   const originX = minX < 0 ? minX - LOCATION_MAP_CANVAS_PADDING : 0,
     originY = minY < 0 ? minY - LOCATION_MAP_CANVAS_PADDING : 0;

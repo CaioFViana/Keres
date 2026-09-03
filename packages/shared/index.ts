@@ -117,6 +117,7 @@ export * from './utils/storyZip';
 export * from './utils/reviveDates';
 export * from './theme/ThemeColors';
 export * from './theme/palettes';
+export * from './graphs/spatialCanvas';
 
 // Domain rules that hold on both sides of synchronization: the client applies them before writing to
 // the operation log and the server applies them again on receipt. Each of them once existed

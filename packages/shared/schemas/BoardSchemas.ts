@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
 
 /**
  * A Board is a named drawing: pins of existing entities, free notes, and arrows that are not
@@ -29,6 +30,7 @@ export const BOARD_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 
 export const MAX_BOARD_NODES = 500;
 export const MAX_BOARD_EDGES = 1000;
+const BOARD_MAX_NODE_EXTENT = 720;
 export const BOARD_CARD_DISPLAY_MODES = ['compact', 'summary', 'note', 'summary-and-note'] as const;
 export type BoardCardDisplayMode = (typeof BOARD_CARD_DISPLAY_MODES)[number];
 
@@ -146,6 +148,24 @@ export const BoardContentSchema = z
           message: 'Edge refers to a node that is not on this board.',
         });
       }
+    }
+    // A freeform Board may be large, but an unbounded JSON coordinate would make exports and
+    // geometry unsafe even after the interactive canvas becomes virtualized.
+    if (
+      !isSpatialEnvelopeSafe(
+        content.nodes.map((node) => ({
+          x: node.x,
+          y: node.y,
+          width: node.width ?? BOARD_MAX_NODE_EXTENT,
+          height: node.height ?? BOARD_MAX_NODE_EXTENT,
+        })),
+      )
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['nodes'],
+        message: 'Board nodes exceed the supported spatial canvas envelope.',
+      });
     }
   });
 

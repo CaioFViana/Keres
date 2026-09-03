@@ -15,6 +15,8 @@ interface Props {
   /** Surface translation for the world-coordinate canvas. */
   positionOffsetX?: number;
   positionOffsetY?: number;
+  /** Baked viewport scale so the native surface can stay in screen pixels. */
+  positionScale?: number;
   /** When locked, dragging on the image pans the canvas instead of moving the image. */
   locked: boolean;
   onSelect: (imageId: string) => void;
@@ -44,6 +46,7 @@ const LocationMapImageView: React.FC<Props> = ({
   scale,
   positionOffsetX = 0,
   positionOffsetY = 0,
+  positionScale = 1,
   locked,
   onSelect,
   onMove,
@@ -188,10 +191,12 @@ const LocationMapImageView: React.FC<Props> = ({
       StyleSheet.create({
         image: {
           position: 'absolute',
-          left: image.x + positionOffsetX,
-          top: image.y + positionOffsetY,
+          left: (image.x + positionOffsetX) * positionScale,
+          top: (image.y + positionOffsetY) * positionScale,
           width: image.width,
           height: image.height,
+          transform: [{ scale: positionScale }],
+          transformOrigin: 'top left' as const,
           backgroundColor: colors.surface,
           borderWidth: selected ? 2.5 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -235,6 +240,7 @@ const LocationMapImageView: React.FC<Props> = ({
       image.y,
       positionOffsetX,
       positionOffsetY,
+      positionScale,
       selected,
     ],
   );

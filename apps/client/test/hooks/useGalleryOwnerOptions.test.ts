@@ -19,6 +19,7 @@ const rows = [
   [{ id: 'note-1', name: null }],
   [{ id: 'scene-1', name: 'Prólogo' }],
   [{ id: 'item-1', name: 'Chave' }],
+  [{ id: 'world-piece-1', name: 'Hidra', section: 'fauna' }],
 ];
 
 function queryFor(result: unknown) {
@@ -35,6 +36,7 @@ beforeEach(() => {
   db.select.mockImplementationOnce(() => queryFor(rows[2]));
   db.select.mockImplementationOnce(() => queryFor(rows[3]));
   db.select.mockImplementationOnce(() => queryFor(rows[4]));
+  db.select.mockImplementationOnce(() => queryFor(rows[5]));
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -61,6 +63,11 @@ it('loads every owner type and exposes both flat and grouped picker options', as
     expect.objectContaining({ label: 'note: unnamed', value: 'Note:note-1' }),
     expect.objectContaining({ label: 'scene: Prólogo', value: 'Scene:scene-1' }),
     expect.objectContaining({ label: 'item: Chave', value: 'Item:item-1' }),
+    expect.objectContaining({
+      label: 'world_piece: Hidra',
+      value: 'WorldRule:world-piece-1',
+      worldPieceSection: 'fauna',
+    }),
   ]);
   expect(result.current.optionsByValue.get('Note:note-1')?.name).toBe('unnamed');
   expect(result.current.groupedOptions).toEqual(
@@ -73,6 +80,11 @@ it('loads every owner type and exposes both flat and grouped picker options', as
       expect.objectContaining({
         key: 'Note',
         options: [{ label: 'unnamed', value: 'Note:note-1' }],
+      }),
+      expect.objectContaining({
+        key: 'WorldRule:fauna',
+        label: 'world_piece_section_fauna',
+        options: [{ label: 'Hidra', value: 'WorldRule:world-piece-1', color: '#C62828' }],
       }),
     ]),
   );
@@ -94,5 +106,5 @@ it('does not query before a story is selected and can recover with reload after 
   db.select.mockReset();
   for (const row of rows) db.select.mockImplementationOnce(() => queryFor(row));
   await act(async () => failed.result.current.reload());
-  expect(failed.result.current.options).toHaveLength(5);
+  expect(failed.result.current.options).toHaveLength(6);
 });

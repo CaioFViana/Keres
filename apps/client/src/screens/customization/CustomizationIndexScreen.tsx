@@ -49,6 +49,12 @@ const CustomizationIndexScreen = () => {
 
   const entries: Entry[] = [
     {
+      route: 'StoryAppearance',
+      icon: 'color-palette-outline',
+      titleKey: 'appearance_title',
+      descriptionKey: 'customization_theme_description',
+    },
+    {
       route: 'Vocabulary',
       icon: 'text-outline',
       titleKey: 'vocabulary_title',

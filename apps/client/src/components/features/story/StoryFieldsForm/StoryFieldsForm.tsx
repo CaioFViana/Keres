@@ -1,7 +1,6 @@
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { themeDisplayOptions } from '@keres/shared';
 import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,15 +31,13 @@ interface StoryFieldsFormProps {
   onFavoriteBehaviorChange: (value: FavoriteBehavior) => void;
   extraNotes: string | null;
   onExtraNotesChange: (value: string | null) => void;
-  theme: string | null;
-  onThemeChange: (value: string | null) => void;
   /** `false` em telas somente-leitura (papel de leitor) - desabilita todo campo. */
   editable?: boolean;
 }
 
 /**
  * A story's "core" fields (title, type, description, genre, author, language, favourite,
- * favourite behaviour, extra notes, theme) - what `StorySettingsScreen` (inside the
+ * favourite behaviour and extra notes) - what `StorySettingsScreen` (inside the
  * drawer, editing only) and `StoryFormScreen` (outside the story stack, creation+editing)
  * duplicated almost byte for byte. Type and `favoriteBehavior` are owner policy on the server;
  * the screens pass `typeDisabled` / `favoriteBehaviorDisabled` for writers. Whatever is not
@@ -68,12 +65,10 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
   onFavoriteBehaviorChange,
   extraNotes,
   onExtraNotesChange,
-  theme,
-  onThemeChange,
   editable = true,
 }) => {
   const { t } = useTranslation();
-  const { colors, setTheme: applyTheme } = useTheme();
+  const { colors } = useTheme();
   const commonInputStyles = getCommonInputStyles(colors);
 
   const storyTypeOptions = [
@@ -81,10 +76,6 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
     { label: t('branching'), value: 'branching' },
   ];
   const languageOptions = getLanguageOptions(t);
-  const themeOptions = themeDisplayOptions.map((option) => ({
-    label: t(option.labelKey),
-    value: option.value,
-  }));
 
   return (
     <>
@@ -181,17 +172,6 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
         editable={editable}
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
-      <SingleSelectPill
-        options={themeOptions}
-        value={theme}
-        onValueChange={(value) => {
-          onThemeChange(value);
-          applyTheme(value || 'default');
-        }}
-        placeholder={t('select_theme')}
-        disabled={!editable}
-      />
     </>
   );
 };

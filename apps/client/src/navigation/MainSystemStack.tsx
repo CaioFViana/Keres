@@ -35,6 +35,7 @@ import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
 import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import StoryAppearanceScreen from '../screens/customization/StoryAppearanceScreen';
 import VocabularyScreen from '../screens/customization/VocabularyScreen';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
 import BoardListScreen from '../screens/boards/BoardListScreen';
@@ -497,6 +498,7 @@ const CustomizationStack = createNativeStackNavigator<CustomizationStackParamLis
  */
 export type CustomizationStackParamList = {
   CustomizationIndex: undefined;
+  StoryAppearance: undefined;
   Vocabulary: undefined;
   StoryCalendarList: undefined;
   StoryCalendarForm: { calendarId?: string };
@@ -518,6 +520,7 @@ const CustomizationStackNavigator = () => {
   return (
     <CustomizationStack.Navigator screenOptions={{ headerShown: false }}>
       <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
+      <CustomizationStack.Screen name="StoryAppearance" component={StoryAppearanceScreen} />
       <CustomizationStack.Screen name="Vocabulary" component={VocabularyScreen} />
       <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
       <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />

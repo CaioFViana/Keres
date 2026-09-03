@@ -1,20 +1,21 @@
-# Séries, canon e crossovers entre Histórias
+# Séries, arcos e crossovers entre Histórias
 
 **Status:** análise técnica e de produto; não é plano de implementação.
 
-## Decisão resumida
+## Decisão de escopo
 
-Keres deve tratar três necessidades como capacidades diferentes:
+**Canon compartilhado não entra no produto.** Uma entidade única, editável e usada por várias Histórias criaria uma nova raiz de propriedade e transformaria Keres num produto de gestão de universos compartilhados. Não é o problema que se quer resolver agora.
 
-1. **Série:** organização e leitura editorial de várias Histórias.
-2. **Crossover:** uma História ou entidade referencia outra História ou entidade.
-3. **Canon compartilhado:** uma entidade existe uma única vez e pode ser usada por várias Histórias.
+As direções a avaliar são:
 
-Uma tela de coleção resolve somente a primeira. Começar pelo canon compartilhado seria uma mudança estrutural ampla e arriscada. A sequência recomendada é:
+| Opção | Ideia central | Resultado | Viabilidade |
+| --- | --- | --- | --- |
+| **A. Série + ligações** | Histórias independentes entram numa Série e podem se referenciar explicitamente. | Crossovers entre obras, preservando isolamento. | Média/alta |
+| **B. Arcos numa História** | Uma História abriga vários Arcos; por exemplo, cada livro ou jogo é um Arco. | Série no mesmo mundo, com dados e customização comuns. | Média |
+| **C. História derivada** | Uma História filha é um overlay sobre uma História de origem. | Isolamento narrativo com base comum. | Baixa |
+| **D. Arcos + referências externas** | B para a série principal, A para menções e crossovers pontuais. | Melhor cobertura sem canon vivo. | Média, em duas etapas |
 
-1. `Series` para agrupar Histórias;
-2. `StoryLink` e referências externas explícitas para crossovers;
-3. avaliar um `Canon` opcional, com entidades compartilhadas e usos locais, somente após validar a demanda.
+A recomendação é **D, entregue em duas fases**: primeiro Arcos dentro de uma História; depois `Series`, `StoryLink` e `CrossStoryEntityReference` apenas onde obras realmente independentes precisarem se conectar. A implementação de Arcos não deve virar uma alteração cosmética em capítulos: precisa ser um escopo narrativo explícito, mas opcional e compatível com todo conteúdo existente.
 
 ## Estado atual de Keres
 
@@ -26,27 +27,23 @@ Uma tela de coleção resolve somente a primeira. Começar pelo canon compartilh
 - Relações polimórficas, como See also, validam no servidor que todos os destinos pertencem à mesma História.
 - Permissões (`owner`, `writer`, `reader`) são concedidas por História.
 - Exportação/importação trata uma História como pacote fechado e remapeia IDs internos.
-- Boards e Mapas de locais são documentos JSON de uma História; seus IDs internos também são remapeados na importação.
+- Boards e mapas de locais são documentos JSON de uma História; seus IDs internos também são remapeados na importação.
 - Navegação, pesquisa, backlinks, comentários, favoritos e pickers recebem ou consultam um `storyId` explícito.
 
-Essa rigidez é uma propriedade útil: previne que uma edição, exclusão, operação offline ou conflito em uma obra afete outra por acidente.
+Essa rigidez previne que edição, exclusão, operação offline ou conflito de uma obra afete outra por acidente. `FEATURE_LANDSCAPE.md` já registra que História é a unidade de posse e que hoje canon entre livros ou campanhas requer cópia/importação.
 
-O documento de produto já reconhece explicitamente esta fronteira: `FEATURE_LANDSCAPE.md` afirma que a História é a unidade de posse e que o canon compartilhado entre livros ou campanhas exige cópia/importação hoje.
+## Comparação com concorrentes citados
 
-## Comparação com os concorrentes citados
-
-| Produto | Fronteira de dados | Suporte de série/canon | Limite relevante |
+| Produto | Fronteira de dados | Suporte relevante | Limite para Keres |
 | --- | --- | --- | --- |
-| Plottr | Projeto com livros | Series View, timeline/outline de série; personagens podem ser vinculados a livros | A Series View não é preenchida automaticamente a partir dos livros; é uma camada editorial paralela. |
-| Dabble | Projeto com vários livros | Personagens, Notebook e plots compartilhados por padrão; itens podem ser associados a livros específicos | Projetos diferentes ainda exigem mover ou copiar conteúdo; não há referência viva entre projetos. |
-| World Anvil | Mundo | Artigos, mapas, cronologias e personagens pertencem ao mesmo mundo; romances e campanhas usam o canon desse mundo | Resolve obras no mesmo cenário, não necessariamente um crossover entre mundos independentes. |
-| Keres atual | História | Entidades, relações, sync, permissões e exportação são isolados por História | Não existe série, referência externa ou entidade canônica compartilhada. |
+| Plottr | Projeto com livros | Series View editorial; personagens podem ser vinculados a livros. | A Series View é manual; não preenche dados dos livros automaticamente. |
+| Dabble | Projeto com vários livros | Documentos, personagens e plots podem ser compartilhados ou filtrados por livro. | Equivale a trazer o conceito de livro/arco para dentro de uma mesma raiz. |
+| World Anvil | Mundo | Obras e campanhas usam o mesmo mundo como contexto comum. | É uma raiz de universo, o que esta decisão exclui. |
+| Keres atual | História | Sync, permissões e entidades isoladas. | Ainda não há uma subdivisão narrativa nem referências entre Histórias. |
 
 ### Plottr
 
-Plottr oferece uma `Series View` para registrar continuidade, eventos que atravessam livros e foreshadowing. A própria documentação esclarece que informações da série **não** são preenchidas automaticamente pelos nomes ou timelines dos livros. O modelo é útil como referência para uma primeira versão de `Series` em Keres: editorial, manual e honesto, sem inferir uma cronologia global.
-
-Os personagens podem ser vinculados a livros para organização e filtro. Isso sugere uma entidade de projeto/serie acima dos livros, mas a documentação também registra que não há categorias de personagem por livro. Portanto, o modelo é compartilhado, porém com poucos overlays locais.
+Plottr oferece uma `Series View` para continuidade, eventos entre livros e foreshadowing. A documentação esclarece que a visão de série **não** é preenchida automaticamente pelos livros. É uma boa referência para `Series`: camada editorial manual, sem inferir cronologia das timelines internas. Personagens podem ser vinculados a livros para filtro e organização.
 
 Fontes oficiais:
 
@@ -56,80 +53,38 @@ Fontes oficiais:
 
 ### Dabble
 
-Dabble é a comparação arquitetônica mais próxima de um canon de série: um único projeto contém vários livros, enquanto personagens, lore, Notebook e plots podem permanecer compartilhados. Um documento pode pertencer a todos os livros ou somente a determinados livros; o filtro por livro altera a visibilidade, não a identidade ou o conteúdo do documento.
+Dabble é a referência mais próxima da opção B: um projeto pode conter vários livros, com conteúdo filtrável por livro. O filtro muda visibilidade e contexto, não exige uma nova raiz de dados. Já conteúdo em projetos diferentes precisa ser movido ou copiado, não ligado de forma viva.
 
-Isso corresponde a **entidade canônica + associação de uso em obra**. Ao mesmo tempo, documentos movidos entre projetos são transferidos ou copiados, não ligados dinamicamente. Esse limite reforça a distinção entre série interna e crossover externo.
+Isso favorece Arcos como contexto interno de uma História e relações explícitas para obras externas, sem uma entidade canônica compartilhada.
 
 Fontes oficiais:
 
 - [Filter a project by book](https://www.dabblewriter.com/docs/manuscript-structure/filter-by-book)
 - [Move work between projects](https://www.dabblewriter.com/docs/managing-projects/move-work-between-projects)
-- [Séries e mundos compartilhados](https://www.dabblewriter.com/)
 
 ### World Anvil
 
-World Anvil organiza o canon pelo `World`: artigos, mapas, cronologias e outros objetos pertencem ao mundo; romances, campanhas e serialização são usos narrativos dele. A documentação recomenda usar um único mundo quando obras e campanhas compartilham o mesmo cenário.
+World Anvil concentra artigos, mapas, cronologias e personagens num `World`; romances e campanhas são usos desse mesmo mundo. É forte para consistência de universo, mas requer precisamente a raiz de canon/universo que foi descartada para Keres.
 
-Esse é o modelo mais forte para consistência de universo, mas equivale a introduzir uma nova raiz de propriedade acima da obra. Keres hoje não tem um modo de “mundo neutro”: cada História precisa ter forma linear ou branching e possui seu próprio conjunto de entidades.
+Fonte oficial: [Workflow para ficção serial](https://www.worldanvil.com/learn/workflows/serial-fiction-workflow).
 
-Fontes oficiais:
+Nas fontes oficiais consultadas, Scrivener, articy:draft e Twine não apresentam um modelo equivalente de série compartilhada. Kanka se aproxima mais de World Anvil: a campanha é a fronteira.
 
-- [Workflow para ficção serial](https://www.worldanvil.com/learn/workflows/serial-fiction-workflow)
-- [Organização e referências dentro de um mundo](https://www.worldanvil.com/features/search-explore)
-
-### Concorrentes sem evidência de modelo de série compartilhada
-
-Nas fontes oficiais consultadas, Scrivener, articy:draft e Twine não apresentam um modelo equivalente de canon compartilhado entre obras. Kanka organiza conteúdo dentro de uma campanha, o que se aproxima mais do modelo “um mundo/campanha é a fronteira” do que de uma série formada por obras independentes.
-
-## Opções para Keres
-
-### A. Série editorial, sem compartilhamento de entidades
+## A. Série e ligações entre Histórias
 
 ```text
 Series
  ├─ História A
  ├─ História B
  └─ História C
+
+História A ── StoryLink ──> História B
+Personagem A ── CrossStoryEntityReference ──> Personagem B
 ```
 
-**Viabilidade:** alta.
+`Series` responde à organização editorial. `StoryLink` descreve relações entre obras. `CrossStoryEntityReference` conecta duas entidades distintas, sem afirmar que são a mesma linha de dados.
 
-Entrega ordenação, capa, descrição, notas de continuidade e uma visão editorial de alto nível. Pode ter uma timeline de série manual, como a do Plottr, sem afirmar que ela é derivada das timelines internas.
-
-Não resolve, por si só, uma personagem ou local que aparece em mais de uma História.
-
-### B. Crossover por relações externas
-
-```text
-História A ── crossover ──> História B
-Personagem A ── aparece em ──> Personagem B
-```
-
-**Viabilidade:** média/alta, sem enfraquecer o isolamento atual.
-
-Cada História continua dona de seus próprios registros. Uma referência externa declara uma conexão, mas não transforma as duas entidades em uma só. Isso comporta bem adaptações, linhas do tempo alternativas e personagens que mudam entre obras.
-
-É a melhor primeira capacidade funcional de crossover.
-
-### C. Canon compartilhado vivo
-
-```text
-Canon
- ├─ Personagem canônica
- ├─ Local canônico
- └─ Peça de mundo canônica
-
-História A ── usa ──> Personagem canônica
-História B ── usa ──> Personagem canônica
-```
-
-**Viabilidade:** baixa como primeira etapa; alto impacto em dados e infraestrutura.
-
-Editar a entidade canônica deve decidir, explicitamente, o que é global e o que é local à obra. Por exemplo, biografia-base pode ser canônica, enquanto papel narrativo, estado, relações, tags e notas podem variar por História. Não é seguro simplesmente tornar `storyId` opcional nas tabelas existentes.
-
-## Modelagem de dados recomendada
-
-### Fase 1 — `Series` e membros
+### Modelagem
 
 ```ts
 Series {
@@ -154,18 +109,7 @@ SeriesMember {
   version: number
   isDeleted: boolean
 }
-```
 
-Regras:
-
-- Uma História pode, inicialmente, pertencer a no máximo uma Série ou a várias Séries; a escolha precisa ser de produto. Recomenda-se permitir várias apenas se houver um caso concreto para coleções, spin-offs e universos compartilhados.
-- O dono deve ter `owner` na História para inseri-la ou removê-la da Série.
-- A timeline de Série é um documento editorial próprio; não é calculada automaticamente pelas cenas das Histórias.
-- Séries não alteram vocabulário, tipo linear/branching, calendários, permissões ou sync das Histórias participantes.
-
-### Fase 2 — ligações entre Histórias
-
-```ts
 StoryLink {
   id: string
   sourceStoryId: string
@@ -179,18 +123,7 @@ StoryLink {
   version: number
   isDeleted: boolean
 }
-```
 
-Regras:
-
-- Uma ligação é criada na História de origem e não muda a propriedade da História de destino.
-- Para revelar título, descrição ou entidades do destino a leitores da origem, é necessário acesso de leitura ao destino ou aceite explícito do proprietário do destino.
-- Se a permissão do destino for removida, a relação pode sobreviver como referência indisponível, sem copiar título ou dados privados.
-- Duplicatas devem ser normalizadas para relações bidirecionais, como já ocorre em See also.
-
-### Fase 3 — referência externa de entidade
-
-```ts
 CrossStoryEntityReference {
   id: string
   sourceStoryId: string
@@ -208,86 +141,195 @@ CrossStoryEntityReference {
 }
 ```
 
-Regras de validação no servidor:
+### Regras essenciais
 
-1. A origem existe, está ativa e pertence a `sourceStoryId`.
-2. O destino existe, está ativo e pertence a `targetStoryId`.
-3. O autor possui autorização de escrita na origem e leitura no destino.
-4. Os tipos são permitidos por uma lista compartilhada, inicialmente restrita a entidades com tela de detalhe navegável.
-5. A referência não permite usar um ID sem seu `targetStoryId`.
+1. Origem e destino existem, estão ativos e pertencem aos respectivos `storyId`.
+2. O autor precisa de escrita na origem e leitura no destino; revelar nome, ícone ou descrição do destino exige essa mesma leitura.
+3. A referência não compartilha estado, atributos, imagens, relações, permissões ou operações de sync.
+4. Relações bidirecionais precisam ser normalizadas para impedir duplicatas.
+5. Se acesso ao destino for revogado, a origem mostra referência indisponível sem vazar dados privados.
+6. Navegação deve levar explicitamente `targetStoryId`, preservando a História de origem para retorno.
 
-Na interface, um clique deve abrir a História de destino de modo seguro e preservar a origem para retorno. Isso exige estender a navegação atual, que hoje recebe essencialmente `entityType` e `entityId` dentro da História ativa.
+Uma Série não altera vocabulário, tipo linear/branching, calendários, permissões nem sync das Histórias participantes. Uma timeline de Série é editorial e manual, não calculada das cenas.
 
-### Fase 4 — canon opcional
+## B. Arcos dentro de uma História
 
-Somente se os casos de uso provarem necessidade de edição única em múltiplas obras:
+```text
+História
+ ├─ Arco padrão
+ ├─ Arco: Livro I
+ ├─ Arco: Livro II
+ └─ Arco: Jogo derivado
+```
+
+Um Arco não é somente uma coleção de capítulos. Ele é um contexto narrativo opcional para indexar e filtrar capítulos e, quando desejado, cenas, plots, anchors, personagens e outras entidades. Assim, uma História passa a comportar uma série inteira que compartilha World, calendário, vocabulário, atributos personalizados, permissões, arquivos e sync.
+
+Isso não faz `World` virar canon e não inverte “História” e “Arco”: a História continua sendo a unidade técnica e de propriedade. O Arco é uma dimensão editorial interna, análoga ao livro de um projeto no Dabble, sem autonomia de dados.
+
+### Modelo mínimo compatível
 
 ```ts
-Canon {
+StoryArc {
   id: string
-  ownerUserId: string
+  storyId: string
   title: string
   description: string | null
-}
-
-CanonicalEntity {
-  id: string
-  canonId: string
-  type: 'Character' | 'Location' | 'WorldRule'
-  canonicalData: JSON
+  order: number
+  color: string | null
+  createdAt: Date
+  updatedAt: Date
   version: number
-}
-
-CanonicalEntityUse {
-  id: string
-  canonicalEntityId: string
-  storyId: string
-  localData: JSON | null
-  visibility: 'shared' | 'story_only'
-  version: number
+  isDeleted: boolean
 }
 ```
 
-Esta forma deve começar com poucos tipos — Personagem, Local e Peça de Mundo são os candidatos naturais — e com schemas fortes por tipo. Um JSON genérico para todas as entidades perderia justamente a validação rígida que Keres construiu. `localData` precisa ser um overlay explicitamente tipado por entidade, não uma cópia opaca de toda a linha.
+Todas as Histórias existentes recebem, por migração, **um Arco padrão**. Ele pode ficar invisível enquanto for o único Arco; por isso, o comportamento atual não muda para quem não usa a funcionalidade.
 
-## O que não deve entrar nas primeiras fases
+Para entidades já existentes, usar inicialmente uma associação opcional e explícita, em vez de tornar `arcId` obrigatório em todas as tabelas de uma vez:
 
-- **Auto-links globais:** nomes repetidos entre Histórias são ambíguos e podem vazar conteúdo privado.
-- **Backlinks globais:** exigem índice multi-História, filtrado por permissão do leitor.
-- **Pins externos em Boards:** o pin atual guarda um ID interno; ele precisaria ganhar `targetStoryId` e regras de importação próprias.
-- **Mapas de locais externos:** nós, marcadores e destinos de mapas precisariam de referências qualificadas por História.
-- **Timeline universal:** calendários, datas e ordens narrativas pertencem à História; uma cronologia de Série deve ser declarada, não inferida.
-- **Sincronização automática de cópias:** isso cria necessidade de diff, merge, origem, versão e resolução de conflito em nível de entidade.
+```ts
+ArcEntityMembership {
+  id: string
+  storyId: string
+  arcId: string
+  entityType: string
+  entityId: string
+  role: 'primary' | 'appears_in' | 'contextual'
+  createdAt: Date
+  updatedAt: Date
+  version: number
+  isDeleted: boolean
+}
+```
 
-## Ciclo de vida obrigatório
+Esse desenho permite que personagem, local ou regra do mundo apareça em mais de um Arco sem copiar a entidade. Para itens cuja pertença é naturalmente singular — sobretudo capítulos e talvez cenas — pode existir depois um `primaryArcId` materializado, mantendo a associação como fonte de verdade para participações secundárias.
 
-Cada nova relação persistida precisa cobrir:
+### Consequências de produto a explicar no momento de criar Arcos
 
-| Evento | Decisão necessária |
+- Arcos compartilham World, calendários, atributos personalizados, configurações, arquivos, permissões e o espaço de sync da História.
+- Eles podem ter ordenação, capa/cores, notas e um contexto de timeline próprio, mas não uma configuração independente de calendário.
+- A tela pode alternar entre “todos os Arcos” (a super timeline atual) e um Arco específico.
+- Entidades sem associação explícita continuam visíveis em todos os Arcos, até que uma política de visibilidade seja escolhida. Isso preserva o comportamento existente.
+- Criar Arcos é uma decisão organizacional com filtros e contextos; não cria uma História independente e não serve para esconder dados de colaboradores da mesma História.
+
+### Sequência segura de adoção
+
+1. Criar `StoryArc` e um Arco padrão para cada História, sem mudar consultas existentes.
+2. Adicionar seletor de Arco e filtros a capítulos, cenas e timeline; sem limitar dados ainda não associados.
+3. Adicionar `ArcEntityMembership` aos tipos em que contexto separado tem valor: personagens, cenas, plots, anchors, capítulos e localizações.
+4. Só depois decidir políticas de filtro para boards, mapas, regras de mundo, comentários, backlinks, auto-links e busca.
+
+Isso evita quebrar compatibilidade e impede a pior alternativa: acrescentar `arcId` obrigatório indiscriminadamente, fazendo entidades antigas desaparecerem de telas ou sincronizações.
+
+## C. História derivada como overlay
+
+```text
+História de origem
+ ├─ World, calendário, vocabulário e personalização
+ └─ entidades-base
+       ▲
+       │ overlay seletivo
+História derivada
+ ├─ conteúdo próprio
+ └─ exceções locais
+```
+
+Uma História derivada reutilizaria elementos da origem sem ter World ou personalização própria. Aparentemente resolve “mesmo mundo, narrativa isolada”, mas cada leitura passa a precisar compor base, overlay, exclusões, substituições e permissões. Isso alcança quase toda a complexidade de um canon compartilhado, acrescida de herança e conflitos.
+
+Questões obrigatórias incluem: qual versão da origem é lida offline; como uma exclusão na origem afeta a filha; como exportar a filha; como o sync resolve edição concorrente; como cancelar uma herança; e se colaboradores da filha podem visualizar tudo que é herdado. Sem uma resposta rigorosa, o recurso introduz vazamento de dados e corrupção semântica.
+
+**Conclusão:** não recomendada. Só deve ser reavaliada se Arcos e referências externas comprovadamente não atenderem a um caso central, mensurável e recorrente.
+
+## D. Estratégia combinada recomendada
+
+| Necessidade | Capacidade indicada |
 | --- | --- |
-| Criar | Quais papéis podem criar e quando o destino precisa aceitar? |
-| Atualizar | Relação é editável, direcional e versionada? |
-| Excluir | Soft-delete da relação; não excluir a História ou entidade de destino. |
-| Permissão revogada | Ocultar dados do destino, mantendo ou removendo a referência conforme a política escolhida. |
-| Sync offline | Aceitar somente após validar ambos os lados e permissões no servidor; conflito explícito se o destino sumiu. |
-| Exportar uma História | Preservar referência externa, removê-la ou transformar em texto? A regra deve ser explícita. |
-| Importar/duplicar | IDs internos são remapeados; referências externas não podem apontar silenciosamente para IDs aleatórios. |
-| Excluir destino | Mostrar destino excluído/indisponível; não corromper a origem. |
-| Compartilhar História | Definir se o leitor pode ver apenas a ligação, também o título do destino, ou navegar até ele. |
+| Vários livros, jogos ou fases no mesmo universo e com mesma equipe | Uma História com Arcos |
+| Ordem, capa, descrição e notas de uma coleção de Histórias independentes | `Series` + `SeriesMember` |
+| Prequel, sequência, adaptação ou universo compartilhado entre Histórias | `StoryLink` |
+| Personagens, locais ou outras entidades de obras diferentes que precisam ser mencionados/relacionados | `CrossStoryEntityReference` |
+| Mesma entidade viva, editada uma vez em várias Histórias | Fora de escopo; não é canon compartilhado |
+
+Na prática, B entrega a maior parte do caso “minha série” de maneira simples. A completa o caso em que obras devem continuar independentes. A referência externa é um vínculo semântico, não uma dependência de dados: uma entidade pode representar a mesma personagem em outra obra, mas mantém atributos e evolução próprios.
+
+## Localização na interface
+
+### Arcos: Customização para administrar, contexto para trabalhar
+
+**Sim: `Story menu → Customização → Arcos` é o lugar correto para editar Arcos.** A área já reúne tudo que configura a História uma vez e depois orienta o trabalho diário: vocabulário, calendários, atributos, sugestões e stats. Arcos têm a mesma natureza de estrutura editorial da História, e não devem disputar espaço com as listas diárias no drawer principal.
+
+A tela `Arcos` deve explicar antes de criar o segundo Arco que todos continuam compartilhando World, calendários, atributos personalizados, arquivos, permissões e sync. Ela oferece:
+
+- lista ordenável de Arcos, com título, cor/capa opcional e contagens de conteúdo;
+- criar, editar, reordenar e arquivar/excluir um Arco;
+- proteção do Arco padrão: não pode ser excluído enquanto ainda houver conteúdo sem destino;
+- opção de mover ou manter associações ao apagar um Arco;
+- explicação visível de que Arcos não são Histórias separadas e não isolam colaboradores.
+
+Mas **não** se deve obrigar o autor a voltar a Customização para trocar de contexto. Depois que houver mais de um Arco, o drawer ganha, logo abaixo da História ativa, um item do mesmo tamanho e linguagem dos demais itens: ícone do Arco ativo + `Todos os arcos` ou o nome curto do Arco. Seu toque abre um modal de seleção de Arco; não há rótulo longo como “Visualizando”. O ícone e o tema efetivo tornam o contexto reconhecível mesmo quando o título for truncado. No primeiro Arco, esse item permanece oculto. O modo `Todos os arcos` preserva a super timeline e a experiência existente.
+
+Em detalhes e formulários, uma seção discreta `Arcos` permite definir a participação da entidade (`principal`, `aparece em`, `contextual`). Ela não deve ser exibida ou exigida para entidades que continuam globais à História.
+
+### Séries: biblioteca de Histórias para administrar
+
+Séries não devem ficar dentro de `Customização`: elas administram **várias** Histórias e podem existir antes de uma delas estar selecionada. O lugar primário é a tela de seleção de Histórias, como uma área ou rota `Séries`/`Coleções` acessível pelo cabeçalho e, se fizer sentido, pelo drawer desse contexto.
+
+Essa área lista Séries, permite criar e ordenar membros e abre uma Série como coleção. Em cada card e formulário de História, uma linha secundária como `Séries: Crônicas de ...` pode abrir o gerenciador ou a ação `Adicionar à Série`, desde que o usuário tenha a autorização adequada. Essa é uma entrada contextual conveniente, não uma segunda tela de edição.
+
+`StoryLink` é editado na página de detalhes/configurações da História, em uma seção `Relações com outras Histórias`. `CrossStoryEntityReference` é editado na entidade de origem, em uma seção `Conexões` ou como extensão explícita de `See also`; ambos precisam identificar visualmente a História de destino e seu estado de acesso.
+
+### Aparência: tema padrão da História e sobrescrita opcional do Arco
+
+O tema é outra indicação forte de contexto e deve seguir esta resolução, sem criar um canon ou configuração independente:
+
+```text
+tema efetivo = tema sobrescrito do Arco ativo
+              ?? tema padrão da História
+              ?? tema padrão da aplicação
+```
+
+`Story.theme` continua sendo o tema padrão. `StoryArc.themeOverride` é opcional (`null` significa **usar o tema da História**) e `StoryArc.icon` identifica o Arco no drawer. Assim, uma História pode permanecer inteiramente com seu tema normal, enquanto `A chama eterna` usa um ícone de labareda e, se o autor desejar, uma sobrescrita escarlate; `O gelo invencível` pode herdar o tema ou sobrescrever para twilight. O ícone do Arco integra o próprio seletor global e preserva reconhecimento quando o título for truncado.
+
+O campo `theme` deve sair do formulário geral de `Story settings` e da criação de História. Em `Story menu → Customização`, uma entrada `Aparência` abre uma tela curta, dedicada, que apresenta o tema padrão da História, os Arcos que o sobrescrevem e a ação para escolher o tema. A criação pode começar no padrão; personalização é uma decisão posterior e rara. O mesmo seletor é reutilizado no formulário de Arco, com as opções claras `Herdar o tema da História` e `Sobrescrever`.
+
+O seletor precisa ser um `ThemePickerModal` reutilizável, não um `SingleSelectPill` que grava ou aplica estado global diretamente. Enquanto aberto, ele pode mostrar uma prévia temporária; ao confirmar, devolve a escolha ao formulário, que a persiste no seu Save. Ao cancelar, fechar, voltar ou abandonar o formulário, deve restaurar o tema efetivo previamente salvo. Depois de salvar ou trocar de Arco, o provedor de tema reaplica `resolveTheme(story.theme, activeArc.themeOverride)`.
+
+Essa separação corrige o comportamento atual: o formulário de Story chama `setTheme` assim que o campo muda, mas não tem um ciclo de cancelamento/restauração; por isso, sair sem salvar deixa a prévia visível. A prévia deve ser estado efêmero de interface, nunca a fonte de verdade do tema ativo.
+
+## O que não deve entrar nesta iniciativa
+
+- Entidade canônica/global ou `storyId` opcional nas tabelas existentes.
+- Auto-links ou backlinks globais por nome, que são ambíguos e podem vazar conteúdo privado.
+- Pins externos em Boards e destinos externos em mapas de locais na primeira versão. Eles exigem `targetStoryId`, novas regras de importação e UI de acesso indisponível.
+- Timeline universal inferida: calendários, datas e ordem narrativa continuam pertencendo à História. A timeline de Série é manual.
+- Sync automático de cópias, que exigiria origem, diff, merge, versões e resolução de conflitos por entidade.
+- Herança/overlay de História derivada, salvo reavaliação baseada em evidência de produto.
+
+## Ciclo de vida e validação obrigatórios
+
+| Evento | Arco | Ligação entre Histórias |
+| --- | --- | --- |
+| Criar | Escrita na História; ordenar no mesmo `storyId`. | Escrita na origem e leitura no destino; pode exigir aceite futuro. |
+| Atualizar | Versionado e sincronizado como entidade da História. | Versionado; validar os dois lados no servidor. |
+| Excluir | Soft-delete; associações são preservadas ou removidas conforme política. | Soft-delete somente da relação, nunca do destino. |
+| Permissão revogada | Não se aplica fora da própria História. | Ocultar dados e impedir navegação ao destino. |
+| Sync offline | Um único `storyId`; comportamento atual. | Revalidar origem, destino e permissões na chegada ao servidor. |
+| Exportar/importar | Remapear `arcId` e memberships dentro do pacote. | Não remapear cegamente IDs externos; preservar como indisponível, remover ou converter em texto conforme regra explícita. |
+| Excluir destino | Não se aplica. | Exibir destino excluído/indisponível sem corromper origem. |
 
 ## Cobertura de testes mínima
 
-- Schema compartilhado para todos os novos documentos e tipos de referência.
-- Migração local e servidor para as tabelas novas.
-- Testes de integração de sync para criação, atualização, exclusão, reenvio e conflitos.
-- Matriz de permissões: owner/writer/reader, acesso ao destino revogado e destinos de outro autor.
-- Exportação, importação e duplicação com referências internas e externas.
-- Navegação entre Histórias com retorno à origem.
-- Garantia de que busca, auto-links e backlinks não revelem entidades sem permissão.
-- Regressões para Board e Mapa de locais, caso referências externas sejam adicionadas a essas superfícies.
+- Schemas compartilhados e validação de API para `StoryArc`, memberships, `Series`, `StoryLink` e referências externas.
+- Migração de História antiga para Arco padrão, com a UI e as consultas mantendo o comportamento atual.
+- Sync de criação, atualização, exclusão, reenvio e conflitos para os novos registros.
+- Filtros de Arco em timeline, capítulos, cenas, plots, anchors e personagens, incluindo itens sem associação.
+- Matriz de permissões para ligações: owner/writer/reader, revogação de leitura e destino removido.
+- Exportação, importação e duplicação de Arcos e referências externas.
+- Navegação entre Histórias e retorno à origem.
+- Garantia de que busca, auto-links e backlinks não revelem conteúdo de outro `storyId`.
 
 ## Recomendação final
 
-Não implementar “entidade compartilhada entre Histórias” diretamente nas tabelas atuais. O valor imediato está em uma Série editorial e em crossovers explícitos, que preservam a unidade de sync e de permissão de cada História.
+Não criar canon compartilhado e não alterar a fronteira de propriedade de `Story`.
 
-Se a pesquisa com usuários confirmar que autores precisam manter uma biografia única, compartilhada e editável entre vários livros, criar então um `Canon` como nova raiz de propriedade. Esse caminho se aproxima do modelo de projeto do Dabble e do modelo de mundo do World Anvil, sem sacrificar a integridade atual de Keres.
+Implementar primeiro **Arcos**, invisíveis e neutros em Histórias que não os usam, para que uma única História acomode uma série com World, calendário e personalização comuns. Em seguida, quando existirem obras que precisam permanecer independentes, introduzir **Séries, ligações entre Histórias e referências externas de entidades**. Essa composição cobre séries e crossovers sem sacrificar o modelo de sync, permissões e importação que Keres já protege.

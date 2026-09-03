@@ -38,7 +38,7 @@ type StorySettingsScreenNavigationProp = DrawerNavigationProp<
 const StorySettingsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors, setTheme: applyTheme } = useTheme();
+  const { colors } = useTheme();
   const navigation = useNavigation<StorySettingsScreenNavigationProp>();
   // Removed useRoute and route.params
   const { selectedStory, setSelectedStory } = useStoryStore();
@@ -69,7 +69,6 @@ const StorySettingsScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [theme, setTheme] = useState<string | null>(null);
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
   const [statSystem, setStatSystem] = useState(false);
   const [statNotation, setStatNotation] = useState<StatNotation>('letter');
@@ -117,14 +116,12 @@ const StorySettingsScreen = () => {
         setIsFavorite(fetchedStory.isFavorite);
         setFavoriteBehavior(fetchedStory.favoriteBehavior);
         setExtraNotes(fetchedStory.extraNotes);
-        setTheme(fetchedStory.theme);
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
         setStatSystem(fetchedStory.statSystem);
         setStatNotation(fetchedStory.statNotation as StatNotation);
         setAllowReaderComments(fetchedStory.allowReaderComments);
         setAutoLinkMentions(fetchedStory.autoLinkMentions);
         setCompletenessChecks(fetchedStory.completenessChecks);
-        applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
         const servers = await serverService().getAllServers();
@@ -154,7 +151,7 @@ const StorySettingsScreen = () => {
       }
     };
     loadStoryAndServers();
-  }, [storyId, storyService, serverService, userId, t, applyTheme]);
+  }, [storyId, storyService, serverService, userId, t]);
 
   const linkedServer = availableServers.find((server) => server.id === serverId) ?? null;
 
@@ -255,7 +252,6 @@ const StorySettingsScreen = () => {
         author,
         isFavorite,
         extraNotes,
-        theme,
         normalizeSceneTiming,
         // Preferences about this story, not owner policy: a writer may turn either on or off.
         autoLinkMentions,
@@ -687,8 +683,6 @@ const StorySettingsScreen = () => {
         onFavoriteBehaviorChange={setFavoriteBehavior}
         extraNotes={extraNotes}
         onExtraNotesChange={setExtraNotes}
-        theme={theme}
-        onThemeChange={setTheme}
         editable={canEdit}
       />
 

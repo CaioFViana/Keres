@@ -35,7 +35,7 @@ type StoryFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamLis
 const StoryFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors, setTheme: applyTheme } = useTheme();
+  const { colors } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
   const route = useRoute<StoryFormScreenRouteProp>();
   const { storyId } = route.params || {};
@@ -63,7 +63,6 @@ const StoryFormScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [theme, setTheme] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,8 +87,6 @@ const StoryFormScreen = () => {
             setIsFavorite(fetchedStory.isFavorite);
             setFavoriteBehavior(fetchedStory.favoriteBehavior);
             setExtraNotes(fetchedStory.extraNotes);
-            setTheme(fetchedStory.theme);
-            applyTheme(fetchedStory.theme || 'default');
           } else {
             setError(t('story_not_found'));
           }
@@ -101,11 +98,10 @@ const StoryFormScreen = () => {
         }
       } else {
         setLoading(false);
-        applyTheme('default');
       }
     };
     loadStory();
-  }, [storyId, storyService, userId, t, applyTheme]);
+  }, [storyId, storyService, userId, t]);
 
   useEffect(() => {
     if (storyId) return;
@@ -145,7 +141,6 @@ const StoryFormScreen = () => {
           author,
           isFavorite,
           extraNotes,
-          theme,
           ...(canManageStoryPolicy ? { favoriteBehavior } : {}),
         });
         AppAlert.alert(t('success'), t('story_updated_successfully'));
@@ -164,7 +159,9 @@ const StoryFormScreen = () => {
           isFavorite,
           favoriteBehavior,
           extraNotes,
-          theme,
+          // Appearance is configured after creation under Customization. `null` selects the
+          // application default and keeps old exports and newly-created stories consistent.
+          theme: null,
           timelineEpochDay: null,
           timelineEpochSeconds: null,
           normalizeSceneTiming: false,
@@ -322,8 +319,6 @@ const StoryFormScreen = () => {
         onFavoriteBehaviorChange={setFavoriteBehavior}
         extraNotes={extraNotes}
         onExtraNotesChange={setExtraNotes}
-        theme={theme}
-        onThemeChange={setTheme}
         editable={canEdit}
       />
 

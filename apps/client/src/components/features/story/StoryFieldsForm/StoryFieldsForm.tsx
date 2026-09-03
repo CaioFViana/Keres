@@ -171,7 +171,6 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
         multiline
         editable={editable}
       />
-
     </>
   );
 };

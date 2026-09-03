@@ -33,6 +33,7 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/com
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -55,6 +56,18 @@ const ItemJourneyDetailScreen = () => {
   const { t } = useTranslation();
   const itemCopy = useVocabularyEntityCopy('Item');
   const sceneCopy = useVocabularyEntityCopy('Scene');
+  const { agree, term } = useStoryVocabulary();
+  const characterTerm = term('Character');
+  const characterOwnerEnding = agree('Character', {
+    masculine: 'o',
+    feminine: 'a',
+    neutral: 'o',
+  });
+  const characterOwnerPrefix = agree('Character', {
+    masculine: 'Novo',
+    feminine: 'Nova',
+    neutral: 'Novo(a)',
+  });
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -332,7 +345,14 @@ const ItemJourneyDetailScreen = () => {
           activeOpacity={0.7}
         >
           <View style={{ flex: 1 }}>
-            <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />
+            <DetailField
+              label={t('item_journey_new_character_owner_label', {
+                character: characterTerm,
+                ending: characterOwnerEnding,
+                prefix: characterOwnerPrefix,
+              })}
+              value={newCharacterOwner.name}
+            />
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>

@@ -36,6 +36,7 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/com
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {
@@ -54,6 +55,12 @@ const ItemDetailScreen = () => {
   const { itemId } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Item');
+  const { agree, term } = useStoryVocabulary();
+  const characterOwnerEnding = agree('Character', {
+    masculine: 'o',
+    feminine: 'a',
+    neutral: 'o',
+  });
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -262,7 +269,13 @@ const ItemDetailScreen = () => {
                 )
               }
             />
-            <DetailField label={t('character_owner')} value={owner?.name || t('common_na')} />
+            <DetailField
+              label={t('item_character_owner_label', {
+                character: term('Character'),
+                ending: characterOwnerEnding,
+              })}
+              value={owner?.name || t('common_na')}
+            />
 
             <CustomAttributeDetailFields
               storyId={item.storyId}

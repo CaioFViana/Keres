@@ -21,7 +21,10 @@ import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { AppAlert } from '@/src/utils/AppAlert';
 import ThemePreview from './ThemePreview';
 
-type AppearanceNavigation = NativeStackNavigationProp<CustomizationStackParamList, 'StoryAppearance'>;
+type AppearanceNavigation = NativeStackNavigationProp<
+  CustomizationStackParamList,
+  'StoryAppearance'
+>;
 
 /** Edits the Story-wide theme; Arc-specific overrides will reuse ThemePickerModal in a later release. */
 const StoryAppearanceScreen = () => {
@@ -81,7 +84,8 @@ const StoryAppearanceScreen = () => {
       } finally {
         setSaving(false);
       }
-    }, [applyTheme, selectedStory, setSelectedStory, storyId, storyService, t, themeName, userId],
+    },
+    [applyTheme, selectedStory, setSelectedStory, storyId, storyService, t, themeName, userId],
   );
 
   const themeLabel = t(

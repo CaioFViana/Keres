@@ -44,6 +44,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 type ItemFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemForm'>;
 type ItemFormScreenNavigationProp = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;
@@ -56,6 +57,12 @@ const ItemFormScreen = () => {
   const { itemId: initialItemId } = route.params || {}; // Changed from choiceId
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Item');
+  const { agree, term } = useStoryVocabulary();
+  const characterOwnerEnding = agree('Character', {
+    masculine: 'o',
+    feminine: 'a',
+    neutral: 'o',
+  });
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const {
@@ -356,12 +363,20 @@ const ItemFormScreen = () => {
         multiline
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('character_owner')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {t('item_character_owner_label', {
+          character: term('Character'),
+          ending: characterOwnerEnding,
+        })}
+      </Text>
       <SingleSelectPill
         options={characterOptions}
         value={characterOwnerId}
         onValueChange={setCharacterOwnerId}
-        placeholder={t('select_character_owner')}
+        placeholder={t('select_item_character_owner', {
+          character: term('Character'),
+          ending: characterOwnerEnding,
+        })}
         multiple={false}
       />
 

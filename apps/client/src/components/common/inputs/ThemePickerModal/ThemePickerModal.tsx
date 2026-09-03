@@ -102,7 +102,9 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
               >
                 <View style={[styles.swatch, { backgroundColor: paletteColors.primary }]} />
                 <Text style={styles.optionLabel}>{t(option.labelKey)}</Text>
-                {selected ? <Text style={styles.selectedText}>{t('theme_picker_selected')}</Text> : null}
+                {selected ? (
+                  <Text style={styles.selectedText}>{t('theme_picker_selected')}</Text>
+                ) : null}
               </TouchableOpacity>
             );
           })}

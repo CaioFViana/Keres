@@ -38,6 +38,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 type ItemJourneyFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemJourneyForm'>;
 type ItemJourneyFormScreenNavigationProp = NativeStackNavigationProp<
@@ -54,6 +55,18 @@ const ItemJourneyFormScreen = () => {
   const { t } = useTranslation();
   const itemCopy = useVocabularyEntityCopy('Item');
   const sceneCopy = useVocabularyEntityCopy('Scene');
+  const { agree, term } = useStoryVocabulary();
+  const characterTerm = term('Character');
+  const characterOwnerEnding = agree('Character', {
+    masculine: 'o',
+    feminine: 'a',
+    neutral: 'o',
+  });
+  const characterOwnerPrefix = agree('Character', {
+    masculine: 'Novo',
+    feminine: 'Nova',
+    neutral: 'Novo(a)',
+  });
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
 
@@ -366,12 +379,22 @@ const ItemJourneyFormScreen = () => {
         allowDeselect={true}
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('new_character_owner')}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {t('item_journey_new_character_owner_label', {
+          character: characterTerm,
+          ending: characterOwnerEnding,
+          prefix: characterOwnerPrefix,
+        })}
+      </Text>
       <SingleSelectPill
         options={characterOptions}
         value={newCharacterOwnerId}
         onValueChange={setNewCharacterOwnerId}
-        placeholder={t('select_new_character_owner')}
+        placeholder={t('select_item_journey_new_character_owner', {
+          character: characterTerm,
+          ending: characterOwnerEnding,
+          prefix: characterOwnerPrefix,
+        })}
         multiple={false}
         allowDeselect={true}
       />

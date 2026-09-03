@@ -36,6 +36,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
@@ -91,6 +92,7 @@ const ItemListScreen = () => {
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [tagsByItemId, setTagsByItemId] = useState<Map<string, TagSelect[]>>(new Map());
+  const [characterNamesById, setCharacterNamesById] = useState<Map<string, string>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
   const loadJourneys = useCallback(async () => {
@@ -110,6 +112,19 @@ const ItemListScreen = () => {
   useEffect(() => {
     loadJourneys();
   }, [loadJourneys]);
+
+  const loadCharacterNames = useCallback(async () => {
+    if (!drizzleDb || !storyId) {
+      setCharacterNamesById(new Map());
+      return;
+    }
+    const characters = await createCharacterService(drizzleDb).getAllByStoryId(storyId);
+    setCharacterNamesById(new Map(characters.map((character) => [character.id, character.name])));
+  }, [drizzleDb, storyId]);
+
+  useEffect(() => {
+    loadCharacterNames();
+  }, [loadCharacterNames]);
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
       if (changedStoryId === storyId) loadJourneys();
@@ -125,6 +140,14 @@ const ItemListScreen = () => {
       entityEventEmitter.off('choice_changed', refresh);
     };
   }, [loadJourneys, storyId]);
+
+  useEffect(() => {
+    const refreshCharacterNames = (changedStoryId: string) => {
+      if (changedStoryId === storyId) loadCharacterNames();
+    };
+    entityEventEmitter.on('character_changed', refreshCharacterNames);
+    return () => entityEventEmitter.off('character_changed', refreshCharacterNames);
+  }, [loadCharacterNames, storyId]);
 
   const loadTags = useCallback(async () => {
     if (!drizzleDb || !storyId) {
@@ -211,6 +234,9 @@ const ItemListScreen = () => {
           item={item}
           onViewDetails={handleViewDetails}
           onToggleFavorite={handleToggleFavorite}
+          characterOwnerName={
+            item.characterOwnerId ? characterNamesById.get(item.characterOwnerId) : undefined
+          }
           tags={tagsByItemId.get(item.id)}
           renderJourneys={() => (
             <ItemJourneyRows
@@ -227,6 +253,7 @@ const ItemListScreen = () => {
     [
       canEdit,
       chapters,
+      characterNamesById,
       choices,
       handleAddJourney,
       handleOpenJourney,

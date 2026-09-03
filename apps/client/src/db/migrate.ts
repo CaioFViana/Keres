@@ -35,5 +35,14 @@ export async function migrate(expoDb: SQLiteDatabase) {
       }
     }
   }
+
+  // Links carry only a URL, so no local file can ever be pending. Older imports accidentally
+  // marked them as downloads; repair those rows idempotently while opening the database.
+  await expoDb.execAsync(`
+    UPDATE galleries
+    SET upload_state = 'uploaded', download_state = 'downloaded'
+    WHERE media_type = 'link'
+      AND (upload_state <> 'uploaded' OR download_state <> 'downloaded');
+  `);
   console.log('migrate: All pending migrations applied.');
 }

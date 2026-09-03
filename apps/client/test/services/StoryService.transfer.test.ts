@@ -23,6 +23,7 @@ const FIELD_ID = '01ARZ3NDEKTSV4RRFFQ69G5FB2';
 const VALUE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FB3';
 const GALLERY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FB4';
 const COMMENT_ID = '01ARZ3NDEKTSV4RRFFQ69G5FB5';
+const LINK_GALLERY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FB6';
 
 beforeEach(async () => {
   jest.clearAllMocks();
@@ -78,6 +79,17 @@ it('round-trips portable story data after a permanent local purge and clears sta
     fileName: 'mapa.png',
     hash: '0123456789abcdef0123456789abcdef',
     sizeBytes: 3,
+    ...entityBase,
+  });
+  await database.db.insert(schema.galleries).values({
+    id: LINK_GALLERY_ID,
+    storyId: STORY_ID,
+    mediaType: 'link',
+    mimeType: 'text/uri-list',
+    fileName: 'Referência',
+    hash: 'fedcba9876543210fedcba9876543210',
+    sizeBytes: 0,
+    sourceUrl: 'https://example.com/reference',
     ...entityBase,
   });
   await database.db.insert(schema.comments).values({
@@ -160,11 +172,22 @@ it('round-trips portable story data after a permanent local purge and clears sta
   );
   expect(importedValue?.id).not.toBe(VALUE_ID);
   expect(importedCharacter?.id).not.toBe(CHARACTER_ID);
-  expect(await database.db.query.galleries.findFirst()).toEqual(
+  const importedGalleries = await database.db.query.galleries.findMany({
+    where: (gallery, { eq: equals }) => equals(gallery.storyId, importedStoryId),
+  });
+  expect(importedGalleries.find((gallery) => gallery.mediaType === 'image')).toEqual(
     expect.objectContaining({
       storyId: importedStoryId,
       localPath: 'desktop-media:media/mapa.png',
       uploadState: 'pending',
+      downloadState: 'downloaded',
+    }),
+  );
+  expect(importedGalleries.find((gallery) => gallery.mediaType === 'link')).toEqual(
+    expect.objectContaining({
+      storyId: importedStoryId,
+      localPath: null,
+      uploadState: 'uploaded',
       downloadState: 'downloaded',
     }),
   );

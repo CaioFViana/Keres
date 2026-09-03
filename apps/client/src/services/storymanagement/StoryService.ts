@@ -2,6 +2,7 @@ import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
 import {
   assertStoryExportIntegrity,
   CURRENT_STORY_FORMAT_VERSION,
+  galleryHasFile,
   pruneDanglingStoryExportRows,
   FullStoryExportSchema,
   scenesToUnflag,
@@ -1658,6 +1659,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             // transaction began (see `ImportExportScreen.handleImport`); a plain `.json`
             // carries only the metadata, and the bytes stay on the server, addressed by the hash.
             const localPath = localMediaPaths?.get(galleryItem.hash);
+            const requiresFileTransfer = galleryHasFile(galleryItem.mediaType);
             const galleryItemToInsert: GalleryInsert = {
               ...galleryItem,
               storyId: galleryItem.storyId,
@@ -1667,11 +1669,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               isDeleted: false,
               deletedAt: null,
               localPath: localPath ?? null,
-              // With the file already here, what is missing is the upload to the server (if/when the story
-              // is linked to one); without it, what is missing is the download - synchronization decides on its own
-              // from these two states.
-              uploadState: localPath ? 'pending' : 'uploaded',
-              downloadState: localPath ? 'downloaded' : 'pending',
+              // A link is complete metadata, not a file. It must never be put into either transfer
+              // queue; otherwise an offline import would permanently claim that it was downloading.
+              uploadState: requiresFileTransfer && localPath ? 'pending' : 'uploaded',
+              downloadState: requiresFileTransfer && !localPath ? 'pending' : 'downloaded',
             };
             await tx.insert(galleries).values(galleryItemToInsert).run();
           }

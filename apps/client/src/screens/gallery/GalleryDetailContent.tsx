@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import type { MediaType } from '@keres/shared';
+import { galleryHasFile, type MediaType } from '@keres/shared';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -348,6 +348,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   }
 
   const mediaType = media.mediaType as MediaType;
+  const isDownloading = galleryHasFile(mediaType) && media.downloadState === 'pending';
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasLocalVideo = mediaType === 'video' && !!resolvedUri;
   const hasLocalAudio = mediaType === 'audio' && !!resolvedUri;
@@ -398,7 +399,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
                   <Text style={styles.placeholderText}>
                     {mediaType === 'link'
                       ? media.sourceUrl
-                      : media.downloadState === 'pending'
+                      : isDownloading
                         ? t('media_downloading')
                         : mediaType === 'document'
                           ? media.fileName
@@ -462,7 +463,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>{t('media_sync_status')}</Text>
               <Text style={styles.metaValue}>
-                {media.downloadState === 'pending'
+                {isDownloading
                   ? t('media_downloading')
                   : media.uploadState === 'uploaded'
                     ? t('media_synced')

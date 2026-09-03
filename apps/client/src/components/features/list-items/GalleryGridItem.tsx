@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { MediaType } from '@keres/shared';
+import { galleryHasFile, type MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -74,7 +74,9 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
   );
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
-  const isDownloading = media.downloadState === 'pending';
+  // A URL is already usable; an old local row can carry a stale transfer state, but it must not
+  // turn that bookkeeping mistake into a misleading status for the person using the gallery.
+  const isDownloading = galleryHasFile(mediaType) && media.downloadState === 'pending';
   const transferFailed = media.uploadState === 'failed' || media.downloadState === 'failed';
   const pendingUpload = media.uploadState === 'pending';
 

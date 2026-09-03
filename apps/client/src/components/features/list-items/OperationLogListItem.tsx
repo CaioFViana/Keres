@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
-import { OperationLogEntityType } from '@keres/shared';
+import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance, OperationLogEntityType } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -13,29 +13,34 @@ interface OperationLogListItemProps {
   onPress?: (logId: string) => void; // Add this prop
 }
 
-const getOperationIcon = (operationType: string, color: string, size: number): React.ReactNode => {
-  let iconName: keyof typeof Ionicons.glyphMap;
+const getOperationIconName = (operationType: string): keyof typeof Ionicons.glyphMap => {
   switch (operationType) {
     case 'create':
-      iconName = 'add-circle-outline';
-      break;
+      return 'add-circle-outline';
     case 'update':
-      iconName = 'create-outline';
-      break;
+      return 'create-outline';
     case 'delete':
-      iconName = 'trash-outline';
-      break;
+      return 'trash-outline';
     case 'reorder':
-      iconName = 'repeat-outline';
-      break;
+      return 'repeat-outline';
     default:
-      iconName = 'help-circle-outline';
+      return 'help-circle-outline';
   }
-  return <Ionicons name={iconName} size={size} color={color} />;
 };
 
+const RELATION_ENTITY_TYPES = new Set<string>([
+  OperationLogEntityType.CharacterRelation,
+  OperationLogEntityType.CharacterScene,
+  OperationLogEntityType.GalleryRelation,
+  OperationLogEntityType.LocationRelation,
+  OperationLogEntityType.NoteRelation,
+  OperationLogEntityType.PlotScene,
+  OperationLogEntityType.SeeAlsoRelation,
+  OperationLogEntityType.StatRelation,
+  OperationLogEntityType.TagRelation,
+]);
+
 const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPress }) => {
-  // Destructure onPress
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -46,6 +51,13 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
   );
 
   const userDisplayName = useUserDisplayName(log.userId, log.storyId); // Use the new hook
+  const entityAppearance = getEntityAppearance(log.entityType);
+  const isRelation = RELATION_ENTITY_TYPES.has(log.entityType);
+  const entityIcon = isRelation
+    ? 'link-outline'
+    : (entityAppearance.icon as keyof typeof Ionicons.glyphMap);
+  const entityIconColor = isRelation ? colors.secondary : entityAppearance.color;
+  const operationIconColor = log.operationType === 'delete' ? colors.error : colors.primary;
 
   // Determine the display text for the operation
   let operationDisplayText = '';
@@ -114,17 +126,29 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
       shadowRadius: 4,
       elevation: 3,
     },
-    operationTypeContainer: {
+    header: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 5,
     },
+    operationMarker: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: 9,
+    },
+    entityIcon: { marginRight: 6 },
     operationTypeText: {
       fontSize: 16,
       fontWeight: 'bold',
       color: colors.text,
       textTransform: 'capitalize',
-      marginLeft: 5, // Space between icon and text
+      flexShrink: 1,
     },
     entityInfo: {
       fontSize: 14,
@@ -154,8 +178,15 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
       onPress={onPress ? () => onPress(log.id) : undefined}
       disabled={!onPress} // Disable touch feedback if no onPress handler is provided
     >
-      <View style={styles.operationTypeContainer}>
-        {getOperationIcon(log.operationType, colors.primary, 18)}
+      <View style={styles.header}>
+        <View style={styles.operationMarker}>
+          <Ionicons
+            name={getOperationIconName(log.operationType)}
+            size={18}
+            color={operationIconColor}
+          />
+        </View>
+        <Ionicons name={entityIcon} size={18} color={entityIconColor} style={styles.entityIcon} />
         <Text style={styles.operationTypeText}>{operationDisplayText}</Text>
       </View>
       {log.userId && (

@@ -60,7 +60,8 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
       )}
     </View>
   );
-  const resolvedAppearance = entityAppearance ?? (entityType ? getEntityAppearance(entityType) : null);
+  const resolvedAppearance =
+    entityAppearance ?? (entityType ? getEntityAppearance(entityType) : null);
 
   return (
     <GenericListItem

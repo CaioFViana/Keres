@@ -22,6 +22,7 @@ import {
   modes,
   noteRelations,
   notes,
+  routes,
   scenes,
   seeAlsoRelations,
   stories,
@@ -63,6 +64,7 @@ const SIMPLE_TABLES: Partial<Record<string, { table: any; column: string }>> = {
   Tag: { table: tags, column: 'name' },
   Scene: { table: scenes, column: 'name' },
   Chapter: { table: chapters, column: 'name' },
+  Route: { table: routes, column: 'name' },
   Note: { table: notes, column: 'title' },
   WorldRule: { table: worldRules, column: 'title' },
   Story: { table: stories, column: 'title' },
@@ -160,6 +162,10 @@ export async function enrichDeletedDisplayNames(
         break;
       case 'ItemJourney':
         if (asId(r.itemId)) refs.push({ entityType: 'Item', id: r.itemId as string });
+        if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
+        break;
+      case 'RouteStep':
+        if (asId(r.routeId)) refs.push({ entityType: 'Route', id: r.routeId as string });
         if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
         break;
       case 'TagRelation':
@@ -300,6 +306,10 @@ export async function enrichDeletedDisplayNames(
       }
       case 'ItemJourney': {
         composed = `${labelOrId(nameMap, 'Item', asId(r.itemId))} @ ${labelOrId(nameMap, 'Scene', asId(r.sceneId))}`;
+        break;
+      }
+      case 'RouteStep': {
+        composed = `${labelOrId(nameMap, 'Route', asId(r.routeId))} @ ${labelOrId(nameMap, 'Scene', asId(r.sceneId))}`;
         break;
       }
       case 'TagRelation': {

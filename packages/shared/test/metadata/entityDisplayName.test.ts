@@ -11,8 +11,9 @@ describe('getSimpleDisplayName', () => {
     expect(getSimpleDisplayName('Gallery', { title: null, fileName: 'a.png' })).toBe('a.png');
   });
 
-  it('reads Story.title and Choice.text', () => {
+  it('reads Story.title, Route.name and Choice.text', () => {
     expect(getSimpleDisplayName('Story', { title: 'Ouroboros' })).toBe('Ouroboros');
+    expect(getSimpleDisplayName('Route', { name: 'Caminho da torre' })).toBe('Caminho da torre');
     expect(getSimpleDisplayName('Choice', { text: 'Go left' })).toBe('Go left');
   });
 

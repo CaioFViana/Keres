@@ -9,6 +9,7 @@ export const ENTITY_SIMPLE_DISPLAY_NAME_FIELD: Readonly<Record<string, string>> 
   Item: 'name',
   Tag: 'name',
   Chapter: 'name',
+  Route: 'name',
   Scene: 'name',
   StorySchemaField: 'name',
   Stat: 'name',

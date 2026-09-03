@@ -29,10 +29,12 @@ import { useTheme } from '../../theme';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 const CharactersScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
@@ -130,9 +132,9 @@ const CharactersScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('characters_title'));
+      setDocumentTitle(term('Character', true));
       navigation.getParent()?.setOptions({
-        title: t('characters_title'),
+        title: term('Character', true),
         headerRight: () => (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 }}>
             {selectedStory?.type === 'linear' && (
@@ -156,7 +158,7 @@ const CharactersScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, canEdit, openCharacterList, selectedStory?.type]),
+    }, [navigation, colors.text, t, canEdit, openCharacterList, selectedStory?.type, term]),
   );
 
   const handleToggleFavorite = useCallback(
@@ -206,7 +208,11 @@ const CharactersScreen = () => {
   }, [t]);
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_characters')} />;
+    return (
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('Character', true) })}
+      />
+    );
   }
 
   if (error) {
@@ -221,7 +227,7 @@ const CharactersScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_characters')}
+        searchPlaceholder={t('search_entities', { entities: term('Character', true) })}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterTagsChange}

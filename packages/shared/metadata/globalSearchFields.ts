@@ -21,7 +21,8 @@ export type GlobalSearchEntityType =
   | 'Note'
   | 'WorldRule'
   | 'Mode'
-  | 'Plot';
+  | 'Plot'
+  | 'Route';
 
 export interface GlobalSearchFieldConfig {
   /** Column used as the result's display title. */
@@ -83,7 +84,16 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
   },
   WorldRule: {
     titleField: 'title',
-    searchFields: ['title', 'description', 'extraNotes'],
+    searchFields: [
+      'title',
+      'description',
+      'type',
+      'category',
+      'behavior',
+      'usability',
+      'danger',
+      'extraNotes',
+    ],
   },
   // A Mode has no screen of its own: the result carries the owning character's id, and opening it
   // goes to that character's detail, where the modes are listed (see ENTITY_ROUTES in the client).
@@ -92,6 +102,10 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
     searchFields: ['name', 'modeChanges'],
   },
   Plot: {
+    titleField: 'name',
+    searchFields: ['name', 'details'],
+  },
+  Route: {
     titleField: 'name',
     searchFields: ['name', 'details'],
   },

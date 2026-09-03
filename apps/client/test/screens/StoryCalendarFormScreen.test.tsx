@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 /**
@@ -112,6 +112,17 @@ jest.mock('../../src/services/storymanagement/StoryCalendarService', () => ({
     getById: mockGetById,
   }),
 }));
+// The form's calendar-change review is covered by its pure projection tests. Keep this mount test
+// focused on the form's initial state, without pulling the sync-backed anchor services into it.
+jest.mock('../../src/components/features/calendars/CalendarAnchorsModal', () => ({
+  __esModule: true,
+  default: ({ visible, onConfirm }: { visible: boolean; onConfirm: () => void }) => {
+    const { TouchableOpacity } = require('react-native') as typeof import('react-native');
+    return visible ? (
+      <TouchableOpacity testID="calendar-change-preview-confirm" onPress={onConfirm} />
+    ) : null;
+  },
+}));
 
 import StoryCalendarFormScreen from '../../src/screens/storycalendars/StoryCalendarFormScreen';
 
@@ -168,5 +179,42 @@ describe('opening the calendar form', () => {
     ];
     expect(payload.name).toBe('Reckoning');
     expect(payload.definition.months).toHaveLength(2);
+  });
+
+  it('requires an anchor-reading review before saving a changed calendar definition', async () => {
+    mockRouteParams.value = { calendarId: 'calendar-1' };
+    mockGetById.mockResolvedValueOnce({
+      id: 'calendar-1',
+      name: 'Reckoning',
+      description: null,
+      definition: {
+        months: [{ name: 'First', days: 30 }],
+        daysPerWeek: 1,
+        weekdayNames: [],
+        hoursPerDay: 24,
+        minutesPerHour: 60,
+        secondsPerMinute: 60,
+        eras: [],
+        seasons: [],
+        moons: [],
+        unitNames: {},
+      },
+    });
+    const screen = await render(<StoryCalendarFormScreen />);
+    await waitFor(() => expect(screen.getByDisplayValue('Reckoning')).toBeTruthy());
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByDisplayValue('30'), '31');
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('confirm-calendar-save'));
+    });
+
+    expect(mockUpdateCalendar).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByTestId('calendar-change-preview-confirm')).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('calendar-change-preview-confirm'));
+    });
+    await waitFor(() => expect(mockUpdateCalendar).toHaveBeenCalledTimes(1));
   });
 });

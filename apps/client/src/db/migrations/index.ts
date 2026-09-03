@@ -35,6 +35,10 @@ import migration_31 from './0030_eminent_guardsmen';
 import migration_32 from './0031_wonderful_dragon_man';
 import migration_33 from './0032_bright_naoko';
 import migration_34 from './0033_absurd_machine_man';
+import migration_35 from './0034_crazy_amphibian';
+import migration_36 from './0035_same_miek';
+import migration_37 from './0036_organic_komodo';
+import migration_38 from './0037_closed_silver_fox';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -71,6 +75,10 @@ const migrations = [
   { id: 32, name: '0031_wonderful_dragon_man', run: migration_32 },
   { id: 33, name: '0032_bright_naoko', run: migration_33 },
   { id: 34, name: '0033_absurd_machine_man', run: migration_34 },
+  { id: 35, name: '0034_crazy_amphibian', run: migration_35 },
+  { id: 36, name: '0035_same_miek', run: migration_36 },
+  { id: 37, name: '0036_organic_komodo', run: migration_37 },
+  { id: 38, name: '0037_closed_silver_fox', run: migration_38 },
 ];
 
 export default migrations;

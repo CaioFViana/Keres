@@ -26,15 +26,18 @@ const page: HelpPage = {
         'Use Collaborators to invite, remove, or adjust access.',
         'Use Send to server to link a local story to a server.',
         'Enable reader comments when you want observations from readers.',
-        'Adjust time normalization and favorite behavior when those features make sense.',
+        'Use the reading-preferences card to choose favorite behavior, link mentions automatically, and normalize scene timing while it is displayed.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'These choices can make Choices available, control what collaborators see or change, define where the story synchronizes, and change how favorites appear to the team.',
+      text: 'These choices can make Choices available, control what collaborators see or change, define where the story synchronizes, change how favorites appear to the team, turn recognized names in text into links, and change how scene durations are displayed.',
     },
-    { type: 'seeAlso', pages: ['story-type', 'collaborators', 'sync-basics', 'favorites'] },
+    {
+      type: 'seeAlso',
+      pages: ['story-type', 'collaborators', 'sync-basics', 'favorites', 'appearance'],
+    },
   ],
 };
 export default page;

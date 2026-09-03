@@ -275,7 +275,17 @@ describe('the public showcase', () => {
       content: {
         ...validContent(),
         tags: [tag('Undead'), tag('Cursed')],
-        settings: { statSystem: true, statNotation: 'number' },
+        settings: {
+          statSystem: true,
+          statNotation: 'number',
+          vocabulary: {
+            version: 1,
+            language: 'en',
+            terms: {
+              Character: { singular: 'Hero', plural: 'Heroes', grammaticalGender: 'neutral' },
+            },
+          },
+        },
       },
     });
 
@@ -284,7 +294,13 @@ describe('the public showcase', () => {
     expect(data[0]).toMatchObject({
       authorName: 'Ana the GM',
       owner: { username: ana.username },
-      summary: { tagCount: 2, fieldCount: 0, statSystem: true, statNotation: 'number' },
+      summary: {
+        tagCount: 2,
+        fieldCount: 0,
+        hasVocabulary: true,
+        statSystem: true,
+        statNotation: 'number',
+      },
     });
     expect(data[0].content).toBeUndefined();
   });

@@ -21,6 +21,7 @@ import { createLocationRelationService } from '../../services/storymanagement/Lo
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import type {
   GraphLocationRelation,
@@ -55,6 +56,7 @@ interface LocationNodeConnection {
 const LocationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
   const drizzleDb = useDrizzle();
@@ -362,7 +364,7 @@ const LocationGraphScreen = () => {
         selectedValues={selectedIds}
         onSelectionChange={(next) => setSelectedIds(next.slice(0, MAX_SELECTED_LOCATIONS))}
         maxSelections={MAX_SELECTED_LOCATIONS}
-        placeholder={t('locations_title')}
+        placeholder={term('Location', true)}
         searchPlaceholder={t('search')}
         triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
       />

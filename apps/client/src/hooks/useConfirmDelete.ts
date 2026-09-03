@@ -5,14 +5,20 @@ import { AppAlert } from '../utils/AppAlert';
 export interface ConfirmDeleteOptions {
   /** Translation key for the confirmation dialog title, e.g. `'delete_tag_title'`. */
   titleKey: string;
+  /** A resolved title for terminology-aware screens. Takes precedence over `titleKey`. */
+  title?: string;
   /** Translation key for the confirmation body, e.g. `'delete_tag_message'`. */
   messageKey: string;
+  /** A resolved message for terminology-aware screens. Takes precedence over `messageKey`. */
+  message?: string;
   /** Runs after the user confirms. Throwing here surfaces the failure alert. */
   onConfirm: () => Promise<void>;
   /** Shown after a successful delete. Omit to stay silent. */
   successKey?: string;
+  successMessage?: string;
   /** Shown when `onConfirm` throws. */
   failureKey: string;
+  failureMessage?: string;
   /** Called around the delete so screens can drive their own spinner. */
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -30,15 +36,19 @@ export function useConfirmDelete() {
   return useCallback(
     ({
       titleKey,
+      title,
       messageKey,
+      message,
       onConfirm,
       successKey,
+      successMessage,
       failureKey,
+      failureMessage,
       onLoadingChange,
     }: ConfirmDeleteOptions) => {
       AppAlert.alert(
-        t(titleKey),
-        t(messageKey),
+        title ?? t(titleKey),
+        message ?? t(messageKey),
         [
           { text: t('cancel'), style: 'cancel' },
           {
@@ -48,12 +58,12 @@ export function useConfirmDelete() {
               try {
                 onLoadingChange?.(true);
                 await onConfirm();
-                if (successKey) {
-                  AppAlert.alert(t('success'), t(successKey));
+                if (successMessage ?? successKey) {
+                  AppAlert.alert(t('success'), successMessage ?? t(successKey!));
                 }
               } catch (err) {
                 console.error(`Delete failed (${titleKey}):`, err);
-                AppAlert.alert(t('error'), t(failureKey));
+                AppAlert.alert(t('error'), failureMessage ?? t(failureKey));
               } finally {
                 onLoadingChange?.(false);
               }

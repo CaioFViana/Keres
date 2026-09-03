@@ -204,7 +204,53 @@
     "statStrengths": [],
     "settings": {
       "statSystem": false,
-      "statNotation": "letter"
+      "statNotation": "letter",
+      "vocabulary": {
+        "version": 1,
+        "language": "pt",
+        "terms": {
+          "Character": {
+            "singular": "Personagem",
+            "plural": "Personagens",
+            "grammaticalGender": "masculine"
+          },
+          "Location": {
+            "singular": "Cenário",
+            "plural": "Cenários",
+            "grammaticalGender": "masculine"
+          },
+          "Chapter": {
+            "singular": "Edição",
+            "plural": "Edições",
+            "grammaticalGender": "feminine"
+          },
+          "Scene": {
+            "singular": "Sequência",
+            "plural": "Sequências",
+            "grammaticalGender": "feminine"
+          },
+          "Event": {
+            "singular": "Momento",
+            "plural": "Momentos",
+            "grammaticalGender": "masculine"
+          },
+          "Item": {
+            "singular": "Adereço",
+            "plural": "Adereços",
+            "grammaticalGender": "masculine"
+          },
+          "WorldRule": {
+            "singular": "Regra de continuidade",
+            "plural": "Regras de continuidade",
+            "grammaticalGender": "feminine"
+          },
+          "Choice": {
+            "singular": "Ramificação",
+            "plural": "Ramificações",
+            "grammaticalGender": "feminine"
+          }
+        }
+      }
     }
   }
 }

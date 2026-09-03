@@ -63,7 +63,7 @@ A collection of scenes. It does not mean chronological order, but "display order
 The fundamental narrative units.
 
 ### Plots / Plot Scenes
-`Plot` represents a narrative thread within a **linear** story. It has a `name` and
+`Plot` represents a narrative thread within a story. It has a `name` and
 `details`, belongs to a single `Story` and may group any number of scenes — including
 none, while it is still being planned. A scene may take part in several Plots, so
 the relation is N:N and not a column on `Scene`.
@@ -71,12 +71,11 @@ the relation is N:N and not a column on `Scene`.
 `PlotScene` materialises that relation (`plotId` + `sceneId`) and holds a required `note`, of
 a single line and at most 160 characters, explaining that scene's role in that plot. The
 `(plotId, sceneId)` pair is unique and both entities must belong to the same story. The relation
-is edited in the Plots section of the scene's form; there is no separate
-`PlotScene` form.
+is edited in the Plot form; there is no separate `PlotScene` form.
 
-Plots are not allowed in `branching` stories at this stage. A linear story with active Plots
-also cannot be converted to branching before they are removed. `Plot` and
-`PlotScene` take part in export/import, synchronization, tombstones and the operation log.
+Plots work in both story shapes and survive linear/branching conversion. In branching stories,
+their scene membership is presented as graph distribution rather than as a reading order. `Plot`
+and `PlotScene` take part in export/import, synchronization, tombstones and the operation log.
 `Plot` appears in the Global Search by name and details; `PlotScene`, being a join, is not an
 independently navigable destination. Deliberately, Plots do not get tags, favourites, comments,
 suggestions or custom attributes.
@@ -102,10 +101,10 @@ Fixed relations. Such as "siblings", "Master/Slave", "Mother/Daughter"...
 A relation between two locations, with a `relationType`: `contains` (directional - `locationAId` is the "parent" location containing `locationBId`) or `connected_to` (an unordered pair, e.g. two cities linked by a road).
 
 #### Plot X Scene (`PlotScene`)
-An N:N relation exclusive to linear stories. A scene may develop several plots and a plot
-may cross scenes from different chapters. The join's short note describes the scene's specific
-role in that plot; the display order is still derived from the chapter's index and, next,
-the scene's index.
+An N:N membership relation available in both story shapes. A scene may develop several plots and
+a plot may cross scenes from different chapters or graph branches. The join's short note describes
+the scene's specific role in that plot; branching surfaces use labelled graph/catalogue order,
+never an invented reading order.
 
 #### Tag X <entity> (`TagRelation`) / Note X <entity> (`NoteRelation`)
 The same polymorphic pattern as `GalleryRelation`: a generic join table linking a `Tag`/`Note` to any entity of the story, instead of a fixed FK column per type.
@@ -118,6 +117,13 @@ When `Story.statSystem` is on, `Stat` defines a measurable axis (for example, St
 
 ### Choices
 Represents the transitions between scenes in branching stories (CYOA) - `sceneId` (source) → `nextSceneId` (target) + `text`. See `docs/choice_mechanics.md` and `docs/dynamic_story_structure.md` for the full detail (linear stories never have explicit `Choice`s; navigation follows the scenes' `index`).
+
+### Routes / Route Steps
+`Route` is an authored possible traversal in a branching story. Its ordered `RouteStep` visits
+record both the scene and the exact selected outgoing Choice, allowing loops and repeated scenes.
+Routes are validated against the current graph, synchronize and export with the story, and are used
+by the route-aware Reader. The Story Navigator can simulate Choices in memory and save its visited
+path as a Route; it never persists simulated item or trigger state.
 
 ### Items / Item Journeys
 `Item` is an object in the story (a weapon, an artefact, ...). `ItemJourney` records an item's "journey" through the narrative: in which `sceneId` it changes, to what `newState`, and optionally changes owner (`newCharacterOwnerId`) - it is an item's possession/state history told scene by scene.
@@ -157,7 +163,7 @@ The client includes a help catalogue in Portuguese and English, with local searc
 - **Comments:** collaborators and authorized readers may comment on a native or custom field of a navigable entity; each comment preserves the field's context and the comment list brings those conversations together.
 - **See also:** creates a free, reciprocal link between related elements, without replacing tags or notes.
 - **Branching stories:** choices may have checks (visits, items or flags) and effects (grant/take an item or turn a flag on/off). These features form the reader's state and are analysed alongside the story map.
-- **Plots in linear stories:** Plots group overlapping scenes without altering their order. The Plots stack offers a Plot × Scene matrix, a coverage chart, an average of scenes per plot and a textual reader of summaries; a scene may count towards more than one plot, so coverage percentages need not add up to 100%.
+- **Plots:** Plots group overlapping scenes without altering narrative topology. Linear stories show matrix/coverage and a textual reader; branching stories show graph distribution and map highlights without claiming a single reading order. A scene may count towards more than one plot, so coverage percentages need not add up to 100%.
 - **Collaboration:** a story linked to a server may have collaborators; permissions and reader comments are configured in the story itself.
 
 ### Entity relationship chart

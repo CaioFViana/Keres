@@ -113,6 +113,13 @@ export class StoryExportImportService {
       where: (plotScenes, { eq, and }) =>
         and(eq(plotScenes.storyId, storyId), eq(plotScenes.isDeleted, false)),
     });
+    const routes = await db.query.routes.findMany({
+      where: (routes, { eq, and }) => and(eq(routes.storyId, storyId), eq(routes.isDeleted, false)),
+    });
+    const routeSteps = await db.query.routeSteps.findMany({
+      where: (routeSteps, { eq, and }) =>
+        and(eq(routeSteps.storyId, storyId), eq(routeSteps.isDeleted, false)),
+    });
     const galleryItems = await db.query.galleries.findMany({
       where: (galleries, { eq, and }) =>
         and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)),
@@ -218,6 +225,8 @@ export class StoryExportImportService {
         characterScenes,
         plots,
         plotScenes,
+        routes,
+        routeSteps,
         galleryItems,
         galleryRelations,
         items,
@@ -799,6 +808,53 @@ export class StoryExportImportService {
       });
       if (newPlotScenesData.length > 0)
         await tx.insert(dbSchema.plotScenes).values(newPlotScenesData);
+
+      // --- Routes ---
+      const newRoutesData = (validatedFullStory.routes ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+          deletedAt: null,
+        };
+      });
+      if (newRoutesData.length > 0) await tx.insert(dbSchema.routes).values(newRoutesData);
+
+      // --- RouteSteps ---
+      const newRouteStepsData = (validatedFullStory.routeSteps ?? []).map((original) => {
+        const newId = nextId(original.id);
+        const routeId = idMap.get(original.routeId);
+        const sceneId = idMap.get(original.sceneId);
+        const selectedChoiceId = original.selectedChoiceId
+          ? idMap.get(original.selectedChoiceId)
+          : null;
+        if (!routeId || !sceneId || (original.selectedChoiceId && !selectedChoiceId)) {
+          throw new Error(
+            `Import Error: route, scene, or choice missing for route step ${original.id}.`,
+          );
+        }
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          routeId,
+          sceneId,
+          selectedChoiceId,
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+          deletedAt: null,
+        };
+      });
+      if (newRouteStepsData.length > 0)
+        await tx.insert(dbSchema.routeSteps).values(newRouteStepsData);
 
       // --- GalleryItems ---
       const newGalleryItemsData = validatedFullStory.galleryItems.map((original) => {

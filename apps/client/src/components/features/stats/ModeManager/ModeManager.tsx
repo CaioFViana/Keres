@@ -2,14 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '../../../common/controls/Button/Button';
-import FormActions from '../../../common/controls/FormActions/FormActions';
-import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
-import TextInput from '../../../common/inputs/TextInput/TextInput';
 import type { ModeSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
+import Button from '../../../common/controls/Button/Button';
+import FormActions from '../../../common/controls/FormActions/FormActions';
+import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
+import TextInput from '../../../common/inputs/TextInput/TextInput';
 
 /**
  * CRUD for a character's modes, in the form. The detail screen only displays them.
@@ -158,7 +158,7 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
             onChangeText={setChanges}
             placeholder={t('mode_changes_placeholder')}
             multiline
-            style={commonInputStyles.input}
+            style={commonInputStyles.multiline}
           />
           {editingId ? (
             <FormActions>

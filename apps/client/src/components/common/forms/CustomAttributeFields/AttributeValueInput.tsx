@@ -1,16 +1,23 @@
-import type { StorySchemaEntityType } from '@keres/shared';
-import { AttributeType, decodeAttributeValue, encodeAttributeValue } from '@keres/shared';
-import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
-import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
-import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
+import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
+import type { Ionicons } from '@expo/vector-icons';
+import type { StorySchemaEntityType } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  encodeAttributeValue,
+  getEntityAppearance,
+} from '@keres/shared';
+import React, { useMemo } from 'react';
+import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import { useTheme } from '../../../../theme';
+import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;
@@ -46,6 +53,22 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
 }) => {
   const { colors } = useTheme();
   const commonInputStyles = getCommonInputStyles(colors);
+  const { options: entityOptions, loading: entityOptionsLoading } = useEntityPickerOptions(
+    storyId,
+    targetEntityType,
+  );
+  const entityPillOptions = useMemo(
+    () =>
+      targetEntityType
+        ? entityOptions.map((option) => ({
+            label: option.name || '—',
+            value: option.id,
+            color: getEntityAppearance(targetEntityType).color,
+            icon: getEntityAppearance(targetEntityType).icon as keyof typeof Ionicons.glyphMap,
+          }))
+        : [],
+    [entityOptions, targetEntityType],
+  );
 
   switch (type) {
     case AttributeType.LONG_TEXT:
@@ -55,7 +78,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           onChangeText={onChange}
           placeholder={placeholder}
           multiline
-          style={[commonInputStyles.input, { minHeight: 4 * 20, textAlignVertical: 'top' }, style]}
+          style={[commonInputStyles.multiline, style]}
         />
       );
 
@@ -132,12 +155,13 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
     case AttributeType.ENTITY:
       if (storyId && targetEntityType) {
         return (
-          <EntityPickerInput
-            storyId={storyId}
-            entityType={targetEntityType}
-            value={value || null}
-            onChange={onChange}
+          <MultiSelectPill
+            options={entityPillOptions}
+            selectedValues={value ? [value] : []}
+            onSelectionChange={(selected) => onChange(selected[0] ?? null)}
+            singleSelect
             placeholder={placeholder}
+            noOptionsText={entityOptionsLoading ? '…' : undefined}
           />
         );
       }

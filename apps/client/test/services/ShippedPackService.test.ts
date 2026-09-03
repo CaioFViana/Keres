@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { PackContentSchema } from '@keres/shared';
+import { PackContentSchema, STORY_VOCABULARY_ENTITY_TYPES } from '@keres/shared';
 import { createPackService } from '../../src/services/storymanagement/PackService';
 import { createShippedPackService } from '../../src/services/storymanagement/ShippedPackService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
@@ -36,6 +36,15 @@ describe('the shipped catalogue', () => {
     }
   });
 
+  it('identifies vocabulary in every pack preview', () => {
+    const previews = createShippedPackService(db).previewShippedPacks();
+
+    expect(previews).toHaveLength(6);
+    for (const preview of previews) {
+      expect(preview.counts.hasVocabulary).toBe(true);
+    }
+  });
+
   /** Generated content still has to satisfy the schema the app applies it through. */
   it('carries content that validates', () => {
     for (const entry of shippedPackRegistry) {
@@ -63,10 +72,29 @@ describe('the shipped catalogue', () => {
           suggestionCount: content.suggestions.length,
           statCount: content.stats.length,
           ladderValues: content.statStrengths.map((tier) => tier.minValue),
-          settings: content.settings,
+          settings: {
+            statSystem: content.settings.statSystem,
+            statNotation: content.settings.statNotation,
+          },
+          vocabularyKeys: Object.keys(content.settings.vocabulary?.terms ?? {}).sort(),
         });
       });
       expect(`${entry.slug}: ${shapes[0]}`).toBe(`${entry.slug}: ${shapes[1]}`);
+    }
+  });
+
+  it('ships a complete vocabulary localized for every pack language', () => {
+    for (const entry of shippedPackRegistry) {
+      for (const language of entry.languages) {
+        const content = PackContentSchema.parse((language.pack as { content: unknown }).content);
+        expect(content.settings.vocabulary).toMatchObject({
+          version: 1,
+          language: language.language,
+        });
+        expect(Object.keys(content.settings.vocabulary!.terms).sort()).toEqual(
+          [...STORY_VOCABULARY_ENTITY_TYPES].sort(),
+        );
+      }
     }
   });
 
@@ -119,7 +147,7 @@ describe('installing a shipped pack', () => {
       visibility: 'private',
       // No source story: it was not extracted here, so it cannot be re-extracted.
       sourceStoryId: null,
-      counts: { stats: 6, customAttributes: 0 },
+      counts: { stats: 6, customAttributes: 0, hasVocabulary: true },
     });
   });
 
@@ -190,6 +218,34 @@ describe('a story created from a shipped pack', () => {
     expect(story?.statSystem).toBe(true);
     expect(story?.statNotation).toBe('number');
   });
+
+  it.each([
+    ['tabletop-stats', 'en', 'Chapter', 'Session'],
+    ['tabletop-stats', 'pt', 'Chapter', 'Sessão'],
+    ['novel-craft', 'en', 'Location', 'Setting'],
+    ['novel-craft', 'pt', 'Location', 'Cenário'],
+    ['comic', 'en', 'Chapter', 'Issue'],
+    ['comic', 'pt', 'Chapter', 'Edição'],
+  ] as const)(
+    'seeds %s/%s vocabulary when creating a story',
+    async (slug, language, entityType, singular) => {
+      const installed = await createShippedPackService(db).installShippedPack(slug, language);
+      if (installed.status !== 'installed') throw new Error('The pack failed to install.');
+
+      const storyId = await createPackService(db).createStoryWithPacks(
+        USER_ID,
+        newStory('A seeded story'),
+        [installed.packId],
+      );
+      const story = await createStoryService(db).getStoryById(storyId);
+
+      expect(story?.vocabulary).toMatchObject({
+        version: 1,
+        language,
+        terms: { [entityType]: { singular } },
+      });
+    },
+  );
 
   it('creates the novel craft fields on the entities they belong to', async () => {
     const shipped = createShippedPackService(db);

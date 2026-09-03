@@ -2,7 +2,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -105,7 +105,7 @@ const PlotReaderScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Select
+        <SingleSelectPill
           options={[
             { label: t('all_scenes'), value: ALL_SCENES },
             ...plots.map((plot) => ({ label: plot.name, value: plot.id })),

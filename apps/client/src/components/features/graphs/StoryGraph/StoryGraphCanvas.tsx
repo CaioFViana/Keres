@@ -28,10 +28,12 @@ interface StoryGraphCanvasProps {
   showEdgeLabels: boolean;
   selectedNodeId: string | null;
   onSelectNode: (node: GraphNode) => void;
+  /** A screen-local Plot filter; it never changes the graph or its persistence. */
+  highlightedNodeIds?: ReadonlySet<string>;
 }
 
 const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProps>(
-  ({ layout, showEdgeLabels, selectedNodeId, onSelectNode }, ref) => {
+  ({ layout, showEdgeLabels, selectedNodeId, onSelectNode, highlightedNodeIds }, ref) => {
     const { colors } = useTheme();
     const panZoom = usePanZoomCanvas(ref, layout, { freePan: true });
 
@@ -128,6 +130,7 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
 
         {layout.nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
+          const isHighlighted = !highlightedNodeIds || highlightedNodeIds.has(node.id);
           const borderColor = isSelected
             ? colors.primary
             : node.isStart
@@ -149,6 +152,7 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
                   width: node.width,
                   height: node.height,
                   backgroundColor: node.chapterColor,
+                  opacity: isHighlighted ? 1 : 0.28,
                 },
               ]}
             >
@@ -156,8 +160,9 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
                 style={[
                   styles.nodeInner,
                   {
-                    borderColor,
-                    borderWidth: isSelected || node.isStart || node.isFinish ? 2.5 : 1.2,
+                    borderColor: isHighlighted && !isSelected ? colors.primary : borderColor,
+                    borderWidth:
+                      isSelected || node.isStart || node.isFinish || isHighlighted ? 2.5 : 1.2,
                   },
                 ]}
               >

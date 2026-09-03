@@ -39,6 +39,7 @@ import { createSceneService } from '../../../services/storymanagement/SceneServi
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
 import { createTagService } from '../../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../../services/storymanagement/TagRelationService';
+import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -79,6 +80,7 @@ const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: strin
 const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -538,7 +540,7 @@ const NarrativeElementsListScreen = () => {
       activeSort,
       sortDirection,
       scenesWithFavoriteState,
-      selectedStory?.type,
+      selectedStory,
       searchQuery,
       tagsByChapterId,
       tagsBySceneId,
@@ -556,13 +558,13 @@ const NarrativeElementsListScreen = () => {
 
   const advancedSearchScopes = useMemo(
     () => [
-      { entityName: 'Chapter' as const, prefix: 'chapter', label: t('chapters_title') },
-      { entityName: 'Scene' as const, prefix: 'scene', label: t('scenes_title') },
+      { entityName: 'Chapter' as const, prefix: 'chapter', label: term('Chapter', true) },
+      { entityName: 'Scene' as const, prefix: 'scene', label: term('Scene', true) },
       ...(selectedStory?.type === 'branching'
-        ? [{ entityName: 'Choice' as const, prefix: 'choice', label: t('choices_title') }]
+        ? [{ entityName: 'Choice' as const, prefix: 'choice', label: term('Choice', true) }]
         : []),
     ],
-    [selectedStory?.type, t],
+    [selectedStory?.type, term],
   );
 
   const visibleSceneCount = useMemo(() => {
@@ -589,11 +591,11 @@ const NarrativeElementsListScreen = () => {
     if (!hasChapters) return setReorderingType('event');
 
     AppAlert.alert(t('chapter_reorder_which'), '', [
-      { text: t('chapter_reorder_chapters'), onPress: () => setReorderingType('chapter') },
-      { text: t('chapter_reorder_events'), onPress: () => setReorderingType('event') },
+      { text: term('Chapter', true), onPress: () => setReorderingType('chapter') },
+      { text: term('Event', true), onPress: () => setReorderingType('event') },
       { text: t('cancel'), style: 'cancel' },
     ]);
-  }, [outlineChapters, t]);
+  }, [outlineChapters, t, term]);
 
   const handleReorderConfirm = useCallback(
     async (newOrder: { id: string; newIndex: number }[]) => {
@@ -630,11 +632,13 @@ const NarrativeElementsListScreen = () => {
         title: t('narrative_elements_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
-            {selectedStory?.type === 'branching' && (
+            {selectedStory && (
               <TouchableOpacity
                 onPress={() => navigation.navigate('ChoiceView')}
                 style={styles.headerButton}
-                accessibilityLabel={t('story_map_title')}
+                accessibilityLabel={
+                  selectedStory.type === 'linear' ? t('story_flow_title') : t('story_map_title')
+                }
               >
                 <Ionicons name="git-network-outline" size={26} color={colors.text} />
               </TouchableOpacity>
@@ -672,7 +676,7 @@ const NarrativeElementsListScreen = () => {
       styles.headerButton,
       styles.headerRightContainer,
       canEdit,
-      selectedStory?.type,
+      selectedStory,
     ]),
   );
 
@@ -680,7 +684,11 @@ const NarrativeElementsListScreen = () => {
   // source for this composite Chapter + Scene screen, so a debounced scene-name search must not
   // temporarily replace the whole screen (and its focused search field) with a loading state.
   if (loading && outlineChapters.length === 0) {
-    return <ScreenLoading message={t('loading_chapters')} />;
+    return (
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('Chapter', true) })}
+      />
+    );
   }
 
   if (error) {
@@ -695,7 +703,10 @@ const NarrativeElementsListScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('chapter_outline_search_placeholder')}
+        searchPlaceholder={t('chapter_outline_search_placeholder', {
+          chapters: term('Chapter', true),
+          scenes: term('Scene', true),
+        })}
         currentSearchTerm={searchQuery}
         filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
         onFilterChange={setActiveTagIds}

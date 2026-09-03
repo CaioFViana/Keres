@@ -1,6 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { PackVisibility } from '@keres/shared';
 import React, { useEffect, useState } from 'react';
@@ -102,7 +102,7 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
 
       <View style={styles.formGroup}>
         <Text style={styles.label}>{t('packs_share_server_label')}</Text>
-        <Select
+        <SingleSelectPill
           options={servers.map((server) => ({
             label: server.name ?? server.url,
             value: server.id,
@@ -116,7 +116,7 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
 
       <View style={styles.formGroup}>
         <Text style={styles.label}>{t('packs_share_visibility_label')}</Text>
-        <Select
+        <SingleSelectPill
           options={[
             { label: t('packs_visibility_private'), value: 'private' },
             { label: t('packs_visibility_public'), value: 'public' },

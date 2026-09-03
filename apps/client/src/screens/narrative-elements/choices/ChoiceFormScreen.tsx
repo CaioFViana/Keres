@@ -1,7 +1,8 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/inputs/Select/Select';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -32,6 +33,7 @@ import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import {
   commonFormStyleDefs,
   getCommonContainerStyles,
@@ -54,6 +56,8 @@ const ChoiceFormScreen = () => {
   const route = useRoute<ChoiceFormScreenRouteProp>();
   const { choiceId: initialChoiceId, sceneId: initialSceneId } = route.params || {};
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Choice');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const {
@@ -147,15 +151,16 @@ const ChoiceFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentChoiceId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_choice_title') : t('create_choice_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_choice_title') : t('create_choice_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -234,7 +239,7 @@ const ChoiceFormScreen = () => {
       return;
     }
     if (!sceneId) {
-      AppAlert.alert(t('error'), t('scene_required'));
+      AppAlert.alert(t('error'), sceneCopy.required);
       return;
     }
     if (!nextSceneId) {
@@ -268,7 +273,7 @@ const ChoiceFormScreen = () => {
           choiceData,
         );
         savedChoiceId = savedChoice.id;
-        AppAlert.alert(t('success'), t('choice_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         const savedChoice = await choiceServiceRef.current!.createChoice(userId, {
           ...choiceData,
@@ -276,7 +281,7 @@ const ChoiceFormScreen = () => {
         });
         savedChoiceId = savedChoice.id;
         setCurrentChoiceId(savedChoice.id);
-        AppAlert.alert(t('success'), t('choice_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
       }
 
       if (savedChoiceId) {
@@ -293,7 +298,7 @@ const ChoiceFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save choice:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_choice'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -310,9 +315,12 @@ const ChoiceFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_choice_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_choice_message',
-      successKey: 'choice_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_choice',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await choiceServiceRef.current!.deleteChoice(userId, currentChoiceId);
@@ -645,37 +653,37 @@ const ChoiceFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_choice_title') : t('create_choice_title')}
-      </Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {t('choice_form_description')}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('text')}</Text>
       <TextInput
         placeholder={t('text_placeholder')}
         value={text}
         onChangeText={setText}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('parent_scene')}</Text>
-      <Select
+      <Text style={[styles.label, { color: colors.text }]}>
+        {t('vocabulary_parent_entity', { entity: sceneCopy.entity })}
+      </Text>
+      <SingleSelectPill
         options={sceneOptions}
         value={sceneId}
         onValueChange={setSceneId}
-        placeholder={t('select_parent_scene')}
+        placeholder={sceneCopy.select}
         multiple={false}
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('next_scene')}</Text>
-      <Select
+      <Text style={[styles.label, { color: colors.text }]}>
+        {t('vocabulary_next_entity', { entity: sceneCopy.entity })}
+      </Text>
+      <SingleSelectPill
         options={sceneOptions}
         value={nextSceneId}
         onValueChange={setNextSceneId}
-        placeholder={t('select_next_scene')}
+        placeholder={sceneCopy.select}
         multiple={false}
       />
 
@@ -684,7 +692,7 @@ const ChoiceFormScreen = () => {
         placeholder={t('choice_notes_placeholder')}
         value={notes || ''}
         onChangeText={setNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -716,7 +724,7 @@ const ChoiceFormScreen = () => {
                 <View style={styles.cardRow}>
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_group_combinator')}</Text>
-                    <Select
+                    <SingleSelectPill
                       options={combinatorOptions}
                       value={group.combinator}
                       onValueChange={(value) =>
@@ -739,7 +747,7 @@ const ChoiceFormScreen = () => {
                     <View style={styles.cardRow}>
                       <View style={styles.fieldFlex}>
                         <Text style={styles.cardRowLabel}>{t('check_type')}</Text>
-                        <Select
+                        <SingleSelectPill
                           options={checkTypeOptions}
                           value={check.type}
                           onValueChange={(value) =>
@@ -750,7 +758,7 @@ const ChoiceFormScreen = () => {
                       </View>
                       <View style={styles.fieldFlex}>
                         <Text style={styles.cardRowLabel}>{t('check_mode')}</Text>
-                        <Select
+                        <SingleSelectPill
                           options={checkModeOptions}
                           value={check.mode}
                           onValueChange={(value) =>
@@ -766,13 +774,13 @@ const ChoiceFormScreen = () => {
                       <View style={styles.cardRow}>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_scene')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={sceneOptions}
                             value={check.sceneId}
                             onValueChange={(value) =>
                               handleUpdateCheck(check.id, { sceneId: value })
                             }
-                            placeholder={t('select_scene')}
+                            placeholder={sceneCopy.select}
                             multiple={false}
                             allowDeselect={true}
                           />
@@ -798,7 +806,7 @@ const ChoiceFormScreen = () => {
                       <View style={styles.cardRow}>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_item')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={itemOptions}
                             value={check.itemId}
                             onValueChange={(value) =>
@@ -811,7 +819,7 @@ const ChoiceFormScreen = () => {
                         </View>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_item_presence')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={itemPresenceOptions}
                             value={check.itemPresence}
                             onValueChange={(value) =>
@@ -841,7 +849,7 @@ const ChoiceFormScreen = () => {
                         </View>
                         <View style={styles.fieldFlex}>
                           <Text style={styles.cardRowLabel}>{t('check_trigger_state')}</Text>
-                          <Select
+                          <SingleSelectPill
                             options={triggerStateOptions}
                             value={check.triggerState}
                             onValueChange={(value) =>
@@ -890,7 +898,7 @@ const ChoiceFormScreen = () => {
               <View style={styles.cardRow}>
                 <View style={styles.fieldFlex}>
                   <Text style={styles.cardRowLabel}>{t('effect_type')}</Text>
-                  <Select
+                  <SingleSelectPill
                     options={effectTypeOptions}
                     value={effect.effectType}
                     onValueChange={(value) =>
@@ -905,7 +913,7 @@ const ChoiceFormScreen = () => {
                 <View style={styles.cardRow}>
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_item')}</Text>
-                    <Select
+                    <SingleSelectPill
                       options={itemOptions}
                       value={effect.itemId}
                       onValueChange={(value) => handleUpdateEffect(effect.id, { itemId: value })}
@@ -977,10 +985,10 @@ const ChoiceFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('save_choice')}</Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_choice_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

@@ -9,6 +9,8 @@ export * from './entities/CharacterRelation';
 export * from './entities/CharacterScene';
 export * from './entities/Plot';
 export * from './entities/PlotScene';
+export * from './entities/Route';
+export * from './entities/RouteStep';
 export * from './entities/Choice';
 export * from './entities/ChoiceCheck';
 export * from './entities/ChoiceCheckGroup';
@@ -51,6 +53,7 @@ export * from './schemas/CharacterRelationSchemas';
 export * from './schemas/CharacterSceneSchemas';
 export * from './schemas/PlotSchemas';
 export * from './schemas/PlotSceneSchemas';
+export * from './schemas/RouteSchemas';
 export * from './schemas/CharacterSchemas';
 export * from './schemas/ChoiceCheckGroupSchemas';
 export * from './schemas/ChoiceCheckSchemas';
@@ -105,19 +108,27 @@ export * from './metadata/avatar';
 export * from './metadata/mapIcons';
 export * from './utils/attributeKey';
 export * from './utils/attributeValueCodec';
+export * from './utils/base64';
 export * from './utils/attributeDateValue';
 export * from './utils/colorUtils';
 export * from './metadata/TimingUnit';
 export * from './utils/storyCalendar';
 export * from './utils/storyZip';
+export * from './utils/reviveDates';
 export * from './theme/ThemeColors';
 export * from './theme/palettes';
+export * from './graphs/spatialCanvas';
 
 // Domain rules that hold on both sides of synchronization: the client applies them before writing to
 // the operation log and the server applies them again on receipt. Each of them once existed
 // duplicated, and at least one had already diverged.
 export * from './rules/entityPair';
 export * from './rules/linearStoryScenes';
+export * from './utils/narrativeProjection';
+export * from './utils/routeValidation';
+export * from './utils/routeChronology';
+export * from './utils/storySimulation';
+export * from './utils/routeTraversal';
 export * from './rules/reorderIndices';
 export * from './rules/storyExportIntegrity';
 export * from './rules/storyOwnerFields';

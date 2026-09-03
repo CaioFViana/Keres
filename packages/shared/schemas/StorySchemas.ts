@@ -1,9 +1,35 @@
+import type { StoryVocabulary } from '../entities/Story';
 import { UlidSchema } from '../schemas/SyncSchemas'; // Adjusted path
 import { z } from 'zod';
 
 export const StoryTypeSchema = z.enum(['linear', 'branching']);
 export const FavoriteBehaviorSchema = z.enum(['global', 'individual', 'individual_public']);
 export const StatNotationSchema = z.enum(['letter', 'number']);
+
+export const StoryVocabularyTermSchema = z.object({
+  singular: z.string().trim().min(1).max(80),
+  plural: z.string().trim().min(1).max(80),
+  grammaticalGender: z.enum(['masculine', 'feminine', 'neutral']),
+});
+
+/**
+ * Persisted terminology is deliberately one language wide. The user writes it once; the app
+ * falls back to its normal translated terminology while being read in another locale.
+ */
+export const StoryVocabularySchema: z.ZodType<StoryVocabulary> = z.object({
+  version: z.literal(1),
+  language: z.enum(['pt', 'en']),
+  terms: z.object({
+    Character: StoryVocabularyTermSchema.optional(),
+    Location: StoryVocabularyTermSchema.optional(),
+    Chapter: StoryVocabularyTermSchema.optional(),
+    Scene: StoryVocabularyTermSchema.optional(),
+    Event: StoryVocabularyTermSchema.optional(),
+    Item: StoryVocabularyTermSchema.optional(),
+    WorldRule: StoryVocabularyTermSchema.optional(),
+    Choice: StoryVocabularyTermSchema.optional(),
+  }),
+});
 
 // Schema for client-provided input during story creation
 export const StoryCreateInputSchema = z.object({
@@ -26,6 +52,7 @@ export const StoryCreateInputSchema = z.object({
   completenessChecks: z.boolean().default(false),
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
+  vocabulary: StoryVocabularySchema.nullable().default(null),
 });
 
 // Schema for the 'data' payload when creating a story via sync
@@ -48,6 +75,7 @@ export const CreateStoryDataSchema = z.object({
   completenessChecks: z.boolean().default(false),
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
+  vocabulary: StoryVocabularySchema.nullable().default(null),
 });
 
 // Full Story Schema, including server-managed fields like userId

@@ -28,6 +28,10 @@ import {
   formatGregorianDate,
   gregorianDayNumberForElapsed,
   gregorianPartsFromDayNumber,
+  gregorianDayNumber,
+  isCalendarDateCoordinateInBounds,
+  parseCalendarDateCoordinate,
+  partsToDayNumber,
 } from '@keres/shared';
 import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import { useStoryCalendar } from './useStoryCalendar';
@@ -54,7 +58,7 @@ const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) 
  */
 export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | null) {
   const { t } = useTranslation();
-  const { definition: primaryCalendar, describeDay } = useStoryCalendar();
+  const { definition: primaryCalendar, calendars, describeDay } = useStoryCalendar();
   const calendar = calendarOverride ?? primaryCalendar;
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -192,6 +196,36 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
       })),
     [chapterDurationLabels, orderedScenes],
   );
+  const sceneElapsedOverrides = useMemo(() => {
+    const epochDay = story?.timelineEpochDay;
+    if (epochDay === null || epochDay === undefined || !calendar) return {};
+    const currentSecondsPerDay = calendarSecondsPerDay(calendar);
+    return Object.fromEntries(
+      scenes.flatMap((scene) => {
+        const coordinate = parseCalendarDateCoordinate(scene.calendarDateOverride);
+        const source = scene.calendarDateOverrideCalendarId
+          ? calendars.find((candidate) => candidate.id === scene.calendarDateOverrideCalendarId)
+              ?.definition
+          : null;
+        if (!coordinate || (source && !isCalendarDateCoordinateInBounds(source, coordinate)))
+          return [];
+        const day = source ? partsToDayNumber(source, coordinate) : gregorianDayNumber(coordinate);
+        const sourceSecondsPerDay = source ? calendarSecondsPerDay(source) : 86400;
+        const timeFraction =
+          (coordinate.hour * (source?.minutesPerHour ?? 60) * (source?.secondsPerMinute ?? 60) +
+            coordinate.minute * (source?.secondsPerMinute ?? 60)) /
+          sourceSecondsPerDay;
+        return [
+          [
+            scene.id,
+            (day - epochDay) * currentSecondsPerDay +
+              timeFraction * currentSecondsPerDay -
+              (story?.timelineEpochSeconds ?? 0),
+          ],
+        ];
+      }),
+    );
+  }, [calendar, calendars, scenes, story?.timelineEpochDay, story?.timelineEpochSeconds]);
   /*
    * The anchored containers, in the order the writer would look for them.
    *
@@ -262,8 +296,16 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         anchored: anchoredContainers,
         placement: eventPlacement,
         calendar,
+        sceneElapsedOverrides,
       }),
-    [anchoredContainers, calendar, eventPlacement, scaleMode, timelineScenes],
+    [
+      anchoredContainers,
+      calendar,
+      eventPlacement,
+      scaleMode,
+      sceneElapsedOverrides,
+      timelineScenes,
+    ],
   );
 
   /** The same conversion as `dateForRow`, but returning the season and the moons with it. */

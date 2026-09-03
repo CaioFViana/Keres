@@ -1,5 +1,9 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('../../src/db', () => ({
+  __esModule: true,
+  useDrizzle: jest.fn(),
+  worldRules: jest.requireActual('../../src/db/schema').worldRules,
+}));
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
@@ -20,7 +24,13 @@ import { loadEntityOptions } from '../../src/utils/entityOptions';
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (useDrizzle as jest.Mock).mockReturnValue({});
+  (useDrizzle as jest.Mock).mockReturnValue({
+    select: jest.fn(() => ({
+      from: jest.fn(() => ({
+        where: jest.fn(() => ({ all: jest.fn(() => []) })),
+      })),
+    })),
+  });
   (loadEntityOptions as jest.Mock).mockImplementation(
     async (_db: unknown, _storyId: string, type: string) =>
       type === 'Character'

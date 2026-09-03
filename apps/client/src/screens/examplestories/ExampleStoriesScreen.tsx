@@ -1,4 +1,4 @@
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -241,7 +241,7 @@ const ExampleStoriesScreen = () => {
 
           <View style={styles.installRow}>
             <View style={styles.languageSelect}>
-              <Select
+              <SingleSelectPill
                 options={languageOptions}
                 value={selectedLanguage}
                 onValueChange={(value) => {

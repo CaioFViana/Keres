@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { StorySchemaEntityType } from '@keres/shared';
+import { getEntityAppearance, type StorySchemaEntityType } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
@@ -35,6 +35,8 @@ import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
 import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
+import StoryAppearanceScreen from '../screens/customization/StoryAppearanceScreen';
+import VocabularyScreen from '../screens/customization/VocabularyScreen';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
 import BoardListScreen from '../screens/boards/BoardListScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
@@ -77,6 +79,13 @@ import PlotListScreen from '../screens/plots/PlotListScreen';
 import PlotMatrixScreen from '../screens/plots/PlotMatrixScreen';
 import PlotProgressScreen from '../screens/plots/PlotProgressScreen';
 import PlotReaderScreen from '../screens/plots/PlotReaderScreen';
+import RouteListScreen from '../screens/routes/RouteListScreen';
+import RouteFormScreen from '../screens/routes/RouteFormScreen';
+import RouteDetailScreen from '../screens/routes/RouteDetailScreen';
+import RouteStepsScreen from '../screens/routes/RouteStepsScreen';
+import RouteReaderScreen from '../screens/routes/RouteReaderScreen';
+import RouteTimelineScreen from '../screens/routes/RouteTimelineScreen';
+import StoryNavigatorScreen from '../screens/routes/StoryNavigatorScreen';
 import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
 import StatFormScreen from '../screens/stats/StatFormScreen';
 import StatLadderScreen from '../screens/stats/StatLadderScreen';
@@ -96,10 +105,12 @@ import TagsScreen from '../screens/tags/TagListScreen';
 import type { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
+import WorldIndexScreen from '../screens/worldrules/WorldIndexScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { readShowcaseRequest, showcaseInitialRoute } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
+import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import type { HelpStackParamList } from './HelpStack';
@@ -145,8 +156,8 @@ const mainSystemStackRootScreens = new Set([
   'GalleryList',
   'BoardList',
   'Tags',
+  'WorldIndex',
   'Notes',
-  'WorldRules',
   'Plots',
   'OperationLog',
   'CommentsList',
@@ -168,6 +179,13 @@ export type PlotsStackParamList = {
   PlotMatrix: undefined;
   PlotProgress: undefined;
   PlotReader: undefined;
+  Routes: undefined;
+  RouteDetail: { routeId: string };
+  RouteForm: { routeId?: string };
+  RouteSteps: { routeId: string };
+  RouteReader: { routeId: string };
+  RouteTimeline: { routeId: string };
+  StoryNavigator: undefined;
 };
 const PlotsStackNavigator = () => {
   useBackButtonHandler();
@@ -182,6 +200,13 @@ const PlotsStackNavigator = () => {
       <PlotsStack.Screen name="PlotMatrix" component={PlotMatrixScreen} />
       <PlotsStack.Screen name="PlotProgress" component={PlotProgressScreen} />
       <PlotsStack.Screen name="PlotReader" component={PlotReaderScreen} />
+      <PlotsStack.Screen name="Routes" component={RouteListScreen} />
+      <PlotsStack.Screen name="RouteForm" component={RouteFormScreen} />
+      <PlotsStack.Screen name="RouteDetail" component={RouteDetailScreen} />
+      <PlotsStack.Screen name="RouteSteps" component={RouteStepsScreen} />
+      <PlotsStack.Screen name="RouteReader" component={RouteReaderScreen} />
+      <PlotsStack.Screen name="RouteTimeline" component={RouteTimelineScreen} />
+      <PlotsStack.Screen name="StoryNavigator" component={StoryNavigatorScreen} />
     </PlotsStack.Navigator>
   );
 };
@@ -402,7 +427,10 @@ const NoteStackNavigator = () => {
 const WorldRulesStack = createNativeStackNavigator<WorldRulesStackParamList>();
 
 export type WorldRulesStackParamList = {
-  WorldRules: undefined;
+  WorldIndex: undefined;
+  WorldRules:
+    | { section?: import('@keres/shared/entities/WorldRule').WorldPieceSection }
+    | undefined;
   WorldRuleDetail: WorldRuleDetailScreenParamList['WorldRuleDetail'];
   WorldRuleForm: { worldRuleId?: string };
 };
@@ -411,6 +439,7 @@ const WorldRuleStackNavigator = () => {
   useBackButtonHandler();
   return (
     <WorldRulesStack.Navigator screenOptions={{ headerShown: false }}>
+      <WorldRulesStack.Screen name="WorldIndex" component={WorldIndexScreen} />
       <WorldRulesStack.Screen name="WorldRules" component={WorldRulesScreen} />
       <WorldRulesStack.Screen name="WorldRuleDetail" component={WorldRuleDetailScreen} />
       <WorldRulesStack.Screen name="WorldRuleForm" component={WorldRuleFormScreen} />
@@ -469,6 +498,8 @@ const CustomizationStack = createNativeStackNavigator<CustomizationStackParamLis
  */
 export type CustomizationStackParamList = {
   CustomizationIndex: undefined;
+  StoryAppearance: undefined;
+  Vocabulary: undefined;
   StoryCalendarList: undefined;
   StoryCalendarForm: { calendarId?: string };
   StoryAgenda: { calendarId?: string } | undefined;
@@ -489,6 +520,8 @@ const CustomizationStackNavigator = () => {
   return (
     <CustomizationStack.Navigator screenOptions={{ headerShown: false }}>
       <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
+      <CustomizationStack.Screen name="StoryAppearance" component={StoryAppearanceScreen} />
+      <CustomizationStack.Screen name="Vocabulary" component={VocabularyScreen} />
       <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
       <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
       <CustomizationStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
@@ -525,6 +558,7 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
@@ -685,8 +719,8 @@ const MainSystemNavigator = () => {
           name="CharactersStack"
           component={CharacterStackNavigator}
           options={{
-            title: t('characters_title'),
-            drawerLabel: t('characters_title'),
+            title: term('Character', true),
+            drawerLabel: term('Character', true),
             drawerIcon: drawerIcon('people-outline'),
           }}
           listeners={({ navigation }) => ({
@@ -717,29 +751,27 @@ const MainSystemNavigator = () => {
             },
           })}
         />
-        {selectedStory?.type === 'linear' && (
-          <Drawer.Screen
-            name="PlotsStack"
-            component={PlotsStackNavigator}
-            options={{
-              title: t('plots_title'),
-              drawerLabel: t('plots_title'),
-              drawerIcon: drawerIcon('git-branch-outline'),
-            }}
-            listeners={({ navigation }) => ({
-              drawerItemPress: (e) => {
-                e.preventDefault();
-                navigation.navigate('PlotsStack', { screen: 'Plots' });
-              },
-            })}
-          />
-        )}
+        <Drawer.Screen
+          name="PlotsStack"
+          component={PlotsStackNavigator}
+          options={{
+            title: t('plots_title'),
+            drawerLabel: t('plots_title'),
+            drawerIcon: drawerIcon('git-branch-outline'),
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('PlotsStack', { screen: 'Plots' });
+            },
+          })}
+        />
         <Drawer.Screen
           name="LocationsStack"
           component={LocationStackNavigator}
           options={{
-            title: t('locations_title'),
-            drawerLabel: t('locations_title'),
+            title: term('Location', true),
+            drawerLabel: term('Location', true),
             drawerIcon: drawerIcon('map-outline'),
           }}
           listeners={({ navigation }) => ({
@@ -753,8 +785,8 @@ const MainSystemNavigator = () => {
           name="ItemsStack"
           component={ItemStackNavigator}
           options={{
-            title: t('items_title'),
-            drawerLabel: t('items_title'),
+            title: term('Item', true),
+            drawerLabel: term('Item', true),
             drawerIcon: drawerIcon('cube-outline'),
           }}
           listeners={({ navigation }) => ({
@@ -783,14 +815,14 @@ const MainSystemNavigator = () => {
           name="WorldRulesStack"
           component={WorldRuleStackNavigator}
           options={{
-            title: t('world_rules_title'),
-            drawerLabel: t('world_rules_title'),
+            title: t('world_title'),
+            drawerLabel: t('world_title'),
             drawerIcon: drawerIcon('globe-outline'),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {
               e.preventDefault();
-              navigation.navigate('WorldRulesStack', { screen: 'WorldRules' });
+              navigation.navigate('WorldRulesStack', { screen: 'WorldIndex' });
             },
           })}
         />
@@ -830,7 +862,9 @@ const MainSystemNavigator = () => {
           options={{
             title: t('boards_title'),
             drawerLabel: t('boards_title'),
-            drawerIcon: drawerIcon('easel-outline'),
+            drawerIcon: drawerIcon(
+              getEntityAppearance('Board').icon as keyof typeof Ionicons.glyphMap,
+            ),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {

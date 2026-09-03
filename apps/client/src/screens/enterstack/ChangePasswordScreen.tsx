@@ -93,7 +93,7 @@ const ChangePasswordScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('change_password_title') });
+      navigation.setOptions({ title: t('change_password_title'), headerRight: undefined });
     }, [navigation, t]),
   );
 

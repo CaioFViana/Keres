@@ -9,6 +9,7 @@ import {
   items,
   locations,
   notes,
+  routes,
   scenes,
   stories,
   storySchemaFields,
@@ -42,6 +43,7 @@ const ids = {
   field: '',
   gallery: '',
   galleryNoTitle: '',
+  route: '',
 };
 
 /** An id that does not exist in the database, to exercise the fallback label. */
@@ -106,6 +108,11 @@ beforeEach(async () => {
     sceneId: ids.scene,
     nextSceneId: ids.otherScene,
     text: 'Subir a bordo',
+  } as never);
+  await db.insert(routes).values({
+    id: ids.route,
+    storyId: ids.story,
+    name: 'Caminho da torre',
   } as never);
   await db.insert(choiceCheckGroups).values({
     id: ids.choiceGroup,
@@ -180,6 +187,10 @@ describe('enrichDeletedDisplayNames', () => {
       [
         deleted('ItemJourney', newId(), { itemId: ids.item, sceneId: ids.otherScene }),
         'A bússola @ A partida',
+      ],
+      [
+        deleted('RouteStep', newId(), { routeId: ids.route, sceneId: ids.scene }),
+        'Caminho da torre @ A chegada',
       ],
       [
         deleted('TagRelation', newId(), {

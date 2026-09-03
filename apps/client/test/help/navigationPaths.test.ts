@@ -34,6 +34,14 @@ function drawerLabels(language: string): Set<string> {
     const label = key ? TRANSLATIONS[language][key] : undefined;
     if (label) labels.add(label);
   }
+
+  // These two labels are intentionally vocabulary-aware in the drawer.  With no story-specific
+  // vocabulary selected, `term()` renders the translated defaults below; help authored for the
+  // default interface must therefore continue to find them.
+  for (const key of ['characters', 'locations', 'items', 'world_rules']) {
+    const label = TRANSLATIONS[language][key];
+    if (label) labels.add(label);
+  }
   return labels;
 }
 

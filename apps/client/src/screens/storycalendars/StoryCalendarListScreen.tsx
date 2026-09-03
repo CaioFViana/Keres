@@ -29,6 +29,7 @@ import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAnchorsModal';
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
@@ -55,6 +56,7 @@ const StoryCalendarListScreen = () => {
     useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryCalendarList'>>();
   const { calendars, primary, reload } = useStoryCalendar(story?.id);
   const [busy, setBusy] = useState(false);
+  const [inspectedCalendar, setInspectedCalendar] = useState<StoryCalendarSelect | null>(null);
   /*
    * The epoch, edited here rather than on the calendar itself.
    *
@@ -407,6 +409,15 @@ const StoryCalendarListScreen = () => {
                 <Ionicons name="calendar-outline" size={17} color={colors.primary} />
                 <Text style={styles.actionText}>{t('calendar_view_agenda')}</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.action}
+                onPress={() => setInspectedCalendar(calendar)}
+                accessibilityRole="button"
+                accessibilityLabel={t('calendar_view_anchors')}
+              >
+                <Ionicons name="git-branch-outline" size={17} color={colors.primary} />
+                <Text style={styles.actionText}>{t('calendar_view_anchors')}</Text>
+              </TouchableOpacity>
               {canEdit && (
                 <>
                   <TouchableOpacity
@@ -562,6 +573,14 @@ const StoryCalendarListScreen = () => {
           </View>
         )}
       </ScrollView>
+      {inspectedCalendar && (
+        <CalendarAnchorsModal
+          visible
+          calendarName={inspectedCalendar.name}
+          definition={inspectedCalendar.definition}
+          onClose={() => setInspectedCalendar(null)}
+        />
+      )}
     </View>
   );
 };

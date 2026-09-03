@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { eq } from 'drizzle-orm';
 import { db } from '../../src/db';
-import { stories, users } from '../../src/db/schema';
+import { notes, stories, users } from '../../src/db/schema';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
@@ -161,5 +162,55 @@ describe('note relation sync handler', () => {
         current,
       ),
     ).rejects.toThrow(/Cannot change 'relationId'/i);
+  });
+
+  it('rejects missing, deleted, and cross-story endpoints before creating a relation', async () => {
+    const handler = new NoteRelationSyncHandler();
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('NoteRelation', newId(), {
+          noteId: newId(),
+          relationId: entities.Character,
+          relationType: 'Character',
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    await db
+      .update(notes)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(notes.id, noteId));
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('NoteRelation', newId(), {
+          noteId,
+          relationId: entities.Character,
+          relationType: 'Character',
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
+
+  it('enforces one live relation per note and endpoint, while allowing it after tombstoning', async () => {
+    const handler = new NoteRelationSyncHandler();
+    const firstId = newId();
+    const data = { noteId, relationId: entities.Chapter, relationType: 'Chapter' as const };
+    await handler.create(userId, storyId, create('NoteRelation', firstId, data));
+    await expect(
+      handler.create(userId, storyId, create('NoteRelation', newId(), data)),
+    ).rejects.toThrow(/already exists/i);
+
+    const current = await handler.findById(firstId);
+    await handler.delete(
+      userId,
+      storyId,
+      { type: 'delete', entity: 'NoteRelation', id: firstId, version: current.version } as any,
+      current,
+    );
+    await handler.create(userId, storyId, create('NoteRelation', newId(), data));
   });
 });

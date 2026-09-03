@@ -5,6 +5,6 @@
  * consumed by both the client and the API, so there is no separate server version.
  */
 export const APP_RELEASE = {
-  name: 'Eris',
-  version: '1.6.0',
+  name: 'Iris',
+  version: '1.7.0',
 } as const;

@@ -159,7 +159,53 @@
     ],
     "settings": {
       "statSystem": true,
-      "statNotation": "number"
+      "statNotation": "number",
+      "vocabulary": {
+        "version": 1,
+        "language": "en",
+        "terms": {
+          "Character": {
+            "singular": "Character",
+            "plural": "Characters",
+            "grammaticalGender": "neutral"
+          },
+          "Location": {
+            "singular": "Place",
+            "plural": "Places",
+            "grammaticalGender": "neutral"
+          },
+          "Chapter": {
+            "singular": "Session",
+            "plural": "Sessions",
+            "grammaticalGender": "neutral"
+          },
+          "Scene": {
+            "singular": "Encounter",
+            "plural": "Encounters",
+            "grammaticalGender": "neutral"
+          },
+          "Event": {
+            "singular": "Game Event",
+            "plural": "Game Events",
+            "grammaticalGender": "neutral"
+          },
+          "Item": {
+            "singular": "Equipment",
+            "plural": "Equipment",
+            "grammaticalGender": "neutral"
+          },
+          "WorldRule": {
+            "singular": "Table Rule",
+            "plural": "Table Rules",
+            "grammaticalGender": "neutral"
+          },
+          "Choice": {
+            "singular": "Player Choice",
+            "plural": "Player Choices",
+            "grammaticalGender": "neutral"
+          }
+        }
+      }
     }
   }
 }

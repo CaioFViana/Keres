@@ -204,7 +204,53 @@
     "statStrengths": [],
     "settings": {
       "statSystem": false,
-      "statNotation": "letter"
+      "statNotation": "letter",
+      "vocabulary": {
+        "version": 1,
+        "language": "en",
+        "terms": {
+          "Character": {
+            "singular": "Character",
+            "plural": "Characters",
+            "grammaticalGender": "neutral"
+          },
+          "Location": {
+            "singular": "Setting",
+            "plural": "Settings",
+            "grammaticalGender": "neutral"
+          },
+          "Chapter": {
+            "singular": "Issue",
+            "plural": "Issues",
+            "grammaticalGender": "neutral"
+          },
+          "Scene": {
+            "singular": "Sequence",
+            "plural": "Sequences",
+            "grammaticalGender": "neutral"
+          },
+          "Event": {
+            "singular": "Beat",
+            "plural": "Beats",
+            "grammaticalGender": "neutral"
+          },
+          "Item": {
+            "singular": "Prop",
+            "plural": "Props",
+            "grammaticalGender": "neutral"
+          },
+          "WorldRule": {
+            "singular": "Continuity Rule",
+            "plural": "Continuity Rules",
+            "grammaticalGender": "neutral"
+          },
+          "Choice": {
+            "singular": "Branch",
+            "plural": "Branches",
+            "grammaticalGender": "neutral"
+          }
+        }
+      }
     }
   }
 }

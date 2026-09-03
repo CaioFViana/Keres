@@ -24,7 +24,7 @@ const page: HelpPage = {
         'Create a Location and enter Name.',
         'Use Description for the overall view.',
         'Fill in Climate, Culture, and Politics when they are useful to the narrative.',
-        'After saving, link the location to scenes and organize its position on the map.',
+        'After saving, link the location to scenes and organize its position on the Location map.',
       ],
     },
     {
@@ -77,7 +77,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Scenes depend on a Location. The map can show locations inside others and path connections. Deleting one requires reviewing scenes that use it.',
+      text: 'Scenes depend on a Location. On the Location map, you can position it, link it to other Locations or markers, and create a destination to another map. Deleting one requires reviewing scenes that use it and removes its points and links from maps.',
     },
     { type: 'seeAlso', pages: ['scenes', 'location-map', 'characters'] },
   ],

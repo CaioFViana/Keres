@@ -2,13 +2,13 @@ import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'location-map',
   title: 'Mapa de locais',
-  summary: 'Organize lugares dentro de lugares e caminhos entre lugares.',
-  keywords: ['mapa', 'contém', 'conectado', 'local'],
+  summary: 'Posicione locais, imagens, marcadores e ligações do seu mundo.',
+  keywords: ['mapa', 'contém', 'conectado', 'local', 'marcador', 'ligação'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'O mapa de locais mostra duas relações diferentes: “contém”, para hierarquia, e “conectado a”, para um caminho ou passagem entre dois locais.',
+      text: 'O Mapa de locais é um desenho salvo: posicione Locais sobre imagens da galeria, acrescente marcadores livres e ligue os pontos. Entre Locais, ele pode mostrar “contém”, para hierarquia, e “conectado a”, para um caminho ou passagem.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
@@ -22,17 +22,29 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Crie os Locais antes de organizá-los no mapa.',
-        'Abra um local para definir ou remover seu local pai quando quiser indicar “contém”.',
-        'No mapa, adicione ou remova conexões quando quiser indicar um caminho entre dois locais.',
-        'Abra um local pelo mapa para revisar sua ficha.',
+        'Use Adicionar imagens para colocar uma base visual e Adicionar locais ou Marcador para colocar pontos no canvas.',
+        'Arraste pontos ou imagens para posicioná-los; o modo Editar layout libera os controles de tamanho e camadas.',
+        'Ative Ligar nós no cabeçalho e arraste de um ponto até outro para criar uma ligação.',
+        'No diálogo, escolha se a ligação é direcionada, o sentido A → B ou B → A, e um texto opcional.',
+        'Abra um Local pelo mapa para revisar sua ficha, relações e destino de mapa.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'Direção, textos e marcadores' },
+    {
+      type: 'paragraph',
+      text: 'Entre dois Locais, uma ligação não direcionada cria “conectado a”; uma ligação direcionada cria “contém”, com a seta do pai para o filho. O texto fica salvo só neste mapa e aparece sobre a linha e na exportação. Ligações que envolvem um marcador — marcador com marcador ou com Local — também ficam só neste mapa: marcadores não mudam a estrutura da história.',
+    },
+    { type: 'heading', level: 2, text: 'Destinos de mapa' },
+    {
+      type: 'paragraph',
+      text: 'Um Local ou marcador pode apontar para outro Mapa de locais. O pequeno ícone de saída indica o destino; mantenha o ponto pressionado até aparecer o pop de saída e solte para abrir o outro mapa.',
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Hierarquia e conexões ajudam a ler o mapa e encontrar lugares relacionados. Remover uma relação no mapa não exclui o Local nem as cenas que acontecem nele.',
+      text: 'Hierarquia e conexões entre Locais alteram as relações da história e podem aparecer onde essas relações são usadas. Posições, imagens, marcadores, textos, destinos de mapa e ligações com marcadores pertencem somente a este mapa. Remover um ponto não exclui o Local nem as cenas que acontecem nele.',
     },
-    { type: 'seeAlso', pages: ['locations', 'scenes', 'location-map'] },
+    { type: 'seeAlso', pages: ['locations', 'scenes', 'boards'] },
   ],
 };
 export default page;

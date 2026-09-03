@@ -1,5 +1,5 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -39,6 +39,7 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 export type ChoiceDetailScreenParamList = {
@@ -55,6 +56,8 @@ const ChoiceDetailScreen = () => {
   const route = useRoute<ChoiceDetailScreenRouteProp>();
   const { choiceId } = route.params;
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Choice');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -148,21 +151,21 @@ const ChoiceDetailScreen = () => {
       const fetchedChoice = await choiceServiceRef.current.getById(choiceId);
       if (fetchedChoice && !fetchedChoice.isDeleted) {
         setChoice(fetchedChoice);
-        setHeaderTitle(fetchedChoice.text || t('choice_details_title')); // Use text
+        setHeaderTitle(fetchedChoice.text || copy.detailsTitle);
       } else if (fetchedChoice && fetchedChoice.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('choice_not_found'));
-        setHeaderTitle(t('choice_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch choice details:', err);
-      setError(t('failed_to_load_choice'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [choiceId, navigation, t]);
+  }, [choiceId, navigation, copy, t]);
 
   const handleChoiceChange = useCallback(
     async (changedStoryId: string, changedChoiceId: string) => {
@@ -172,11 +175,11 @@ const ChoiceDetailScreen = () => {
           navigation.goBack();
         } else {
           setChoice(updatedChoice);
-          setHeaderTitle(updatedChoice.text || t('choice_details_title')); // Use text
+          setHeaderTitle(updatedChoice.text || copy.detailsTitle);
         }
       }
     },
-    [choiceId, navigation, t],
+    [choiceId, navigation, copy],
   );
 
   const fetchChecksAndEffects = useCallback(async () => {
@@ -274,15 +277,13 @@ const ChoiceDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_choice_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
   if (error) {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!choice) {
-    return (
-      <ScreenError padded message={t('choice_data_missing')} onGoBack={() => navigation.goBack()} />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -290,6 +291,7 @@ const ChoiceDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{choice.text}</Text>
       <TagList tags={choiceTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <TouchableOpacity
@@ -299,7 +301,7 @@ const ChoiceDetailScreen = () => {
       >
         <View style={{ flex: 1 }}>
           <DetailField
-            label={t('from_scene')}
+            label={sceneCopy.fromEntity}
             value={sceneNamesById[choice.sceneId] || t('common_na')}
           />
         </View>

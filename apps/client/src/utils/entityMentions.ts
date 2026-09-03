@@ -120,6 +120,8 @@ export function buildMentionMatcher(entities: MentionableEntity[]): MentionMatch
 export interface SplitMentionOptions {
   /** The entity whose screen this text belongs to; it never links to itself. */
   selfId?: string;
+  /** Backlink indexing counts every valid occurrence; rendered text still links only the first. */
+  includeRepeated?: boolean;
 }
 
 /**
@@ -170,7 +172,11 @@ export function splitTextIntoMentionSegments(
     const ref = matched?.ref;
     const key = ref ? `${ref.type}:${ref.id}` : null;
     const usable =
-      matched && ref && ref.id !== options.selfId && key !== null && !alreadyLinked.has(key);
+      matched &&
+      ref &&
+      ref.id !== options.selfId &&
+      key !== null &&
+      (options.includeRepeated === true || !alreadyLinked.has(key));
 
     if (usable && matched && ref && key) {
       if (start > plainFrom) segments.push({ text: text.slice(plainFrom, start) });

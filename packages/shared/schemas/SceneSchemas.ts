@@ -10,6 +10,13 @@ const SceneTimingValueSchema = z
   .max(2147483647)
   .nullable();
 
+/** Calendar coordinates stay syntactically valid even when a later calendar edit makes them out of bounds. */
+const CalendarDateOverrideSchema = z
+  .string()
+  .regex(/^-?\d{1,}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Use YYYY-MM-DDTHH:mm')
+  .nullable()
+  .default(null);
+
 export const SceneSchema = z.object({
   id: z.string(),
   storyId: z.string(),
@@ -31,6 +38,8 @@ export const SceneSchema = z.object({
   summary: z.string().nullable(),
   gap: SceneTimingValueSchema,
   gapType: z.string().nullable(),
+  calendarDateOverride: CalendarDateOverrideSchema,
+  calendarDateOverrideCalendarId: z.string().nullable().default(null),
   duration: SceneTimingValueSchema,
   durationType: z.string().nullable(),
   isFinish: z.boolean(),

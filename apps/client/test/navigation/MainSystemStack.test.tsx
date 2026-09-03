@@ -429,13 +429,42 @@ it('keeps both back and menu controls on a nested compact screen', async () => {
   expect(getByTestId('drawer-menu-button')).toBeTruthy();
 });
 
+it('keeps the World index root screen free of a back button', async () => {
+  mockResponsiveLayout.isCompact = true;
+  mockResponsiveLayout.isWide = false;
+  mockResponsiveLayout.width = 500;
+  const navigationModule = jest.requireMock('@react-navigation/native') as {
+    getFocusedRouteNameFromRoute: jest.Mock;
+  };
+  navigationModule.getFocusedRouteNameFromRoute.mockReturnValue('WorldIndex');
+  await renderDrawer();
+  const navigator = mockDrawerNavigatorProps.at(-1);
+  const options = navigator?.screenOptions({
+    navigation: { getState: () => ({ routes: [] }) },
+    route: {
+      key: 'world-rules-key',
+      name: 'WorldRulesStack',
+      state: {
+        type: 'stack',
+        key: 'world-rules-stack',
+        index: 0,
+        routes: [{ name: 'WorldIndex' }],
+      },
+    },
+  });
+  const { getByTestId, queryByTestId } = await render(<>{options.headerLeft()}</>);
+
+  expect(queryByTestId('navigation-back-button')).toBeNull();
+  expect(getByTestId('drawer-menu-button')).toBeTruthy();
+});
+
 it.each([
   ['CharactersStack', 'Characters'],
   ['NarrativeElementsStack', 'NarrativeElements'],
   ['LocationsStack', 'Locations'],
   ['ItemsStack', 'Items'],
   ['TagsStack', 'Tags'],
-  ['WorldRulesStack', 'WorldRules'],
+  ['WorldRulesStack', 'WorldIndex'],
   ['NotesStack', 'Notes'],
   ['GalleryStack', 'GalleryList'],
   ['BoardsStack', 'BoardList'],

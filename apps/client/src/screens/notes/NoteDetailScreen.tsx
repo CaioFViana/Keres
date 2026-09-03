@@ -1,4 +1,4 @@
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -323,6 +323,7 @@ const NoteDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{note.title}</Text>
       <TagList tags={noteTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
@@ -383,6 +384,8 @@ const NoteDetailScreen = () => {
         version={note.version}
         createdAt={note.createdAt}
         updatedAt={note.updatedAt}
+        entityType="Note"
+        entityId={note.id}
       />
 
       <View style={styles.buttonContainer}>

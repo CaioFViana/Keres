@@ -34,6 +34,7 @@ const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
   Tag: 'name',
   Scene: 'name',
   Chapter: 'name',
+  Route: 'name',
   Note: 'title',
   WorldRule: 'title',
   Story: 'title',

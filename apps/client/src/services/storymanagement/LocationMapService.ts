@@ -1,5 +1,5 @@
 import type { LocationMapContentType } from '@keres/shared';
-import { LocationMapContentSchema } from '@keres/shared';
+import { validateLocationMapContent } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { LocationMapInsert, LocationMapSelect } from '../../db/schema';
@@ -64,7 +64,7 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
 
     async createMap(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
-      const content = LocationMapContentSchema.parse(data.content ?? { images: [], nodes: [] });
+      const content = validateLocationMapContent(data.content ?? { images: [], nodes: [] });
       const map = prepareNewEntityData<LocationMapInsert>({ ...data, content });
       const result = await db.insert(locationMaps).values(map).returning().get();
       await logOperation(currentUserId, map.storyId, 'create', map.id, { ...result });
@@ -77,7 +77,7 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
       await assertStoryIsWritable(db, original.storyId);
 
       const nextContent =
-        changes.content !== undefined ? LocationMapContentSchema.parse(changes.content) : undefined;
+        changes.content !== undefined ? validateLocationMapContent(changes.content) : undefined;
       const normalised = {
         ...changes,
         ...(nextContent !== undefined ? { content: nextContent } : {}),

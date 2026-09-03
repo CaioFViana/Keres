@@ -9,6 +9,8 @@ import addServer_en from '../content/add-server/en';
 import addServer_pt from '../content/add-server/pt';
 import appSettings_en from '../content/app-settings/en';
 import appSettings_pt from '../content/app-settings/pt';
+import appearance_en from '../content/appearance/en';
+import appearance_pt from '../content/appearance/pt';
 import boards_en from '../content/boards/en';
 import boards_pt from '../content/boards/pt';
 import branchingBasics_en from '../content/branching-basics/en';
@@ -81,6 +83,8 @@ import plots_en from '../content/plots/en';
 import plots_pt from '../content/plots/pt';
 import publishStory_en from '../content/publish-story/en';
 import publishStory_pt from '../content/publish-story/pt';
+import routes_en from '../content/routes/en';
+import routes_pt from '../content/routes/pt';
 import sceneTiming_en from '../content/scene-timing/en';
 import sceneTiming_pt from '../content/scene-timing/pt';
 import scenes_en from '../content/scenes/en';
@@ -117,6 +121,8 @@ import troubleshooting_en from '../content/troubleshooting/en';
 import troubleshooting_pt from '../content/troubleshooting/pt';
 import usingThisHelp_en from '../content/using-this-help/en';
 import usingThisHelp_pt from '../content/using-this-help/pt';
+import vocabulary_en from '../content/vocabulary/en';
+import vocabulary_pt from '../content/vocabulary/pt';
 import whatIsAServer_en from '../content/what-is-a-server/en';
 import whatIsAServer_pt from '../content/what-is-a-server/pt';
 import whatIsKeres_en from '../content/what-is-keres/en';
@@ -131,6 +137,7 @@ export type GeneratedHelpPageId =
   | 'activity-log'
   | 'add-server'
   | 'app-settings'
+  | 'appearance'
   | 'boards'
   | 'branching-basics'
   | 'calendars'
@@ -167,6 +174,7 @@ export type GeneratedHelpPageId =
   | 'packs'
   | 'plots'
   | 'publish-story'
+  | 'routes'
   | 'scene-timing'
   | 'scenes'
   | 'see-also'
@@ -185,6 +193,7 @@ export type GeneratedHelpPageId =
   | 'tags'
   | 'troubleshooting'
   | 'using-this-help'
+  | 'vocabulary'
   | 'what-is-a-server'
   | 'what-is-keres'
   | 'world-rules'
@@ -206,6 +215,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'app-settings': {
     en: appSettings_en,
     pt: appSettings_pt,
+  },
+  appearance: {
+    en: appearance_en,
+    pt: appearance_pt,
   },
   boards: {
     en: boards_en,
@@ -351,6 +364,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
     en: publishStory_en,
     pt: publishStory_pt,
   },
+  routes: {
+    en: routes_en,
+    pt: routes_pt,
+  },
   'scene-timing': {
     en: sceneTiming_en,
     pt: sceneTiming_pt,
@@ -422,6 +439,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'using-this-help': {
     en: usingThisHelp_en,
     pt: usingThisHelp_pt,
+  },
+  vocabulary: {
+    en: vocabulary_en,
+    pt: vocabulary_pt,
   },
   'what-is-a-server': {
     en: whatIsAServer_en,

@@ -1,10 +1,11 @@
+import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
 import { useChapterNames } from '@/src/hooks/useChapterNames';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 
@@ -35,7 +36,7 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   showChapter = true,
 }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const chapterCopy = useVocabularyEntityCopy('Chapter');
   const navigateToDetail = useNavigateToEntityDetail();
   const chapterNameOf = useChapterNames(scenes);
 
@@ -68,7 +69,7 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
           </Text>
           {showChapter && chapterNameOf(relatedScene.chapterId) ? (
             <RelationAttributeLine
-              label={t('chapter')}
+              label={chapterCopy.entity}
               value={chapterNameOf(relatedScene.chapterId) as string}
             />
           ) : null}
@@ -79,6 +80,8 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
       )}
       title={title}
       onItemPress={handleScenePress}
+      icon="easel"
+      color={getEntityAppearance('Scene').color}
     />
   );
 };

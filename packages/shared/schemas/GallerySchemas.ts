@@ -6,7 +6,14 @@ import { z } from 'zod';
  * It works as a runtime value (the server's polymorphic validation walks this list) and as a type,
  * so that adding an entity here breaks compilation everywhere a new `case` is needed.
  */
-export const GALLERY_OWNER_ENTITIES = ['Character', 'Location', 'Note', 'Scene', 'Item'] as const;
+export const GALLERY_OWNER_ENTITIES = [
+  'Character',
+  'Location',
+  'Note',
+  'Scene',
+  'Item',
+  'WorldRule',
+] as const;
 export type GalleryOwnerEntity = (typeof GALLERY_OWNER_ENTITIES)[number];
 
 /** Image/video/audio play inside Keres. Documents and links are catalogued and opened outside. */

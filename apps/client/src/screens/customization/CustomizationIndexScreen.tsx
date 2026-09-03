@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 
@@ -17,8 +16,8 @@ import { setDocumentTitle } from '@/src/utils/documentTitle';
  * next to things a writer sets up once and rarely returns to. Grouping them costs one tap and buys
  * a drawer that reads as a list of places to write rather than a list of everything.
  *
- * The stat system keeps its own visibility rule, which simply moved here from the drawer: the
- * screens stay reachable when it is off, only the entry disappears.
+ * Statistics are also configured here, including the switch that turns the feature on. Keeping the
+ * entry visible means a story can enable it without returning to the general story settings.
  */
 
 interface Entry {
@@ -26,14 +25,12 @@ interface Entry {
   icon: keyof typeof Ionicons.glyphMap;
   titleKey: string;
   descriptionKey: string;
-  hidden?: boolean;
 }
 
 const CustomizationIndexScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const story = useStoryStore((state) => state.selectedStory);
   const navigation =
     useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'CustomizationIndex'>>();
 
@@ -48,6 +45,18 @@ const CustomizationIndexScreen = () => {
   );
 
   const entries: Entry[] = [
+    {
+      route: 'StoryAppearance',
+      icon: 'color-palette-outline',
+      titleKey: 'appearance_title',
+      descriptionKey: 'customization_theme_description',
+    },
+    {
+      route: 'Vocabulary',
+      icon: 'text-outline',
+      titleKey: 'vocabulary_title',
+      descriptionKey: 'vocabulary_index_description',
+    },
     {
       route: 'StoryCalendarList',
       icon: 'calendar-outline',
@@ -71,7 +80,6 @@ const CustomizationIndexScreen = () => {
       icon: 'stats-chart-outline',
       titleKey: 'stats_title',
       descriptionKey: 'customization_stats_description',
-      hidden: !story?.statSystem,
     },
   ];
 
@@ -103,23 +111,21 @@ const CustomizationIndexScreen = () => {
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('customization_intro')}</Text>
-        {entries
-          .filter((entry) => !entry.hidden)
-          .map((entry) => (
-            <TouchableOpacity
-              key={entry.route}
-              style={styles.card}
-              testID={`customization-${entry.route}`}
-              onPress={() => navigation.navigate(entry.route as never)}
-            >
-              <Ionicons name={entry.icon} size={24} color={colors.primary} />
-              <View style={styles.body}>
-                <Text style={styles.title}>{t(entry.titleKey)}</Text>
-                <Text style={styles.description}>{t(entry.descriptionKey)}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ))}
+        {entries.map((entry) => (
+          <TouchableOpacity
+            key={entry.route}
+            style={styles.card}
+            testID={`customization-${entry.route}`}
+            onPress={() => navigation.navigate(entry.route as never)}
+          >
+            <Ionicons name={entry.icon} size={24} color={colors.primary} />
+            <View style={styles.body}>
+              <Text style={styles.title}>{t(entry.titleKey)}</Text>
+              <Text style={styles.description}>{t(entry.descriptionKey)}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );

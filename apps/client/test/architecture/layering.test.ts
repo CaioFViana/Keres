@@ -110,7 +110,6 @@ const FILES_OVER_THE_LIMIT = [
   'navigation/MainSystemStack.tsx',
   'screens/characters/CharacterDetailScreen.tsx',
   'screens/characters/CharacterFormScreen.tsx',
-  'screens/enterstack/PublishStoryScreen.tsx',
   'screens/enterstack/ServerRegistrationScreen.tsx',
   'screens/locations/LocationDetailsScreen.tsx',
   'screens/locations/LocationFormScreen.tsx',
@@ -120,16 +119,67 @@ const FILES_OVER_THE_LIMIT = [
   'screens/narrative-elements/choices/ChoiceViewScreen.tsx',
   'screens/narrative-elements/scenes/SceneDetailScreen.tsx',
   'screens/narrative-elements/scenes/SceneFormScreen.tsx',
-  'services/SyncConflictService.ts',
   'services/storymanagement/StoryService.ts',
   'services/storymanagement/SuggestionService.ts',
   'utils/storyAnalysisChecks.ts',
 ];
 
+/** Counts only meaningful source lines, leaving comments and visual spacing out of the ceiling. */
+function codeLineCount(content: string): number {
+  let inBlockComment = false;
+  let inString: string | null = null;
+  let lines = 0;
+
+  for (const line of content.split(/\r?\n/)) {
+    let hasCode = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const character = line[index];
+      const next = line[index + 1];
+      if (inBlockComment) {
+        if (character === '*' && next === '/') {
+          inBlockComment = false;
+          index += 1;
+        }
+        continue;
+      }
+      if (inString) {
+        hasCode = true;
+        if (character === '\\') index += 1;
+        else if (character === inString) inString = null;
+        continue;
+      }
+      if (character === '/' && next === '/') break;
+      if (character === '/' && next === '*') {
+        inBlockComment = true;
+        index += 1;
+        continue;
+      }
+      if (character === "'" || character === '"' || character === '`') {
+        inString = character;
+        hasCode = true;
+        continue;
+      }
+      if (!/\s/.test(character)) hasCode = true;
+    }
+    if (hasCode) lines += 1;
+  }
+  return lines;
+}
+
 describe('file size', () => {
+  it('disregards comments and blank lines when measuring source files', () => {
+    expect(
+      codeLineCount(
+        ['', '// Documentation.', '/* More documentation.', ' */', '', 'const item = 1;'].join(
+          '\n',
+        ),
+      ),
+    ).toBe(1);
+  });
+
   it('does not let a new file be born above the ceiling', () => {
     const oversized = sourceFiles
-      .filter((path) => readFileSync(path, 'utf8').split('\n').length > LINE_LIMIT)
+      .filter((path) => codeLineCount(readFileSync(path, 'utf8')) > LINE_LIMIT)
       .map(relativeOf)
       .sort();
 

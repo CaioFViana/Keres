@@ -1,5 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
@@ -185,7 +185,7 @@ const FriendshipFormScreen = () => {
       <Text style={[styles.title, { color: colors.text }]}>{t('add_new_friendship')}</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-      <Select
+      <SingleSelectPill
         options={servers.map((server) => ({
           label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
           value: server.id,

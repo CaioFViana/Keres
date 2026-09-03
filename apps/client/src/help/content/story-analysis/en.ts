@@ -22,6 +22,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Open analysis. The quick warnings load right away.',
+        'Use the control at the top to choose whether unreferenced elements are reported. Confirm saves the choice; Cancel leaves the story unchanged.',
         'For a branching story, tap Check reachability & choice logic to also look for scenes and choices that can never actually be reached.',
         'Wait for the progress bar to finish, or tap Cancel to stop it.',
         'Read each warning and open the indicated element.',
@@ -46,7 +47,7 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'Others are about elements that exist without being used anywhere - a location in no scene, a character with no relationships, an unused tag. Whether those are problems is your call, not Keres’s: in a world bible, a place nobody has visited yet is simply a place. They are off by default and turned on with Report unreferenced elements, in Story Settings.',
+      text: 'Others are about elements that exist without being used anywhere - a location in no scene, a character with no relationships, an unused tag. Whether those are problems is your call, not Keres’s: in a world bible, a place nobody has visited yet is simply a place. They are off by default and can be turned on with Report unreferenced elements at the top of this screen. Confirm the change before leaving it.',
     },
     {
       type: 'callout',

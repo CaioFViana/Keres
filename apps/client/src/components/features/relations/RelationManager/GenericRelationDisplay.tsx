@@ -1,10 +1,11 @@
-import React from 'react';
+import type { Ionicons } from '@expo/vector-icons';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../../../../theme';
-import { Ionicons } from '@expo/vector-icons';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 
 // Generic types for items and relations, similar to RelationManager
 export type BaseItem = { id: string }; // Simpler BaseItem for display
@@ -29,6 +30,8 @@ interface GenericRelationDisplayProps<TItem extends BaseItem, TRelation extends 
    * main content (a Plot's detail is the list of its scenes), and not an appendix.
    */
   initialExpanded?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
+  color?: string;
 }
 
 const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRelation>({
@@ -41,6 +44,8 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   title, // Destructure title prop
   onItemPress,
   initialExpanded = false,
+  icon = 'link-outline',
+  color,
 }: GenericRelationDisplayProps<TItem, TRelation>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -50,57 +55,40 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   });
 
   const filteredRelations = relations.filter((rel) => !rel.isDeleted);
+  const items = useMemo(
+    () =>
+      filteredRelations.flatMap((relation) => {
+        const relatedItem = getRelatedItem(getRelationItemId(relation));
+        if (!relatedItem) return [];
+        const details = renderItemExtraContent?.(relation, relatedItem);
+        return [
+          {
+            id: relation.id,
+            title: details ? '' : getItemDisplayName(relatedItem),
+            icon,
+            color: color ?? colors.primary,
+            details,
+            onPress: onItemPress ? () => onItemPress(relatedItem) : undefined,
+          },
+        ];
+      }),
+    [
+      color,
+      colors.primary,
+      filteredRelations,
+      getItemDisplayName,
+      getRelatedItem,
+      getRelationItemId,
+      icon,
+      onItemPress,
+      renderItemExtraContent,
+    ],
+  );
 
   return (
     <View style={styles.container}>
       <CollapsibleCard title={title} initialExpanded={initialExpanded}>
-        <View>
-          {filteredRelations.length === 0 ? (
-            <Text style={{ color: colors.textSecondary }}>{t(noItemsMessage)}</Text>
-          ) : (
-            <View>
-              {filteredRelations.map((relation) => {
-                const relatedItem = getRelatedItem(getRelationItemId(relation));
-                if (!relatedItem) return null;
-
-                const content = (
-                  <View style={styles.relationItemContent}>
-                    {renderItemExtraContent ? (
-                      renderItemExtraContent(relation, relatedItem)
-                    ) : (
-                      <Text style={styles.relationText}>{getItemDisplayName(relatedItem)}</Text>
-                    )}
-                  </View>
-                );
-
-                if (!onItemPress) {
-                  return (
-                    <View key={relation.id} style={styles.relationItem}>
-                      {content}
-                    </View>
-                  );
-                }
-
-                return (
-                  <TouchableOpacity
-                    key={relation.id}
-                    style={styles.relationItem}
-                    onPress={() => onItemPress(relatedItem)}
-                    activeOpacity={0.7}
-                  >
-                    {content}
-                    <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={colors.textSecondary}
-                      style={styles.chevron}
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </View>
+        <EntityRelationList items={items} emptyText={t(noItemsMessage)} />
       </CollapsibleCard>
     </View>
   );

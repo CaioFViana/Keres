@@ -27,7 +27,7 @@ const CommentListScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: t('comments_title') });
+      navigation.setOptions({ title: t('comments_title'), headerRight: undefined });
       setDocumentTitle(t('comments_title'));
     }, [navigation, t]),
   );

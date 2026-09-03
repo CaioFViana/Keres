@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +7,7 @@ import type { SceneSelect } from '../../../../db/schema';
 import { useChapterNames } from '../../../../hooks/useChapterNames';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { createULID } from '../../../../utils/entityUtils';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager';
@@ -30,6 +32,8 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
   currentCharacterId,
 }) => {
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
+  const chapterCopy = useVocabularyEntityCopy('Chapter');
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
   const chapterNameOf = useChapterNames(availableScenes);
@@ -87,7 +91,7 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
       getItemDisplayName={getSceneDisplayName}
       getItemSearchValue={getSceneSearchableValue}
       filterAvailableItems={filterAvailableScenes}
-      selectItemPlaceholder={t('select_scene')}
+      selectItemPlaceholder={sceneCopy.select}
       noItemsAssignedMessage={t('no_scenes_assigned_to_character')}
       itemAlreadyAddedMessage={t('scene_already_assigned_to_character')}
       selectItemToAddMessage={t('select_scene_to_add_to_character')}
@@ -101,13 +105,15 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
           <View>
             <Text style={{ fontSize: 16, color: colors.text }}>{scene.name}</Text>
             {chapterName ? (
-              <RelationAttributeLine label={t('chapter')} value={chapterName} />
+              <RelationAttributeLine label={chapterCopy.entity} value={chapterName} />
             ) : null}
           </View>
         );
       }}
-      title={t('scenes_title')}
+      title={sceneCopy.entities}
       onItemPress={handleScenePress}
+      itemIcon="easel"
+      itemColor={getEntityAppearance('Scene').color}
     />
   );
 };

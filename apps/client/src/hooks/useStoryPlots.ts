@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
-import type { ChapterSelect, PlotSceneSelect, PlotSelect, SceneSelect } from '../db/schema';
+import type {
+  ChapterSelect,
+  ChoiceSelect,
+  PlotSceneSelect,
+  PlotSelect,
+  SceneSelect,
+} from '../db/schema';
 import { createChapterService } from '../services/storymanagement/ChapterService';
+import { createChoiceService } from '../services/storymanagement/ChoiceService';
 import { createPlotSceneService } from '../services/storymanagement/PlotSceneService';
 import { createPlotService } from '../services/storymanagement/PlotService';
 import { createSceneService } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
-import { sortScenesNarratively } from '../utils/narrativeSceneOrder';
+import { buildNarrativeProjection, type NarrativePresentationOrder } from '@keres/shared';
 
 /**
  * Everything a Plot screen needs, in a single query and refreshed by event - the same
@@ -23,6 +30,7 @@ export interface StoryPlotsData {
   /** The story's active scenes, already in narrative order (chapter, then scene). */
   scenes: SceneSelect[];
   chapters: ChapterSelect[];
+  choices: ChoiceSelect[];
   /** A Plot's relations, in the same narrative order as the scenes. */
   relationsOf: (plotId: string) => PlotSceneSelect[];
   sceneById: (sceneId: string) => SceneSelect | undefined;
@@ -31,6 +39,9 @@ export interface StoryPlotsData {
   plotById: (plotId: string) => PlotSelect | undefined;
   /** Covered scenes / the story's active scenes, with the percentage rounded. */
   coverageOf: (plotId: string) => { covered: number; total: number; percentage: number };
+  /** A Branching list is a stable catalogue, never an implied reading path. */
+  presentationOrder: NarrativePresentationOrder;
+  layerOf: (sceneId: string) => number | undefined;
   loading: boolean;
   reload: () => Promise<void>;
 }
@@ -40,9 +51,13 @@ const EMPTY: {
   relations: PlotSceneSelect[];
   scenes: SceneSelect[];
   chapters: ChapterSelect[];
-} = { plots: [], relations: [], scenes: [], chapters: [] };
+  choices: ChoiceSelect[];
+} = { plots: [], relations: [], scenes: [], chapters: [], choices: [] };
 
-export function useStoryPlots(storyId: string | undefined | null): StoryPlotsData {
+export function useStoryPlots(
+  storyId: string | undefined | null,
+  storyType: 'linear' | 'branching' = 'linear',
+): StoryPlotsData {
   const drizzleDb = useDrizzle();
   const [data, setData] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -54,25 +69,33 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
       return;
     }
     try {
-      const [plots, relations, scenes, chapters] = await Promise.all([
+      const [plots, relations, scenes, chapters, choices] = await Promise.all([
         createPlotService(drizzleDb).getAllByStoryId(storyId),
         createPlotSceneService(drizzleDb).getAllByStoryId(storyId),
         createSceneService(drizzleDb).getAllByStoryId(storyId),
         createChapterService(drizzleDb).getAllByStoryId(storyId),
+        createChoiceService(drizzleDb).getAllByStoryId(storyId),
       ]);
-      setData({ plots, relations, scenes: sortScenesNarratively(scenes, chapters), chapters });
+      const projection = buildNarrativeProjection({ storyType, scenes, choices, chapters });
+      setData({ plots, relations, scenes: projection.scenes, chapters, choices });
     } catch (error) {
       console.error('Failed to load the plots of the story:', error);
       setData(EMPTY);
     } finally {
       setLoading(false);
     }
-  }, [drizzleDb, storyId]);
+  }, [drizzleDb, storyId, storyType]);
 
   useEntityInitialLoad(reload);
 
   useEffect(() => {
-    const events = ['plot_changed', 'plot_scene_changed', 'scene_changed', 'chapter_changed'];
+    const events = [
+      'plot_changed',
+      'plot_scene_changed',
+      'scene_changed',
+      'chapter_changed',
+      'choice_changed',
+    ];
     for (const event of events) entityEventEmitter.on(event, reload);
     return () => {
       for (const event of events) entityEventEmitter.off(event, reload);
@@ -80,7 +103,13 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
   }, [reload]);
 
   return useMemo(() => {
-    const sceneIndex = new Map(data.scenes.map((scene, position) => [scene.id, position]));
+    const projection = buildNarrativeProjection({
+      storyType,
+      scenes: data.scenes,
+      choices: data.choices,
+      chapters: data.chapters,
+    });
+    const sceneIndex = new Map(projection.scenes.map((scene, position) => [scene.id, position]));
     const scenesById = new Map(data.scenes.map((scene) => [scene.id, scene]));
     const plotsById = new Map(data.plots.map((plot) => [plot.id, plot]));
     const chapterNames = new Map(data.chapters.map((chapter) => [chapter.id, chapter.name]));
@@ -112,8 +141,10 @@ export function useStoryPlots(storyId: string | undefined | null): StoryPlotsDat
         const total = data.scenes.length;
         return { covered, total, percentage: Math.round((covered / total || 0) * 100) };
       },
+      presentationOrder: projection.order,
+      layerOf: (sceneId: string) => projection.layerBySceneId.get(sceneId),
       loading,
       reload,
     };
-  }, [data, loading, reload]);
+  }, [data, loading, reload, storyType]);
 }

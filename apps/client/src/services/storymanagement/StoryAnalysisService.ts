@@ -65,6 +65,8 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       worldRules,
       storySchemaFields,
       attributeValues,
+      routes,
+      routeSteps,
     ] = await Promise.all([
       db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) }),
       db
@@ -221,6 +223,20 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         })
         .from(schema.attributeValues)
         .where(belongsToStory(schema.attributeValues)),
+      db
+        .select({ id: schema.routes.id, name: schema.routes.name })
+        .from(schema.routes)
+        .where(belongsToStory(schema.routes)),
+      db
+        .select({
+          id: schema.routeSteps.id,
+          routeId: schema.routeSteps.routeId,
+          position: schema.routeSteps.position,
+          sceneId: schema.routeSteps.sceneId,
+          selectedChoiceId: schema.routeSteps.selectedChoiceId,
+        })
+        .from(schema.routeSteps)
+        .where(belongsToStory(schema.routeSteps)),
     ]);
 
     if (!story) {
@@ -250,6 +266,8 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       worldRules,
       storySchemaFields,
       attributeValues,
+      routes,
+      routeSteps,
     };
   };
 

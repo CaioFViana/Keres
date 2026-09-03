@@ -13,7 +13,7 @@ export const galleryRelations = sqliteTable('gallery_relations', {
   storyId: text('story_id').notNull(),
   galleryId: text('gallery_id').notNull(),
   ownerId: text('owner_id').notNull(),
-  /** 'Character' | 'Location' | 'Note' | 'Scene' | 'Item' (ver `GALLERY_OWNER_ENTITIES`). */
+  /** See `GALLERY_OWNER_ENTITIES` for the entity types that can own a media relation. */
   ownerType: text('owner_type').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),

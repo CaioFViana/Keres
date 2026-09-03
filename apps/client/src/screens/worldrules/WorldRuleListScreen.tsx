@@ -3,7 +3,7 @@ import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,8 @@ import { createTagService } from '../../services/storymanagement/TagService'; //
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'WorldRulesStack'>,
@@ -35,11 +37,17 @@ export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
 >;
 
 const WorldRulesScreen = () => {
-  useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
+  const route = useRoute();
+  const section = (route.params as { section?: WorldPieceSection } | undefined)?.section;
+  useBackButtonHandler({
+    showWebBackButton: true,
+    onBack: () => navigation.navigate('WorldIndex'),
+  });
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
@@ -100,9 +108,10 @@ const WorldRulesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('world_rules_title'));
+      const title = section ? t(`world_piece_section_${section}`) : term('WorldRule', true);
+      setDocumentTitle(title);
       navigation.getParent()?.setOptions({
-        title: t('world_rules_title'),
+        title,
         headerRight: canEdit
           ? () => (
               <TouchableOpacity
@@ -114,7 +123,7 @@ const WorldRulesScreen = () => {
             )
           : undefined,
       });
-    }, [navigation, colors.text, t, canEdit]),
+    }, [navigation, colors.text, t, canEdit, term, section]),
   );
 
   const handleToggleFavorite = useCallback(
@@ -159,7 +168,11 @@ const WorldRulesScreen = () => {
   });
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_world_rules')} />;
+    return (
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('WorldRule', true) })}
+      />
+    );
   }
 
   if (error) {
@@ -169,12 +182,16 @@ const WorldRulesScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
-        data={worldRules}
+        data={
+          section
+            ? worldRules.filter((piece: WorldRuleWithTags) => piece.section === section)
+            : worldRules
+        }
         renderItem={memoizedWorldRuleListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_world_rules')}
+        searchPlaceholder={t('vocabulary_search_entities', { entities: term('WorldRule', true) })}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterTagsChange}

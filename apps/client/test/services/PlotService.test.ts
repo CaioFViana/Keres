@@ -80,19 +80,19 @@ describe('PlotService', () => {
     expect(await service.getAllByStoryId(TEST_STORY_ID)).toHaveLength(0);
   });
 
-  it('refuses to create a plot in a branching story', async () => {
+  it('allows a plot in a branching story', async () => {
     await database.db
       .update(schema.stories)
       .set({ type: 'branching' })
       .where(eq(schema.stories.id, TEST_STORY_ID))
       .run();
 
-    await expect(createPlot()).rejects.toThrow(/linear/i);
+    await expect(createPlot()).resolves.toMatchObject({ name: 'Trama principal' });
   });
 });
 
 describe('PlotSceneService', () => {
-  it('creates a relation with the id the scene form generated, then updates that same row', async () => {
+  it('creates a relation with a client-generated id, then updates that same row', async () => {
     const service = createPlotSceneService(database.db);
     const plot = await createPlot();
 

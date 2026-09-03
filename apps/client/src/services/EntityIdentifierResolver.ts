@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '@keres/shared';
+import type { StoryVocabulary } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
@@ -21,6 +22,8 @@ import {
   notes,
   plots,
   plotScenes,
+  routes,
+  routeSteps,
   scenes,
   seeAlsoRelations,
   stats,
@@ -29,7 +32,11 @@ import {
   tags,
   worldRules,
 } from '../db/schemas';
-
+import {
+  loadStoryVocabulary,
+  translateStoryNoun,
+  unknownStoryNoun,
+} from '../vocabulary/storyVocabularyLookup';
 const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   board: OperationLogEntityType.Board,
   locationmap: OperationLogEntityType.LocationMap,
@@ -53,6 +60,8 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   characterscene: OperationLogEntityType.CharacterScene,
   plot: OperationLogEntityType.Plot,
   plotscene: OperationLogEntityType.PlotScene,
+  route: OperationLogEntityType.Route,
+  routestep: OperationLogEntityType.RouteStep,
   gallery: OperationLogEntityType.Gallery,
   galleryrelation: OperationLogEntityType.GalleryRelation,
   favorite: OperationLogEntityType.Favorite,
@@ -66,7 +75,6 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   statrelation: OperationLogEntityType.StatRelation,
   mode: OperationLogEntityType.Mode,
 };
-
 export async function resolveRelationEntityName(
   db: AppDrizzleClient,
   relationType: OperationLogEntityType,
@@ -76,7 +84,10 @@ export async function resolveRelationEntityName(
 ): Promise<{ name: string | undefined; type: string | undefined }> {
   let name: string | undefined;
   let type: string | undefined;
-
+  // Relation labels are often resolved in batches. Only a handful of relations use a
+  // terminology-aware noun, so avoid reading the story unless one is actually encountered.
+  let vocabularyPromise: Promise<StoryVocabulary | null> | undefined;
+  const vocabulary = () => (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
   switch (relationType) {
     case OperationLogEntityType.Board:
       const board = await db.query.boards.findFirst({
@@ -102,6 +113,40 @@ export async function resolveRelationEntityName(
       name = story?.title;
       type = t('story');
       break;
+    case OperationLogEntityType.Route:
+      const route = await db.query.routes.findFirst({
+        where: and(
+          eq(routes.id, relationId),
+          eq(routes.storyId, storyId),
+          eq(routes.isDeleted, false),
+        ),
+        columns: { name: true },
+      });
+      name = route?.name;
+      type = t('route');
+      break;
+    case OperationLogEntityType.RouteStep:
+      const routeStep = await db.query.routeSteps.findFirst({
+        where: and(
+          eq(routeSteps.id, relationId),
+          eq(routeSteps.storyId, storyId),
+          eq(routeSteps.isDeleted, false),
+        ),
+        columns: { routeId: true, position: true, sceneId: true },
+      });
+      if (routeStep) {
+        const routeForStep = await db.query.routes.findFirst({
+          where: and(eq(routes.id, routeStep.routeId), eq(routes.isDeleted, false)),
+          columns: { name: true },
+        });
+        const sceneForStep = await db.query.scenes.findFirst({
+          where: and(eq(scenes.id, routeStep.sceneId), eq(scenes.isDeleted, false)),
+          columns: { name: true },
+        });
+        name = `${routeForStep?.name || t('unknown_entity')} · ${routeStep.position}: ${sceneForStep?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
+      }
+      type = t('route_step');
+      break;
     case OperationLogEntityType.Character:
       const character = await db.query.characters.findFirst({
         where: and(
@@ -112,7 +157,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = character?.name;
-      type = t('character');
+      type = translateStoryNoun(t, await vocabulary(), 'Character');
       break;
     case OperationLogEntityType.Note:
       const note = await db.query.notes.findFirst({
@@ -136,7 +181,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = location?.name;
-      type = t('location');
+      type = translateStoryNoun(t, await vocabulary(), 'Location');
       break;
     case OperationLogEntityType.WorldRule:
       const worldRule = await db.query.worldRules.findFirst({
@@ -145,10 +190,12 @@ export async function resolveRelationEntityName(
           eq(worldRules.storyId, storyId),
           eq(worldRules.isDeleted, false),
         ),
-        columns: { title: true },
+        columns: { title: true, section: true },
       });
       name = worldRule?.title;
-      type = t('world_rule');
+      type = worldRule?.section
+        ? t(`world_piece_section_${worldRule.section}`)
+        : translateStoryNoun(t, await vocabulary(), 'WorldRule');
       break;
     case OperationLogEntityType.LocationMap:
       const locationMap = await db.query.locationMaps.findFirst({
@@ -169,10 +216,14 @@ export async function resolveRelationEntityName(
           eq(chapters.storyId, storyId),
           eq(chapters.isDeleted, false),
         ),
-        columns: { name: true },
+        columns: { name: true, type: true },
       });
       name = chapter?.name;
-      type = t('chapter');
+      type = translateStoryNoun(
+        t,
+        await vocabulary(),
+        chapter?.type === 'event' ? 'Event' : 'Chapter',
+      );
       break;
     case OperationLogEntityType.Scene:
       const scene = await db.query.scenes.findFirst({
@@ -184,7 +235,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = scene?.name;
-      type = t('scene');
+      type = translateStoryNoun(t, await vocabulary(), 'Scene');
       break;
     case OperationLogEntityType.Item:
       const item = await db.query.items.findFirst({
@@ -196,7 +247,7 @@ export async function resolveRelationEntityName(
         columns: { name: true },
       });
       name = item?.name;
-      type = t('item');
+      type = translateStoryNoun(t, await vocabulary(), 'Item');
       break;
     case OperationLogEntityType.Choice:
       const relatedChoice = await db.query.choices.findFirst({
@@ -208,7 +259,7 @@ export async function resolveRelationEntityName(
         columns: { text: true },
       });
       name = relatedChoice?.text;
-      type = t('choice');
+      type = translateStoryNoun(t, await vocabulary(), 'Choice');
       break;
     case OperationLogEntityType.Tag:
       const relatedTag = await db.query.tags.findFirst({
@@ -248,7 +299,7 @@ export async function resolveRelationEntityName(
           where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
           columns: { name: true },
         });
-        name = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || t('unknown_scene')}`;
+        name = `${relatedItem?.name || unknownStoryNoun(t, await vocabulary(), 'Item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
       }
       type = t('item_journey');
       break;
@@ -394,7 +445,7 @@ export async function resolveRelationEntityName(
         });
         name = t('character_attributed_to_scene', {
           characterName: relatedCharacter?.name || t('unknown_character'),
-          sceneName: relatedScene?.name || t('unknown_scene'),
+          sceneName: relatedScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene'),
         });
       }
       type = t('character_scene_relation');
@@ -423,7 +474,7 @@ export async function resolveRelationEntityName(
             columns: { name: true },
           }),
         ]);
-        name = `${plotForRelation?.name || t('plots_title')} — ${sceneForRelation?.name || t('scenes_title')}`;
+        name = `${plotForRelation?.name || t('plots_title')} — ${sceneForRelation?.name || translateStoryNoun(t, await vocabulary(), 'Scene', true)}`;
       }
       type = t('plot_scenes');
       break;
@@ -526,7 +577,6 @@ export async function resolveRelationEntityName(
   }
   return { name, type };
 }
-
 export async function getEntityIdentifier(
   db: AppDrizzleClient,
   entityTypeString: string,
@@ -535,10 +585,8 @@ export async function getEntityIdentifier(
   t: TFunction,
 ): Promise<string | undefined> {
   const operationLogEntityType = ENTITY_LOOKUP_MAP[entityTypeString.toLowerCase()];
-
-  if (operationLogEntityType === undefined) {
+  if (operationLogEntityType === undefined)
     throw new Error(`Invalid entityTypeString: ${entityTypeString}`);
-  }
 
   const { name } = await resolveRelationEntityName(
     db,

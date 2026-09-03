@@ -12,6 +12,7 @@ import {
   type BoardGalleryMediaById,
 } from './boardLayout';
 import { boardPinAppearanceType } from './boardPinAppearance';
+import type { BoardEntitySummary } from './boardEntitySummary';
 
 export interface BoardSvgOptions {
   title: string;
@@ -25,12 +26,19 @@ export interface BoardSvgOptions {
   };
   titles: Record<
     string,
-    { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }
+    {
+      title: string;
+      typeLabel: string;
+      appearanceType?: string;
+      appearance?: { color: string };
+      ghost?: boolean;
+    }
   >;
   /** Media of the story's galleries - sizes Gallery pins that show an image. */
   galleryMediaById?: BoardGalleryMediaById;
   /** Data URIs of the pinned galleries' pictures, keyed by gallery id - embedded in the exported file. */
   galleryImages?: Record<string, string>;
+  summaries?: Record<string, BoardEntitySummary | null>;
 }
 
 const HEADER = 56;
@@ -74,10 +82,12 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
     `<g transform="translate(0 ${HEADER})">`,
     ...shiftedNodes.map((node) => {
       const meta = options.titles[node.id];
-      const accent = getEntityAppearance(
-        meta?.appearanceType ??
-          boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
-      ).color;
+      const accent =
+        meta?.appearance?.color ??
+        getEntityAppearance(
+          meta?.appearanceType ??
+            boardPinAppearanceType(node.kind, node.kind === 'entity' ? node.entityType : undefined),
+        ).color;
       const galleryMedia =
         node.kind === 'entity' && node.entityType === 'Gallery'
           ? options.galleryMediaById?.[node.entityId]
@@ -96,6 +106,23 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
       const bodyLines =
         node.kind === 'note' && node.body
           ? wrapNoteBody(node.body, BOARD_NOTE_BODY_MAX_LINES, noteBodyCharsPerLine(size.width))
+          : [];
+      const entityLines =
+        node.kind === 'entity'
+          ? [
+              ...((node.displayMode === 'summary' || node.displayMode === 'summary-and-note') &&
+              options.summaries?.[node.id]?.details
+                ? wrapNoteBody(
+                    options.summaries[node.id]?.details ?? '',
+                    10,
+                    noteBodyCharsPerLine(size.width),
+                  )
+                : []),
+              ...((node.displayMode === 'note' || node.displayMode === 'summary-and-note') &&
+              node.cardNote
+                ? wrapNoteBody(node.cardNote, 10, noteBodyCharsPerLine(size.width))
+                : []),
+            ]
           : [];
       // A gallery pin with a picture embeds it as a data URI (read by the caller); when the bytes
       // could not be read, a picture placeholder keeps the card's shape.
@@ -125,6 +152,10 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
         ...bodyLines.map(
           (line, index) =>
             `<text x="${round(node.x + 14)}" y="${round(node.y + 64 + index * 13)}" font-size="11" fill="${options.colors.text}">${escapeXml(line)}</text>`,
+        ),
+        ...entityLines.map(
+          (line, index) =>
+            `<text x="${round(node.x + 14)}" y="${round((hasGalleryImage ? node.y + BOARD_GALLERY_IMAGE_HEIGHT + 60 : node.y + 64) + index * 13)}" font-size="11" fill="${escapeXml(index === 0 ? options.colors.text : options.colors.textSecondary)}">${escapeXml(line)}</text>`,
         ),
       ].join('');
     }),

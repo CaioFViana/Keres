@@ -28,6 +28,7 @@ import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -37,6 +38,7 @@ export type LocationsScreenNavigationProp = CompositeNavigationProp<
 const LocationsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
@@ -105,9 +107,9 @@ const LocationsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('locations_title'));
+      setDocumentTitle(term('Location', true));
       navigation.getParent()?.setOptions({
-        title: t('locations_title'),
+        title: term('Location', true),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
             <TouchableOpacity
@@ -135,7 +137,15 @@ const LocationsScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton, canEdit]),
+    }, [
+      navigation,
+      colors.text,
+      t,
+      styles.headerRightContainer,
+      styles.headerButton,
+      canEdit,
+      term,
+    ]),
   );
 
   const handleToggleFavorite = useCallback(
@@ -176,7 +186,11 @@ const LocationsScreen = () => {
   }, [t]);
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_locations')} />;
+    return (
+      <ScreenLoading
+        message={t('vocabulary_loading_entities', { entities: term('Location', true) })}
+      />
+    );
   }
 
   if (error) {
@@ -191,7 +205,7 @@ const LocationsScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_locations')}
+        searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
         currentSearchTerm={searchQuery}
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterTagsChange}

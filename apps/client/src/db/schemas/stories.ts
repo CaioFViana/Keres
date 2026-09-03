@@ -1,5 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type { StoryVocabulary } from '@keres/shared/entities/Story';
 
 export const stories = sqliteTable('stories', {
   id: text('id').primaryKey(),
@@ -45,6 +46,8 @@ export const stories = sqliteTable('stories', {
   statSystem: integer('stat_system', { mode: 'boolean' }).notNull().default(false),
   /** 'letter' | 'number' - how stat values are displayed. */
   statNotation: text('stat_notation').notNull().default('letter'),
+  /** Per-story presentation terminology. Null means the app's standard translated vocabulary. */
+  vocabulary: text('vocabulary', { mode: 'json' }).$type<StoryVocabulary | null>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

@@ -114,7 +114,34 @@ describe('StoryCreateInputSchema', () => {
       normalizeSceneTiming: false,
       allowReaderComments: false,
       isFavorite: false,
+      vocabulary: null,
     });
+  });
+
+  it('accepts one-language terminology but refuses an incomplete grammatical term', () => {
+    const base = { id: ulid('story1'), title: 'A Queda', type: 'linear' as const };
+    expect(
+      StoryCreateInputSchema.safeParse({
+        ...base,
+        vocabulary: {
+          version: 1,
+          language: 'pt',
+          terms: {
+            Chapter: { singular: 'Edição', plural: 'Edições', grammaticalGender: 'feminine' },
+          },
+        },
+      }).success,
+    ).toBe(true);
+    expect(
+      StoryCreateInputSchema.safeParse({
+        ...base,
+        vocabulary: {
+          version: 1,
+          language: 'pt',
+          terms: { Chapter: { singular: 'Edição', plural: '', grammaticalGender: 'feminine' } },
+        },
+      }).success,
+    ).toBe(false);
   });
 
   it.each([

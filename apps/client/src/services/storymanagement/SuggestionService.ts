@@ -33,6 +33,13 @@ import { getEntityTable } from '../entityTableRegistry';
 const CUSTOM_ATTRIBUTE_TYPE_PREFIX = 'custom:';
 export const LIST_CATALOG_TYPE = 'list_catalog';
 export const NAMED_LIST_TYPE_PREFIX = 'list_';
+export const WORLD_PIECE_TYPE_PREFIX = 'world_piece_type:';
+export const WORLD_PIECE_CATEGORY_TYPE = 'world_piece_category';
+
+/** A World Piece type catalogue is deliberately scoped by its fixed Section. */
+export function isWorldPieceSuggestionType(type: string): boolean {
+  return type.startsWith(WORLD_PIECE_TYPE_PREFIX) || type === WORLD_PIECE_CATEGORY_TYPE;
+}
 
 export function customAttributeSuggestionType(fieldId: string): string {
   return `${CUSTOM_ATTRIBUTE_TYPE_PREFIX}${fieldId}`;
@@ -197,7 +204,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
     type: SuggestionType,
     storyId: string,
   ): Promise<[string, number][]> => {
-    if (!storyId || isNamedListType(type)) return [];
+    if (!storyId || isNamedListType(type) || isWorldPieceSuggestionType(type)) return [];
     if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
       const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
       return createAttributeValueService(db).getValueUsageCounts(fieldId);
@@ -435,7 +442,9 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         isCustomAttribute || isNamedList
           ? null
           : suggestionConfig[type as keyof typeof suggestionConfig];
-      if (!isCustomAttribute && !isNamedList && !config) return [];
+      if (!isCustomAttribute && !isNamedList && !isWorldPieceSuggestionType(type) && !config) {
+        return [];
+      }
 
       const counts = new Map<string, number>();
       const stored = await db

@@ -5,8 +5,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
-import MultiSelectPill from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import Select from '../../components/common/inputs/Select/Select';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { StatRadarChart } from '../../components/features/stats/StatRadarChart/StatRadarChart';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
@@ -18,6 +19,7 @@ import type {
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
@@ -55,6 +57,7 @@ const newSlot = (characterId: string | null = null): SeriesSlot => ({
 
 const StatComparisonScreen = () => {
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<StatComparisonNavigationProp>();
@@ -261,7 +264,7 @@ const StatComparisonScreen = () => {
         onSelectionChange={handleCharacterSelection}
         maxSelections={MAX_SERIES}
         placeholder={t('stat_compare_select_characters', { count: MAX_SERIES })}
-        searchPlaceholder={t('search_characters')}
+        searchPlaceholder={t('search_entities', { entities: term('Character', true) })}
         style={{ marginBottom: 16 }}
       />
       {slots.length >= MAX_SERIES ? (
@@ -282,7 +285,7 @@ const StatComparisonScreen = () => {
               <Text style={styles.slotTitle}>{nameOf(slot.characterId!)}</Text>
             </View>
             <Text style={styles.modeLabel}>{t('mode')}</Text>
-            <Select
+            <SingleSelectPill
               options={modeOptions}
               value={slot.modeId ?? ''}
               onValueChange={(value) =>

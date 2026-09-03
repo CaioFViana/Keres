@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -6,6 +7,7 @@ import type { SceneSelect } from '../../../../db/schema'; // SceneSelect type
 import type { CharacterSelect } from '../../../../db/schemas/characters'; // CharacterSelect type
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import type { BaseRelation } from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
@@ -32,6 +34,7 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
   availableCharacters, // Add this
 }) => {
   const { t } = useTranslation();
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
 
@@ -112,7 +115,7 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
             return (
               <View key={journey.id}>
                 <RelationAttributeLine
-                  label={t('scene')}
+                  label={sceneCopy.entity}
                   value={scene?.name || t('unknown_scene')}
                 />
                 {journey.newState && (
@@ -128,7 +131,7 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
         </View>
       );
     },
-    [availableScenes, availableCharacters, colors.text, t],
+    [availableScenes, availableCharacters, colors.text, sceneCopy.entity, t],
   );
 
   return (
@@ -141,6 +144,8 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
       renderItemExtraContent={renderItemExtraContent}
       title={t('items_in_location_title')}
       onItemPress={handleItemPress}
+      icon="cube"
+      color={getEntityAppearance('Item').color}
     />
   );
 };

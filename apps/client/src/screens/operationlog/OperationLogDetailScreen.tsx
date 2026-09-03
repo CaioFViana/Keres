@@ -1,7 +1,7 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
+import { ISO_DATE_PATTERN, OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -20,7 +20,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
-import { ISO_DATE_PATTERN } from '../../utils/reviveDates';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -144,6 +143,7 @@ const OperationLogDetailScreen: React.FC = () => {
     useCallback(() => {
       navigation.setOptions({
         title: t('operation_log_detail_title'),
+        headerRight: undefined,
       });
     }, [navigation, t]),
   );

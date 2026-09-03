@@ -1,4 +1,4 @@
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -48,6 +48,7 @@ import { createLocationRelationService } from '../../services/storymanagement/Lo
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
@@ -70,6 +71,8 @@ const LocationDetailsScreen = () => {
   const route = useRoute<LocationDetailScreenRouteProp>();
   const { locationId } = route.params;
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('Location');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
@@ -160,7 +163,7 @@ const LocationDetailsScreen = () => {
 
   const fetchLocationDetails = useCallback(async () => {
     if (!locationServiceRef.current || !locationId) {
-      setError(t('failed_to_load_location'));
+      setError(copy.failedToLoad);
       setLoading(false);
       return;
     }
@@ -170,21 +173,21 @@ const LocationDetailsScreen = () => {
       const fetchedLocation = await locationServiceRef.current.getById(locationId);
       if (fetchedLocation && !fetchedLocation.isDeleted) {
         setLocation(fetchedLocation);
-        setHeaderTitle(fetchedLocation.name || t('location_details_title'));
+        setHeaderTitle(fetchedLocation.name || copy.detailsTitle);
       } else if (fetchedLocation && fetchedLocation.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('location_not_found'));
-        setHeaderTitle(t('location_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch location details:', err);
-      setError(t('failed_to_load_location'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, t]);
+  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, copy, t]);
 
   const fetchAllCharactersInStory = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) {
@@ -514,7 +517,7 @@ const LocationDetailsScreen = () => {
   }, [allCharacters, allScenes, characterSceneRelations, locationId]);
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_location_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
   if (error) {
@@ -522,9 +525,7 @@ const LocationDetailsScreen = () => {
   }
 
   if (!location) {
-    return (
-      <ScreenError padded message={t('location_not_found')} onGoBack={() => navigation.goBack()} />
-    );
+    return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -532,6 +533,7 @@ const LocationDetailsScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{location.name}</Text>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {(() => {
@@ -642,7 +644,7 @@ const LocationDetailsScreen = () => {
         title={t('characters_in_location_title')}
         noItemsMessage="no_characters_in_location"
         entityType="Character"
-        sceneLabel={t('scene')}
+        sceneLabel={sceneCopy.entity}
       />
 
       <RelatedScenesList
@@ -687,6 +689,8 @@ const LocationDetailsScreen = () => {
         version={location.version}
         createdAt={location.createdAt}
         updatedAt={location.updatedAt}
+        entityType="Location"
+        entityId={location.id}
       />
     </ScrollView>
   );

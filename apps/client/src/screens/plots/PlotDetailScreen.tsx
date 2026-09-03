@@ -1,5 +1,5 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,
@@ -24,18 +24,19 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;
 
 /**
- * Reading, not editing: name, details and the plot's scenes in narrative order. The relation itself
- * (which scene, with what note) carries on being edited on the Scene's form, so that there are not
- * two competing editors of the same relation.
+ * Reading, not editing: name, details and the plot's scenes in narrative order. Scene membership is
+ * authored in the Plot form, alongside the plot's own name and details.
  */
 const PlotDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const chapterCopy = useVocabularyEntityCopy('Chapter');
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const route = useRoute<PlotDetailScreenRouteProp>();
@@ -55,7 +56,8 @@ const PlotDetailScreen = () => {
   const scrollBottomPadding = useFormScrollBottomPadding();
 
   const { plotById, relationsOf, sceneById, chapterNameOf, coverageOf, loading } = useStoryPlots(
-    selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
+    selectedStory?.id,
+    selectedStory?.type,
   );
   const plot = plotById(plotId);
   const { canEdit } = useStoryRole(plot?.storyId);
@@ -142,7 +144,7 @@ const PlotDetailScreen = () => {
             <Text style={styles.relationText}>{scene.name}</Text>
             {chapterNameOf(scene.chapterId) ? (
               <RelationAttributeLine
-                label={t('chapter')}
+                label={chapterCopy.entity}
                 value={chapterNameOf(scene.chapterId) as string}
               />
             ) : null}
@@ -157,6 +159,8 @@ const PlotDetailScreen = () => {
         version={plot.version}
         createdAt={plot.createdAt}
         updatedAt={plot.updatedAt}
+        entityType="Plot"
+        entityId={plot.id}
       />
 
       <View style={styles.buttonContainer}>

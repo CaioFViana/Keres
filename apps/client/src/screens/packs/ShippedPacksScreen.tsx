@@ -1,4 +1,4 @@
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -158,6 +158,7 @@ const ShippedPacksScreen = () => {
           t('packs_chip_suggestions', { count: shown.counts.suggestions }),
         shown.counts.tags > 0 && t('packs_chip_tags', { count: shown.counts.tags }),
         shown.counts.stats > 0 && t('packs_chip_stats', { count: shown.counts.stats }),
+        shown.counts.hasVocabulary && t('packs_chip_vocabulary'),
         shown.statSystem && t('shipped_packs_chip_stat_system'),
       ].filter((chip): chip is string => Boolean(chip));
 
@@ -181,7 +182,7 @@ const ShippedPacksScreen = () => {
 
           <View style={styles.installRow}>
             <View style={styles.languageSelect}>
-              <Select
+              <SingleSelectPill
                 options={item.languages.map((language) => ({
                   label: languageLabel(language.language),
                   value: language.language,

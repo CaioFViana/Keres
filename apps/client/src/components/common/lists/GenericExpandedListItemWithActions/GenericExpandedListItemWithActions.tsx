@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance, type EntityAppearance } from '@keres/shared';
 import React, { useState } from 'react';
 import { View } from 'react-native';
 
@@ -15,6 +17,10 @@ interface GenericExpandedListItemWithActionsProps<T extends { id: string; isFavo
   isExpanded?: boolean;
   onExpandedChange?: (isExpanded: boolean) => void;
   density?: 'default' | 'nested';
+  /** Uses the shared icon and color assigned to this entity type. */
+  entityType?: string;
+  /** Overrides the entity type appearance when the item has a more specific subtype. */
+  entityAppearance?: EntityAppearance;
 }
 
 const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?: boolean }>({
@@ -27,6 +33,8 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
   isExpanded: controlledIsExpanded,
   onExpandedChange,
   density = 'default',
+  entityType,
+  entityAppearance,
 }: GenericExpandedListItemWithActionsProps<T>) => {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(initialExpanded);
   const isOpen = controlledIsExpanded ?? uncontrolledIsOpen;
@@ -52,10 +60,22 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
       )}
     </View>
   );
+  const resolvedAppearance =
+    entityAppearance ?? (entityType ? getEntityAppearance(entityType) : null);
 
   return (
     <GenericListItem
       headerContent={renderHeaderContent(item)}
+      leadingIcon={
+        resolvedAppearance ? (
+          <Ionicons
+            name={resolvedAppearance.icon as keyof typeof Ionicons.glyphMap}
+            size={24}
+            color={resolvedAppearance.color}
+            testID="entity-list-item-icon"
+          />
+        ) : undefined
+      }
       expandedContent={renderExpandedContent(item)}
       isOpen={isOpen}
       onPress={toggleOpen}

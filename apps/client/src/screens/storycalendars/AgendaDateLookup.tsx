@@ -15,7 +15,7 @@ import type { TextStyle, ViewStyle } from 'react-native';
 import { Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
@@ -81,7 +81,7 @@ export const CustomCalendarDateLookup = React.memo(function CustomCalendarDateLo
       {eras.length > 0 && (
         <View style={{ marginBottom: 8, zIndex: 3 }}>
           <Text style={styles.lookupLabel}>{t('calendar_eras')}</Text>
-          <Select
+          <SingleSelectPill
             options={eras}
             value={eraValue}
             onValueChange={(value) => {
@@ -112,7 +112,7 @@ export const CustomCalendarDateLookup = React.memo(function CustomCalendarDateLo
         </View>
         <View style={[styles.lookupField, styles.lookupMonth]}>
           <Text style={styles.lookupLabel}>{t('calendar_epoch_month')}</Text>
-          <Select
+          <SingleSelectPill
             options={definition.months.map((month, index) => ({
               label: month.name || String(index + 1),
               value: String(index + 1),

@@ -3,9 +3,9 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,
@@ -32,6 +32,8 @@ import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -52,6 +54,20 @@ const ItemJourneyDetailScreen = () => {
   const route = useRoute<ItemJourneyDetailScreenRouteProp>();
   const { itemJourneyId } = route.params;
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
+  const { agree, term } = useStoryVocabulary();
+  const characterTerm = term('Character');
+  const characterOwnerEnding = agree('Character', {
+    masculine: 'o',
+    feminine: 'a',
+    neutral: 'o',
+  });
+  const characterOwnerPrefix = agree('Character', {
+    masculine: 'Novo',
+    feminine: 'Nova',
+    neutral: 'Novo(a)',
+  });
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -153,23 +169,23 @@ const ItemJourneyDetailScreen = () => {
         setItemJourney(fetchedItemJourney);
         // Display item name + new state as title
         const relatedItem = items.find((item) => item.id === fetchedItemJourney.itemId);
-        setHeaderTitle(
-          `${relatedItem?.name || t('unknown_item')} - ${fetchedItemJourney.newState}`,
-        );
+        setHeaderTitle(`${relatedItem?.name || itemCopy.unknown} - ${fetchedItemJourney.newState}`);
       } else if (fetchedItemJourney && fetchedItemJourney.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('item_journey_not_found'));
-        setHeaderTitle(t('item_journey_not_found'));
+        setError(t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }));
+        setHeaderTitle(
+          t('vocabulary_entity_not_found', { entity: itemCopy.itemJourney, ending: 'a' }),
+        );
       }
     } catch (err) {
       console.error('Failed to fetch item journey details:', err);
-      setError(t('failed_to_load_item_journey'));
+      setError(t('vocabulary_failed_to_load_entity', { entity: itemCopy.itemJourney }));
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [itemJourneyId, navigation, t, items]);
+  }, [itemJourneyId, navigation, t, items, itemCopy]);
 
   const handleItemJourneyChange = useCallback(
     async (changedStoryId: string, changedItemJourneyId: string) => {
@@ -181,12 +197,12 @@ const ItemJourneyDetailScreen = () => {
           setItemJourney(updatedItemJourney);
           const relatedItem = items.find((item) => item.id === updatedItemJourney.itemId);
           setHeaderTitle(
-            `${relatedItem?.name || t('unknown_item')} - ${updatedItemJourney.newState}`,
+            `${relatedItem?.name || itemCopy.unknown} - ${updatedItemJourney.newState}`,
           );
         }
       }
     },
-    [itemJourneyId, navigation, t, items],
+    [itemJourneyId, navigation, items, itemCopy],
   );
 
   useEntityInitialLoad(fetchItemJourney);
@@ -241,7 +257,12 @@ const ItemJourneyDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_item_journey_details')} />;
+    return (
+      <ScreenLoading
+        padded
+        message={t('vocabulary_loading_entity_details', { entity: itemCopy.itemJourney })}
+      />
+    );
   }
   if (error) {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
@@ -250,7 +271,7 @@ const ItemJourneyDetailScreen = () => {
     return (
       <ScreenError
         padded
-        message={t('item_journey_data_missing')}
+        message={t('vocabulary_entity_data_missing', { entity: itemCopy.itemJourney })}
         onGoBack={() => navigation.goBack()}
       />
     );
@@ -261,12 +282,13 @@ const ItemJourneyDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{headerTitle}</Text>
       <TagList tags={itemJourneyTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {relatedItem && (
         <TouchableOpacity onPress={handleItemPress} style={styles.relationLink} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
-            <DetailField label={t('item')} value={relatedItem.name} />
+            <DetailField label={itemCopy.entity} value={relatedItem.name} />
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -312,7 +334,7 @@ const ItemJourneyDetailScreen = () => {
           activeOpacity={0.7}
         >
           <View style={{ flex: 1 }}>
-            <DetailField label={t('scene')} value={relatedScene.name} />
+            <DetailField label={sceneCopy.entity} value={relatedScene.name} />
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -324,7 +346,14 @@ const ItemJourneyDetailScreen = () => {
           activeOpacity={0.7}
         >
           <View style={{ flex: 1 }}>
-            <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />
+            <DetailField
+              label={t('item_journey_new_character_owner_label', {
+                character: characterTerm,
+                ending: characterOwnerEnding,
+                prefix: characterOwnerPrefix,
+              })}
+              value={newCharacterOwner.name}
+            />
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>

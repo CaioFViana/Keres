@@ -9,7 +9,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'A board is a named drawing. You pin characters, locations, scenes and other dictionary entries, drop free notes, and connect them with arrows. Those arrows belong only to the board — they do not become character relations or “see also” links.',
+      text: 'A board is a named drawing. You pin characters, locations, scenes and other dictionary entries, drop free notes, and connect them. Those links belong only to the board — they do not become character relations or “see also” links.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
@@ -24,9 +24,16 @@ const page: HelpPage = {
         'Open Boards in the story menu and create a board with a short name.',
         'Add existing entities from the picker. The same entity can be pinned more than once.',
         'Add a note for something that is not an entity yet.',
-        'Drag a pin to move it. Tap it to connect it to another pin on this board, or to open the entity.',
+        'Drag a pin to move it. Tap it to open its profile or edit its note.',
+        'To create a link, turn on Connect nodes in the header and drag from one pin to another.',
+        'In the dialog, choose whether the link is directional, its arrow direction, and optional text.',
         'Save explicitly. Revert restores the last saved drawing. Opening an entity keeps the unsaved drawing in memory until you save, close the app, or open another board.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'Links on a board' },
+    {
+      type: 'paragraph',
+      text: 'A plain link represents an association. A directional link shows an arrow; choose A → B or B → A in the dialog. Its optional text appears over the line, for example “protects”, “discovered”, or “leads to”.',
     },
     {
       type: 'fields',
@@ -59,7 +66,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Boards do not change the story map, the location graph, or character relations. Arrows on a board stay on that board. Opening a pinned entity keeps the unsaved drawing in memory until you save, close the app, or open another board. Saving writes one update for the whole drawing, so two people editing the same board resolve it as keep-mine, keep-theirs, or a copy — the drawings are not merged.',
+      text: 'Boards do not change the story map, the location graph, or character relations. Links and their text stay on that board. Opening a pinned entity keeps the unsaved drawing in memory until you save, close the app, or open another board. Saving writes one update for the whole drawing, so two people editing the same board resolve it as keep-mine, keep-theirs, or a copy — the drawings are not merged.',
     },
   ],
 };

@@ -6,7 +6,9 @@ jest.mock('react-native-safe-area-context', () => ({
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import MultiSelectPill from '../../src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '../../src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 
 jest.mock('../../src/theme', () => ({
   useTheme: () => ({
@@ -76,6 +78,76 @@ describe('MultiSelectPill grouped mode, singleSelect', () => {
 
     expect(onSelectionChange).toHaveBeenCalledWith([]);
   });
+
+  it('keeps a required selection when deselection is disabled', async () => {
+    const onSelectionChange = jest.fn();
+    const screen = await render(
+      <MultiSelectPill
+        groups={groups}
+        selectedValues={['atena']}
+        onSelectionChange={onSelectionChange}
+        singleSelect
+        allowDeselect={false}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await fireEvent.press(screen.getByTestId('multiselect-option-atena'));
+
+    expect(onSelectionChange).toHaveBeenCalledWith(['atena']);
+  });
+
+  it('renders a single selection as input text instead of a colored pill', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={groups[0].options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+        singleSelect
+      />,
+    );
+
+    expect(screen.getByText('Atena')).toBeTruthy();
+    expect(screen.queryByTestId('multiselect-pill-atena')).toBeNull();
+  });
+
+  it('adapts the former one-value selector API to the searchable picker', async () => {
+    const onValueChange = jest.fn();
+    const screen = await render(
+      <SingleSelectPill
+        options={groups[0].options}
+        value={null}
+        onValueChange={onValueChange}
+        placeholder="Choose a character"
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await fireEvent.press(screen.getByTestId('multiselect-option-keres'));
+
+    expect(onValueChange).toHaveBeenCalledWith('keres');
+  });
+});
+
+it('shows the entity icon beside options that inherit their group appearance', async () => {
+  const screen = await render(
+    <MultiSelectPill
+      groups={[
+        {
+          key: 'Character',
+          label: 'Characters',
+          entityType: 'Character',
+          options: [{ label: 'Atena', value: 'atena' }],
+        },
+      ]}
+      selectedValues={[]}
+      onSelectionChange={jest.fn()}
+    />,
+  );
+
+  await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+
+  expect(screen.getByTestId('multiselect-option-icon-atena')).toBeTruthy();
 });
 
 describe('MultiSelectPill flat mode (options)', () => {
@@ -225,6 +297,23 @@ describe('MultiSelectPill, pill spacing', () => {
     // The content's height must not exceed the minimum: a pill (14px of text + 10 of vertical padding)
     // plus the container's padding fits within the 50px.
     expect(triggerStyleOf(filled).minHeight).toBe(50);
+  });
+});
+
+describe('SingleSelectPill layout', () => {
+  it('forwards compact layout styles to its multi-select foundation', async () => {
+    const screen = await render(
+      <SingleSelectPill
+        options={[{ label: 'Name', value: 'name' }]}
+        value={null}
+        onValueChange={jest.fn()}
+        style={{ marginBottom: 0 }}
+        triggerStyle={{ height: 50 }}
+      />,
+    );
+
+    const trigger = StyleSheet.flatten(screen.getByTestId('multiselect-trigger').props.style);
+    expect(trigger.height).toBe(50);
   });
 });
 

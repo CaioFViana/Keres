@@ -24,6 +24,7 @@ export const helpSections: HelpSection[] = [
       'create-story',
       'story-type',
       'story-settings',
+      'appearance',
       'calendars',
       'story-dashboard',
       'story-analysis',
@@ -65,6 +66,7 @@ export const helpSections: HelpSection[] = [
     icon: 'git-branch-outline',
     pageIds: [
       'branching-basics',
+      'routes',
       'choices',
       'story-map',
       'choice-conditions',
@@ -76,7 +78,7 @@ export const helpSections: HelpSection[] = [
     id: 'annotate',
     titleKey: 'help_section_annotate',
     icon: 'create-outline',
-    pageIds: ['comments', 'see-also', 'custom-attributes', 'suggestions'],
+    pageIds: ['comments', 'see-also', 'custom-attributes', 'vocabulary', 'suggestions'],
   },
   {
     id: 'preferences',

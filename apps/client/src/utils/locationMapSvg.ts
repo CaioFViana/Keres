@@ -3,8 +3,8 @@ import type {
   LocationMapConnection,
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import { interpolateColor, pointOnCircleBoundary } from './locationMapColors';
-import { LOCATION_MAP_NODE_SIZE } from './locationMapLayout';
+import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 import { LOCATION_MAP_ICON_PATHS } from './locationMapIconPaths';
 
 export interface LocationMapSvgOptions {
@@ -75,7 +75,17 @@ export function renderLocationMapSvg(
     maxX = Math.max(maxX, node.x + NODE_RADIUS);
     maxY = Math.max(maxY, node.y + NODE_RADIUS + 18);
   }
-  if (content.images.length === 0 && content.nodes.length === 0) {
+  for (const marker of content.markers ?? []) {
+    minX = Math.min(minX, marker.x - NODE_RADIUS);
+    minY = Math.min(minY, marker.y - NODE_RADIUS);
+    maxX = Math.max(maxX, marker.x + NODE_RADIUS);
+    maxY = Math.max(maxY, marker.y + NODE_RADIUS + 18);
+  }
+  if (
+    content.images.length === 0 &&
+    content.nodes.length === 0 &&
+    (content.markers?.length ?? 0) === 0
+  ) {
     minX = 0;
     minY = 0;
     maxX = 0;
@@ -118,9 +128,18 @@ export function renderLocationMapSvg(
       const p1 = shift(start.x, start.y);
       const p2 = shift(end.x, end.y);
       const color = interpolateColor(a.color, b.color);
+      const label = connection.label ? escapeXml(connection.label) : null;
+      const labelX = round((p1.x + p2.x) / 2);
+      const labelY = round((p1.y + p2.y) / 2 - 6);
       return [
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85"/>`,
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4">${label}</text>`
+          : '',
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${color}">${label}</text>`
+          : '',
       ];
     });
 
@@ -138,11 +157,20 @@ export function renderLocationMapSvg(
       const p1 = shift(start.x, start.y);
       const p2 = shift(tip.x, tip.y);
       const color = interpolateColor(from.color, to.color);
+      const label = relation.label ? escapeXml(relation.label) : null;
+      const labelX = round((p1.x + p2.x) / 2);
+      const labelY = round((p1.y + p2.y) / 2 - 6);
       return [
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
         `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
         `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 13)}" fill="${options.colors.background}"/>`,
         `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 10)}" fill="${color}"/>`,
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4">${label}</text>`
+          : '',
+        label
+          ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${color}">${label}</text>`
+          : '',
       ];
     });
 
@@ -165,6 +193,22 @@ export function renderLocationMapSvg(
       `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
+  const markerElements = (content.markers ?? []).map((marker) => {
+    const p = shift(marker.x, marker.y);
+    const name = escapeXml(marker.title);
+    const iconPaths = LOCATION_MAP_ICON_PATHS[marker.icon] ?? '';
+    const iconSize = 512 * ICON_SCALE;
+    const iconX = p.x - iconSize / 2;
+    const iconY = p.y - iconSize / 2;
+    return [
+      `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(marker.color)}" stroke-width="2"/>`,
+      iconPaths
+        ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${ICON_SCALE})" fill="${escapeXml(marker.color)}">${iconPaths}</g>`
+        : '',
+      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
+      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+    ].join('');
+  });
 
   const body = [
     `<rect x="0" y="0" width="${round(width)}" height="${round(height)}" fill="${options.colors.background}"/>`,
@@ -175,6 +219,7 @@ export function renderLocationMapSvg(
     ...connectionElements,
     ...containsElements,
     ...nodeElements,
+    ...markerElements,
     '</g>',
   ].join('\n');
 

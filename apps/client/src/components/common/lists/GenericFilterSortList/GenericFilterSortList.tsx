@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
 import {
@@ -14,8 +14,9 @@ import {
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
-import Select from '@/src/components/common/inputs/Select/Select';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
@@ -259,13 +260,16 @@ const GenericFilterSortList = <T,>({
                 }}
               />
             ) : (
-              <Select
-                options={filterOptions || []}
-                value={selectedFilter}
-                onValueChange={handleFilterSelection}
+              <MultiSelectPill
+                options={(filterOptions || []).map((option) => ({
+                  ...option,
+                  color: option.color ?? undefined,
+                }))}
+                selectedValues={selectedFilter}
+                onSelectionChange={handleFilterSelection}
                 placeholder={t('filter_by_tags')}
-                multiple={true}
                 disabled={disableTagFilter}
+                style={styles(colors).compactSelect}
               />
             )}
           </View>
@@ -283,11 +287,12 @@ const GenericFilterSortList = <T,>({
         </View>
         <View style={styles(colors).filterSortRow}>
           <View style={styles(colors).selectContainerSort}>
-            <Select
+            <SingleSelectPill
               options={sortOptions || []}
               value={selectedSort}
               onValueChange={handleSortSelection}
               placeholder={t('sort_by')}
+              style={styles(colors).compactSelect}
             />
           </View>
           {!disableFavoriteFilter && (
@@ -388,6 +393,11 @@ const styles = (colors: any) =>
     selectContainerSort: {
       flex: 1,
       paddingRight: 10,
+    },
+    // A regular field keeps space below itself for a following form control. In this toolbar that
+    // margin becomes part of the row's height and shifts the icon buttons down from their select.
+    compactSelect: {
+      marginBottom: 0,
     },
     sortDirectionButton: {
       padding: 12,

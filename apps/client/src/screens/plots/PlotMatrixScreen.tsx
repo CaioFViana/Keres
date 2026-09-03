@@ -1,8 +1,5 @@
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
@@ -19,6 +16,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getDistinctSeriesColor } from '@keres/shared';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
@@ -56,6 +54,7 @@ const MATRIX_CONTROL_LABELS = {
 const PlotMatrixScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const navigateToDetail = useNavigateToEntityDetail();
@@ -73,7 +72,8 @@ const PlotMatrixScreen = () => {
   );
 
   const { plots, relations, scenes, chapters, loading, chapterNameOf, coverageOf } = useStoryPlots(
-    selectedStory?.type === 'linear' ? selectedStory?.id : undefined,
+    selectedStory?.id,
+    selectedStory?.type,
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -216,10 +216,6 @@ const PlotMatrixScreen = () => {
     [colors],
   );
 
-  if (selectedStory?.type !== 'linear') {
-    return <ScreenError message={t('plots_linear_only')} onGoBack={() => navigation.goBack()} />;
-  }
-
   if (loading) {
     return <ScreenLoading message={t('loading_plots')} />;
   }
@@ -352,7 +348,7 @@ const PlotMatrixScreen = () => {
           sections={[
             { title: t('plot_details'), description: selectedPlot.details || t('common_na') },
             {
-              title: t('scenes_title'),
+              title: term('Scene', true),
               emptyMessage: t('no_plot_scenes'),
               items: relations
                 .filter((relation) => relation.plotId === selectedPlot.id)

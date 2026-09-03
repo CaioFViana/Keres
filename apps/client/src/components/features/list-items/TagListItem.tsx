@@ -64,6 +64,7 @@ const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails, onToggleF
       item={tag}
       onToggleFavorite={onToggleFavorite}
       onViewDetails={onViewDetails}
+      entityType="Tag"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

@@ -374,3 +374,21 @@ existing story becomes invalid at any point in this plan.
   material for one — Kaguya's is explicitly lunar, which would demonstrate §8 without inventing
   anything. Content work, the same class as the events entry in `events_feature_plan.md` §14.
 - A shipped calendar pack, once §11's pack support exists.
+
+---
+
+## 16. Calendar-change review and anchor inspection (shipped 2026-08-30)
+
+Calendar definitions interpret the story's relative timeline; they do not own or migrate it.
+Consequently, editing a saved definition now opens a required review before persistence. The review
+lists the story opening and every Chapter/Event anchor, with its current reading and its reading
+after the proposed definition. Confirming saves only the definition: it never rewrites an epoch,
+gap, duration or anchor.
+
+Each custom calendar also exposes **View anchors**. Its read-only sheet shows those same facts as
+that calendar currently reads them and opens the reference Scene through normal entity navigation.
+When the story opening has not been set, an anchor is listed but intentionally has no invented date.
+
+This is deliberately not a calendar migration system. Different calendars cannot preserve both an
+authored label and the underlying elapsed story time after a structural change. Keres preserves the
+relative time and makes the changed interpretation visible before the author accepts it.

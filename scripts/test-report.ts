@@ -59,9 +59,9 @@ interface RunResult {
   output: string;
 }
 
-function run(command: string, args: string[]): Promise<RunResult> {
+function run(command: string, args: string[], cwd = repoRoot): Promise<RunResult> {
   return new Promise((resolveRun) => {
-    const child = spawn(command, args, { cwd: repoRoot });
+    const child = spawn(command, args, { cwd });
     let output = '';
     child.stdout.on('data', (chunk) => {
       output += chunk;
@@ -180,7 +180,10 @@ for (const [name, path, runs] of projects) {
   process.stdout.write(`Running ${name}... `);
   const executions: (RunResult & { coverageDirectory: string })[] = [];
   for (const [script, coverageDirectory] of runs) {
-    const result = await run('bun', ['run', '--cwd', path, script]);
+    // Running `bun run --cwd <path>` as a child can make Bun's Windows launcher close before the
+    // test runner it started. Use the package itself as the child working directory so `close`
+    // unequivocally means the suite and its coverage report have finished.
+    const result = await run('bun', ['run', script], resolve(repoRoot, path));
     executions.push({ ...result, coverageDirectory });
     if (result.code !== 0) break;
   }

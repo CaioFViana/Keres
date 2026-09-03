@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
 
 /**
  * A Board is a named drawing: pins of existing entities, free notes, and arrows that are not
@@ -18,6 +19,7 @@ export const BOARD_PIN_ENTITIES = [
   'Gallery',
   'Chapter',
   'WorldRule',
+  'Board',
 ] as const;
 export type BoardPinEntity = (typeof BOARD_PIN_ENTITIES)[number];
 
@@ -28,6 +30,9 @@ export const BOARD_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 
 export const MAX_BOARD_NODES = 500;
 export const MAX_BOARD_EDGES = 1000;
+const BOARD_MAX_NODE_EXTENT = 720;
+export const BOARD_CARD_DISPLAY_MODES = ['compact', 'summary', 'note', 'summary-and-note'] as const;
+export type BoardCardDisplayMode = (typeof BOARD_CARD_DISPLAY_MODES)[number];
 
 const BoardLocalIdSchema = z
   .string()
@@ -53,6 +58,15 @@ const BoardEntityNodeSchema = z.object({
   entityType: z.enum(BOARD_PIN_ENTITIES),
   entityId: z.string().min(1),
   labelAtPin: z.string().max(200),
+  /** Presentation belongs to this Board pin, not to the linked story entity. */
+  displayMode: z.enum(BOARD_CARD_DISPLAY_MODES).default('compact'),
+  /** A contextual note for this pin; it deliberately does not create a Note entity. */
+  cardNote: z.string().max(8000).nullable().default(null),
+  /** Optional manual dimensions keep older compact pins visually unchanged. */
+  width: z.number().finite().min(148).max(720).optional(),
+  height: z.number().finite().min(86).max(720).optional(),
+  /** Visual stacking order inside this Board; absent values preserve older document order. */
+  zIndex: z.number().finite().optional(),
 });
 
 const BoardNoteNodeSchema = z.object({
@@ -62,6 +76,9 @@ const BoardNoteNodeSchema = z.object({
   y: z.number().finite(),
   title: z.string().max(200),
   body: z.string().max(8000).nullable(),
+  width: z.number().finite().min(148).max(720).optional(),
+  height: z.number().finite().min(86).max(720).optional(),
+  zIndex: z.number().finite().optional(),
 });
 
 export const BoardNodeSchema = z.discriminatedUnion('kind', [
@@ -98,6 +115,7 @@ export const BoardContentSchema = z
     }
 
     const edgeIds = new Set<string>();
+    const edgePairs = new Set<string>();
     for (const [index, edge] of content.edges.entries()) {
       if (edgeIds.has(edge.id)) {
         context.addIssue({
@@ -107,6 +125,15 @@ export const BoardContentSchema = z
         });
       }
       edgeIds.add(edge.id);
+      const pair = [edge.from, edge.to].sort().join(':');
+      if (edgePairs.has(pair)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['edges', index],
+          message: 'A board can only have one connection between the same two nodes.',
+        });
+      }
+      edgePairs.add(pair);
       if (!nodeIds.has(edge.from)) {
         context.addIssue({
           code: 'custom',
@@ -122,7 +149,30 @@ export const BoardContentSchema = z
         });
       }
     }
+    // A freeform Board may be large, but an unbounded JSON coordinate would make exports and
+    // geometry unsafe even after the interactive canvas becomes virtualized.
+    if (
+      !isSpatialEnvelopeSafe(
+        content.nodes.map((node) => ({
+          x: node.x,
+          y: node.y,
+          width: node.width ?? BOARD_MAX_NODE_EXTENT,
+          height: node.height ?? BOARD_MAX_NODE_EXTENT,
+        })),
+      )
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['nodes'],
+        message: 'Board nodes exceed the supported spatial canvas envelope.',
+      });
+    }
   });
+
+/** The one runtime boundary for a Board's JSON document, shared by client and server. */
+export function validateBoardContent(content: unknown) {
+  return BoardContentSchema.parse(content);
+}
 
 export const BoardSchema = z.object({
   id: z.string(),
@@ -145,9 +195,10 @@ export const CreateBoardDataSchema = z.object({
 
 export const PartialBoardSchema = CreateBoardDataSchema.partial();
 
-export type BoardNodeType = z.infer<typeof BoardNodeSchema>;
+/** Input types keep drawings created before optional presentation settings valid in callers. */
+export type BoardNodeType = z.input<typeof BoardNodeSchema>;
 export type BoardEdgeType = z.infer<typeof BoardEdgeSchema>;
-export type BoardContentType = z.infer<typeof BoardContentSchema>;
+export type BoardContentType = z.input<typeof BoardContentSchema>;
 export type BoardRowType = z.infer<typeof BoardSchema>;
 export type CreateBoardDataType = z.infer<typeof CreateBoardDataSchema>;
 export type PartialBoardType = z.infer<typeof PartialBoardSchema>;
@@ -160,10 +211,17 @@ export type PartialBoardType = z.infer<typeof PartialBoardSchema>;
 export function remapBoardContent(
   content: BoardContentType,
   remapId: (id: string) => string,
-): BoardContentType {
+): z.infer<typeof BoardContentSchema> {
   return {
     nodes: content.nodes.map((node) =>
-      node.kind === 'entity' ? { ...node, entityId: remapId(node.entityId) } : node,
+      node.kind === 'entity'
+        ? {
+            ...node,
+            entityId: remapId(node.entityId),
+            displayMode: node.displayMode ?? 'compact',
+            cardNote: node.cardNote ?? null,
+          }
+        : node,
     ),
     edges: content.edges,
   };

@@ -36,6 +36,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
@@ -43,6 +44,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -52,6 +54,7 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 const ItemListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  const { agree, term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -89,6 +92,7 @@ const ItemListScreen = () => {
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [tagsByItemId, setTagsByItemId] = useState<Map<string, TagSelect[]>>(new Map());
+  const [characterNamesById, setCharacterNamesById] = useState<Map<string, string>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
 
   const loadJourneys = useCallback(async () => {
@@ -108,6 +112,19 @@ const ItemListScreen = () => {
   useEffect(() => {
     loadJourneys();
   }, [loadJourneys]);
+
+  const loadCharacterNames = useCallback(async () => {
+    if (!drizzleDb || !storyId) {
+      setCharacterNamesById(new Map());
+      return;
+    }
+    const characters = await createCharacterService(drizzleDb).getAllByStoryId(storyId);
+    setCharacterNamesById(new Map(characters.map((character) => [character.id, character.name])));
+  }, [drizzleDb, storyId]);
+
+  useEffect(() => {
+    loadCharacterNames();
+  }, [loadCharacterNames]);
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
       if (changedStoryId === storyId) loadJourneys();
@@ -123,6 +140,14 @@ const ItemListScreen = () => {
       entityEventEmitter.off('choice_changed', refresh);
     };
   }, [loadJourneys, storyId]);
+
+  useEffect(() => {
+    const refreshCharacterNames = (changedStoryId: string) => {
+      if (changedStoryId === storyId) loadCharacterNames();
+    };
+    entityEventEmitter.on('character_changed', refreshCharacterNames);
+    return () => entityEventEmitter.off('character_changed', refreshCharacterNames);
+  }, [loadCharacterNames, storyId]);
 
   const loadTags = useCallback(async () => {
     if (!drizzleDb || !storyId) {
@@ -195,6 +220,15 @@ const ItemListScreen = () => {
     [navigation],
   );
 
+  const characterOwnerLabels = useMemo(() => {
+    const character = term('Character');
+    const ending = agree('Character', { masculine: 'o', feminine: 'a', neutral: 'o' });
+    return {
+      owner: t('item_character_owner_label', { character, ending }),
+      unknown: t('item_unknown_character_owner', { character, ending }),
+    };
+  }, [agree, t, term]);
+
   const memoizedItemListItem = useCallback(
     ({ item }: { item: ItemSelect }) => {
       const orderedJourneys = orderItemJourneysByNarrative(
@@ -209,6 +243,11 @@ const ItemListScreen = () => {
           item={item}
           onViewDetails={handleViewDetails}
           onToggleFavorite={handleToggleFavorite}
+          characterOwnerName={
+            item.characterOwnerId ? characterNamesById.get(item.characterOwnerId) : undefined
+          }
+          characterOwnerLabel={characterOwnerLabels.owner}
+          unknownCharacterOwnerLabel={characterOwnerLabels.unknown}
           tags={tagsByItemId.get(item.id)}
           renderJourneys={() => (
             <ItemJourneyRows
@@ -224,7 +263,9 @@ const ItemListScreen = () => {
     },
     [
       canEdit,
+      characterOwnerLabels,
       chapters,
+      characterNamesById,
       choices,
       handleAddJourney,
       handleOpenJourney,
@@ -254,9 +295,9 @@ const ItemListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('items_title'));
+      setDocumentTitle(term('Item', true));
       navigation.getParent()?.setOptions({
-        title: t('items_title'),
+        title: term('Item', true),
         headerRight:
           selectedStory?.type === 'linear' || canEdit
             ? () => (
@@ -286,11 +327,14 @@ const ItemListScreen = () => {
       canEdit,
       openItemList,
       selectedStory?.type,
+      term,
     ]),
   );
 
   if (isInitialLoading) {
-    return <ScreenLoading message={t('loading_items')} />;
+    return (
+      <ScreenLoading message={t('vocabulary_loading_entities', { entities: term('Item', true) })} />
+    );
   }
 
   if (error) {
@@ -305,7 +349,7 @@ const ItemListScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder={t('search_items')}
+        searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
         currentSearchTerm={searchQuery}
         filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
         onFilterChange={setActiveTagIds}

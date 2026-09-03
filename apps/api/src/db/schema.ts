@@ -31,6 +31,8 @@ export * from './schema/tables/operationLog';
 export * from './schema/tables/packs';
 export * from './schema/tables/plots';
 export * from './schema/tables/plotScenes';
+export * from './schema/tables/routes';
+export * from './schema/tables/routeSteps';
 export * from './schema/tables/registrationSettings';
 export * from './schema/tables/showcaseSettings';
 export * from './schema/tables/scenes';

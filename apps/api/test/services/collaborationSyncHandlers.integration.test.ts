@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { eq } from 'drizzle-orm';
 import { db } from '../../src/db';
-import { stories, users } from '../../src/db/schema';
+import { scenes, stories, users } from '../../src/db/schema';
 import { CharacterSceneSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
@@ -232,5 +233,243 @@ describe('collaboration sync entity handlers', () => {
       await handler.delete(userId, storyId, remove(entity, id, version), current);
       expect(await handler.findById(id)).toMatchObject({ isDeleted: true });
     }
+  });
+
+  it('rejects absent CharacterScene endpoints and validates a retarget before updating', async () => {
+    const handler = new CharacterSceneSyncHandler();
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('CharacterScene', newId(), { characterId: newId(), sceneId }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('CharacterScene', newId(), { characterId, sceneId: newId() }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const linkId = newId();
+    await handler.create(
+      userId,
+      storyId,
+      create('CharacterScene', linkId, { characterId, sceneId }),
+    );
+    const current = await handler.findById(linkId);
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'CharacterScene',
+          id: linkId,
+          changes: { characterId: newId(), version: current.version },
+        } as UpdateStoryUpdate,
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    expect(await handler.findById(linkId)).toMatchObject({ characterId, sceneId, version: 1 });
+  });
+
+  it('never lets one user create, update, or delete another user’s favorite', async () => {
+    const favorites = new FavoriteSyncHandler();
+    const outsiderId = newId();
+    const favoriteId = newId();
+    await db.insert(users).values({
+      id: outsiderId,
+      username: 'bia',
+      tag: 'bia',
+      password: 'x',
+    } as never);
+
+    await expect(
+      favorites.create(
+        outsiderId,
+        storyId,
+        create('Favorite', newId(), {
+          userId,
+          entityId: characterId,
+          entityType: 'Character',
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'unauthorized' });
+
+    await favorites.create(
+      userId,
+      storyId,
+      create('Favorite', favoriteId, {
+        userId,
+        entityId: characterId,
+        entityType: 'Character',
+      }),
+    );
+    const favorite = await favorites.findById(favoriteId);
+
+    await expect(
+      favorites.update(
+        outsiderId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'Favorite',
+          id: favoriteId,
+          changes: { version: 1 },
+        } as UpdateStoryUpdate,
+        favorite,
+      ),
+    ).rejects.toMatchObject({ reason: 'unauthorized' });
+    await expect(
+      favorites.delete(outsiderId, storyId, remove('Favorite', favoriteId, 1), favorite),
+    ).rejects.toMatchObject({ reason: 'unauthorized' });
+    expect(await favorites.findById(favoriteId)).toMatchObject({ isDeleted: false, version: 1 });
+  });
+
+  it('keeps a favorite attached to its original user, story and entity even if its owner sends those fields', async () => {
+    const favorites = new FavoriteSyncHandler();
+    const favoriteId = newId();
+    await favorites.create(
+      userId,
+      storyId,
+      create('Favorite', favoriteId, {
+        userId,
+        entityId: characterId,
+        entityType: 'Character',
+      }),
+    );
+    const current = await favorites.findById(favoriteId);
+    await favorites.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Favorite',
+        id: favoriteId,
+        changes: {
+          userId: newId(),
+          storyId: newId(),
+          entityId: newId(),
+          entityType: 'Scene',
+          version: current.version,
+        },
+      } as UpdateStoryUpdate,
+      current,
+    );
+    expect(await favorites.findById(favoriteId)).toMatchObject({
+      userId,
+      storyId,
+      entityId: characterId,
+      entityType: 'Character',
+      version: 2,
+    });
+  });
+
+  it('enforces scene references while allowing a scene to deliberately have no location', async () => {
+    const scenesHandler = new SceneSyncHandler();
+    const baseScene = (overrides: Record<string, unknown> = {}) => ({
+      chapterId: newId(),
+      locationId: null,
+      name: 'Sem lugar',
+      index: 2,
+      summary: null,
+      gap: null,
+      gapType: null,
+      duration: null,
+      durationType: null,
+      isStart: false,
+      isFinish: false,
+      isFavorite: false,
+      extraNotes: null,
+      ...overrides,
+    });
+
+    await expect(
+      scenesHandler.create(userId, storyId, create('Scene', newId(), baseScene())),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      scenesHandler.create(
+        userId,
+        storyId,
+        create('Scene', newId(), baseScene({ chapterId: null, locationId: newId() })),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      scenesHandler.create(
+        userId,
+        storyId,
+        create(
+          'Scene',
+          newId(),
+          baseScene({
+            chapterId: null,
+            calendarDateOverride: '0001-01-01T00:00',
+            calendarDateOverrideCalendarId: newId(),
+          }),
+        ),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const noLocationId = newId();
+    await scenesHandler.create(
+      userId,
+      storyId,
+      create('Scene', noLocationId, baseScene({ chapterId: null })),
+    );
+    expect(await scenesHandler.findById(noLocationId)).toMatchObject({ locationId: null });
+  });
+
+  it('keeps one start/finish only in linear stories and leaves branching scene flags independent', async () => {
+    const scenesHandler = new SceneSyncHandler();
+    const nextLinearId = newId();
+    const sceneData = (id: string, overrides: Record<string, unknown> = {}) => ({
+      chapterId: null,
+      locationId: null,
+      name: `Scene ${id}`,
+      index: 2,
+      summary: null,
+      gap: null,
+      gapType: null,
+      duration: null,
+      durationType: null,
+      isStart: true,
+      isFinish: true,
+      isFavorite: false,
+      extraNotes: null,
+      ...overrides,
+    });
+    await db.update(scenes).set({ isFinish: true }).where(eq(scenes.id, sceneId));
+
+    await scenesHandler.create(
+      userId,
+      storyId,
+      create('Scene', nextLinearId, sceneData(nextLinearId)),
+    );
+    expect(await scenesHandler.findById(sceneId)).toMatchObject({
+      isStart: false,
+      isFinish: false,
+    });
+    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({
+      isStart: true,
+      isFinish: true,
+    });
+
+    await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
+    const branchSceneId = newId();
+    await scenesHandler.create(
+      userId,
+      storyId,
+      create('Scene', branchSceneId, sceneData(branchSceneId)),
+    );
+    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({
+      isStart: true,
+      isFinish: true,
+    });
+    expect(await scenesHandler.findById(branchSceneId)).toMatchObject({
+      isStart: true,
+      isFinish: true,
+    });
   });
 });

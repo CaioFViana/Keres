@@ -72,9 +72,10 @@ function previewOf(slug: string, language: string, pack: unknown): ShippedPackPr
       suggestions?: unknown;
       tags?: unknown;
       stats?: unknown;
-      settings?: { statSystem?: unknown };
+      settings?: { statSystem?: unknown; vocabulary?: { terms?: unknown } | null };
     };
   } | null;
+  const vocabulary = file?.content?.settings?.vocabulary;
 
   return {
     slug,
@@ -88,6 +89,10 @@ function previewOf(slug: string, language: string, pack: unknown): ShippedPackPr
       suggestions: countOf(file?.content?.suggestions),
       tags: countOf(file?.content?.tags),
       stats: countOf(file?.content?.stats),
+      hasVocabulary:
+        typeof vocabulary === 'object' &&
+        vocabulary !== null &&
+        Object.keys(vocabulary.terms ?? {}).length > 0,
     },
     statSystem: file?.content?.settings?.statSystem === true,
   };

@@ -21,4 +21,5 @@ export const ENTITY_TYPE_ICONS: Record<GlobalSearchEntityType, keyof typeof Ioni
   WorldRule: 'shield-checkmark-outline',
   Mode: 'sparkles-outline',
   Plot: 'git-network-outline',
+  Route: 'trail-sign-outline',
 };

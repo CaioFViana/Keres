@@ -55,7 +55,18 @@ export const fieldSources: Record<string, string[]> = {
   ],
   'item-journeys': ['itemId', 'sceneId', 'newCharacterOwnerId', 'newState', 'extraNotes'],
   'character-relationships': ['relatedCharacter', 'relationType'],
-  'world-rules': ['title', 'description', 'isFavorite', 'extraNotes'],
+  'world-rules': [
+    'title',
+    'section',
+    'type',
+    'description',
+    'category',
+    'behavior',
+    'usability',
+    'danger',
+    'isFavorite',
+    'extraNotes',
+  ],
   notes: ['title', 'body', 'isFavorite', 'extraNotes'],
   tags: ['name', 'color', 'extraNotes', 'isFavorite'],
   gallery: [
@@ -71,6 +82,7 @@ export const fieldSources: Record<string, string[]> = {
   boards: ['name', 'description'],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],
   plots: ['name', 'details', 'note'],
+  routes: ['name', 'details', 'sceneId', 'selectedChoiceId'],
   'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
 };
 
@@ -90,6 +102,7 @@ export const entityMetadataHelpPages = {
   Choice: 'choices',
   Mode: 'character-modes',
   Plot: 'plots',
+  Route: 'routes',
 } as const;
 
 export const visibleEntityProperties = fieldSources;
@@ -385,6 +398,14 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: ['plotId', 'sceneId', 'note', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
+  Route: {
+    documented: ['name', 'details', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  RouteStep: {
+    documented: ['position', 'sceneId', 'selectedChoiceId', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'routeId', 'version', 'isDeleted', 'deletedAt'],
+  },
   RegistrationSettings: {
     documented: ['isRegistrationOpen', 'maxUsers', 'autoManage', 'defaultTierId', 'updatedAt'],
     invisible: ['id'],
@@ -398,6 +419,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'summary',
       'gap',
       'gapType',
+      'calendarDateOverride',
+      'calendarDateOverrideCalendarId',
       'duration',
       'durationType',
       'isStart',
@@ -487,6 +510,9 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'serverId',
       'lastOperationLog',
       'lastServerSyncedLog',
+      // The vocabulary editor owns this configuration under Customization. It is not a Story
+      // Settings field, so it must not be claimed by that help page's field list.
+      'vocabulary',
       'version',
       'isDeleted',
       'deletedAt',
@@ -539,7 +565,20 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     invisible: ['id'],
   },
   WorldRule: {
-    documented: ['title', 'description', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],
+    documented: [
+      'title',
+      'section',
+      'type',
+      'description',
+      'category',
+      'behavior',
+      'usability',
+      'danger',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
 };

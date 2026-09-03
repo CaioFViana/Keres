@@ -1,3 +1,5 @@
+import { getEntityAppearance } from '@keres/shared';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -6,9 +8,9 @@ import { useTheme } from '../../../../theme';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
-import RelationRow from '@/src/components/features/relations/RelationManager/RelationRow';
 import { AppAlert } from '../../../../utils/AppAlert';
 
 interface LocationRelationManagerProps {
@@ -219,18 +221,32 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
         <View>
           {/* Parent Location */}
           <Text style={styles.subsectionTitle}>{t('parent_location')}</Text>
-          {parentRelation ? (
-            <RelationRow
-              // In `editable` (a form) the row does not navigate - leaving the screen would lose the form's
-              // unsaved changes.
-              onPress={editable ? undefined : () => handleLocationPress(parentRelation.locationAId)}
-              onRemove={editable ? handleRemoveParent : undefined}
-            >
-              <Text style={styles.relationText}>{getLocationName(parentRelation.locationAId)}</Text>
-            </RelationRow>
-          ) : (
-            <Text style={styles.noRelationsText}>{t('no_parent_location')}</Text>
-          )}
+          <EntityRelationList
+            emptyText={t('no_parent_location')}
+            items={
+              parentRelation
+                ? [
+                    {
+                      id: parentRelation.id,
+                      title: getLocationName(parentRelation.locationAId),
+                      icon: 'map',
+                      color: getEntityAppearance('Location').color,
+                      onPress: editable
+                        ? undefined
+                        : () => handleLocationPress(parentRelation.locationAId),
+                      trailing: editable ? (
+                        <Ionicons
+                          name="trash-outline"
+                          size={22}
+                          color={colors.error}
+                          onPress={handleRemoveParent}
+                        />
+                      ) : undefined,
+                    },
+                  ]
+                : []
+            }
+          />
           {editable && (
             <View style={styles.buttonContainer}>
               <Button onPress={() => setActivePicker('parent')}>
@@ -241,28 +257,30 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
 
           {/* Child Locations */}
           <Text style={styles.subsectionTitle}>{t('child_locations')}</Text>
-          {childRelations.length === 0 ? (
-            <Text style={styles.noRelationsText}>{t('no_child_locations')}</Text>
-          ) : (
-            childRelations.map((rel) => (
-              <RelationRow
-                key={rel.id}
-                onPress={editable ? undefined : () => handleLocationPress(rel.locationBId)}
-                onRemove={
-                  editable
-                    ? () =>
-                        handleRemoveRelation(
-                          rel.id,
-                          'remove_child_location_title',
-                          'remove_child_location_message',
-                        )
-                    : undefined
-                }
-              >
-                <Text style={styles.relationText}>{getLocationName(rel.locationBId)}</Text>
-              </RelationRow>
-            ))
-          )}
+          <EntityRelationList
+            emptyText={t('no_child_locations')}
+            items={childRelations.map((rel) => ({
+              id: rel.id,
+              title: getLocationName(rel.locationBId),
+              icon: 'map',
+              color: getEntityAppearance('Location').color,
+              onPress: editable ? undefined : () => handleLocationPress(rel.locationBId),
+              trailing: editable ? (
+                <Ionicons
+                  name="trash-outline"
+                  size={22}
+                  color={colors.error}
+                  onPress={() =>
+                    handleRemoveRelation(
+                      rel.id,
+                      'remove_child_location_title',
+                      'remove_child_location_message',
+                    )
+                  }
+                />
+              ) : undefined,
+            }))}
+          />
           {editable && (
             <View style={styles.buttonContainer}>
               <Button onPress={() => setActivePicker('child')}>{t('add_child_location')}</Button>
@@ -271,32 +289,34 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
 
           {/* Connected Locations */}
           <Text style={styles.subsectionTitle}>{t('connected_locations')}</Text>
-          {connectionRelations.length === 0 ? (
-            <Text style={styles.noRelationsText}>{t('no_connected_locations')}</Text>
-          ) : (
-            connectionRelations.map((rel) => {
+          <EntityRelationList
+            emptyText={t('no_connected_locations')}
+            items={connectionRelations.map((rel) => {
               const otherId =
                 rel.locationAId === currentLocationId ? rel.locationBId : rel.locationAId;
-              return (
-                <RelationRow
-                  key={rel.id}
-                  onPress={editable ? undefined : () => handleLocationPress(otherId)}
-                  onRemove={
-                    editable
-                      ? () =>
-                          handleRemoveRelation(
-                            rel.id,
-                            'remove_connection_title',
-                            'remove_connection_message',
-                          )
-                      : undefined
-                  }
-                >
-                  <Text style={styles.relationText}>{getLocationName(otherId)}</Text>
-                </RelationRow>
-              );
-            })
-          )}
+              return {
+                id: rel.id,
+                title: getLocationName(otherId),
+                icon: 'map',
+                color: getEntityAppearance('Location').color,
+                onPress: editable ? undefined : () => handleLocationPress(otherId),
+                trailing: editable ? (
+                  <Ionicons
+                    name="trash-outline"
+                    size={22}
+                    color={colors.error}
+                    onPress={() =>
+                      handleRemoveRelation(
+                        rel.id,
+                        'remove_connection_title',
+                        'remove_connection_message',
+                      )
+                    }
+                  />
+                ) : undefined,
+              };
+            })}
+          />
           {editable && (
             <View style={styles.buttonContainer}>
               <Button onPress={() => setActivePicker('connection')}>{t('add_connection')}</Button>

@@ -86,6 +86,21 @@ export function buildPack(definition: ShippedPackDefinition, language: PackLangu
     ...rowDates,
   }));
 
+  const vocabulary = {
+    version: 1 as const,
+    language,
+    terms: Object.fromEntries(
+      Object.entries(definition.vocabulary).map(([entityType, term]) => [
+        entityType,
+        {
+          singular: term.singular[language],
+          plural: term.plural[language],
+          grammaticalGender: term.grammaticalGender[language],
+        },
+      ]),
+    ),
+  };
+
   return {
     id,
     name: definition.name[language],
@@ -99,7 +114,11 @@ export function buildPack(definition: ShippedPackDefinition, language: PackLangu
       tags: [],
       stats,
       statStrengths,
-      settings: { statSystem: definition.statSystem, statNotation: definition.statNotation },
+      settings: {
+        statSystem: definition.statSystem,
+        statNotation: definition.statNotation,
+        vocabulary,
+      },
     },
   };
 }

@@ -60,6 +60,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
       item={note}
       onToggleFavorite={onToggleFavorite}
       onViewDetails={onViewDetails}
+      entityType="Note"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

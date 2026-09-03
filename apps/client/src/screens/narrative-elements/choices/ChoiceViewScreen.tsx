@@ -20,10 +20,17 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../../db';
-import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../db/schema';
+import type {
+  ChapterSelect,
+  ChoiceSelect,
+  PlotSceneSelect,
+  PlotSelect,
+  SceneSelect,
+} from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -32,6 +39,8 @@ import { createChoiceCheckGroupService } from '../../../services/storymanagement
 import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
 import { createEffectService } from '../../../services/storymanagement/EffectService';
 import { createItemService } from '../../../services/storymanagement/ItemService';
+import { createPlotSceneService } from '../../../services/storymanagement/PlotSceneService';
+import { createPlotService } from '../../../services/storymanagement/PlotService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
@@ -47,6 +56,7 @@ import {
 } from '../../../utils/sceneTiming';
 import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
 import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import { buildNarrativeProjection } from '@keres/shared';
 import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
@@ -91,6 +101,9 @@ const ChoiceViewScreen = () => {
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
+  const [plots, setPlots] = useState<PlotSelect[]>([]);
+  const [plotScenes, setPlotScenes] = useState<PlotSceneSelect[]>([]);
+  const [selectedPlotIds, setSelectedPlotIds] = useState<string[]>([]);
   const [checkGroups, setCheckGroups] = useState<ChoiceCheckGroup[]>([]);
   const [checks, setChecks] = useState<ChoiceCheck[]>([]);
   const [effects, setEffects] = useState<Effect[]>([]);
@@ -116,6 +129,8 @@ const ChoiceViewScreen = () => {
         loadedChecks,
         loadedEffects,
         loadedItems,
+        loadedPlots,
+        loadedPlotScenes,
       ] = await Promise.all([
         createSceneService(drizzleDb).getScenesByStoryId(storyId),
         createChoiceService(drizzleDb).getChoicesByStoryId(storyId),
@@ -124,6 +139,8 @@ const ChoiceViewScreen = () => {
         createChoiceCheckService(drizzleDb).getAllByStoryId(storyId),
         createEffectService(drizzleDb).getAllByStoryId(storyId),
         createItemService(drizzleDb).getItemsByStoryId(storyId),
+        createPlotService(drizzleDb).getAllByStoryId(storyId),
+        createPlotSceneService(drizzleDb).getAllByStoryId(storyId),
       ]);
       setScenes(loadedScenes);
       setChoices(loadedChoices);
@@ -132,6 +149,8 @@ const ChoiceViewScreen = () => {
       setChecks(loadedChecks);
       setEffects(loadedEffects);
       setItemNamesById(Object.fromEntries(loadedItems.map((item) => [item.id, item.name])));
+      setPlots(loadedPlots);
+      setPlotScenes(loadedPlotScenes);
     } catch (loadError) {
       console.log('ChoiceViewScreen: failed to load graph data.', loadError);
       setError(t('failed_to_load_graph_data'));
@@ -157,22 +176,40 @@ const ChoiceViewScreen = () => {
     return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
   }, [storyId, loadGraph]);
 
+  const isLinearFlow = selectedStory?.type === 'linear';
+  const screenTitle = isLinearFlow ? t('story_flow_title') : t('story_map_title');
+
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('story_map_title'));
-      navigation.getParent()?.setOptions({ title: t('story_map_title'), headerRight: undefined });
-    }, [navigation, t]),
+      setDocumentTitle(screenTitle);
+      navigation.getParent()?.setOptions({ title: screenTitle, headerRight: undefined });
+    }, [navigation, screenTitle]),
   );
+
+  const graphChoices = useMemo(() => {
+    if (!isLinearFlow) return choices;
+    return buildNarrativeProjection({
+      storyType: 'linear',
+      scenes,
+      choices: [],
+      chapters,
+    }).implicitEdges.map((edge, index) => ({
+      id: `linear-flow-${index}-${edge.sceneId}-${edge.nextSceneId}`,
+      sceneId: edge.sceneId,
+      nextSceneId: edge.nextSceneId,
+      text: '',
+    }));
+  }, [chapters, choices, isLinearFlow, scenes]);
 
   const layout = useMemo(
     () =>
       buildStoryGraphLayout(
         scenes,
-        choices,
+        graphChoices,
         chapters,
         isCompact ? 'top-to-bottom' : 'left-to-right',
       ),
-    [scenes, choices, chapters, isCompact],
+    [scenes, graphChoices, chapters, isCompact],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
@@ -180,6 +217,18 @@ const ChoiceViewScreen = () => {
   const selectedNode = useMemo(
     () => layout.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [layout.nodes, selectedNodeId],
+  );
+
+  const highlightedNodeIds = useMemo(
+    () =>
+      selectedPlotIds.length
+        ? new Set(
+            plotScenes
+              .filter((relation) => selectedPlotIds.includes(relation.plotId))
+              .map((relation) => relation.sceneId),
+          )
+        : undefined,
+    [plotScenes, selectedPlotIds],
   );
 
   const sceneNamesById = useMemo(
@@ -277,12 +326,12 @@ const ChoiceViewScreen = () => {
   // have to say the same thing about what is being shown.
   const mapSubtitle = useMemo(
     () =>
-      t('story_map_subtitle', {
+      t(isLinearFlow ? 'story_flow_subtitle' : 'story_map_subtitle', {
         sceneCount: layout.nodes.length,
         choiceCount: layout.edges.length,
         date: new Date().toLocaleDateString(),
       }),
-    [layout.edges.length, layout.nodes.length, t],
+    [isLinearFlow, layout.edges.length, layout.nodes.length, t],
   );
 
   const handleExport = useCallback(async () => {
@@ -461,6 +510,16 @@ const ChoiceViewScreen = () => {
         <Text style={styles.headerSubtitle} numberOfLines={1}>
           {mapSubtitle}
         </Text>
+        {plots.length ? (
+          <View style={{ paddingHorizontal: 12, paddingTop: 8, zIndex: 5 }}>
+            <MultiSelectPill
+              options={plots.map((plot) => ({ value: plot.id, label: plot.name }))}
+              selectedValues={selectedPlotIds}
+              onSelectionChange={setSelectedPlotIds}
+              placeholder={t('story_map_filter_plots')}
+            />
+          </View>
+        ) : null}
 
         <ScrollView
           horizontal
@@ -505,6 +564,7 @@ const ChoiceViewScreen = () => {
         layout={layout}
         showEdgeLabels={showEdgeLabels}
         selectedNodeId={selectedNodeId}
+        highlightedNodeIds={highlightedNodeIds}
         onSelectNode={handleSelectNode}
       />
 

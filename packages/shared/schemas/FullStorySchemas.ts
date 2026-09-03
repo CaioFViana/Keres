@@ -9,6 +9,7 @@ import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjuste
 import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
 import { PlotSchema } from './PlotSchemas';
 import { PlotSceneSchema } from './PlotSceneSchemas';
+import { RouteSchema, RouteStepSchema } from './RouteSchemas';
 import { ChoiceSchema } from './ChoiceSchemas'; // Adjusted path
 import { ChoiceCheckGroupSchema } from './ChoiceCheckGroupSchemas';
 import { ChoiceCheckSchema } from './ChoiceCheckSchemas';
@@ -63,6 +64,9 @@ export const FullStoryExportSchema = z.object({
   // Introduced in format V6; earlier migrations provide empty lists.
   plots: z.array(PlotSchema).optional(),
   plotScenes: z.array(PlotSceneSchema).optional(),
+  // Introduced in format V9; legacy packages have no authored routes.
+  routes: z.array(RouteSchema).optional(),
+  routeSteps: z.array(RouteStepSchema).optional(),
   galleryItems: z.array(GallerySchema),
   // Optional so packages generated before the gallery became N:N remain importable.
   galleryRelations: z.array(GalleryRelationSchema).optional(),

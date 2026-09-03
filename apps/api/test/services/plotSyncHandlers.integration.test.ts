@@ -146,6 +146,44 @@ describe('PlotSceneSyncHandler', () => {
       reason: 'referenced_entity_deleted',
     });
   });
+
+  it('validates both dependencies again when a stale update or delete arrives', async () => {
+    const handler = new PlotSceneSyncHandler();
+    const id = newId();
+    await handler.create(userId, storyId, {
+      type: 'create',
+      entity: 'PlotScene',
+      id,
+      data: { plotId, sceneId, note: 'Antes' },
+    } as CreateStoryUpdate);
+    const current = await handler.findById(id);
+    await db
+      .update(scenes)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(scenes.id, sceneId));
+
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'PlotScene',
+          id,
+          changes: { note: 'Tarde', version: 1 },
+        } as UpdateStoryUpdate,
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      handler.delete(
+        userId,
+        storyId,
+        { type: 'delete', entity: 'PlotScene', id, version: 1 } as DeleteStoryUpdate,
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
 });
 
 describe('plot story constraints', () => {
@@ -162,5 +200,46 @@ describe('plot story constraints', () => {
     await expect(attempt).rejects.toMatchObject({
       reason: 'validation',
     });
+  });
+
+  it('rejects stale plot-scene writes after the story becomes branching', async () => {
+    await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
+
+    const attempt = new PlotSceneSyncHandler().create(userId, storyId, {
+      type: 'create',
+      entity: 'PlotScene',
+      id: newId(),
+      data: { plotId, sceneId, note: 'Stale linear relation' },
+    } as CreateStoryUpdate);
+
+    await expect(attempt).rejects.toMatchObject({ reason: 'validation' });
+  });
+
+  it('rejects update and deletion of an existing plot after conversion to branching', async () => {
+    const handler = new PlotSyncHandler();
+    const current = await handler.findById(plotId);
+    await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
+
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'Plot',
+          id: plotId,
+          changes: { name: 'Tarde', version: 1 },
+        } as UpdateStoryUpdate,
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'validation' });
+    await expect(
+      handler.delete(
+        userId,
+        storyId,
+        { type: 'delete', entity: 'Plot', id: plotId, version: 1 } as DeleteStoryUpdate,
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'validation' });
   });
 });

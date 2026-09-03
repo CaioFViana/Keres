@@ -6,7 +6,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
 import FormActions from '../../components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
-import Select from '../../components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
@@ -241,7 +241,7 @@ const PackFormScreen = () => {
     >
       <>
         <Text style={styles.label}>{t('packs_source_story')}</Text>
-        <Select
+        <SingleSelectPill
           value={sourceStoryId}
           onValueChange={(value) => value && chooseStory(value)}
           options={stories.map((story) => ({ label: story.title, value: story.id }))}
@@ -281,7 +281,7 @@ const PackFormScreen = () => {
           value={description}
           onChangeText={setDescription}
           placeholder={t('description')}
-          style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+          style={commonInputStyles.multiline}
           multiline
         />
         <Text style={styles.label}>{t('language')}</Text>

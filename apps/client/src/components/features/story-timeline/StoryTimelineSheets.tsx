@@ -1,6 +1,7 @@
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
 import React from 'react';
@@ -48,6 +49,7 @@ const StoryTimelineSheets: React.FC<Props> = ({
   describeSceneDay,
 }) => {
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const dayOfSelectedScene = selectedSceneId ? (describeSceneDay?.(selectedSceneId) ?? null) : null;
@@ -166,7 +168,7 @@ const StoryTimelineSheets: React.FC<Props> = ({
                   .join('\n') || t('anchor_empty'),
             },
             {
-              title: t('scenes_title'),
+              title: term('Scene', true),
               emptyMessage: t('story_timeline_event_no_scenes'),
               items: selectedEventScenes.map((scene) => ({
                 id: scene.id,

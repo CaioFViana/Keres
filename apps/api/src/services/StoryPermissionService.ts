@@ -146,6 +146,12 @@ export class StoryPermissionService {
       };
 
       await db.insert(storyPermissions).values(newPermission);
+      // Friendship can be removed between the precondition above and the insert. Do a compensating
+      // check so an unfriending that wins that race never leaves a usable permission behind.
+      if (!(await this._areFriends(ownerUserId, targetUserId))) {
+        await db.delete(storyPermissions).where(eq(storyPermissions.id, newPermission.id));
+        throw new AppError(403, 'Permission can only be granted to friends.');
+      }
       emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
       return newPermission;
     }

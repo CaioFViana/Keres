@@ -299,6 +299,78 @@ describe('StatRelation', () => {
       ),
     ).rejects.toThrow(SyncConflictError);
   });
+
+  it('rejects missing characters and modes before writing a value', async () => {
+    await expect(
+      valueHandler.create(
+        userId,
+        storyId,
+        create('StatRelation', newId(), { characterId: newId(), statId, value: 10 }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    await expect(
+      valueHandler.create(
+        userId,
+        storyId,
+        create('StatRelation', newId(), {
+          characterId,
+          modeId: newId(),
+          statId,
+          value: 10,
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
+
+  it('checks a retargeted value against its new key and leaves the old row intact on conflict', async () => {
+    const currentId = newId();
+    const conflictingId = newId();
+    await valueHandler.create(
+      userId,
+      storyId,
+      create('StatRelation', currentId, { characterId, statId, value: 10 }),
+    );
+    await valueHandler.create(
+      userId,
+      storyId,
+      create('StatRelation', conflictingId, { characterId: otherCharacterId, statId, value: 20 }),
+    );
+    const current = await valueHandler.findById(currentId);
+
+    await expect(
+      valueHandler.update(
+        userId,
+        storyId,
+        change('StatRelation', currentId, { characterId: otherCharacterId, version: 1 }),
+        current,
+      ),
+    ).rejects.toMatchObject({ reason: 'validation' });
+    expect(await valueHandler.findById(currentId)).toMatchObject({
+      characterId,
+      value: 10,
+      version: 1,
+    });
+  });
+
+  it('allows a new value once the previous value for that exact key is tombstoned', async () => {
+    const firstId = newId();
+    await valueHandler.create(
+      userId,
+      storyId,
+      create('StatRelation', firstId, { characterId, statId, value: 10 }),
+    );
+    await db
+      .update(statRelations)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(statRelations.id, firstId));
+
+    await valueHandler.create(
+      userId,
+      storyId,
+      create('StatRelation', newId(), { characterId, statId, value: 30 }),
+    );
+  });
 });
 
 describe('Mode', () => {
@@ -340,6 +412,26 @@ describe('Mode', () => {
     );
 
     expect(await modeHandler.findById(modeId)).toBeDefined();
+  });
+
+  it('does not let an update retarget a mode to a character that is absent or from another story', async () => {
+    const modeId = newId();
+    await modeHandler.create(
+      userId,
+      storyId,
+      create('Mode', modeId, { characterId, name: 'Ferida' }),
+    );
+    const current = await modeHandler.findById(modeId);
+
+    await expect(
+      modeHandler.update(
+        userId,
+        storyId,
+        change('Mode', modeId, { characterId: newId(), version: current.version }),
+        current,
+      ),
+    ).rejects.toThrow(SyncConflictError);
+    expect(await modeHandler.findById(modeId)).toMatchObject({ characterId, version: 1 });
   });
 });
 

@@ -15,6 +15,16 @@ export type PackLanguage = 'en' | 'pt';
 /** A string that exists in both languages. Every visible word in a shipped pack is one of these. */
 export type Bilingual = Record<PackLanguage, string>;
 
+export interface VocabularyTermDefinition {
+  singular: Bilingual;
+  plural: Bilingual;
+  grammaticalGender: Record<PackLanguage, GrammaticalGender>;
+}
+
+export type PackVocabularyDefinition = Partial<
+  Record<StoryVocabularyEntityType, VocabularyTermDefinition>
+>;
+
 export interface FieldDefinition {
   /** Stable across languages: it is the column key, not a label. */
   key: string;
@@ -56,6 +66,8 @@ export interface ShippedPackDefinition {
   code: string;
   name: Bilingual;
   description: Bilingual;
+  /** Terminology that a story created from this pack starts with. */
+  vocabulary: PackVocabularyDefinition;
   fields: FieldDefinition[];
   stats: StatDefinition[];
   /** The default ladder, shared by every axis that does not define one of its own. */
@@ -72,6 +84,48 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
     description: {
       en: 'Six ability scores and a ladder to read them by. The only shipped pack that turns the stat system on.',
       pt: 'Seis atributos e uma escala para lê-los. O único pacote de fábrica que liga o sistema de status.',
+    },
+    vocabulary: {
+      Character: {
+        singular: { en: 'Character', pt: 'Personagem' },
+        plural: { en: 'Characters', pt: 'Personagens' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Location: {
+        singular: { en: 'Place', pt: 'Local' },
+        plural: { en: 'Places', pt: 'Locais' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Chapter: {
+        singular: { en: 'Session', pt: 'Sessão' },
+        plural: { en: 'Sessions', pt: 'Sessões' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Scene: {
+        singular: { en: 'Encounter', pt: 'Encontro' },
+        plural: { en: 'Encounters', pt: 'Encontros' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Event: {
+        singular: { en: 'Game Event', pt: 'Evento de jogo' },
+        plural: { en: 'Game Events', pt: 'Eventos de jogo' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Item: {
+        singular: { en: 'Equipment', pt: 'Equipamento' },
+        plural: { en: 'Equipment', pt: 'Equipamentos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      WorldRule: {
+        singular: { en: 'Table Rule', pt: 'Regra de mesa' },
+        plural: { en: 'Table Rules', pt: 'Regras de mesa' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Choice: {
+        singular: { en: 'Player Choice', pt: 'Decisão de jogador' },
+        plural: { en: 'Player Choices', pt: 'Decisões de jogador' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
     },
     fields: [],
     stats: [
@@ -100,6 +154,48 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
     description: {
       en: 'Scene and character fields from one school of novel craft, as an opt-in rather than as part of every story.',
       pt: 'Campos de cena e de personagem de uma escola do ofício do romance, como opção e não como parte de toda história.',
+    },
+    vocabulary: {
+      Character: {
+        singular: { en: 'Character', pt: 'Personagem' },
+        plural: { en: 'Characters', pt: 'Personagens' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Location: {
+        singular: { en: 'Setting', pt: 'Cenário' },
+        plural: { en: 'Settings', pt: 'Cenários' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Chapter: {
+        singular: { en: 'Chapter', pt: 'Capítulo' },
+        plural: { en: 'Chapters', pt: 'Capítulos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Scene: {
+        singular: { en: 'Scene', pt: 'Cena' },
+        plural: { en: 'Scenes', pt: 'Cenas' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Event: {
+        singular: { en: 'Story Event', pt: 'Evento narrativo' },
+        plural: { en: 'Story Events', pt: 'Eventos narrativos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Item: {
+        singular: { en: 'Story Object', pt: 'Objeto narrativo' },
+        plural: { en: 'Story Objects', pt: 'Objetos narrativos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      WorldRule: {
+        singular: { en: 'Story Rule', pt: 'Regra da história' },
+        plural: { en: 'Story Rules', pt: 'Regras da história' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Choice: {
+        singular: { en: 'Narrative Choice', pt: 'Escolha narrativa' },
+        plural: { en: 'Narrative Choices', pt: 'Escolhas narrativas' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
     },
     fields: [
       {
@@ -224,6 +320,48 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
       en: 'Pages, panels and the language of shots - a story planned for artwork rather than for prose.',
       pt: 'Páginas, quadros e a linguagem dos enquadramentos - uma história planejada para arte, não para prosa.',
     },
+    vocabulary: {
+      Character: {
+        singular: { en: 'Character', pt: 'Personagem' },
+        plural: { en: 'Characters', pt: 'Personagens' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Location: {
+        singular: { en: 'Setting', pt: 'Cenário' },
+        plural: { en: 'Settings', pt: 'Cenários' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Chapter: {
+        singular: { en: 'Issue', pt: 'Edição' },
+        plural: { en: 'Issues', pt: 'Edições' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Scene: {
+        singular: { en: 'Sequence', pt: 'Sequência' },
+        plural: { en: 'Sequences', pt: 'Sequências' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Event: {
+        singular: { en: 'Beat', pt: 'Momento' },
+        plural: { en: 'Beats', pt: 'Momentos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Item: {
+        singular: { en: 'Prop', pt: 'Adereço' },
+        plural: { en: 'Props', pt: 'Adereços' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      WorldRule: {
+        singular: { en: 'Continuity Rule', pt: 'Regra de continuidade' },
+        plural: { en: 'Continuity Rules', pt: 'Regras de continuidade' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Choice: {
+        singular: { en: 'Branch', pt: 'Ramificação' },
+        plural: { en: 'Branches', pt: 'Ramificações' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+    },
     fields: [
       {
         key: 'page_count',
@@ -304,3 +442,4 @@ export function derivedId(
 export function packId(code: string, language: PackLanguage): string {
   return derivedId(code, language, 'P');
 }
+import type { GrammaticalGender, StoryVocabularyEntityType } from '@keres/shared';

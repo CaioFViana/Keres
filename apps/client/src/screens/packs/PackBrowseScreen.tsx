@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Select from '../../components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -179,7 +179,7 @@ const PackBrowseScreen = () => {
         ListHeaderComponent={
           <>
             <Text style={styles.description}>{t('packs_browse_description')}</Text>
-            <Select
+            <SingleSelectPill
               value={serverId}
               onValueChange={setServerId}
               options={servers.map((entry) => ({

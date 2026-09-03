@@ -1,6 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -311,7 +311,7 @@ const AnchorEditModal: React.FC<Props> = ({
                 style={[commonInputStyles.input, styles.numberWidthInput]}
               />
               <View style={styles.unitField}>
-                <Select
+                <SingleSelectPill
                   options={unitOptions}
                   value={unit}
                   onValueChange={(value) =>
@@ -367,7 +367,7 @@ const AnchorEditModal: React.FC<Props> = ({
     return (
       <View style={styles.formGroup}>
         <Text style={styles.label}>{t(edge === 'start' ? 'anchor_starts' : 'anchor_ends')}</Text>
-        <Select
+        <SingleSelectPill
           options={sceneOptions}
           value={sceneId}
           onValueChange={(value) =>

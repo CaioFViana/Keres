@@ -159,7 +159,53 @@
     ],
     "settings": {
       "statSystem": true,
-      "statNotation": "number"
+      "statNotation": "number",
+      "vocabulary": {
+        "version": 1,
+        "language": "pt",
+        "terms": {
+          "Character": {
+            "singular": "Personagem",
+            "plural": "Personagens",
+            "grammaticalGender": "masculine"
+          },
+          "Location": {
+            "singular": "Local",
+            "plural": "Locais",
+            "grammaticalGender": "masculine"
+          },
+          "Chapter": {
+            "singular": "Sessão",
+            "plural": "Sessões",
+            "grammaticalGender": "feminine"
+          },
+          "Scene": {
+            "singular": "Encontro",
+            "plural": "Encontros",
+            "grammaticalGender": "masculine"
+          },
+          "Event": {
+            "singular": "Evento de jogo",
+            "plural": "Eventos de jogo",
+            "grammaticalGender": "masculine"
+          },
+          "Item": {
+            "singular": "Equipamento",
+            "plural": "Equipamentos",
+            "grammaticalGender": "masculine"
+          },
+          "WorldRule": {
+            "singular": "Regra de mesa",
+            "plural": "Regras de mesa",
+            "grammaticalGender": "feminine"
+          },
+          "Choice": {
+            "singular": "Decisão de jogador",
+            "plural": "Decisões de jogador",
+            "grammaticalGender": "feminine"
+          }
+        }
+      }
     }
   }
 }

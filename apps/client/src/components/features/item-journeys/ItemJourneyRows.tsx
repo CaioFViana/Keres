@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ItemJourneySelect, SceneSelect } from '@/src/db/schema';
 import { useChapterNames } from '@/src/hooks/useChapterNames';
 import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 
 interface ItemJourneyRowsProps {
   journeys: ItemJourneySelect[];
@@ -23,6 +24,8 @@ const ItemJourneyRows: React.FC<ItemJourneyRowsProps> = ({
   onAddJourney,
 }) => {
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { colors } = useTheme();
   const sceneById = useMemo(() => new Map(scenes.map((scene) => [scene.id, scene])), [scenes]);
   const chapterNameOf = useChapterNames(scenes);
@@ -50,11 +53,13 @@ const ItemJourneyRows: React.FC<ItemJourneyRowsProps> = ({
   return (
     <View>
       <View style={styles.heading}>
-        <Text style={styles.title}>{t('item_journeys_title')}</Text>
+        <Text style={styles.title}>{itemCopy.itemJourneys}</Text>
         {canEdit && (
           <TouchableOpacity style={styles.add} onPress={onAddJourney}>
             <Ionicons name="add" size={16} color={colors.primary} />
-            <Text style={styles.addText}>{t('add_item_journey')}</Text>
+            <Text style={styles.addText}>
+              {t('vocabulary_create_entity', { entity: itemCopy.itemJourney })}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -69,7 +74,7 @@ const ItemJourneyRows: React.FC<ItemJourneyRowsProps> = ({
             <Text style={styles.scene} numberOfLines={1}>
               {(() => {
                 const scene = sceneById.get(journey.sceneId);
-                if (!scene) return t('unknown_scene');
+                if (!scene) return sceneCopy.unknown;
                 const chapterName = chapterNameOf(scene.chapterId);
                 // The chapter situates the stop: the list mixes scenes from the whole story.
                 return chapterName ? `${scene.name} · ${chapterName}` : scene.name;

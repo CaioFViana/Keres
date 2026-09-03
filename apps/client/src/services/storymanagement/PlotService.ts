@@ -2,7 +2,6 @@ import type { Plot } from '@keres/shared/entities/Plot';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, PlotInsert } from '../../db';
 import { plots } from '../../db';
-import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
@@ -13,12 +12,6 @@ import {
 import { createServerService } from '../ServerService';
 
 export type SavePlot = Pick<Plot, 'storyId' | 'name' | 'details'> & { id?: string };
-
-const assertLinearStory = async (db: AppDrizzleClient, storyId: string) => {
-  const story = await db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) });
-  if (!story || story.isDeleted) throw new Error('Story not found.');
-  if (story.type !== 'linear') throw new Error('Plots are only available for linear stories.');
-};
 
 export const createPlotService = (db: AppDrizzleClient) => {
   const serverService = createServerService(db);
@@ -34,7 +27,6 @@ export const createPlotService = (db: AppDrizzleClient) => {
     },
     async save(userId: string, value: SavePlot): Promise<Plot> {
       await assertStoryIsWritable(db, value.storyId);
-      await assertLinearStory(db, value.storyId);
       if (value.id) {
         const original = await db.query.plots.findFirst({ where: eq(plots.id, value.id) });
         if (!original || original.isDeleted) throw new Error('Plot not found.');
@@ -97,7 +89,6 @@ export const createPlotService = (db: AppDrizzleClient) => {
       const original = await db.query.plots.findFirst({ where: eq(plots.id, id) });
       if (!original || original.isDeleted) return;
       await assertStoryIsWritable(db, original.storyId);
-      await assertLinearStory(db, original.storyId);
       const [deleted] = await db
         .update(plots)
         .set({

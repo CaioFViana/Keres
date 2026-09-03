@@ -12,6 +12,8 @@ export const scenes = sqliteTable('scenes', {
   summary: text('summary'),
   gap: integer('gap'),
   gapType: text('gap_type'),
+  calendarDateOverride: text('calendar_date_override'),
+  calendarDateOverrideCalendarId: text('calendar_date_override_calendar_id'),
   duration: integer('duration'),
   durationType: text('duration_type'),
   isStart: integer('is_start', { mode: 'boolean' }).notNull().default(false),

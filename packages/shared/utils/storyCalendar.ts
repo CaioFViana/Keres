@@ -184,6 +184,56 @@ export interface CalendarDateParts {
   weekday: number | null;
 }
 
+/** A timezone-free coordinate authored against either Gregorian or a custom calendar. */
+export interface CalendarDateCoordinate {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
+
+const CALENDAR_COORDINATE = /^(-?\d+)-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+
+/** Parses the ISO-like storage notation without involving JavaScript Date or a time zone. */
+export function parseCalendarDateCoordinate(
+  value: string | null | undefined,
+): CalendarDateCoordinate | null {
+  if (!value) return null;
+  const match = CALENDAR_COORDINATE.exec(value);
+  if (!match) return null;
+  const [year, month, day, hour, minute] = match.slice(1).map(Number);
+  return [year, month, day, hour, minute].every(Number.isSafeInteger)
+    ? { year, month, day, hour, minute }
+    : null;
+}
+
+/** Canonical, sortable, timezone-free representation used by Scene date overrides. */
+export function formatCalendarDateCoordinate(parts: CalendarDateCoordinate): string {
+  const year =
+    parts.year < 0
+      ? `-${String(Math.abs(parts.year)).padStart(4, '0')}`
+      : String(parts.year).padStart(4, '0');
+  return `${year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}T${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`;
+}
+
+/** Syntax alone is intentionally insufficient: a calendar edit can make retained coordinates invalid. */
+export function isCalendarDateCoordinateInBounds(
+  definition: CalendarDefinitionType,
+  parts: CalendarDateCoordinate,
+): boolean {
+  return (
+    parts.month >= 1 &&
+    parts.month <= definition.months.length &&
+    parts.day >= 1 &&
+    parts.day <= definition.months[parts.month - 1]!.days &&
+    parts.hour >= 0 &&
+    parts.hour < definition.hoursPerDay &&
+    parts.minute >= 0 &&
+    parts.minute < definition.minutesPerHour
+  );
+}
+
 /** The components of an absolute day number in this calendar. */
 export function dayNumberToParts(
   definition: CalendarDefinitionType,

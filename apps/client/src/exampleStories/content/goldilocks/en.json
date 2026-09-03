@@ -24,7 +24,8 @@
     "normalizeSceneTiming": false,
     "allowReaderComments": true,
     "autoLinkMentions": true,
-    "completenessChecks": true
+    "completenessChecks": true,
+    "vocabulary": null
   },
   "chapters": [
     {
@@ -91,7 +92,9 @@
       "isFinish": false,
       "isStart": true,
       "isFavorite": true,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0K044SNWCNX8SZ2C3R",
@@ -113,7 +116,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0K17NGGSSYC2SN0K46",
@@ -135,7 +140,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0KHP8ZRVERF5SSG2C4",
@@ -157,7 +164,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "01KYXBHD0KZS1Q3QSR04EYYCMT",
@@ -179,7 +188,9 @@
       "isFinish": false,
       "isStart": false,
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "37FX3WSMT4Q8GFJ18B0M6XNBS1",
@@ -201,7 +212,9 @@
       "durationType": "minutes",
       "isStart": false,
       "isFinish": false,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "6C9EMHEMX4F5NN55EBDDDK845V",
@@ -223,7 +236,9 @@
       "durationType": "hours",
       "isStart": false,
       "isFinish": false,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "2T489CDWD94GR5832RBVXKTV7J",
@@ -245,7 +260,9 @@
       "durationType": "days",
       "isStart": false,
       "isFinish": false,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "615X0GMKE8DS25M86F8PDNFQ3G",
@@ -267,7 +284,9 @@
       "durationType": "minutes",
       "isStart": false,
       "isFinish": false,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "5QNYH8GSVVNM1FD1CNTJQTHF86",
@@ -289,7 +308,9 @@
       "durationType": "years",
       "isStart": false,
       "isFinish": false,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "6NVH7FB859SPBAWMA4298EVR4S",
@@ -311,7 +332,9 @@
       "durationType": "minutes",
       "isStart": false,
       "isFinish": false,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     },
     {
       "id": "223W50B6X5GS9XR33406C528BB",
@@ -333,7 +356,9 @@
       "durationType": "hours",
       "isStart": false,
       "isFinish": true,
-      "isFavorite": false
+      "isFavorite": false,
+      "calendarDateOverride": null,
+      "calendarDateOverrideCalendarId": null
     }
   ],
   "choices": [],
@@ -2187,7 +2212,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 8,
+  "formatVersion": 9,
   "stats": [
     {
       "id": "6ZVGMD560WVB2V67079KD7CFAE",
@@ -3083,5 +3108,7 @@
     }
   ],
   "storyBoards": [],
-  "storyLocationMaps": []
+  "storyLocationMaps": [],
+  "routes": [],
+  "routeSteps": []
 }

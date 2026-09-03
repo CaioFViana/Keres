@@ -1,6 +1,6 @@
 import {
   CURRENT_PACK_FORMAT_VERSION,
-  PackContentSchema,
+  validatePackContent,
   type PackContentType,
   type PackSelectionType,
   type PackVisibility,
@@ -54,6 +54,7 @@ export interface PackContentCounts {
   suggestions: number;
   tags: number;
   stats: number;
+  hasVocabulary: boolean;
 }
 
 /** A pack as it travels: metadata plus the payload. */
@@ -123,13 +124,14 @@ export function countPackContent(content: PackContentType): PackContentCounts {
     suggestions: content.suggestions.length,
     tags: content.tags.length,
     stats: content.stats.length,
+    hasVocabulary: Object.keys(content.settings.vocabulary?.terms ?? {}).length > 0,
   };
 }
 
 /** Tolerates a payload written by a future version rather than breaking the whole listing. */
 function parseContent(raw: string): PackContentType | null {
   try {
-    return PackContentSchema.parse(JSON.parse(raw));
+    return validatePackContent(JSON.parse(raw));
   } catch (error) {
     console.error('Failed to parse pack content:', error);
     return null;
@@ -161,6 +163,8 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
     if (!story) throw new Error(`Story with ID ${storyId} not found for pack extraction.`);
 
     const content: PackContentType = { ...EMPTY_CONTENT, settings: { ...EMPTY_CONTENT.settings } };
+    // A pack offers terminology only at story creation. The resulting story owns its copied value.
+    content.settings.vocabulary = story.vocabulary;
 
     if (selection.customAttributes) {
       content.storySchemaFields = await db

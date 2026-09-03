@@ -52,6 +52,16 @@ describe('the confirmation dialog', () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
+  it('prefers already-resolved copy when a screen supplies it', async () => {
+    const { title, message } = await openDialog({
+      title: 'Excluir Heroína',
+      message: 'Tem certeza de que deseja excluir Heroína?',
+    });
+
+    expect(title).toBe('Excluir Heroína');
+    expect(message).toBe('Tem certeza de que deseja excluir Heroína?');
+  });
+
   it('offers a cancel and a destructive option, in that order', async () => {
     const { buttons } = await openDialog();
 
@@ -89,12 +99,33 @@ describe('after confirming', () => {
     expect(alert).toHaveBeenCalledWith('success', 'tag_deleted');
   });
 
+  it('uses a resolved success message when one is given', async () => {
+    const { buttons } = await openDialog({ successMessage: 'Heroína excluída com sucesso!' });
+
+    await pressDelete(buttons);
+
+    expect(alert).toHaveBeenCalledWith('success', 'Heroína excluída com sucesso!');
+  });
+
   it('stays silent when the screen asked for no success message', async () => {
     const { buttons } = await openDialog({ successKey: undefined });
 
     await pressDelete(buttons);
 
     expect(alert).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a resolved failure message when one is given', async () => {
+    const { buttons } = await openDialog({
+      failureMessage: 'Falha ao excluir Heroína.',
+      onConfirm: jest.fn(async () => {
+        throw new Error('sem permissão');
+      }),
+    });
+
+    await pressDelete(buttons);
+
+    expect(alert).toHaveBeenCalledWith('error', 'Falha ao excluir Heroína.');
   });
 
   it('reports a failure with the key the screen chose', async () => {

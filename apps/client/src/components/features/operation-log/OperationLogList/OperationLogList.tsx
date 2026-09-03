@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../../../db';
+import { and, eq, inArray } from 'drizzle-orm';
+import { useDrizzle, worldRules } from '../../../../db';
 import type { OperationLogSelect } from '../../../../db/schema';
 import { createOperationLogService } from '../../../../services/OperationLogService';
 import { useTheme } from '../../../../theme';
@@ -10,7 +11,8 @@ import OperationLogListItem from '@/src/components/features/list-items/Operation
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
-import type { FavoriteBehavior } from '@keres/shared';
+import { OperationLogEntityType, type FavoriteBehavior } from '@keres/shared';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 interface OperationLogListProps {
   storyId: string;
@@ -45,6 +47,9 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
   const [page, setPage] = useState(1);
   const [totalLogs, setTotalLogs] = useState(0);
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
+  const [worldPieceSections, setWorldPieceSections] = useState<Record<string, WorldPieceSection>>(
+    {},
+  );
   const [operationLogService, setOperationLogService] = useState<ReturnType<
     typeof createOperationLogService
   > | null>(null);
@@ -122,6 +127,44 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
       entityEventEmitter.off('operation_log_updated', handleOperationLogUpdated);
     };
   }, [storyId, limit, paginated, fetchLogs]);
+
+  // World Pieces share one persisted entity type (`WorldRule`), but their section is their visual
+  // identity. Resolve it once for the whole page rather than doing one lookup in every log card.
+  useEffect(() => {
+    const worldPieceIds = logs
+      .filter((log) => log.entityType === OperationLogEntityType.WorldRule)
+      .map((log) => log.entityId);
+    if (worldPieceIds.length === 0) {
+      setWorldPieceSections({});
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await drizzleDb
+          .select({ id: worldRules.id, section: worldRules.section })
+          .from(worldRules)
+          .where(
+            and(
+              eq(worldRules.storyId, storyId),
+              inArray(worldRules.id, [...new Set(worldPieceIds)]),
+            ),
+          )
+          .all();
+        if (!cancelled) {
+          setWorldPieceSections(Object.fromEntries(rows.map((row) => [row.id, row.section])));
+        }
+      } catch (lookupError) {
+        console.warn('Could not resolve World Piece appearances for operation logs.', lookupError);
+        if (!cancelled) setWorldPieceSections({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [drizzleDb, logs, storyId]);
 
   // New useEffect to watch for shouldRefetch prop changes
   useEffect(() => {
@@ -252,7 +295,13 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
 
   const renderEntry = (entry: OperationLogListEntry) => {
     if (entry.type === 'log') {
-      return <OperationLogListItem log={entry.log} onPress={onPressItem} />;
+      return (
+        <OperationLogListItem
+          log={entry.log}
+          onPress={onPressItem}
+          worldPieceSection={worldPieceSections[entry.log.entityId]}
+        />
+      );
     }
 
     return (

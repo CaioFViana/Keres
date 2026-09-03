@@ -239,6 +239,34 @@
       "when": 1788012167046,
       "tag": "0033_friendly_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788099188610,
+      "tag": "0034_wet_layla_miller",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788103957943,
+      "tag": "0035_nifty_hex",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1788138290127,
+      "tag": "0036_daffy_slyde",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1788269971227,
+      "tag": "0037_pretty_nekra",
+      "breakpoints": true
     }
   ]
 }

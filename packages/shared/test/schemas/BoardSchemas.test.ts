@@ -4,6 +4,7 @@ import {
   CreateBoardDataSchema,
   generateBoardLocalId,
   remapBoardContent,
+  validateBoardContent,
 } from '../../schemas/BoardSchemas';
 
 const nodeId = '01ABCDEF';
@@ -11,7 +12,16 @@ const otherId = '02GHJKMN';
 
 describe('BoardContentSchema', () => {
   it('accepts an empty drawing', () => {
-    expect(BoardContentSchema.parse({ nodes: [], edges: [] })).toEqual({ nodes: [], edges: [] });
+    expect(validateBoardContent({ nodes: [], edges: [] })).toEqual({ nodes: [], edges: [] });
+  });
+
+  it('rejects a Board whose drawable envelope exceeds the shared safety domain', () => {
+    expect(() =>
+      BoardContentSchema.parse({
+        nodes: [{ id: nodeId, kind: 'note', x: 100_000, y: 0, title: 'Far', body: null }],
+        edges: [],
+      }),
+    ).toThrow(/spatial canvas envelope/);
   });
 
   it('defaults a new board to an empty drawing', () => {
@@ -47,6 +57,7 @@ describe('BoardContentSchema', () => {
       edges: [],
     });
     expect(content.nodes).toHaveLength(2);
+    expect(content.nodes[0]).toMatchObject({ displayMode: 'compact', cardNote: null });
   });
 
   it('rejects an edge that points at a missing node', () => {
@@ -65,6 +76,21 @@ describe('BoardContentSchema', () => {
         edges: [{ id: otherId, from: nodeId, to: 'ZZZZZZZZ', directed: false, label: null }],
       }),
     ).toThrow(/not on this board/);
+  });
+
+  it('rejects a second connection between the same two pins, in either direction', () => {
+    expect(() =>
+      BoardContentSchema.parse({
+        nodes: [
+          { id: nodeId, kind: 'note', x: 0, y: 0, title: 'Theme', body: null },
+          { id: otherId, kind: 'note', x: 40, y: 10, title: 'Conflict', body: null },
+        ],
+        edges: [
+          { id: '03PQRSTV', from: nodeId, to: otherId, directed: true, label: null },
+          { id: '04UVWXYZ', from: otherId, to: nodeId, directed: false, label: null },
+        ],
+      }),
+    ).toThrow(/only have one connection/);
   });
 
   it('allocates ids that do not collide with ones already on the board', () => {
@@ -86,6 +112,8 @@ describe('BoardContentSchema', () => {
             entityType: 'Scene',
             entityId: 'old-scene',
             labelAtPin: 'The dock',
+            displayMode: 'summary-and-note',
+            cardNote: 'Bring the storm motif forward.',
           },
           { id: otherId, kind: 'note', x: 3, y: 4, title: 'TODO', body: null },
         ],
@@ -93,7 +121,12 @@ describe('BoardContentSchema', () => {
       },
       (id) => (id === 'old-scene' ? 'new-scene' : id),
     );
-    expect(remapped.nodes[0]).toMatchObject({ id: nodeId, entityId: 'new-scene' });
+    expect(remapped.nodes[0]).toMatchObject({
+      id: nodeId,
+      entityId: 'new-scene',
+      displayMode: 'summary-and-note',
+      cardNote: 'Bring the storm motif forward.',
+    });
     expect(remapped.nodes[1]).toMatchObject({ id: otherId, kind: 'note' });
     expect(remapped.edges[0].from).toBe(nodeId);
   });

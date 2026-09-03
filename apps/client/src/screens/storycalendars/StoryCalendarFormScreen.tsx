@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
+import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAnchorsModal';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { CalendarRowField } from '@/src/components/features/calendars/CalendarRowList';
@@ -61,6 +62,8 @@ const StoryCalendarFormScreen = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [weekdayText, setWeekdayText] = useState('');
+  const [savedDefinition, setSavedDefinition] = useState<CalendarDefinitionType | null>(null);
+  const [reviewingCalendarChange, setReviewingCalendarChange] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,6 +83,7 @@ const StoryCalendarFormScreen = () => {
       setName(existing.name);
       setDescription(existing.description ?? '');
       setDefinition(existing.definition);
+      setSavedDefinition(existing.definition);
       setWeekdayText(existing.definition.weekdayNames.join(', '));
     })();
   }, [calendarId, db]);
@@ -175,7 +179,7 @@ const StoryCalendarFormScreen = () => {
   const parsed = CalendarDefinitionSchema.safeParse(definition);
   const problem = parsed.success ? null : parsed.error.issues[0]?.message;
 
-  const save = useCallback(async () => {
+  const persist = useCallback(async () => {
     if (!story || !currentUserId || !parsed.success) return;
     setSaving(true);
     try {
@@ -203,6 +207,21 @@ const StoryCalendarFormScreen = () => {
     }
   }, [calendarId, currentUserId, db, description, name, navigation, notify, parsed, story, t]);
 
+  const save = useCallback(() => {
+    if (!parsed.success) return;
+    // Names and descriptions are metadata; every definition change is reviewed because even a
+    // renamed month is worth making visible beside the facts that calendar currently interprets.
+    if (
+      calendarId &&
+      savedDefinition &&
+      JSON.stringify(savedDefinition) !== JSON.stringify(parsed.data)
+    ) {
+      setReviewingCalendarChange(true);
+      return;
+    }
+    void persist();
+  }, [calendarId, parsed, persist, savedDefinition]);
+
   return (
     <KeyboardAwareScreen contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.label}>{t('calendar_name')}</Text>
@@ -221,7 +240,7 @@ const StoryCalendarFormScreen = () => {
         editable={canEdit}
         placeholder={t('calendar_description_placeholder')}
         multiline
-        style={[inputStyles.input, { minHeight: 70, textAlignVertical: 'top' }]}
+        style={[inputStyles.multiline, { minHeight: 70 }]}
       />
 
       <CalendarRowList
@@ -400,6 +419,20 @@ const StoryCalendarFormScreen = () => {
             {t('save')}
           </Button>
         </FormActions>
+      )}
+      {calendarId && savedDefinition && parsed.success && (
+        <CalendarAnchorsModal
+          visible={reviewingCalendarChange}
+          calendarName={name.trim() || t('calendar_edit_title')}
+          definition={savedDefinition}
+          comparisonDefinition={parsed.data}
+          onClose={() => setReviewingCalendarChange(false)}
+          onConfirm={() => {
+            setReviewingCalendarChange(false);
+            void persist();
+          }}
+          confirming={saving}
+        />
       )}
     </KeyboardAwareScreen>
   );

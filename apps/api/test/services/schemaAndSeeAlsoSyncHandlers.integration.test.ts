@@ -6,7 +6,16 @@ import {
   type UpdateStoryUpdate,
 } from '@keres/shared';
 import { db } from '../../src/db';
-import { stories, users } from '../../src/db/schema';
+import {
+  chapters,
+  choices,
+  itemJourneys,
+  items,
+  scenes,
+  stories,
+  users,
+  worldRules,
+} from '../../src/db/schema';
 import { AttributeValueSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueSyncHandler';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
@@ -204,5 +213,149 @@ describe('schema and see-also sync entity handlers', () => {
     ]).toEqual([`Character:${characterId}`, `Location:${locationId}`].sort());
     await handler.delete(userId, storyId, remove('SeeAlsoRelation', id, 1), created);
     expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
+  });
+
+  it('rejects self-links, duplicate links in reverse order, and attempts to retarget an existing link', async () => {
+    const handler = new SeeAlsoRelationSyncHandler();
+    const relationId = newId();
+
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Character',
+          entityAId: characterId,
+          entityBType: 'Character',
+          entityBId: characterId,
+        }),
+      ),
+    ).rejects.toThrow(/itself/i);
+
+    await handler.create(
+      userId,
+      storyId,
+      create('SeeAlsoRelation', relationId, {
+        entityAType: 'Character',
+        entityAId: characterId,
+        entityBType: 'Location',
+        entityBId: locationId,
+      }),
+    );
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Location',
+          entityAId: locationId,
+          entityBType: 'Character',
+          entityBId: characterId,
+        }),
+      ),
+    ).rejects.toThrow(/already exists/i);
+
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'SeeAlsoRelation',
+          id: relationId,
+          changes: { entityAId: locationId, version: 1 },
+        } as UpdateStoryUpdate,
+        await handler.findById(relationId),
+      ),
+    ).rejects.toThrow(/cannot change the linked entities/i);
+  });
+
+  it('rejects missing endpoints and does not allow a tombstoned endpoint to be linked', async () => {
+    const handler = new SeeAlsoRelationSyncHandler();
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Character',
+          entityAId: characterId,
+          entityBType: 'Location',
+          entityBId: newId(),
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const locations = new LocationSyncHandler();
+    const current = await locations.findById(locationId);
+    await locations.delete(
+      userId,
+      storyId,
+      remove('Location', locationId, current.version),
+      current,
+    );
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Character',
+          entityAId: characterId,
+          entityBType: 'Location',
+          entityBId: locationId,
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
+
+  it('accepts every remaining supported entity kind from the same active story', async () => {
+    const handler = new SeeAlsoRelationSyncHandler();
+    const chapterId = newId();
+    const sceneId = newId();
+    const itemId = newId();
+    const journeyId = newId();
+    const ruleId = newId();
+    const choiceId = newId();
+    await db
+      .insert(chapters)
+      .values({ id: chapterId, storyId, name: 'Capítulo', index: 1 } as never);
+    await db
+      .insert(scenes)
+      .values({ id: sceneId, storyId, chapterId, name: 'Cena', index: 1 } as never);
+    await db.insert(items).values({ id: itemId, storyId, name: 'Chave' } as never);
+    await db.insert(itemJourneys).values({
+      id: journeyId,
+      storyId,
+      itemId,
+      sceneId,
+      newState: 'encontrada',
+    } as never);
+    await db.insert(worldRules).values({ id: ruleId, storyId, title: 'Regra' } as never);
+    await db.insert(choices).values({
+      id: choiceId,
+      storyId,
+      sceneId,
+      nextSceneId: sceneId,
+      text: 'Seguir',
+    } as never);
+
+    for (const [type, id] of [
+      ['Chapter', chapterId],
+      ['Scene', sceneId],
+      ['Item', itemId],
+      ['ItemJourney', journeyId],
+      ['WorldRule', ruleId],
+      ['Choice', choiceId],
+    ] as const) {
+      await handler.create(
+        userId,
+        storyId,
+        create('SeeAlsoRelation', newId(), {
+          entityAType: 'Character',
+          entityAId: characterId,
+          entityBType: type,
+          entityBId: id,
+        }),
+      );
+    }
   });
 });

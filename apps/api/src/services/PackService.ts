@@ -1,11 +1,11 @@
 import {
-  PackContentSchema,
   summarizePackContent,
   type PackContentType,
   type PackVisibility,
   type ShowcaseOwner,
   type ShowcasePackCard,
   type ShowcasePackDetail,
+  validatePackContent,
 } from '@keres/shared';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../db';
@@ -179,9 +179,14 @@ export const packService = {
    * immutable, so there is nothing to merge - the row is simply replaced by its author.
    */
   async upload(ownerId: string, input: UploadPackInput): Promise<PackListEntry> {
-    const parsed = PackContentSchema.safeParse(input.content);
-    if (!parsed.success) {
-      throw new AppError(422, `Pack content is not valid: ${parsed.error.message}`);
+    let content: PackContentType;
+    try {
+      content = validatePackContent(input.content);
+    } catch (error) {
+      throw new AppError(
+        422,
+        `Pack content is not valid: ${error instanceof Error ? error.message : 'Unknown error.'}`,
+      );
     }
 
     const [existing] = await db.select().from(packs).where(eq(packs.id, input.id)).limit(1);
@@ -198,7 +203,7 @@ export const packService = {
       authorName: input.authorName ?? null,
       version: input.version ?? 1,
       visibility: input.visibility ?? 'private',
-      content: parsed.data,
+      content,
       updatedAt: new Date(),
     };
 

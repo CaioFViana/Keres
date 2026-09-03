@@ -1,12 +1,29 @@
-import type { Ionicons } from '@expo/vector-icons';
-import { getEntityAppearance } from '@keres/shared';
+import {
+  getWorldPieceSectionAppearance,
+  type EntityAppearanceKey,
+  WORLD_PIECE_SECTIONS,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
-import { chapters, galleries } from '../db/schema';
+import { boards, chapters, galleries, worldRules } from '../db/schema';
 import { loadEntityOptions } from '../utils/entityOptions';
+import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+
+type BoardPinGroup =
+  | 'character'
+  | 'location'
+  | 'note'
+  | 'scene'
+  | 'item'
+  | 'gallery'
+  | 'chapter'
+  | 'event'
+  | `worldrule:${WorldPieceSection}`
+  | 'board';
 
 export interface BoardPinOption {
   entityType:
@@ -17,19 +34,11 @@ export interface BoardPinOption {
     | 'Item'
     | 'Gallery'
     | 'Chapter'
-    | 'WorldRule';
+    | 'WorldRule'
+    | 'Board';
   entityId: string;
   label: string;
-  group:
-    | 'character'
-    | 'location'
-    | 'note'
-    | 'scene'
-    | 'item'
-    | 'gallery'
-    | 'chapter'
-    | 'event'
-    | 'worldrule';
+  group: BoardPinGroup;
 }
 
 export function encodeBoardPinValue(entityType: string, entityId: string): string {
@@ -47,9 +56,10 @@ export function decodeBoardPinValue(
 /**
  * Entities that can be pinned on a board. Events are stored as Chapter; the picker splits them.
  */
-export function useBoardPinOptions(storyId: string | undefined) {
+export function useBoardPinOptions(storyId: string | undefined, excludedBoardId?: string) {
   const db = useDrizzle();
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const [options, setOptions] = useState<BoardPinOption[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -60,25 +70,43 @@ export function useBoardPinOptions(storyId: string | undefined) {
     }
     setLoading(true);
     try {
-      const [character, location, note, scene, item, worldRule, galleryRows, chapterRows] =
-        await Promise.all([
-          loadEntityOptions(db, storyId, 'Character'),
-          loadEntityOptions(db, storyId, 'Location'),
-          loadEntityOptions(db, storyId, 'Note'),
-          loadEntityOptions(db, storyId, 'Scene'),
-          loadEntityOptions(db, storyId, 'Item'),
-          loadEntityOptions(db, storyId, 'WorldRule'),
-          db
-            .select()
-            .from(galleries)
-            .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)))
-            .all(),
-          db
-            .select()
-            .from(chapters)
-            .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
-            .all(),
-        ]);
+      const [
+        character,
+        location,
+        note,
+        scene,
+        item,
+        worldRule,
+        galleryRows,
+        chapterRows,
+        boardRows,
+      ] = await Promise.all([
+        loadEntityOptions(db, storyId, 'Character'),
+        loadEntityOptions(db, storyId, 'Location'),
+        loadEntityOptions(db, storyId, 'Note'),
+        loadEntityOptions(db, storyId, 'Scene'),
+        loadEntityOptions(db, storyId, 'Item'),
+        db
+          .select({ id: worldRules.id, name: worldRules.title, section: worldRules.section })
+          .from(worldRules)
+          .where(and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)))
+          .all(),
+        db
+          .select()
+          .from(galleries)
+          .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)))
+          .all(),
+        db
+          .select()
+          .from(chapters)
+          .where(and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)))
+          .all(),
+        db
+          .select()
+          .from(boards)
+          .where(and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)))
+          .all(),
+      ]);
 
       const next: BoardPinOption[] = [
         ...character.map((row) => ({
@@ -115,7 +143,7 @@ export function useBoardPinOptions(storyId: string | undefined) {
           entityType: 'WorldRule' as const,
           entityId: row.id,
           label: row.name,
-          group: 'worldrule' as const,
+          group: `worldrule:${row.section}` as const,
         })),
         ...galleryRows.map((row) => ({
           entityType: 'Gallery' as const,
@@ -129,6 +157,14 @@ export function useBoardPinOptions(storyId: string | undefined) {
           label: row.name,
           group: row.type === 'event' ? ('event' as const) : ('chapter' as const),
         })),
+        ...boardRows
+          .filter((row) => row.id !== excludedBoardId)
+          .map((row) => ({
+            entityType: 'Board' as const,
+            entityId: row.id,
+            label: row.name,
+            group: 'board' as const,
+          })),
       ];
       setOptions(next);
     } catch (error) {
@@ -137,46 +173,59 @@ export function useBoardPinOptions(storyId: string | undefined) {
     } finally {
       setLoading(false);
     }
-  }, [db, storyId]);
+  }, [db, excludedBoardId, storyId]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
-    const groups: {
-      key: BoardPinOption['group'];
+    const standardGroups: {
+      key: Exclude<BoardPinGroup, `worldrule:${WorldPieceSection}`>;
       label: string;
-      appearanceType: string;
+      appearanceType: EntityAppearanceKey;
     }[] = [
-      { key: 'character', label: t('character_plural'), appearanceType: 'Character' },
-      { key: 'location', label: t('location_plural'), appearanceType: 'Location' },
-      { key: 'scene', label: t('scene_plural'), appearanceType: 'Scene' },
-      { key: 'chapter', label: t('chapter_plural'), appearanceType: 'Chapter' },
-      { key: 'event', label: t('event_plural'), appearanceType: 'Event' },
+      { key: 'character', label: term('Character', true), appearanceType: 'Character' },
+      { key: 'location', label: term('Location', true), appearanceType: 'Location' },
+      { key: 'scene', label: term('Scene', true), appearanceType: 'Scene' },
+      { key: 'chapter', label: term('Chapter', true), appearanceType: 'Chapter' },
+      { key: 'event', label: term('Event', true), appearanceType: 'Event' },
       { key: 'item', label: t('item_plural'), appearanceType: 'Item' },
       { key: 'note', label: t('note_plural'), appearanceType: 'Note' },
-      { key: 'worldrule', label: t('world_rules_title'), appearanceType: 'WorldRule' },
       { key: 'gallery', label: t('gallery'), appearanceType: 'Gallery' },
+      { key: 'board', label: t('boards_title'), appearanceType: 'Board' },
     ];
-    return groups
-      .map((group) => {
-        const appearance = getEntityAppearance(group.appearanceType);
+    const groups: MultiSelectGroup[] = [
+      ...standardGroups.map((group) => ({
+        key: group.key,
+        label: group.label,
+        entityType: group.appearanceType,
+        options: options
+          .filter((option) => option.group === group.key)
+          .map((option) => ({
+            label: option.label,
+            value: encodeBoardPinValue(option.entityType, option.entityId),
+          })),
+      })),
+      ...WORLD_PIECE_SECTIONS.map((section) => {
+        const appearance = getWorldPieceSectionAppearance(section);
+        const key = `worldrule:${section}`;
         return {
-          key: group.key,
-          label: group.label,
-          icon: appearance.icon as keyof typeof Ionicons.glyphMap,
+          key,
+          label: t(`world_piece_section_${section}`),
+          icon: appearance.icon as MultiSelectGroup['icon'],
           color: appearance.color,
           options: options
-            .filter((option) => option.group === group.key)
+            .filter((option) => option.group === key)
             .map((option) => ({
               label: option.label,
               value: encodeBoardPinValue(option.entityType, option.entityId),
             })),
         };
-      })
-      .filter((group) => group.options.length > 0);
-  }, [options, t]);
+      }),
+    ];
+    return groups.filter((group) => group.options.length > 0);
+  }, [options, t, term]);
 
   return { options, groupedOptions, loading, reload: load };
 }

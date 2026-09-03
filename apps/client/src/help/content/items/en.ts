@@ -24,7 +24,7 @@ const page: HelpPage = {
       items: [
         'Create the item and fill in Name.',
         'Use Category and Initial state when they help organize your collection.',
-        'Choose Character owner if someone already owns the item at the start.',
+        'Choose the item owner if someone already owns it at the start.',
         'Save to add Tags, Notes, media, custom attributes, and See also.',
         'Use Item journeys to record changes that happen in scenes.',
       ],
@@ -58,7 +58,7 @@ const page: HelpPage = {
         },
         {
           key: 'characterOwnerId',
-          label: 'Character owner',
+          label: 'Owner (Character)',
           whatToWrite: 'Who begins with the item, if anyone.',
           note: 'Details show the selected character’s name.',
         },

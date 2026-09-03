@@ -149,4 +149,90 @@ describe('location hierarchy sync handler', () => {
       version: 2,
     });
   });
+
+  it('keeps a single canonical connected edge', async () => {
+    const handler = new LocationRelationSyncHandler();
+    const firstId = newId();
+    await handler.create(
+      userId,
+      storyId,
+      create('LocationRelation', firstId, {
+        locationAId: palaceId,
+        locationBId: olympusId,
+        relationType: 'connected_to',
+      }),
+    );
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('LocationRelation', newId(), {
+          locationAId: olympusId,
+          locationBId: palaceId,
+          relationType: 'connected_to',
+        }),
+      ),
+    ).rejects.toThrow(/already exists/i);
+  });
+
+  it('rejects invalid endpoints and prevents an update from assigning a second parent', async () => {
+    const handler = new LocationRelationSyncHandler();
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('LocationRelation', newId(), {
+          locationAId: olympusId,
+          locationBId: olympusId,
+          relationType: 'contains',
+        }),
+      ),
+    ).rejects.toThrow(/cannot be identical/i);
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('LocationRelation', newId(), {
+          locationAId: olympusId,
+          locationBId: newId(),
+          relationType: 'connected_to',
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const olympusContainsPalace = newId();
+    const hallContainsOlympus = newId();
+    await handler.create(
+      userId,
+      storyId,
+      create('LocationRelation', olympusContainsPalace, {
+        locationAId: olympusId,
+        locationBId: palaceId,
+        relationType: 'contains',
+      }),
+    );
+    await handler.create(
+      userId,
+      storyId,
+      create('LocationRelation', hallContainsOlympus, {
+        locationAId: hallId,
+        locationBId: olympusId,
+        relationType: 'contains',
+      }),
+    );
+    const current = await handler.findById(hallContainsOlympus);
+    await expect(
+      handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'LocationRelation',
+          id: hallContainsOlympus,
+          changes: { locationBId: palaceId, version: current.version },
+        } as UpdateStoryUpdate,
+        current,
+      ),
+    ).rejects.toThrow(/already has a parent/i);
+  });
 });

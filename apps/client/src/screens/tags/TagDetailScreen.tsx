@@ -1,4 +1,4 @@
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,
@@ -303,6 +303,7 @@ const TagDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{tag.name}</Text>
       {tag.color && (
         <View style={styles.colorDisplayContainer}>
           <View style={[styles.colorCircle, { backgroundColor: tag.color }]} />

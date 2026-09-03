@@ -282,4 +282,213 @@ describe('choice and inventory sync entity handlers', () => {
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
     expect((await choice.findById(choiceId)).text).toBe('Abrir o portão');
   });
+
+  it('refuses dependent writes when a check, group or effect would reference another story row that is absent', async () => {
+    const groups = new ChoiceCheckGroupSyncHandler();
+    const checks = new ChoiceCheckSyncHandler();
+    const effects = new EffectSyncHandler();
+    const choice = new ChoiceSyncHandler();
+    const groupId = newId();
+    const choiceId = newId();
+    const item = new ItemSyncHandler();
+    const itemId = newId();
+
+    await expect(
+      groups.create(
+        userId,
+        storyId,
+        create('ChoiceCheckGroup', groupId, {
+          choiceId: 'missing-choice',
+          combinator: 'AND',
+          order: 0,
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      checks.create(
+        userId,
+        storyId,
+        create('ChoiceCheck', newId(), {
+          groupId: 'missing-group',
+          mode: 'enable',
+          type: 'trigger',
+          order: 0,
+          sceneId: null,
+          minVisits: null,
+          itemId: null,
+          itemPresence: null,
+          triggerName: 'gate-open',
+          triggerState: 'set',
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      effects.create(
+        userId,
+        storyId,
+        create('Effect', newId(), {
+          entityType: 'Scene',
+          entityId: firstSceneId,
+          effectType: 'itemGrant',
+          itemId: 'missing-item',
+          triggerName: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    await choice.create(
+      userId,
+      storyId,
+      create('Choice', choiceId, {
+        sceneId: firstSceneId,
+        nextSceneId: secondSceneId,
+        text: 'Continue',
+        notes: null,
+      }),
+    );
+    await groups.create(
+      userId,
+      storyId,
+      create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+    );
+    await item.create(
+      userId,
+      storyId,
+      create('Item', itemId, {
+        characterOwnerId: null,
+        name: 'Chave',
+        category: null,
+        description: null,
+        initialState: null,
+        isFavorite: false,
+        extraNotes: null,
+      }),
+    );
+    const checkId = newId();
+    await checks.create(
+      userId,
+      storyId,
+      create('ChoiceCheck', checkId, {
+        groupId,
+        mode: 'enable',
+        type: 'inventory',
+        order: 0,
+        sceneId: null,
+        minVisits: null,
+        itemId,
+        itemPresence: 'has',
+        triggerName: null,
+        triggerState: null,
+      }),
+    );
+    const effectId = newId();
+    await effects.create(
+      userId,
+      storyId,
+      create('Effect', effectId, {
+        entityType: 'Scene',
+        entityId: firstSceneId,
+        effectType: 'itemGrant',
+        itemId,
+        triggerName: null,
+      }),
+    );
+
+    await expect(
+      checks.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'ChoiceCheck',
+          id: checkId,
+          changes: { itemId: 'missing-item', version: 1 },
+        } as UpdateStoryUpdate,
+        await checks.findById(checkId),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      effects.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'Effect',
+          id: effectId,
+          changes: { itemId: 'missing-item', version: 1 },
+        } as UpdateStoryUpdate,
+        await effects.findById(effectId),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
+
+  it('revalidates a group and scene when an existing check is retargeted', async () => {
+    const choice = new ChoiceSyncHandler();
+    const groups = new ChoiceCheckGroupSyncHandler();
+    const checks = new ChoiceCheckSyncHandler();
+    const choiceId = newId();
+    const groupId = newId();
+    const checkId = newId();
+    await choice.create(
+      userId,
+      storyId,
+      create('Choice', choiceId, {
+        sceneId: firstSceneId,
+        nextSceneId: secondSceneId,
+        text: 'Continuar',
+        notes: null,
+      }),
+    );
+    await groups.create(
+      userId,
+      storyId,
+      create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+    );
+    await checks.create(
+      userId,
+      storyId,
+      create('ChoiceCheck', checkId, {
+        groupId,
+        mode: 'enable',
+        type: 'sceneCount',
+        order: 0,
+        sceneId: firstSceneId,
+        minVisits: 1,
+        itemId: null,
+        itemPresence: null,
+        triggerName: null,
+        triggerState: null,
+      }),
+    );
+    const groupCurrent = await groups.findById(groupId);
+    await expect(
+      groups.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'ChoiceCheckGroup',
+          id: groupId,
+          changes: { choiceId: 'missing-choice', version: groupCurrent.version },
+        } as UpdateStoryUpdate,
+        groupCurrent,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+
+    const checkCurrent = await checks.findById(checkId);
+    await expect(
+      checks.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity: 'ChoiceCheck',
+          id: checkId,
+          changes: { sceneId: 'missing-scene', version: checkCurrent.version },
+        } as UpdateStoryUpdate,
+        checkCurrent,
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    expect(await checks.findById(checkId)).toMatchObject({ sceneId: firstSceneId, version: 1 });
+  });
 });

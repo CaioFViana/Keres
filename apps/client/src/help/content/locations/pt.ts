@@ -24,7 +24,7 @@ const page: HelpPage = {
         'Crie um Local e informe Nome.',
         'Use Descrição para a visão geral.',
         'Preencha Clima, Cultura e Política quando forem úteis à narrativa.',
-        'Depois de salvar, vincule o local a cenas e organize sua posição no mapa.',
+        'Depois de salvar, vincule o local a cenas e organize sua posição no Mapa de locais.',
       ],
     },
     {
@@ -77,7 +77,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Cenas dependem de um Local. O mapa pode mostrar locais dentro de outros e conexões de caminho. Excluir um local exige revisar as cenas que o usam.',
+      text: 'Cenas dependem de um Local. No Mapa de locais, você pode posicionar o local, ligá-lo a outros locais ou a marcadores e criar um destino para outro mapa. Excluir um local exige revisar as cenas que o usam e remove seus pontos e ligações dos mapas.',
     },
     { type: 'seeAlso', pages: ['scenes', 'location-map', 'characters'] },
   ],

@@ -111,4 +111,32 @@ describe('RealtimeSessionService', () => {
     expect(canReadStory).toHaveBeenCalledWith('user-1', 'private-story', 'reader');
     expect(listeners.get('storyUpdate:private-story')).toBeUndefined();
   });
+
+  it('replaces a previous subscription to the same story instead of delivering duplicate realtime events', () => {
+    const socket = { send: vi.fn() };
+
+    service.subscribeToStory(socket, 'user-1', 'story-1');
+    service.subscribeToStory(socket, 'user-1', 'story-1');
+    listeners
+      .get('storyUpdate:story-1')
+      ?.forEach((listener) => listener({ maxOperationVersion: 42 }));
+
+    expect(listeners.get('storyUpdate:story-1')?.size).toBe(1);
+    expect(socket.send).toHaveBeenCalledTimes(1);
+    expect(socket.send).toHaveBeenCalledWith(
+      JSON.stringify({ type: 'story.changed', storyId: 'story-1', maxOperationVersion: 42 }),
+    );
+  });
+
+  it('does not authorize a subscription request before a valid realtime ticket opened the socket', async () => {
+    const socket = { send: vi.fn() };
+
+    await service.handleEventMessage(
+      socket,
+      JSON.stringify({ type: 'subscribe', storyId: 'story-1' }),
+    );
+
+    expect(canReadStory).not.toHaveBeenCalled();
+    expect(listeners.get('storyUpdate:story-1')).toBeUndefined();
+  });
 });

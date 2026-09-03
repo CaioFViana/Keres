@@ -106,6 +106,41 @@ describe('create', () => {
   });
 });
 
+describe('idempotent create comparison and log payloads', () => {
+  it('recognizes only the same validated create payload as a safe retry', async () => {
+    const row = await createCharacter();
+
+    expect(handler.createPayloadMatches(row, { name: 'Keres' })).toBe(true);
+    expect(handler.createPayloadMatches(row, { name: 'Nyx' })).toBe(false);
+    expect(handler.createPayloadMatches(row, { name: '' })).toBe(false);
+  });
+
+  it('serializes deletes and reorders into the minimal operation-log payload', () => {
+    expect(
+      handler.sanitizePayloadForLog(
+        { type: 'delete', entity: 'Character', id: 'char-1', version: 1 } as DeleteStoryUpdate,
+        USER_ID,
+      ),
+    ).toEqual({ id: 'char-1' });
+    expect(
+      handler.sanitizePayloadForLog(
+        {
+          type: 'reorder',
+          entity: 'Story',
+          id: STORY_ID,
+          reorderItems: [{ id: 'chapter-1', newIndex: 1 }],
+          reorderTarget: 'Event',
+        } as any,
+        USER_ID,
+      ),
+    ).toEqual({
+      reorderItems: [{ id: 'chapter-1', newIndex: 1 }],
+      reorderTarget: 'Event',
+      schemaEntityType: undefined,
+    });
+  });
+});
+
 describe('update', () => {
   it('applies the change and bumps the version', async () => {
     const entity = await createCharacter();

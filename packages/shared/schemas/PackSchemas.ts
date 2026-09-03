@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ShowcaseOwnerSchema } from './PublicationSchemas';
-import { StatNotationSchema } from './StorySchemas';
+import { StatNotationSchema, StoryVocabularySchema } from './StorySchemas';
 import { StatSchema, StatStrengthSchema } from './StatSchemas';
 import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
 import { SuggestionSchema } from './SuggestionSchemas';
@@ -29,19 +29,53 @@ export const CURRENT_PACK_FORMAT_VERSION = 1;
 export const PackSettingsSchema = z.object({
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
+  /** Optional terminology offered when a new story is created from this pack. */
+  vocabulary: StoryVocabularySchema.nullable().optional(),
 });
 
-export const PackContentSchema = z.object({
-  formatVersion: z.number().int().min(1).default(CURRENT_PACK_FORMAT_VERSION),
-  storySchemaFields: z.array(StorySchemaFieldSchema).default([]),
-  suggestions: z.array(SuggestionSchema).default([]),
-  tags: z.array(TagSchema).default([]),
-  stats: z.array(StatSchema).default([]),
-  statStrengths: z.array(StatStrengthSchema).default([]),
-  settings: PackSettingsSchema.default({ statSystem: false, statNotation: 'letter' }),
-});
+export const PackContentSchema = z
+  .object({
+    formatVersion: z.number().int().min(1).default(CURRENT_PACK_FORMAT_VERSION),
+    storySchemaFields: z.array(StorySchemaFieldSchema).default([]),
+    suggestions: z.array(SuggestionSchema).default([]),
+    tags: z.array(TagSchema).default([]),
+    stats: z.array(StatSchema).default([]),
+    statStrengths: z.array(StatStrengthSchema).default([]),
+    settings: PackSettingsSchema.default({ statSystem: false, statNotation: 'letter' }),
+  })
+  .superRefine((content, context) => {
+    const fieldIds = new Set(content.storySchemaFields.map((field) => field.id));
+    for (const [index, suggestion] of content.suggestions.entries()) {
+      if (
+        suggestion.type.startsWith('custom:') &&
+        !fieldIds.has(suggestion.type.slice('custom:'.length))
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['suggestions', index, 'type'],
+          message: 'A custom suggestion must refer to a field carried by this pack.',
+        });
+      }
+    }
+
+    const statIds = new Set(content.stats.map((stat) => stat.id));
+    for (const [index, tier] of content.statStrengths.entries()) {
+      if (tier.statId !== null && !statIds.has(tier.statId)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['statStrengths', index, 'statId'],
+          message: 'A stat tier must refer to a stat carried by this pack.',
+        });
+      }
+    }
+  });
 
 export type PackContentType = z.infer<typeof PackContentSchema>;
+
+/** The one runtime boundary for a Pack's JSON document, shared by client and server. */
+export function validatePackContent(content: unknown): PackContentType {
+  return PackContentSchema.parse(content);
+}
 
 /** What the author chose to extract. Stored so re-extraction can start from the same answers. */
 export const PackSelectionSchema = z.object({
@@ -104,6 +138,7 @@ export const PackContentSummarySchema = z.object({
   suggestionCount: z.number().int(),
   tagCount: z.number().int(),
   statCount: z.number().int(),
+  hasVocabulary: z.boolean(),
   statSystem: z.boolean(),
   statNotation: StatNotationSchema,
 });
@@ -116,6 +151,7 @@ export function summarizePackContent(content: PackContentType): PackContentSumma
     suggestionCount: content.suggestions.length,
     tagCount: content.tags.length,
     statCount: content.stats.length,
+    hasVocabulary: Object.keys(content.settings.vocabulary?.terms ?? {}).length > 0,
     statSystem: content.settings.statSystem,
     statNotation: content.settings.statNotation,
   };

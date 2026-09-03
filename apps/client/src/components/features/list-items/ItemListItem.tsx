@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ItemSelect } from '../../../db/schemas/items';
 import type { TagSelect } from '../../../db/schema';
@@ -16,6 +17,11 @@ interface ItemListItemProps {
   onToggleFavorite: (itemId: string, isFavorite: boolean) => void;
   renderJourneys?: () => React.ReactNode;
   tags?: TagSelect[];
+  /** Resolved by the list in one batch; never expose the persisted character ULID as content. */
+  characterOwnerName?: string;
+  /** Resolved by the screen because this drawing component does not read story state. */
+  characterOwnerLabel: string;
+  unknownCharacterOwnerLabel: string;
 }
 
 const ItemListItem: React.FC<ItemListItemProps> = ({
@@ -24,8 +30,12 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
   onToggleFavorite,
   renderJourneys,
   tags = [],
+  characterOwnerName,
+  characterOwnerLabel,
+  unknownCharacterOwnerLabel,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const referenceStyles = createReferenceListItemStyles(colors);
   const styles = StyleSheet.create({
@@ -50,13 +60,19 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
         <Text style={referenceStyles.summaryText}>{truncate(currentItem.description, 200)}</Text>
       )}
       {currentItem.category && (
-        <Text style={styles.detailText}>Category: {currentItem.category}</Text>
+        <Text style={styles.detailText}>
+          {t('category')}: {currentItem.category}
+        </Text>
       )}
       {currentItem.initialState && (
-        <Text style={styles.detailText}>Initial State: {currentItem.initialState}</Text>
+        <Text style={styles.detailText}>
+          {t('initial_state')}: {currentItem.initialState}
+        </Text>
       )}
       {currentItem.characterOwnerId && (
-        <Text style={styles.detailText}>Owner: {truncate(currentItem.characterOwnerId, 50)}</Text>
+        <Text style={styles.detailText}>
+          {characterOwnerLabel}: {characterOwnerName || unknownCharacterOwnerLabel}
+        </Text>
       )}
       {tags.length > 0 && <TagList tags={tags} />}
       {renderJourneys?.()}
@@ -68,6 +84,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
       item={item}
       onViewDetails={onViewDetails}
       onToggleFavorite={onToggleFavorite}
+      entityType="Item"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

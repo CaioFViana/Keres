@@ -5,6 +5,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
+import { WORLD_PIECE_SECTIONS } from '@keres/shared/entities/WorldRule';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -21,6 +22,8 @@ import {
   customAttributeSuggestionType,
   isNamedListType,
   namedListDisplayKey,
+  WORLD_PIECE_CATEGORY_TYPE,
+  WORLD_PIECE_TYPE_PREFIX,
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -29,18 +32,18 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
-
+import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
 type StorySuggestion = [value: string, usageCount: number];
-
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
   'character_relation_changed',
   'item_changed',
   'item_journey_changed',
+  'worldrule_changed',
   'attribute_value_changed',
 ] as const;
-
 const ENTITY_LABELS: Record<string, string> = {
   Character: 'characters_title',
   CharacterRelation: 'character_relations_title',
@@ -56,10 +59,10 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
   Note: 'notes_title',
   WorldRule: 'world_rules_title',
 };
-
 const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
   useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -102,7 +105,9 @@ const SuggestionsScreen = () => {
             entityLabels: [],
             fieldLabels: [],
           };
-          const entityLabel = t(ENTITY_LABELS[entity] ?? entity);
+          const entityLabel = isStoryVocabularyEntityType(entity)
+            ? label(entity, true)
+            : t(ENTITY_LABELS[entity] ?? entity);
           const fieldLabel = t(field.label);
           if (!current.entityLabels.includes(entityLabel)) current.entityLabels.push(entityLabel);
           if (!current.fieldLabels.includes(fieldLabel)) current.fieldLabels.push(fieldLabel);
@@ -114,6 +119,18 @@ const SuggestionsScreen = () => {
       key: group.key,
       label: `${group.entityLabels.join(' + ')} · ${group.fieldLabels.join(' / ')}`,
     }));
+    const worldPiece = [
+      ...WORLD_PIECE_SECTIONS.map((section) => ({
+        type: `${WORLD_PIECE_TYPE_PREFIX}${section}`,
+        key: `world_piece_type_${section}`,
+        label: `${t(`world_piece_section_${section}`)} · ${t('world_piece_type')}`,
+      })),
+      {
+        type: WORLD_PIECE_CATEGORY_TYPE,
+        key: 'world_piece_category',
+        label: `${t('world_title')} · ${t('category')}`,
+      },
+    ];
     const schemaService = createStorySchemaFieldService(db);
     const batches = await Promise.all(
       STORY_SCHEMA_ENTITY_TYPES.map((entityType) =>
@@ -126,7 +143,11 @@ const SuggestionsScreen = () => {
         .map((field) => ({
           type: customAttributeSuggestionType(field.id),
           key: field.key,
-          label: `${t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]])} · ${field.name}`,
+          label: `${
+            isStoryVocabularyEntityType(STORY_SCHEMA_ENTITY_TYPES[index])
+              ? label(STORY_SCHEMA_ENTITY_TYPES[index], true)
+              : t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]])
+          } · ${field.name}`,
         })),
     );
     const named = (await suggestionService.listNamedLists(storyId)).map((list) => ({
@@ -135,12 +156,14 @@ const SuggestionsScreen = () => {
       name: list.name,
       label: `${t('suggestion_named_list')} · ${list.name}`,
     }));
-    const next = [...native, ...custom, ...named].sort((a, b) => a.label.localeCompare(b.label));
+    const next = [...native, ...worldPiece, ...custom, ...named].sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
     setGroups(next);
     setSelectedType((current) =>
       current && next.some((group) => group.type === current) ? current : (next[0]?.type ?? null),
     );
-  }, [db, storyId, suggestionService, t]);
+  }, [db, label, storyId, suggestionService, t]);
 
   const loadValues = useCallback(async () => {
     if (!storyId || !selectedType) {
@@ -327,13 +350,7 @@ const SuggestionsScreen = () => {
   const styles = StyleSheet.create({
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
     description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
-    // Compact: a strip of chips with horizontal scrolling (it fits well on narrow screens). Wide: a fixed
-    // left-hand column with the complete list of groups, without depending on horizontal scrolling to reach
-    // groups "off screen" - the original problem on this screen.
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    // Vertical scrolling with line wrapping, not horizontal scrolling - in a list with many groups, a chip
-    // "off screen" to the side gave no visual clue that there was more to scroll to; with wrapping,
-    // everything is reachable just by going down.
     groups: { maxHeight: 160, marginBottom: 16 },
     groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
     chip: {

@@ -4,15 +4,16 @@ import {
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
   migrateStoryExport,
+  reviveDates,
+  stripUtf8Bom,
   StoryExportVersionError,
 } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
-import { reviveDates } from './reviveDates';
 import type { ExtractedZipMedia } from './storyMediaBundle';
-import { extractStoryZip, stripUtf8Bom } from './storyMediaBundle';
+import { extractStoryZip } from './storyMediaBundle';
 import { StoryImportError } from './StoryImportError';
 
 export { StoryImportError };

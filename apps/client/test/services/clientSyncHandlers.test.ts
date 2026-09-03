@@ -22,6 +22,8 @@ import { NoteClientSyncHandler } from '../../src/services/entity-sync-handlers/N
 import { NoteRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteRelationClientSyncHandler';
 import { PlotClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotClientSyncHandler';
 import { PlotSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotSceneClientSyncHandler';
+import { RouteClientSyncHandler } from '../../src/services/entity-sync-handlers/RouteClientSyncHandler';
+import { RouteStepClientSyncHandler } from '../../src/services/entity-sync-handlers/RouteStepClientSyncHandler';
 import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { StoryCalendarClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryCalendarClientSyncHandler';
@@ -455,6 +457,46 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { note: 'Turns here' },
+  },
+  {
+    name: 'Route',
+    usesStoryContext: false,
+    build: () => new RouteClientSyncHandler(),
+    table: schema.routes,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Mara chooses the train',
+      details: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Mara stays' },
+  },
+  {
+    name: 'RouteStep',
+    usesStoryContext: false,
+    build: () => new RouteStepClientSyncHandler(),
+    table: schema.routeSteps,
+    labelColumn: 'position' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      routeId: `route-${id}`,
+      position: 1,
+      sceneId: `scene-${id}`,
+      selectedChoiceId: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { position: 2 },
   },
   {
     name: 'ChoiceCheckGroup',

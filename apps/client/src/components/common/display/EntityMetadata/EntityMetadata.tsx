@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 
-interface EntityMetadataProps {
+export interface EntityMetadataProps {
   version: number;
   createdAt: Date;
   updatedAt: Date;

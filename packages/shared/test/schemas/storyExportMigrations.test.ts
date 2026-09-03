@@ -9,6 +9,8 @@ const EMPTY_V6_COLLECTIONS = { plots: [], plotScenes: [] };
 const EMPTY_V7_COLLECTIONS = { chapterAnchors: [] };
 /** V7 -> V8 materialises the story's own calendars, for the same reason. */
 const EMPTY_V8_COLLECTIONS = { storyCalendars: [] };
+/** V8 -> V9 materialises authored routes, which older packages could not express. */
+const EMPTY_V9_COLLECTIONS = { routes: [], routeSteps: [] };
 
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {
@@ -60,7 +62,7 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v2Export)).toEqual({
       ...v2Export,
-      story: { ...v2Export.story, statSystem: false, statNotation: 'letter' },
+      story: { ...v2Export.story, statSystem: false, statNotation: 'letter', vocabulary: null },
       comments: [],
       seeAlsoRelations: [],
       choiceCheckGroups: [],
@@ -70,6 +72,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,
       ...EMPTY_V8_COLLECTIONS,
+      ...EMPTY_V9_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -89,7 +92,7 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v3Export)).toEqual({
       ...v3Export,
-      story: { ...v3Export.story, statSystem: false, statNotation: 'letter' },
+      story: { ...v3Export.story, statSystem: false, statNotation: 'letter', vocabulary: null },
       choiceCheckGroups: [],
       choiceChecks: [],
       effects: [],
@@ -97,6 +100,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,
       ...EMPTY_V8_COLLECTIONS,
+      ...EMPTY_V9_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -139,11 +143,34 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v4Export)).toEqual({
       ...v4Export,
-      story: { ...v4Export.story, statSystem: false, statNotation: 'letter' },
+      story: { ...v4Export.story, statSystem: false, statNotation: 'letter', vocabulary: null },
       ...EMPTY_V5_COLLECTIONS,
       ...EMPTY_V6_COLLECTIONS,
       ...EMPTY_V7_COLLECTIONS,
       ...EMPTY_V8_COLLECTIONS,
+      ...EMPTY_V9_COLLECTIONS,
+      formatVersion: CURRENT_STORY_FORMAT_VERSION,
+    });
+  });
+
+  it('migrates a V8 export with vocabulary and authored route collections together', () => {
+    const v8Export = {
+      formatVersion: 8,
+      story: {
+        id: 'story-8',
+        title: 'Current story',
+        favoriteBehavior: 'individual',
+        normalizeSceneTiming: false,
+        statSystem: false,
+        statNotation: 'letter',
+      },
+      storyCalendars: [{ id: 'calendar-1' }],
+    };
+
+    expect(migrateStoryExport(v8Export)).toEqual({
+      ...v8Export,
+      story: { ...v8Export.story, vocabulary: null },
+      ...EMPTY_V9_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });

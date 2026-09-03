@@ -1,7 +1,14 @@
 /**
  * @jest-environment node
  */
-import { appendImagesToMap, appendLocationsToMap } from '../../src/utils/locationMapContent';
+import {
+  appendImagesToMap,
+  appendLocationsToMap,
+  appendMarkersToMap,
+  addLocationMapMarkerConnection,
+  removeLocationMapPoint,
+  setLocationMapRelationText,
+} from '../../src/utils/locationMapContent';
 import { deriveConnections, deriveContains } from '../../src/utils/locationMapRelations';
 
 const content = { images: [], nodes: [] };
@@ -26,6 +33,16 @@ it('appends location points with the default icon and colour', () => {
   expect(next.nodes[0].locationId).toBe('location-1');
   expect(next.nodes[0].icon).toBe('map');
   expect(next.nodes[0].color).toBe('#8BC34A');
+});
+
+it('appends free markers without creating a location entity', () => {
+  const next = appendMarkersToMap(content, [{ title: 'Hidden key', note: 'Behind the statue' }]);
+  expect(next.nodes).toHaveLength(0);
+  expect(next.markers?.[0]).toMatchObject({
+    title: 'Hidden key',
+    note: 'Behind the statue',
+    destinationMapId: null,
+  });
 });
 
 const relationBase = {
@@ -84,4 +101,44 @@ it('includes contains relations when both ends are on the map', () => {
   };
 
   expect(deriveContains(relations, map)).toEqual([{ parentLocationId: 'a', childLocationId: 'c' }]);
+});
+
+it('keeps relation text inside the map and resolves it for both connection directions', () => {
+  const map = setLocationMapRelationText(
+    {
+      images: [],
+      nodes: [
+        { id: 'n1', locationId: 'a', x: 0, y: 0, icon: 'pin', color: '#8BC34A' },
+        { id: 'n2', locationId: 'b', x: 0, y: 0, icon: 'pin', color: '#8BC34A' },
+      ],
+    },
+    'b',
+    'a',
+    'A guarded road',
+  );
+
+  expect(deriveConnections(relations, map)).toEqual([
+    { locationAId: 'a', locationBId: 'b', label: 'A guarded road' },
+  ]);
+});
+
+it('keeps marker-involved connections local to the map and removes them with their point', () => {
+  const map = appendMarkersToMap(appendLocationsToMap(content, ['location-1']), [
+    { title: 'Gate' },
+  ]);
+  const markerId = map.markers![0].id;
+  const linked = addLocationMapMarkerConnection(map, {
+    fromId: map.nodes[0].id,
+    toId: markerId,
+    directed: true,
+    label: 'Pass through',
+  });
+
+  expect(linked.markerConnections).toHaveLength(1);
+  expect(linked.markerConnections![0]).toMatchObject({
+    fromId: map.nodes[0].id,
+    toId: markerId,
+    label: 'Pass through',
+  });
+  expect(removeLocationMapPoint(linked, markerId).markerConnections).toEqual([]);
 });

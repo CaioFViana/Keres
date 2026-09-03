@@ -1,4 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
+import Button from '@/src/components/common/controls/Button/Button';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
+import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
+import BoardCanvasHeaderActions from '@/src/components/features/boards/BoardCanvasHeaderActions';
+import BoardConnectionModal from '@/src/components/features/boards/BoardConnectionModal';
+import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
@@ -6,22 +17,14 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
-import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
-import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
-import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
+import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useBoardCanvasLayout } from '../../hooks/useBoardCanvasLayout';
 import {
-  useBoardPinOptions,
   decodeBoardPinValue,
+  useBoardPinOptions,
   type BoardPinOption,
 } from '../../hooks/useBoardPinOptions';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
@@ -29,31 +32,25 @@ import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
 import { createBoardService } from '../../services/storymanagement/BoardService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { mediaFileService } from '../../services/MediaFileService';
 import { useBoardDraftStore } from '../../state/boardDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { nextStaggeredPosition } from '../../utils/boardLayout';
-import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
-import { boardPinAppearanceType, boardPinTypeKey } from '../../utils/boardPinAppearance';
-import { renderBoardSvg } from '../../utils/boardSvg';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
+import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
+import { nextStaggeredPosition } from '../../utils/boardLayout';
+import {
+  boardPinAppearanceType,
+  boardPinTypeKey,
+  getBoardPinAppearance,
+  worldPieceSectionFromBoardPinGroup,
+} from '../../utils/boardPinAppearance';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
-
-/** Base64 of the bytes, chunked so a large image does not blow the call stack. */
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-}
+import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { buildStandaloneBoardSvg } from '../../utils/storyMapSvgExport';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -67,7 +64,7 @@ const BoardCanvasScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const navigateToEntity = useNavigateToEntityDetail();
-  const { groupedOptions, options } = useBoardPinOptions(storyId);
+  const { groupedOptions, options } = useBoardPinOptions(storyId, boardId);
   const canvasRef = useRef<BoardCanvasHandle>(null);
 
   const [board, setBoard] = useState<BoardSelect | null>(null);
@@ -76,15 +73,21 @@ const BoardCanvasScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<BoardNodeType | null>(null);
+  const [layoutSelectedNodeId, setLayoutSelectedNodeId] = useState<string | null>(null);
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const [connectionMode, setConnectionMode] = useState(false);
+  const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
   const [livePins, setLivePins] = useState<
     Record<string, { label: string; group: BoardPinOption['group'] }>
   >({});
   const [exporting, setExporting] = useState(false);
-  /** Media of the story's galleries, keyed by gallery id - lets Gallery pins show their image. */
   const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
-  /** Light summary of the selected entity pin, loaded when the sheet opens. */
   const [selectedSummary, setSelectedSummary] = useState<BoardEntitySummary | null>(null);
+  const [summariesByNode, setSummariesByNode] = useState<Record<string, BoardEntitySummary | null>>(
+    {},
+  );
+  const { handleMoveNode, handleResizeNode, moveNodeLayer } = useBoardCanvasLayout(setContent);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
@@ -181,6 +184,24 @@ const BoardCanvasScreen = () => {
     };
   }, [db, selected]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const entityNodes = content.nodes.filter(
+      (node): node is Extract<BoardNodeType, { kind: 'entity' }> => node.kind === 'entity',
+    );
+    void Promise.all(
+      entityNodes.map(
+        async (node) =>
+          [node.id, await loadBoardEntitySummary(db, node.entityType, node.entityId)] as const,
+      ),
+    ).then((entries) => {
+      if (!cancelled) setSummariesByNode(Object.fromEntries(entries));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [content.nodes, db]);
+
   const save = useCallback(async () => {
     if (!userId || !board) return;
     try {
@@ -215,51 +236,39 @@ const BoardCanvasScreen = () => {
         title: board?.name ?? t('boards_title'),
         headerRight: canEdit
           ? () => (
-              <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
-                <TouchableOpacity
-                  onPress={revert}
-                  disabled={!dirty}
-                  accessibilityLabel={t('board_revert')}
-                >
-                  <Ionicons
-                    name="arrow-undo-outline"
-                    size={24}
-                    color={dirty ? colors.text : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => void save()}
-                  disabled={!dirty}
-                  accessibilityLabel={t('board_save')}
-                >
-                  <Ionicons
-                    name="checkmark-outline"
-                    size={26}
-                    color={dirty ? colors.primary : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <BoardCanvasHeaderActions
+                dirty={dirty}
+                layoutEditing={layoutEditing}
+                connectionMode={connectionMode}
+                onRevert={revert}
+                onSave={() => void save()}
+                onToggleLayout={() => {
+                  setLayoutEditing((current) => !current);
+                  setConnectionMode(false);
+                  setLayoutSelectedNodeId(null);
+                }}
+                onToggleConnectionMode={() => {
+                  setConnectionMode((current) => !current);
+                  setLayoutEditing(false);
+                  setLayoutSelectedNodeId(null);
+                }}
+              />
             )
           : undefined,
       });
-    }, [
-      board?.name,
-      canEdit,
-      colors.primary,
-      colors.text,
-      colors.textSecondary,
-      dirty,
-      navigation,
-      revert,
-      save,
-      t,
-    ]),
+    }, [board?.name, canEdit, dirty, layoutEditing, connectionMode, navigation, revert, save, t]),
   );
 
   const titles = useMemo(() => {
     const map: Record<
       string,
-      { title: string; typeLabel: string; appearanceType?: string; ghost?: boolean }
+      {
+        title: string;
+        typeLabel: string;
+        appearanceType?: string;
+        appearance?: { color: string; icon: string };
+        ghost?: boolean;
+      }
     > = {};
     for (const node of content.nodes) {
       const live =
@@ -269,23 +278,37 @@ const BoardCanvasScreen = () => {
         node.kind === 'entity' ? node.entityType : undefined,
         live?.group,
       );
-      const typeLabel = t(
-        boardPinTypeKey(
-          node.kind,
-          node.kind === 'entity' ? node.entityType : undefined,
-          live?.group,
-        ),
+      const worldPieceSection = worldPieceSectionFromBoardPinGroup(live?.group);
+      const typeLabel = worldPieceSection
+        ? t(`world_piece_section_${worldPieceSection}`)
+        : t(
+            boardPinTypeKey(
+              node.kind,
+              node.kind === 'entity' ? node.entityType : undefined,
+              live?.group,
+            ),
+          );
+      const appearance = getBoardPinAppearance(
+        node.kind,
+        node.kind === 'entity' ? node.entityType : undefined,
+        live?.group,
       );
       if (node.kind === 'note') {
-        map[node.id] = { title: node.title.trim() || t('board_note'), typeLabel, appearanceType };
+        map[node.id] = {
+          title: node.title.trim() || t('board_note'),
+          typeLabel,
+          appearanceType,
+          appearance,
+        };
         continue;
       }
       map[node.id] = live
-        ? { title: live.label, typeLabel, appearanceType }
+        ? { title: live.label, typeLabel, appearanceType, appearance }
         : {
             title: node.labelAtPin || t('board_deleted_entity'),
             typeLabel: `${typeLabel} · ${t('board_deleted_entity')}`,
             appearanceType,
+            appearance,
             ghost: true,
           };
     }
@@ -296,25 +319,7 @@ const BoardCanvasScreen = () => {
     if (!selectedStory) return;
     setExporting(true);
     try {
-      // The exported SVG is standalone, so each gallery pin's picture is embedded as a data URI.
-      // Only the pinned galleries are read - a story's whole gallery can be large.
-      const galleryImages: Record<string, string> = {};
-      for (const node of content.nodes) {
-        if (node.kind !== 'entity' || node.entityType !== 'Gallery') continue;
-        const media = galleryMediaById[node.entityId];
-        if (!media) continue;
-        const path = media.mediaType === 'image' ? media.localPath : media.thumbnailPath;
-        if (!path) continue;
-        try {
-          const bytes = await mediaFileService.readBytes(path);
-          galleryImages[node.entityId] =
-            `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
-        } catch (readError) {
-          console.log('BoardCanvasScreen: failed to read gallery image for export.', readError);
-        }
-      }
-
-      const svg = renderBoardSvg(content, {
+      const svg = await buildStandaloneBoardSvg(content, {
         title: board?.name ?? t('boards_title'),
         subtitle: t('board_export_subtitle', {
           story: selectedStory.title,
@@ -330,7 +335,7 @@ const BoardCanvasScreen = () => {
         },
         titles,
         galleryMediaById,
-        galleryImages,
+        summaries: summariesByNode,
       });
       const result = await deliverSvgMap(
         svg,
@@ -350,7 +355,17 @@ const BoardCanvasScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [board?.name, colors, content, galleryMediaById, selectedStory, showNotification, t, titles]);
+  }, [
+    board?.name,
+    colors,
+    content,
+    galleryMediaById,
+    selectedStory,
+    showNotification,
+    summariesByNode,
+    t,
+    titles,
+  ]);
 
   const nodeTitles = useMemo(() => {
     const map: Record<string, string> = {};
@@ -358,19 +373,13 @@ const BoardCanvasScreen = () => {
     return map;
   }, [titles]);
 
-  const handleMoveNode = useCallback((id: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      nodes: current.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
-    }));
-  }, []);
-
   const addEntities = (values: string[]) => {
     let created: BoardNodeType[] = [];
     setContent((current) => {
       let next = current;
       created = [];
-      const origin = { x: 80, y: 80 };
+      const center = canvasRef.current?.viewportWorldCenter() ?? { x: 160, y: 160 };
+      const origin = { x: center.x - 80, y: center.y - 40 };
       for (const value of values) {
         const decoded = decodeBoardPinValue(value);
         if (!decoded) continue;
@@ -390,6 +399,8 @@ const BoardCanvasScreen = () => {
           entityType: decoded.entityType as BoardPinEntity,
           entityId: decoded.entityId,
           labelAtPin: option?.label ?? decoded.entityId,
+          displayMode: 'compact',
+          cardNote: null,
         };
         created.push(node);
         next = { ...next, nodes: [...next.nodes, node] };
@@ -412,7 +423,8 @@ const BoardCanvasScreen = () => {
         ...current.nodes.map((node) => node.id),
         ...current.edges.map((edge) => edge.id),
       ]);
-      const position = nextStaggeredPosition(current, { x: 120, y: 120 });
+      const center = canvasRef.current?.viewportWorldCenter() ?? { x: 200, y: 160 };
+      const position = nextStaggeredPosition(current, { x: center.x - 110, y: center.y - 40 });
       created = {
         id: generateBoardLocalId(existing),
         kind: 'note',
@@ -435,6 +447,8 @@ const BoardCanvasScreen = () => {
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
+    toolRow: { flexDirection: 'row', gap: 8 },
+    toolControl: { flex: 1 },
   });
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
@@ -452,43 +466,54 @@ const BoardCanvasScreen = () => {
     <View style={styles.container}>
       {canEdit && (
         <View style={styles.tools}>
-          <MultiSelectPill
-            groups={groupedOptions}
-            selectedValues={pickerValues}
-            onSelectionChange={(values) => {
-              const selectedValue = values[0];
-              if (!selectedValue) {
-                setPickerValues([]);
-                return;
-              }
-              // A board picker is an action, not a persistent filter: every selection creates a
-              // fresh pin, so the same entity must be immediately available for another pin.
-              addEntities([selectedValue]);
-              setPickerValues([selectedValue]);
-              requestAnimationFrame(() => setPickerValues([]));
-            }}
-            placeholder={t('board_add_entity')}
-            noOptionsText={t('board_no_entities')}
-            singleSelect
-          />
-          <TouchableOpacity
-            onPress={addNote}
-            style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-            accessibilityLabel={t('board_add_note')}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 14 }}>{t('board_add_note')}</Text>
-          </TouchableOpacity>
+          <View style={styles.toolRow}>
+            <MultiSelectPill
+              style={styles.toolControl}
+              groups={groupedOptions}
+              selectedValues={pickerValues}
+              onSelectionChange={(values) => {
+                const selectedValue = values[0];
+                if (!selectedValue) {
+                  setPickerValues([]);
+                  return;
+                }
+                // A board picker is an action, not a persistent filter: every selection creates a
+                // fresh pin, so the same entity must be immediately available for another pin.
+                addEntities([selectedValue]);
+                setPickerValues([selectedValue]);
+                requestAnimationFrame(() => setPickerValues([]));
+              }}
+              placeholder={t('board_add_entity')}
+              noOptionsText={t('board_no_entities')}
+              singleSelect
+            />
+            <View style={styles.toolControl}>
+              <Button onPress={addNote} style={{ height: 50 }}>
+                {t('board_add_note')}
+              </Button>
+            </View>
+          </View>
         </View>
       )}
       <BoardCanvas
         ref={canvasRef}
         content={content}
         titles={titles}
-        selectedNodeId={selected?.id ?? null}
+        selectedNodeId={layoutEditing ? layoutSelectedNodeId : null}
+        layoutEditing={layoutEditing}
+        connectionMode={connectionMode}
         galleryMediaById={galleryMediaById}
-        onSelectNode={setSelected}
+        summaries={summariesByNode}
+        onSelectNode={(node) => {
+          if (layoutEditing) setLayoutSelectedNodeId(node.id);
+          else setSelected(node);
+        }}
         onMoveNode={handleMoveNode}
+        onResizeNode={handleResizeNode}
+        onOpenNodeDetails={setSelected}
+        onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
+        onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
+        onConnectNodes={(from, to) => setConnectionPair({ from, to })}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -518,9 +543,23 @@ const BoardCanvasScreen = () => {
               ),
             }));
           }}
+          onChangeEntityPresentation={(displayMode, cardNote) => {
+            setContent((current) => ({
+              ...current,
+              nodes: current.nodes.map((node) =>
+                node.id === selected.id && node.kind === 'entity'
+                  ? { ...node, displayMode, cardNote }
+                  : node,
+              ),
+            }));
+          }}
           onOpenEntity={() => {
             if (selected.kind !== 'entity') return;
             setSelected(null);
+            if (selected.entityType === 'Board') {
+              navigation.navigate('BoardCanvas', { boardId: selected.entityId });
+              return;
+            }
             if (selected.entityType === 'Gallery') {
               navigation.getParent()?.navigate('GalleryStack', {
                 screen: 'GalleryDetail',
@@ -532,6 +571,14 @@ const BoardCanvasScreen = () => {
             if (!type) return;
             navigateToEntity(type as NavigableEntityType, selected.entityId);
           }}
+        />
+      )}
+      {connectionPair && (
+        <BoardConnectionModal
+          pair={connectionPair}
+          nodeTitles={nodeTitles}
+          setContent={setContent}
+          onClose={() => setConnectionPair(null)}
         />
       )}
     </View>

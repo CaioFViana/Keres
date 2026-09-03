@@ -1,4 +1,4 @@
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -7,6 +7,7 @@ import {
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +15,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -22,6 +23,7 @@ import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
@@ -29,6 +31,7 @@ import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
 
 // Define the parameter list for this screen
@@ -42,12 +45,14 @@ const WorldRuleDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
+  const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<WorldRuleDetailScreenRouteProp>();
   const { worldRuleId } = route.params;
 
   const drizzleDb = useDrizzle();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('WorldRule');
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -95,21 +100,21 @@ const WorldRuleDetailScreen = () => {
       const fetchedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
       if (fetchedWorldRule && !fetchedWorldRule.isDeleted) {
         setWorldRule(fetchedWorldRule);
-        setHeaderTitle(fetchedWorldRule.title || t('world_rule_details_title'));
+        setHeaderTitle(fetchedWorldRule.title || copy.detailsTitle);
       } else if (fetchedWorldRule && fetchedWorldRule.isDeleted) {
         navigation.goBack();
       } else {
-        setError(t('world_rule_not_found'));
-        setHeaderTitle(t('world_rule_not_found'));
+        setError(copy.notFound);
+        setHeaderTitle(copy.notFound);
       }
     } catch (err) {
       console.error('Failed to fetch world rule details:', err);
-      setError(t('failed_to_load_world_rule'));
+      setError(copy.failedToLoad);
       setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, t]);
+  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const handleWorldRuleChange = useCallback(
     async (changedStoryId: string, changedWorldRuleId: string) => {
@@ -120,12 +125,12 @@ const WorldRuleDetailScreen = () => {
             navigation.goBack();
           } else {
             setWorldRule(updatedWorldRule);
-            setHeaderTitle(updatedWorldRule.title || t('world_rule_details_title'));
+            setHeaderTitle(updatedWorldRule.title || copy.detailsTitle);
           }
         }
       }
     },
-    [worldRuleId, navigation, setWorldRule, setHeaderTitle, t],
+    [worldRuleId, navigation, setWorldRule, setHeaderTitle, copy],
   );
 
   const handleTagRelationChange = useCallback(
@@ -179,7 +184,7 @@ const WorldRuleDetailScreen = () => {
   );
 
   if (loading) {
-    return <ScreenLoading padded message={t('loading_world_rule_details')} />;
+    return <ScreenLoading padded message={copy.loadingDetails} />;
   }
 
   if (error) {
@@ -187,13 +192,7 @@ const WorldRuleDetailScreen = () => {
   }
 
   if (!worldRule) {
-    return (
-      <ScreenError
-        padded
-        message={t('world_rule_data_missing')}
-        onGoBack={() => navigation.goBack()}
-      />
-    );
+    return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -201,7 +200,47 @@ const WorldRuleDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{worldRule.title}</Text>
       <TagList tags={worldRule.tags} variant="chip" emptyMessage={t('no_tags_found')} />
+
+      <CommentableDetailField
+        storyId={worldRule.storyId}
+        label={t('world_piece_section')}
+        value={t(`world_piece_section_${worldRule.section}`)}
+        comments={commentsByField['section'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'section' },
+            { ...input, contentSnapshot: t(`world_piece_section_${worldRule.section}`) },
+          )
+        }
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
+
+      {(['type', 'category', 'behavior', 'usability', 'danger'] as const).map((field) => (
+        <CommentableDetailField
+          key={field}
+          storyId={worldRule.storyId}
+          label={t(field === 'category' ? 'category' : `world_piece_${field}`)}
+          value={worldRule[field] || t('common_na')}
+          comments={commentsByField[field] ?? []}
+          canComment={canComment}
+          isStoryOwner={isStoryOwner}
+          currentUserId={currentUserId}
+          onAddComment={(input) =>
+            addComment(
+              { fieldKey: field },
+              { ...input, contentSnapshot: worldRule[field] || t('common_na') },
+            )
+          }
+          onDeleteComment={deleteComment}
+          onUpdateComment={updateComment}
+        />
+      ))}
 
       <CommentableDetailField
         storyId={worldRule.storyId}
@@ -245,6 +284,14 @@ const WorldRuleDetailScreen = () => {
         onUpdateComment={updateComment}
       />
 
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={worldRuleId}
+        ownerType="WorldRule"
+        onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
+      />
+
       <NoteManager
         noteRelations={worldRuleNoteRelations}
         availableNotes={allNotes}
@@ -267,6 +314,8 @@ const WorldRuleDetailScreen = () => {
         version={worldRule.version}
         createdAt={worldRule.createdAt}
         updatedAt={worldRule.updatedAt}
+        entityType="WorldRule"
+        entityId={worldRule.id}
       />
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />
 

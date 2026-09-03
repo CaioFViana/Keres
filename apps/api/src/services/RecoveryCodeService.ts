@@ -107,10 +107,18 @@ export class RecoveryCodeService {
 
     const hashedPassword = await hashPassword(newPassword);
     await db.transaction(async (tx) => {
-      await tx
+      // Claim the code in the same write that changes the password. Two requests can both read an
+      // unused code before either transaction begins; the `isUsed = false` predicate makes the
+      // second writer observe that the first one already consumed it instead of resetting the
+      // password a second time with the same recovery secret.
+      const [claimed] = await tx
         .update(userRecoveryCodes)
         .set({ isUsed: true, usedAt: new Date() })
-        .where(eq(userRecoveryCodes.id, matched!.id));
+        .where(and(eq(userRecoveryCodes.id, matched!.id), eq(userRecoveryCodes.isUsed, false)))
+        .returning({ id: userRecoveryCodes.id });
+      if (!claimed) {
+        throw new InvalidRecoveryCodeError();
+      }
       await tx
         .update(users)
         .set({ password: hashedPassword, updatedAt: new Date() })

@@ -22,6 +22,11 @@ export interface LanguageContentIndexOptions {
   typeImport: string;
   /** The property each language entry carries the payload under, e.g. `story` or `pack`. */
   payloadProperty: string;
+  /**
+   * Optional expression used for the imported payload.  This lets a catalogue keep old content
+   * readable when a newly exported optional collection becomes part of the package contract.
+   */
+  formatPayload?: (importName: string) => string;
   /** What to print when done, given how many items were indexed. */
   describe: (count: number) => string;
 }
@@ -58,7 +63,8 @@ export function generateLanguageContentIndex(options: LanguageContentIndexOption
         const language = basename(file, '.json');
         const importName = toImportName(slug, language);
         imports += `import ${importName} from '../content/${slug}/${file}';\n`;
-        return `      { language: '${language}', ${options.payloadProperty}: ${importName} },`;
+        const payload = options.formatPayload?.(importName) ?? importName;
+        return `      { language: '${language}', ${options.payloadProperty}: ${payload} },`;
       })
       .join('\n');
 

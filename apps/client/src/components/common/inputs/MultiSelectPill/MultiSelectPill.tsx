@@ -1,4 +1,6 @@
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
+import { ENTITY_APPEARANCE, getContrastTextColor, getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
@@ -11,22 +13,39 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
-import { getContrastTextColor } from '@keres/shared';
 
 export interface MultiSelectOption {
   label: string;
   value: string;
   color?: string;
+  /** Optional entity or section icon displayed beside the option in the modal. */
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 export interface MultiSelectGroup {
   key: string;
   label: string;
+  /** Entity appearance used when the caller does not need an intentional custom colour. */
+  entityType?: keyof typeof ENTITY_APPEARANCE;
   icon?: keyof typeof Ionicons.glyphMap;
   color?: string;
   options: MultiSelectOption[];
+}
+
+/** Compatibility shape for places that previously needed a one-value dropdown. */
+export interface SingleSelectPillProps {
+  options: (Omit<MultiSelectOption, 'color'> & { color?: string | null })[];
+  value: string | null;
+  onValueChange: (value: string | null) => void;
+  placeholder?: string;
+  /** Kept for call-site readability; this component always chooses one value. */
+  multiple?: false;
+  disabled?: boolean;
+  allowDeselect?: boolean;
+  /** Layout adjustment for compact contexts such as a filter toolbar. */
+  style?: StyleProp<ViewStyle>;
+  triggerStyle?: StyleProp<ViewStyle>;
 }
 
 interface MultiSelectPillProps {
@@ -34,7 +53,7 @@ interface MultiSelectPillProps {
   options?: MultiSelectOption[];
   /**
    * Selection in two steps: the type first, then the entity - good when there are hundreds of options of
-   * different types (the `EntityPickerInput`, say). Exactly one of the two (`options` or `groups`) has to
+   * different types (an entity selector, say). Exactly one of the two (`options` or `groups`) has to
    * be passed.
    */
   groups?: MultiSelectGroup[];
@@ -47,8 +66,12 @@ interface MultiSelectPillProps {
   searchPlaceholder?: string;
   /** Limits the selection to one value and closes the modal after the choice. */
   singleSelect?: boolean;
+  /** Lets a selected single value be cleared by choosing it again. */
+  allowDeselect?: boolean;
   /** Maximum number of simultaneous options. Options not yet chosen become unavailable. */
   maxSelections?: number;
+  /** Makes the trigger inert while retaining its current value. */
+  disabled?: boolean;
   /** Ajustes de layout para contextos compactos, como barras de filtro. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
@@ -64,7 +87,7 @@ const FLAT_GROUP_KEY = '__flat__';
  * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 duplicated lines of style/animation): `options`
  * flattens the list straight into one modal; `groups` asks for the type first. When there is only one
  * group (a flat `options`, or `groups` with a single item), the type-picking step is skipped - the same
- * path `EntityPickerInput` already used in `singleSelect` mode.
+ * path used by a one-type entity selector in `singleSelect` mode.
  */
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   options,
@@ -76,13 +99,15 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   noOptionsText,
   searchPlaceholder,
   singleSelect = false,
+  allowDeselect = true,
   maxSelections,
+  disabled = false,
   style,
   triggerStyle,
   pillStyle,
   selectionSummary,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,6 +117,20 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   const effectiveGroups = useMemo<MultiSelectGroup[]>(
     () => groups ?? [{ key: FLAT_GROUP_KEY, label: '', options: options ?? [] }],
     [groups, options],
+  );
+
+  const groupAppearance = useCallback(
+    (group: MultiSelectGroup) => {
+      const appearanceKey = group.entityType ?? group.key;
+      const defaultAppearance = Object.hasOwn(ENTITY_APPEARANCE, appearanceKey)
+        ? getEntityAppearance(appearanceKey, isDarkMode)
+        : undefined;
+      return {
+        icon: group.icon ?? (defaultAppearance?.icon as keyof typeof Ionicons.glyphMap | undefined),
+        color: group.color ?? defaultAppearance?.color,
+      };
+    },
+    [isDarkMode],
   );
 
   const optionsByValue = useMemo(() => {
@@ -148,7 +187,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         return;
       }
       const newSelection = singleSelect
-        ? selectedValues.includes(value)
+        ? selectedValues.includes(value) && allowDeselect
           ? []
           : [value]
         : selectedValues.includes(value)
@@ -159,7 +198,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         closeModal();
       }
     },
-    [selectedValues, onSelectionChange, singleSelect, maxSelections, closeModal],
+    [selectedValues, onSelectionChange, singleSelect, allowDeselect, maxSelections, closeModal],
   );
 
   const openGroup = useCallback((groupKey: string) => {
@@ -173,6 +212,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   }, []);
 
   const showGroupPicker = !activeGroup && effectiveGroups.length > 1;
+  const singleValueAppearance = singleSelect || maxSelections === 1;
 
   const styles = StyleSheet.create({
     container: {
@@ -192,12 +232,24 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       padding: 10,
       minHeight: 50,
       alignItems: 'center',
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderWidth: 1,
       // The spacing between pills belongs to the container, not to each pill. With a margin on each one, the
       // last still charged its bottom margin: the field grew when the first option was chosen and the pill
       // sat above the centre, with 8px of slack underneath it.
       gap: 8,
+    },
+    singleValueContainer: {
+      flexWrap: 'nowrap',
+      borderRadius: 5,
+    },
+    singleValueText: {
+      color: colors.text,
+      fontSize: 16,
+      flexShrink: 1,
+    },
+    disabled: {
+      opacity: 0.4,
     },
     pill: {
       flexDirection: 'row',
@@ -316,6 +368,13 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       borderWidth: 1,
       borderColor: colors.border,
     },
+    optionIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     optionText: {
       fontSize: 16,
       color: colors.text,
@@ -341,10 +400,20 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       <TouchableOpacity
         testID="multiselect-trigger"
         onPress={openModal}
-        style={[styles.pillContainer, triggerStyle]}
+        disabled={disabled}
+        style={[
+          styles.pillContainer,
+          singleValueAppearance && styles.singleValueContainer,
+          disabled && styles.disabled,
+          triggerStyle,
+        ]}
       >
         {selectionSummary ? (
           <Text style={styles.selectionSummary}>{selectionSummary}</Text>
+        ) : singleValueAppearance && selectedOptionDetails[0] ? (
+          <Text style={styles.singleValueText} numberOfLines={1}>
+            {selectedOptionDetails[0].label}
+          </Text>
         ) : selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option) => {
             const pillBackgroundColor = option.color || colors.primaryContainer;
@@ -363,7 +432,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
         )}
         <Ionicons
-          name={singleSelect ? 'chevron-down' : 'add-circle'}
+          name={singleValueAppearance ? 'chevron-down' : 'add-circle'}
           size={24}
           color={colors.primary}
           style={{ marginLeft: 'auto' }}
@@ -409,6 +478,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
             {showGroupPicker ? (
               effectiveGroups.map((group) => {
+                const appearance = groupAppearance(group);
                 const selectedCount = group.options.filter((option) =>
                   selectedValues.includes(option.value),
                 ).length;
@@ -420,17 +490,17 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                     onPress={() => !disabled && openGroup(group.key)}
                     disabled={disabled}
                   >
-                    {group.icon && (
+                    {appearance.icon && (
                       <View
                         style={[
                           styles.groupIcon,
-                          { backgroundColor: group.color || colors.primaryContainer },
+                          { backgroundColor: appearance.color || colors.primaryContainer },
                         ]}
                       >
                         <Ionicons
-                          name={group.icon}
+                          name={appearance.icon}
                           size={18}
-                          color={getContrastTextColor(group.color || colors.primaryContainer)}
+                          color={getContrastTextColor(appearance.color || colors.primaryContainer)}
                         />
                       </View>
                     )}
@@ -451,6 +521,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
               })
             ) : visibleOptions.length > 0 ? (
               visibleOptions.map((option) => {
+                const groupOptionAppearance = groupAppearance(activeGroup!);
+                const optionIcon = option.icon ?? groupOptionAppearance.icon;
+                const optionColor = option.color ?? groupOptionAppearance.color;
                 const atSelectionLimit =
                   !singleSelect &&
                   maxSelections !== undefined &&
@@ -465,9 +538,23 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
                     disabled={atSelectionLimit}
                   >
                     <View style={styles.optionLeading}>
-                      {option.color && (
+                      {optionIcon ? (
+                        <View
+                          testID={`multiselect-option-icon-${option.value}`}
+                          style={[
+                            styles.optionIcon,
+                            { backgroundColor: optionColor || colors.primaryContainer },
+                          ]}
+                        >
+                          <Ionicons
+                            name={optionIcon}
+                            size={16}
+                            color={getContrastTextColor(optionColor || colors.primaryContainer)}
+                          />
+                        </View>
+                      ) : option.color ? (
                         <View style={[styles.optionColor, { backgroundColor: option.color }]} />
-                      )}
+                      ) : null}
                       <Text style={styles.optionText}>{option.label}</Text>
                     </View>
                     <View testID={`multiselect-check-${option.value}`} style={styles.optionCheck}>
@@ -487,5 +574,29 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     </View>
   );
 };
+
+/** A searchable, text-input-shaped single selector backed by `MultiSelectPill`. */
+export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  allowDeselect = false,
+  style,
+  triggerStyle,
+}) => (
+  <MultiSelectPill
+    options={options.map((option) => ({ ...option, color: option.color ?? undefined }))}
+    selectedValues={value ? [value] : []}
+    onSelectionChange={(values) => onValueChange(values[0] ?? null)}
+    placeholder={placeholder}
+    singleSelect
+    allowDeselect={allowDeselect}
+    disabled={disabled}
+    style={style}
+    triggerStyle={triggerStyle}
+  />
+);
 
 export default MultiSelectPill;

@@ -14,6 +14,7 @@ import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { setDocumentTitle } from '../../../utils/documentTitle';
+import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 
 const TIMELINE_CONTROL_LABELS = {
   add: 'zoom_in',
@@ -25,6 +26,7 @@ const TIMELINE_CONTROL_LABELS = {
 const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'StoryTimeline'>>();
@@ -142,7 +144,7 @@ const StoryTimelineScreen = () => {
         }))}
         selectedValues={chapterIds}
         onSelectionChange={setChapterIds}
-        placeholder={t('chapters_title')}
+        placeholder={term('Chapter', true)}
         searchPlaceholder={t('search')}
         selectionSummary={
           chapterIds.length === chapters.length ? t('story_timeline_all_chapters') : undefined

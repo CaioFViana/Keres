@@ -1,9 +1,9 @@
-import { Button, Select } from '@/src/components/common';
+import { Button, SingleSelectPill } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import type { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -38,7 +38,7 @@ type StorySettingsScreenNavigationProp = DrawerNavigationProp<
 const StorySettingsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors, setTheme: applyTheme } = useTheme();
+  const { colors } = useTheme();
   const navigation = useNavigation<StorySettingsScreenNavigationProp>();
   // Removed useRoute and route.params
   const { selectedStory, setSelectedStory } = useStoryStore();
@@ -55,7 +55,7 @@ const StorySettingsScreen = () => {
     useCallback(() => {
       // A leaf `Drawer.Screen` again, now that the calendars have their own drawer entry - so this
       // is its own title, not the parent's.
-      navigation.setOptions({ title: t('story_settings_title') });
+      navigation.setOptions({ title: t('story_settings_title'), headerRight: undefined });
       setDocumentTitle(t('story_settings_title'));
     }, [navigation, t]),
   );
@@ -69,13 +69,9 @@ const StorySettingsScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [theme, setTheme] = useState<string | null>(null);
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
-  const [statSystem, setStatSystem] = useState(false);
-  const [statNotation, setStatNotation] = useState<StatNotation>('letter');
   const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [autoLinkMentions, setAutoLinkMentions] = useState(false);
-  const [completenessChecks, setCompletenessChecks] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -117,14 +113,9 @@ const StorySettingsScreen = () => {
         setIsFavorite(fetchedStory.isFavorite);
         setFavoriteBehavior(fetchedStory.favoriteBehavior);
         setExtraNotes(fetchedStory.extraNotes);
-        setTheme(fetchedStory.theme);
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
-        setStatSystem(fetchedStory.statSystem);
-        setStatNotation(fetchedStory.statNotation as StatNotation);
         setAllowReaderComments(fetchedStory.allowReaderComments);
         setAutoLinkMentions(fetchedStory.autoLinkMentions);
-        setCompletenessChecks(fetchedStory.completenessChecks);
-        applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
         const servers = await serverService().getAllServers();
@@ -154,7 +145,7 @@ const StorySettingsScreen = () => {
       }
     };
     loadStoryAndServers();
-  }, [storyId, storyService, serverService, userId, t, applyTheme]);
+  }, [storyId, storyService, serverService, userId, t]);
 
   const linkedServer = availableServers.find((server) => server.id === serverId) ?? null;
 
@@ -255,13 +246,9 @@ const StorySettingsScreen = () => {
         author,
         isFavorite,
         extraNotes,
-        theme,
-        normalizeSceneTiming,
         // Preferences about this story, not owner policy: a writer may turn either on or off.
+        normalizeSceneTiming,
         autoLinkMentions,
-        completenessChecks,
-        statSystem,
-        statNotation,
         // `type` / `favoriteBehavior` / `allowReaderComments` are owner policy - a
         // writer who sent them would write locally and take an `unauthorized` on every push.
         ...(canManageStoryPolicy ? { favoriteBehavior, allowReaderComments } : {}),
@@ -289,21 +276,10 @@ const StorySettingsScreen = () => {
     if (!storyId || !userId || !canManageStoryPolicy || newType === type) return;
 
     if (newType === 'branching') {
-      // Plots only exist in linear stories: warn before asking, as in the opposite
-      // direction, instead of letting the conversion fail without explanation.
       (async () => {
         try {
           setLoading(true);
-          const activePlots = await storyService().countActivePlots(storyId);
           setLoading(false);
-
-          if (activePlots > 0) {
-            AppAlert.alert(
-              t('cannot_convert_to_branching_title'),
-              t('cannot_convert_to_branching_plots_message', { count: activePlots }),
-            );
-            return;
-          }
 
           AppAlert.alert(
             t('convert_to_branching_title'),
@@ -696,212 +672,240 @@ const StorySettingsScreen = () => {
         onIsFavoriteChange={setIsFavorite}
         favoriteBehavior={favoriteBehavior}
         onFavoriteBehaviorChange={setFavoriteBehavior}
+        showFavoriteBehavior={false}
         extraNotes={extraNotes}
         onExtraNotesChange={setExtraNotes}
-        theme={theme}
-        onThemeChange={setTheme}
         editable={canEdit}
       />
 
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('normalize_scene_timing')}</Text>
-          <Text style={{ color: colors.textSecondary }}>
-            {t('normalize_scene_timing_description')}
-          </Text>
-        </View>
-        <ThemedSwitch
-          value={normalizeSceneTiming}
-          onValueChange={setNormalizeSceneTiming}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('auto_link_mentions')}</Text>
-          <Text style={{ color: colors.textSecondary }}>{t('auto_link_mentions_description')}</Text>
-        </View>
-        <ThemedSwitch
-          value={autoLinkMentions}
-          onValueChange={setAutoLinkMentions}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('completeness_checks')}</Text>
-          <Text style={{ color: colors.textSecondary }}>
-            {t('completeness_checks_description')}
-          </Text>
-        </View>
-        <ThemedSwitch
-          value={completenessChecks}
-          onValueChange={setCompletenessChecks}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('stat_system')}</Text>
-          <Text style={{ color: colors.textSecondary }}>{t('stat_system_description')}</Text>
-        </View>
-        <ThemedSwitch value={statSystem} onValueChange={setStatSystem} disabled={!canEdit} />
-      </View>
-
-      {/* A notação só muda como os valores aparecem, então só faz sentido com o sistema ligado. */}
-      {statSystem && (
-        <View style={{ marginBottom: 20 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('stat_notation')}</Text>
-          <Select
-            options={[
-              { label: t('stat_notation_letter'), value: 'letter' },
-              { label: t('stat_notation_number'), value: 'number' },
-            ]}
-            value={statNotation}
-            onValueChange={(value) => setStatNotation((value as StatNotation) || 'letter')}
-            placeholder={t('stat_notation')}
-            disabled={!canEdit}
-          />
-          <Text style={{ color: colors.textSecondary }}>{t('stat_notation_description')}</Text>
-        </View>
-      )}
-
-      {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
-              história local não tem colaboradores, então este ajuste não faria sentido. */}
-      {serverId && (
-        <View style={styles.switchContainer}>
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={[styles.label, { color: colors.text }]}>{t('allow_reader_comments')}</Text>
-            <Text style={{ color: colors.textSecondary }}>
-              {t('allow_reader_comments_description')}
+      <View
+        style={[
+          styles.preferencesCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        <View
+          style={[
+            styles.preferenceRow,
+            styles.preferenceRowDivider,
+            { borderBottomColor: colors.border },
+          ]}
+        >
+          <View style={styles.preferenceBody}>
+            <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+              {t('normalize_scene_timing')}
+            </Text>
+            <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+              {t('normalize_scene_timing_description')}
             </Text>
           </View>
           <ThemedSwitch
-            value={allowReaderComments}
-            onValueChange={setAllowReaderComments}
-            disabled={!canManageStoryPolicy}
+            value={normalizeSceneTiming}
+            onValueChange={setNormalizeSceneTiming}
+            disabled={!canEdit}
           />
         </View>
-      )}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-      {serverId === null ? (
-        uploadServerOptions.length > 0 ? (
-          <>
-            <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
-              {t('send_to_server_description')}
+        <View
+          style={[
+            styles.preferenceRow,
+            styles.preferenceRowDivider,
+            { borderBottomColor: colors.border },
+          ]}
+        >
+          <View style={styles.preferenceBody}>
+            <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+              {t('auto_link_mentions')}
             </Text>
-            <Select
-              options={uploadServerOptions}
-              value={uploadTargetServerId}
-              onValueChange={setUploadTargetServerId}
-              placeholder={t('select_server')}
-            />
-            <Button
-              onPress={handleSendToServer}
-              disabled={!uploadTargetServerId || serverActionLoading}
-              style={styles.saveButton}
-            >
-              {t('send_to_server')}
-            </Button>
-          </>
-        ) : (
-          <Text style={{ color: colors.textSecondary }}>{t('no_registered_servers')}</Text>
-        )
-      ) : (
-        <>
-          <Text style={{ color: colors.text, marginBottom: 10 }}>
-            {linkedServer?.name ?? serverId}
+            <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+              {t('auto_link_mentions_description')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={autoLinkMentions}
+            onValueChange={setAutoLinkMentions}
+            disabled={!canEdit}
+          />
+        </View>
+
+        <View>
+          <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+            {t('favorite_behavior')}
           </Text>
+          <SingleSelectPill
+            options={[
+              { label: t('favorite_behavior_global'), value: 'global' },
+              { label: t('favorite_behavior_individual'), value: 'individual' },
+              { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
+            ]}
+            value={favoriteBehavior}
+            onValueChange={(value) => setFavoriteBehavior(value as FavoriteBehavior)}
+            placeholder={t('favorite_behavior')}
+            disabled={!canManageStoryPolicy}
+          />
+          <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+            {t(`favorite_behavior_${favoriteBehavior}_description`)}
+          </Text>
+        </View>
+      </View>
 
-          {isOwnerOnServer === true && (
-            <View style={styles.collaboratorsSection}>
-              <Text style={[styles.label, { color: colors.text }]}>{t('collaborators_title')}</Text>
-
-              {addableFriendOptions.length > 0 ? (
-                <View style={styles.addCollaboratorRow}>
-                  <View style={styles.addCollaboratorFriendSelect}>
-                    <Select
-                      options={addableFriendOptions}
-                      value={selectedFriendId}
-                      onValueChange={setSelectedFriendId}
-                      placeholder={t('select_friend_to_add')}
-                    />
-                  </View>
-                  <View style={styles.addCollaboratorPermissionSelect}>
-                    <Select
-                      options={permissionTypeOptions}
-                      value={selectedPermissionType}
-                      onValueChange={(value) =>
-                        setSelectedPermissionType(value as 'reader' | 'writer')
-                      }
-                      placeholder={t('select_permission_type')}
-                    />
-                  </View>
-                  <Button
-                    onPress={handleAddCollaborator}
-                    disabled={!selectedFriendId || serverActionLoading}
-                    style={styles.addCollaboratorButton}
-                  >
-                    {t('add')}
-                  </Button>
-                </View>
-              ) : (
-                <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
-                  {t('no_addable_friends')}
-                </Text>
-              )}
-
-              {collaborators !== null && collaborators.length === 0 && (
-                <Text style={{ color: colors.textSecondary }}>{t('no_collaborators')}</Text>
-              )}
-              {(collaborators ?? []).map((collaborator) => (
-                <View key={collaborator.id} style={styles.collaboratorRow}>
-                  <Text style={[styles.collaboratorName, { color: colors.text }]} numberOfLines={2}>
-                    {collaborator.user?.username ?? collaborator.userId}
-                  </Text>
-                  <View style={styles.collaboratorPermissionSelect}>
-                    <Select
-                      options={permissionTypeOptions}
-                      value={collaborator.permissionType}
-                      onValueChange={(value) => {
-                        if (value === 'reader' || value === 'writer') {
-                          void handleUpdateCollaboratorPermission(collaborator, value);
-                        }
-                      }}
-                      disabled={serverActionLoading}
-                    />
-                  </View>
-                  <Button
-                    onPress={() => handleRemoveCollaborator(collaborator)}
-                    disabled={serverActionLoading}
-                    style={styles.removeCollaboratorButton}
-                  >
-                    {t('remove')}
-                  </Button>
-                </View>
-              ))}
-
-              {collaborators !== null && collaborators.length > 0 && (
-                <Text style={{ color: colors.textSecondary, marginTop: 5 }}>
-                  {t('unlink_blocked_by_collaborators')}
-                </Text>
-              )}
-
-              <Button
-                onPress={handleUnlinkFromServer}
-                disabled={serverActionLoading || collaborators === null || collaborators.length > 0}
-                style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
-              >
-                {t('unlink_from_server_title')}
-              </Button>
+      <View
+        style={[
+          styles.collaborationCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
+            história local não tem colaboradores, então este ajuste não faria sentido. */}
+        {serverId && (
+          <View
+            style={[
+              styles.preferenceRow,
+              styles.preferenceRowDivider,
+              { borderBottomColor: colors.border },
+            ]}
+          >
+            <View style={styles.preferenceBody}>
+              <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+                {t('allow_reader_comments')}
+              </Text>
+              <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+                {t('allow_reader_comments_description')}
+              </Text>
             </View>
+            <ThemedSwitch
+              value={allowReaderComments}
+              onValueChange={setAllowReaderComments}
+              disabled={!canManageStoryPolicy}
+            />
+          </View>
+        )}
+
+        <View style={serverId ? styles.serverSection : undefined}>
+          <Text style={[styles.preferenceTitle, { color: colors.text }]}>{t('server')}</Text>
+          {serverId === null ? (
+            uploadServerOptions.length > 0 ? (
+              <>
+                <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+                  {t('send_to_server_description')}
+                </Text>
+                <SingleSelectPill
+                  options={uploadServerOptions}
+                  value={uploadTargetServerId}
+                  onValueChange={setUploadTargetServerId}
+                  placeholder={t('select_server')}
+                />
+                <Button
+                  onPress={handleSendToServer}
+                  disabled={!uploadTargetServerId || serverActionLoading}
+                  style={styles.serverActionButton}
+                >
+                  {t('send_to_server')}
+                </Button>
+              </>
+            ) : (
+              <Text style={{ color: colors.textSecondary }}>{t('no_registered_servers')}</Text>
+            )
+          ) : (
+            <>
+              <Text style={{ color: colors.text, marginBottom: 10 }}>
+                {linkedServer?.name ?? serverId}
+              </Text>
+
+              {isOwnerOnServer === true && (
+                <View style={[styles.collaboratorsSection, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+                    {t('collaborators_title')}
+                  </Text>
+
+                  {addableFriendOptions.length > 0 ? (
+                    <View style={styles.addCollaboratorRow}>
+                      <View style={styles.addCollaboratorFriendSelect}>
+                        <SingleSelectPill
+                          options={addableFriendOptions}
+                          value={selectedFriendId}
+                          onValueChange={setSelectedFriendId}
+                          placeholder={t('select_friend_to_add')}
+                        />
+                      </View>
+                      <View style={styles.addCollaboratorPermissionSelect}>
+                        <SingleSelectPill
+                          options={permissionTypeOptions}
+                          value={selectedPermissionType}
+                          onValueChange={(value) =>
+                            setSelectedPermissionType(value as 'reader' | 'writer')
+                          }
+                          placeholder={t('select_permission_type')}
+                        />
+                      </View>
+                      <Button
+                        onPress={handleAddCollaborator}
+                        disabled={!selectedFriendId || serverActionLoading}
+                        style={styles.addCollaboratorButton}
+                      >
+                        {t('add')}
+                      </Button>
+                    </View>
+                  ) : (
+                    <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+                      {t('no_addable_friends')}
+                    </Text>
+                  )}
+
+                  {collaborators !== null && collaborators.length === 0 && (
+                    <Text style={{ color: colors.textSecondary }}>{t('no_collaborators')}</Text>
+                  )}
+                  {(collaborators ?? []).map((collaborator) => (
+                    <View key={collaborator.id} style={styles.collaboratorRow}>
+                      <Text
+                        style={[styles.collaboratorName, { color: colors.text }]}
+                        numberOfLines={2}
+                      >
+                        {collaborator.user?.username ?? collaborator.userId}
+                      </Text>
+                      <View style={styles.collaboratorPermissionSelect}>
+                        <SingleSelectPill
+                          options={permissionTypeOptions}
+                          value={collaborator.permissionType}
+                          onValueChange={(value) => {
+                            if (value === 'reader' || value === 'writer') {
+                              void handleUpdateCollaboratorPermission(collaborator, value);
+                            }
+                          }}
+                          disabled={serverActionLoading}
+                        />
+                      </View>
+                      <Button
+                        onPress={() => handleRemoveCollaborator(collaborator)}
+                        disabled={serverActionLoading}
+                        style={styles.removeCollaboratorButton}
+                      >
+                        {t('remove')}
+                      </Button>
+                    </View>
+                  ))}
+
+                  {collaborators !== null && collaborators.length > 0 && (
+                    <Text style={{ color: colors.textSecondary, marginTop: 5 }}>
+                      {t('unlink_blocked_by_collaborators')}
+                    </Text>
+                  )}
+
+                  <Button
+                    onPress={handleUnlinkFromServer}
+                    disabled={
+                      serverActionLoading || collaborators === null || collaborators.length > 0
+                    }
+                    style={[styles.serverActionButton, { backgroundColor: colors.error }]}
+                  >
+                    {t('unlink_from_server_title')}
+                  </Button>
+                </View>
+              )}
+            </>
           )}
-        </>
-      )}
+        </View>
+      </View>
 
       <FormActions stackOnCompact>
         <Button onPress={handleSave} disabled={!canEdit}>
@@ -935,24 +939,42 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 5,
   },
-  switchContainer: {
-    flexDirection: 'row',
+  preferencesCard: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 20,
+    marginBottom: 10,
+    padding: 15,
+  },
+  collaborationCard: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 20,
+    padding: 15,
+  },
+  preferenceRow: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 15,
-    marginBottom: 5,
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 4,
   },
-  saveButton: {
-    marginTop: 35,
-    marginBottom: 0,
+  preferenceRowDivider: {
+    borderBottomWidth: 1,
+    marginBottom: 10,
+    paddingBottom: 14,
   },
-  deleteButton: {
-    marginTop: 10,
-    marginBottom: 15,
-    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
-  },
+  preferenceBody: { flex: 1 },
+  preferenceTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
+  preferenceDescription: { marginTop: 3 },
+  serverSection: { paddingTop: 0 },
   collaboratorsSection: {
-    marginTop: 15,
+    borderTopWidth: 1,
+    marginTop: 16,
+    paddingTop: 14,
+  },
+  serverActionButton: {
+    marginTop: 12,
+    minHeight: 50,
   },
   addCollaboratorRow: {
     flexDirection: 'row',
@@ -968,6 +990,10 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   addCollaboratorButton: {
+    // SingleSelectPill reserves 10px beneath its trigger. Match that reserved space so flex
+    // measures all three controls equally and aligns their visible top edges.
+    marginBottom: 10,
+    minHeight: 50,
     paddingHorizontal: 12,
   },
   collaboratorRow: {

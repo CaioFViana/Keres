@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { BoardContentType, BoardNodeType } from '@keres/shared';
+import type { BoardCardDisplayMode, BoardContentType, BoardNodeType } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
@@ -28,6 +30,7 @@ interface Props {
   onChangeContent: (content: BoardContentType) => void;
   onOpenEntity: () => void;
   onChangeNote: (title: string, body: string | null) => void;
+  onChangeEntityPresentation: (displayMode: BoardCardDisplayMode, cardNote: string | null) => void;
 }
 
 const BoardNodeSheet: React.FC<Props> = ({
@@ -43,6 +46,7 @@ const BoardNodeSheet: React.FC<Props> = ({
   onChangeContent,
   onOpenEntity,
   onChangeNote,
+  onChangeEntityPresentation,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -63,7 +67,18 @@ const BoardNodeSheet: React.FC<Props> = ({
   }, [node.id, noteBodyFromNode, noteTitleFromNode]);
 
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
-  const others = content.nodes.filter((item) => item.id !== node.id);
+  // An edge is a relationship between a pair, irrespective of its direction. Keeping the picker
+  // to unconnected pins makes the UI match the content schema and avoids invalid drafts.
+  const connectedNodeIds = new Set(
+    edges.map((edge) => (edge.from === node.id ? edge.to : edge.from)),
+  );
+  // State updates are asynchronous, so a fast double tap can call `addEdge` twice before the
+  // picker rerenders. Keep the immediate interaction state in a ref as well as in the UI state.
+  const connectedNodeIdsRef = useRef(connectedNodeIds);
+  connectedNodeIdsRef.current = connectedNodeIds;
+  const others = content.nodes.filter(
+    (item) => item.id !== node.id && !connectedNodeIds.has(item.id),
+  );
   const connectOptions = others.map((item) => ({
     label: nodeTitles[item.id] ?? item.id,
     value: item.id,
@@ -175,6 +190,11 @@ const BoardNodeSheet: React.FC<Props> = ({
 
   const addEdge = () => {
     if (!connectTo) return;
+    if (connectedNodeIdsRef.current.has(connectTo)) {
+      setConnectTo(null);
+      return;
+    }
+    connectedNodeIdsRef.current.add(connectTo);
     const existing = new Set([
       ...content.nodes.map((item) => item.id),
       ...content.edges.map((edge) => edge.id),
@@ -265,6 +285,43 @@ const BoardNodeSheet: React.FC<Props> = ({
           </View>
         )}
 
+        {node.kind === 'entity' && canEdit && (
+          <View style={cardStyles.cardContainer}>
+            <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('board_card_content')}</Text>
+            <SingleSelectPill
+              options={[
+                { label: t('board_card_compact'), value: 'compact' },
+                { label: t('board_card_summary'), value: 'summary' },
+                { label: t('board_card_note'), value: 'note' },
+                { label: t('board_card_summary_and_note'), value: 'summary-and-note' },
+              ]}
+              value={node.displayMode ?? 'compact'}
+              onValueChange={(value) =>
+                onChangeEntityPresentation(
+                  (value ?? 'compact') as BoardCardDisplayMode,
+                  node.cardNote ?? null,
+                )
+              }
+              multiple={false}
+              placeholder={t('board_card_content')}
+            />
+            {((node.displayMode ?? 'compact') === 'note' ||
+              (node.displayMode ?? 'compact') === 'summary-and-note') && (
+              <View style={[styles.field, { marginTop: 10 }]}>
+                <TextInput
+                  value={node.cardNote ?? ''}
+                  onChangeText={(value) =>
+                    onChangeEntityPresentation(node.displayMode ?? 'compact', value || null)
+                  }
+                  placeholder={t('board_card_note_placeholder')}
+                  multiline
+                  style={{ minHeight: 100, textAlignVertical: 'top' }}
+                />
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={cardStyles.cardContainer}>
           <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('board_edges')}</Text>
           {edges.length === 0 ? (
@@ -316,7 +373,11 @@ const BoardNodeSheet: React.FC<Props> = ({
                   placeholder={t('board_edge_label')}
                 />
               </View>
-              <Button disabled={!connectTo} onPress={addEdge} style={styles.addButton}>
+              <Button
+                disabled={!connectTo || connectedNodeIds.has(connectTo)}
+                onPress={addEdge}
+                style={styles.addButton}
+              >
                 {t('board_add_edge')}
               </Button>
             </>

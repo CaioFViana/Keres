@@ -1,18 +1,25 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import type { WorldRule } from '@keres/shared/entities/WorldRule';
+import {
+  WORLD_PIECE_SECTIONS,
+  type WorldPieceSection,
+  type WorldRule,
+} from '@keres/shared/entities/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -38,6 +45,7 @@ import {
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
 type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
 
@@ -47,6 +55,7 @@ const WorldRuleFormScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<WorldRuleFormScreenRouteProp>();
   const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('WorldRule');
   const { userId } = useUserSettingsStore();
   const { worldRuleId: initialWorldRuleId } = route.params || {}; // Renamed to initialWorldRuleId
   const { selectedStory } = useStoryStore();
@@ -70,6 +79,12 @@ const WorldRuleFormScreen = () => {
   ); // State to manage worldRuleId
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string | null>(null);
+  const [section, setSection] = useState<WorldPieceSection>('rule');
+  const [type, setType] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const [behavior, setBehavior] = useState<string | null>(null);
+  const [usability, setUsability] = useState<string | null>(null);
+  const [danger, setDanger] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
@@ -92,15 +107,16 @@ const WorldRuleFormScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentWorldRuleId;
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'));
+      setDocumentTitle(formTitle);
       navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'),
+        title: formTitle,
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t]),
+    }, [navigation, formTitle]),
   );
 
   useEffect(() => {
@@ -118,6 +134,12 @@ const WorldRuleFormScreen = () => {
           if (fetchedWorldRule) {
             setTitle(fetchedWorldRule.title);
             setDescription(fetchedWorldRule.description);
+            setSection(fetchedWorldRule.section as WorldPieceSection);
+            setType(fetchedWorldRule.type);
+            setCategory(fetchedWorldRule.category);
+            setBehavior(fetchedWorldRule.behavior);
+            setUsability(fetchedWorldRule.usability);
+            setDanger(fetchedWorldRule.danger);
             setIsFavorite(fetchedWorldRule.isFavorite);
             setExtraNotes(fetchedWorldRule.extraNotes);
 
@@ -147,7 +169,7 @@ const WorldRuleFormScreen = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      AppAlert.alert(t('error'), t('world_rule_title_required'));
+      AppAlert.alert(t('error'), copy.required);
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
@@ -173,6 +195,12 @@ const WorldRuleFormScreen = () => {
       > = {
         title: title.trim(),
         description: description,
+        section,
+        type,
+        category,
+        behavior,
+        usability,
+        danger,
         isFavorite: isFavorite,
         extraNotes: extraNotes,
       };
@@ -184,13 +212,13 @@ const WorldRuleFormScreen = () => {
           currentWorldRuleId!,
           worldRuleData,
         );
-        AppAlert.alert(t('success'), t('world_rule_updated_successfully'));
+        AppAlert.alert(t('success'), copy.updated);
       } else {
         savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, {
           ...worldRuleData,
           storyId: selectedStory.id,
         });
-        AppAlert.alert(t('success'), t('world_rule_created_successfully'));
+        AppAlert.alert(t('success'), copy.created);
         setCurrentWorldRuleId(savedWorldRule.id);
       }
 
@@ -218,7 +246,7 @@ const WorldRuleFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save world rule:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_world_rule'));
+      AppAlert.alert(t('error'), copy.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -235,9 +263,12 @@ const WorldRuleFormScreen = () => {
 
     confirmDelete({
       titleKey: 'delete_world_rule_title',
+      title: copy.deleteLabel,
       messageKey: 'delete_world_rule_message',
-      successKey: 'world_rule_deleted_successfully',
+      message: copy.deleteMessage,
+      successMessage: copy.deleted,
       failureKey: 'failed_to_delete_world_rule',
+      failureMessage: copy.failedToDelete,
       onLoadingChange: setLoading,
       onConfirm: async () => {
         await worldRuleServiceRef.current!.deleteWorldRule(userId, currentWorldRuleId);
@@ -295,12 +326,8 @@ const WorldRuleFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {isEditing ? t('edit_world_rule_title') : t('create_world_rule_title')}
-      </Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {t('world_rule_form_description')}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
       <TextInput
@@ -308,6 +335,31 @@ const WorldRuleFormScreen = () => {
         value={title}
         onChangeText={setTitle}
         style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_section')}</Text>
+      <SingleSelectPill
+        options={WORLD_PIECE_SECTIONS.map((value) => ({
+          value,
+          label: t(`world_piece_section_${value}`),
+        }))}
+        value={section}
+        onValueChange={(next) => {
+          const nextSection = (next ?? 'rule') as WorldPieceSection;
+          if (nextSection !== section && type) setType(null);
+          setSection(nextSection);
+        }}
+        placeholder={t('world_piece_section')}
+        multiple={false}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_type')}</Text>
+      <SuggestionTextInput
+        placeholder={t('world_piece_type_placeholder')}
+        value={type || ''}
+        onChangeText={setType}
+        type={`world_piece_type:${section}`}
+        storyId={selectedStory?.id || ''}
       />
 
       <View style={styles.switchContainer}>
@@ -326,7 +378,43 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_rule_description_placeholder')}
         value={description || ''}
         onChangeText={setDescription}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
+      <SuggestionTextInput
+        placeholder={t('category_placeholder')}
+        value={category || ''}
+        onChangeText={setCategory}
+        type="world_piece_category"
+        storyId={selectedStory?.id || ''}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_behavior')}</Text>
+      <TextInput
+        placeholder={t('world_piece_behavior_placeholder')}
+        value={behavior || ''}
+        onChangeText={setBehavior}
+        style={commonInputStyles.multiline}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_usability')}</Text>
+      <TextInput
+        placeholder={t('world_piece_usability_placeholder')}
+        value={usability || ''}
+        onChangeText={setUsability}
+        style={commonInputStyles.multiline}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_danger')}</Text>
+      <TextInput
+        placeholder={t('world_piece_danger_placeholder')}
+        value={danger || ''}
+        onChangeText={setDanger}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -335,7 +423,7 @@ const WorldRuleFormScreen = () => {
         placeholder={t('world_rule_extra_notes_placeholder')}
         value={extraNotes || ''}
         onChangeText={setExtraNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        style={commonInputStyles.multiline}
         multiline
       />
 
@@ -388,12 +476,10 @@ const WorldRuleFormScreen = () => {
       )}
 
       <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>
-          {isEditing ? t('save_changes') : t('create_world_rule')}
-        </Button>
+        <Button onPress={handleSave}>{copy.saveLabel}</Button>
         {isEditing && (
           <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('delete_world_rule_title')}
+            {copy.deleteLabel}
           </Button>
         )}
       </FormActions>

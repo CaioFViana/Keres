@@ -225,6 +225,73 @@ describe('buildConflictSummaries - relation conflicts', () => {
     expect(summary.detail).toBe('unknown_entity - unknown_entity');
   });
 
+  it.each([
+    [
+      'NoteRelation',
+      { noteId: 'note-1', relationId: 'rule-1', relationType: 'WorldRule' },
+      [
+        ['Note:note-1', 'Rascunho'],
+        ['WorldRule:rule-1', 'Magia cobra preço'],
+      ],
+      'Rascunho - Magia cobra preço',
+    ],
+    [
+      'LocationRelation',
+      { locationAId: 'location-a', locationBId: 'location-b', relationType: 'contains' },
+      [
+        ['Location:location-a', 'Cidade'],
+        ['Location:location-b', 'Torre'],
+      ],
+      'location_contains_location',
+    ],
+    [
+      'GalleryRelation',
+      { galleryId: 'gallery-1', ownerId: 'character-1', ownerType: 'Character' },
+      [
+        ['Gallery:gallery-1', 'Mapa'],
+        ['Character:character-1', 'Ari'],
+      ],
+      'Mapa - Ari',
+    ],
+    [
+      'ItemJourney',
+      { itemId: 'item-1', sceneId: 'scene-1', newCharacterOwnerId: null },
+      [
+        ['Item:item-1', 'Chave'],
+        ['Scene:scene-1', 'Chegada'],
+      ],
+      'Chave showed_in_scene Chegada',
+    ],
+    [
+      'SeeAlsoRelation',
+      {
+        entityAId: 'character-1',
+        entityAType: 'Character',
+        entityBId: 'item-1',
+        entityBType: 'Item',
+      },
+      [
+        ['Character:character-1', 'Ari'],
+        ['Item:item-1', 'Chave'],
+      ],
+      'Ari - Chave',
+    ],
+  ] as const)(
+    'summarizes every remaining %s relation without exposing identifiers',
+    (entityType, localValues, entries, expectedDetail) => {
+      const [summary] = buildConflictSummaries(
+        [conflict({ entityType, localValues })],
+        noSnapshots,
+        new Map(entries),
+        t,
+      );
+
+      expect(summary.kind).toBe('relation');
+      expect(summary.detail).toBe(expectedDetail);
+      expect(summary.detail).not.toContain('-1');
+    },
+  );
+
   /**
    * Regression: character A deleted on device 1, the relation edited (only `relationType`) on
    * device 2 offline. `localValues`/`serverValues` do not have `character1Id`/`character2Id`

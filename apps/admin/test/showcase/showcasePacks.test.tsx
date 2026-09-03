@@ -54,6 +54,7 @@ const card: ShowcasePackCard = {
     suggestionCount: 4,
     tagCount: 1,
     statCount: 6,
+    hasVocabulary: true,
     statSystem: true,
     statNotation: 'letter',
   },
@@ -180,7 +181,17 @@ const detail: ShowcasePackDetail = {
         deletedAt: null,
       },
     ],
-    settings: { statSystem: true, statNotation: 'letter' },
+    settings: {
+      statSystem: true,
+      statNotation: 'letter',
+      vocabulary: {
+        version: 1,
+        language: 'en',
+        terms: {
+          Character: { singular: 'Hero', plural: 'Heroes', grammaticalGender: 'neutral' },
+        },
+      },
+    },
   },
 };
 
@@ -210,6 +221,7 @@ describe('the pack listing', () => {
     expect(text).toContain('6 stat axes');
     expect(text).toContain('1 tag');
     expect(text).toContain('4 suggestions');
+    expect(text).toContain('Vocabulary');
     await unmount();
   });
 
@@ -265,6 +277,8 @@ describe('the pack page', () => {
     expect(text).toContain('Danger');
     expect(text).toContain('Strength');
     expect(text).toContain('Undead');
+    expect(text).toContain('Hero');
+    expect(text).toContain('Heroes');
     await unmount();
   });
 

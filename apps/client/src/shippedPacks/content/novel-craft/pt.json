@@ -338,7 +338,53 @@
     "statStrengths": [],
     "settings": {
       "statSystem": false,
-      "statNotation": "letter"
+      "statNotation": "letter",
+      "vocabulary": {
+        "version": 1,
+        "language": "pt",
+        "terms": {
+          "Character": {
+            "singular": "Personagem",
+            "plural": "Personagens",
+            "grammaticalGender": "masculine"
+          },
+          "Location": {
+            "singular": "Cenário",
+            "plural": "Cenários",
+            "grammaticalGender": "masculine"
+          },
+          "Chapter": {
+            "singular": "Capítulo",
+            "plural": "Capítulos",
+            "grammaticalGender": "masculine"
+          },
+          "Scene": {
+            "singular": "Cena",
+            "plural": "Cenas",
+            "grammaticalGender": "feminine"
+          },
+          "Event": {
+            "singular": "Evento narrativo",
+            "plural": "Eventos narrativos",
+            "grammaticalGender": "masculine"
+          },
+          "Item": {
+            "singular": "Objeto narrativo",
+            "plural": "Objetos narrativos",
+            "grammaticalGender": "masculine"
+          },
+          "WorldRule": {
+            "singular": "Regra da história",
+            "plural": "Regras da história",
+            "grammaticalGender": "feminine"
+          },
+          "Choice": {
+            "singular": "Escolha narrativa",
+            "plural": "Escolhas narrativas",
+            "grammaticalGender": "feminine"
+          }
+        }
+      }
     }
   }
 }

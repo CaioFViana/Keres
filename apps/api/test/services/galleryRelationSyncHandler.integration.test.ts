@@ -10,6 +10,7 @@ import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyn
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
 import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
 import { SceneSyncHandler } from '../../src/services/entity-sync-handlers/SceneSyncHandler';
+import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -31,6 +32,7 @@ beforeEach(async () => {
   const sceneId = newId();
   const itemId = newId();
   const noteId = newId();
+  const worldRuleId = newId();
   galleryId = newId();
   owners = {
     Character: characterId,
@@ -38,6 +40,7 @@ beforeEach(async () => {
     Scene: sceneId,
     Item: itemId,
     Note: noteId,
+    WorldRule: worldRuleId,
   };
   await db
     .insert(users)
@@ -118,6 +121,22 @@ beforeEach(async () => {
     storyId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
   );
+  await new WorldRuleSyncHandler().create(
+    userId,
+    storyId,
+    create('WorldRule', worldRuleId, {
+      title: 'A magia cobra um preço',
+      description: null,
+      section: 'rule',
+      type: null,
+      category: null,
+      behavior: null,
+      usability: null,
+      danger: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
   await new GallerySyncHandler().create(
     userId,
     storyId,
@@ -135,7 +154,7 @@ beforeEach(async () => {
 });
 
 describe('gallery relation sync handler', () => {
-  it.each(['Character', 'Location', 'Note', 'Scene', 'Item'] as const)(
+  it.each(['Character', 'Location', 'Note', 'Scene', 'Item', 'WorldRule'] as const)(
     'links a gallery to a valid %s owner',
     async (ownerType) => {
       const handler = new GalleryRelationSyncHandler();

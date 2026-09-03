@@ -37,6 +37,7 @@ const OperationLogScreen: React.FC = () => {
     useCallback(() => {
       navigation.setOptions({
         title: t('operation_logs_title'),
+        headerRight: undefined,
       });
     }, [navigation, t]),
   );

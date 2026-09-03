@@ -258,7 +258,13 @@ describe('storing packs', () => {
     });
 
     const [pack] = await service.listPacks();
-    expect(pack?.counts).toEqual({ customAttributes: 1, suggestions: 1, tags: 1, stats: 1 });
+    expect(pack?.counts).toEqual({
+      customAttributes: 1,
+      suggestions: 1,
+      tags: 1,
+      stats: 1,
+      hasVocabulary: false,
+    });
     expect(pack?.version).toBe(1);
   });
 

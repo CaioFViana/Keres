@@ -15,7 +15,7 @@ const page: HelpPage = {
     {
       type: 'example',
       title: 'Example',
-      text: 'The key begins rusted with Lia. In the “Market” Scene, a journey records New character owner: Omar and New state: repaired.',
+      text: 'The key begins rusted with Lia. In the “Market” Scene, a journey records New owner (Character): Omar and New state: repaired.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     { type: 'path', segments: ['Story menu', 'Items', 'Item journeys', '+'] },
@@ -25,7 +25,7 @@ const page: HelpPage = {
         'Choose the Item that changed.',
         'Choose the Scene where the change happens.',
         'Fill in New state.',
-        'Choose New character owner only if the item passes to someone.',
+        'Choose New owner (Character) only if the item passes to someone.',
         'Save and add Tags, Notes, or See also when you need context.',
       ],
     },
@@ -46,7 +46,7 @@ const page: HelpPage = {
         },
         {
           key: 'newCharacterOwnerId',
-          label: 'New character owner',
+          label: 'New owner (Character)',
           whatToWrite: 'Choose who receives the item; leave empty if ownership does not change.',
           note: 'It differs from the initial owner in the Item profile.',
         },

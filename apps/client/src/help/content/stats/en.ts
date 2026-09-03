@@ -21,12 +21,12 @@ const page: HelpPage = {
       text: 'With the ladder F starting at 0, C at 50 and A at 400, a character with 100 in Strength sits inside C, one third of the way to A. Someone above the last tier is drawn in the dashed band outside the chart.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Story Settings', 'Stat system'] },
+    { type: 'path', segments: ['Story menu', 'Customization', 'Stats'] },
     {
       type: 'steps',
       items: [
-        'Turn on the stat system in Story Settings and choose the notation: letters or numbers.',
-        'Open Stats in the story menu and create the axes. Mark as primary the ones you want on the chart.',
+        'Open Stats in Customization, turn on the stat system, and choose the notation: letters or numbers.',
+        'Create the axes. Mark as primary the ones you want on the chart.',
         'Edit the story default ladder, and give a stat its own ladder only when it needs a different scale.',
         'Open a character, choose Edit, and fill in the values. A mode without its own value inherits the normal mode.',
         'While typing, the ruler under the field shows where each tier starts and where the value falls.',
@@ -71,9 +71,9 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Turning the system off only hides the menu entry and the character panel; nothing is deleted, and turning it back on restores everything. Deleting a stat removes the values recorded for it in every character.',
+      text: 'Turning the system off hides the character panel and statistic tools; nothing is deleted, and turning it back on restores everything. Deleting a stat removes the values recorded for it in every character.',
     },
-    { type: 'seeAlso', pages: ['characters', 'character-modes', 'story-settings'] },
+    { type: 'seeAlso', pages: ['characters', 'character-modes', 'custom-attributes'] },
   ],
 };
 export default page;

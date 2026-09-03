@@ -1,7 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { characters, operationLog, stories } from '../../src/db/schema';
+import {
+  chapters,
+  characters,
+  favorites,
+  operationLog,
+  scenes,
+  stories,
+} from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -11,8 +18,16 @@ let storyId: string;
 const push = (token: string, story: string, updates: unknown[]) =>
   request('POST', `/sync/${story}`, { token, body: updates });
 
-const pull = (token: string, story: string, lastOperationVersion = 0) =>
-  request('GET', `/sync/${story}/pull`, { token, query: { lastOperationVersion } });
+const pull = (
+  token: string,
+  story: string,
+  lastOperationVersion = 0,
+  lastPublicFavoriteVersion = 0,
+) =>
+  request('GET', `/sync/${story}/pull`, {
+    token,
+    query: { lastOperationVersion, lastPublicFavoriteVersion },
+  });
 
 /** A character-create operation, the simplest way to write something through sync. */
 const createCharacter = (id: string, name: string, version = 0) => ({
@@ -252,6 +267,127 @@ describe('POST /sync/:storyId', () => {
     expect(data.conflicts).toHaveLength(1);
   });
 
+  it('blocks only later operations for the entity that already conflicted, while preserving other work in the batch', async () => {
+    const characterId = newId();
+    const otherId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const { data } = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Stale edit', 0, 'stale-first'),
+      updateCharacter(characterId, 'Would otherwise be valid', 1, 'blocked-second'),
+      createCharacter(otherId, 'Independent work'),
+    ]);
+
+    expect(data.applied).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entityId: otherId })]),
+    );
+    expect(data.conflicts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clientOperationId: 'stale-first', reason: 'version_conflict' }),
+        expect.objectContaining({
+          clientOperationId: 'blocked-second',
+          reason: 'version_conflict',
+          message: expect.stringContaining('Skipped: an earlier operation'),
+        }),
+      ]),
+    );
+    expect(
+      (await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name,
+    ).toBe('Keres');
+  });
+
+  it('accepts a resent create after later edits by comparing it with the recorded create payload', async () => {
+    const characterId = newId();
+    const original = createCharacter(characterId, 'Keres');
+    const created = await push(ana.token, storyId, [original]);
+    await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Keres, a Deusa', created.data.applied[0].entityVersion),
+    ]);
+
+    const retried = await push(ana.token, storyId, [original]);
+
+    expect(retried.data.conflicts).toEqual([]);
+    expect(retried.data.applied).toEqual([
+      expect.objectContaining({ entityId: characterId, entityVersion: 2 }),
+    ]);
+    expect(
+      (await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name,
+    ).toBe('Keres, a Deusa');
+  });
+
+  it('refuses a second create with the same id when neither the live row nor its original log payload matches', async () => {
+    const characterId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const { data } = await push(ana.token, storyId, [createCharacter(characterId, 'Outra pessoa')]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({
+        entityId: characterId,
+        reason: 'validation',
+        message: expect.stringContaining('different data'),
+      }),
+    ]);
+  });
+
+  it('allows a tombstone to be retried and restores it only through a versioned update', async () => {
+    const characterId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const deleted = await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Character', id: characterId, version: 1 },
+    ]);
+
+    const retry = await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Character', id: characterId, version: 1 },
+    ]);
+    expect(retry.data.conflicts).toEqual([]);
+    expect(retry.data.applied).toHaveLength(1);
+
+    const restored = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        changes: {
+          name: 'Keres voltou',
+          isDeleted: false,
+          version: deleted.data.applied[0].entityVersion,
+        },
+      },
+    ]);
+    expect(restored.data.conflicts).toEqual([]);
+    expect(
+      await db.query.characters.findFirst({ where: eq(characters.id, characterId) }),
+    ).toMatchObject({
+      name: 'Keres voltou',
+      isDeleted: false,
+      deletedAt: null,
+    });
+  });
+
+  it('rejects an operation timestamp that is in the future instead of letting client clocks reorder history', async () => {
+    const { data } = await push(ana.token, storyId, [
+      {
+        ...createCharacter(newId(), 'Do futuro'),
+        operationTime: new Date(Date.now() + 60_000).toISOString(),
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ reason: 'validation', message: expect.stringContaining('future') }),
+    ]);
+  });
+
+  it('rejects an invalid operation timestamp before a handler can persist an invalid date', async () => {
+    const { status } = await push(ana.token, storyId, [
+      { ...createCharacter(newId(), 'Tempo inválido'), operationTime: 'not-a-date' },
+    ]);
+
+    expect(status).toBe(422);
+  });
+
   it('rejects a batch that is not an array of operations', async () => {
     const { status } = await push(ana.token, storyId, { type: 'create' } as any);
 
@@ -389,10 +525,197 @@ describe('GET /sync/:storyId/pull', () => {
     expect(data.updates.some((update: any) => update.id === characterId)).toBe(true);
   });
 
+  it('reconstructs create, update, and delete entries with entity versions rather than log positions', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        changes: { name: 'Keres, a Deusa', version: created.data.applied[0].entityVersion },
+      },
+    ]);
+    await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Character', id: characterId, version: 2 },
+    ]);
+
+    const { data } = await pull(ana.token, storyId);
+    const [create, update, deletion] = data.updates.filter(
+      (entry: { entity: string; id: string }) =>
+        entry.entity === 'Character' && entry.id === characterId,
+    );
+
+    expect(create).toMatchObject({
+      type: 'create',
+      version: 1,
+      data: expect.objectContaining({ name: 'Keres' }),
+      operationId: expect.any(String),
+    });
+    expect(update).toMatchObject({
+      type: 'update',
+      version: 2,
+      changes: expect.objectContaining({ name: 'Keres, a Deusa' }),
+      operationId: expect.any(String),
+    });
+    expect(create.data).not.toHaveProperty('storyId');
+    expect(update.changes).not.toHaveProperty('storyId');
+    expect(deletion).toMatchObject({ type: 'delete', version: 3, operationId: expect.any(String) });
+    expect(deletion.data).toBeUndefined();
+  });
+
+  it('publishes legacy favorites exactly once when a story becomes public', async () => {
+    const bia = await registerUser('bia');
+    const favoriteId = newId();
+    await db
+      .update(stories)
+      .set({ favoriteBehavior: 'individual_public' })
+      .where(eq(stories.id, storyId));
+    await db.insert(favorites).values({
+      id: favoriteId,
+      storyId,
+      entityId: newId(),
+      entityType: 'Character',
+      userId: bia.userId,
+      version: 1,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Two first pulls can arrive together when two devices reconnect. The repair must serialize
+    // itself: both callers can receive the row, but only one operation-log create may be born.
+    const [first, second] = await Promise.all([
+      pull(ana.token, storyId),
+      pull(ana.token, storyId, 0, 0),
+    ]);
+    const repairLogs = await db.query.operationLog.findMany({
+      where: eq(operationLog.entityId, favoriteId),
+    });
+
+    expect(first.data.publicFavorites).toEqual([
+      expect.objectContaining({ id: favoriteId, userId: bia.userId }),
+    ]);
+    expect(first.data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Favorite', id: favoriteId })]),
+    );
+    expect(second.data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Favorite', id: favoriteId })]),
+    );
+    expect(repairLogs).toHaveLength(1);
+  });
+
   it('tells the caller which role they hold on the story', async () => {
     const { data } = await pull(ana.token, storyId, 0);
 
     expect(data.role).toBe('owner');
+  });
+
+  it('serializes chapter and story reorders back into the exact pull operations clients apply', async () => {
+    const chapterA = newId();
+    const chapterB = newId();
+    const sceneA = newId();
+    const sceneB = newId();
+    const now = new Date();
+    await db.insert(chapters).values([
+      {
+        id: chapterA,
+        storyId,
+        name: 'Um',
+        index: 1,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+      {
+        id: chapterB,
+        storyId,
+        name: 'Dois',
+        index: 2,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+    ] as never);
+    await db.insert(scenes).values([
+      {
+        id: sceneA,
+        storyId,
+        chapterId: chapterA,
+        name: 'Cena um',
+        index: 1,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+      {
+        id: sceneB,
+        storyId,
+        chapterId: chapterA,
+        name: 'Cena dois',
+        index: 2,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+    ] as never);
+
+    const chapterPush = await push(ana.token, storyId, [
+      {
+        type: 'reorder',
+        entity: 'Chapter',
+        id: chapterA,
+        version: 1,
+        reorderItems: [
+          { id: sceneA, newIndex: 2 },
+          { id: sceneB, newIndex: 1 },
+        ],
+        clientOperationId: 'chapter-reorder',
+      },
+    ]);
+    expect(chapterPush.data.conflicts).toEqual([]);
+    const storyPush = await push(ana.token, storyId, [
+      {
+        type: 'reorder',
+        entity: 'Story',
+        id: storyId,
+        version: 1,
+        reorderItems: [
+          { id: chapterA, newIndex: 2 },
+          { id: chapterB, newIndex: 1 },
+        ],
+        clientOperationId: 'story-reorder',
+      },
+    ]);
+    expect(storyPush.data.conflicts).toEqual([]);
+
+    const { data } = await pull(ana.token, storyId);
+    expect(data.updates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'reorder',
+          entity: 'Chapter',
+          id: chapterA,
+          reorderItems: [
+            { id: sceneA, newIndex: 2 },
+            { id: sceneB, newIndex: 1 },
+          ],
+        }),
+        expect.objectContaining({
+          type: 'reorder',
+          entity: 'Story',
+          id: storyId,
+          reorderItems: [
+            { id: chapterA, newIndex: 2 },
+            { id: chapterB, newIndex: 1 },
+          ],
+        }),
+      ]),
+    );
   });
 
   it('rejects a pull with no version, since the server cannot guess it', async () => {
@@ -428,6 +751,17 @@ describe('GET /sync/pullpreviews', () => {
     expect(data.storyPreviews).toEqual([]);
   });
 
+  it('lists a shared story with the collaborator role rather than treating it as owned', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+
+    const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
+
+    expect(data.storyPreviews).toEqual([
+      expect.objectContaining({ storyId, role: 'writer', lastOperationVersion: 0 }),
+    ]);
+  });
+
   /**
    * `lastOperationVersion` used to come from `stories.version` (the Story row's own
    * optimistic-concurrency counter, bumped only when the Story row itself changes) instead of
@@ -459,7 +793,12 @@ describe('GET /sync/pullpreviews', () => {
   });
 });
 
-const grantWriter = async (owner: TestUser, collaborator: TestUser, story: string) => {
+const grantCollaborator = async (
+  owner: TestUser,
+  collaborator: TestUser,
+  story: string,
+  permissionType: 'reader' | 'writer' = 'writer',
+) => {
   const requested = await request('POST', `/friend/request/${collaborator.userId}`, {
     token: owner.token,
   });
@@ -470,12 +809,74 @@ const grantWriter = async (owner: TestUser, collaborator: TestUser, story: strin
   expect(accepted.status).toBeLessThan(400);
   const granted = await request('POST', '/story-permissions/', {
     token: owner.token,
-    body: { storyId: story, targetUserId: collaborator.userId, permissionType: 'writer' },
+    body: { storyId: story, targetUserId: collaborator.userId, permissionType },
   });
   expect(granted.status).toBeLessThan(400);
 };
 
+const grantWriter = (owner: TestUser, collaborator: TestUser, story: string) =>
+  grantCollaborator(owner, collaborator, story, 'writer');
+
 describe('sync authorization hardening', () => {
+  it('lets a reader pull the shared history while reporting the reader role', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'reader');
+    const characterId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const { status, data } = await pull(bia.token, storyId);
+
+    expect(status).toBe(200);
+    expect(data.role).toBe('reader');
+    expect(data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
+    );
+  });
+
+  it('does not leak a private favorite operation to another collaborator on pull', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+    const characterId = newId();
+    const favoriteId = newId();
+    await push(ana.token, storyId, [
+      createCharacter(characterId, 'Keres'),
+      {
+        type: 'create',
+        entity: 'Favorite',
+        id: favoriteId,
+        data: { userId: ana.userId, entityId: characterId, entityType: 'Character' },
+        clientOperationId: 'ana-private-favorite',
+      },
+    ]);
+
+    const { status, data } = await pull(bia.token, storyId);
+
+    expect(status).toBe(200);
+    expect(data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
+    );
+    expect(data.updates).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Favorite', id: favoriteId })]),
+    );
+    expect(data.publicFavorites).toEqual([]);
+  });
+
+  it('rejects a pull from a user with no permission to read the story', async () => {
+    const bia = await registerUser('bia');
+
+    const { status } = await pull(bia.token, storyId);
+
+    expect(status).toBe(403);
+  });
+
+  it('rejects a push to a story that the user cannot access', async () => {
+    const bia = await registerUser('bia');
+
+    const { status } = await push(bia.token, storyId, [createCharacter(newId(), 'Invasora')]);
+
+    expect(status).toBe(403);
+  });
+
   it('does not let a writer steal story ownership via userId in an update', async () => {
     const bia = await registerUser('bia');
     await grantWriter(ana, bia, storyId);
@@ -494,6 +895,26 @@ describe('sync authorization hardening', () => {
 
     const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
     expect(story?.userId).toBe(ana.userId);
+  });
+
+  it('allows a writer to update ordinary story content while preserving the owner-only policy', async () => {
+    const bia = await registerUser('bia');
+    await grantWriter(ana, bia, storyId);
+
+    const { data } = await push(bia.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Story',
+        id: storyId,
+        changes: { title: 'Título colaborativo', version: 1 },
+      },
+    ]);
+
+    expect(data.conflicts).toEqual([]);
+    expect(data.applied).toHaveLength(1);
+    expect((await db.query.stories.findFirst({ where: eq(stories.id, storyId) }))?.title).toBe(
+      'Título colaborativo',
+    );
   });
 
   it('does not let a writer delete the story', async () => {
@@ -590,5 +1011,165 @@ describe('sync authorization hardening', () => {
     expect(created.data.isDeleted).toBe(false);
     expect(created.data.storyId).toBeUndefined();
     expect(created.data.name).toBe('Keres');
+  });
+
+  it('lets a reader save only a favorite under their own identity, not story content', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'reader');
+    const characterId = newId();
+    const favoriteId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const { data } = await push(bia.token, storyId, [
+      createCharacter(newId(), 'Leitor não pode escrever'),
+      {
+        type: 'create',
+        entity: 'Favorite',
+        id: favoriteId,
+        data: { userId: bia.userId, entityId: characterId, entityType: 'Character' },
+        clientOperationId: 'reader-favorite',
+      },
+    ]);
+
+    expect(data.applied).toEqual([
+      expect.objectContaining({ entity: 'Favorite', entityId: favoriteId }),
+    ]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ entity: 'Character', reason: 'unauthorized' }),
+    ]);
+  });
+
+  it('enforces the reader-comment switch on create, update, and delete', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'reader');
+    const characterId = newId();
+    const commentId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const comment = {
+      type: 'create',
+      entity: 'Comment',
+      id: commentId,
+      data: {
+        entityType: 'Character',
+        entityId: characterId,
+        fieldId: null,
+        fieldKey: 'name',
+        contentSnapshot: 'Keres',
+        excerptText: null,
+        authorUserId: bia.userId,
+        commentText: 'Rever este nome',
+        criticality: 1,
+      },
+    };
+
+    const blocked = await push(bia.token, storyId, [comment]);
+    expect(blocked.data.conflicts[0]).toMatchObject({ entity: 'Comment', reason: 'unauthorized' });
+
+    await db.update(stories).set({ allowReaderComments: true }).where(eq(stories.id, storyId));
+    const created = await push(bia.token, storyId, [comment]);
+    expect(created.data.applied).toHaveLength(1);
+    const commentVersion = created.data.applied[0].entityVersion;
+
+    await db.update(stories).set({ allowReaderComments: false }).where(eq(stories.id, storyId));
+    const afterDisabled = await push(bia.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Comment',
+        id: commentId,
+        changes: { commentText: 'Não deveria editar', version: commentVersion },
+      },
+      { type: 'delete', entity: 'Comment', id: commentId, version: commentVersion },
+    ]);
+
+    expect(afterDisabled.data.applied).toEqual([]);
+    expect(afterDisabled.data.conflicts).toEqual([
+      expect.objectContaining({ entity: 'Comment', reason: 'unauthorized' }),
+      expect.objectContaining({ entity: 'Comment', reason: 'unauthorized' }),
+    ]);
+  });
+
+  it('allows the owner to moderate a reader comment but never lets the owner edit its text', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'reader');
+    await db.update(stories).set({ allowReaderComments: true }).where(eq(stories.id, storyId));
+    const characterId = newId();
+    const commentId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const created = await push(bia.token, storyId, [
+      {
+        type: 'create',
+        entity: 'Comment',
+        id: commentId,
+        data: {
+          entityType: 'Character',
+          entityId: characterId,
+          fieldId: null,
+          fieldKey: 'name',
+          contentSnapshot: 'Keres',
+          excerptText: null,
+          authorUserId: bia.userId,
+          commentText: 'Comentário da Bia',
+          criticality: 1,
+        },
+      },
+    ]);
+    const version = created.data.applied[0].entityVersion;
+
+    const edit = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Comment',
+        id: commentId,
+        changes: { commentText: 'Alterado pela dona', version },
+      },
+    ]);
+    expect(edit.data.conflicts[0]).toMatchObject({ reason: 'unauthorized' });
+
+    const deleted = await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Comment', id: commentId, version },
+    ]);
+    expect(deleted.data.applied).toHaveLength(1);
+  });
+
+  it("does not let one writer delete another writer's comment", async () => {
+    const bia = await registerUser('bia');
+    const caio = await registerUser('caio');
+    await grantWriter(ana, bia, storyId);
+    await grantWriter(ana, caio, storyId);
+    const characterId = newId();
+    const commentId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const created = await push(bia.token, storyId, [
+      {
+        type: 'create',
+        entity: 'Comment',
+        id: commentId,
+        data: {
+          entityType: 'Character',
+          entityId: characterId,
+          fieldId: null,
+          fieldKey: 'name',
+          contentSnapshot: 'Keres',
+          excerptText: null,
+          authorUserId: bia.userId,
+          commentText: 'Comentário da Bia',
+          criticality: 1,
+        },
+      },
+    ]);
+
+    const deletion = await push(caio.token, storyId, [
+      {
+        type: 'delete',
+        entity: 'Comment',
+        id: commentId,
+        version: created.data.applied[0].entityVersion,
+      },
+    ]);
+
+    expect(deletion.data.applied).toEqual([]);
+    expect(deletion.data.conflicts).toEqual([
+      expect.objectContaining({ entity: 'Comment', entityId: commentId, reason: 'unauthorized' }),
+    ]);
   });
 });

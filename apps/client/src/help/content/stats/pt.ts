@@ -23,13 +23,13 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'path',
-      segments: ['Menu da história', 'Configurações da História', 'Sistema de status'],
+      segments: ['Menu da história', 'Personalização', 'Status'],
     },
     {
       type: 'steps',
       items: [
-        'Ligue o sistema de status nas Configurações da História e escolha a notação: letras ou números.',
-        'Abra Status no menu da história e crie os eixos. Marque como primários os que devem entrar no gráfico.',
+        'Abra Status em Personalização, ligue o sistema e escolha a notação: letras ou números.',
+        'Crie os eixos. Marque como primários os que devem entrar no gráfico.',
         'Edite a escada padrão da história e dê escada própria a um status só quando ele precisar de outra faixa.',
         'Abra um personagem, escolha Editar e preencha os valores. Um modo sem valor próprio herda o do modo normal.',
         'Ao digitar, a régua abaixo do campo mostra onde cada tier começa e onde o valor cai.',
@@ -74,9 +74,9 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Desligar o sistema apenas oculta o item do menu e o painel do personagem; nada é apagado, e religar devolve tudo. Apagar um status remove os valores registrados nele em todos os personagens.',
+      text: 'Desligar o sistema oculta o painel do personagem e as ferramentas de status; nada é apagado, e religar devolve tudo. Apagar um status remove os valores registrados nele em todos os personagens.',
     },
-    { type: 'seeAlso', pages: ['characters', 'character-modes', 'story-settings'] },
+    { type: 'seeAlso', pages: ['characters', 'character-modes', 'custom-attributes'] },
   ],
 };
 export default page;

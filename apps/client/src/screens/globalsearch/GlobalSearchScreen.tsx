@@ -25,6 +25,8 @@ import type { FavoriteFilterState } from '../../types/entityFilters';
 import { debounce } from '../../utils/debounce';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
@@ -45,6 +47,7 @@ const SECTION_ORDER: { entityType: GlobalSearchEntityType; titleKey: string }[] 
   { entityType: 'Note', titleKey: 'notes_title' },
   { entityType: 'WorldRule', titleKey: 'world_rules_title' },
   { entityType: 'Plot', titleKey: 'plots_title' },
+  { entityType: 'Route', titleKey: 'routes_title' },
 ];
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -59,6 +62,7 @@ interface ResultSection {
 const GlobalSearchScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<GlobalSearchScreenNavigationProp>();
   const drizzleDb = useDrizzle();
@@ -120,7 +124,7 @@ const GlobalSearchScreen = () => {
       // GlobalSearch is a direct Drawer.Screen (no nested Stack in between, unlike the entity
       // list/detail/form screens), so `navigation` here already IS the Drawer's own nav object -
       // `.getParent()` would target the Root Stack above it instead, one level too far up.
-      navigation.setOptions({ title: t('global_search_title') });
+      navigation.setOptions({ title: t('global_search_title'), headerRight: undefined });
       setDocumentTitle(t('global_search_title'));
     }, [navigation, t]),
   );
@@ -143,10 +147,14 @@ const GlobalSearchScreen = () => {
       ({ entityType }) => (byEntityType.get(entityType)?.length ?? 0) > 0,
     ).map(({ entityType, titleKey }) => ({
       entityType,
-      title: `${t(titleKey)} (${byEntityType.get(entityType)!.length})`,
+      title: `${
+        isStoryVocabularyEntityType(entityType) || entityType === 'ItemJourney'
+          ? label(entityType, true)
+          : t(titleKey)
+      } (${byEntityType.get(entityType)!.length})`,
       data: byEntityType.get(entityType)!,
     }));
-  }, [favoriteFilterState, results, t]);
+  }, [favoriteFilterState, results, t, label]);
 
   const handleFavoriteFilterToggle = useCallback(() => {
     setFavoriteFilterState((current) =>
@@ -257,9 +265,9 @@ const styles = (colors: any) =>
       alignItems: 'center',
       borderRadius: 5,
       justifyContent: 'center',
-      marginBottom: 20,
       marginLeft: 10,
-      padding: 12,
+      height: 50,
+      width: 50,
     },
     loadingIndicator: {
       marginVertical: 8,

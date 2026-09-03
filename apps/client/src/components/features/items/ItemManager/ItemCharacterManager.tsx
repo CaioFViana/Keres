@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -7,6 +8,7 @@ import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntity
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { useTheme } from '../../../../theme';
+import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 // Type Guards
 const isItemJourney = (entity: Item | ItemJourney): entity is ItemJourney => {
@@ -31,6 +33,8 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
   currentCharacterId,
 }) => {
   const { t } = useTranslation();
+  const itemCopy = useVocabularyEntityCopy('Item');
+  const sceneCopy = useVocabularyEntityCopy('Scene');
   const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
 
@@ -89,7 +93,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
               )}
               {allScenes?.find((scene) => scene.id === entity.sceneId)?.name && (
                 <RelationAttributeLine
-                  label={t('scene')}
+                  label={sceneCopy.entity}
                   value={allScenes.find((scene) => scene.id === entity.sceneId)!.name}
                 />
               )}
@@ -101,7 +105,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
         </View>
       );
     },
-    [allScenes, colors.text, t],
+    [allScenes, colors.text, sceneCopy.entity, t],
   );
 
   return (
@@ -112,8 +116,10 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
       getItemDisplayName={(item) => item.name}
       noItemsMessage={'no_items_assigned_to_character'}
       renderItemExtraContent={renderItemExtraContent}
-      title={t('items_title')}
+      title={itemCopy.entities}
       onItemPress={handleItemPress}
+      icon="cube"
+      color={getEntityAppearance('Item').color}
     />
   );
 };

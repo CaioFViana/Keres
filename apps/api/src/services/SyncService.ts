@@ -14,6 +14,7 @@ import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
 import { db, withTransaction } from '../db';
+import { usingSqlite } from '../db/dialect';
 import {
   favorites,
   operationLog,
@@ -44,6 +45,8 @@ import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
 import { PlotSyncHandler } from './entity-sync-handlers/PlotSyncHandler';
 import { PlotSceneSyncHandler } from './entity-sync-handlers/PlotSceneSyncHandler';
+import { RouteSyncHandler } from './entity-sync-handlers/RouteSyncHandler';
+import { RouteStepSyncHandler } from './entity-sync-handlers/RouteStepSyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationRelationSyncHandler } from './entity-sync-handlers/LocationRelationSyncHandler';
 import { LocationMapSyncHandler } from './entity-sync-handlers/LocationMapSyncHandler';
@@ -104,6 +107,8 @@ export class SyncService {
     this.registerEntityHandler(new ItemJourneySyncHandler());
     this.registerEntityHandler(new PlotSyncHandler());
     this.registerEntityHandler(new PlotSceneSyncHandler());
+    this.registerEntityHandler(new RouteSyncHandler());
+    this.registerEntityHandler(new RouteStepSyncHandler());
     this.registerEntityHandler(new SuggestionSyncHandler());
     this.registerEntityHandler(new TagSyncHandler());
     this.registerEntityHandler(new TagRelationSyncHandler());
@@ -297,6 +302,11 @@ export class SyncService {
         // call made during `withTransaction`, including inside the entity handlers - they do not need to
         // know about it.
         await withTransaction(async () => {
+          // Creation handlers historically own their insert timestamps, and several of them do not
+          // call BaseSyncEntityHandler.parseOperationTime(). Validate at the protocol boundary as
+          // well, so a client clock cannot place *any* operation ahead of the server's history.
+          this.assertOperationTimeIsValid(update.operationTime);
+
           // A read inside the transaction: the create-vs-alreadyApplied / not_found decision has to see the
           // same row the write is going to touch.
           currentEntity = await handler.findById(entityId);
@@ -502,6 +512,21 @@ export class SyncService {
     return result.at(0)?.maxVersion || 0;
   }
 
+  /** Reject malformed or materially future client clocks for every operation kind, including creates. */
+  private assertOperationTimeIsValid(operationTime: string | undefined): void {
+    if (!operationTime) return;
+    const timestamp = new Date(operationTime);
+    if (Number.isNaN(timestamp.getTime())) {
+      throw new SyncConflictError('validation', `Operation time ${operationTime} is invalid.`);
+    }
+    if (timestamp.getTime() > Date.now() + 1000) {
+      throw new SyncConflictError(
+        'validation',
+        `Operation time ${operationTime} cannot be in the future.`,
+      );
+    }
+  }
+
   /**
    * Which fields actually changed on this entity since the version the client read as its base - the
    * difference between "the client's base went stale" (`version_conflict`, which only compares the
@@ -567,9 +592,14 @@ export class SyncService {
     storyId: string,
   ): Promise<{ count: number; maxOperationVersion: number }> {
     return await db.transaction(async (tx) => {
-      await tx.execute(
-        sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
-      );
+      // SQLite has no `FOR UPDATE` (and its transaction adapter does not expose `execute`). Its
+      // single-writer transaction model already serializes this repair; Postgres still needs the
+      // row lock to coordinate this pull-time repair with concurrent pushes.
+      if (!usingSqlite) {
+        await tx.execute(
+          sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
+        );
+      }
 
       const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
         tx

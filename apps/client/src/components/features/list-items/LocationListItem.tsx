@@ -53,6 +53,7 @@ const LocationListItem: React.FC<LocationListItemProps> = ({
       item={location}
       onToggleFavorite={onToggleFavorite}
       onViewDetails={onViewDetails}
+      entityType="Location"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

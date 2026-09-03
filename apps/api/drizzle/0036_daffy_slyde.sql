@@ -1,0 +1,3 @@
+ALTER TABLE "scenes" ADD COLUMN "calendar_date_override" text;--> statement-breakpoint
+ALTER TABLE "scenes" ADD COLUMN "calendar_date_override_calendar_id" text;--> statement-breakpoint
+ALTER TABLE "scenes" ADD CONSTRAINT "scenes_calendar_date_override_calendar_id_story_calendars_id_fk" FOREIGN KEY ("calendar_date_override_calendar_id") REFERENCES "public"."story_calendars"("id") ON DELETE no action ON UPDATE no action;

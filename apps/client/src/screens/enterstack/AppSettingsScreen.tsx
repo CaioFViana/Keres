@@ -1,6 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -171,7 +171,7 @@ const SettingsScreen = () => {
         <View style={styles.settingItem}>
           <Text style={[styles.settingLabel, { color: colors.text }]}>{t('select_language')}</Text>
           <View style={styles.selectWrapper}>
-            <Select
+            <SingleSelectPill
               options={languageOptions}
               value={language || 'en'}
               onValueChange={handleLanguageChange as (value: string | null) => void}
@@ -207,7 +207,7 @@ const SettingsScreen = () => {
             </Text>
           </View>
           <View style={styles.dateFormatSelectWrapper}>
-            <Select
+            <SingleSelectPill
               options={[
                 { label: t('date_display_format_iso'), value: 'iso' },
                 { label: t('date_display_format_dmy'), value: 'dmy' },

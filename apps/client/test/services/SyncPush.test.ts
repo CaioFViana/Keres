@@ -425,6 +425,76 @@ describe('push result handling', () => {
 });
 
 describe('push loop', () => {
+  it('pushes offline Plot membership and Route traversal creations without dropping their links', async () => {
+    const plot = operation('plot', 'create', {
+      entityType: 'Plot',
+      entityId: 'plot-1',
+      payload: JSON.stringify({ name: 'The thread', details: null, version: 1 }),
+    });
+    const plotScene = operation('plot-scene', 'create', {
+      entityType: 'PlotScene',
+      entityId: 'plot-scene-1',
+      payload: JSON.stringify({ plotId: 'plot-1', sceneId: 'scene-1', note: null, version: 1 }),
+    });
+    const route = operation('route', 'create', {
+      entityType: 'Route',
+      entityId: 'route-1',
+      payload: JSON.stringify({ name: 'Possible path', details: null, version: 1 }),
+    });
+    const routeStep = operation('route-step', 'create', {
+      entityType: 'RouteStep',
+      entityId: 'route-step-1',
+      payload: JSON.stringify({
+        routeId: 'route-1',
+        position: 1,
+        sceneId: 'scene-1',
+        selectedChoiceId: null,
+        version: 1,
+      }),
+    });
+    await Promise.all([plot, plotScene, route, routeStep].map(seedOperation));
+    post.mockResolvedValue({
+      data: {
+        applied: [plot, plotScene, route, routeStep].map((entry, index) => ({
+          clientOperationId: entry.id,
+          operationVersion: index + 1,
+        })),
+        conflicts: [],
+      },
+    });
+
+    await push.pushPendingOperations();
+
+    expect(post).toHaveBeenCalledWith(
+      `/sync/${STORY_ID}`,
+      expect.arrayContaining([
+        expect.objectContaining({
+          entity: 'Plot',
+          id: 'plot-1',
+          data: { name: 'The thread', details: null, version: 1 },
+        }),
+        expect.objectContaining({
+          entity: 'PlotScene',
+          id: 'plot-scene-1',
+          data: expect.objectContaining({ plotId: 'plot-1', sceneId: 'scene-1' }),
+        }),
+        expect.objectContaining({
+          entity: 'Route',
+          id: 'route-1',
+          data: expect.objectContaining({ name: 'Possible path' }),
+        }),
+        expect.objectContaining({
+          entity: 'RouteStep',
+          id: 'route-step-1',
+          data: expect.objectContaining({ routeId: 'route-1', sceneId: 'scene-1' }),
+        }),
+      ]),
+    );
+    expect(
+      (await database.db.query.operationLogs.findMany()).every((entry) => entry.isSynced),
+    ).toBe(true);
+  });
+
   it('leaves an unsafe operation pending without sending an empty batch', async () => {
     await seedOperation(
       operation('unsafe', 'update', { payload: JSON.stringify({ name: 'Missing base' }) }),

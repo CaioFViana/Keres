@@ -12,7 +12,7 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 /**
- * The media linked to an entity (a character, location, note, scene or item), with the means
+ * The media linked to an entity (a character, location, note, scene, item or World Piece), with the means
  * of adding a new one and unlinking an existing one.
  *
  * The same shape as `useEntityRelations` (tags/notes): the hook owns the fetch, the
@@ -132,6 +132,31 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     [linkImported, ownerId, refresh, services, storyId, userId],
   );
 
+  const getUnlinkedMedia = useCallback(async () => {
+    if (!services || !storyId || !ownerId) return [];
+    const linkedIds = new Set(media.map((item) => item.id));
+    const allMedia = await services.gallery.getGalleriesByStoryId(storyId);
+    return allMedia.filter((item) => !linkedIds.has(item.id));
+  }, [media, ownerId, services, storyId]);
+
+  /** Links existing gallery entries only; their files and metadata are left untouched. */
+  const linkExistingMedia = useCallback(
+    async (galleryIds: string[]) => {
+      if (!services || !storyId || !userId || !ownerId) return 0;
+      const linkedIds = new Set(media.map((item) => item.id));
+      const uniqueIds = [...new Set(galleryIds)].filter((galleryId) => !linkedIds.has(galleryId));
+      for (const galleryId of uniqueIds) {
+        await services.relation.linkGalleryToOwner(userId, storyId, galleryId, {
+          ownerId,
+          ownerType,
+        });
+      }
+      await refresh();
+      return uniqueIds.length;
+    },
+    [media, ownerId, ownerType, refresh, services, storyId, userId],
+  );
+
   /** It removes only the link with this entity; the medium carries on existing in the gallery. */
   const removeMedia = useCallback(
     async (galleryId: string) => {
@@ -155,6 +180,8 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     addPlayableMedia,
     addDocuments,
     addLink,
+    getUnlinkedMedia,
+    linkExistingMedia,
     removeMedia,
     refresh,
   };

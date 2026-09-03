@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -12,9 +12,11 @@ import {
 import LocationMapCanvas, {
   type LocationMapCanvasHandle,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import LocationMapImageSheet from '@/src/components/features/location-maps/LocationMapImageSheet';
 import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
+import LocationMapConnectionModal from '@/src/components/features/location-maps/LocationMapConnectionModal';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
+import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
+import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
@@ -26,6 +28,8 @@ import type {
 } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
+import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
+import { useLocationMapExport } from '../../hooks/useLocationMapExport';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -39,19 +43,9 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  LOCATION_MAP_IMAGE_DEFAULT_HEIGHT,
-  LOCATION_MAP_IMAGE_DEFAULT_WIDTH,
-  LOCATION_MAP_IMAGE_MAX,
-  LOCATION_MAP_IMAGE_MIN,
-} from '../../utils/locationMapLayout';
-import { appendImagesToMap, appendLocationsToMap } from '../../utils/locationMapContent';
-import { imageSizeOf } from '../../utils/locationMapMedia';
-import { buildLocationMapSvg } from '../../utils/locationMapExport';
-import { buildLocationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
-
+import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -65,7 +59,6 @@ const LocationMapScreen = () => {
   const { showNotification } = useNotificationStore();
   const navigateToEntity = useNavigateToEntityDetail();
   const canvasRef = useRef<LocationMapCanvasHandle>(null);
-
   const [map, setMap] = useState<LocationMapSelect | null>(null);
   const [content, setContent] = useState<LocationMapContentType>({ images: [], nodes: [] });
   const [savedContent, setSavedContent] = useState<LocationMapContentType>({
@@ -75,32 +68,42 @@ const LocationMapScreen = () => {
   const [locations, setLocations] = useState<LocationSelect[]>([]);
   const [galleries, setGalleries] = useState<GallerySelect[]>([]);
   const [relations, setRelations] = useState<LocationRelationSelect[]>([]);
+  const [maps, setMaps] = useState<LocationMapSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  const [openedNodeId, setOpenedNodeId] = useState<string | null>(null);
+  const [openedMarkerId, setOpenedMarkerId] = useState<string | null>(null);
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const [connectionMode, setConnectionMode] = useState(false);
+  const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
+  const [markerConnectionPair, setMarkerConnectionPair] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
-
   useBackButtonHandler({
     showWebBackButton: true,
     onBack: () => navigation.goBack(),
   });
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [row, loadedLocations, loadedGalleries, loadedRelations] = await Promise.all([
-        createLocationMapService(db).getById(mapId),
-        storyId ? createLocationService(db).getAllByStoryId(storyId) : Promise.resolve([]),
-        storyId ? createGalleryService(db).getGalleriesByStoryId(storyId) : Promise.resolve([]),
-        storyId
-          ? createLocationRelationService(db).getAllRelationsForStory(storyId)
-          : Promise.resolve([]),
-      ]);
+      const [row, loadedLocations, loadedGalleries, loadedRelations, loadedMaps] =
+        await Promise.all([
+          createLocationMapService(db).getById(mapId),
+          storyId ? createLocationService(db).getAllByStoryId(storyId) : Promise.resolve([]),
+          storyId ? createGalleryService(db).getGalleriesByStoryId(storyId) : Promise.resolve([]),
+          storyId
+            ? createLocationRelationService(db).getAllRelationsForStory(storyId)
+            : Promise.resolve([]),
+          storyId ? createLocationMapService(db).getMapsForStory(storyId) : Promise.resolve([]),
+        ]);
       if (!row || row.isDeleted) {
         setError(t('location_map_not_found'));
         setMap(null);
@@ -115,6 +118,7 @@ const LocationMapScreen = () => {
       setLocations(loadedLocations.filter((x) => !x.isDeleted));
       setGalleries(loadedGalleries.filter((x) => !x.isDeleted));
       setRelations(loadedRelations.filter((x) => !x.isDeleted));
+      setMaps(loadedMaps.filter((x) => !x.isDeleted));
       if (keep && keep.mapId === mapId && keep.storyId === storyId) {
         setContent(keep.content);
         setSavedContent(row.content);
@@ -130,11 +134,9 @@ const LocationMapScreen = () => {
       setLoading(false);
     }
   }, [db, mapId, storyId, t]);
-
   useEffect(() => {
     void load();
   }, [load]);
-
   useEffect(() => {
     if (!storyId || !map || map.id !== mapId) return;
     useLocationMapDraftStore.getState().remember({
@@ -144,7 +146,6 @@ const LocationMapScreen = () => {
       savedContent,
     });
   }, [map, mapId, content, savedContent, storyId]);
-
   const save = useCallback(async () => {
     if (!userId || !map) return;
     try {
@@ -160,11 +161,9 @@ const LocationMapScreen = () => {
       setSaving(false);
     }
   }, [content, db, map, showNotification, t, userId]);
-
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
-
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(map?.name ?? t('location_map_list_title'));
@@ -177,13 +176,37 @@ const LocationMapScreen = () => {
                 saving={saving}
                 onRevert={revert}
                 onSave={() => void save()}
+                layoutEditing={layoutEditing}
+                connectionMode={connectionMode}
+                onToggleLayout={() => {
+                  setLayoutEditing((current) => !current);
+                  setConnectionMode(false);
+                  setOpenedNodeId(null);
+                  setOpenedMarkerId(null);
+                }}
+                onToggleConnectionMode={() => {
+                  setConnectionMode((current) => !current);
+                  setLayoutEditing(false);
+                  setOpenedNodeId(null);
+                  setOpenedMarkerId(null);
+                }}
               />
             )
           : undefined,
       });
-    }, [canEdit, dirty, map?.name, navigation, revert, save, saving, t]),
+    }, [
+      canEdit,
+      connectionMode,
+      dirty,
+      layoutEditing,
+      map?.name,
+      navigation,
+      revert,
+      save,
+      saving,
+      t,
+    ]),
   );
-
   const galleryMediaById = useMemo(() => {
     const next: Record<
       string,
@@ -204,7 +227,6 @@ const LocationMapScreen = () => {
     }
     return next;
   }, [galleries]);
-
   const imagePaths = useMemo(
     () =>
       content.images.map((image) => {
@@ -223,7 +245,6 @@ const LocationMapScreen = () => {
     });
     return next;
   }, [content.images, imagePaths, resolvedUris]);
-
   const locationNameById = useMemo(
     () => new Map(locations.map((location) => [location.id, location.name])),
     [locations],
@@ -263,8 +284,10 @@ const LocationMapScreen = () => {
     childCandidates,
     connectCandidates,
     handleAddConnection,
+    handleConnectLocations,
     handleRemoveConnection,
     handleSetParent,
+    handleSetLocationParent,
     handleRemoveParent,
     handleAddChild,
     handleRemoveRelation,
@@ -280,193 +303,70 @@ const LocationMapScreen = () => {
     notify: showNotification,
   });
 
-  const handleExport = useCallback(async () => {
-    if (!map) return;
-    setExporting(true);
-    try {
-      // The exported SVG is standalone, so each image base is embedded as a data URI. Only the
-      // images actually used on the map are read.
-      const svg = await buildLocationMapSvg(content, galleryMediaById, {
-        title: map.name,
-        subtitle: t('location_map_export_subtitle', {
-          nodeCount: content.nodes.length,
-          imageCount: content.images.length,
-        }),
-        colors: {
-          background: colors.background,
-          surface: colors.surface,
-          text: colors.text,
-          textSecondary: colors.textSecondary,
-          border: colors.border,
-        },
-        nodeNames,
-        connections,
-        contains,
-      });
-      const result = await deliverSvgMap(svg, buildLocationMapFileName(map.name));
-      if (result.delivered) {
-        showNotification(
-          t('location_map_export_success', { fileName: result.fileName }),
-          'success',
-        );
-      } else {
-        showNotification(
-          t('location_map_export_no_share_target', { path: result.uri ?? result.fileName }),
-          'warning',
-        );
-      }
-    } catch (exportError) {
-      console.log('LocationMapScreen: failed to export map.', exportError);
-      showNotification(t('location_map_export_failed'), 'error');
-    } finally {
-      setExporting(false);
-    }
-  }, [
-    colors,
-    connections,
-    contains,
+  const handleExport = useLocationMapExport({
+    map,
     content,
     galleryMediaById,
-    map,
     nodeNames,
-    showNotification,
+    connections,
+    contains,
+    colors,
     t,
-  ]);
-
-  const usedGalleryIds = useMemo(
-    () => new Set(content.images.map((image) => image.galleryId)),
-    [content.images],
-  );
-  const imageOptions = useMemo(
-    () =>
-      galleries
-        .filter(
-          (gallery) =>
-            gallery.mediaType === 'image' && !!gallery.localPath && !usedGalleryIds.has(gallery.id),
-        )
-        .map((gallery) => ({ label: gallery.title || gallery.fileName, value: gallery.id })),
-    [galleries, usedGalleryIds],
-  );
-
-  const usedLocationIds = useMemo(
-    () => new Set(content.nodes.map((node) => node.locationId)),
-    [content.nodes],
-  );
-  const locationOptions = useMemo(
-    () =>
-      locations
-        .filter((location) => !usedLocationIds.has(location.id))
-        .map((location) => ({ label: location.name, value: location.id })),
-    [locations, usedLocationIds],
-  );
-
-  const addImages = async (values: string[]) => {
-    // Each image keeps its real aspect ratio: the default size is a bounding box the image is
-    // scaled to fit, so a square picture comes in square instead of stretched rectangular.
-    const sized: { galleryId: string; width: number; height: number }[] = [];
-    for (const galleryId of values) {
-      const media = galleryMediaById[galleryId];
-      let width = LOCATION_MAP_IMAGE_DEFAULT_WIDTH;
-      let height = LOCATION_MAP_IMAGE_DEFAULT_HEIGHT;
-      if (media?.localPath) {
-        try {
-          const { width: naturalWidth, height: naturalHeight } = await imageSizeOf(media.localPath);
-          if (naturalWidth > 0 && naturalHeight > 0) {
-            const scale = Math.min(
-              LOCATION_MAP_IMAGE_DEFAULT_WIDTH / naturalWidth,
-              LOCATION_MAP_IMAGE_DEFAULT_HEIGHT / naturalHeight,
-            );
-            width = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalWidth * scale));
-            height = Math.max(LOCATION_MAP_IMAGE_MIN, Math.round(naturalHeight * scale));
-          }
-        } catch (sizeError) {
-          console.log('LocationMapScreen: failed to read image size, using default.', sizeError);
-        }
-      }
-      sized.push({ galleryId, width, height });
-    }
-
-    setContent((current) => appendImagesToMap(current, sized));
-  };
-
-  const addLocations = (values: string[]) => {
-    setContent((current) => appendLocationsToMap(current, values));
-  };
-
-  const selectedImage = useMemo(
-    () => content.images.find((image) => image.id === selectedImageId) ?? null,
-    [content.images, selectedImageId],
-  );
-
-  const handleResizeImage = useCallback(
-    (factor: number) => {
-      if (!selectedImageId) return;
-      setContent((current) => ({
-        ...current,
-        images: current.images.map((image) =>
-          image.id === selectedImageId
-            ? {
-                ...image,
-                width: clamp(image.width * factor, LOCATION_MAP_IMAGE_MIN, LOCATION_MAP_IMAGE_MAX),
-                height: clamp(
-                  image.height * factor,
-                  LOCATION_MAP_IMAGE_MIN,
-                  LOCATION_MAP_IMAGE_MAX,
-                ),
-              }
-            : image,
-        ),
-      }));
-    },
-    [selectedImageId],
-  );
-
-  const handleRemoveImage = useCallback(() => {
-    if (!selectedImageId) return;
-    setContent((current) => ({
-      ...current,
-      images: current.images.filter((image) => image.id !== selectedImageId),
-    }));
-    setSelectedImageId(null);
-  }, [selectedImageId]);
-
-  const handleToggleImageLock = useCallback(() => {
-    if (!selectedImageId) return;
-    setContent((current) => ({
-      ...current,
-      images: current.images.map((image) =>
-        image.id === selectedImageId ? { ...image, locked: !image.locked } : image,
-      ),
-    }));
-  }, [selectedImageId]);
-
-  const handleSelectImage = useCallback((imageId: string) => {
-    setSelectedNodeId(null);
-    setSelectedImageId(imageId);
-  }, []);
-
-  const handleMoveImage = useCallback((imageId: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      images: current.images.map((image) => (image.id === imageId ? { ...image, x, y } : image)),
-    }));
-  }, []);
-
-  const handleSelectNode = useCallback((nodeId: string) => {
-    setSelectedImageId(null);
-    setSelectedNodeId(nodeId);
-  }, []);
-
-  const handleMoveNode = useCallback((nodeId: string, x: number, y: number) => {
-    setContent((current) => ({
-      ...current,
-      nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
-    }));
-  }, []);
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    showNotification,
+    setExporting,
   });
+
+  const {
+    imageOptions,
+    locationOptions,
+    destinationOptions,
+    addImages,
+    addLocations,
+    addMarker,
+    handleResizeImageDirect,
+    handleRemoveImage,
+    handleToggleImageLock,
+    handleSelectImage,
+    handleMoveImage,
+    handleSelectNode,
+    handleMoveNode,
+    handleSelectMarker,
+    handleMoveMarker,
+    moveImageLayer,
+    moveNodeLayer,
+    moveMarkerLayer,
+    destinationName,
+    openDestination,
+    createDestination,
+    handleOpenMarkerDestination,
+    handleOpenNodeDestination,
+  } = useLocationMapCanvasActions({
+    content,
+    setContent,
+    placementOrigin: () => canvasRef.current?.viewportWorldCenter() ?? { x: 80, y: 80 },
+    galleries,
+    locations,
+    maps,
+    mapId,
+    galleryMediaById,
+    layoutEditing,
+    navigation,
+    t,
+    setSelectedImageId,
+    setSelectedNodeId,
+    setSelectedMarkerId,
+    setOpenedNodeId,
+    setOpenedMarkerId,
+    db,
+    storyId,
+    userId,
+    setMaps,
+    showNotification,
+  });
+
+  const openedNode = content.nodes.find((node) => node.id === openedNodeId) ?? null;
+  const openedMarker =
+    (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null;
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !map) {
@@ -480,15 +380,14 @@ const LocationMapScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {canEdit && (
         <LocationMapTools
           imageOptions={imageOptions}
           locationOptions={locationOptions}
-          onAddImages={(values) => {
-            addImages(values);
-          }}
+          onAddImages={addImages}
           onAddLocations={addLocations}
+          onAddMarker={addMarker}
         />
       )}
       <LocationMapCanvas
@@ -500,10 +399,32 @@ const LocationMapScreen = () => {
         contains={contains}
         selectedImageId={selectedImageId}
         selectedNodeId={selectedNodeId}
+        selectedMarkerId={selectedMarkerId}
+        layoutEditing={layoutEditing}
+        connectionMode={connectionMode}
         onSelectImage={handleSelectImage}
         onMoveImage={handleMoveImage}
+        onResizeImage={handleResizeImageDirect}
+        onBringImageToFront={(id) => moveImageLayer(id, 'front')}
+        onSendImageToBack={(id) => moveImageLayer(id, 'back')}
+        onToggleImageLock={handleToggleImageLock}
+        onRemoveImage={handleRemoveImage}
+        onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
+        onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
+        onBringMarkerToFront={(id) => moveMarkerLayer(id, 'front')}
+        onSendMarkerToBack={(id) => moveMarkerLayer(id, 'back')}
         onSelectNode={handleSelectNode}
         onMoveNode={handleMoveNode}
+        onSelectMarker={handleSelectMarker}
+        onMoveMarker={handleMoveMarker}
+        onOpenNodeDestination={handleOpenNodeDestination}
+        onOpenMarkerDestination={handleOpenMarkerDestination}
+        onConnectPoints={(from, to) => {
+          const fromLocation = content.nodes.find((node) => node.id === from)?.locationId;
+          const toLocation = content.nodes.find((node) => node.id === to)?.locationId;
+          if (fromLocation && toLocation) setConnectionPair({ from: fromLocation, to: toLocation });
+          else setMarkerConnectionPair({ from, to });
+        }}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -513,22 +434,12 @@ const LocationMapScreen = () => {
         exporting={exporting}
         exportLabel={t('location_map_export')}
       />
-      {selectedImage && (
-        <LocationMapImageSheet
-          visible
-          onClose={() => setSelectedImageId(null)}
-          onResize={handleResizeImage}
-          onRemove={handleRemoveImage}
-          locked={selectedImage.locked}
-          onToggleLock={handleToggleImageLock}
-        />
-      )}
-      {selectedNode && (
+      {openedNode && (
         <LocationMapNodeSheet
-          name={nodeNames[selectedNode.locationId] ?? selectedNode.locationId}
+          name={nodeNames[openedNode.locationId] ?? openedNode.locationId}
           summary={selectedNodeSummary}
-          icon={selectedNode.icon}
-          color={selectedNode.color}
+          icon={openedNode.icon}
+          color={openedNode.color}
           parent={nodeParent}
           childLocations={nodeChildren}
           connections={nodeConnections}
@@ -536,11 +447,17 @@ const LocationMapScreen = () => {
           childCandidates={childCandidates}
           connectCandidates={connectCandidates}
           canEdit={canEdit}
+          destinationMapId={openedNode.destinationMapId}
+          destinationName={destinationName(openedNode.destinationMapId)}
+          destinationUnavailable={
+            !!openedNode.destinationMapId && !destinationName(openedNode.destinationMapId)
+          }
+          destinationOptions={destinationOptions}
           onChangeIcon={(icon) =>
             setContent((current) => ({
               ...current,
               nodes: current.nodes.map((node) =>
-                node.id === selectedNode.id ? { ...node, icon } : node,
+                node.id === openedNode.id ? { ...node, icon } : node,
               ),
             }))
           }
@@ -548,7 +465,7 @@ const LocationMapScreen = () => {
             setContent((current) => ({
               ...current,
               nodes: current.nodes.map((node) =>
-                node.id === selectedNode.id ? { ...node, color } : node,
+                node.id === openedNode.id ? { ...node, color } : node,
               ),
             }))
           }
@@ -559,25 +476,125 @@ const LocationMapScreen = () => {
           onAddConnection={(locationId) => void handleAddConnection(locationId)}
           onRemoveConnection={(relationId) => void handleRemoveConnection(relationId)}
           onRemoveNode={() => {
+            setContent((current) => removeLocationMapPoint(current, openedNode.id));
+            setSelectedNodeId(null);
+            setOpenedNodeId(null);
+          }}
+          onChangeDestination={(destinationMapId) =>
             setContent((current) => ({
               ...current,
-              nodes: current.nodes.filter((node) => node.id !== selectedNode.id),
-            }));
-            setSelectedNodeId(null);
-          }}
+              nodes: current.nodes.map((node) =>
+                node.id === openedNode.id ? { ...node, destinationMapId } : node,
+              ),
+            }))
+          }
+          onCreateDestination={() =>
+            void createDestination(
+              {
+                locationId: openedNode.locationId,
+                title: nodeNames[openedNode.locationId] ?? openedNode.locationId,
+              },
+              (destinationMapId) =>
+                setContent((current) => ({
+                  ...current,
+                  nodes: current.nodes.map((node) =>
+                    node.id === openedNode.id ? { ...node, destinationMapId } : node,
+                  ),
+                })),
+            )
+          }
+          onOpenDestination={() => openDestination(openedNode.destinationMapId)}
           onOpenLocation={() => {
             setSelectedNodeId(null);
-            navigateToEntity('Location', selectedNode.locationId);
+            navigateToEntity('Location', openedNode.locationId);
           }}
-          onClose={() => setSelectedNodeId(null)}
+          onClose={() => {
+            setOpenedNodeId(null);
+            setSelectedNodeId(null);
+          }}
+        />
+      )}
+      {openedMarker && (
+        <LocationMapMarkerSheet
+          title={openedMarker.title}
+          note={openedMarker.note}
+          icon={openedMarker.icon}
+          color={openedMarker.color}
+          destinationMapId={openedMarker.destinationMapId}
+          destinationUnavailable={
+            !!openedMarker.destinationMapId && !destinationName(openedMarker.destinationMapId)
+          }
+          destinationOptions={destinationOptions}
+          canEdit={canEdit}
+          onChange={(changes) =>
+            setContent((current) => ({
+              ...current,
+              markers: (current.markers ?? []).map((marker) =>
+                marker.id === openedMarker.id ? { ...marker, ...changes } : marker,
+              ),
+            }))
+          }
+          onChangeDestination={(destinationMapId) =>
+            setContent((current) => ({
+              ...current,
+              markers: (current.markers ?? []).map((marker) =>
+                marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
+              ),
+            }))
+          }
+          onCreateDestination={() =>
+            void createDestination(
+              { title: openedMarker.title, note: openedMarker.note },
+              (destinationMapId) =>
+                setContent((current) => ({
+                  ...current,
+                  markers: (current.markers ?? []).map((marker) =>
+                    marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
+                  ),
+                })),
+            )
+          }
+          onOpenDestination={() => openDestination(openedMarker.destinationMapId)}
+          onClearDestination={() =>
+            setContent((current) => ({
+              ...current,
+              markers: (current.markers ?? []).map((marker) =>
+                marker.id === openedMarker.id ? { ...marker, destinationMapId: null } : marker,
+              ),
+            }))
+          }
+          onRemove={() => {
+            setContent((current) => removeLocationMapPoint(current, openedMarker.id));
+            setSelectedMarkerId(null);
+            setOpenedMarkerId(null);
+          }}
+          onClose={() => {
+            setOpenedMarkerId(null);
+            setSelectedMarkerId(null);
+          }}
+        />
+      )}
+      {connectionPair && (
+        <LocationMapConnectionModal
+          pair={connectionPair}
+          nodeNames={nodeNames}
+          setContent={setContent}
+          onConnect={(from, to) => void handleConnectLocations(from, to)}
+          onSetParent={(child, parent) => void handleSetLocationParent(child, parent)}
+          onClose={() => setConnectionPair(null)}
+        />
+      )}
+      {markerConnectionPair && (
+        <LocationMapMarkerConnectionModal
+          pair={markerConnectionPair}
+          content={content}
+          locationNames={nodeNames}
+          setContent={setContent}
+          onClose={() => setMarkerConnectionPair(null)}
         />
       )}
     </View>
   );
 };
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
 export default LocationMapScreen;

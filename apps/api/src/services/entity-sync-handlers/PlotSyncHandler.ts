@@ -22,12 +22,15 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
       deletedAtColumnName: 'deletedAt',
     });
   }
-  private async assertLinear(storyId: string) {
+  /** Plots are a linear-story feature; stale offline writes must not recreate them after conversion. */
+  private async assertLinear(storyId: string): Promise<void> {
     const story = await db.query.stories.findFirst({
       where: and(eq(stories.id, storyId), eq(stories.isDeleted, false)),
+      columns: { type: true },
     });
-    if (!story || story.type !== 'linear')
+    if (!story || story.type !== 'linear') {
       throw new SyncConflictError('validation', 'Plots are only available for linear stories.');
+    }
   }
   async create(_: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     const data: CreatePlotDataType = this.createSchema.parse(update.data);

@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import DatePickerModal from '../../src/components/common/inputs/DatePickerInput/DatePickerModal';
 
@@ -66,12 +66,20 @@ describe('DatePickerModal', () => {
 
     expect(screen.queryByTestId('date-picker-hour')).toBeNull();
 
-    await fireEvent(screen.getByTestId('date-picker-include-time'), 'valueChange', true);
-    await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '10');
-    await fireEvent.changeText(screen.getByTestId('date-picker-minute'), '30');
-    await fireEvent.press(screen.getByTestId('date-picker-confirm'));
+    jest.useFakeTimers();
+    try {
+      await act(async () => {
+        fireEvent(screen.getByTestId('date-picker-include-time'), 'valueChange', true);
+        await jest.advanceTimersByTimeAsync(180);
+      });
+      await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '10');
+      await fireEvent.changeText(screen.getByTestId('date-picker-minute'), '30');
+      await fireEvent.press(screen.getByTestId('date-picker-confirm'));
 
-    expect(onSelect).toHaveBeenCalledWith('2024-01-15T10:30');
+      expect(onSelect).toHaveBeenCalledWith('2024-01-15T10:30');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('reopens an existing timed value with the time already on', async () => {

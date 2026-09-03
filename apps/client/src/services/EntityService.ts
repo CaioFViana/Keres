@@ -1,4 +1,5 @@
 import type { StorySchemaEntityType } from '@keres/shared';
+import type { StoryVocabulary } from '@keres/shared/entities/Story';
 import {
   AttributeType,
   decodeAttributeValue,
@@ -29,6 +30,8 @@ import {
   operationLogs,
   plots,
   plotScenes,
+  routes,
+  routeSteps,
   scenes,
   suggestions,
   stories,
@@ -38,13 +41,17 @@ import {
   users,
   worldRules,
 } from '../db/schemas';
+import {
+  fromStoryNoun,
+  loadStoryVocabulary,
+  translateStoryNoun,
+  unknownStoryNoun,
+} from '../vocabulary/storyVocabularyLookup';
+import { isStoryVocabularyEntityType } from '../vocabulary/resolveStoryTerm';
 import { getEntityIdentifier, resolveRelationEntityName } from './EntityIdentifierResolver';
 import { resolveAdvancedEntityName } from './EntityAdvancedNameResolver';
 
-/**
- * The singular translation key already used in this file for each entity type that can receive a Story
- * Schema - reused instead of a second list of labels.
- */
+/** Reuses the singular translation key for each entity type that can receive a Story Schema. */
 const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'character',
   Location: 'location',
@@ -54,11 +61,6 @@ const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, stri
   Note: 'note',
   WorldRule: 'world_rule',
 };
-
-/**
- * The translation keys for each Effect type's label - used to build an Effect's readable name from its
- * effectType (an entity with no name of its own).
- */
 
 export class EntityService {
   static async getEntityName(
@@ -70,6 +72,10 @@ export class EntityService {
   ): Promise<string | undefined> {
     let translatedEntityType: string | undefined;
     let entitySpecificName: string | undefined;
+    // Operation-log rows are resolved independently. Most entity types do not need custom
+    // terminology, so keep the extra story read lazy and share it for a composite name.
+    let vocabularyPromise: Promise<StoryVocabulary | null> | undefined;
+    const vocabulary = () => (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
 
     switch (entityType) {
       case OperationLogEntityType.Board:
@@ -110,7 +116,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = character?.name;
-        translatedEntityType = t('character');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Character');
         break;
       case OperationLogEntityType.Note:
         const note = await db.query.notes.findFirst({
@@ -126,15 +132,17 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = location?.name;
-        translatedEntityType = t('location');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Location');
         break;
       case OperationLogEntityType.WorldRule:
         const worldRule = await db.query.worldRules.findFirst({
           where: and(eq(worldRules.id, entityId), eq(worldRules.isDeleted, false)),
-          columns: { title: true },
+          columns: { title: true, section: true },
         });
         entitySpecificName = worldRule?.title;
-        translatedEntityType = t('world_rule');
+        translatedEntityType = worldRule?.section
+          ? t(`world_piece_section_${worldRule.section}`)
+          : translateStoryNoun(t, await vocabulary(), 'WorldRule');
         break;
       case OperationLogEntityType.Tag:
         const tag = await db.query.tags.findFirst({
@@ -155,10 +163,14 @@ export class EntityService {
       case OperationLogEntityType.Chapter:
         const chapter = await db.query.chapters.findFirst({
           where: and(eq(chapters.id, entityId), eq(chapters.isDeleted, false)),
-          columns: { name: true },
+          columns: { name: true, type: true },
         });
         entitySpecificName = chapter?.name;
-        translatedEntityType = t('chapter');
+        translatedEntityType = translateStoryNoun(
+          t,
+          await vocabulary(),
+          chapter?.type === 'event' ? 'Event' : 'Chapter',
+        );
         break;
       case OperationLogEntityType.Scene:
         const scene = await db.query.scenes.findFirst({
@@ -166,7 +178,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = scene?.name;
-        translatedEntityType = t('scene');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Scene');
         break;
       case OperationLogEntityType.Choice:
         const choice = await db.query.choices.findFirst({
@@ -178,11 +190,11 @@ export class EntityService {
             where: and(eq(scenes.id, choice.sceneId), eq(scenes.isDeleted, false)),
             columns: { name: true },
           });
-          entitySpecificName = `${t('from_scene')}: ${originScene?.name || t('unknown_scene')} - ${choice.text}`;
+          entitySpecificName = `${fromStoryNoun(t, await vocabulary(), 'Scene')}: ${originScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')} - ${choice.text}`;
         } else {
           entitySpecificName = `${t('unknown_choice')} ${t('id')}: ${entityId}`;
         }
-        translatedEntityType = t('choice');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Choice');
         break;
       case OperationLogEntityType.Gallery:
         const gallery = await db.query.galleries.findFirst({
@@ -252,7 +264,7 @@ export class EntityService {
           columns: { name: true },
         });
         entitySpecificName = item?.name;
-        translatedEntityType = t('item');
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Item');
         break;
       case OperationLogEntityType.ItemJourney:
         const itemJourney = await db.query.itemJourneys.findFirst({
@@ -268,7 +280,7 @@ export class EntityService {
             where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
             columns: { name: true },
           });
-          entitySpecificName = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || t('unknown_scene')}`;
+          entitySpecificName = `${relatedItem?.name || unknownStoryNoun(t, await vocabulary(), 'Item')} ${t('showed_in_scene')} ${targetScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
         }
         translatedEntityType = t('item_journey');
         break;
@@ -428,7 +440,7 @@ export class EntityService {
           });
           entitySpecificName = t('character_attributed_to_scene', {
             characterName: character?.name || t('unknown_character'),
-            sceneName: scene?.name || t('unknown_scene'),
+            sceneName: scene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene'),
           });
         }
         translatedEntityType = t('character_scene_relation');
@@ -457,9 +469,45 @@ export class EntityService {
               columns: { name: true },
             }),
           ]);
-          entitySpecificName = `${relatedPlot?.name || t('plots_title')} — ${relatedScene?.name || t('scenes_title')}`;
+          entitySpecificName = `${relatedPlot?.name || t('plots_title')} — ${relatedScene?.name || translateStoryNoun(t, await vocabulary(), 'Scene', true)}`;
         }
         translatedEntityType = t('plot_scenes');
+        break;
+      case OperationLogEntityType.Route:
+        const route = await db.query.routes.findFirst({
+          where: and(
+            eq(routes.id, entityId),
+            eq(routes.storyId, storyId),
+            eq(routes.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
+        entitySpecificName = route?.name;
+        translatedEntityType = t('route');
+        break;
+      case OperationLogEntityType.RouteStep:
+        const routeStep = await db.query.routeSteps.findFirst({
+          where: and(
+            eq(routeSteps.id, entityId),
+            eq(routeSteps.storyId, storyId),
+            eq(routeSteps.isDeleted, false),
+          ),
+          columns: { routeId: true, position: true, sceneId: true },
+        });
+        if (routeStep) {
+          const [stepRoute, stepScene] = await Promise.all([
+            db.query.routes.findFirst({
+              where: and(eq(routes.id, routeStep.routeId), eq(routes.isDeleted, false)),
+              columns: { name: true },
+            }),
+            db.query.scenes.findFirst({
+              where: and(eq(scenes.id, routeStep.sceneId), eq(scenes.isDeleted, false)),
+              columns: { name: true },
+            }),
+          ]);
+          entitySpecificName = `${stepRoute?.name || t('unknown_entity')} — ${t('route_step')} ${routeStep.position + 1}: ${stepScene?.name || unknownStoryNoun(t, await vocabulary(), 'Scene')}`;
+        }
+        translatedEntityType = t('route_step');
         break;
       case OperationLogEntityType.StorySchemaField:
         const schemaField = await db.query.storySchemaFields.findFirst({
@@ -469,7 +517,13 @@ export class EntityService {
         if (schemaField) {
           const entityTypeLabelKey =
             STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS[schemaField.entityType as StorySchemaEntityType];
-          entitySpecificName = `${schemaField.name} (${entityTypeLabelKey ? t(entityTypeLabelKey) : schemaField.entityType})`;
+          entitySpecificName = `${schemaField.name} (${
+            isStoryVocabularyEntityType(schemaField.entityType)
+              ? translateStoryNoun(t, await vocabulary(), schemaField.entityType)
+              : entityTypeLabelKey
+                ? t(entityTypeLabelKey)
+                : schemaField.entityType
+          })`;
         }
         translatedEntityType = t('custom_attribute');
         break;
@@ -523,10 +577,9 @@ export class EntityService {
     }
     if (entitySpecificName) {
       return `${translatedEntityType} - ${entitySpecificName}`;
-    } else {
-      // If no specific name found, but entityType is known, return just the translated type
-      return translatedEntityType;
     }
+    // If no specific name found, but entityType is known, return just the translated type.
+    return translatedEntityType;
   }
 
   // Private helper to resolve the name and type of a related entity (e.g., from TagRelation)

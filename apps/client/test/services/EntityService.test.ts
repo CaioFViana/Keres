@@ -117,6 +117,61 @@ describe('getEntityName', () => {
     ).resolves.toBe('location_map - Continente');
   });
 
+  it('names routes and their steps for the operation log', async () => {
+    await seedStory({ type: 'branching' });
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: STORY_ID,
+      name: 'Opening',
+      index: 1,
+      ...base,
+    });
+    await database.db.insert(schema.scenes).values({
+      id: 'scene-1',
+      storyId: STORY_ID,
+      chapterId: 'chapter-1',
+      locationId: null,
+      name: 'The fork',
+      index: 1,
+      ...base,
+    });
+    await database.db.insert(schema.routes).values({
+      id: 'route-1',
+      storyId: STORY_ID,
+      name: 'Mercy path',
+      details: null,
+      ...base,
+    });
+    await database.db.insert(schema.routeSteps).values({
+      id: 'step-1',
+      storyId: STORY_ID,
+      routeId: 'route-1',
+      position: 0,
+      sceneId: 'scene-1',
+      selectedChoiceId: null,
+      ...base,
+    });
+
+    await expect(
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Route,
+        'route-1',
+        STORY_ID,
+        t,
+      ),
+    ).resolves.toBe('route - Mercy path');
+    await expect(
+      EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.RouteStep,
+        'step-1',
+        STORY_ID,
+        t,
+      ),
+    ).resolves.toBe('route_step - Mercy path — route_step 1: The fork');
+  });
+
   it.each([
     ['note', OperationLogEntityType.Note, schema.notes, { title: 'Ideia' }, 'note - Ideia'],
     [
@@ -131,7 +186,7 @@ describe('getEntityName', () => {
       OperationLogEntityType.WorldRule,
       schema.worldRules,
       { title: 'Magia' },
-      'world_rule - Magia',
+      'world_piece_section_rule - Magia',
     ],
     ['tag', OperationLogEntityType.Tag, schema.tags, { name: 'Vilões' }, 'tag - Vilões'],
   ])('names a %s', async (_label, entityType, table, columns, expected) => {

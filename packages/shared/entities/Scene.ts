@@ -10,6 +10,10 @@ export interface Scene {
   summary: string | null;
   gap: number | null;
   gapType: string | null;
+  /** ISO-like calendar coordinates (`YYYY-MM-DDTHH:mm`), not a timezone-aware JS date. */
+  calendarDateOverride: string | null;
+  /** Null means the built-in Gregorian calendar; otherwise the custom calendar that owns the coordinates. */
+  calendarDateOverrideCalendarId: string | null;
   duration: number | null;
   durationType: string | null;
   isStart: boolean;

@@ -2,6 +2,7 @@ import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
 import {
   assertStoryExportIntegrity,
   CURRENT_STORY_FORMAT_VERSION,
+  galleryHasFile,
   pruneDanglingStoryExportRows,
   FullStoryExportSchema,
   scenesToUnflag,
@@ -35,6 +36,8 @@ import type {
   NoteSelect,
   PlotInsert,
   PlotSceneInsert,
+  RouteInsert,
+  RouteStepInsert,
   SceneInsert,
   SceneSelect,
   SeeAlsoRelationInsert,
@@ -77,6 +80,8 @@ import {
   notes,
   plots,
   plotScenes,
+  routes,
+  routeSteps,
   scenes,
   seeAlsoRelations,
   servers,
@@ -772,14 +777,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       if (targetType === 'branching') {
-        const row = await db
-          .select({ count: count() })
-          .from(plots)
-          .where(and(eq(plots.storyId, storyId), eq(plots.isDeleted, false)))
-          .get();
-        if ((row?.count ?? 0) > 0) {
-          throw new Error('Remove all plots before converting this story to branching.');
-        }
         // Linear -> Branching: always allowed. Each pair of consecutive scenes (by index,
         // within the chapter) becomes an explicit Choice, including the bridge between the end of one
         // chapter and the start of the next - the same shape the validation below accepts on the way back,
@@ -1137,6 +1134,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyModes,
         storyPlots,
         storyPlotScenes,
+        storyRoutes,
+        storyRouteSteps,
         storyChoiceCheckGroups,
         storyChoiceChecks,
         storyEffects,
@@ -1174,6 +1173,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.modes.findMany({ where: belongsToStory(modes) }),
         db.query.plots.findMany({ where: belongsToStory(plots) }),
         db.query.plotScenes.findMany({ where: belongsToStory(plotScenes) }),
+        db.query.routes.findMany({ where: belongsToStory(routes) }),
+        db.query.routeSteps.findMany({ where: belongsToStory(routeSteps) }),
         db.query.choiceCheckGroups.findMany({ where: belongsToStory(choiceCheckGroups) }),
         db.query.choiceChecks.findMany({ where: belongsToStory(choiceChecks) }),
         db.query.effects.findMany({ where: belongsToStory(effects) }),
@@ -1218,6 +1219,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           modes: storyModes,
           plots: storyPlots,
           plotScenes: storyPlotScenes,
+          routes: storyRoutes,
+          routeSteps: storyRouteSteps,
           // The choices' conditions and effects: they are what makes a branching story work.
           // They were left out of the export for years - the importer here always knew how to read them, and the
           // API always exported them, so a package generated on the device came back without the choices'
@@ -1608,6 +1611,28 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           await tx.insert(plotScenes).values(plotSceneToInsert).run();
         }
 
+        // 12d. Routes must precede their ordered visits.
+        for (const route of fullStoryData.routes ?? []) {
+          const routeToInsert: RouteInsert = {
+            ...route,
+            createdAt: new Date(route.createdAt),
+            updatedAt: new Date(),
+            isDeleted: false,
+            deletedAt: null,
+          };
+          await tx.insert(routes).values(routeToInsert).run();
+        }
+        for (const step of fullStoryData.routeSteps ?? []) {
+          const stepToInsert: RouteStepInsert = {
+            ...step,
+            createdAt: new Date(step.createdAt),
+            updatedAt: new Date(),
+            isDeleted: false,
+            deletedAt: null,
+          };
+          await tx.insert(routeSteps).values(stepToInsert).run();
+        }
+
         // 13. Process TagRelations
         if (fullStoryData.tagRelations) {
           for (const tagRelation of fullStoryData.tagRelations) {
@@ -1634,6 +1659,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             // transaction began (see `ImportExportScreen.handleImport`); a plain `.json`
             // carries only the metadata, and the bytes stay on the server, addressed by the hash.
             const localPath = localMediaPaths?.get(galleryItem.hash);
+            const requiresFileTransfer = galleryHasFile(galleryItem.mediaType);
             const galleryItemToInsert: GalleryInsert = {
               ...galleryItem,
               storyId: galleryItem.storyId,
@@ -1643,11 +1669,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               isDeleted: false,
               deletedAt: null,
               localPath: localPath ?? null,
-              // With the file already here, what is missing is the upload to the server (if/when the story
-              // is linked to one); without it, what is missing is the download - synchronization decides on its own
-              // from these two states.
-              uploadState: localPath ? 'pending' : 'uploaded',
-              downloadState: localPath ? 'downloaded' : 'pending',
+              // A link is complete metadata, not a file. It must never be put into either transfer
+              // queue; otherwise an offline import would permanently claim that it was downloading.
+              uploadState: requiresFileTransfer && localPath ? 'pending' : 'uploaded',
+              downloadState: requiresFileTransfer && !localPath ? 'pending' : 'downloaded',
             };
             await tx.insert(galleries).values(galleryItemToInsert).run();
           }

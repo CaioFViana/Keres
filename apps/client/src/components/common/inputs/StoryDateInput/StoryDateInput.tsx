@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import Select from '@/src/components/common/inputs/Select/Select';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useTheme } from '@/src/theme';
@@ -133,7 +133,7 @@ const StoryDateInput: React.FC<Props> = ({ value, onChange, editable = true }) =
       {definition.eras.length > 0 && (
         <View style={{ marginBottom: 8 }}>
           <Text style={styles.label}>{t('calendar_eras')}</Text>
-          <Select
+          <SingleSelectPill
             options={definition.eras.map((candidate) => ({
               label: `${candidate.name} (${candidate.abbreviation})`,
               value: String(candidate.startYear),
@@ -159,7 +159,7 @@ const StoryDateInput: React.FC<Props> = ({ value, onChange, editable = true }) =
         {numberField('day', t('calendar_epoch_day'))}
         <View style={[styles.field, { flexGrow: 2 }]}>
           <Text style={styles.label}>{t('calendar_epoch_month')}</Text>
-          <Select
+          <SingleSelectPill
             options={definition.months.map((candidate, index) => ({
               label: candidate.name || String(index + 1),
               value: String(index + 1),

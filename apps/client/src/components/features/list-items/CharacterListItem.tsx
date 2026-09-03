@@ -58,6 +58,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
       item={character}
       onToggleFavorite={onToggleFavorite}
       onViewDetails={onViewDetails}
+      entityType="Character"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

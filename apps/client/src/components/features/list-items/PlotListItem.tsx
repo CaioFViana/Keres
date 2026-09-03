@@ -32,6 +32,7 @@ const PlotListItem: React.FC<PlotListItemProps> = ({ plot, sceneCount, onViewDet
     <GenericExpandedListItemWithActions
       item={plot}
       onViewDetails={onViewDetails}
+      entityType="Plot"
       renderHeaderContent={(item) => (
         <View style={{ flex: 1 }}>
           <ListItemTitle

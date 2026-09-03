@@ -68,6 +68,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
       item={item}
       onViewDetails={onViewDetails}
       onToggleFavorite={onToggleFavorite}
+      entityType="Item"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

@@ -155,6 +155,7 @@ const mainSystemStackRootScreens = new Set([
   'GalleryList',
   'BoardList',
   'Tags',
+  'WorldIndex',
   'Notes',
   'Plots',
   'OperationLog',

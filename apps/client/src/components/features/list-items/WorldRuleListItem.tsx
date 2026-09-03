@@ -1,4 +1,5 @@
 import React from 'react';
+import { getWorldPieceSectionAppearance } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
@@ -48,6 +49,7 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({
       item={worldRule}
       onToggleFavorite={onToggleFavorite}
       onViewDetails={onViewDetails}
+      entityAppearance={getWorldPieceSectionAppearance(worldRule.section)}
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
     />

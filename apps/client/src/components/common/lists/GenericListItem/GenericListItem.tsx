@@ -12,6 +12,7 @@ import { useTheme } from '../../../../theme';
 
 interface GenericListItemProps {
   headerContent: React.ReactNode;
+  leadingIcon?: React.ReactNode;
   expandedContent?: React.ReactNode;
   isOpen: boolean;
   onPress: () => void;
@@ -24,6 +25,7 @@ const MeasurementContext = React.createContext(false);
 
 const GenericListItem: React.FC<GenericListItemProps> = ({
   headerContent,
+  leadingIcon,
   expandedContent,
   isOpen,
   onPress,
@@ -108,6 +110,11 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
       flex: 1,
       minWidth: 0,
     },
+    leadingIcon: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+    },
     headerToggle: {
       ...StyleSheet.absoluteFillObject,
     },
@@ -145,6 +152,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     return (
       <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
         <View style={styles.header}>
+          {leadingIcon && <View style={styles.leadingIcon}>{leadingIcon}</View>}
           {headerContent}
           <View style={styles.headerRight}>{rightActions}</View>
         </View>
@@ -157,6 +165,11 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
       <Animated.View style={[styles.header, animatedHeaderStyle]}>
         <Pressable onPress={onPress} style={styles.headerToggle} />
+        {leadingIcon && (
+          <View style={styles.leadingIcon} pointerEvents="none">
+            {leadingIcon}
+          </View>
+        )}
         <View style={styles.headerContent} pointerEvents="none">
           {headerContent}
         </View>

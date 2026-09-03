@@ -17,6 +17,7 @@ export const ENTITY_APPEARANCE = {
   Fork: { icon: 'git-branch', light: '#B8860B', dark: '#FFD700' },
   Plot: { icon: 'git-branch', light: '#B8860B', dark: '#FFD700' },
   Board: { icon: 'albums', light: '#2F4F6F', dark: '#3D5A80' },
+  LocationMap: { icon: 'map-outline', light: '#00695C', dark: '#26A69A' },
 } as const;
 
 export type EntityAppearanceKey = keyof typeof ENTITY_APPEARANCE;

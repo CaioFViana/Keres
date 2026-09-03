@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -37,6 +38,7 @@ const BoardListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const boardAppearance = getEntityAppearance('Board');
   const navigation = useNavigation<Navigation>();
   const db = useDrizzle();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
@@ -108,6 +110,7 @@ const BoardListScreen = () => {
       borderBottomColor: colors.border,
     },
     rowText: { flex: 1 },
+    entityIcon: { marginRight: 12 },
     actionButton: { padding: 8, marginLeft: 4 },
     name: { fontSize: 16, fontWeight: '600', color: colors.text },
     description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
@@ -200,6 +203,12 @@ const BoardListScreen = () => {
             style={styles.row}
             onPress={() => navigation.navigate('BoardCanvas', { boardId: item.id })}
           >
+            <Ionicons
+              name={boardAppearance.icon as keyof typeof Ionicons.glyphMap}
+              size={24}
+              color={boardAppearance.color}
+              style={styles.entityIcon}
+            />
             <View style={styles.rowText}>
               <Text style={styles.name}>{item.name}</Text>
               {!!item.description && <Text style={styles.description}>{item.description}</Text>}

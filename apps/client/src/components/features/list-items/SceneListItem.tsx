@@ -59,6 +59,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
       item={scene}
       onToggleFavorite={onToggleFavorite}
       onViewDetails={onViewDetails}
+      entityType="Scene"
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
       density={density}

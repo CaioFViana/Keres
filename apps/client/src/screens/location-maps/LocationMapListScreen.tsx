@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { getEntityAppearance } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -36,6 +37,7 @@ type Navigation = CompositeNavigationProp<
 const LocationMapListScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const mapAppearance = getEntityAppearance('LocationMap');
   const navigation = useNavigation<Navigation>();
   useBackButtonHandler({
     showWebBackButton: true,
@@ -111,6 +113,7 @@ const LocationMapListScreen = () => {
       borderBottomColor: colors.border,
     },
     rowText: { flex: 1 },
+    entityIcon: { marginRight: 12 },
     actionButton: { padding: 8, marginLeft: 4 },
     name: { fontSize: 16, fontWeight: '600', color: colors.text },
     description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
@@ -205,6 +208,12 @@ const LocationMapListScreen = () => {
             style={styles.row}
             onPress={() => navigation.navigate('LocationMap', { mapId: item.id })}
           >
+            <Ionicons
+              name={mapAppearance.icon as keyof typeof Ionicons.glyphMap}
+              size={24}
+              color={mapAppearance.color}
+              style={styles.entityIcon}
+            />
             <View style={styles.rowText}>
               <Text style={styles.name}>{item.name}</Text>
               {!!item.description && <Text style={styles.description}>{item.description}</Text>}

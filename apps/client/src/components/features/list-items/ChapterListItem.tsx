@@ -101,6 +101,9 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
       item={chapter}
       onToggleFavorite={isUnchapteredGroup(chapter.id) ? undefined : onToggleFavorite}
       onViewDetails={isUnchapteredGroup(chapter.id) ? undefined : onViewDetails}
+      entityType={
+        isUnchapteredGroup(chapter.id) ? undefined : chapter.type === 'event' ? 'Event' : 'Chapter'
+      }
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
       initialExpanded={initialExpanded}

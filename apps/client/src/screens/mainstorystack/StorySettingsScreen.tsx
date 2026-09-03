@@ -3,7 +3,7 @@ import FormActions from '@/src/components/common/controls/FormActions/FormAction
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import type { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -70,11 +70,8 @@ const StorySettingsScreen = () => {
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
-  const [statSystem, setStatSystem] = useState(false);
-  const [statNotation, setStatNotation] = useState<StatNotation>('letter');
   const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [autoLinkMentions, setAutoLinkMentions] = useState(false);
-  const [completenessChecks, setCompletenessChecks] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -117,11 +114,8 @@ const StorySettingsScreen = () => {
         setFavoriteBehavior(fetchedStory.favoriteBehavior);
         setExtraNotes(fetchedStory.extraNotes);
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
-        setStatSystem(fetchedStory.statSystem);
-        setStatNotation(fetchedStory.statNotation as StatNotation);
         setAllowReaderComments(fetchedStory.allowReaderComments);
         setAutoLinkMentions(fetchedStory.autoLinkMentions);
-        setCompletenessChecks(fetchedStory.completenessChecks);
 
         // Fetch servers
         const servers = await serverService().getAllServers();
@@ -252,12 +246,9 @@ const StorySettingsScreen = () => {
         author,
         isFavorite,
         extraNotes,
-        normalizeSceneTiming,
         // Preferences about this story, not owner policy: a writer may turn either on or off.
+        normalizeSceneTiming,
         autoLinkMentions,
-        completenessChecks,
-        statSystem,
-        statNotation,
         // `type` / `favoriteBehavior` / `allowReaderComments` are owner policy - a
         // writer who sent them would write locally and take an `unauthorized` on every push.
         ...(canManageStoryPolicy ? { favoriteBehavior, allowReaderComments } : {}),
@@ -681,76 +672,82 @@ const StorySettingsScreen = () => {
         onIsFavoriteChange={setIsFavorite}
         favoriteBehavior={favoriteBehavior}
         onFavoriteBehaviorChange={setFavoriteBehavior}
+        showFavoriteBehavior={false}
         extraNotes={extraNotes}
         onExtraNotesChange={setExtraNotes}
         editable={canEdit}
       />
 
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('normalize_scene_timing')}</Text>
-          <Text style={{ color: colors.textSecondary }}>
-            {t('normalize_scene_timing_description')}
-          </Text>
-        </View>
-        <ThemedSwitch
-          value={normalizeSceneTiming}
-          onValueChange={setNormalizeSceneTiming}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('auto_link_mentions')}</Text>
-          <Text style={{ color: colors.textSecondary }}>{t('auto_link_mentions_description')}</Text>
-        </View>
-        <ThemedSwitch
-          value={autoLinkMentions}
-          onValueChange={setAutoLinkMentions}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('completeness_checks')}</Text>
-          <Text style={{ color: colors.textSecondary }}>
-            {t('completeness_checks_description')}
-          </Text>
-        </View>
-        <ThemedSwitch
-          value={completenessChecks}
-          onValueChange={setCompletenessChecks}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('stat_system')}</Text>
-          <Text style={{ color: colors.textSecondary }}>{t('stat_system_description')}</Text>
-        </View>
-        <ThemedSwitch value={statSystem} onValueChange={setStatSystem} disabled={!canEdit} />
-      </View>
-
-      {/* A notação só muda como os valores aparecem, então só faz sentido com o sistema ligado. */}
-      {statSystem && (
-        <View style={{ marginBottom: 20 }}>
-          <Text style={[styles.label, { color: colors.text }]}>{t('stat_notation')}</Text>
-          <SingleSelectPill
-            options={[
-              { label: t('stat_notation_letter'), value: 'letter' },
-              { label: t('stat_notation_number'), value: 'number' },
-            ]}
-            value={statNotation}
-            onValueChange={(value) => setStatNotation((value as StatNotation) || 'letter')}
-            placeholder={t('stat_notation')}
+      <View
+        style={[
+          styles.preferencesCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        <View
+          style={[
+            styles.preferenceRow,
+            styles.preferenceRowDivider,
+            { borderBottomColor: colors.border },
+          ]}
+        >
+          <View style={styles.preferenceBody}>
+            <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+              {t('normalize_scene_timing')}
+            </Text>
+            <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+              {t('normalize_scene_timing_description')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={normalizeSceneTiming}
+            onValueChange={setNormalizeSceneTiming}
             disabled={!canEdit}
           />
-          <Text style={{ color: colors.textSecondary }}>{t('stat_notation_description')}</Text>
         </View>
-      )}
+
+        <View
+          style={[
+            styles.preferenceRow,
+            styles.preferenceRowDivider,
+            { borderBottomColor: colors.border },
+          ]}
+        >
+          <View style={styles.preferenceBody}>
+            <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+              {t('auto_link_mentions')}
+            </Text>
+            <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+              {t('auto_link_mentions_description')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={autoLinkMentions}
+            onValueChange={setAutoLinkMentions}
+            disabled={!canEdit}
+          />
+        </View>
+
+        <View>
+          <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+            {t('favorite_behavior')}
+          </Text>
+          <SingleSelectPill
+            options={[
+              { label: t('favorite_behavior_global'), value: 'global' },
+              { label: t('favorite_behavior_individual'), value: 'individual' },
+              { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
+            ]}
+            value={favoriteBehavior}
+            onValueChange={(value) => setFavoriteBehavior(value as FavoriteBehavior)}
+            placeholder={t('favorite_behavior')}
+            disabled={!canManageStoryPolicy}
+          />
+          <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+            {t(`favorite_behavior_${favoriteBehavior}_description`)}
+          </Text>
+        </View>
+      </View>
 
       {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
               história local não tem colaboradores, então este ajuste não faria sentido. */}
@@ -925,6 +922,27 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 5,
   },
+  preferencesCard: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 20,
+    marginBottom: 10,
+    padding: 15,
+  },
+  preferenceRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 4,
+  },
+  preferenceRowDivider: {
+    borderBottomWidth: 1,
+    marginBottom: 10,
+    paddingBottom: 14,
+  },
+  preferenceBody: { flex: 1 },
+  preferenceTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
+  preferenceDescription: { marginTop: 3 },
   saveButton: {
     marginTop: 35,
     marginBottom: 0,

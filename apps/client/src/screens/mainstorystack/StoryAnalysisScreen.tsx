@@ -1,21 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -69,9 +73,10 @@ const StoryAnalysisScreen = () => {
   // It does not use route.params: arriving here straight from the drawer (rather than from the
   // MainDashboard, which passes storyId explicitly) navigates with no param at all - the same story as
   // selectedStory, already fixed in StorySettingsScreen.
-  const { selectedStory } = useStoryStore();
+  const { selectedStory, setSelectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
+  const { canEdit } = useStoryRole(storyId);
   const drizzleDb = useDrizzle();
   const commonContainerStyles = getCommonContainerStyles(colors);
 
@@ -80,11 +85,19 @@ const StoryAnalysisScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [normalizing, setNormalizing] = useState(false);
+  const [completenessChecks, setCompletenessChecks] = useState(
+    selectedStory?.completenessChecks ?? false,
+  );
+  const [savingPreferences, setSavingPreferences] = useState(false);
   const [progressFraction, setProgressFraction] = useState(0);
   // Reachability/satisfiability only apply to a branching story - for a linear one the quick check is
   // already the full report, with no need for the button.
   const [hasRunFull, setHasRunFull] = useState(selectedStory?.type !== 'branching');
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setCompletenessChecks(selectedStory?.completenessChecks ?? false);
+  }, [selectedStory?.completenessChecks]);
 
   const loadCheapReport = useCallback(async () => {
     if (!storyId) return;
@@ -178,6 +191,37 @@ const StoryAnalysisScreen = () => {
     abortControllerRef.current?.abort();
   }, []);
 
+  const resetPreferences = useCallback(() => {
+    setCompletenessChecks(selectedStory?.completenessChecks ?? false);
+  }, [selectedStory?.completenessChecks]);
+
+  const savePreferences = useCallback(async () => {
+    if (!storyId || !userId || !selectedStory || savingPreferences) return;
+    setSavingPreferences(true);
+    try {
+      const preferences = { completenessChecks };
+      await createStoryService(drizzleDb).updateStory(userId, storyId, preferences);
+      setSelectedStory({ ...selectedStory, ...preferences });
+      await loadCheapReport();
+      AppAlert.alert(t('success'), t('story_updated_successfully'));
+    } catch (saveError) {
+      console.error('StoryAnalysisScreen: failed to save preferences.', saveError);
+      AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
+    } finally {
+      setSavingPreferences(false);
+    }
+  }, [
+    completenessChecks,
+    drizzleDb,
+    loadCheapReport,
+    savingPreferences,
+    selectedStory,
+    setSelectedStory,
+    storyId,
+    t,
+    userId,
+  ]);
+
   const findingsByCategory = useMemo(() => {
     const grouped = new Map<StoryAnalysisCategory, StoryAnalysisFinding[]>();
     for (const finding of report?.findings ?? []) {
@@ -215,6 +259,28 @@ const StoryAnalysisScreen = () => {
       borderRadius: 8,
       padding: 15,
       marginBottom: 10,
+    },
+    preferencesCard: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 14,
+    },
+    preferenceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 4,
+    },
+    preferenceBody: { flex: 1 },
+    preferenceTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+    preferenceDescription: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginTop: 3,
+      lineHeight: 18,
     },
     analysisHint: {
       color: colors.textSecondary,
@@ -282,6 +348,35 @@ const StoryAnalysisScreen = () => {
 
   const progressPercent = Math.round(progressFraction * 100);
 
+  const hasUnsavedPreferences = completenessChecks !== (selectedStory?.completenessChecks ?? false);
+
+  const preferencesCard = (
+    <View style={styles.preferencesCard} testID="analysis-preferences">
+      <View style={styles.preferenceRow}>
+        <View style={styles.preferenceBody}>
+          <Text style={styles.preferenceTitle}>{t('completeness_checks')}</Text>
+          <Text style={styles.preferenceDescription}>{t('completeness_checks_description')}</Text>
+        </View>
+        <ThemedSwitch
+          value={completenessChecks}
+          onValueChange={setCompletenessChecks}
+          disabled={!canEdit || savingPreferences}
+          testID="completeness-checks-switch"
+        />
+      </View>
+      {canEdit && (
+        <FormActions>
+          <Button onPress={resetPreferences} disabled={!hasUnsavedPreferences || savingPreferences}>
+            {t('cancel')}
+          </Button>
+          <Button onPress={savePreferences} disabled={!hasUnsavedPreferences || savingPreferences}>
+            {savingPreferences ? t('saving') : t('confirm')}
+          </Button>
+        </FormActions>
+      )}
+    </View>
+  );
+
   const analysisCard = (
     <View style={styles.analysisCard}>
       <Text style={styles.analysisHint}>{t('story_analysis_run_hint')}</Text>
@@ -326,6 +421,7 @@ const StoryAnalysisScreen = () => {
         style={commonContainerStyles.container}
         contentContainerStyle={styles.scrollContent}
       >
+        {preferencesCard}
         {analysisCard}
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-circle-outline" size={54} color={colors.primary} />
@@ -340,6 +436,7 @@ const StoryAnalysisScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollContent}
     >
+      {preferencesCard}
       {analysisCard}
 
       {(hasRunFull || report.findings.length > 0) && (

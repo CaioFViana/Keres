@@ -26,15 +26,15 @@ const page: HelpPage = {
         'Use Colaboradores para convidar, remover ou ajustar acesso.',
         'Use Enviar para servidor para ligar uma história local a um servidor.',
         'Ative comentários de leitores quando quiser receber observações de leitores.',
-        'Ajuste normalização de tempo e comportamento dos favoritos quando esses recursos fizerem sentido.',
+        'Use o cartão de preferências de leitura para escolher o comportamento dos favoritos, ligar menções automaticamente e normalizar o tempo das cenas ao exibi-lo.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Essas escolhas podem disponibilizar Escolhas, controlar o que colaboradores veem ou alteram, definir onde a história sincroniza e como favoritos aparecem para a equipe.',
+      text: 'Essas escolhas podem disponibilizar Escolhas, controlar o que colaboradores veem ou alteram, definir onde a história sincroniza, como favoritos aparecem para a equipe, transformar nomes reconhecidos no texto em links e como as durações das cenas são exibidas.',
     },
-    { type: 'seeAlso', pages: ['story-type', 'collaborators', 'sync-basics', 'favorites'] },
+    { type: 'seeAlso', pages: ['story-type', 'collaborators', 'sync-basics', 'favorites', 'appearance'] },
   ],
 };
 export default page;

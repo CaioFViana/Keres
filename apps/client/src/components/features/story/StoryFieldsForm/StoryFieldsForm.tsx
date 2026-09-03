@@ -17,6 +17,8 @@ interface StoryFieldsFormProps {
   typeDisabled?: boolean;
   /** `true` to lock favorite-behavior independently of `editable` (owner-only policy). */
   favoriteBehaviorDisabled?: boolean;
+  /** Lets Story Settings group this policy with its other story-wide reading preferences. */
+  showFavoriteBehavior?: boolean;
   description: string | null;
   onDescriptionChange: (value: string | null) => void;
   genre: string | null;
@@ -41,8 +43,9 @@ interface StoryFieldsFormProps {
  * drawer, editing only) and `StoryFormScreen` (outside the story stack, creation+editing)
  * duplicated almost byte for byte. Type and `favoriteBehavior` are owner policy on the server;
  * the screens pass `typeDisabled` / `favoriteBehaviorDisabled` for writers. Whatever is not
- * common to both (linear/branching type conversion, the server link, collaborators,
- * normalizeSceneTiming/allowReaderComments) stays in each screen, not here.
+ * common to both (linear/branching type conversion, the server link, collaborators, reading
+ * preferences) stays in each screen, not here. Story Settings can also group the favorite policy
+ * with those preferences, while the creation form keeps it in this shared form.
  */
 const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
   title,
@@ -51,6 +54,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
   onTypeChange,
   typeDisabled,
   favoriteBehaviorDisabled,
+  showFavoriteBehavior = true,
   description,
   onDescriptionChange,
   genre,
@@ -146,21 +150,25 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
         />
       </View>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('favorite_behavior')}</Text>
-      <SingleSelectPill
-        options={[
-          { label: t('favorite_behavior_global'), value: 'global' },
-          { label: t('favorite_behavior_individual'), value: 'individual' },
-          { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
-        ]}
-        value={favoriteBehavior}
-        onValueChange={(value) => onFavoriteBehaviorChange(value as FavoriteBehavior)}
-        placeholder={t('favorite_behavior')}
-        disabled={favoriteBehaviorDisabled ?? !editable}
-      />
-      <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
-        {t(`favorite_behavior_${favoriteBehavior}_description`)}
-      </Text>
+      {showFavoriteBehavior && (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>{t('favorite_behavior')}</Text>
+          <SingleSelectPill
+            options={[
+              { label: t('favorite_behavior_global'), value: 'global' },
+              { label: t('favorite_behavior_individual'), value: 'individual' },
+              { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
+            ]}
+            value={favoriteBehavior}
+            onValueChange={(value) => onFavoriteBehaviorChange(value as FavoriteBehavior)}
+            placeholder={t('favorite_behavior')}
+            disabled={favoriteBehaviorDisabled ?? !editable}
+          />
+          <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
+            {t(`favorite_behavior_${favoriteBehavior}_description`)}
+          </Text>
+        </>
+      )}
 
       <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
       <TextInput

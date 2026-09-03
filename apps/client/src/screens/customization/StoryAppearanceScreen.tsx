@@ -28,7 +28,9 @@ type AppearanceNavigation = NativeStackNavigationProp<
 
 /** Edits the Story-wide theme; Arc-specific overrides will reuse ThemePickerModal in a later release. */
 const StoryAppearanceScreen = () => {
-  useBackButtonHandler();
+  // The drawer owns the visible header. Register its back action against this nested stack so the
+  // header arrow returns to Customization instead of attempting to pop the drawer itself.
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<AppearanceNavigation>();

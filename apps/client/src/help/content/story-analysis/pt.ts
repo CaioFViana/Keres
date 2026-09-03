@@ -29,6 +29,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Abra a análise. Os avisos rápidos carregam na hora.',
+        'Use o controle no topo para escolher se elementos não referenciados são relatados. Confirmar salva a escolha; Cancelar deixa a história sem alteração.',
         'Em uma história ramificada, toque em Verificar alcançabilidade e lógica das escolhas para também procurar cenas e escolhas que nunca podem ser alcançadas de verdade.',
         'Espere a barra de progresso terminar, ou toque em Cancelar para interromper.',
         'Leia cada aviso e abra o elemento indicado.',
@@ -53,7 +54,7 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'Outros são sobre elementos que existem sem serem usados em lugar nenhum - um local em nenhuma cena, um personagem sem relações, uma etiqueta sem uso. Se isso é problema é decisão sua, não do Keres: numa bíblia de mundo, um lugar onde ninguém foi ainda é simplesmente um lugar. Vêm desligados e são ligados em Relatar elementos não referenciados, nas Configurações da História.',
+      text: 'Outros são sobre elementos que existem sem serem usados em lugar nenhum - um local em nenhuma cena, um personagem sem relações, uma etiqueta sem uso. Se isso é problema é decisão sua, não do Keres: numa bíblia de mundo, um lugar onde ninguém foi ainda é simplesmente um lugar. Vêm desligados e podem ser ligados em Relatar elementos não referenciados no topo desta tela. Confirme a alteração antes de sair.',
     },
     {
       type: 'callout',

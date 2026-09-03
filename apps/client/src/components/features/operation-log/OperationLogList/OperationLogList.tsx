@@ -146,7 +146,10 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
           .select({ id: worldRules.id, section: worldRules.section })
           .from(worldRules)
           .where(
-            and(eq(worldRules.storyId, storyId), inArray(worldRules.id, [...new Set(worldPieceIds)])),
+            and(
+              eq(worldRules.storyId, storyId),
+              inArray(worldRules.id, [...new Set(worldPieceIds)]),
+            ),
           )
           .all();
         if (!cancelled) {

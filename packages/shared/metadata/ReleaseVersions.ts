@@ -23,7 +23,7 @@
  * migration in `storyExportMigrations.ts`. An older Keres refuses a package from a newer format
  * rather than guessing at it.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 10;
+export const CURRENT_STORY_FORMAT_VERSION = 9;
 
 /**
  * Version of the synchronization protocol: what client and server exchange, and the rules each end
@@ -41,8 +41,11 @@ export const CURRENT_STORY_FORMAT_VERSION = 10;
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
  * retry loop with no way out from inside the app. `ChapterAnchor` and the container `type` column
  * arrived in the same release; those an older peer merely ignores, but the null it cannot survive.
+ * 
+ * **3** - Branching and linear are compatible with each other's features, so older clients can acuse
+ * not accepting something it should.
  */
-export const SYNC_PROTOCOL_VERSION = 2;
+export const SYNC_PROTOCOL_VERSION = 3;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -53,4 +56,4 @@ export const SYNC_PROTOCOL_VERSION = 2;
  *
  * Raised to **2** with the lines above.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 2;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 3;

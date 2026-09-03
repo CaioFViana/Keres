@@ -131,20 +131,12 @@ const migrateV7ToV8: StoryExportMigration = {
   }),
 };
 
-/** V8 -> V9: terminology was not configurable in an older package. */
+/** V8 -> V9: configurable terminology plus authored branching Routes and their ordered visits. */
 const migrateV8ToV9: StoryExportMigration = {
   fromVersion: 8,
   migrate: (data) => ({
     ...data,
     story: data?.story ? { ...data.story, vocabulary: data.story.vocabulary ?? null } : data?.story,
-  }),
-};
-
-/** V9 -> V10: authored branching Routes and their ordered visits. */
-const migrateV9ToV10: StoryExportMigration = {
-  fromVersion: 9,
-  migrate: (data) => ({
-    ...data,
     routes: Array.isArray(data?.routes) ? data.routes : [],
     routeSteps: Array.isArray(data?.routeSteps) ? data.routeSteps : [],
   }),
@@ -159,7 +151,6 @@ const migrations: StoryExportMigration[] = [
   migrateV6ToV7,
   migrateV7ToV8,
   migrateV8ToV9,
-  migrateV9ToV10,
 ];
 
 /**

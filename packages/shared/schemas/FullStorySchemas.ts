@@ -64,7 +64,7 @@ export const FullStoryExportSchema = z.object({
   // Introduced in format V6; earlier migrations provide empty lists.
   plots: z.array(PlotSchema).optional(),
   plotScenes: z.array(PlotSceneSchema).optional(),
-  // Introduced in format V10; legacy packages have no authored routes.
+  // Introduced in format V9; legacy packages have no authored routes.
   routes: z.array(RouteSchema).optional(),
   routeSteps: z.array(RouteStepSchema).optional(),
   galleryItems: z.array(GallerySchema),

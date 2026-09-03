@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { StorySchemaEntityType } from '@keres/shared';
+import { getEntityAppearance, type StorySchemaEntityType } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
@@ -862,7 +862,9 @@ const MainSystemNavigator = () => {
           options={{
             title: t('boards_title'),
             drawerLabel: t('boards_title'),
-            drawerIcon: drawerIcon('easel-outline'),
+            drawerIcon: drawerIcon(
+              getEntityAppearance('Board').icon as keyof typeof Ionicons.glyphMap,
+            ),
           }}
           listeners={({ navigation }) => ({
             drawerItemPress: (e) => {

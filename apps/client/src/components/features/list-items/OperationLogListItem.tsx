@@ -1,5 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { getEntityAppearance, OperationLogEntityType } from '@keres/shared';
+import {
+  getEntityAppearance,
+  getWorldPieceSectionAppearance,
+  OperationLogEntityType,
+} from '@keres/shared';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,6 +16,7 @@ import { useTheme } from '../../../theme';
 interface OperationLogListItemProps {
   log: OperationLogSelect;
   onPress?: (logId: string) => void; // Add this prop
+  worldPieceSection?: WorldPieceSection;
 }
 
 const getOperationIconName = (operationType: string): keyof typeof Ionicons.glyphMap => {
@@ -40,7 +46,11 @@ const RELATION_ENTITY_TYPES = new Set<string>([
   OperationLogEntityType.TagRelation,
 ]);
 
-const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPress }) => {
+const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
+  log,
+  onPress,
+  worldPieceSection,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -51,7 +61,10 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
   );
 
   const userDisplayName = useUserDisplayName(log.userId, log.storyId); // Use the new hook
-  const entityAppearance = getEntityAppearance(log.entityType);
+  const entityAppearance =
+    log.entityType === OperationLogEntityType.WorldRule && worldPieceSection
+      ? getWorldPieceSectionAppearance(worldPieceSection)
+      : getEntityAppearance(log.entityType);
   const isRelation = RELATION_ENTITY_TYPES.has(log.entityType);
   const entityIcon = isRelation
     ? 'link-outline'

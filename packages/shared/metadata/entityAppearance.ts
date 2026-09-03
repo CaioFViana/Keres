@@ -2,6 +2,7 @@ import type { WorldPieceSection } from '../entities/WorldRule';
 
 /** Theme-aware visual vocabulary shared by every entity surface. */
 export const ENTITY_APPEARANCE = {
+  Story: { icon: 'book', light: '#512DA8', dark: '#9575CD' },
   Chapter: { icon: 'bookmarks', light: '#C62828', dark: '#F44336' },
   Event: { icon: 'flag', light: '#3949AB', dark: '#5C6BC0' },
   Scene: { icon: 'easel', light: '#7B1FA2', dark: '#BA68C8' },
@@ -42,7 +43,7 @@ export const WORLD_PIECE_SECTION_APPEARANCE: Record<
   { icon: string; light: string; dark: string }
 > = {
   rule: { icon: 'shield-checkmark-outline', light: '#0277BD', dark: '#0288D1' },
-  fauna: { icon: 'paw-outline', light: '#558B2F', dark: '#7CB342' },
+  fauna: { icon: 'paw-outline', light: '#C62828', dark: '#EF5350' },
   flora: { icon: 'leaf-outline', light: '#2E7D32', dark: '#2E7D32' },
   mythology: { icon: 'sparkles-outline', light: '#5E35B1', dark: '#7E57C2' },
   people: { icon: 'people-outline', light: '#C17900', dark: '#F9A825' },

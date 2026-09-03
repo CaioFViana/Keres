@@ -7,6 +7,10 @@ import {
 } from '../../index';
 
 describe('entity appearance palettes', () => {
+  it('gives Story a distinct icon instead of the generic fallback', () => {
+    expect(ENTITY_APPEARANCE.Story.icon).toBe('book');
+  });
+
   it('keeps every theme variant readable with its chosen black or white foreground', () => {
     const colors = [
       ...Object.values(ENTITY_APPEARANCE).flatMap(({ light, dark }) => [light, dark]),

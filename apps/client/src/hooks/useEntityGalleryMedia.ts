@@ -132,6 +132,31 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     [linkImported, ownerId, refresh, services, storyId, userId],
   );
 
+  const getUnlinkedMedia = useCallback(async () => {
+    if (!services || !storyId || !ownerId) return [];
+    const linkedIds = new Set(media.map((item) => item.id));
+    const allMedia = await services.gallery.getGalleriesByStoryId(storyId);
+    return allMedia.filter((item) => !linkedIds.has(item.id));
+  }, [media, ownerId, services, storyId]);
+
+  /** Links existing gallery entries only; their files and metadata are left untouched. */
+  const linkExistingMedia = useCallback(
+    async (galleryIds: string[]) => {
+      if (!services || !storyId || !userId || !ownerId) return 0;
+      const linkedIds = new Set(media.map((item) => item.id));
+      const uniqueIds = [...new Set(galleryIds)].filter((galleryId) => !linkedIds.has(galleryId));
+      for (const galleryId of uniqueIds) {
+        await services.relation.linkGalleryToOwner(userId, storyId, galleryId, {
+          ownerId,
+          ownerType,
+        });
+      }
+      await refresh();
+      return uniqueIds.length;
+    },
+    [media, ownerId, ownerType, refresh, services, storyId, userId],
+  );
+
   /** It removes only the link with this entity; the medium carries on existing in the gallery. */
   const removeMedia = useCallback(
     async (galleryId: string) => {
@@ -155,6 +180,8 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     addPlayableMedia,
     addDocuments,
     addLink,
+    getUnlinkedMedia,
+    linkExistingMedia,
     removeMedia,
     refresh,
   };

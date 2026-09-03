@@ -16,8 +16,11 @@ import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
 import { useResolvedMediaUri } from '../../../../hooks/useResolvedMediaUri';
 import { useNotificationStore } from '../../../../state/notificationStore';
 import { useTheme } from '../../../../theme';
+import GalleryAddMediaModal, {
+  type EntityMediaAddKind,
+} from '@/src/components/features/gallery/GalleryAddMediaModal';
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
-import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGalleryAddKind';
+import GalleryAttachExistingModal from '@/src/components/features/gallery/GalleryAttachExistingModal';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 
 interface EntityGalleryManagerProps {
@@ -122,9 +125,21 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
-  const { media, importing, addPlayableMedia, addDocuments, addLink, removeMedia } =
-    useEntityGalleryMedia(ownerId, ownerType);
+  const {
+    media,
+    importing,
+    addPlayableMedia,
+    addDocuments,
+    addLink,
+    getUnlinkedMedia,
+    linkExistingMedia,
+    removeMedia,
+  } = useEntityGalleryMedia(ownerId, ownerType);
+  const [addModalVisible, setAddModalVisible] = useState(false);
   const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [existingMediaVisible, setExistingMediaVisible] = useState(false);
+  const [existingMediaLoading, setExistingMediaLoading] = useState(false);
+  const [unlinkedMedia, setUnlinkedMedia] = useState<GallerySelect[]>([]);
 
   const notifyImport = useCallback(
     async (run: () => Promise<{ added: number; duplicates: number; rejected: number } | null>) => {
@@ -150,13 +165,50 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
     [showNotification, t],
   );
 
-  const handleAdd = useCallback(() => {
-    promptGalleryAddKind(t, (kind) => {
+  const openExistingMedia = useCallback(async () => {
+    setAddModalVisible(false);
+    setExistingMediaVisible(true);
+    setExistingMediaLoading(true);
+    try {
+      setUnlinkedMedia(await getUnlinkedMedia());
+    } catch (error) {
+      console.error('Failed to load gallery media to attach:', error);
+      showNotification(t('media_load_failed'), 'error');
+      setUnlinkedMedia([]);
+    } finally {
+      setExistingMediaLoading(false);
+    }
+  }, [getUnlinkedMedia, showNotification, t]);
+
+  const handleAddKind = useCallback(
+    (kind: EntityMediaAddKind) => {
+      if (kind === 'existing') {
+        void openExistingMedia();
+        return;
+      }
+      setAddModalVisible(false);
       if (kind === 'playable') void notifyImport(addPlayableMedia);
       else if (kind === 'document') void notifyImport(addDocuments);
       else setLinkModalVisible(true);
-    });
-  }, [addDocuments, addPlayableMedia, notifyImport, t]);
+    },
+    [addDocuments, addPlayableMedia, notifyImport, openExistingMedia],
+  );
+
+  const handleAttachExistingMedia = useCallback(
+    async (galleryIds: string[]) => {
+      try {
+        const count = await linkExistingMedia(galleryIds);
+        if (count > 0) {
+          showNotification(t('media_linked_to_entity', { count }), 'success');
+        }
+        setExistingMediaVisible(false);
+      } catch (error) {
+        console.error('Failed to attach existing gallery media:', error);
+        showNotification(t('media_save_failed'), 'error');
+      }
+    },
+    [linkExistingMedia, showNotification, t],
+  );
 
   const handleRemove = useCallback(
     (galleryId: string) => {
@@ -258,7 +310,7 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
         {editable && (
           <TouchableOpacity
             style={styles.addTile}
-            onPress={handleAdd}
+            onPress={() => setAddModalVisible(true)}
             disabled={importing || !ownerId}
           >
             {importing ? (
@@ -281,6 +333,18 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
           setLinkModalVisible(false);
           void notifyImport(() => addLink(url, title));
         }}
+      />
+      <GalleryAddMediaModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onPick={handleAddKind}
+      />
+      <GalleryAttachExistingModal
+        visible={existingMediaVisible}
+        media={unlinkedMedia}
+        loading={existingMediaLoading}
+        onClose={() => setExistingMediaVisible(false)}
+        onConfirm={(galleryIds) => void handleAttachExistingMedia(galleryIds)}
       />
     </View>
   );

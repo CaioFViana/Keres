@@ -1,5 +1,9 @@
 import type { GalleryOwnerEntity } from '@keres/shared';
-import { GALLERY_OWNER_ENTITIES } from '@keres/shared';
+import {
+  GALLERY_OWNER_ENTITIES,
+  getWorldPieceSectionAppearance,
+  WORLD_PIECE_SECTIONS,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +11,7 @@ import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelec
 import { useDrizzle } from '../db';
 import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
 import * as schema from '../db/schema';
+import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 /**
  * The story's entities a media file can be linked to, ready for a picker.
@@ -24,6 +29,7 @@ export interface GalleryOwnerOption {
   value: string;
   ownerId: string;
   ownerType: GalleryOwnerEntity;
+  worldPieceSection?: WorldPieceSection;
 }
 
 export function encodeOwnerValue(ownerType: GalleryOwnerEntity, ownerId: string): string {
@@ -86,14 +92,21 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
           .from(schema.items)
           .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
         db
-          .select({ id: schema.worldRules.id, name: schema.worldRules.title })
+          .select({
+            id: schema.worldRules.id,
+            name: schema.worldRules.title,
+            section: schema.worldRules.section,
+          })
           .from(schema.worldRules)
           .where(
             and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
           ),
       ]);
 
-      const byType: Record<GalleryOwnerEntity, { id: string; name: string | null }[]> = {
+      const byType: Record<
+        GalleryOwnerEntity,
+        { id: string; name: string | null; section?: WorldPieceSection }[]
+      > = {
         Character: characters,
         Location: locations,
         Note: notes,
@@ -114,6 +127,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
             value: encodeOwnerValue(ownerType, row.id),
             ownerId: row.id,
             ownerType,
+            worldPieceSection: ownerType === 'WorldRule' ? row.section : undefined,
           });
         }
       }
@@ -142,7 +156,9 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
    * with no filter, mixing all entity types.
    */
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
-    return GALLERY_OWNER_ENTITIES.map((ownerType) => ({
+    const standardGroups = GALLERY_OWNER_ENTITIES.filter(
+      (ownerType) => ownerType !== 'WorldRule',
+    ).map((ownerType) => ({
       key: ownerType,
       label: label(ownerType, true),
       entityType: ownerType,
@@ -150,7 +166,22 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
         .filter((option) => option.ownerType === ownerType)
         .map((option) => ({ label: option.name, value: option.value })),
     }));
-  }, [label, options]);
+    const worldPieceGroups = WORLD_PIECE_SECTIONS.map((section) => {
+      const appearance = getWorldPieceSectionAppearance(section);
+      return {
+        key: `WorldRule:${section}`,
+        label: t(`world_piece_section_${section}`),
+        icon: appearance.icon as MultiSelectGroup['icon'],
+        color: appearance.color,
+        options: options
+          .filter(
+            (option) => option.ownerType === 'WorldRule' && option.worldPieceSection === section,
+          )
+          .map((option) => ({ label: option.name, value: option.value, color: appearance.color })),
+      };
+    });
+    return [...standardGroups, ...worldPieceGroups].filter((group) => group.options.length > 0);
+  }, [label, options, t]);
 
   return { options, optionsByValue, groupedOptions, loading, reload: load };
 }

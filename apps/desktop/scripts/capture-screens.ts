@@ -11,12 +11,12 @@
  *
  *   bun run desktop:capture
  */
+import electronModule from 'electron';
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import electronModule from 'electron';
 
 // Imported from outside Electron, the `electron` package exports the binary's path - the
 // published typings describe the main-process API, which is the other side of the same package.
@@ -181,8 +181,8 @@ function buildPlan() {
 async function main() {
   const skipBuild = process.argv.includes('--skip-build');
   if (!skipBuild) {
-    await run('bun', ['run', 'export:web'], { cwd: clientRoot });
-    await run('bun', ['run', 'build:main'], { cwd: desktopRoot });
+    await run('bun', ['run', 'capture:setup'], { cwd: clientRoot });
+    await run('bun', ['run', 'build:main'   ], { cwd: desktopRoot });
   }
 
   const plan = buildPlan();

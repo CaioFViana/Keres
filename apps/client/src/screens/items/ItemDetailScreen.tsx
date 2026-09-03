@@ -219,6 +219,7 @@ const ItemDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{item.name}</Text>
       {(() => {
         const commentableFieldProps = {
           storyId: item.storyId,

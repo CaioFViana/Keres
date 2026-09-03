@@ -291,6 +291,7 @@ const ChoiceDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{choice.text}</Text>
       <TagList tags={choiceTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <TouchableOpacity

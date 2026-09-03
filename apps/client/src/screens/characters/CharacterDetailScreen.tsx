@@ -578,6 +578,7 @@ const CharacterDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{character.name}</Text>
       <TagList tags={characterTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}

@@ -533,6 +533,7 @@ const LocationDetailsScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
+      <Text style={styles.mainTitle}>{location.name}</Text>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {(() => {

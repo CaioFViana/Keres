@@ -56,5 +56,15 @@ export function boardEdgeGeometry(
   };
   const labelX = (start.x + end.x) / 2;
   const labelY = (start.y + end.y) / 2;
-  return { id: edge.id, path, directed: edge.directed, label: edge.label, arrow, labelX, labelY, start, end: tip };
+  return {
+    id: edge.id,
+    path,
+    directed: edge.directed,
+    label: edge.label,
+    arrow,
+    labelX,
+    labelY,
+    start,
+    end: tip,
+  };
 }

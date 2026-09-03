@@ -21,7 +21,9 @@ describe('LocationMapContentSchema', () => {
   it('rejects a map whose image leaves the shared spatial envelope', () => {
     expect(() =>
       LocationMapContentSchema.parse({
-        images: [{ id: imageId, galleryId: 'gallery-1', x: 100_000, y: 0, width: 320, height: 240 }],
+        images: [
+          { id: imageId, galleryId: 'gallery-1', x: 100_000, y: 0, width: 320, height: 240 },
+        ],
         nodes: [],
       }),
     ).toThrow(/spatial canvas envelope/);

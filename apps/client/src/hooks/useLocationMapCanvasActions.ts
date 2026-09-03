@@ -22,6 +22,7 @@ import {
   appendMarkersToMap,
 } from '../utils/locationMapContent';
 import { imageSizeOf } from '../utils/locationMapMedia';
+import { clampCanvasWorldCoordinate } from '../utils/canvasDragBounds';
 
 type GalleryMediaById = Record<
   string,
@@ -203,11 +204,15 @@ export function useLocationMapCanvasActions({
     [setOpenedNodeId, setSelectedImageId, setSelectedMarkerId, setSelectedNodeId],
   );
   const handleMoveImage = useCallback(
-    (imageId: string, x: number, y: number) =>
+    (imageId: string, x: number, y: number) => {
+      const position = { x: clampCanvasWorldCoordinate(x), y: clampCanvasWorldCoordinate(y) };
       setContent((current) => ({
         ...current,
-        images: current.images.map((image) => (image.id === imageId ? { ...image, x, y } : image)),
-      })),
+        images: current.images.map((image) =>
+          image.id === imageId ? { ...image, ...position } : image,
+        ),
+      }));
+    },
     [setContent],
   );
   const handleSelectNode = useCallback(
@@ -220,11 +225,13 @@ export function useLocationMapCanvasActions({
     [layoutEditing, setOpenedNodeId, setSelectedImageId, setSelectedMarkerId, setSelectedNodeId],
   );
   const handleMoveNode = useCallback(
-    (nodeId: string, x: number, y: number) =>
+    (nodeId: string, x: number, y: number) => {
+      const position = { x: clampCanvasWorldCoordinate(x), y: clampCanvasWorldCoordinate(y) };
       setContent((current) => ({
         ...current,
-        nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
-      })),
+        nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, ...position } : node)),
+      }));
+    },
     [setContent],
   );
   const handleSelectMarker = useCallback(
@@ -245,13 +252,15 @@ export function useLocationMapCanvasActions({
     ],
   );
   const handleMoveMarker = useCallback(
-    (markerId: string, x: number, y: number) =>
+    (markerId: string, x: number, y: number) => {
+      const position = { x: clampCanvasWorldCoordinate(x), y: clampCanvasWorldCoordinate(y) };
       setContent((current) => ({
         ...current,
         markers: (current.markers ?? []).map((marker) =>
-          marker.id === markerId ? { ...marker, x, y } : marker,
+          marker.id === markerId ? { ...marker, ...position } : marker,
         ),
-      })),
+      }));
+    },
     [setContent],
   );
   const moveImageLayer = useCallback(

@@ -7,9 +7,11 @@ import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
 import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
 import {
   locationMapCanvasBounds,
+  LOCATION_MAP_CANVAS_PADDING,
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
+import { limitCanvasDragPosition } from '../../../utils/canvasDragBounds';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,
   type LocationMapContains,
@@ -147,11 +149,33 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
 
     const updateDrag = useCallback(
       (kind: ActiveDrag['kind'], id: string, x: number, y: number) => {
+        const footprint = (() => {
+          if (kind !== 'image') {
+            const point = [...content.nodes, ...(content.markers ?? [])].find(
+              (candidate) => candidate.id === id,
+            );
+            if (!point) return null;
+            return {
+              left: LOCATION_MAP_NODE_SIZE / 2,
+              top: LOCATION_MAP_NODE_SIZE / 2,
+              right: LOCATION_MAP_NODE_SIZE,
+              bottom: LOCATION_MAP_NODE_SIZE,
+            };
+          }
+          const image = content.images.find((candidate) => candidate.id === id);
+          return image ? { left: 0, top: 0, right: image.width, bottom: image.height } : null;
+        })();
+        if (!footprint) return;
+        const position = limitCanvasDragPosition(
+          { x: x + dragWorldOriginRef.current.x, y: y + dragWorldOriginRef.current.y },
+          size,
+          footprint,
+          LOCATION_MAP_CANVAS_PADDING,
+        );
         pendingDragRef.current = {
           kind,
           id,
-          x: x + dragWorldOriginRef.current.x,
-          y: y + dragWorldOriginRef.current.y,
+          ...position,
         };
         if (dragFrameRef.current !== null) return;
         // Pointer events can arrive more often than a screen can paint. One visual update per
@@ -159,7 +183,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         // editor for every raw event.
         dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
       },
-      [publishPendingDrag],
+      [content.images, content.markers, content.nodes, publishPendingDrag, size],
     );
     const handleImageDragMove = useCallback(
       (imageId: string, x: number, y: number) => updateDrag('image', imageId, x, y),

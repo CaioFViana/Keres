@@ -8,10 +8,12 @@ import { useGrowingCanvasBounds } from '@/src/hooks/useGrowingCanvasBounds';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import {
+  BOARD_CANVAS_PADDING,
   boardCanvasBounds,
   boardNodeSize,
   type BoardGalleryMediaById,
 } from '../../../utils/boardLayout';
+import { limitCanvasDragPosition } from '../../../utils/canvasDragBounds';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type { BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import BoardNodeView from './BoardNode';
@@ -164,17 +166,28 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
     }, []);
     const handleNodeDragMove = useCallback(
       (nodeId: string, x: number, y: number) => {
+        const node = content.nodes.find((candidate) => candidate.id === nodeId);
+        if (!node) return;
+        const nodeSize = boardNodeSize(
+          node,
+          node.kind === 'entity' ? galleryMediaById?.[node.entityId] : undefined,
+        );
+        const position = limitCanvasDragPosition(
+          { x: x + dragWorldOriginRef.current.x, y: y + dragWorldOriginRef.current.y },
+          size,
+          { left: 0, top: 0, right: nodeSize.width, bottom: nodeSize.height },
+          BOARD_CANVAS_PADDING,
+        );
         pendingDragRef.current = {
           id: nodeId,
-          x: x + dragWorldOriginRef.current.x,
-          y: y + dragWorldOriginRef.current.y,
+          ...position,
         };
         if (dragFrameRef.current !== null) return;
         // Coalesce raw pointer events to the display's cadence. The permanent board content is
         // intentionally untouched until the drag ends, avoiding full-screen work per pixel.
         dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
       },
-      [publishPendingDrag],
+      [content.nodes, galleryMediaById, publishPendingDrag, size],
     );
     const consumeNodeDrag = useCallback((nodeId: string) => {
       if (dragFrameRef.current !== null) {

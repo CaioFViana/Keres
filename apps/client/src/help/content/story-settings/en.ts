@@ -34,7 +34,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'These choices can make Choices available, control what collaborators see or change, define where the story synchronizes, change how favorites appear to the team, turn recognized names in text into links, and change how scene durations are displayed.',
     },
-    { type: 'seeAlso', pages: ['story-type', 'collaborators', 'sync-basics', 'favorites', 'appearance'] },
+    {
+      type: 'seeAlso',
+      pages: ['story-type', 'collaborators', 'sync-basics', 'favorites', 'appearance'],
+    },
   ],
 };
 export default page;

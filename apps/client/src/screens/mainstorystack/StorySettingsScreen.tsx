@@ -749,139 +749,163 @@ const StorySettingsScreen = () => {
         </View>
       </View>
 
-      {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
-              história local não tem colaboradores, então este ajuste não faria sentido. */}
-      {serverId && (
-        <View style={styles.switchContainer}>
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={[styles.label, { color: colors.text }]}>{t('allow_reader_comments')}</Text>
-            <Text style={{ color: colors.textSecondary }}>
-              {t('allow_reader_comments_description')}
-            </Text>
-          </View>
-          <ThemedSwitch
-            value={allowReaderComments}
-            onValueChange={setAllowReaderComments}
-            disabled={!canManageStoryPolicy}
-          />
-        </View>
-      )}
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-      {serverId === null ? (
-        uploadServerOptions.length > 0 ? (
-          <>
-            <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
-              {t('send_to_server_description')}
-            </Text>
-            <SingleSelectPill
-              options={uploadServerOptions}
-              value={uploadTargetServerId}
-              onValueChange={setUploadTargetServerId}
-              placeholder={t('select_server')}
-            />
-            <Button
-              onPress={handleSendToServer}
-              disabled={!uploadTargetServerId || serverActionLoading}
-              style={styles.saveButton}
-            >
-              {t('send_to_server')}
-            </Button>
-          </>
-        ) : (
-          <Text style={{ color: colors.textSecondary }}>{t('no_registered_servers')}</Text>
-        )
-      ) : (
-        <>
-          <Text style={{ color: colors.text, marginBottom: 10 }}>
-            {linkedServer?.name ?? serverId}
-          </Text>
-
-          {isOwnerOnServer === true && (
-            <View style={styles.collaboratorsSection}>
-              <Text style={[styles.label, { color: colors.text }]}>{t('collaborators_title')}</Text>
-
-              {addableFriendOptions.length > 0 ? (
-                <View style={styles.addCollaboratorRow}>
-                  <View style={styles.addCollaboratorFriendSelect}>
-                    <SingleSelectPill
-                      options={addableFriendOptions}
-                      value={selectedFriendId}
-                      onValueChange={setSelectedFriendId}
-                      placeholder={t('select_friend_to_add')}
-                    />
-                  </View>
-                  <View style={styles.addCollaboratorPermissionSelect}>
-                    <SingleSelectPill
-                      options={permissionTypeOptions}
-                      value={selectedPermissionType}
-                      onValueChange={(value) =>
-                        setSelectedPermissionType(value as 'reader' | 'writer')
-                      }
-                      placeholder={t('select_permission_type')}
-                    />
-                  </View>
-                  <Button
-                    onPress={handleAddCollaborator}
-                    disabled={!selectedFriendId || serverActionLoading}
-                    style={styles.addCollaboratorButton}
-                  >
-                    {t('add')}
-                  </Button>
-                </View>
-              ) : (
-                <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
-                  {t('no_addable_friends')}
-                </Text>
-              )}
-
-              {collaborators !== null && collaborators.length === 0 && (
-                <Text style={{ color: colors.textSecondary }}>{t('no_collaborators')}</Text>
-              )}
-              {(collaborators ?? []).map((collaborator) => (
-                <View key={collaborator.id} style={styles.collaboratorRow}>
-                  <Text style={[styles.collaboratorName, { color: colors.text }]} numberOfLines={2}>
-                    {collaborator.user?.username ?? collaborator.userId}
-                  </Text>
-                  <View style={styles.collaboratorPermissionSelect}>
-                    <SingleSelectPill
-                      options={permissionTypeOptions}
-                      value={collaborator.permissionType}
-                      onValueChange={(value) => {
-                        if (value === 'reader' || value === 'writer') {
-                          void handleUpdateCollaboratorPermission(collaborator, value);
-                        }
-                      }}
-                      disabled={serverActionLoading}
-                    />
-                  </View>
-                  <Button
-                    onPress={() => handleRemoveCollaborator(collaborator)}
-                    disabled={serverActionLoading}
-                    style={styles.removeCollaboratorButton}
-                  >
-                    {t('remove')}
-                  </Button>
-                </View>
-              ))}
-
-              {collaborators !== null && collaborators.length > 0 && (
-                <Text style={{ color: colors.textSecondary, marginTop: 5 }}>
-                  {t('unlink_blocked_by_collaborators')}
-                </Text>
-              )}
-
-              <Button
-                onPress={handleUnlinkFromServer}
-                disabled={serverActionLoading || collaborators === null || collaborators.length > 0}
-                style={[styles.saveButton, styles.deleteButton, { backgroundColor: colors.error }]}
-              >
-                {t('unlink_from_server_title')}
-              </Button>
+      <View
+        style={[
+          styles.collaborationCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
+            história local não tem colaboradores, então este ajuste não faria sentido. */}
+        {serverId && (
+          <View
+            style={[
+              styles.preferenceRow,
+              styles.preferenceRowDivider,
+              { borderBottomColor: colors.border },
+            ]}
+          >
+            <View style={styles.preferenceBody}>
+              <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+                {t('allow_reader_comments')}
+              </Text>
+              <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+                {t('allow_reader_comments_description')}
+              </Text>
             </View>
+            <ThemedSwitch
+              value={allowReaderComments}
+              onValueChange={setAllowReaderComments}
+              disabled={!canManageStoryPolicy}
+            />
+          </View>
+        )}
+
+        <View style={serverId ? styles.serverSection : undefined}>
+          <Text style={[styles.preferenceTitle, { color: colors.text }]}>{t('server')}</Text>
+          {serverId === null ? (
+            uploadServerOptions.length > 0 ? (
+              <>
+                <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+                  {t('send_to_server_description')}
+                </Text>
+                <SingleSelectPill
+                  options={uploadServerOptions}
+                  value={uploadTargetServerId}
+                  onValueChange={setUploadTargetServerId}
+                  placeholder={t('select_server')}
+                />
+                <Button
+                  onPress={handleSendToServer}
+                  disabled={!uploadTargetServerId || serverActionLoading}
+                  style={styles.serverActionButton}
+                >
+                  {t('send_to_server')}
+                </Button>
+              </>
+            ) : (
+              <Text style={{ color: colors.textSecondary }}>{t('no_registered_servers')}</Text>
+            )
+          ) : (
+            <>
+              <Text style={{ color: colors.text, marginBottom: 10 }}>
+                {linkedServer?.name ?? serverId}
+              </Text>
+
+              {isOwnerOnServer === true && (
+                <View style={[styles.collaboratorsSection, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.preferenceTitle, { color: colors.text }]}>
+                    {t('collaborators_title')}
+                  </Text>
+
+                  {addableFriendOptions.length > 0 ? (
+                    <View style={styles.addCollaboratorRow}>
+                      <View style={styles.addCollaboratorFriendSelect}>
+                        <SingleSelectPill
+                          options={addableFriendOptions}
+                          value={selectedFriendId}
+                          onValueChange={setSelectedFriendId}
+                          placeholder={t('select_friend_to_add')}
+                        />
+                      </View>
+                      <View style={styles.addCollaboratorPermissionSelect}>
+                        <SingleSelectPill
+                          options={permissionTypeOptions}
+                          value={selectedPermissionType}
+                          onValueChange={(value) =>
+                            setSelectedPermissionType(value as 'reader' | 'writer')
+                          }
+                          placeholder={t('select_permission_type')}
+                        />
+                      </View>
+                      <Button
+                        onPress={handleAddCollaborator}
+                        disabled={!selectedFriendId || serverActionLoading}
+                        style={styles.addCollaboratorButton}
+                      >
+                        {t('add')}
+                      </Button>
+                    </View>
+                  ) : (
+                    <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+                      {t('no_addable_friends')}
+                    </Text>
+                  )}
+
+                  {collaborators !== null && collaborators.length === 0 && (
+                    <Text style={{ color: colors.textSecondary }}>{t('no_collaborators')}</Text>
+                  )}
+                  {(collaborators ?? []).map((collaborator) => (
+                    <View key={collaborator.id} style={styles.collaboratorRow}>
+                      <Text
+                        style={[styles.collaboratorName, { color: colors.text }]}
+                        numberOfLines={2}
+                      >
+                        {collaborator.user?.username ?? collaborator.userId}
+                      </Text>
+                      <View style={styles.collaboratorPermissionSelect}>
+                        <SingleSelectPill
+                          options={permissionTypeOptions}
+                          value={collaborator.permissionType}
+                          onValueChange={(value) => {
+                            if (value === 'reader' || value === 'writer') {
+                              void handleUpdateCollaboratorPermission(collaborator, value);
+                            }
+                          }}
+                          disabled={serverActionLoading}
+                        />
+                      </View>
+                      <Button
+                        onPress={() => handleRemoveCollaborator(collaborator)}
+                        disabled={serverActionLoading}
+                        style={styles.removeCollaboratorButton}
+                      >
+                        {t('remove')}
+                      </Button>
+                    </View>
+                  ))}
+
+                  {collaborators !== null && collaborators.length > 0 && (
+                    <Text style={{ color: colors.textSecondary, marginTop: 5 }}>
+                      {t('unlink_blocked_by_collaborators')}
+                    </Text>
+                  )}
+
+                  <Button
+                    onPress={handleUnlinkFromServer}
+                    disabled={
+                      serverActionLoading || collaborators === null || collaborators.length > 0
+                    }
+                    style={[styles.serverActionButton, { backgroundColor: colors.error }]}
+                  >
+                    {t('unlink_from_server_title')}
+                  </Button>
+                </View>
+              )}
+            </>
           )}
-        </>
-      )}
+        </View>
+      </View>
 
       <FormActions stackOnCompact>
         <Button onPress={handleSave} disabled={!canEdit}>
@@ -915,18 +939,17 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 5,
   },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 15,
-    marginBottom: 5,
-  },
   preferencesCard: {
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 20,
     marginBottom: 10,
+    padding: 15,
+  },
+  collaborationCard: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 20,
     padding: 15,
   },
   preferenceRow: {
@@ -943,17 +966,15 @@ const styles = StyleSheet.create({
   preferenceBody: { flex: 1 },
   preferenceTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
   preferenceDescription: { marginTop: 3 },
-  saveButton: {
-    marginTop: 35,
-    marginBottom: 0,
-  },
-  deleteButton: {
-    marginTop: 10,
-    marginBottom: 15,
-    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
-  },
+  serverSection: { paddingTop: 0 },
   collaboratorsSection: {
-    marginTop: 15,
+    borderTopWidth: 1,
+    marginTop: 16,
+    paddingTop: 14,
+  },
+  serverActionButton: {
+    marginTop: 12,
+    minHeight: 50,
   },
   addCollaboratorRow: {
     flexDirection: 'row',
@@ -969,6 +990,10 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   addCollaboratorButton: {
+    // SingleSelectPill reserves 10px beneath its trigger. Match that reserved space so flex
+    // measures all three controls equally and aligns their visible top edges.
+    marginBottom: 10,
+    minHeight: 50,
     paddingHorizontal: 12,
   },
   collaboratorRow: {

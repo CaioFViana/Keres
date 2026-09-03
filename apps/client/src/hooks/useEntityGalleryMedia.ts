@@ -12,7 +12,7 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 /**
- * The media linked to an entity (a character, location, note, scene or item), with the means
+ * The media linked to an entity (a character, location, note, scene, item or World Piece), with the means
  * of adding a new one and unlinking an existing one.
  *
  * The same shape as `useEntityRelations` (tags/notes): the hook owns the fetch, the

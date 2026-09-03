@@ -7,6 +7,7 @@ import {
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
@@ -43,6 +45,7 @@ const WorldRuleDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
+  const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<WorldRuleDetailScreenRouteProp>();
   const { worldRuleId } = route.params;
 
@@ -279,6 +282,14 @@ const WorldRuleDetailScreen = () => {
         }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
+      />
+
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={worldRuleId}
+        ownerType="WorldRule"
+        onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
 
       <NoteManager

@@ -47,8 +47,7 @@ export const galleries = table(
 );
 
 /**
- * An N:N link between a media file and an entity of the story (`Character`, `Location`, `Note`,
- * `Scene` or `Item`). The owner is polymorphic, so there is no foreign key: the owner's existence is
+ * An N:N link between a media file and an entity of the story. The owner is polymorphic, so there is no foreign key: the owner's existence is
  * validated in the synchronization handler, as in `tag_relations`.
  */
 export const galleryRelations = table(

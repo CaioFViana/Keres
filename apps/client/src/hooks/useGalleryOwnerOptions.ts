@@ -12,12 +12,12 @@ import * as schema from '../db/schema';
  * The story's entities a media file can be linked to, ready for a picker.
  *
  * Each option's value is `Type:id` in a single field because the multi-picker works with a flat list of
- * strings; splitting it into five pickers (one per type) would fill the screen with no gain at all,
+ * strings; splitting it into one picker per type would fill the screen with no gain at all,
  * since the person thinks "link it to Ana", not "link it to a Character, and the character is Ana".
  */
 
 export interface GalleryOwnerOption {
-  /** Com o tipo prefixado (`"Personagem: Ana"`) - para a lista achatada, que mistura os cinco tipos. */
+  /** Com o tipo prefixado (`"Personagem: Ana"`) - para a lista achatada, que mistura tipos. */
   label: string;
   /** Without the type prefix - for the grouped picker, where the type is already in the group's header. */
   name: string;
@@ -61,7 +61,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
 
     setLoading(true);
     try {
-      const [characters, locations, notes, scenes, items] = await Promise.all([
+      const [characters, locations, notes, scenes, items, worldRules] = await Promise.all([
         db
           .select({ id: schema.characters.id, name: schema.characters.name })
           .from(schema.characters)
@@ -85,6 +85,12 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
           .select({ id: schema.items.id, name: schema.items.name })
           .from(schema.items)
           .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
+        db
+          .select({ id: schema.worldRules.id, name: schema.worldRules.title })
+          .from(schema.worldRules)
+          .where(
+            and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
+          ),
       ]);
 
       const byType: Record<GalleryOwnerEntity, { id: string; name: string | null }[]> = {
@@ -93,6 +99,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
         Note: notes,
         Scene: scenes,
         Item: items,
+        WorldRule: worldRules,
       };
 
       const collected: GalleryOwnerOption[] = [];
@@ -100,7 +107,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
         for (const row of byType[ownerType]) {
           const name = row.name || t('unnamed');
           collected.push({
-            // The type goes into the label because the flat list mixes all five: without it, two identical names
+            // The type goes into the label because the flat list mixes entity types: without it, two identical names
             // on different entities would be indistinguishable.
             label: `${label(ownerType)}: ${name}`,
             name,
@@ -132,7 +139,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
   /**
    * The same links grouped by type, for the two-step picker (`GroupedMultiSelectPill`): the entity type
    * first, only then the list - which otherwise grows along with the story and becomes one long scroll,
-   * with no filter, mixing all five types.
+   * with no filter, mixing all entity types.
    */
   const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({

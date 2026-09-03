@@ -15,6 +15,7 @@ import {
   locations,
   notes,
   scenes,
+  worldRules,
 } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -115,6 +116,17 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
           where: and(eq(items.id, ownerId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
         });
         ownerExists = !!item;
+        break;
+      }
+      case 'WorldRule': {
+        const worldRule = await db.query.worldRules.findFirst({
+          where: and(
+            eq(worldRules.id, ownerId),
+            eq(worldRules.storyId, storyId),
+            eq(worldRules.isDeleted, false),
+          ),
+        });
+        ownerExists = !!worldRule;
         break;
       }
       default:

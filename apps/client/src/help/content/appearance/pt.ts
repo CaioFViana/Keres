@@ -11,6 +11,12 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Aparência da história escolhe o tema de cores da história atual. Ele muda as superfícies, controles, gráficos e canvases do app enquanto você trabalha nela; não é o tema narrativo da obra.',
     },
+    { type: 'heading', level: 2, text: 'Para que serve' },
+    {
+      type: 'example',
+      title: 'Exemplo',
+      text: 'Use uma paleta mais fria para uma história ambientada no inverno ou uma de alto contraste quando preferir sua legibilidade. O conteúdo da história permanece exatamente o mesmo.',
+    },
     { type: 'heading', level: 2, text: 'Como fazer' },
     { type: 'path', segments: ['Menu da história', 'Personalização', 'Aparência'] },
     {

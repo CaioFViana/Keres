@@ -54,7 +54,7 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 const ItemListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  const { term } = useStoryVocabulary();
+  const { agree, term } = useStoryVocabulary();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -220,6 +220,15 @@ const ItemListScreen = () => {
     [navigation],
   );
 
+  const characterOwnerLabels = useMemo(() => {
+    const character = term('Character');
+    const ending = agree('Character', { masculine: 'o', feminine: 'a', neutral: 'o' });
+    return {
+      owner: t('item_character_owner_label', { character, ending }),
+      unknown: t('item_unknown_character_owner', { character, ending }),
+    };
+  }, [agree, t, term]);
+
   const memoizedItemListItem = useCallback(
     ({ item }: { item: ItemSelect }) => {
       const orderedJourneys = orderItemJourneysByNarrative(
@@ -237,6 +246,8 @@ const ItemListScreen = () => {
           characterOwnerName={
             item.characterOwnerId ? characterNamesById.get(item.characterOwnerId) : undefined
           }
+          characterOwnerLabel={characterOwnerLabels.owner}
+          unknownCharacterOwnerLabel={characterOwnerLabels.unknown}
           tags={tagsByItemId.get(item.id)}
           renderJourneys={() => (
             <ItemJourneyRows
@@ -252,6 +263,7 @@ const ItemListScreen = () => {
     },
     [
       canEdit,
+      characterOwnerLabels,
       chapters,
       characterNamesById,
       choices,

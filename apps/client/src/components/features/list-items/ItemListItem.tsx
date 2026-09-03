@@ -10,7 +10,6 @@ import GenericExpandedListItemWithActions from '@/src/components/common/lists/Ge
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 
 interface ItemListItemProps {
   item: ItemSelect;
@@ -20,6 +19,9 @@ interface ItemListItemProps {
   tags?: TagSelect[];
   /** Resolved by the list in one batch; never expose the persisted character ULID as content. */
   characterOwnerName?: string;
+  /** Resolved by the screen because this drawing component does not read story state. */
+  characterOwnerLabel: string;
+  unknownCharacterOwnerLabel: string;
 }
 
 const ItemListItem: React.FC<ItemListItemProps> = ({
@@ -29,24 +31,11 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
   renderJourneys,
   tags = [],
   characterOwnerName,
+  characterOwnerLabel,
+  unknownCharacterOwnerLabel,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const { agree, term } = useStoryVocabulary();
-  const characterTerm = term('Character');
-  const characterOwnerEnding = agree('Character', {
-    masculine: 'o',
-    feminine: 'a',
-    neutral: 'o',
-  });
-  const ownerLabel = t('item_character_owner_label', {
-    character: characterTerm,
-    ending: characterOwnerEnding,
-  });
-  const unknownOwner = t('item_unknown_character_owner', {
-    character: characterTerm,
-    ending: characterOwnerEnding,
-  });
 
   const referenceStyles = createReferenceListItemStyles(colors);
   const styles = StyleSheet.create({
@@ -82,7 +71,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
       )}
       {currentItem.characterOwnerId && (
         <Text style={styles.detailText}>
-          {ownerLabel}: {characterOwnerName || unknownOwner}
+          {characterOwnerLabel}: {characterOwnerName || unknownCharacterOwnerLabel}
         </Text>
       )}
       {tags.length > 0 && <TagList tags={tags} />}

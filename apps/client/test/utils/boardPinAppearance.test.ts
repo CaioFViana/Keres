@@ -20,6 +20,6 @@ it('uses a World Piece section appearance for a board card', () => {
   expect(worldPieceSectionFromBoardPinGroup('worldrule:unknown')).toBeNull();
   expect(getBoardPinAppearance('entity', 'WorldRule', 'worldrule:fauna')).toMatchObject({
     icon: 'paw-outline',
-    color: '#558B2F',
+    color: '#C62828',
   });
 });

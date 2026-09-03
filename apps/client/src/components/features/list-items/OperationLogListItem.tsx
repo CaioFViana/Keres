@@ -12,6 +12,7 @@ import type { OperationLogSelect } from '../../../db/schema';
 import { useEntityName } from '../../../hooks/useEntityName';
 import { useUserDisplayName } from '../../../hooks/useUserDisplayName'; // Import the new hook
 import { useTheme } from '../../../theme';
+import { truncate } from '../../../utils/stringUtils';
 
 interface OperationLogListItemProps {
   log: OperationLogSelect;
@@ -71,6 +72,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
     : (entityAppearance.icon as keyof typeof Ionicons.glyphMap);
   const entityIconColor = isRelation ? colors.secondary : entityAppearance.color;
   const operationIconColor = log.operationType === 'delete' ? colors.error : colors.primary;
+  const entityDisplayName = truncate(mainEntityName, 100) || t('unknown_entity');
 
   // Determine the display text for the operation
   let operationDisplayText = '';
@@ -80,49 +82,46 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
     // For TagRelation, mainEntityName is now the descriptive string like "TagName related to EntityName (EntityType)"
     if (log.operationType === 'create') {
       operationDisplayText = t('operation_tag_relation_added', {
-        tagRelationDescription: mainEntityName,
+        tagRelationDescription: entityDisplayName,
       });
     } else if (log.operationType === 'delete') {
       operationDisplayText = t('operation_tag_relation_removed', {
-        tagRelationDescription: mainEntityName,
+        tagRelationDescription: entityDisplayName,
       });
     } else {
       // Fallback for unexpected operation types on TagRelation
-      operationDisplayText =
-        t('tag_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+      operationDisplayText = t('tag_relation') + `: ${t(log.operationType)} ${entityDisplayName}`;
     }
   } else if (log.entityType === OperationLogEntityType.NoteRelation) {
     if (log.operationType === 'create') {
       operationDisplayText = t('operation_note_relation_added', {
-        noteRelationDescription: mainEntityName,
+        noteRelationDescription: entityDisplayName,
       });
     } else if (log.operationType === 'delete') {
       operationDisplayText = t('operation_note_relation_removed', {
-        noteRelationDescription: mainEntityName,
+        noteRelationDescription: entityDisplayName,
       });
     } else {
       // Fallback for unexpected operation types on NoteRelation
-      operationDisplayText =
-        t('note_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+      operationDisplayText = t('note_relation') + `: ${t(log.operationType)} ${entityDisplayName}`;
     }
   } else if (log.entityType === OperationLogEntityType.GalleryRelation) {
     if (log.operationType === 'create') {
       operationDisplayText = t('operation_gallery_relation_added', {
-        galleryRelationDescription: mainEntityName,
+        galleryRelationDescription: entityDisplayName,
       });
     } else if (log.operationType === 'delete') {
       operationDisplayText = t('operation_gallery_relation_removed', {
-        galleryRelationDescription: mainEntityName,
+        galleryRelationDescription: entityDisplayName,
       });
     } else {
       // Fallback for unexpected operation types on GalleryRelation
       operationDisplayText =
-        t('gallery_relation') +
-        `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+        t('gallery_relation') + `: ${t(log.operationType)} ${entityDisplayName}`;
     }
   } else {
     // For other entity types, just combine operation and entity name
-    operationDisplayText = `${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+    operationDisplayText = `${t(log.operationType)} ${entityDisplayName}`;
   }
 
   const styles = StyleSheet.create({

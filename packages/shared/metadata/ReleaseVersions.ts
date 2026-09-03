@@ -41,7 +41,7 @@ export const CURRENT_STORY_FORMAT_VERSION = 9;
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
  * retry loop with no way out from inside the app. `ChapterAnchor` and the container `type` column
  * arrived in the same release; those an older peer merely ignores, but the null it cannot survive.
- * 
+ *
  * **3** - Branching and linear are compatible with each other's features, so older clients can acuse
  * not accepting something it should.
  */

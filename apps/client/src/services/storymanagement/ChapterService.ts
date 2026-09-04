@@ -1,5 +1,4 @@
 import type { ChapterType } from '@keres/shared';
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -14,6 +13,7 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { createStoryArcService } from './StoryArcService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -120,41 +120,14 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         conditions.push(eq(chapters.isFavorite, false) as SQL<boolean>);
       }
 
-      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Chapter is not described in `entityFieldMetadata`; without the `?? []` an unknown criterion takes the
-        // query down instead of being ignored.
-        const chapterMetadata = entityFieldMetadata['Chapter'] ?? [];
-        for (const key in advancedSearchCriteria) {
-          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
-            const value = advancedSearchCriteria[key];
-            const fieldMeta = chapterMetadata.find((meta) => meta.name === key);
-
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${chapters[key as keyof ChapterSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'boolean') {
-                conditions.push(eq(chapters[key as keyof ChapterSelect], value) as SQL<boolean>);
-              } else if (fieldMeta.type === 'number') {
-                conditions.push(
-                  eq(chapters[key as keyof ChapterSelect], Number(value)) as SQL<boolean>,
-                );
-              }
-            } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(
-                db,
-                chapters.id,
-                key,
-                value,
-              );
-              if (customCondition) {
-                conditions.push(customCondition);
-              }
-            }
-          }
-        }
-      }
+      conditions.push(
+        ...(await buildAdvancedSearchConditions(
+          'Chapter',
+          chapters,
+          advancedSearchCriteria,
+          (field, value) => buildCustomAttributeSearchCondition(db, chapters.id, field, value),
+        )),
+      );
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 

@@ -1,4 +1,3 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, WorldRuleInsert, WorldRuleSelect } from '../../db';
@@ -15,6 +14,7 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -106,38 +106,14 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         conditions.push(eq(worldRules.isFavorite, false) as SQL<boolean>);
       }
 
-      // Apply advanced search criteria
-      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        const worldRuleMetadata = entityFieldMetadata['WorldRule'];
-        for (const key in advancedSearchCriteria) {
-          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
-            const value = advancedSearchCriteria[key];
-            const fieldMeta = worldRuleMetadata.find((meta) => meta.name === key);
-
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${worldRules[key as keyof WorldRuleSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'boolean') {
-                conditions.push(
-                  eq(worldRules[key as keyof WorldRuleSelect], value) as SQL<boolean>,
-                );
-              }
-            } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(
-                db,
-                worldRules.id,
-                key,
-                value,
-              );
-              if (customCondition) {
-                conditions.push(customCondition);
-              }
-            }
-          }
-        }
-      }
+      conditions.push(
+        ...(await buildAdvancedSearchConditions(
+          'WorldRule',
+          worldRules,
+          advancedSearchCriteria,
+          (field, value) => buildCustomAttributeSearchCondition(db, worldRules.id, field, value),
+        )),
+      );
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 

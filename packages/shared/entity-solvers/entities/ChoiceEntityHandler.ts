@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const textOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.text;
@@ -10,6 +11,8 @@ const textOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a branching Choice and its source/destination Scenes. */
 export const choiceEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Choice,
+  conflictLabelKey: 'choice',
+  displayName: displayField('text'),
   help: {
     source: 'choices',
     fields: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],

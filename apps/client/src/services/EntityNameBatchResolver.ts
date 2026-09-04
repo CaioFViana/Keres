@@ -1,5 +1,5 @@
 import { inArray } from 'drizzle-orm';
-import { ENTITY_SIMPLE_DISPLAY_NAME_FIELD } from '@keres/shared';
+import { getEntityDomainHandler, OperationLogEntityType } from '@keres/shared';
 import type { AppDrizzleClient } from '../db';
 import { getEntityTable } from './entityTableRegistry';
 
@@ -42,32 +42,23 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
         if (!table) continue;
         const idList = Array.from(ids);
 
-        // Gallery has no single name column - `title` is optional and falls back to the file's
-        // name, just as the rest of the app already does in `EntityService.getEntityName`.
-        if (entityType === 'Gallery') {
-          const rows = await db
-            .select({
-              id: (table as any).id,
-              title: (table as any).title,
-              fileName: (table as any).fileName,
-            })
-            .from(table)
-            .where(inArray((table as any).id, idList));
-          for (const row of rows) {
-            result.set(nameKey(entityType, row.id), row.title || row.fileName || row.id);
-          }
-          continue;
+        const displayName = getEntityDomainHandler(
+          entityType as OperationLogEntityType,
+        )?.displayName;
+        if (!displayName) continue;
+
+        const selection: Record<string, any> = { id: (table as any).id };
+        for (const field of displayName.fields) {
+          selection[field] = (table as any)[field];
         }
 
-        const nameColumn = ENTITY_SIMPLE_DISPLAY_NAME_FIELD[entityType];
-        if (!nameColumn) continue;
-
         const rows = await db
-          .select({ id: (table as any).id, name: (table as any)[nameColumn] })
+          .select(selection)
           .from(table)
           .where(inArray((table as any).id, idList));
         for (const row of rows) {
-          result.set(nameKey(entityType, row.id), row.name || row.id);
+          const name = displayName.getName(row as Record<string, unknown>);
+          result.set(nameKey(entityType, row.id as string), name ?? (row.id as string));
         }
       }
 

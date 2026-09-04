@@ -1,5 +1,4 @@
 import type { Scene } from '@keres/shared';
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -14,6 +13,7 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -166,41 +166,14 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         conditions.push(eq(scenes.isFavorite, false) as SQL<boolean>);
       }
 
-      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Scene is not described in `entityFieldMetadata`; without the `?? []` an unknown criterion takes the
-        // query down instead of being ignored.
-        const sceneMetadata = entityFieldMetadata['Scene'] ?? [];
-        for (const key in advancedSearchCriteria) {
-          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
-            const value = advancedSearchCriteria[key];
-            const fieldMeta = sceneMetadata.find((meta) => meta.name === key);
-
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${scenes[key as keyof SceneSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'boolean') {
-                conditions.push(eq(scenes[key as keyof SceneSelect], value) as SQL<boolean>);
-              } else if (fieldMeta.type === 'number') {
-                conditions.push(
-                  eq(scenes[key as keyof SceneSelect], Number(value)) as SQL<boolean>,
-                );
-              }
-            } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(
-                db,
-                scenes.id,
-                key,
-                value,
-              );
-              if (customCondition) {
-                conditions.push(customCondition);
-              }
-            }
-          }
-        }
-      }
+      conditions.push(
+        ...(await buildAdvancedSearchConditions(
+          'Scene',
+          scenes,
+          advancedSearchCriteria,
+          (field, value) => buildCustomAttributeSearchCondition(db, scenes.id, field, value),
+        )),
+      );
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 

@@ -1,4 +1,3 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -13,6 +12,7 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -80,39 +80,14 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         conditions.push(eq(items.isFavorite, false) as SQL<boolean>);
       }
 
-      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        const itemMetadata = entityFieldMetadata['Item'];
-        for (const key in advancedSearchCriteria) {
-          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
-            const value = advancedSearchCriteria[key];
-            const fieldMeta = itemMetadata.find((meta) => meta.name === key);
-
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${items[key as keyof ItemSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'number') {
-                conditions.push(eq(items[key as keyof ItemSelect], Number(value)) as SQL<boolean>);
-              } else if (fieldMeta.type === 'boolean') {
-                conditions.push(
-                  eq(items[key as keyof ItemSelect], value === 'true') as SQL<boolean>,
-                );
-              }
-            } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(
-                db,
-                items.id,
-                key,
-                value,
-              );
-              if (customCondition) {
-                conditions.push(customCondition);
-              }
-            }
-          }
-        }
-      }
+      conditions.push(
+        ...(await buildAdvancedSearchConditions(
+          'Item',
+          items,
+          advancedSearchCriteria,
+          (field, value) => buildCustomAttributeSearchCondition(db, items.id, field, value),
+        )),
+      );
 
       const finalConditions = conditions.filter((c) => c !== undefined) as SQL<boolean>[];
       let query = db

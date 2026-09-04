@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.name;
@@ -10,6 +11,7 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Plot. */
 export const plotEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Plot,
+  displayName: displayField('name'),
   help: {
     source: 'plots',
     fields: ['name', 'details', 'note'],

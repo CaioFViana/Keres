@@ -1,4 +1,3 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'; // Import asc and desc
 import type { AppDrizzleClient } from '../../db';
@@ -10,6 +9,7 @@ import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
+import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -75,29 +75,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         conditions.push(eq(tags.isFavorite, false) as SQL<boolean>); // Explicit cast
       }
 
-      // Apply advanced search criteria
-      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        const tagMetadata = entityFieldMetadata['Tag'];
-        for (const key in advancedSearchCriteria) {
-          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
-            const value = advancedSearchCriteria[key];
-            const fieldMeta = tagMetadata.find((meta) => meta.name === key);
-
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${tags[key as keyof TagSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'boolean') {
-                conditions.push(eq(tags[key as keyof TagSelect], value) as SQL<boolean>);
-              } else if (fieldMeta.type === 'color') {
-                conditions.push(eq(tags[key as keyof TagSelect], value) as SQL<boolean>);
-              }
-              // Add other types (number, date, etc.) as needed
-            }
-          }
-        }
-      }
+      conditions.push(...buildNativeAdvancedSearchConditions('Tag', tags, advancedSearchCriteria));
 
       // Filter out undefined conditions and use 'and' to combine them
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];

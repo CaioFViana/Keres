@@ -2,6 +2,7 @@ import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { chapterEntityHandler } from './ChapterEntityHandler';
 import { choiceEntityHandler } from './ChoiceEntityHandler';
 import type { EntityDomainHandler } from './contracts';
+import type { EntityConflictReference } from './contracts';
 import { sceneEntityHandler } from './SceneEntityHandler';
 import { routeEntityHandler } from './RouteEntityHandler';
 import { routeStepEntityHandler } from './RouteStepEntityHandler';
@@ -88,6 +89,12 @@ const ENTITY_HANDLERS: ReadonlyMap<OperationLogEntityType, EntityDomainHandler> 
   [storyCalendarEntityHandler.entityType, storyCalendarEntityHandler],
 ]);
 
+export const CONFLICT_RELATION_ENTITY_TYPES = new Set(
+  [...ENTITY_HANDLERS.values()]
+    .filter((handler) => handler.isConflictRelation)
+    .map((handler) => handler.entityType),
+);
+
 /** Factory for entity-owned domain presentation. An unknown external type has no handler. */
 export function getEntityDomainHandler(
   entityType: OperationLogEntityType,
@@ -101,4 +108,28 @@ export function getEntityReferenceFieldType(field: string): OperationLogEntityTy
     if (entityType) return entityType;
   }
   return undefined;
+}
+
+export function getEntityConflictLabelKey(entityType: string): string {
+  return (
+    getEntityDomainHandler(entityType as OperationLogEntityType)?.conflictLabelKey ?? entityType
+  );
+}
+
+export function isConflictRelationEntity(entityType: string): boolean {
+  return getEntityDomainHandler(entityType as OperationLogEntityType)?.isConflictRelation ?? false;
+}
+
+/** Fixed references come from the generic handler contract; relations add polymorphic pairs locally. */
+export function getEntityConflictReferences(
+  entityType: string,
+): readonly EntityConflictReference[] {
+  const handler = getEntityDomainHandler(entityType as OperationLogEntityType);
+  if (!handler) return [];
+  const fixed = Object.entries(handler.referenceFields ?? {}).map(([field, target]) => ({
+    kind: 'fixed' as const,
+    field,
+    entityType: target,
+  }));
+  return [...fixed, ...(handler.conflictReferences ?? [])];
 }

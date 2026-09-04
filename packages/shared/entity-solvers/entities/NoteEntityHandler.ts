@@ -3,6 +3,7 @@ import { searchField } from './advancedSearch';
 import { createSimpleEntityHandler } from './createSimpleEntityHandler';
 export const noteEntityHandler = createSimpleEntityHandler({
   entityType: OperationLogEntityType.Note,
+  conflictLabelKey: 'note',
   displayField: 'title',
   previewDetailsFields: ['body'],
   help: { source: 'notes', fields: ['title', 'body', 'isFavorite', 'extraNotes'] },

@@ -1,5 +1,6 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const stringValue = (row: Record<string, unknown> | undefined, field: string) => {
   const value = row?.[field];
@@ -9,6 +10,7 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a custom-attribute definition. */
 export const storySchemaFieldEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StorySchemaField,
+  displayName: displayField('name'),
   help: {
     source: 'custom-attributes',
     fields: ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],

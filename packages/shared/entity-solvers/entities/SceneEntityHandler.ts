@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.name;
@@ -10,6 +11,8 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Scene and the story entities its editable fields refer to. */
 export const sceneEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Scene,
+  conflictLabelKey: 'scene',
+  displayName: displayField('name'),
   help: {
     source: 'scenes',
     fields: [

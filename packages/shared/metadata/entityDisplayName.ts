@@ -1,69 +1,8 @@
-/**
- * Per-type primary display field, used by every host's display-name reader.
- * Gallery is special-cased in `getSimpleDisplayName` (title || fileName).
- */
-export const ENTITY_SIMPLE_DISPLAY_NAME_FIELD: Readonly<Record<string, string>> = {
-  Character: 'name',
-  Location: 'name',
-  Item: 'name',
-  Tag: 'name',
-  Chapter: 'name',
-  Route: 'name',
-  Scene: 'name',
-  Plot: 'name',
-  StorySchemaField: 'name',
-  Stat: 'name',
-  Mode: 'name',
-  StatStrength: 'label',
-  Story: 'title',
-  StoryArc: 'title',
-  Board: 'name',
-  LocationMap: 'name',
-  Note: 'title',
-  WorldRule: 'title',
-  Choice: 'text',
-  Suggestion: 'value',
-  AttributeValue: 'value',
-};
+import { getEntityDomainHandler } from '../entity-solvers/entities/EntityRegistry';
+import { suggestionDisplayValue } from '../entity-solvers/entities/displayName';
+import { OperationLogEntityType } from './OperationLogEntityType';
 
-const COMMENT_SNIPPET_MAX = 80;
-
-function asNonEmptyString(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
-function truncate(value: string, max: number): string {
-  if (value.length <= max) return value;
-  return `${value.slice(0, max - 1)}…`;
-}
-
-/**
- * Named-list catalog rows store `{ type, name }` as Suggestion.value.
- * Show only the human name; leave ordinary suggestion values untouched.
- */
-export function suggestionDisplayValue(value: unknown): string | null {
-  const raw = asNonEmptyString(value);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as { type?: unknown; name?: unknown };
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      typeof parsed.name === 'string' &&
-      parsed.name.trim() &&
-      typeof parsed.type === 'string' &&
-      parsed.type.startsWith('list_') &&
-      parsed.type !== 'list_catalog'
-    ) {
-      return parsed.name.trim();
-    }
-  } catch {
-    // Plain suggestion text, not catalog JSON.
-  }
-  return raw;
-}
+export { suggestionDisplayValue };
 
 /**
  * Best-effort display name from the entity's own row (no joins).
@@ -74,24 +13,10 @@ export function getSimpleDisplayName(
   entityType: string,
   row: Record<string, unknown>,
 ): string | null {
-  if (entityType === 'Gallery') {
-    return asNonEmptyString(row.title) ?? asNonEmptyString(row.fileName);
+  if (!Object.values(OperationLogEntityType).includes(entityType as OperationLogEntityType)) {
+    return null;
   }
-
-  if (entityType === 'Comment') {
-    const text = asNonEmptyString(row.commentText);
-    return text ? truncate(text, COMMENT_SNIPPET_MAX) : null;
-  }
-
-  if (entityType === 'Effect') {
-    return asNonEmptyString(row.triggerName) ?? asNonEmptyString(row.effectType);
-  }
-
-  if (entityType === 'Suggestion') {
-    return suggestionDisplayValue(row.value);
-  }
-
-  const field = ENTITY_SIMPLE_DISPLAY_NAME_FIELD[entityType];
-  if (!field) return null;
-  return asNonEmptyString(row[field]);
+  return (
+    getEntityDomainHandler(entityType as OperationLogEntityType)?.displayName?.getName(row) ?? null
+  );
 }

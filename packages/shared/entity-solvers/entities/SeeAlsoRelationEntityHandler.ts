@@ -29,6 +29,11 @@ const resolveName = async (context: EntitySolverContext, entityId: string) => {
 /** Presentation metadata for a bidirectional “see also” relation. */
 export const seeAlsoRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.SeeAlsoRelation,
+  isConflictRelation: true,
+  conflictReferences: [
+    { kind: 'dynamic', idField: 'entityAId', typeField: 'entityAType' },
+    { kind: 'dynamic', idField: 'entityBId', typeField: 'entityBType' },
+  ],
   async resolveReference(context, entityId) {
     return {
       name: await resolveName(context, entityId),

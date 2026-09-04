@@ -1,5 +1,6 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import type { EntityDomainHandler } from './contracts';
+import { displayFirst } from './displayName';
 
 const effectTypeLabelKeys: Readonly<Record<string, string>> = {
   itemGrant: 'effect_item_grant',
@@ -16,6 +17,7 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for an effect applied by a choice. */
 export const effectEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Effect,
+  displayName: displayFirst('triggerName', 'effectType'),
   referenceFields: { itemId: OperationLogEntityType.Item },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Effect, entityId);

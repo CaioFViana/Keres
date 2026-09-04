@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.name;
@@ -22,6 +23,8 @@ async function resolveChapterReference(
 /** All presentation metadata that belongs specifically to a narrative Chapter. */
 export const chapterEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Chapter,
+  conflictLabelKey: 'chapter',
+  displayName: displayField('name'),
   help: {
     source: 'chapters',
     fields: ['name', 'summary', 'order', 'arcId', 'isFavorite', 'extraNotes'],

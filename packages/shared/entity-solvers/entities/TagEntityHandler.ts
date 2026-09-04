@@ -3,6 +3,7 @@ import { searchField } from './advancedSearch';
 import { createSimpleEntityHandler } from './createSimpleEntityHandler';
 export const tagEntityHandler = createSimpleEntityHandler({
   entityType: OperationLogEntityType.Tag,
+  conflictLabelKey: 'tag',
   displayField: 'name',
   previewDetailsFields: ['extraNotes'],
   help: { source: 'tags', fields: ['name', 'color', 'extraNotes', 'isFavorite'] },

@@ -9,6 +9,8 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Character appearing in a Scene. */
 export const characterSceneEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.CharacterScene,
+  conflictLabelKey: 'character_scene_relation',
+  isConflictRelation: true,
   referenceFields: {
     characterId: OperationLogEntityType.Character,
     sceneId: OperationLogEntityType.Scene,

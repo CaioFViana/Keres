@@ -10,6 +10,8 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for an Item state change recorded at a Scene. */
 export const itemJourneyEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.ItemJourney,
+  conflictLabelKey: 'item_journey',
+  isConflictRelation: true,
   help: {
     source: 'item-journeys',
     fields: ['itemId', 'sceneId', 'newCharacterOwnerId', 'newState', 'extraNotes'],

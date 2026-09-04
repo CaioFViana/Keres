@@ -1,5 +1,6 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const titleOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.title;
@@ -9,6 +10,7 @@ const titleOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a story Arc, including the v10 chapter association surface. */
 export const storyArcEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StoryArc,
+  displayName: displayField('title'),
   help: {
     source: 'arcs',
     fields: ['title', 'description', 'themeOverride'],

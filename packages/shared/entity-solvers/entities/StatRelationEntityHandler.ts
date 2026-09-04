@@ -14,6 +14,8 @@ const numberValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a character's current value of a Stat. */
 export const statRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StatRelation,
+  conflictLabelKey: 'stat_relation',
+  isConflictRelation: true,
   help: { source: 'stats', fields: ['value'] },
   referenceFields: {
     statId: OperationLogEntityType.Stat,

@@ -1,11 +1,13 @@
 import type { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 export function createSimpleEntityHandler(config: {
   entityType: OperationLogEntityType;
   displayField: string;
   help?: EntityDomainHandler['help'];
   referenceFields?: EntityDomainHandler['referenceFields'];
+  conflictLabelKey?: string;
   previewDetailsFields?: readonly [string, string?];
   advancedSearch?: EntityDomainHandler['advancedSearch'];
 }): EntityDomainHandler {
@@ -24,6 +26,8 @@ export function createSimpleEntityHandler(config: {
     entityType: config.entityType,
     help: config.help,
     referenceFields: config.referenceFields,
+    conflictLabelKey: config.conflictLabelKey,
+    displayName: displayField(config.displayField),
     advancedSearch: config.advancedSearch,
     summarizePreview: config.previewDetailsFields
       ? (row) => ({

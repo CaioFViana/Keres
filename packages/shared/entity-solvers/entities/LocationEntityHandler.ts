@@ -3,6 +3,7 @@ import { searchField } from './advancedSearch';
 import { createSimpleEntityHandler } from './createSimpleEntityHandler';
 export const locationEntityHandler = createSimpleEntityHandler({
   entityType: OperationLogEntityType.Location,
+  conflictLabelKey: 'location',
   displayField: 'name',
   previewDetailsFields: ['description'],
   help: {

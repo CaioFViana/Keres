@@ -1,4 +1,3 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Added
 import type { SQL } from 'drizzle-orm';
 import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -15,6 +14,7 @@ import {
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -95,70 +95,39 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       }
 
       if (advancedSearchCriteria) {
-        const characterMetadata = entityFieldMetadata.Character.filter((m) => m.isSearchable); // Get metadata for Character entity
+        const relationType = advancedSearchCriteria.relationType;
+        if (relationType !== undefined && relationType !== null && relationType !== '') {
+          whereConditions.push(
+            sql`EXISTS (
+              SELECT 1 FROM ${characterRelations}
+              WHERE ${characterRelations.storyId} = ${storyId}
+                AND ${characterRelations.isDeleted} = false
+                AND ${characterRelations.relationType} LIKE ${`%${relationType}%`} COLLATE NOCASE
+                AND (${characterRelations.character1Id} = ${characters.id}
+                  OR ${characterRelations.character2Id} = ${characters.id})
+            )` as SQL<boolean>,
+          );
+        }
 
-        for (const key in advancedSearchCriteria) {
-          if (advancedSearchCriteria.hasOwnProperty(key)) {
-            const value = advancedSearchCriteria[key];
-            if (value === undefined || value === null || value === '') continue; // Skip empty values
-
-            if (key === 'relationType') {
-              whereConditions.push(
-                sql`EXISTS (
-                  SELECT 1 FROM ${characterRelations}
-                  WHERE ${characterRelations.storyId} = ${storyId}
-                    AND ${characterRelations.isDeleted} = false
-                    AND ${characterRelations.relationType} LIKE ${`%${value}%`} COLLATE NOCASE
-                    AND (${characterRelations.character1Id} = ${characters.id}
-                      OR ${characterRelations.character2Id} = ${characters.id})
-                )` as SQL<boolean>,
-              );
-              continue;
-            }
-
-            const fieldMetadata = characterMetadata.find((meta) => meta.name === key);
-
-            if (!fieldMetadata) {
-              const customCondition = await buildCustomAttributeSearchCondition(
+        whereConditions.push(
+          ...(await buildAdvancedSearchConditions(
+            'Character',
+            characters,
+            advancedSearchCriteria,
+            async (field, value) => {
+              const condition = await buildCustomAttributeSearchCondition(
                 db,
                 characters.id,
-                key,
+                field,
                 value,
               );
-              if (customCondition) {
-                whereConditions.push(customCondition);
-              } else {
-                console.warn(`No metadata found for advanced search field: ${key}`);
+              if (!condition) {
+                console.warn(`No metadata found for advanced search field: ${field}`);
               }
-              continue;
-            }
-
-            switch (fieldMetadata.type) {
-              case 'string':
-              case 'id':
-                whereConditions.push(
-                  sql`${(characters as any)[key]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                ); // Explicitly cast characters to any
-                break;
-              case 'boolean':
-                whereConditions.push(eq((characters as any)[key], value)); // Explicitly cast characters to any
-                break;
-              case 'number':
-                // Assuming exact match for numbers for now
-                whereConditions.push(eq((characters as any)[key], Number(value))); // Explicitly cast characters to any
-                break;
-              case 'date':
-                // Assuming exact date string match for now, or could parse to range
-                whereConditions.push(
-                  sql`${(characters as any)[key]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                ); // Explicitly cast characters to any
-                break;
-              default:
-                console.warn(`Unsupported field type for advanced search: ${fieldMetadata.type}`);
-                break;
-            }
-          }
-        }
+              return condition;
+            },
+          )),
+        );
       }
 
       const finalWhereConditions = and(...whereConditions);

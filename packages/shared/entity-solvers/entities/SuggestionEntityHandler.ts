@@ -1,10 +1,11 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
-import { suggestionDisplayValue } from '../../metadata/entityDisplayName';
 import type { EntityDomainHandler } from './contracts';
+import { suggestionDisplayValue } from './displayName';
 
 /** Presentation metadata for a reusable suggestion value. */
 export const suggestionEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Suggestion,
+  displayName: { fields: ['value'], getName: (row) => suggestionDisplayValue(row.value) },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Suggestion, entityId);
     return {

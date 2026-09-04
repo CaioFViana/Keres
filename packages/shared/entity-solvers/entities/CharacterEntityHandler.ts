@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.name;
@@ -10,6 +11,8 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Character. */
 export const characterEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Character,
+  conflictLabelKey: 'character',
+  displayName: displayField('name'),
   help: {
     source: 'characters',
     fields: [

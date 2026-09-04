@@ -3,6 +3,7 @@ import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { decodeAttributeValue } from '../../utils/attributeValueCodec';
 import { resolveEntityReference } from '../EntityReferenceResolver';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const stringValue = (row: Record<string, unknown> | undefined, field: string) => {
   const value = row?.[field];
@@ -12,6 +13,7 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for an entity's value in a custom-attribute field. */
 export const attributeValueEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.AttributeValue,
+  displayName: displayField('value'),
   referenceFields: { fieldId: OperationLogEntityType.StorySchemaField },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.AttributeValue, entityId);

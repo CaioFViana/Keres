@@ -10,6 +10,9 @@ const stringValue = (row: Record<string, unknown>, field: string) => {
 /** Presentation metadata for a Note attributed to another entity. */
 export const noteRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.NoteRelation,
+  conflictLabelKey: 'note_relation',
+  isConflictRelation: true,
+  conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],
   referenceFields: { noteId: OperationLogEntityType.Note },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.NoteRelation, entityId);

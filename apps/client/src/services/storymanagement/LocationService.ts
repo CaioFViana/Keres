@@ -1,4 +1,3 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -15,6 +14,7 @@ import {
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -95,54 +95,25 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       }
 
       if (advancedSearchCriteria) {
-        const locationMetadata = entityFieldMetadata.Location.filter((m) => m.isSearchable);
-
-        for (const key in advancedSearchCriteria) {
-          if (advancedSearchCriteria.hasOwnProperty(key)) {
-            const value = advancedSearchCriteria[key];
-            if (value === undefined || value === null || value === '') continue;
-
-            const fieldMetadata = locationMetadata.find((meta) => meta.name === key);
-
-            if (!fieldMetadata) {
-              const customCondition = await buildCustomAttributeSearchCondition(
+        whereConditions.push(
+          ...(await buildAdvancedSearchConditions(
+            'Location',
+            locations,
+            advancedSearchCriteria,
+            async (field, value) => {
+              const condition = await buildCustomAttributeSearchCondition(
                 db,
                 locations.id,
-                key,
+                field,
                 value,
               );
-              if (customCondition) {
-                whereConditions.push(customCondition);
-              } else {
-                console.warn(`No metadata found for advanced search field: ${key}`);
+              if (!condition) {
+                console.warn(`No metadata found for advanced search field: ${field}`);
               }
-              continue;
-            }
-
-            switch (fieldMetadata.type) {
-              case 'string':
-              case 'id':
-                whereConditions.push(
-                  sql`${(locations as any)[key]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-                break;
-              case 'boolean':
-                whereConditions.push(eq((locations as any)[key], value));
-                break;
-              case 'number':
-                whereConditions.push(eq((locations as any)[key], Number(value)));
-                break;
-              case 'date':
-                whereConditions.push(
-                  sql`${(locations as any)[key]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-                break;
-              default:
-                console.warn(`Unsupported field type for advanced search: ${fieldMetadata.type}`);
-                break;
-            }
-          }
-        }
+              return condition;
+            },
+          )),
+        );
       }
 
       const finalWhereConditions = and(...whereConditions);

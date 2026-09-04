@@ -1,8 +1,11 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { nonSearchableField, searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 export const worldRuleEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.WorldRule,
+  conflictLabelKey: 'world_rule',
+  displayName: displayField('title'),
   help: {
     source: 'world-rules',
     fields: [

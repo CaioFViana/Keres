@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { resolveEntityReference } from '../EntityReferenceResolver';
 import type { EntityDomainHandler } from './contracts';
+import { nonEmptyString, truncateDisplay } from './displayName';
 
 const stringValue = (row: Record<string, unknown> | undefined, field: string) => {
   const value = row?.[field];
@@ -10,6 +11,13 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a comment made on an entity or custom field. */
 export const commentEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Comment,
+  displayName: {
+    fields: ['commentText'],
+    getName: (row) => {
+      const text = nonEmptyString(row.commentText);
+      return text ? truncateDisplay(text, 80) : null;
+    },
+  },
   referenceFields: { fieldId: OperationLogEntityType.StorySchemaField },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Comment, entityId);

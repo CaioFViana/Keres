@@ -1,5 +1,6 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const stringValue = (row: Record<string, unknown> | undefined, field: string) => {
   const value = row?.[field];
@@ -14,6 +15,8 @@ const numberValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a value tier on a Stat ladder. */
 export const statStrengthEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StatStrength,
+  conflictLabelKey: 'stat_strength',
+  displayName: displayField('label'),
   help: { source: 'stats', fields: ['label', 'minValue'] },
   referenceFields: { statId: OperationLogEntityType.Stat },
   async resolveReference(context, entityId) {

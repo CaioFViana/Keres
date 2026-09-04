@@ -248,6 +248,11 @@
             "singular": "Branch",
             "plural": "Branches",
             "grammaticalGender": "neutral"
+          },
+          "Arc": {
+            "singular": "Volume",
+            "plural": "Volumes",
+            "grammaticalGender": "neutral"
           }
         }
       }

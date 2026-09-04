@@ -183,6 +183,13 @@
       "when": 1788269972501,
       "tag": "0025_youthful_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1788485396547,
+      "tag": "0026_chubby_marvel_zombies",
+      "breakpoints": true
     }
   ]
 }

@@ -28,6 +28,7 @@ export const StoryVocabularySchema: z.ZodType<StoryVocabulary> = z.object({
     Item: StoryVocabularyTermSchema.optional(),
     WorldRule: StoryVocabularyTermSchema.optional(),
     Choice: StoryVocabularyTermSchema.optional(),
+    Arc: StoryVocabularyTermSchema.optional(),
   }),
 });
 

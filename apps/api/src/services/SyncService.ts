@@ -33,6 +33,7 @@ import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { ChapterAnchorSyncHandler } from './entity-sync-handlers/ChapterAnchorSyncHandler';
 import { BoardSyncHandler } from './entity-sync-handlers/BoardSyncHandler';
 import { StoryCalendarSyncHandler } from './entity-sync-handlers/StoryCalendarSyncHandler';
+import { StoryArcSyncHandler } from './entity-sync-handlers/StoryArcSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
@@ -100,6 +101,7 @@ export class SyncService {
     this.registerEntityHandler(new CharacterSceneSyncHandler());
     this.registerEntityHandler(new ChapterAnchorSyncHandler());
     this.registerEntityHandler(new StoryCalendarSyncHandler());
+    this.registerEntityHandler(new StoryArcSyncHandler());
     this.registerEntityHandler(new BoardSyncHandler());
     this.registerEntityHandler(new LocationMapSyncHandler());
     this.registerEntityHandler(new CharacterRelationSyncHandler());

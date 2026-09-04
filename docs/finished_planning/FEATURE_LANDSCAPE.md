@@ -83,7 +83,9 @@ Keres does not currently provide:
 - real-time co-editing with cursors;
 - a full public-world publishing and permission system;
 - geographic region discovery, controlled reveal, map comparison/overlay or persistent geographic layers;
-- a series-level shared entity model across Stories.
+- a series-level shared entity model across Stories. Arcs now exist as an optional
+  editorial subdivision *inside* one Story (Customization, vocabulary, default arc,
+  `chapters.arcId`). Filters, derived “appears in”, and cross-story mentions are not shipped yet.
 
 The operation log is not draft history. It records entity changes for synchronization and conflicts; it is not a safe substitute for snapshots of prose.
 

@@ -41,6 +41,7 @@ export const ENTITY_TABLES = {
   Tag: schema.tags,
   TagRelation: schema.tagRelations,
   StoryCalendar: schema.storyCalendars,
+  StoryArc: schema.storyArcs,
   WorldRule: schema.worldRules,
 } as const;
 

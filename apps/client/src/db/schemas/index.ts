@@ -34,6 +34,7 @@ export * from './seeAlsoRelations';
 export * from './servers';
 export * from './stats';
 export * from './stories';
+export * from './storyArcs';
 export * from './storyCalendars';
 export * from './storyPermissions';
 export * from './storyPublications';

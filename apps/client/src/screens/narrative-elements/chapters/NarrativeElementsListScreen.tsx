@@ -429,6 +429,7 @@ const NarrativeElementsListScreen = () => {
         type: 'chapter',
         summary: null,
         extraNotes: null,
+        arcId: null,
         isFavorite: false,
         createdAt: new Date(0),
         updatedAt: new Date(0),

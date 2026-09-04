@@ -203,6 +203,11 @@
             "singular": "Decisão de jogador",
             "plural": "Decisões de jogador",
             "grammaticalGender": "feminine"
+          },
+          "Arc": {
+            "singular": "Arco",
+            "plural": "Arcos",
+            "grammaticalGender": "masculine"
           }
         }
       }

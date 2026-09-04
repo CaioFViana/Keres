@@ -14,6 +14,11 @@ export const ChapterSchema = z.object({
   summary: z.string().nullable(),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
+  /**
+   * The Arc this container belongs to. Optional in the row so packages written before Arcs remain
+   * importable; after migration every live chapter/event has one.
+   */
+  arcId: z.string().nullable().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),

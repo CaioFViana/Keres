@@ -9,6 +9,7 @@ export enum OperationLogEntityType {
   Chapter = 'Chapter',
   ChapterAnchor = 'ChapterAnchor',
   StoryCalendar = 'StoryCalendar',
+  StoryArc = 'StoryArc',
   Board = 'Board',
   LocationMap = 'LocationMap',
   Scene = 'Scene',

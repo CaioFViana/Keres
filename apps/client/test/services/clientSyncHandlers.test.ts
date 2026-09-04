@@ -27,6 +27,7 @@ import { RouteStepClientSyncHandler } from '../../src/services/entity-sync-handl
 import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { StoryCalendarClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryCalendarClientSyncHandler';
+import { StoryArcClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryArcClientSyncHandler';
 import {
   ModeClientSyncHandler,
   StatClientSyncHandler,
@@ -133,6 +134,29 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { name: 'Calendário solar' },
+  },
+  {
+    name: 'StoryArc',
+    build: () => new StoryArcClientSyncHandler(),
+    table: schema.storyArcs,
+    labelColumn: 'title' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      title: 'Livro I',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { title: 'Livro II' },
   },
   {
     name: 'AttributeValue',

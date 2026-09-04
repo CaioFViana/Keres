@@ -42,6 +42,7 @@ const EMPTY_TERMS: DraftTerms = {
   Item: { singular: '', plural: '', grammaticalGender: 'masculine' },
   WorldRule: { singular: '', plural: '', grammaticalGender: 'feminine' },
   Choice: { singular: '', plural: '', grammaticalGender: 'feminine' },
+  Arc: { singular: '', plural: '', grammaticalGender: 'masculine' },
 };
 
 function languageFamily(language: string | undefined): 'pt' | 'en' {

@@ -37,6 +37,8 @@ import CommentListScreen from '../screens/comments/CommentListScreen';
 import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
 import StoryAppearanceScreen from '../screens/customization/StoryAppearanceScreen';
 import VocabularyScreen from '../screens/customization/VocabularyScreen';
+import StoryArcListScreen from '../screens/customization/StoryArcListScreen';
+import StoryArcFormScreen from '../screens/customization/StoryArcFormScreen';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
 import BoardListScreen from '../screens/boards/BoardListScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
@@ -500,6 +502,8 @@ export type CustomizationStackParamList = {
   CustomizationIndex: undefined;
   StoryAppearance: undefined;
   Vocabulary: undefined;
+  StoryArcList: undefined;
+  StoryArcForm: { arcId?: string };
   StoryCalendarList: undefined;
   StoryCalendarForm: { calendarId?: string };
   StoryAgenda: { calendarId?: string } | undefined;
@@ -522,6 +526,8 @@ const CustomizationStackNavigator = () => {
       <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
       <CustomizationStack.Screen name="StoryAppearance" component={StoryAppearanceScreen} />
       <CustomizationStack.Screen name="Vocabulary" component={VocabularyScreen} />
+      <CustomizationStack.Screen name="StoryArcList" component={StoryArcListScreen} />
+      <CustomizationStack.Screen name="StoryArcForm" component={StoryArcFormScreen} />
       <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
       <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
       <CustomizationStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />

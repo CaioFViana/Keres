@@ -16,6 +16,7 @@ export const chapters = sqliteTable('chapters', {
   summary: text('summary'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),
+  arcId: text('arc_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

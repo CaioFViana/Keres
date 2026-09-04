@@ -14,6 +14,7 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { createStoryArcService } from './StoryArcService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -212,6 +213,13 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
     ): Promise<ChapterSelect> {
       await assertStoryIsWritable(db, chapterData.storyId);
       let newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
+      if (!newChapter.arcId) {
+        const defaultArc = await createStoryArcService(db).ensureDefaultArc(
+          currentUserId,
+          newChapter.storyId,
+        );
+        newChapter = { ...newChapter, arcId: defaultArc.id };
+      }
       const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, 'Chapter', newChapter);
       newChapter = favorite.data;
       const result = await db.insert(chapters).values(newChapter).returning().get();

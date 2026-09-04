@@ -382,6 +382,11 @@
             "singular": "Escolha narrativa",
             "plural": "Escolhas narrativas",
             "grammaticalGender": "feminine"
+          },
+          "Arc": {
+            "singular": "Livro",
+            "plural": "Livros",
+            "grammaticalGender": "masculine"
           }
         }
       }

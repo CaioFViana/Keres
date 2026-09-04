@@ -33,6 +33,7 @@ import {
   stats,
   statStrengths,
   stories,
+  storyArcs,
   storyCalendars,
   storyPermissions,
   storySchemaFields,
@@ -54,6 +55,7 @@ export async function deleteStoryChildRows(
   await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
   await tx.delete(chapterAnchors).where(eq(chapterAnchors.storyId, storyId)).run();
   await tx.delete(storyCalendars).where(eq(storyCalendars.storyId, storyId)).run();
+  await tx.delete(storyArcs).where(eq(storyArcs.storyId, storyId)).run();
   await tx.delete(boards).where(eq(boards.storyId, storyId)).run();
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();

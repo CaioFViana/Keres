@@ -90,6 +90,10 @@ export class StoryExportImportService {
       where: (storyCalendars, { eq, and }) =>
         and(eq(storyCalendars.storyId, storyId), eq(storyCalendars.isDeleted, false)),
     });
+    const storyArcs = await db.query.storyArcs.findMany({
+      where: (storyArcs, { eq, and }) =>
+        and(eq(storyArcs.storyId, storyId), eq(storyArcs.isDeleted, false)),
+    });
     const storyBoards = await db.query.boards.findMany({
       where: (boards, { eq, and }) => and(eq(boards.storyId, storyId), eq(boards.isDeleted, false)),
     });
@@ -219,6 +223,7 @@ export class StoryExportImportService {
         suggestions,
         chapterAnchors,
         storyCalendars,
+        storyArcs,
         storyBoards,
         storyLocationMaps,
         characterRelations,
@@ -343,6 +348,24 @@ export class StoryExportImportService {
       };
       await tx.insert(dbSchema.stories).values(newStoryData);
 
+      const newStoryArcsData = (validatedFullStory.storyArcs ?? []).map((original) => {
+        const newId = nextId(original.id);
+        idMap.set(original.id, newId);
+        return {
+          ...original,
+          id: newId,
+          storyId: targetStoryId,
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+          deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+        };
+      });
+      if (newStoryArcsData.length > 0) {
+        await tx.insert(dbSchema.storyArcs).values(newStoryArcsData);
+      }
+
       // --- Chapters ---
       const newChaptersData = validatedFullStory.chapters.map((original) => {
         const newId = nextId(original.id);
@@ -351,6 +374,7 @@ export class StoryExportImportService {
           ...original,
           id: newId,
           storyId: targetStoryId,
+          arcId: original.arcId ? (idMap.get(original.arcId) ?? original.arcId) : null,
           version: 1,
           createdAt: now,
           updatedAt: now,

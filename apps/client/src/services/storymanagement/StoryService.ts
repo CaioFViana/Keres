@@ -59,6 +59,7 @@ import {
   chapters,
   chapterAnchors,
   boards,
+  storyArcs,
   storyCalendars,
   characterRelations,
   characters,
@@ -111,6 +112,7 @@ import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
 import { createServerService } from '../ServerService';
+import { createStoryArcService } from './StoryArcService';
 import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import { createFavoriteService } from './FavoriteService';
@@ -273,6 +275,17 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, {
         ...newStory,
       }); // Pass serializable data
+
+      await createStoryArcService(db).createArc(currentUserId, {
+        storyId: newStory.id,
+        title: 'Arc',
+        description: null,
+        sortOrder: 0,
+        color: null,
+        icon: null,
+        themeOverride: null,
+        isDefault: true,
+      });
 
       return result;
     },
@@ -1115,6 +1128,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storySuggestions,
         storyChapterAnchors,
         storyOwnCalendars,
+        storyOwnArcs,
         storyBoards,
         storyLocationMaps,
         storyCharacterRelations,
@@ -1154,6 +1168,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.suggestions.findMany({ where: belongsToStory(suggestions) }),
         db.query.chapterAnchors.findMany({ where: belongsToStory(chapterAnchors) }),
         db.query.storyCalendars.findMany({ where: belongsToStory(storyCalendars) }),
+        db.query.storyArcs.findMany({ where: belongsToStory(storyArcs) }),
         db.query.boards.findMany({ where: belongsToStory(boards) }),
         db.query.locationMaps.findMany({ where: belongsToStory(locationMaps) }),
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
@@ -1200,6 +1215,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           suggestions: storySuggestions,
           chapterAnchors: storyChapterAnchors,
           storyCalendars: storyOwnCalendars,
+          storyArcs: storyOwnArcs,
           storyBoards,
           storyLocationMaps,
           characterRelations: storyCharacterRelations,
@@ -1498,6 +1514,21 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               createdAt: new Date(calendar.createdAt),
               updatedAt: new Date(),
               version: calendar.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
+        for (const arc of fullStoryData.storyArcs ?? []) {
+          await tx
+            .insert(storyArcs)
+            .values({
+              ...arc,
+              storyId: arc.storyId,
+              createdAt: new Date(arc.createdAt),
+              updatedAt: new Date(),
+              version: arc.version,
               isDeleted: false,
               deletedAt: null,
             })

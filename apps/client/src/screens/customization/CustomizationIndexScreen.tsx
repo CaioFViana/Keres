@@ -52,6 +52,12 @@ const CustomizationIndexScreen = () => {
       descriptionKey: 'customization_theme_description',
     },
     {
+      route: 'StoryArcList',
+      icon: 'library-outline',
+      titleKey: 'arcs_title',
+      descriptionKey: 'customization_arcs_description',
+    },
+    {
       route: 'Vocabulary',
       icon: 'text-outline',
       titleKey: 'vocabulary_title',

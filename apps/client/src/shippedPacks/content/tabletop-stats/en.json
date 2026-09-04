@@ -203,6 +203,11 @@
             "singular": "Player Choice",
             "plural": "Player Choices",
             "grammaticalGender": "neutral"
+          },
+          "Arc": {
+            "singular": "Arc",
+            "plural": "Arcs",
+            "grammaticalGender": "neutral"
           }
         }
       }

@@ -43,6 +43,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.suggestions);
   registerAll(example.chapterAnchors);
   registerAll(example.storyCalendars);
+  registerAll(example.storyArcs);
   registerAll(example.storyBoards);
   registerAll(example.storyLocationMaps);
   registerAll(example.characterRelations);
@@ -104,7 +105,11 @@ export function cloneExampleStoryForInstall(
       isDeleted: false,
       deletedAt: null,
     },
-    chapters: example.chapters.map((chapter) => ({ ...cloneEntity(chapter), storyId })),
+    chapters: example.chapters.map((chapter) => ({
+      ...cloneEntity(chapter),
+      storyId,
+      arcId: chapter.arcId ? remapId(chapter.arcId) : null,
+    })),
     scenes: example.scenes.map((scene) => ({
       ...cloneEntity(scene),
       storyId,
@@ -167,6 +172,10 @@ export function cloneExampleStoryForInstall(
     })),
     storyCalendars: example.storyCalendars?.map((calendar) => ({
       ...cloneEntity(calendar),
+      storyId,
+    })),
+    storyArcs: example.storyArcs?.map((arc) => ({
+      ...cloneEntity(arc),
       storyId,
     })),
     storyBoards: example.storyBoards?.map((board) => ({

@@ -8,7 +8,7 @@ import type { CreateChapterDataType } from '@keres/shared/';
 import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
 import { db } from '../../db';
-import { chapters, scenes } from '../../db/schema'; // Import scenes table
+import { chapters, scenes, storyArcs } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChapterSyncHandler extends BaseSyncEntityHandler<
@@ -35,6 +35,21 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateChapterDataType = this.createSchema.parse(update.data);
+    if (validatedData.arcId) {
+      const arc = await db.query.storyArcs.findFirst({
+        where: and(
+          eq(storyArcs.id, validatedData.arcId),
+          eq(storyArcs.storyId, storyId),
+          eq(storyArcs.isDeleted, false),
+        ),
+      });
+      if (!arc) {
+        throw new SyncConflictError(
+          'validation',
+          `Arc with ID ${validatedData.arcId} does not belong to story ${storyId}.`,
+        );
+      }
+    }
 
     const currentChapter = await this.findById(update.id!);
     if (currentChapter) {

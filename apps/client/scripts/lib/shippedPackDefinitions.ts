@@ -126,6 +126,11 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
         plural: { en: 'Player Choices', pt: 'Decisões de jogador' },
         grammaticalGender: { en: 'neutral', pt: 'feminine' },
       },
+      Arc: {
+        singular: { en: 'Arc', pt: 'Arco' },
+        plural: { en: 'Arcs', pt: 'Arcos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
     },
     fields: [],
     stats: [
@@ -195,6 +200,11 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
         singular: { en: 'Narrative Choice', pt: 'Escolha narrativa' },
         plural: { en: 'Narrative Choices', pt: 'Escolhas narrativas' },
         grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Arc: {
+        singular: { en: 'Book', pt: 'Livro' },
+        plural: { en: 'Books', pt: 'Livros' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
       },
     },
     fields: [
@@ -360,6 +370,11 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
         singular: { en: 'Branch', pt: 'Ramificação' },
         plural: { en: 'Branches', pt: 'Ramificações' },
         grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Arc: {
+        singular: { en: 'Volume', pt: 'Volume' },
+        plural: { en: 'Volumes', pt: 'Volumes' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
       },
     },
     fields: [

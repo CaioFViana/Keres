@@ -11,6 +11,14 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a comment made on an entity or custom field. */
 export const commentEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Comment,
+  exportCollection: 'comments',
+  exportReferences: [
+    {
+      field: 'fieldId',
+      targetEntityType: OperationLogEntityType.StorySchemaField,
+      required: false,
+    },
+  ],
   displayName: {
     fields: ['commentText'],
     getName: (row) => {

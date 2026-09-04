@@ -33,6 +33,10 @@ const resolveName = async (context: EntitySolverContext, entityId: string) => {
 /** Presentation metadata for media attributed to an entity. */
 export const galleryRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.GalleryRelation,
+  exportCollection: 'galleryRelations',
+  exportReferences: [
+    { field: 'galleryId', targetEntityType: OperationLogEntityType.Gallery, required: true },
+  ],
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'ownerId', typeField: 'ownerType' }],
   referenceFields: { galleryId: OperationLogEntityType.Gallery },

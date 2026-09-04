@@ -10,6 +10,11 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a relation between two Characters. */
 export const characterRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.CharacterRelation,
+  exportCollection: 'characterRelations',
+  exportReferences: [
+    { field: 'character1Id', targetEntityType: OperationLogEntityType.Character, required: true },
+    { field: 'character2Id', targetEntityType: OperationLogEntityType.Character, required: true },
+  ],
   conflictLabelKey: 'character_relation',
   isConflictRelation: true,
   help: {

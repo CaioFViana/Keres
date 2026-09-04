@@ -4,6 +4,7 @@ import {
   summarizeBoardEntity,
   summarizeEntityPreview,
 } from '../../entity-solvers/boardEntitySummary';
+import { getStoryExportReferences } from '../../entity-solvers/entities/EntityRegistry';
 
 describe('entity previews', () => {
   it('keeps a chapter summary and notes available to a list', () => {
@@ -40,6 +41,17 @@ describe('entity previews', () => {
       title: 'Conspiração',
       primaryDetail: 'A trama política.',
       secondaryDetail: null,
+    });
+  });
+
+  it('derives every portable foreign key from the entity handlers', () => {
+    expect(getStoryExportReferences()).toHaveLength(35);
+    expect(getStoryExportReferences()).toContainEqual({
+      collection: 'scenes',
+      field: 'chapterId',
+      targetEntityType: OperationLogEntityType.Chapter,
+      targetCollection: 'chapters',
+      required: true,
     });
   });
 });

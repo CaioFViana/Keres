@@ -11,6 +11,7 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Plot. */
 export const plotEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Plot,
+  exportCollection: 'plots',
   displayName: displayField('name'),
   help: {
     source: 'plots',

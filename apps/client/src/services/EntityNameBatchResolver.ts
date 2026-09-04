@@ -1,4 +1,4 @@
-import { inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { getEntityDomainHandler, OperationLogEntityType } from '@keres/shared';
 import type { AppDrizzleClient } from '../db';
 import { getEntityTable } from './entityTableRegistry';
@@ -19,14 +19,20 @@ export interface EntityNameBatchResolver {
    * Resolving them one by one would become dozens of sequential round-trips to SQLite; this does at most
    * one query per distinct entity type touched by the whole batch.
    */
-  resolveMany(refs: EntityRef[]): Promise<Map<string, string>>;
+  resolveMany(
+    refs: EntityRef[],
+    options?: { includeDeleted?: boolean },
+  ): Promise<Map<string, string>>;
 }
 
 const nameKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
 
 export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameBatchResolver {
   return {
-    async resolveMany(refs: EntityRef[]): Promise<Map<string, string>> {
+    async resolveMany(
+      refs: EntityRef[],
+      options: { includeDeleted?: boolean } = {},
+    ): Promise<Map<string, string>> {
       const idsByType = new Map<string, Set<string>>();
       for (const ref of refs) {
         if (!ref.entityType || !ref.entityId) continue;
@@ -52,10 +58,14 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
           selection[field] = (table as any)[field];
         }
 
+        const conditions = [inArray((table as any).id, idList)];
+        if (options.includeDeleted === false && 'isDeleted' in table) {
+          conditions.push(eq((table as any).isDeleted, false));
+        }
         const rows = await db
           .select(selection)
           .from(table)
-          .where(inArray((table as any).id, idList));
+          .where(and(...conditions));
         for (const row of rows) {
           const name = displayName.getName(row as Record<string, unknown>);
           result.set(nameKey(entityType, row.id as string), name ?? (row.id as string));

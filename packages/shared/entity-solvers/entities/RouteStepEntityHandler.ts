@@ -9,6 +9,16 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for one ordered RouteStep. */
 export const routeStepEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.RouteStep,
+  exportCollection: 'routeSteps',
+  exportReferences: [
+    { field: 'routeId', targetEntityType: OperationLogEntityType.Route, required: true },
+    { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+    {
+      field: 'selectedChoiceId',
+      targetEntityType: OperationLogEntityType.Choice,
+      required: false,
+    },
+  ],
   help: {
     source: 'routes',
     fields: ['sceneId', 'selectedChoiceId'],

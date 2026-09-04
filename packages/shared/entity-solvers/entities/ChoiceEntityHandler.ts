@@ -11,6 +11,11 @@ const textOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a branching Choice and its source/destination Scenes. */
 export const choiceEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Choice,
+  exportCollection: 'choices',
+  exportReferences: [
+    { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+    { field: 'nextSceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+  ],
   conflictLabelKey: 'choice',
   displayName: displayField('text'),
   help: {

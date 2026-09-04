@@ -7,6 +7,16 @@ const textOf = (row: Record<string, unknown> | undefined) =>
 /** Presentation metadata for an individual check within a choice check group. */
 export const choiceCheckEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.ChoiceCheck,
+  exportCollection: 'choiceChecks',
+  exportReferences: [
+    {
+      field: 'groupId',
+      targetEntityType: OperationLogEntityType.ChoiceCheckGroup,
+      required: true,
+    },
+    { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: false },
+    { field: 'itemId', targetEntityType: OperationLogEntityType.Item, required: false },
+  ],
   referenceFields: { groupId: OperationLogEntityType.ChoiceCheckGroup },
   async resolveReference(context, entityId) {
     const check = await context.read(OperationLogEntityType.ChoiceCheck, entityId);

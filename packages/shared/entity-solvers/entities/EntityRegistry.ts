@@ -3,6 +3,7 @@ import { chapterEntityHandler } from './ChapterEntityHandler';
 import { choiceEntityHandler } from './ChoiceEntityHandler';
 import type { EntityDomainHandler } from './contracts';
 import type { EntityConflictReference } from './contracts';
+import type { EntityExportReference } from './contracts';
 import { sceneEntityHandler } from './SceneEntityHandler';
 import { routeEntityHandler } from './RouteEntityHandler';
 import { routeStepEntityHandler } from './RouteStepEntityHandler';
@@ -108,6 +109,46 @@ export function getEntityReferenceFieldType(field: string): OperationLogEntityTy
     if (entityType) return entityType;
   }
   return undefined;
+}
+
+/** Locates a native suggestion field from the entity that declares it for advanced search. */
+export function getSuggestionSource(
+  source: string,
+): { entityType: OperationLogEntityType; field: string } | undefined {
+  for (const handler of ENTITY_HANDLERS.values()) {
+    const field = handler.advancedSearch?.find(
+      (candidate) => candidate.suggestionsSource === source,
+    );
+    if (field) return { entityType: handler.entityType, field: field.name };
+  }
+  return undefined;
+}
+
+export interface StoryExportReference extends EntityExportReference {
+  collection: string;
+  targetCollection: string;
+}
+
+/** Foreign keys in a portable export, declared by their source and target entity handlers. */
+export function getStoryExportReferences(): readonly StoryExportReference[] {
+  return [...ENTITY_HANDLERS.values()].flatMap((handler) => {
+    if (!handler.exportReferences?.length) return [];
+    const collection = handler.exportCollection;
+    if (!collection) {
+      throw new Error(
+        `${handler.entityType} declares export references without an export collection.`,
+      );
+    }
+    return handler.exportReferences.map((reference) => {
+      const targetCollection = ENTITY_HANDLERS.get(reference.targetEntityType)?.exportCollection;
+      if (!targetCollection) {
+        throw new Error(
+          `${handler.entityType}.${reference.field} has no export collection for ${reference.targetEntityType}.`,
+        );
+      }
+      return { ...reference, collection, targetCollection };
+    });
+  });
 }
 
 export function getEntityConflictLabelKey(entityType: string): string {

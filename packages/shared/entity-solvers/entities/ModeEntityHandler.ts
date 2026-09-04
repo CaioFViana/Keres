@@ -11,6 +11,10 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Character Mode. */
 export const modeEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Mode,
+  exportCollection: 'modes',
+  exportReferences: [
+    { field: 'characterId', targetEntityType: OperationLogEntityType.Character, required: true },
+  ],
   conflictLabelKey: 'mode',
   displayName: displayField('name'),
   help: {

@@ -5,6 +5,7 @@ import {
   deriveAttributeKey,
   encodeAttributeValue,
   explodeAttributeUsageValue,
+  getSuggestionSource,
   isSuggestionAttributeType,
 } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
@@ -28,7 +29,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { createAttributeValueService } from './AttributeValueService';
-import { getEntityTable } from '../entityTableRegistry';
+import { createEntityNameBatchResolver } from '../EntityNameBatchResolver';
 
 const CUSTOM_ATTRIBUTE_TYPE_PREFIX = 'custom:';
 export const LIST_CATALOG_TYPE = 'list_catalog';
@@ -88,53 +89,45 @@ const suggestionConfig = {
   character_gender: {
     schema: characters,
     column: characters.gender,
-    entityType: 'Character',
-    field: 'gender',
     event: 'character_changed',
   },
   character_race: {
     schema: characters,
     column: characters.race,
-    entityType: 'Character',
-    field: 'race',
     event: 'character_changed',
   },
   character_subrace: {
     schema: characters,
     column: characters.subrace,
-    entityType: 'Character',
-    field: 'subrace',
     event: 'character_changed',
   },
   characterRelation_type: {
     schema: characterRelations,
     column: characterRelations.relationType,
-    entityType: 'CharacterRelation',
-    field: 'relationType',
     event: 'character_relation_changed',
   },
   item_category: {
     schema: items,
     column: items.category,
-    entityType: 'Item',
-    field: 'category',
     event: 'item_changed',
   },
   item_initial_state: {
     schema: items,
     column: items.initialState,
-    entityType: 'Item',
-    field: 'initialState',
     event: 'item_changed',
   },
   item_state: {
     schema: itemJourneys,
     column: itemJourneys.newState,
-    entityType: 'ItemJourney',
-    field: 'newState',
     event: 'item_journey_changed',
   },
 };
+
+function getNativeSuggestionConfig(type: string) {
+  const persistence = suggestionConfig[type as keyof typeof suggestionConfig];
+  const domain = getSuggestionSource(type);
+  return persistence && domain ? { ...persistence, ...domain } : undefined;
+}
 
 export type SuggestionType = string;
 export type SuggestionUsageEntityType =
@@ -210,7 +203,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       return createAttributeValueService(db).getValueUsageCounts(fieldId);
     }
 
-    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    const config = getNativeSuggestionConfig(type);
     if (!config) return [];
     const dynamic = await db
       .select({ value: config.column, count: sql<number>`count(*)` })
@@ -266,30 +259,13 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       const matching = rows.filter((row) =>
         explodeAttributeUsageValue(field.type as AttributeType, row.value ?? '').includes(value),
       );
-      const idsByType = new Map<GlobalSearchEntityType, Set<string>>();
-      matching.forEach((row) => {
+      const refs = matching.flatMap((row) => {
         const entityType = row.entityType as GlobalSearchEntityType;
-        if (!globalSearchFieldConfig[entityType]) return;
-        const ids = idsByType.get(entityType) ?? new Set<string>();
-        ids.add(row.entityId);
-        idsByType.set(entityType, ids);
+        return globalSearchFieldConfig[entityType] ? [{ entityType, entityId: row.entityId }] : [];
       });
-      const titles = new Map<string, string>();
-      await Promise.all(
-        Array.from(idsByType.entries()).map(async ([entityType, ids]) => {
-          const table = getEntityTable(entityType);
-          if (!table) return;
-          const titleField = globalSearchFieldConfig[entityType].titleField;
-          const rows = await db
-            .select({ id: (table as any).id, title: (table as any)[titleField] })
-            .from(table)
-            .where(
-              and(inArray((table as any).id, Array.from(ids)), eq((table as any).isDeleted, false)),
-            )
-            .all();
-          rows.forEach((row) => titles.set(`${entityType}:${row.id}`, String(row.title ?? '')));
-        }),
-      );
+      const titles = await createEntityNameBatchResolver(db).resolveMany(refs, {
+        includeDeleted: false,
+      });
       return matching.flatMap((row) => {
         const entityType = row.entityType as GlobalSearchEntityType;
         if (entityType === 'Plot') return [];
@@ -300,7 +276,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       });
     }
 
-    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    const config = getNativeSuggestionConfig(type);
     if (!config) return [];
     const rows = await db
       .select()
@@ -399,7 +375,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       );
       return matching.length;
     }
-    const config = suggestionConfig[type as keyof typeof suggestionConfig];
+    const config = getNativeSuggestionConfig(type);
     if (!config) return 0;
     const rows = await db
       .select()
@@ -438,10 +414,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       if (!storyId) return [];
       const isCustomAttribute = type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX);
       const isNamedList = isNamedListType(type);
-      const config =
-        isCustomAttribute || isNamedList
-          ? null
-          : suggestionConfig[type as keyof typeof suggestionConfig];
+      const config = isCustomAttribute || isNamedList ? null : getNativeSuggestionConfig(type);
       if (!isCustomAttribute && !isNamedList && !isWorldPieceSuggestionType(type) && !config) {
         return [];
       }

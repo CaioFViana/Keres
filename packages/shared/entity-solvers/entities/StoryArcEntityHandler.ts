@@ -10,6 +10,7 @@ const titleOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a story Arc, including the v10 chapter association surface. */
 export const storyArcEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StoryArc,
+  exportCollection: 'storyArcs',
   displayName: displayField('title'),
   help: {
     source: 'arcs',

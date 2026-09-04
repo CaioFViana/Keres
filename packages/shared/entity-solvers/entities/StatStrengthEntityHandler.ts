@@ -15,6 +15,10 @@ const numberValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a value tier on a Stat ladder. */
 export const statStrengthEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StatStrength,
+  exportCollection: 'statStrengths',
+  exportReferences: [
+    { field: 'statId', targetEntityType: OperationLogEntityType.Stat, required: false },
+  ],
   conflictLabelKey: 'stat_strength',
   displayName: displayField('label'),
   help: { source: 'stats', fields: ['label', 'minValue'] },

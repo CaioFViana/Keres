@@ -9,6 +9,11 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a directional or containment relation between Locations. */
 export const locationRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.LocationRelation,
+  exportCollection: 'locationRelations',
+  exportReferences: [
+    { field: 'locationAId', targetEntityType: OperationLogEntityType.Location, required: true },
+    { field: 'locationBId', targetEntityType: OperationLogEntityType.Location, required: true },
+  ],
   isConflictRelation: true,
   referenceFields: {
     locationAId: OperationLogEntityType.Location,

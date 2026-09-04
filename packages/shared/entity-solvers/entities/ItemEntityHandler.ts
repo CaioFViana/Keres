@@ -11,6 +11,14 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for an Item and its optional character owner. */
 export const itemEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Item,
+  exportCollection: 'items',
+  exportReferences: [
+    {
+      field: 'characterOwnerId',
+      targetEntityType: OperationLogEntityType.Character,
+      required: false,
+    },
+  ],
   conflictLabelKey: 'item',
   displayName: displayField('name'),
   help: {

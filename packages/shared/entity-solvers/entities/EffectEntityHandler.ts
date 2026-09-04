@@ -17,6 +17,10 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for an effect applied by a choice. */
 export const effectEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Effect,
+  exportCollection: 'effects',
+  exportReferences: [
+    { field: 'itemId', targetEntityType: OperationLogEntityType.Item, required: false },
+  ],
   displayName: displayFirst('triggerName', 'effectType'),
   referenceFields: { itemId: OperationLogEntityType.Item },
   async resolveReference(context, entityId) {

@@ -29,6 +29,10 @@ const resolveName = async (context: EntitySolverContext, entityId: string) => {
 /** Presentation metadata for a Tag attributed to another entity. */
 export const tagRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.TagRelation,
+  exportCollection: 'tagRelations',
+  exportReferences: [
+    { field: 'tagId', targetEntityType: OperationLogEntityType.Tag, required: true },
+  ],
   conflictLabelKey: 'tag_relation',
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],

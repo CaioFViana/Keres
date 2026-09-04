@@ -10,6 +10,10 @@ const stringValue = (row: Record<string, unknown>, field: string) => {
 /** Presentation metadata for a Note attributed to another entity. */
 export const noteRelationEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.NoteRelation,
+  exportCollection: 'noteRelations',
+  exportReferences: [
+    { field: 'noteId', targetEntityType: OperationLogEntityType.Note, required: true },
+  ],
   conflictLabelKey: 'note_relation',
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],

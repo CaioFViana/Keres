@@ -13,6 +13,14 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for an entity's value in a custom-attribute field. */
 export const attributeValueEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.AttributeValue,
+  exportCollection: 'attributeValues',
+  exportReferences: [
+    {
+      field: 'fieldId',
+      targetEntityType: OperationLogEntityType.StorySchemaField,
+      required: true,
+    },
+  ],
   displayName: displayField('value'),
   referenceFields: { fieldId: OperationLogEntityType.StorySchemaField },
   async resolveReference(context, entityId) {

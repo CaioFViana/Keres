@@ -23,6 +23,10 @@ async function resolveChapterReference(
 /** All presentation metadata that belongs specifically to a narrative Chapter. */
 export const chapterEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Chapter,
+  exportCollection: 'chapters',
+  exportReferences: [
+    { field: 'arcId', targetEntityType: OperationLogEntityType.StoryArc, required: false },
+  ],
   conflictLabelKey: 'chapter',
   displayName: displayField('name'),
   help: {

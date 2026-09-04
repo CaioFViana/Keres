@@ -10,6 +10,7 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a custom-attribute definition. */
 export const storySchemaFieldEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StorySchemaField,
+  exportCollection: 'storySchemaFields',
   displayName: displayField('name'),
   help: {
     source: 'custom-attributes',

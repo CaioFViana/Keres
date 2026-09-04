@@ -11,6 +11,11 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Scene and the story entities its editable fields refer to. */
 export const sceneEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Scene,
+  exportCollection: 'scenes',
+  exportReferences: [
+    { field: 'chapterId', targetEntityType: OperationLogEntityType.Chapter, required: true },
+    { field: 'locationId', targetEntityType: OperationLogEntityType.Location, required: false },
+  ],
   conflictLabelKey: 'scene',
   displayName: displayField('name'),
   help: {

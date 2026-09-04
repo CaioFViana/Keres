@@ -11,6 +11,7 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Character. */
 export const characterEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Character,
+  exportCollection: 'characters',
   conflictLabelKey: 'character',
   displayName: displayField('name'),
   help: {

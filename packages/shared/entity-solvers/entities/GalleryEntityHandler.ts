@@ -3,6 +3,7 @@ import type { EntityDomainHandler } from './contracts';
 import { displayFirst } from './displayName';
 export const galleryEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Gallery,
+  exportCollection: 'galleryItems',
   displayName: displayFirst('title', 'fileName'),
   help: {
     source: 'gallery',

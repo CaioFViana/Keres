@@ -9,6 +9,11 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for attaching a Scene to a Plot. */
 export const plotSceneEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.PlotScene,
+  exportCollection: 'plotScenes',
+  exportReferences: [
+    { field: 'plotId', targetEntityType: OperationLogEntityType.Plot, required: true },
+    { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+  ],
   help: {
     source: 'plots',
     fields: ['note'],

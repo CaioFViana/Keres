@@ -11,6 +11,7 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for a Route. Its steps own the scene and choice references. */
 export const routeEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Route,
+  exportCollection: 'routes',
   displayName: displayField('name'),
   help: {
     source: 'routes',

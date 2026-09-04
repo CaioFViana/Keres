@@ -1,6 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
   const value = row?.name;
@@ -10,6 +11,17 @@ const nameOf = (row: Record<string, unknown> | undefined) => {
 /** Presentation metadata for an Item state change recorded at a Scene. */
 export const itemJourneyEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.ItemJourney,
+  exportCollection: 'itemJourneys',
+  exportReferences: [
+    { field: 'itemId', targetEntityType: OperationLogEntityType.Item, required: true },
+    { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+    {
+      field: 'newCharacterOwnerId',
+      targetEntityType: OperationLogEntityType.Character,
+      required: false,
+    },
+  ],
+  displayName: displayField('newState'),
   conflictLabelKey: 'item_journey',
   isConflictRelation: true,
   help: {

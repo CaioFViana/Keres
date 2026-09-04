@@ -1,7 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -18,6 +27,7 @@ const ArcPickerModal: React.FC<Props> = ({ visible, arcs, activeArcId, onSelect,
   const { t } = useTranslation();
   const { colors } = useTheme();
   const vocab = useStoryVocabulary();
+  const { height: screenHeight } = useWindowDimensions();
 
   const choose = (arcId: string | null) => {
     onSelect(arcId);
@@ -31,42 +41,40 @@ const ArcPickerModal: React.FC<Props> = ({ visible, arcs, activeArcId, onSelect,
           <Text style={[styles.title, { color: colors.text }]}>
             {t('arc_picker_title', { arcs: vocab.term('Arc', true) })}
           </Text>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => choose(null)}
-            accessibilityRole="button"
+          <ScrollView
+            style={{ maxHeight: Math.min(screenHeight * 0.6, 480) }}
+            keyboardShouldPersistTaps="handled"
           >
-            <Ionicons
-              name={activeArcId ? 'ellipse-outline' : 'checkmark-circle'}
-              size={22}
-              color={colors.primary}
-            />
-            <Text style={[styles.label, { color: colors.text }]}>
-              {t('all_arcs', { arcs: vocab.term('Arc', true) })}
-            </Text>
-          </TouchableOpacity>
-          {arcs.map((arc) => (
             <TouchableOpacity
-              key={arc.id}
               style={styles.row}
-              onPress={() => choose(arc.id)}
+              onPress={() => choose(null)}
               accessibilityRole="button"
             >
               <Ionicons
-                name={activeArcId === arc.id ? 'checkmark-circle' : 'ellipse-outline'}
+                name={activeArcId ? 'ellipse-outline' : 'checkmark-circle'}
                 size={22}
-                color={arc.color || colors.primary}
+                color={colors.primary}
               />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.label, { color: colors.text }]}>{arc.title}</Text>
-                {arc.isDefault ? (
-                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                    {t('arc_default_badge')}
-                  </Text>
-                ) : null}
-              </View>
+              <Text style={[styles.label, { color: colors.text }]}>
+                {t('all_arcs', { arcs: vocab.term('Arc', true) })}
+              </Text>
             </TouchableOpacity>
-          ))}
+            {arcs.map((arc) => (
+              <TouchableOpacity
+                key={arc.id}
+                style={styles.row}
+                onPress={() => choose(arc.id)}
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name={activeArcId === arc.id ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={22}
+                  color={arc.color || colors.primary}
+                />
+                <Text style={[styles.label, { color: colors.text }]}>{arc.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>

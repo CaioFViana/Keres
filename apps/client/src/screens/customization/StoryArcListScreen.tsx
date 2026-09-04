@@ -103,7 +103,6 @@ const StoryArcListScreen = () => {
       marginBottom: 10,
     },
     title: { fontSize: 16, fontWeight: '700', color: colors.text },
-    badge: { fontSize: 12, color: colors.primary, marginTop: 2 },
     empty: { fontSize: 13, color: colors.textSecondary },
   });
 
@@ -123,7 +122,6 @@ const StoryArcListScreen = () => {
           />
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{arc.title}</Text>
-            {arc.isDefault ? <Text style={styles.badge}>{t('arc_default_badge')}</Text> : null}
           </View>
           {canEdit && !arc.isDefault ? (
             <TouchableOpacity onPress={() => handleDelete(arc)} accessibilityLabel={t('delete')}>
@@ -133,7 +131,7 @@ const StoryArcListScreen = () => {
         </TouchableOpacity>
       ))}
       {arcs.length === 0 ? (
-        <Text style={styles.empty}>{t('arcs_empty', { arc: vocab.term('Arc') })}</Text>
+        <Text style={styles.empty}>{t('arcs_empty', { arcs: vocab.term('Arc', true) })}</Text>
       ) : null}
     </ScrollView>
   );

@@ -1,4 +1,4 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import { entityFieldMetadata, resolveEntityReferenceFieldType } from '@keres/shared';
 import type { TFunction } from 'i18next';
 import type { EntityRef } from './EntityNameBatchResolver';
 import type { PendingConflict } from './SyncConflictService';
@@ -27,24 +27,6 @@ function fieldLabel(entityType: string, field: string, t: TFunction): string {
  * resolve `EntityService.getEntityIdentifier`. Without this, a genuine conflict on `Scene.chapterId`
  * or `Choice.nextSceneId` showed the raw ID in the field-by-field comparison instead of the name.
  */
-const CONTENT_REFERENCE_FIELDS: Record<string, string> = {
-  characterId: 'Character',
-  character1Id: 'Character',
-  character2Id: 'Character',
-  characterOwnerId: 'Character',
-  newCharacterOwnerId: 'Character',
-  sceneId: 'Scene',
-  nextSceneId: 'Scene',
-  itemId: 'Item',
-  locationId: 'Location',
-  chapterId: 'Chapter',
-  tagId: 'Tag',
-  noteId: 'Note',
-  worldRuleId: 'WorldRule',
-  galleryId: 'Gallery',
-  choiceId: 'Choice',
-};
-
 /**
  * The entity's name in the synchronization protocol mapped to the already existing translation key.
  * Moved from `SyncConflictModal.tsx` - both the conflict list and the diff drill-in
@@ -274,7 +256,7 @@ export function collectEntityRefs(
     }
 
     for (const field of conflict.contestedFields) {
-      const entityType = CONTENT_REFERENCE_FIELDS[field];
+      const entityType = resolveEntityReferenceFieldType(field);
       if (!entityType) continue;
       const entityId = conflict.localValues[field] ?? conflict.serverValues?.[field];
       if (typeof entityId === 'string' && entityId) {
@@ -426,7 +408,7 @@ export function buildConflictSummaries(
     );
 
     const displayValue = (field: string, value: unknown): string => {
-      const targetType = CONTENT_REFERENCE_FIELDS[field];
+      const targetType = resolveEntityReferenceFieldType(field);
       if (targetType && typeof value === 'string' && value) {
         return names.get(`${targetType}:${value}`) || formatValue(value, emptyLabel);
       }

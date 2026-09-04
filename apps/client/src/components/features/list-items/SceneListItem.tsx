@@ -1,4 +1,5 @@
 import React from 'react';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
 import type { SceneSelect, TagSelect } from '../../../db/schema';
 import { useTheme } from '../../../theme';
@@ -32,7 +33,9 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  const summaryText = truncate(scene.summary, 150);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Scene, scene);
+  const summaryText = truncate(preview?.primaryDetail, 150);
+  const notesText = truncate(preview?.secondaryDetail, 150);
 
   const styles = createReferenceListItemStyles(colors);
 
@@ -49,7 +52,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
   const renderExpandedContent = (scn: SceneSelect) => (
     <View>
       {summaryText && <Text style={styles.summaryText}>{summaryText}</Text>}
-      {scn.extraNotes && <Text style={styles.notesText}>{truncate(scn.extraNotes, 150)}</Text>}
+      {notesText && <Text style={styles.notesText}>{notesText}</Text>}
       {tags.length > 0 && <TagList tags={tags} />}
     </View>
   );

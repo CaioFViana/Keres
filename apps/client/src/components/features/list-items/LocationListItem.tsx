@@ -1,4 +1,5 @@
 import React from 'react';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
 import type { LocationWithTags } from '../../../services/storymanagement/LocationService'; // Will be created soon
 import { useTheme } from '../../../theme';
@@ -20,7 +21,8 @@ const LocationListItem: React.FC<LocationListItemProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  const descriptionSummary = truncate(location.description, 150);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Location, location);
+  const descriptionSummary = truncate(preview?.primaryDetail, 150);
 
   const styles = createLocationStyles(colors);
 

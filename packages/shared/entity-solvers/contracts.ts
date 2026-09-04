@@ -19,6 +19,7 @@ export interface EntitySolverContext {
   read(type: OperationLogEntityType, id: string): Promise<EntitySolverRow | undefined>;
   translate(key: string, values?: Record<string, unknown>): string;
   noun(type: OperationLogEntityType | 'Event', plural?: boolean): Promise<string>;
+  fromNoun(type: OperationLogEntityType | 'Event'): Promise<string>;
   unknownNoun(type: OperationLogEntityType | 'Event'): Promise<string>;
 }
 

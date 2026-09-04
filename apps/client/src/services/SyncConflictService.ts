@@ -3,29 +3,15 @@ import type {
   StoryReorderingStoryUpdate,
   SyncConflictReason,
 } from '@keres/shared';
-import { validateBoardContent } from '@keres/shared';
+import { findContestedFields, syncConflictValuesDiffer, validateBoardContent } from '@keres/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import type { OperationLogSelect, SyncConflictSelect } from '../db/schema';
+import type { SyncConflictSelect } from '../db/schema';
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
 import { createBoardService } from './storymanagement/BoardService';
-
-/**
- * Fields that never enter a conflict comparison: they are bookkeeping metadata, they change on every
- * write and would therefore show up as "divergent" in every conflict without the user having any
- * decision to make about them.
- */
-const BOOKKEEPING_FIELDS = new Set([
-  'id',
-  'storyId',
-  'version',
-  'createdAt',
-  'updatedAt',
-  'deletedAt',
-]);
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -98,58 +84,7 @@ function parseJson<T>(raw: string | null, fallback: T): T {
   }
 }
 
-/** Compara valores vindos de JSON de forma tolerante a Date-vs-string e null-vs-undefined. */
-function valuesDiffer(a: any, b: any): boolean {
-  if (a === b) return false;
-  if (a == null && b == null) return false;
-  if (a instanceof Date || b instanceof Date) {
-    const timeA = a ? new Date(a).getTime() : null;
-    const timeB = b ? new Date(b).getTime() : null;
-    return timeA !== timeB;
-  }
-  if (typeof a === 'object' || typeof b === 'object') {
-    return JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
-  }
-  return true;
-}
-
-/**
- * Fields the user changed and about which the server has a different opinion.
- *
- * Only these need a decision: if the user changed the summary and the server changed the title, both
- * fit together and there is nothing to choose.
- *
- * The key has to be *present* in `serverValues`, not merely differ. On the pull path, `serverValues` is
- * only the fields the remote operation changed: an absent field means the server had no opinion about
- * it, and comparing it with `undefined` would flag as disputed exactly what should merge silently. On
- * the push path, `serverValues` is the whole entity, so every key exists and the comparison holds.
- */
-export function findContestedFields(
-  localValues: Record<string, any>,
-  serverValues: Record<string, any> | null,
-): string[] {
-  if (!serverValues) {
-    return Object.keys(localValues).filter((key) => !BOOKKEEPING_FIELDS.has(key));
-  }
-  return Object.keys(localValues)
-    .filter((key) => !BOOKKEEPING_FIELDS.has(key))
-    .filter((key) => key in serverValues)
-    .filter((key) => valuesDiffer(localValues[key], serverValues[key]));
-}
-
-/** It merges the pending local operations' payloads into a single set of desired values. */
-export function mergeLocalOperationPayloads(operations: OperationLogSelect[]): Record<string, any> {
-  const merged: Record<string, any> = {};
-  for (const op of operations) {
-    const payload = parseJson<Record<string, any>>(op.payload, {});
-    for (const [key, value] of Object.entries(payload)) {
-      if (BOOKKEEPING_FIELDS.has(key)) continue;
-      // More recent operations come later and therefore win: it is the user's latest intent.
-      merged[key] = value;
-    }
-  }
-  return merged;
-}
+export { findContestedFields, mergeLocalOperationPayloads } from '@keres/shared';
 
 /**
  * Applies a remote reorder (or the server's version of one that conflicted) to the local database. It
@@ -533,7 +468,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // same text, say) - a new operation in the log with no actually new information, just noise.
         const changedValues = Object.fromEntries(
           Object.entries(nextValues).filter(([field, value]) =>
-            valuesDiffer(value, conflict.serverValues?.[field]),
+            syncConflictValuesDiffer(value, conflict.serverValues?.[field]),
           ),
         );
         if (Object.keys(changedValues).length > 0) {

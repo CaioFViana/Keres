@@ -1,7 +1,12 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { ISO_DATE_PATTERN, OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
+import {
+  ISO_DATE_PATTERN,
+  OperationLogEntityType,
+  resolveEntityReferenceFieldType,
+  suggestionDisplayValue,
+} from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -25,30 +30,6 @@ import { useDocumentTitle } from '../../utils/documentTitle';
 function humanizeFieldName(key: string): string {
   return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
 }
-
-/**
- * Payload fields that are another entity's ID, and which entity. It does not come from
- * `entityFieldMetadata` (which only marks `type: 'id'`, without saying which entity) - it is the mapping
- * that was missing in order to reuse `EntityService.getEntityIdentifier` (the same name resolver
- * that `TagRelation`/`NoteRelation`/etc already use) on any payload field.
- */
-const REFERENCE_FIELD_ENTITY_TYPES: Record<string, OperationLogEntityType> = {
-  characterId: OperationLogEntityType.Character,
-  character1Id: OperationLogEntityType.Character,
-  character2Id: OperationLogEntityType.Character,
-  characterOwnerId: OperationLogEntityType.Character,
-  newCharacterOwnerId: OperationLogEntityType.Character,
-  sceneId: OperationLogEntityType.Scene,
-  nextSceneId: OperationLogEntityType.Scene,
-  itemId: OperationLogEntityType.Item,
-  locationId: OperationLogEntityType.Location,
-  chapterId: OperationLogEntityType.Chapter,
-  tagId: OperationLogEntityType.Tag,
-  noteId: OperationLogEntityType.Note,
-  worldRuleId: OperationLogEntityType.WorldRule,
-  galleryId: OperationLogEntityType.Gallery,
-  choiceId: OperationLogEntityType.Choice,
-};
 
 const getOperationIcon = (operationType: string): keyof typeof Ionicons.glyphMap => {
   switch (operationType) {
@@ -381,7 +362,7 @@ const OperationLogDetailScreen: React.FC = () => {
                   (f) => f.name === key,
                 );
                 const label = fieldMeta ? t(fieldMeta.label) : humanizeFieldName(key);
-                const referenceEntityType = REFERENCE_FIELD_ENTITY_TYPES[key];
+                const referenceEntityType = resolveEntityReferenceFieldType(key);
 
                 return (
                   <View key={key} style={styles.changeCard}>

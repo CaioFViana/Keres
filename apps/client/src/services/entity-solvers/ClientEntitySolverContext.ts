@@ -8,6 +8,7 @@ import * as schema from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
 import {
   loadStoryVocabulary,
+  fromStoryNoun,
   translateStoryNoun,
   unknownStoryNoun,
 } from '../../vocabulary/storyVocabularyLookup';
@@ -41,6 +42,7 @@ const translationKey: Partial<Record<OperationLogEntityType, string>> = {
   [OperationLogEntityType.Plot]: 'plots_title',
   [OperationLogEntityType.Stat]: 'stat',
   [OperationLogEntityType.Mode]: 'mode',
+  [OperationLogEntityType.User]: 'user',
 };
 
 const OPERATION_LOG_ONLY_TABLES: Partial<Record<OperationLogEntityType, unknown>> = {
@@ -92,6 +94,12 @@ export function createClientEntitySolverContext(
     async noun(type, plural = false) {
       if (VOCABULARY_TYPES.has(type)) {
         return translateStoryNoun(t, await vocabulary(), vocabularyType(type) as any, plural);
+      }
+      return t(translationKey[type as OperationLogEntityType] ?? 'unknown_entity_type');
+    },
+    async fromNoun(type) {
+      if (VOCABULARY_TYPES.has(type)) {
+        return fromStoryNoun(t, await vocabulary(), vocabularyType(type) as any);
       }
       return t(translationKey[type as OperationLogEntityType] ?? 'unknown_entity_type');
     },

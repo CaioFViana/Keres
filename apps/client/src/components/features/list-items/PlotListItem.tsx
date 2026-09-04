@@ -1,6 +1,7 @@
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
 import { createSimpleEntityListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -18,6 +19,7 @@ interface PlotListItemProps {
 const PlotListItem: React.FC<PlotListItemProps> = ({ plot, sceneCount, onViewDetails }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const preview = summarizeEntityPreview(OperationLogEntityType.Plot, plot);
 
   const styles = StyleSheet.create({
     ...createSimpleEntityListItemStyles(colors),
@@ -49,7 +51,7 @@ const PlotListItem: React.FC<PlotListItemProps> = ({ plot, sceneCount, onViewDet
       )}
       renderExpandedContent={(item) => (
         <Text style={styles.descriptionText}>
-          {item.details ? truncate(item.details, 300) : t('no_plot_details')}
+          {preview?.primaryDetail ? truncate(preview.primaryDetail, 300) : t('no_plot_details')}
         </Text>
       )}
     />

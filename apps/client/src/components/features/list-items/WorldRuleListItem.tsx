@@ -1,5 +1,6 @@
 import React from 'react';
 import { getWorldPieceSectionAppearance } from '@keres/shared';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
@@ -25,7 +26,8 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const descriptionSummary = truncate(worldRule.description, 150);
+  const preview = summarizeEntityPreview(OperationLogEntityType.WorldRule, worldRule);
+  const descriptionSummary = truncate(preview?.primaryDetail, 150);
 
   const styles = createSimpleEntityListItemStyles(colors);
 

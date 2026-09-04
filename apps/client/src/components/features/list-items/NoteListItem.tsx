@@ -1,4 +1,5 @@
 import React from 'react';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NoteWithTags } from '../../../services/storymanagement/NoteService';
 import { useTheme } from '../../../theme';
@@ -16,7 +17,8 @@ interface NoteListItemProps {
 const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onToggleFavorite }) => {
   const { colors } = useTheme();
 
-  const bodySummary = truncate(note.body || '', 300);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Note, note);
+  const bodySummary = truncate(preview?.primaryDetail, 300);
 
   const styles = StyleSheet.create({
     noteInfo: {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ItemSelect } from '../../../db/schemas/items';
@@ -38,6 +39,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
   const { t } = useTranslation();
 
   const referenceStyles = createReferenceListItemStyles(colors);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Item, item);
   const styles = StyleSheet.create({
     detailText: {
       fontSize: 14,
@@ -56,8 +58,8 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
 
   const renderExpandedContent = (currentItem: ItemSelect) => (
     <View>
-      {currentItem.description && (
-        <Text style={referenceStyles.summaryText}>{truncate(currentItem.description, 200)}</Text>
+      {preview?.primaryDetail && (
+        <Text style={referenceStyles.summaryText}>{truncate(preview.primaryDetail, 200)}</Text>
       )}
       {currentItem.category && (
         <Text style={styles.detailText}>

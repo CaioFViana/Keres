@@ -202,7 +202,7 @@ async function main() {
   const skipBuild = process.argv.includes('--skip-build');
   if (!skipBuild) {
     await run('bun', ['run', 'capture:setup'], { cwd: clientRoot });
-    await run('bun', ['run', 'build:main'   ], { cwd: desktopRoot });
+    await run('bun', ['run', 'build:main'], { cwd: desktopRoot });
   }
 
   const plan = buildPlan();

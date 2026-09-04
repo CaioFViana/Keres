@@ -318,6 +318,20 @@ describe('EntityService.getEntityIdentifier', () => {
     await expect(identifierOf('Board', 'board-1')).resolves.toBe('Mapa da cidade');
   });
 
+  it('resolves a story arc by its title', async () => {
+    await database.db.insert(schema.storyArcs).values({
+      id: 'arc-1',
+      storyId: STORY_ID,
+      title: 'Livro I',
+      description: null,
+      sortOrder: 0,
+      isDefault: true,
+      ...base,
+    });
+
+    await expect(identifierOf('StoryArc', 'arc-1')).resolves.toBe('Livro I');
+  });
+
   it('resolves a character relation by both participants', async () => {
     await database.db.insert(schema.characters).values([
       { id: 'mira', storyId: STORY_ID, name: 'Mira', ...base },

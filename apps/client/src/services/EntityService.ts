@@ -35,6 +35,7 @@ import {
   scenes,
   suggestions,
   stories,
+  storyArcs,
   storySchemaFields,
   tagRelations,
   tags,
@@ -109,6 +110,14 @@ export class EntityService {
         });
         entitySpecificName = story?.title;
         translatedEntityType = t('story');
+        break;
+      case OperationLogEntityType.StoryArc:
+        const storyArc = await db.query.storyArcs.findFirst({
+          where: and(eq(storyArcs.id, entityId), eq(storyArcs.isDeleted, false)),
+          columns: { title: true },
+        });
+        entitySpecificName = storyArc?.title;
+        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Arc');
         break;
       case OperationLogEntityType.Character:
         const character = await db.query.characters.findFirst({

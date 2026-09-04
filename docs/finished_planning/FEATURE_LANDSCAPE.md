@@ -85,7 +85,10 @@ Keres does not currently provide:
 - geographic region discovery, controlled reveal, map comparison/overlay or persistent geographic layers;
 - a series-level shared entity model across Stories. Arcs now exist as an optional
   editorial subdivision *inside* one Story (Customization, vocabulary, default arc,
-  `chapters.arcId`). Filters, derived “appears in”, and cross-story mentions are not shipped yet.
+  `chapters.arcId`). The drawer can switch Arc context when more than one exists; chapter/event
+  lists and the timeline follow that filter (only the selected Arc’s chapters and events;
+  unchaptered scenes stay visible). Character, location
+  and item details show a derived “appears in” list. Cross-story mentions are not shipped.
 
 The operation log is not draft history. It records entity changes for synchronization and conflicts; it is not a safe substitute for snapshots of prose.
 

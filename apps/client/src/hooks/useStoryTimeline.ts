@@ -7,6 +7,7 @@ import { createChapterService } from '@/src/services/storymanagement/ChapterServ
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
+import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
 import { useTheme } from '@/src/theme';
 import {
   formatChapterUniverseDuration,
@@ -63,6 +64,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
+  const activeArcId = useStoryStore((state) => state.activeArcId);
   const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
   const notify = useNotificationStore((state) => state.showNotification);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
@@ -96,13 +98,24 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
           createChapterAnchorService(db).getAnchorsForStory(story.id),
         ]);
         if (cancelled) return;
-        setEvents(loadedEvents.filter((event) => !event.isDeleted));
-        setAnchors(loadedAnchors);
-        const visibleChapters = loadedChapters
-          .filter((chapter) => !chapter.isDeleted)
+        const liveEvents = loadedEvents.filter((event) => !event.isDeleted);
+        const liveChapters = loadedChapters.filter((chapter) => !chapter.isDeleted);
+        const visibleEvents = liveEvents.filter((event) => chapterBelongsToArc(event, activeArcId));
+        const visibleChapters = liveChapters
+          .filter((chapter) => chapterBelongsToArc(chapter, activeArcId))
           .sort((a, b) => a.index - b.index);
+        const chaptersById = new Map(
+          [...liveChapters, ...liveEvents].map((chapter) => [chapter.id, chapter]),
+        );
+        setEvents(visibleEvents);
+        setAnchors(loadedAnchors);
         setChapters(visibleChapters);
-        setScenes(loadedScenes.filter((scene) => !scene.isDeleted));
+        setScenes(
+          loadedScenes.filter(
+            (scene) =>
+              !scene.isDeleted && sceneBelongsToActiveArc(scene, chaptersById, activeArcId),
+          ),
+        );
         setChapterIds(visibleChapters.map((chapter) => chapter.id));
       } finally {
         if (!cancelled) setLoading(false);
@@ -111,7 +124,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
     return () => {
       cancelled = true;
     };
-  }, [db, story]);
+  }, [activeArcId, db, story]);
 
   /*
    * Elapsed time turned into an in-world date.

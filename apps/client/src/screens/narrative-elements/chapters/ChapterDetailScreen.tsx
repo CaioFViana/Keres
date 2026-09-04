@@ -22,6 +22,7 @@ import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { useChapterStore } from '@/src/state/chapterStore';
@@ -37,6 +38,7 @@ import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/com
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import {
   formatChapterUniverseDuration,
   formatSceneUniverseDuration,
@@ -68,6 +70,8 @@ const ChapterDetailScreen = () => {
   const locationCopy = useVocabularyEntityCopy('Location');
   const eventCopy = useVocabularyEntityCopy('Event');
   const chapterNounCopy = useVocabularyEntityCopy('Chapter');
+  const vocab = useStoryVocabulary();
+  const { arcs, showSelector } = useStoryArcs();
   const { selectedStory } = useStoryStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
 
@@ -374,6 +378,13 @@ const ChapterDetailScreen = () => {
           />
         </>
       )}
+
+      {showSelector ? (
+        <DetailField
+          label={vocab.term('Arc')}
+          value={arcs.find((arc) => arc.id === chapter.arcId)?.title || t('common_na')}
+        />
+      ) : null}
 
       <CustomAttributeDetailFields
         storyId={chapter.storyId}

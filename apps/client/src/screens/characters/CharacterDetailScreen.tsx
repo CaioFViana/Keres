@@ -16,6 +16,8 @@ import CharacterRelationManager from '@/src/components/features/relations/Charac
 import ScenePresenceList, {
   groupScenePresenceEntries,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
+import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
@@ -151,6 +153,7 @@ const CharacterDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Character', entityId: characterId });
+  const appearingArcs = useAppearsInArcs(character?.storyId ?? '', 'character', characterId);
   const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for all scenes in story
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
   const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in story
@@ -824,6 +827,8 @@ const CharacterDetailScreen = () => {
         currentEntityId={characterId}
         currentEntityType="Character"
       />
+
+      <AppearsInArcsSection arcs={appearingArcs} />
 
       <SeeAlsoManager
         storyId={character.storyId}

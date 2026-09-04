@@ -11,6 +11,8 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import ItemJourneyTimeline from '@/src/components/features/item-journeys/ItemJourney/ItemJourneyTimeline';
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
+import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
@@ -95,6 +97,7 @@ const ItemDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Item', entityId: itemId });
+  const appearingArcs = useAppearsInArcs(item?.storyId ?? '', 'item', itemId);
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -332,6 +335,8 @@ const ItemDetailScreen = () => {
         currentEntityId={itemId}
         currentEntityType="Item"
       />
+
+      <AppearsInArcsSection arcs={appearingArcs} />
 
       <SeeAlsoManager storyId={item.storyId} entityType="Item" entityId={itemId} editable={false} />
 

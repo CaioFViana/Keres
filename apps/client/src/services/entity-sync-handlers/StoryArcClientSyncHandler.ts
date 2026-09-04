@@ -18,7 +18,8 @@ export class StoryArcClientSyncHandler implements ClientSyncEntityHandler {
   }
 
   private get db(): AppDrizzleClient {
-    if (!this.dbInstance) throw new Error('StoryArcClientSyncHandler: Drizzle client (db) not set.');
+    if (!this.dbInstance)
+      throw new Error('StoryArcClientSyncHandler: Drizzle client (db) not set.');
     return this.dbInstance;
   }
 

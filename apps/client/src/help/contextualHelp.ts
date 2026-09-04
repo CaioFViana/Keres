@@ -28,6 +28,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   FriendshipForm: 'friends',
   FriendDetail: 'friends',
   MainDashboard: 'story-dashboard',
+  ArcContext: 'story-dashboard',
   GlobalSearch: 'lists-and-search',
   CharactersStack: 'characters',
   Characters: 'characters',

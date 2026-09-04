@@ -117,6 +117,7 @@ const SHARED_REFRESH_LIFECYCLE_OWNERS = [
   'components/features/comments/CommentList/CommentList.tsx',
   'components/features/favorites/FavoritedByList/FavoritedByList.tsx',
   'components/features/operation-log/OperationLogList/OperationLogList.tsx',
+  'hooks/useAppearsInArcs.ts',
   'hooks/useChapterNames.ts',
   'hooks/useEntityComments.ts',
   'hooks/useSeeAlsoRelations.ts',

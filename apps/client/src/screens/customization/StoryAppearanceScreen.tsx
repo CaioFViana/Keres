@@ -26,7 +26,7 @@ type AppearanceNavigation = NativeStackNavigationProp<
   'StoryAppearance'
 >;
 
-/** Edits the Story-wide theme; Arc-specific overrides will reuse ThemePickerModal in a later release. */
+/** Edits the Story-wide theme. Arc forms reuse ThemePickerModal for an optional override. */
 const StoryAppearanceScreen = () => {
   // The drawer owns the visible header. Register its back action against this nested stack so the
   // header arrow returns to Customization instead of attempting to pop the drawer itself.

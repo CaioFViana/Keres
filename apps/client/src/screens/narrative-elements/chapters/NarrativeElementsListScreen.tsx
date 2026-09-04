@@ -30,6 +30,7 @@ import type {
 import { useChapterStore } from '../../../state/chapterStore';
 import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
+import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { setDocumentTitle } from '../../../utils/documentTitle';
@@ -84,6 +85,7 @@ const NarrativeElementsListScreen = () => {
   const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
+  const activeArcId = useStoryStore((state) => state.activeArcId);
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
 
   const {
@@ -338,6 +340,7 @@ const NarrativeElementsListScreen = () => {
   const visibleChapters = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
     const filtered = outlineChapters.filter((chapter) => {
+      if (!chapterBelongsToArc(chapter, activeArcId)) return false;
       const chapterScenes = scenesWithFavoriteState.filter(
         (scene) => scene.chapterId === chapter.id,
       );
@@ -445,6 +448,7 @@ const NarrativeElementsListScreen = () => {
     advancedMatches,
     choices,
     favoriteFilterState,
+    activeArcId,
     outlineChapters,
     scenesWithFavoriteState,
     searchQuery,

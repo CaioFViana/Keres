@@ -38,6 +38,7 @@ const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
   Note: 'title',
   WorldRule: 'title',
   Story: 'title',
+  StoryArc: 'title',
   Choice: 'text',
   Stat: 'name',
   Mode: 'name',

@@ -7,6 +7,7 @@ import CustomAttributeFields, {
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
@@ -21,7 +22,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../../db';
-import type { ChapterSelect } from '../../../db/schema';
+import type { ChapterSelect, StoryArcSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
@@ -30,6 +31,8 @@ import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
+import { createStoryArcService } from '../../../services/storymanagement/StoryArcService';
+import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
@@ -57,7 +60,8 @@ const ChapterFormScreen = () => {
   const { chapterId: initialChapterId } = route.params || {};
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
-  const { selectedStory } = useStoryStore();
+  const { selectedStory, activeArcId } = useStoryStore();
+  const vocab = useStoryVocabulary();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -81,6 +85,8 @@ const ChapterFormScreen = () => {
   /** Only chosen at creation; changing it afterwards is a conversion - see `ChapterDetailScreen`. */
   const [isEvent, setIsEvent] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
+  const [arcId, setArcId] = useState<string | null>(activeArcId);
+  const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
 
   const {
     availableTags,
@@ -102,6 +108,7 @@ const ChapterFormScreen = () => {
 
   const isEditing = !!currentChapterId;
   const copy = useVocabularyEntityCopy(isEvent ? 'Event' : 'Chapter');
+  const arcCopy = useVocabularyEntityCopy('Arc');
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useFocusEffect(
@@ -131,6 +138,8 @@ const ChapterFormScreen = () => {
             setSummary(fetchedChapter.summary);
             setIsFavorite(fetchedChapter.isFavorite);
             setExtraNotes(fetchedChapter.extraNotes);
+            setIsEvent(fetchedChapter.type === 'event');
+            setArcId(fetchedChapter.arcId ?? null);
 
             const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
               currentChapterId!,
@@ -148,6 +157,21 @@ const ChapterFormScreen = () => {
     };
     loadChapter();
   }, [currentChapterId, drizzleDb, isEditing, selectedStory?.id, t]);
+
+  useEffect(() => {
+    if (!selectedStory?.id) return;
+    void createStoryArcService(drizzleDb)
+      .getArcsForStory(selectedStory.id)
+      .then((loaded) => {
+        setArcs(loaded);
+        if (!isEditing) {
+          setArcId(
+            (current) =>
+              current ?? loaded.find((arc) => arc.isDefault)?.id ?? loaded[0]?.id ?? null,
+          );
+        }
+      });
+  }, [drizzleDb, isEditing, selectedStory?.id]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -193,6 +217,7 @@ const ChapterFormScreen = () => {
         summary,
         isFavorite,
         extraNotes,
+        arcId,
       };
 
       let savedChapter: ChapterSelect;
@@ -328,6 +353,23 @@ const ChapterFormScreen = () => {
         onChangeText={setName}
         style={commonInputStyles.input}
       />
+
+      {arcs.length > 1 ? (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>{vocab.term('Arc')}</Text>
+          <SingleSelectPill
+            options={arcs.map((arc) => ({
+              label: arc.title,
+              value: arc.id,
+              color: arc.color,
+            }))}
+            value={arcId}
+            onValueChange={setArcId}
+            placeholder={arcCopy.select}
+            allowDeselect={false}
+          />
+        </>
+      ) : null}
 
       <Text style={[styles.label, { color: colors.text }]}>{t('summary')}</Text>
       <TextInput

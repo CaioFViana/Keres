@@ -28,6 +28,7 @@ import {
   seeAlsoRelations,
   stats,
   stories,
+  storyArcs,
   tagRelations,
   tags,
   worldRules,
@@ -50,6 +51,7 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   operationlog: OperationLogEntityType.OperationLog,
   scene: OperationLogEntityType.Scene,
   story: OperationLogEntityType.Story,
+  storyarc: OperationLogEntityType.StoryArc,
   tag: OperationLogEntityType.Tag,
   user: OperationLogEntityType.User,
   worldrule: OperationLogEntityType.WorldRule,
@@ -112,6 +114,18 @@ export async function resolveRelationEntityName(
       });
       name = story?.title;
       type = t('story');
+      break;
+    case OperationLogEntityType.StoryArc:
+      const relatedArc = await db.query.storyArcs.findFirst({
+        where: and(
+          eq(storyArcs.id, relationId),
+          eq(storyArcs.storyId, storyId),
+          eq(storyArcs.isDeleted, false),
+        ),
+        columns: { title: true },
+      });
+      name = relatedArc?.title;
+      type = translateStoryNoun(t, await vocabulary(), 'Arc');
       break;
     case OperationLogEntityType.Route:
       const route = await db.query.routes.findFirst({

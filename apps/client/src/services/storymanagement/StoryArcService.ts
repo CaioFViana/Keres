@@ -1,7 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryArcInsert, StoryArcSelect } from '../../db/schema';
-import { chapters, storyArcs } from '../../db/schema';
+import { chapters, characterScenes, itemJourneys, scenes, storyArcs } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -29,6 +29,9 @@ export interface StoryArcService {
     >,
   ): Promise<StoryArcSelect>;
   deleteArc(currentUserId: string, arcId: string): Promise<void>;
+  listArcsForCharacter(storyId: string, characterId: string): Promise<StoryArcSelect[]>;
+  listArcsForLocation(storyId: string, locationId: string): Promise<StoryArcSelect[]>;
+  listArcsForItem(storyId: string, itemId: string): Promise<StoryArcSelect[]>;
 }
 
 export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => {
@@ -136,7 +139,83 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         deletedAt: new Date(),
       });
     },
+
+    async listArcsForCharacter(storyId, characterId) {
+      const rows = await db
+        .selectDistinct({ id: storyArcs.id })
+        .from(characterScenes)
+        .innerJoin(scenes, eq(scenes.id, characterScenes.sceneId))
+        .innerJoin(chapters, eq(chapters.id, scenes.chapterId))
+        .innerJoin(storyArcs, eq(storyArcs.id, chapters.arcId))
+        .where(
+          and(
+            eq(characterScenes.storyId, storyId),
+            eq(characterScenes.characterId, characterId),
+            eq(characterScenes.isDeleted, false),
+            eq(scenes.isDeleted, false),
+            eq(chapters.isDeleted, false),
+            eq(storyArcs.isDeleted, false),
+          ),
+        )
+        .all();
+      return hydrateArcs(
+        storyId,
+        rows.map((row) => row.id),
+      );
+    },
+
+    async listArcsForLocation(storyId, locationId) {
+      const rows = await db
+        .selectDistinct({ id: storyArcs.id })
+        .from(scenes)
+        .innerJoin(chapters, eq(chapters.id, scenes.chapterId))
+        .innerJoin(storyArcs, eq(storyArcs.id, chapters.arcId))
+        .where(
+          and(
+            eq(scenes.storyId, storyId),
+            eq(scenes.locationId, locationId),
+            eq(scenes.isDeleted, false),
+            eq(chapters.isDeleted, false),
+            eq(storyArcs.isDeleted, false),
+          ),
+        )
+        .all();
+      return hydrateArcs(
+        storyId,
+        rows.map((row) => row.id),
+      );
+    },
+
+    async listArcsForItem(storyId, itemId) {
+      const rows = await db
+        .selectDistinct({ id: storyArcs.id })
+        .from(itemJourneys)
+        .innerJoin(scenes, eq(scenes.id, itemJourneys.sceneId))
+        .innerJoin(chapters, eq(chapters.id, scenes.chapterId))
+        .innerJoin(storyArcs, eq(storyArcs.id, chapters.arcId))
+        .where(
+          and(
+            eq(itemJourneys.storyId, storyId),
+            eq(itemJourneys.itemId, itemId),
+            eq(itemJourneys.isDeleted, false),
+            eq(scenes.isDeleted, false),
+            eq(chapters.isDeleted, false),
+            eq(storyArcs.isDeleted, false),
+          ),
+        )
+        .all();
+      return hydrateArcs(
+        storyId,
+        rows.map((row) => row.id),
+      );
+    },
   };
+
+  async function hydrateArcs(storyId: string, ids: string[]): Promise<StoryArcSelect[]> {
+    if (ids.length === 0) return [];
+    const wanted = new Set(ids);
+    return (await service.getArcsForStory(storyId)).filter((arc) => wanted.has(arc.id));
+  }
 
   return service;
 };

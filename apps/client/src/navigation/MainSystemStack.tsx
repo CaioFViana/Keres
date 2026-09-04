@@ -8,6 +8,7 @@ import {
   DrawerActions,
   getFocusedRouteNameFromRoute,
   StackActions,
+  useNavigation,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -57,6 +58,8 @@ import LocationListScreen from '../screens/locations/LocationListScreen';
 import LocationMapListScreen from '../screens/location-maps/LocationMapListScreen';
 import LocationMapScreen from '../screens/location-maps/LocationMapScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
+import ArcPickerModal from '../components/features/arcs/ArcPickerModal';
+import { useStoryArcs } from '../hooks/useStoryArcs';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import type { ChapterDetailScreenParamList } from '../screens/narrative-elements/chapters/ChapterDetailScreen';
@@ -122,6 +125,7 @@ import StoryDevicesStackNavigator from './StoryDevicesStack';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
+  ArcContext: undefined;
   GlobalSearch: undefined;
   // Every stack below accepts an optional `{ screen, params }` for the same reason: each `Drawer.Screen`
   // has its own `drawerItemPress` (see further below) that navigates explicitly to the stack's list screen
@@ -560,11 +564,21 @@ const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNav
   <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />
 );
 
+const ArcContextDrawerScreen = () => {
+  const navigation = useNavigation<MainDashboardScreenNavigationProp>();
+  React.useEffect(() => {
+    navigation.navigate('MainDashboard');
+  }, [navigation]);
+  return null;
+};
+
 const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
+  const { arcs, activeArc, activeArcId, setActiveArcId, showSelector } = useStoryArcs();
+  const [arcPickerOpen, setArcPickerOpen] = React.useState(false);
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
@@ -710,6 +724,31 @@ const MainSystemNavigator = () => {
                 {selectedStory?.title || t('dashboard_title')}
               </Text>
             ),
+          }}
+        />
+        <Drawer.Screen
+          name="ArcContext"
+          component={ArcContextDrawerScreen}
+          options={{
+            title: activeArc?.title || t('all_arcs', { arcs: term('Arc', true) }),
+            drawerIcon: drawerIcon(
+              (activeArc?.icon as keyof typeof Ionicons.glyphMap) || 'library-outline',
+            ),
+            drawerLabel: () => (
+              <Text style={{ fontSize: 15, color: colors.text }} numberOfLines={1}>
+                {activeArc?.title || t('all_arcs', { arcs: term('Arc', true) })}
+              </Text>
+            ),
+            drawerItemStyle: {
+              height: showSelector ? undefined : 0,
+              overflow: 'hidden',
+            },
+          }}
+          listeners={{
+            drawerItemPress: (event) => {
+              event.preventDefault();
+              setArcPickerOpen(true);
+            },
           }}
         />
         <Drawer.Screen
@@ -1008,6 +1047,13 @@ const MainSystemNavigator = () => {
       </Drawer.Navigator>
       <GalleryMediaViewerOverlay />
       <PresenceMatrixViewerOverlay />
+      <ArcPickerModal
+        visible={arcPickerOpen}
+        arcs={arcs}
+        activeArcId={activeArcId}
+        onSelect={setActiveArcId}
+        onClose={() => setArcPickerOpen(false)}
+      />
     </MentionMatcherProvider>
   );
 };

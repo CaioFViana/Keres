@@ -116,6 +116,17 @@ jest.mock('../../src/help/contextualHelp', () => ({
   __esModule: true,
   screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));
+jest.mock('../../src/hooks/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({
+    arcs: [],
+    activeArc: null,
+    activeArcId: null,
+    setActiveArcId: jest.fn(),
+    showSelector: false,
+    reload: jest.fn(),
+  }),
+}));
 
 jest.mock('../../src/screens/narrative-elements/chapters/ChapterDetailScreen', () => ({
   __esModule: true,
@@ -381,7 +392,7 @@ afterEach(() => jest.restoreAllMocks());
 async function renderDrawer() {
   await render(<MainSystemStack />);
   // Three entries (story schema, suggestions, stats) became one: the Customization drawer.
-  expect(mockDrawerScreens).toHaveLength(20);
+  expect(mockDrawerScreens).toHaveLength(21);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -401,6 +412,9 @@ it('configures a compact, front drawer and preserves the current story as its da
   });
   expect(options.drawerStyle).toMatchObject({ minWidth: 280, width: 360 });
   expect(drawerScreen('MainDashboard')?.options).toMatchObject({ title: 'A jornada' });
+  expect(drawerScreen('ArcContext')?.options).toMatchObject({
+    drawerItemStyle: { height: 0, overflow: 'hidden' },
+  });
   expect(drawerScreen('ChoicesStack')).toBeUndefined();
 });
 

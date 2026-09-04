@@ -15,6 +15,8 @@ import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesLis
 import ScenePresenceList, {
   groupScenePresenceEntries,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
+import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
@@ -115,6 +117,7 @@ const LocationDetailsScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Location', entityId: locationId });
+  const appearingArcs = useAppearsInArcs(location?.storyId ?? '', 'location', locationId);
 
   useEffect(() => {
     if (drizzleDb) {
@@ -675,6 +678,8 @@ const LocationDetailsScreen = () => {
         currentEntityId={locationId}
         currentEntityType="Location"
       />
+
+      <AppearsInArcsSection arcs={appearingArcs} />
 
       <SeeAlsoManager
         storyId={location.storyId}

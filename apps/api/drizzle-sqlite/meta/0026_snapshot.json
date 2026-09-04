@@ -60,30 +60,22 @@
       "indexes": {
         "api_logs_story_id_idx": {
           "name": "api_logs_story_id_idx",
-          "columns": [
-            "story_id"
-          ],
+          "columns": ["story_id"],
           "isUnique": false
         },
         "api_logs_user_id_idx": {
           "name": "api_logs_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "api_logs_created_at_idx": {
           "name": "api_logs_created_at_idx",
-          "columns": [
-            "\"created_at\" desc"
-          ],
+          "columns": ["\"created_at\" desc"],
           "isUnique": false
         },
         "api_logs_level_idx": {
           "name": "api_logs_level_idx",
-          "columns": [
-            "level"
-          ],
+          "columns": ["level"],
           "isUnique": false
         }
       },
@@ -178,10 +170,7 @@
       "indexes": {
         "entity_field_unq": {
           "name": "entity_field_unq",
-          "columns": [
-            "entity_id",
-            "field_id"
-          ],
+          "columns": ["entity_id", "field_id"],
           "isUnique": true
         }
       },
@@ -190,12 +179,8 @@
           "name": "attribute_values_story_id_stories_id_fk",
           "tableFrom": "attribute_values",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -203,12 +188,8 @@
           "name": "attribute_values_field_id_story_schema_fields_id_fk",
           "tableFrom": "attribute_values",
           "tableTo": "story_schema_fields",
-          "columnsFrom": [
-            "field_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["field_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -299,12 +280,8 @@
           "name": "boards_story_id_stories_id_fk",
           "tableFrom": "boards",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -425,12 +402,8 @@
           "name": "chapters_story_id_stories_id_fk",
           "tableFrom": "chapters",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -569,11 +542,7 @@
       "indexes": {
         "story_chapter_anchor_order_unq": {
           "name": "story_chapter_anchor_order_unq",
-          "columns": [
-            "story_id",
-            "chapter_id",
-            "order"
-          ],
+          "columns": ["story_id", "chapter_id", "order"],
           "isUnique": true
         }
       },
@@ -582,12 +551,8 @@
           "name": "chapter_anchors_story_id_stories_id_fk",
           "tableFrom": "chapter_anchors",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -595,12 +560,8 @@
           "name": "chapter_anchors_chapter_id_chapters_id_fk",
           "tableFrom": "chapter_anchors",
           "tableTo": "chapters",
-          "columnsFrom": [
-            "chapter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chapter_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -608,12 +569,8 @@
           "name": "chapter_anchors_start_scene_id_scenes_id_fk",
           "tableFrom": "chapter_anchors",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "start_scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["start_scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -621,12 +578,8 @@
           "name": "chapter_anchors_end_scene_id_scenes_id_fk",
           "tableFrom": "chapter_anchors",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "end_scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["end_scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -714,11 +667,7 @@
       "indexes": {
         "story_char1_char2_unq": {
           "name": "story_char1_char2_unq",
-          "columns": [
-            "story_id",
-            "character1_id",
-            "character2_id"
-          ],
+          "columns": ["story_id", "character1_id", "character2_id"],
           "isUnique": true
         }
       },
@@ -727,12 +676,8 @@
           "name": "character_relations_story_id_stories_id_fk",
           "tableFrom": "character_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -740,12 +685,8 @@
           "name": "character_relations_character1_id_characters_id_fk",
           "tableFrom": "character_relations",
           "tableTo": "characters",
-          "columnsFrom": [
-            "character1_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["character1_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -753,12 +694,8 @@
           "name": "character_relations_character2_id_characters_id_fk",
           "tableFrom": "character_relations",
           "tableTo": "characters",
-          "columnsFrom": [
-            "character2_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["character2_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -927,12 +864,8 @@
           "name": "characters_story_id_stories_id_fk",
           "tableFrom": "characters",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1016,12 +949,8 @@
           "name": "character_scenes_character_id_characters_id_fk",
           "tableFrom": "character_scenes",
           "tableTo": "characters",
-          "columnsFrom": [
-            "character_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["character_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1029,12 +958,8 @@
           "name": "character_scenes_story_id_stories_id_fk",
           "tableFrom": "character_scenes",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1042,12 +967,8 @@
           "name": "character_scenes_scene_id_scenes_id_fk",
           "tableFrom": "character_scenes",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1140,12 +1061,8 @@
           "name": "choice_check_groups_story_id_stories_id_fk",
           "tableFrom": "choice_check_groups",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1153,12 +1070,8 @@
           "name": "choice_check_groups_choice_id_choices_id_fk",
           "tableFrom": "choice_check_groups",
           "tableTo": "choices",
-          "columnsFrom": [
-            "choice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["choice_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1300,12 +1213,8 @@
           "name": "choice_checks_story_id_stories_id_fk",
           "tableFrom": "choice_checks",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1313,12 +1222,8 @@
           "name": "choice_checks_group_id_choice_check_groups_id_fk",
           "tableFrom": "choice_checks",
           "tableTo": "choice_check_groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1326,12 +1231,8 @@
           "name": "choice_checks_scene_id_scenes_id_fk",
           "tableFrom": "choice_checks",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1339,12 +1240,8 @@
           "name": "choice_checks_item_id_items_id_fk",
           "tableFrom": "choice_checks",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1442,12 +1339,8 @@
           "name": "choices_story_id_stories_id_fk",
           "tableFrom": "choices",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1455,12 +1348,8 @@
           "name": "choices_scene_id_scenes_id_fk",
           "tableFrom": "choices",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1468,12 +1357,8 @@
           "name": "choices_next_scene_id_scenes_id_fk",
           "tableFrom": "choices",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "next_scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["next_scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1606,12 +1491,8 @@
           "name": "comments_story_id_stories_id_fk",
           "tableFrom": "comments",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1619,12 +1500,8 @@
           "name": "comments_field_id_story_schema_fields_id_fk",
           "tableFrom": "comments",
           "tableTo": "story_schema_fields",
-          "columnsFrom": [
-            "field_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["field_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1632,12 +1509,8 @@
           "name": "comments_author_user_id_users_id_fk",
           "tableFrom": "comments",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1742,12 +1615,8 @@
           "name": "effects_story_id_stories_id_fk",
           "tableFrom": "effects",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1755,12 +1624,8 @@
           "name": "effects_item_id_items_id_fk",
           "tableFrom": "effects",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1827,10 +1692,7 @@
       "indexes": {
         "sender_receiver_unq": {
           "name": "sender_receiver_unq",
-          "columns": [
-            "sender_id",
-            "receiver_id"
-          ],
+          "columns": ["sender_id", "receiver_id"],
           "isUnique": true
         }
       },
@@ -1839,12 +1701,8 @@
           "name": "friendships_sender_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "sender_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sender_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1852,12 +1710,8 @@
           "name": "friendships_receiver_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "receiver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["receiver_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1865,12 +1719,8 @@
           "name": "friendships_blocked_by_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "blocked_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blocked_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2002,10 +1852,7 @@
       "indexes": {
         "galleries_story_hash_idx": {
           "name": "galleries_story_hash_idx",
-          "columns": [
-            "story_id",
-            "hash"
-          ],
+          "columns": ["story_id", "hash"],
           "isUnique": false
         }
       },
@@ -2014,12 +1861,8 @@
           "name": "galleries_story_id_stories_id_fk",
           "tableFrom": "galleries",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2107,18 +1950,12 @@
       "indexes": {
         "gallery_relations_owner_idx": {
           "name": "gallery_relations_owner_idx",
-          "columns": [
-            "story_id",
-            "owner_type",
-            "owner_id"
-          ],
+          "columns": ["story_id", "owner_type", "owner_id"],
           "isUnique": false
         },
         "gallery_relations_gallery_idx": {
           "name": "gallery_relations_gallery_idx",
-          "columns": [
-            "gallery_id"
-          ],
+          "columns": ["gallery_id"],
           "isUnique": false
         }
       },
@@ -2127,12 +1964,8 @@
           "name": "gallery_relations_story_id_stories_id_fk",
           "tableFrom": "gallery_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2140,12 +1973,8 @@
           "name": "gallery_relations_gallery_id_galleries_id_fk",
           "tableFrom": "gallery_relations",
           "tableTo": "galleries",
-          "columnsFrom": [
-            "gallery_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["gallery_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2196,9 +2025,7 @@
       "indexes": {
         "media_blobs_storage_path_idx": {
           "name": "media_blobs_storage_path_idx",
-          "columns": [
-            "storage_path"
-          ],
+          "columns": ["storage_path"],
           "isUnique": true
         }
       },
@@ -2286,12 +2113,7 @@
       "indexes": {
         "favorite_story_entity_user_unq": {
           "name": "favorite_story_entity_user_unq",
-          "columns": [
-            "story_id",
-            "entity_id",
-            "entity_type",
-            "user_id"
-          ],
+          "columns": ["story_id", "entity_id", "entity_type", "user_id"],
           "isUnique": true
         }
       },
@@ -2300,12 +2122,8 @@
           "name": "favorites_story_id_stories_id_fk",
           "tableFrom": "favorites",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2313,12 +2131,8 @@
           "name": "favorites_user_id_users_id_fk",
           "tableFrom": "favorites",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2423,12 +2237,8 @@
           "name": "item_journeys_story_id_stories_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2436,12 +2246,8 @@
           "name": "item_journeys_item_id_items_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2449,12 +2255,8 @@
           "name": "item_journeys_scene_id_scenes_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2462,12 +2264,8 @@
           "name": "item_journeys_new_character_owner_id_characters_id_fk",
           "tableFrom": "item_journeys",
           "tableTo": "characters",
-          "columnsFrom": [
-            "new_character_owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["new_character_owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2587,12 +2385,8 @@
           "name": "items_story_id_stories_id_fk",
           "tableFrom": "items",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2600,12 +2394,8 @@
           "name": "items_character_owner_id_characters_id_fk",
           "tableFrom": "items",
           "tableTo": "characters",
-          "columnsFrom": [
-            "character_owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["character_owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2725,12 +2515,8 @@
           "name": "locations_story_id_stories_id_fk",
           "tableFrom": "locations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2821,12 +2607,8 @@
           "name": "location_maps_story_id_stories_id_fk",
           "tableFrom": "location_maps",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2914,12 +2696,7 @@
       "indexes": {
         "story_loca_locb_type_unq": {
           "name": "story_loca_locb_type_unq",
-          "columns": [
-            "story_id",
-            "location_a_id",
-            "location_b_id",
-            "relation_type"
-          ],
+          "columns": ["story_id", "location_a_id", "location_b_id", "relation_type"],
           "isUnique": true
         }
       },
@@ -2928,12 +2705,8 @@
           "name": "location_relations_story_id_stories_id_fk",
           "tableFrom": "location_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2941,12 +2714,8 @@
           "name": "location_relations_location_a_id_locations_id_fk",
           "tableFrom": "location_relations",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_a_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_a_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2954,12 +2723,8 @@
           "name": "location_relations_location_b_id_locations_id_fk",
           "tableFrom": "location_relations",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_b_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_b_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3096,12 +2861,8 @@
           "name": "modes_story_id_stories_id_fk",
           "tableFrom": "modes",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3109,12 +2870,8 @@
           "name": "modes_character_id_characters_id_fk",
           "tableFrom": "modes",
           "tableTo": "characters",
-          "columnsFrom": [
-            "character_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["character_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3213,12 +2970,8 @@
           "name": "notes_story_id_stories_id_fk",
           "tableFrom": "notes",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3309,12 +3062,8 @@
           "name": "note_relations_story_id_stories_id_fk",
           "tableFrom": "note_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3322,12 +3071,8 @@
           "name": "note_relations_note_id_notes_id_fk",
           "tableFrom": "note_relations",
           "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3413,47 +3158,32 @@
       "indexes": {
         "operation_log_story_id_operation_version_idx": {
           "name": "operation_log_story_id_operation_version_idx",
-          "columns": [
-            "story_id",
-            "operation_version"
-          ],
+          "columns": ["story_id", "operation_version"],
           "isUnique": true
         },
         "operation_log_created_at_idx": {
           "name": "operation_log_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         },
         "operation_log_user_id_idx": {
           "name": "operation_log_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "operation_log_entity_type_idx": {
           "name": "operation_log_entity_type_idx",
-          "columns": [
-            "entity_type"
-          ],
+          "columns": ["entity_type"],
           "isUnique": false
         },
         "operation_log_operation_type_idx": {
           "name": "operation_log_operation_type_idx",
-          "columns": [
-            "operation_type"
-          ],
+          "columns": ["operation_type"],
           "isUnique": false
         },
         "operation_log_entity_type_entity_id_entity_version_idx": {
           "name": "operation_log_entity_type_entity_id_entity_version_idx",
-          "columns": [
-            "entity_type",
-            "entity_id",
-            "entity_version"
-          ],
+          "columns": ["entity_type", "entity_id", "entity_version"],
           "isUnique": false
         }
       },
@@ -3462,12 +3192,8 @@
           "name": "operation_log_story_id_stories_id_fk",
           "tableFrom": "operation_log",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3475,12 +3201,8 @@
           "name": "operation_log_user_id_users_id_fk",
           "tableFrom": "operation_log",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3575,16 +3297,12 @@
       "indexes": {
         "pack_owner_idx": {
           "name": "pack_owner_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         },
         "pack_visibility_idx": {
           "name": "pack_visibility_idx",
-          "columns": [
-            "visibility"
-          ],
+          "columns": ["visibility"],
           "isUnique": false
         }
       },
@@ -3593,12 +3311,8 @@
           "name": "packs_owner_id_users_id_fk",
           "tableFrom": "packs",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3682,12 +3396,8 @@
           "name": "plots_story_id_stories_id_fk",
           "tableFrom": "plots",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3775,31 +3485,22 @@
       "indexes": {
         "plot_scene_story_idx": {
           "name": "plot_scene_story_idx",
-          "columns": [
-            "story_id"
-          ],
+          "columns": ["story_id"],
           "isUnique": false
         },
         "plot_scene_plot_idx": {
           "name": "plot_scene_plot_idx",
-          "columns": [
-            "plot_id"
-          ],
+          "columns": ["plot_id"],
           "isUnique": false
         },
         "plot_scene_scene_idx": {
           "name": "plot_scene_scene_idx",
-          "columns": [
-            "scene_id"
-          ],
+          "columns": ["scene_id"],
           "isUnique": false
         },
         "plot_scene_pair_unique": {
           "name": "plot_scene_pair_unique",
-          "columns": [
-            "plot_id",
-            "scene_id"
-          ],
+          "columns": ["plot_id", "scene_id"],
           "isUnique": true,
           "where": "\"plot_scenes\".\"is_deleted\" = false"
         }
@@ -3809,12 +3510,8 @@
           "name": "plot_scenes_story_id_stories_id_fk",
           "tableFrom": "plot_scenes",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3822,12 +3519,8 @@
           "name": "plot_scenes_plot_id_plots_id_fk",
           "tableFrom": "plot_scenes",
           "tableTo": "plots",
-          "columnsFrom": [
-            "plot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plot_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3835,12 +3528,8 @@
           "name": "plot_scenes_scene_id_scenes_id_fk",
           "tableFrom": "plot_scenes",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3924,12 +3613,8 @@
           "name": "routes_story_id_stories_id_fk",
           "tableFrom": "routes",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4024,24 +3709,17 @@
       "indexes": {
         "route_step_story_idx": {
           "name": "route_step_story_idx",
-          "columns": [
-            "story_id"
-          ],
+          "columns": ["story_id"],
           "isUnique": false
         },
         "route_step_route_idx": {
           "name": "route_step_route_idx",
-          "columns": [
-            "route_id"
-          ],
+          "columns": ["route_id"],
           "isUnique": false
         },
         "route_step_position_unique": {
           "name": "route_step_position_unique",
-          "columns": [
-            "route_id",
-            "position"
-          ],
+          "columns": ["route_id", "position"],
           "isUnique": true,
           "where": "\"route_steps\".\"is_deleted\" = false"
         }
@@ -4051,12 +3729,8 @@
           "name": "route_steps_story_id_stories_id_fk",
           "tableFrom": "route_steps",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4064,12 +3738,8 @@
           "name": "route_steps_route_id_routes_id_fk",
           "tableFrom": "route_steps",
           "tableTo": "routes",
-          "columnsFrom": [
-            "route_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["route_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4077,12 +3747,8 @@
           "name": "route_steps_scene_id_scenes_id_fk",
           "tableFrom": "route_steps",
           "tableTo": "scenes",
-          "columnsFrom": [
-            "scene_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scene_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4090,12 +3756,8 @@
           "name": "route_steps_selected_choice_id_choices_id_fk",
           "tableFrom": "route_steps",
           "tableTo": "choices",
-          "columnsFrom": [
-            "selected_choice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["selected_choice_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4158,12 +3820,8 @@
           "name": "registration_settings_default_tier_id_tiers_id_fk",
           "tableFrom": "registration_settings",
           "tableTo": "tiers",
-          "columnsFrom": [
-            "default_tier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_tier_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4381,12 +4039,8 @@
           "name": "scenes_story_id_stories_id_fk",
           "tableFrom": "scenes",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4394,12 +4048,8 @@
           "name": "scenes_chapter_id_chapters_id_fk",
           "tableFrom": "scenes",
           "tableTo": "chapters",
-          "columnsFrom": [
-            "chapter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chapter_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4407,12 +4057,8 @@
           "name": "scenes_location_id_locations_id_fk",
           "tableFrom": "scenes",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4420,12 +4066,8 @@
           "name": "scenes_calendar_date_override_calendar_id_story_calendars_id_fk",
           "tableFrom": "scenes",
           "tableTo": "story_calendars",
-          "columnsFrom": [
-            "calendar_date_override_calendar_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["calendar_date_override_calendar_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4520,13 +4162,7 @@
       "indexes": {
         "see_also_story_a_b_unq": {
           "name": "see_also_story_a_b_unq",
-          "columns": [
-            "story_id",
-            "entity_a_type",
-            "entity_a_id",
-            "entity_b_type",
-            "entity_b_id"
-          ],
+          "columns": ["story_id", "entity_a_type", "entity_a_id", "entity_b_type", "entity_b_id"],
           "isUnique": true
         }
       },
@@ -4535,12 +4171,8 @@
           "name": "see_also_relations_story_id_stories_id_fk",
           "tableFrom": "see_also_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4635,11 +4267,7 @@
       "indexes": {
         "stat_relation_owner_idx": {
           "name": "stat_relation_owner_idx",
-          "columns": [
-            "story_id",
-            "character_id",
-            "mode_id"
-          ],
+          "columns": ["story_id", "character_id", "mode_id"],
           "isUnique": false
         }
       },
@@ -4648,12 +4276,8 @@
           "name": "stat_relations_story_id_stories_id_fk",
           "tableFrom": "stat_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4661,12 +4285,8 @@
           "name": "stat_relations_character_id_characters_id_fk",
           "tableFrom": "stat_relations",
           "tableTo": "characters",
-          "columnsFrom": [
-            "character_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["character_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4674,12 +4294,8 @@
           "name": "stat_relations_mode_id_modes_id_fk",
           "tableFrom": "stat_relations",
           "tableTo": "modes",
-          "columnsFrom": [
-            "mode_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["mode_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4687,12 +4303,8 @@
           "name": "stat_relations_stat_id_stats_id_fk",
           "tableFrom": "stat_relations",
           "tableTo": "stats",
-          "columnsFrom": [
-            "stat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["stat_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4780,10 +4392,7 @@
       "indexes": {
         "stat_strength_ladder_idx": {
           "name": "stat_strength_ladder_idx",
-          "columns": [
-            "story_id",
-            "stat_id"
-          ],
+          "columns": ["story_id", "stat_id"],
           "isUnique": false
         }
       },
@@ -4792,12 +4401,8 @@
           "name": "stat_strengths_story_id_stories_id_fk",
           "tableFrom": "stat_strengths",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4805,12 +4410,8 @@
           "name": "stat_strengths_stat_id_stats_id_fk",
           "tableFrom": "stat_strengths",
           "tableTo": "stats",
-          "columnsFrom": [
-            "stat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["stat_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4903,12 +4504,8 @@
           "name": "stats_story_id_stories_id_fk",
           "tableFrom": "stats",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5127,12 +4724,8 @@
           "name": "stories_user_id_users_id_fk",
           "tableFrom": "stories",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5253,12 +4846,8 @@
           "name": "story_arcs_story_id_stories_id_fk",
           "tableFrom": "story_arcs",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5364,12 +4953,8 @@
           "name": "story_calendars_story_id_stories_id_fk",
           "tableFrom": "story_calendars",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5453,12 +5038,8 @@
           "name": "story_permissions_story_id_stories_id_fk",
           "tableFrom": "story_permissions",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5466,12 +5047,8 @@
           "name": "story_permissions_user_id_users_id_fk",
           "tableFrom": "story_permissions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5566,17 +5143,12 @@
       "indexes": {
         "story_publication_story_idx": {
           "name": "story_publication_story_idx",
-          "columns": [
-            "story_id"
-          ],
+          "columns": ["story_id"],
           "isUnique": false
         },
         "story_publication_label_unq": {
           "name": "story_publication_label_unq",
-          "columns": [
-            "story_id",
-            "label"
-          ],
+          "columns": ["story_id", "label"],
           "isUnique": true
         }
       },
@@ -5585,12 +5157,8 @@
           "name": "story_publications_story_id_stories_id_fk",
           "tableFrom": "story_publications",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5598,12 +5166,8 @@
           "name": "story_publications_owner_user_id_users_id_fk",
           "tableFrom": "story_publications",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5673,12 +5237,8 @@
           "name": "story_showcase_entries_story_id_stories_id_fk",
           "tableFrom": "story_showcase_entries",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5686,12 +5246,8 @@
           "name": "story_showcase_entries_owner_user_id_users_id_fk",
           "tableFrom": "story_showcase_entries",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5823,11 +5379,7 @@
       "indexes": {
         "story_entitytype_key_unq": {
           "name": "story_entitytype_key_unq",
-          "columns": [
-            "story_id",
-            "entity_type",
-            "key"
-          ],
+          "columns": ["story_id", "entity_type", "key"],
           "isUnique": true
         }
       },
@@ -5836,12 +5388,8 @@
           "name": "story_schema_fields_story_id_stories_id_fk",
           "tableFrom": "story_schema_fields",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5922,11 +5470,7 @@
       "indexes": {
         "story_suggestion_type_value_unq": {
           "name": "story_suggestion_type_value_unq",
-          "columns": [
-            "story_id",
-            "type",
-            "value"
-          ],
+          "columns": ["story_id", "type", "value"],
           "isUnique": true
         }
       },
@@ -5935,12 +5479,8 @@
           "name": "suggestions_story_id_stories_id_fk",
           "tableFrom": "suggestions",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6028,12 +5568,7 @@
       "indexes": {
         "story_tag_relation_unq": {
           "name": "story_tag_relation_unq",
-          "columns": [
-            "story_id",
-            "tag_id",
-            "relation_id",
-            "relation_type"
-          ],
+          "columns": ["story_id", "tag_id", "relation_id", "relation_type"],
           "isUnique": true
         }
       },
@@ -6042,12 +5577,8 @@
           "name": "tag_relations_story_id_stories_id_fk",
           "tableFrom": "tag_relations",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -6055,12 +5586,8 @@
           "name": "tag_relations_tag_id_tags_id_fk",
           "tableFrom": "tag_relations",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6156,10 +5683,7 @@
       "indexes": {
         "story_name_unq": {
           "name": "story_name_unq",
-          "columns": [
-            "story_id",
-            "name"
-          ],
+          "columns": ["story_id", "name"],
           "isUnique": true
         }
       },
@@ -6168,12 +5692,8 @@
           "name": "tags_story_id_stories_id_fk",
           "tableFrom": "tags",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6275,9 +5795,7 @@
       "indexes": {
         "tiers_name_unique": {
           "name": "tiers_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         }
       },
@@ -6386,16 +5904,12 @@
       "indexes": {
         "users_username_unique": {
           "name": "users_username_unique",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": true
         },
         "users_tag_lower_idx": {
           "name": "users_tag_lower_idx",
-          "columns": [
-            "lower(\"tag\")"
-          ],
+          "columns": ["lower(\"tag\")"],
           "isUnique": true
         }
       },
@@ -6404,12 +5918,8 @@
           "name": "users_tier_id_tiers_id_fk",
           "tableFrom": "users",
           "tableTo": "tiers",
-          "columnsFrom": [
-            "tier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tier_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6471,12 +5981,8 @@
           "name": "user_recovery_codes_user_id_users_id_fk",
           "tableFrom": "user_recovery_codes",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6618,12 +6124,8 @@
           "name": "world_rules_story_id_stories_id_fk",
           "tableFrom": "world_rules",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

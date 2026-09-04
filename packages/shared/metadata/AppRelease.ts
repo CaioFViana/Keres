@@ -5,6 +5,6 @@
  * consumed by both the client and the API, so there is no separate server version.
  */
 export const APP_RELEASE = {
-  name: "Aion",
-  version: "1.8.0",
+  name: 'Aion',
+  version: '1.8.0',
 } as const;

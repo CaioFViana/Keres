@@ -9,6 +9,8 @@ const enumMembers = (source: string) =>
   Array.from(source.matchAll(/^\s{2}(\w+)\s*=\s*'\w+',/gm), ([, name]) => name).sort();
 const switchMembers = (source: string) =>
   Array.from(source.matchAll(/case OperationLogEntityType\.(\w+):/g), ([, name]) => name);
+const referencedMembers = (source: string) =>
+  Array.from(source.matchAll(/OperationLogEntityType\.(\w+)/g), ([, name]) => name);
 
 /**
  * Every operation-log entity must have a readable resolver. Missing one does not cause a type
@@ -24,6 +26,12 @@ describe('operation-log resolver coverage', () => {
       ...switchMembers(read('apps', 'client', 'src', 'services', 'EntityService.ts')),
       ...switchMembers(read('apps', 'client', 'src', 'services', 'EntityAdvancedNameResolver.ts')),
       ...switchMembers(read('apps', 'client', 'src', 'services', 'EntityIdentifierResolver.ts')),
+      ...switchMembers(
+        read('packages', 'shared', 'entity-solvers', 'advancedOperationLogEntitySolver.ts'),
+      ),
+      ...referencedMembers(
+        read('packages', 'shared', 'entity-solvers', 'basicOperationLogEntitySolver.ts'),
+      ),
     ]);
 
     expect([...resolved].sort()).toEqual(declared);

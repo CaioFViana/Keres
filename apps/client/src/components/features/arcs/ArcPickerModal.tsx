@@ -9,7 +9,6 @@ import {
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View,
 } from 'react-native';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';

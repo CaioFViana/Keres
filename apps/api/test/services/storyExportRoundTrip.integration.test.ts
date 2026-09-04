@@ -667,7 +667,9 @@ describe('import of a package with one row of every kind', () => {
     const character = byName(after.characters, 'Ilda');
     expect(after.storyArcs).toHaveLength(1);
     expect(after.storyArcs[0].isDefault).toBe(true);
-    expect(after.chapters.every((chapter: any) => chapter.arcId === after.storyArcs[0].id)).toBe(true);
+    expect(after.chapters.every((chapter: any) => chapter.arcId === after.storyArcs[0].id)).toBe(
+      true,
+    );
     const otherCharacter = byName(after.characters, 'Bento');
     const location = byName(after.locations, 'O farol');
     const scene = byName(after.scenes, 'A maré sobe');

@@ -1,6 +1,6 @@
 import { inArray } from 'drizzle-orm';
+import { ENTITY_SIMPLE_DISPLAY_NAME_FIELD } from '@keres/shared';
 import type { AppDrizzleClient } from '../db';
-import type { SyncableEntityName } from './entityTableRegistry';
 import { getEntityTable } from './entityTableRegistry';
 
 export interface EntityRef {
@@ -23,27 +23,6 @@ export interface EntityNameBatchResolver {
 }
 
 const nameKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
-
-/** The column that carries the display name of each simple type a relation can point at. */
-const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
-  Board: 'name',
-  LocationMap: 'name',
-  Character: 'name',
-  Location: 'name',
-  Item: 'name',
-  Tag: 'name',
-  Scene: 'name',
-  Chapter: 'name',
-  Route: 'name',
-  Note: 'title',
-  WorldRule: 'title',
-  Story: 'title',
-  StoryArc: 'title',
-  Choice: 'text',
-  Stat: 'name',
-  Mode: 'name',
-  StatStrength: 'label',
-};
 
 export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameBatchResolver {
   return {
@@ -80,7 +59,7 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
           continue;
         }
 
-        const nameColumn = NAME_COLUMN_BY_ENTITY[entityType as SyncableEntityName];
+        const nameColumn = ENTITY_SIMPLE_DISPLAY_NAME_FIELD[entityType];
         if (!nameColumn) continue;
 
         const rows = await db

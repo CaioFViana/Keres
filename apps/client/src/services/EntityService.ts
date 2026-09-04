@@ -4,6 +4,7 @@ import {
   AttributeType,
   decodeAttributeValue,
   OperationLogEntityType,
+  resolveBasicOperationLogEntityName,
   suggestionDisplayValue,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
@@ -11,8 +12,6 @@ import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
 import {
   attributeValues,
-  boards,
-  chapters,
   characterRelations,
   characters,
   characterScenes,
@@ -23,7 +22,6 @@ import {
   itemJourneys,
   items,
   locations,
-  locationMaps,
   locationRelations,
   noteRelations,
   notes,
@@ -34,13 +32,10 @@ import {
   routeSteps,
   scenes,
   suggestions,
-  stories,
-  storyArcs,
   storySchemaFields,
   tagRelations,
   tags,
   users,
-  worldRules,
 } from '../db/schemas';
 import {
   fromStoryNoun,
@@ -51,6 +46,7 @@ import {
 import { isStoryVocabularyEntityType } from '../vocabulary/resolveStoryTerm';
 import { getEntityIdentifier, resolveRelationEntityName } from './EntityIdentifierResolver';
 import { resolveAdvancedEntityName } from './EntityAdvancedNameResolver';
+import { createClientEntitySolverContext } from './entity-solvers/ClientEntitySolverContext';
 
 /** Reuses the singular translation key for each entity type that can receive a Story Schema. */
 const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, string> = {
@@ -71,6 +67,13 @@ export class EntityService {
     storyId: string,
     t: TFunction,
   ): Promise<string | undefined> {
+    const basicName = await resolveBasicOperationLogEntityName(
+      createClientEntitySolverContext(db, storyId, t),
+      entityType,
+      entityId,
+    );
+    if (basicName) return basicName;
+
     let translatedEntityType: string | undefined;
     let entitySpecificName: string | undefined;
     // Operation-log rows are resolved independently. Most entity types do not need custom
@@ -79,88 +82,6 @@ export class EntityService {
     const vocabulary = () => (vocabularyPromise ??= loadStoryVocabulary(db, storyId));
 
     switch (entityType) {
-      case OperationLogEntityType.Board:
-        const board = await db.query.boards.findFirst({
-          where: and(
-            eq(boards.id, entityId),
-            eq(boards.storyId, storyId),
-            eq(boards.isDeleted, false),
-          ),
-          columns: { name: true },
-        });
-        entitySpecificName = board?.name;
-        translatedEntityType = t('board');
-        break;
-      case OperationLogEntityType.LocationMap:
-        const locationMap = await db.query.locationMaps.findFirst({
-          where: and(
-            eq(locationMaps.id, entityId),
-            eq(locationMaps.storyId, storyId),
-            eq(locationMaps.isDeleted, false),
-          ),
-          columns: { name: true },
-        });
-        entitySpecificName = locationMap?.name;
-        translatedEntityType = t('location_map');
-        break;
-      case OperationLogEntityType.Story:
-        const story = await db.query.stories.findFirst({
-          where: and(eq(stories.id, entityId), eq(stories.isDeleted, false)),
-          columns: { title: true },
-        });
-        entitySpecificName = story?.title;
-        translatedEntityType = t('story');
-        break;
-      case OperationLogEntityType.StoryArc:
-        const storyArc = await db.query.storyArcs.findFirst({
-          where: and(eq(storyArcs.id, entityId), eq(storyArcs.isDeleted, false)),
-          columns: { title: true },
-        });
-        entitySpecificName = storyArc?.title;
-        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Arc');
-        break;
-      case OperationLogEntityType.Character:
-        const character = await db.query.characters.findFirst({
-          where: and(eq(characters.id, entityId), eq(characters.isDeleted, false)),
-          columns: { name: true },
-        });
-        entitySpecificName = character?.name;
-        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Character');
-        break;
-      case OperationLogEntityType.Note:
-        const note = await db.query.notes.findFirst({
-          where: and(eq(notes.id, entityId), eq(notes.isDeleted, false)),
-          columns: { title: true },
-        });
-        entitySpecificName = note?.title;
-        translatedEntityType = t('note');
-        break;
-      case OperationLogEntityType.Location:
-        const location = await db.query.locations.findFirst({
-          where: and(eq(locations.id, entityId), eq(locations.isDeleted, false)),
-          columns: { name: true },
-        });
-        entitySpecificName = location?.name;
-        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Location');
-        break;
-      case OperationLogEntityType.WorldRule:
-        const worldRule = await db.query.worldRules.findFirst({
-          where: and(eq(worldRules.id, entityId), eq(worldRules.isDeleted, false)),
-          columns: { title: true, section: true },
-        });
-        entitySpecificName = worldRule?.title;
-        translatedEntityType = worldRule?.section
-          ? t(`world_piece_section_${worldRule.section}`)
-          : translateStoryNoun(t, await vocabulary(), 'WorldRule');
-        break;
-      case OperationLogEntityType.Tag:
-        const tag = await db.query.tags.findFirst({
-          where: and(eq(tags.id, entityId), eq(tags.isDeleted, false)),
-          columns: { name: true },
-        });
-        entitySpecificName = tag?.name;
-        translatedEntityType = t('tag');
-        break;
       case OperationLogEntityType.User:
         const user = await db.query.users.findFirst({
           where: and(eq(users.idUser, entityId), eq(users.isDeleted, false)),
@@ -168,26 +89,6 @@ export class EntityService {
         });
         entitySpecificName = user?.displayName ?? undefined;
         translatedEntityType = t('user');
-        break;
-      case OperationLogEntityType.Chapter:
-        const chapter = await db.query.chapters.findFirst({
-          where: and(eq(chapters.id, entityId), eq(chapters.isDeleted, false)),
-          columns: { name: true, type: true },
-        });
-        entitySpecificName = chapter?.name;
-        translatedEntityType = translateStoryNoun(
-          t,
-          await vocabulary(),
-          chapter?.type === 'event' ? 'Event' : 'Chapter',
-        );
-        break;
-      case OperationLogEntityType.Scene:
-        const scene = await db.query.scenes.findFirst({
-          where: and(eq(scenes.id, entityId), eq(scenes.isDeleted, false)),
-          columns: { name: true },
-        });
-        entitySpecificName = scene?.name;
-        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Scene');
         break;
       case OperationLogEntityType.Choice:
         const choice = await db.query.choices.findFirst({
@@ -204,14 +105,6 @@ export class EntityService {
           entitySpecificName = `${t('unknown_choice')} ${t('id')}: ${entityId}`;
         }
         translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Choice');
-        break;
-      case OperationLogEntityType.Gallery:
-        const gallery = await db.query.galleries.findFirst({
-          where: and(eq(galleries.id, entityId), eq(galleries.isDeleted, false)),
-          columns: { title: true, fileName: true },
-        });
-        entitySpecificName = gallery?.title || gallery?.fileName;
-        translatedEntityType = t('gallery');
         break;
       case OperationLogEntityType.Suggestion:
         const suggestion = await db.query.suggestions.findFirst({
@@ -266,14 +159,6 @@ export class EntityService {
           });
         }
         translatedEntityType = t('gallery_relation');
-        break;
-      case OperationLogEntityType.Item:
-        const item = await db.query.items.findFirst({
-          where: and(eq(items.id, entityId), eq(items.isDeleted, false)),
-          columns: { name: true },
-        });
-        entitySpecificName = item?.name;
-        translatedEntityType = translateStoryNoun(t, await vocabulary(), 'Item');
         break;
       case OperationLogEntityType.ItemJourney:
         const itemJourney = await db.query.itemJourneys.findFirst({
@@ -454,14 +339,6 @@ export class EntityService {
         }
         translatedEntityType = t('character_scene_relation');
         break;
-      case OperationLogEntityType.Plot:
-        const plot = await db.query.plots.findFirst({
-          where: and(eq(plots.id, entityId), eq(plots.isDeleted, false)),
-          columns: { name: true },
-        });
-        entitySpecificName = plot?.name || entityId;
-        translatedEntityType = t('plots_title');
-        break;
       case OperationLogEntityType.PlotScene:
         const plotScene = await db.query.plotScenes.findFirst({
           where: and(eq(plotScenes.id, entityId), eq(plotScenes.isDeleted, false)),
@@ -481,18 +358,6 @@ export class EntityService {
           entitySpecificName = `${relatedPlot?.name || t('plots_title')} — ${relatedScene?.name || translateStoryNoun(t, await vocabulary(), 'Scene', true)}`;
         }
         translatedEntityType = t('plot_scenes');
-        break;
-      case OperationLogEntityType.Route:
-        const route = await db.query.routes.findFirst({
-          where: and(
-            eq(routes.id, entityId),
-            eq(routes.storyId, storyId),
-            eq(routes.isDeleted, false),
-          ),
-          columns: { name: true },
-        });
-        entitySpecificName = route?.name;
-        translatedEntityType = t('route');
         break;
       case OperationLogEntityType.RouteStep:
         const routeStep = await db.query.routeSteps.findFirst({

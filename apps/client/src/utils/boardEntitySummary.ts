@@ -1,4 +1,4 @@
-import type { BoardPinEntity } from '@keres/shared';
+import { summarizeBoardEntity, type BoardEntitySummary, type BoardPinEntity } from '@keres/shared';
 import type { AppDrizzleClient } from '../db';
 import { createChapterService } from '../services/storymanagement/ChapterService';
 import { createCharacterService } from '../services/storymanagement/CharacterService';
@@ -10,12 +10,6 @@ import { createSceneService } from '../services/storymanagement/SceneService';
 import { createWorldRuleService } from '../services/storymanagement/WorldRuleService';
 import { createBoardService } from '../services/storymanagement/BoardService';
 
-/** A light summary of an entity pin, shown when its board node is opened. */
-export interface BoardEntitySummary {
-  title: string;
-  details: string | null;
-}
-
 /**
  * Loads the summary of the entity behind a board pin. Each entity kind contributes its own
  * descriptive field - a character's `description`, a scene's `summary`, a gallery's `extraNotes` -
@@ -26,44 +20,19 @@ export async function loadBoardEntitySummary(
   entityType: BoardPinEntity,
   entityId: string,
 ): Promise<BoardEntitySummary | null> {
-  switch (entityType) {
-    case 'Character': {
-      const row = await createCharacterService(db).getById(entityId);
-      return row ? { title: row.name, details: row.description } : null;
-    }
-    case 'Location': {
-      const row = await createLocationService(db).getById(entityId);
-      return row ? { title: row.name, details: row.description } : null;
-    }
-    case 'Scene': {
-      const row = await createSceneService(db).getById(entityId);
-      return row ? { title: row.name, details: row.summary } : null;
-    }
-    case 'Item': {
-      const row = await createItemService(db).getById(entityId);
-      return row ? { title: row.name, details: row.description } : null;
-    }
-    case 'Chapter': {
-      const row = await createChapterService(db).getById(entityId);
-      return row ? { title: row.name, details: row.summary ?? row.extraNotes } : null;
-    }
-    case 'Gallery': {
-      const row = await createGalleryService(db).getById(entityId);
-      return row ? { title: row.title ?? row.fileName, details: row.extraNotes } : null;
-    }
-    case 'WorldRule': {
-      const row = await createWorldRuleService(db).getById(entityId);
-      return row ? { title: row.title, details: row.description } : null;
-    }
-    case 'Note': {
-      const row = await createNoteService(db).getById(entityId);
-      return row ? { title: row.title, details: row.body } : null;
-    }
-    case 'Board': {
-      const row = await createBoardService(db).getById(entityId);
-      return row ? { title: row.name, details: row.description } : null;
-    }
-    default:
-      return null;
-  }
+  const loaderByEntity = {
+    Character: createCharacterService(db).getById,
+    Location: createLocationService(db).getById,
+    Scene: createSceneService(db).getById,
+    Item: createItemService(db).getById,
+    Chapter: createChapterService(db).getById,
+    Gallery: createGalleryService(db).getById,
+    WorldRule: createWorldRuleService(db).getById,
+    Note: createNoteService(db).getById,
+    Board: createBoardService(db).getById,
+  } as const;
+  const row = await loaderByEntity[entityType](entityId);
+  return row ? summarizeBoardEntity(entityType, row) : null;
 }
+
+export type { BoardEntitySummary };

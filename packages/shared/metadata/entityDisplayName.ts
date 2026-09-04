@@ -1,6 +1,5 @@
 /**
- * Per-type primary display field, aligned with
- * `apps/client/src/services/EntityNameBatchResolver.ts` (NAME_COLUMN_BY_ENTITY).
+ * Per-type primary display field, used by every host's display-name reader.
  * Gallery is special-cased in `getSimpleDisplayName` (title || fileName).
  */
 export const ENTITY_SIMPLE_DISPLAY_NAME_FIELD: Readonly<Record<string, string>> = {
@@ -11,6 +10,7 @@ export const ENTITY_SIMPLE_DISPLAY_NAME_FIELD: Readonly<Record<string, string>> 
   Chapter: 'name',
   Route: 'name',
   Scene: 'name',
+  Plot: 'name',
   StorySchemaField: 'name',
   Stat: 'name',
   Mode: 'name',

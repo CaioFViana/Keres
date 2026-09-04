@@ -362,6 +362,12 @@ describe('getEntityIdentifier', () => {
       EntityService.getEntityIdentifier(database.db, 'Dragao', 'e-1', STORY_ID, t),
     ).rejects.toThrow(/Invalid entityTypeString/);
   });
+
+  it('keeps the legacy facade closed to unrelated operation-log types', async () => {
+    await expect(
+      EntityService.getEntityIdentifier(database.db, 'StoryCalendar', 'calendar-1', STORY_ID, t),
+    ).rejects.toThrow(/Invalid entityTypeString/);
+  });
 });
 
 /**

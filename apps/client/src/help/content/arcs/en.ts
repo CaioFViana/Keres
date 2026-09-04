@@ -3,7 +3,8 @@ import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'arcs',
   title: 'Arcs, volumes and phases',
-  summary: 'Organize one story into books, phases or other large sections without splitting its world.',
+  summary:
+    'Organize one story into books, phases or other large sections without splitting its world.',
   keywords: ['arc', 'arcs', 'volume', 'volumes', 'phase', 'chapters', 'events', 'theme'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },

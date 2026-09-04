@@ -37,6 +37,11 @@ export interface EntityDomainHandler {
   conflictReferences?: readonly EntityConflictReference[];
   exportCollection?: string;
   exportReferences?: readonly EntityExportReference[];
+  /**
+   * User and operation-log records participate in the vocabulary but are not children of a story.
+   * Every other domain handler is synchronized with the story unless it opts out explicitly.
+   */
+  syncable?: boolean;
   displayName?: EntityDisplayName;
   summarizePreview?: (row: Record<string, unknown>) => EntityPreview;
   advancedSearch?: readonly EntityFieldMetadata[];

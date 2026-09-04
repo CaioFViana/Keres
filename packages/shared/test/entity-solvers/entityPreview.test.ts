@@ -4,7 +4,21 @@ import {
   summarizeBoardEntity,
   summarizeEntityPreview,
 } from '../../entity-solvers/boardEntitySummary';
-import { getStoryExportReferences } from '../../entity-solvers/entities/EntityRegistry';
+import {
+  getStoryExportCollections,
+  getStoryExportReferences,
+  getStoryImportCollectionOrder,
+  getStorySyncEntityTypes,
+} from '../../entity-solvers/entities/EntityRegistry';
+import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
+
+const isArraySchema = (schema: unknown): boolean => {
+  let current = schema as { def: { type: string; innerType?: unknown } };
+  while (current.def.type === 'optional') {
+    current = current.def.innerType as typeof current;
+  }
+  return current.def.type === 'array';
+};
 
 describe('entity previews', () => {
   it('keeps a chapter summary and notes available to a list', () => {
@@ -45,7 +59,7 @@ describe('entity previews', () => {
   });
 
   it('derives every portable foreign key from the entity handlers', () => {
-    expect(getStoryExportReferences()).toHaveLength(35);
+    expect(getStoryExportReferences()).toHaveLength(38);
     expect(getStoryExportReferences()).toContainEqual({
       collection: 'scenes',
       field: 'chapterId',
@@ -53,5 +67,31 @@ describe('entity previews', () => {
       targetCollection: 'chapters',
       required: true,
     });
+  });
+
+  it('assigns every portable collection to exactly one entity handler', () => {
+    const packageFieldsThatAreCollections = Object.entries(FullStoryExportSchema.shape)
+      .filter(([, schema]) => isArraySchema(schema))
+      .map(([field]) => field)
+      .sort();
+
+    expect(
+      getStoryExportCollections()
+        .map(({ collection }) => collection)
+        .sort(),
+    ).toEqual(packageFieldsThatAreCollections);
+  });
+
+  it('puts foreign-key targets before their portable dependents on import', () => {
+    const order = getStoryImportCollectionOrder();
+    for (const { collection, targetCollection } of getStoryExportReferences()) {
+      expect(order.indexOf(targetCollection)).toBeLessThan(order.indexOf(collection));
+    }
+  });
+
+  it('keeps non-story records out of the synchronization registry', () => {
+    expect(getStorySyncEntityTypes()).not.toContain(OperationLogEntityType.User);
+    expect(getStorySyncEntityTypes()).not.toContain(OperationLogEntityType.OperationLog);
+    expect(getStorySyncEntityTypes()).toContain(OperationLogEntityType.StoryArc);
   });
 });

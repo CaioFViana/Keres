@@ -10,6 +10,7 @@ export function createSimpleEntityHandler(config: {
   conflictLabelKey?: string;
   exportCollection?: string;
   exportReferences?: EntityDomainHandler['exportReferences'];
+  syncable?: boolean;
   previewDetailsFields?: readonly [string, string?];
   advancedSearch?: EntityDomainHandler['advancedSearch'];
 }): EntityDomainHandler {
@@ -31,6 +32,7 @@ export function createSimpleEntityHandler(config: {
     conflictLabelKey: config.conflictLabelKey,
     exportCollection: config.exportCollection,
     exportReferences: config.exportReferences,
+    syncable: config.syncable,
     displayName: displayField(config.displayField),
     advancedSearch: config.advancedSearch,
     summarizePreview: config.previewDetailsFields

@@ -10,6 +10,7 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a favorite marker attached to another entity. */
 export const favoriteEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Favorite,
+  exportCollection: 'favorites',
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Favorite, entityId);
     const targetType = stringValue(row, 'entityType') as OperationLogEntityType;

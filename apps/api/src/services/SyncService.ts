@@ -9,7 +9,11 @@ import type {
   SyncConflict,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { MAX_SYNC_PULL_BATCH, ownerOnlyFieldsIn } from '@keres/shared';
+import {
+  assertStorySyncHandlerCoverage,
+  MAX_SYNC_PULL_BATCH,
+  ownerOnlyFieldsIn,
+} from '@keres/shared';
 import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
@@ -125,6 +129,7 @@ export class SyncService {
     this.registerEntityHandler(new StatSyncHandler());
     this.registerEntityHandler(new StatStrengthSyncHandler());
     this.registerEntityHandler(new StatRelationSyncHandler());
+    assertStorySyncHandlerCoverage(this.entityHandlers.keys());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

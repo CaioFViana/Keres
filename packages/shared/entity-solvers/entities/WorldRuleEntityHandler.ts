@@ -4,6 +4,7 @@ import type { EntityDomainHandler } from './contracts';
 import { displayField } from './displayName';
 export const worldRuleEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.WorldRule,
+  exportCollection: 'worldRules',
   conflictLabelKey: 'world_rule',
   displayName: displayField('title'),
   help: {

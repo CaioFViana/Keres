@@ -9,10 +9,16 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 /** Presentation metadata for a Chapter's anchor Scene. */
 export const chapterAnchorEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.ChapterAnchor,
+  exportCollection: 'chapterAnchors',
   referenceFields: {
     chapterId: OperationLogEntityType.Chapter,
     startSceneId: OperationLogEntityType.Scene,
   },
+  exportReferences: [
+    { field: 'chapterId', targetEntityType: OperationLogEntityType.Chapter, required: true },
+    { field: 'startSceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+    { field: 'endSceneId', targetEntityType: OperationLogEntityType.Scene, required: false },
+  ],
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.ChapterAnchor, entityId);
     if (!row) return { name: undefined, type: context.translate('chapter_anchor') };

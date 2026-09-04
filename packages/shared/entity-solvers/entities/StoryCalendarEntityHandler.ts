@@ -4,6 +4,7 @@ import type { EntityDomainHandler } from './contracts';
 /** Presentation metadata for a story-local calendar. */
 export const storyCalendarEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.StoryCalendar,
+  exportCollection: 'storyCalendars',
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.StoryCalendar, entityId);
     const name = typeof row?.name === 'string' && row.name.trim() ? row.name : undefined;

@@ -1,4 +1,5 @@
 import { AttributeValueClientSyncHandler } from '../entity-sync-handlers/AttributeValueClientSyncHandler';
+import { assertStorySyncHandlerCoverage } from '@keres/shared';
 import { ChapterClientSyncHandler } from '../entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from '../entity-sync-handlers/CharacterClientSyncHandler';
 import { ChapterAnchorClientSyncHandler } from '../entity-sync-handlers/ChapterAnchorClientSyncHandler';
@@ -39,6 +40,7 @@ import { StoryClientSyncHandler } from '../entity-sync-handlers/StoryClientSyncH
 import { StorySchemaFieldClientSyncHandler } from '../entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { SuggestionClientSyncHandler } from '../entity-sync-handlers/SuggestionClientSyncHandler';
 import { TagClientSyncHandler } from '../entity-sync-handlers/TagClientSyncHandler';
+import { TagRelationClientSyncHandler } from '../entity-sync-handlers/TagRelationClientSyncHandler';
 import { WorldRuleClientSyncHandler } from '../entity-sync-handlers/WorldRuleClientSyncHandler';
 
 /** Builds the complete entity-handler registry used by each sync-engine instance. */
@@ -47,6 +49,7 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new StoryClientSyncHandler(),
     new CharacterClientSyncHandler(),
     new TagClientSyncHandler(),
+    new TagRelationClientSyncHandler(),
     new NoteClientSyncHandler(),
     new NoteRelationClientSyncHandler(),
     new WorldRuleClientSyncHandler(),
@@ -85,5 +88,7 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new ModeClientSyncHandler(),
   ];
 
-  return new Map(handlers.map((handler) => [handler.entityName, handler]));
+  const registry = new Map(handlers.map((handler) => [handler.entityName, handler]));
+  assertStorySyncHandlerCoverage(registry.keys());
+  return registry;
 }

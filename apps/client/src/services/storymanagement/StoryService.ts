@@ -1036,6 +1036,23 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         };
         await tx.insert(stories).values(storyToInsert).run();
 
+        // A Chapter can point at its Arc. The shared import plan requires the parent collection
+        // first; SQLite may not enforce this foreign key, but PostgreSQL does.
+        for (const arc of fullStoryData.storyArcs ?? []) {
+          await tx
+            .insert(storyArcs)
+            .values({
+              ...arc,
+              storyId: arc.storyId,
+              createdAt: new Date(arc.createdAt),
+              updatedAt: new Date(),
+              version: arc.version,
+              isDeleted: false,
+              deletedAt: null,
+            })
+            .run();
+        }
+
         // 2. Process Chapters
         for (const chapter of fullStoryData.chapters) {
           const chapterToInsert: ChapterInsert = {
@@ -1048,6 +1065,21 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             deletedAt: null,
           };
           await tx.insert(chapters).values(chapterToInsert).run();
+        }
+
+        // A Scene may name a Location, so this parent collection also precedes Scenes even though
+        // local SQLite accepts the reverse order.
+        for (const location of fullStoryData.locations) {
+          const locationToInsert: LocationInsert = {
+            ...location,
+            storyId: location.storyId,
+            createdAt: new Date(location.createdAt),
+            updatedAt: new Date(),
+            version: location.version,
+            isDeleted: false,
+            deletedAt: null,
+          };
+          await tx.insert(locations).values(locationToInsert).run();
         }
 
         // 3. Process Scenes
@@ -1143,20 +1175,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           await tx.insert(characters).values(characterToInsert).run();
         }
 
-        // 6. Process Locations
-        for (const location of fullStoryData.locations) {
-          const locationToInsert: LocationInsert = {
-            ...location,
-            storyId: location.storyId,
-            createdAt: new Date(location.createdAt),
-            updatedAt: new Date(),
-            version: location.version,
-            isDeleted: false,
-            deletedAt: null,
-          };
-          await tx.insert(locations).values(locationToInsert).run();
-        }
-
         // 6.1 Process LocationRelations (Optional) - after Locations on purpose, see the
         // equivalent comment in StoryExportImportService.ts (API).
         if (fullStoryData.locationRelations) {
@@ -1248,21 +1266,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               createdAt: new Date(calendar.createdAt),
               updatedAt: new Date(),
               version: calendar.version,
-              isDeleted: false,
-              deletedAt: null,
-            })
-            .run();
-        }
-
-        for (const arc of fullStoryData.storyArcs ?? []) {
-          await tx
-            .insert(storyArcs)
-            .values({
-              ...arc,
-              storyId: arc.storyId,
-              createdAt: new Date(arc.createdAt),
-              updatedAt: new Date(),
-              version: arc.version,
               isDeleted: false,
               deletedAt: null,
             })

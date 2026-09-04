@@ -36,6 +36,7 @@ import {
 } from '../../src/services/entity-sync-handlers/StatClientSyncHandler';
 import { SuggestionClientSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionClientSyncHandler';
 import { TagClientSyncHandler } from '../../src/services/entity-sync-handlers/TagClientSyncHandler';
+import { TagRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/TagRelationClientSyncHandler';
 import { WorldRuleClientSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleClientSyncHandler';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -366,6 +367,25 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { name: 'Antagonistas' },
+  },
+  {
+    name: 'TagRelation',
+    build: () => new TagRelationClientSyncHandler(),
+    table: schema.tagRelations,
+    labelColumn: 'relationId' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      tagId: `tag-${id}`,
+      relationId: `character-${id}`,
+      relationType: 'Character',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { relationId: 'character-revised' },
   },
   {
     name: 'Scene',

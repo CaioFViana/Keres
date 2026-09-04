@@ -5,6 +5,7 @@ import { suggestionDisplayValue } from './displayName';
 /** Presentation metadata for a reusable suggestion value. */
 export const suggestionEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Suggestion,
+  exportCollection: 'suggestions',
   displayName: { fields: ['value'], getName: (row) => suggestionDisplayValue(row.value) },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Suggestion, entityId);

@@ -54,3 +54,9 @@ _"After the storm, a maiden with shoulder wings graces the land. If it's an ange
 1.6 was such a big release. but at the same time, comparing to stablished products took a toll on mental. Keres was made for myself, but the dream of something bigger on the horizon scares me. 
 
 So I shouldnt be daunted by the storm. I need to go ahead. Like a rainbow after the storm that will carry my message to the heavens.
+
+### 1.8 - Aion.
+
+_"Locked in place by the eternal serpent, the young main exists surrounded by the zodiac. Never ending, never starting, always present, always cycling."_
+
+The very last feature that i heared from friends was support for crossovers and series/overarching stories. So the final release is upon me. Keres 1.8, Arc support, Aion.

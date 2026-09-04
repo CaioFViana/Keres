@@ -1,7 +1,7 @@
 {
   "name": "@keres/client",
   "main": "expo-router/entry",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "scripts": {
     "prestart": "bun scripts/generate-indexes.ts",
     "start": "expo start",
@@ -16,7 +16,7 @@
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "example-story:build": "bun scripts/build-example-story.ts",
     "shipped-packs:build": "bun scripts/build-shipped-packs.ts",
-    "capture:setup": "bun scripts/generate-indexes.js && expo export -p web" 
+    "capture:setup": "bun scripts/generate-indexes.js && expo export -p web"
   },
   "dependencies": {
     "@keres/shared": "workspace:*",

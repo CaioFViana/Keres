@@ -2,7 +2,7 @@
   "expo": {
     "name": "Keres",
     "slug": "Keres-Client",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "icon": "./assets/images/icon.png",
     "scheme": "keresclient",
     "userInterfaceStyle": "automatic",

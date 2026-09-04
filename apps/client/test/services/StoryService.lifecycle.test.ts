@@ -122,6 +122,6 @@ describe('StoryService lifecycle', () => {
     );
     expect(
       (await database.db.select().from(operationLogs).all()).map((log) => log.entityType).sort(),
-    ).toEqual(['Chapter', 'Character', 'Location', 'Note', 'Scene', 'WorldRule']);
+    ).toEqual(['Chapter', 'Character', 'Location', 'Note', 'Scene', 'StoryArc', 'WorldRule']);
   });
 });

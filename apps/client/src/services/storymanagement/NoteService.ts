@@ -16,6 +16,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -41,6 +42,7 @@ export interface NoteService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<NoteWithTags[]>;
+  getNoteCount(storyId?: string): Promise<number>;
   getById(noteId: string): Promise<NoteWithTags | undefined>;
   createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect>;
   updateNote(
@@ -59,6 +61,10 @@ export interface NoteService {
 export const createNoteService = (db: AppDrizzleClient): NoteService => {
   const serverService = createServerService(db);
   return {
+    async getNoteCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, notes, storyId);
+    },
+
     async getNotesByStoryId(
       storyId,
       searchTerm,

@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { CharacterInsert, CharacterSelect, TagSelect } from '../../db/schema';
 import { characters, characterRelations, tagRelations, tags } from '../../db/schema'; // Import CharacterInsert and stories
@@ -15,6 +15,7 @@ import { createServerService } from '../ServerService'; // Import ServerService 
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -195,16 +196,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
     },
 
     async getCharacterCount(storyId?: string): Promise<number> {
-      const whereConditions = [eq(characters.isDeleted, false)];
-      if (storyId) {
-        whereConditions.push(eq(characters.storyId, storyId));
-      }
-      const result = await db
-        .select({ count: count() })
-        .from(characters)
-        .where(and(...whereConditions))
-        .get();
-      return result?.count || 0;
+      return countActiveStoryEntities(db, characters, storyId);
     },
 
     async createCharacter(

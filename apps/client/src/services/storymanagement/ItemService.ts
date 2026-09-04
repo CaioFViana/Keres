@@ -13,6 +13,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -33,6 +34,7 @@ export interface ItemService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<ItemSelect[]>;
+  getItemCount(storyId?: string): Promise<number>;
   getById(itemId: string): Promise<ItemSelect | undefined>;
   createItem(currentUserId: string, itemData: Create<ItemInsert>): Promise<ItemSelect>;
   updateItem(
@@ -53,6 +55,10 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
   const serverService = createServerService(db);
 
   return {
+    async getItemCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, items, storyId);
+    },
+
     async getItemsByStoryId(
       storyId,
       searchTerm,

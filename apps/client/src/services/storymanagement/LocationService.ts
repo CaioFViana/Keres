@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { LocationInsert, LocationSelect, TagSelect } from '../../db/schema';
 import { locationRelations, locations, tagRelations, tags } from '../../db/schema'; // Import LocationInsert and locations
@@ -15,6 +15,7 @@ import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -178,16 +179,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
     },
 
     async getLocationCount(storyId?: string): Promise<number> {
-      const whereConditions = [eq(locations.isDeleted, false)];
-      if (storyId) {
-        whereConditions.push(eq(locations.storyId, storyId));
-      }
-      const result = await db
-        .select({ count: count() })
-        .from(locations)
-        .where(and(...whereConditions))
-        .get();
-      return result?.count || 0;
+      return countActiveStoryEntities(db, locations, storyId);
     },
 
     async createLocation(

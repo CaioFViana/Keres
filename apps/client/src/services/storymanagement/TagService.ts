@@ -10,6 +10,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -29,6 +30,7 @@ export interface TagService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<TagSelect[]>;
+  getTagCount(storyId?: string): Promise<number>;
   getById(tagId: string): Promise<TagSelect | undefined>;
   createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect>;
   updateTag(
@@ -47,6 +49,10 @@ export interface TagService {
 export const createTagService = (db: AppDrizzleClient): TagService => {
   const serverService = createServerService(db); // Create serverService once
   return {
+    async getTagCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, tags, storyId);
+    },
+
     async getTagsByStoryId(
       storyId,
       searchTerm,

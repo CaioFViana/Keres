@@ -1,9 +1,10 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
 import { choices } from '../../db/schemas/choices';
 import { scenes } from '../../db/schemas/scenes';
+import { stories } from '../../db/schemas/stories';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -29,6 +30,7 @@ export interface ChoiceService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<ChoiceSelect[]>;
+  getChoiceCount(storyId?: string): Promise<number>;
   getById(choiceId: string): Promise<ChoiceSelect | undefined>;
   createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
   updateChoice(
@@ -49,6 +51,23 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
   const serverService = createServerService(db);
 
   return {
+    async getChoiceCount(storyId?: string): Promise<number> {
+      const conditions = [
+        eq(stories.isDeleted, false),
+        eq(scenes.isDeleted, false),
+        eq(choices.isDeleted, false),
+      ];
+      if (storyId) conditions.push(eq(stories.id, storyId));
+      const result = await db
+        .select({ count: count() })
+        .from(choices)
+        .innerJoin(scenes, eq(choices.sceneId, scenes.id))
+        .innerJoin(stories, eq(scenes.storyId, stories.id))
+        .where(and(...conditions))
+        .get();
+      return result?.count ?? 0;
+    },
+
     async getChoicesByStoryId(
       storyId,
       searchTerm,

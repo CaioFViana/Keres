@@ -12,8 +12,10 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { countActiveStoryEntities } from './storyEntityCount';
 
 export interface StorySchemaFieldService {
+  getCustomAttributeCount(storyId?: string): Promise<number>;
   getFieldsByStoryAndEntityType(
     storyId: string,
     entityType: StorySchemaEntityType,
@@ -42,6 +44,10 @@ export interface StorySchemaFieldService {
 export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchemaFieldService => {
   const serverService = createServerService(db);
   return {
+    async getCustomAttributeCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, storySchemaFields, storyId);
+    },
+
     async getFieldsByStoryAndEntityType(storyId, entityType): Promise<StorySchemaFieldSelect[]> {
       return db
         .select()

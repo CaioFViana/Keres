@@ -14,6 +14,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import { createStoryArcService } from './StoryArcService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -37,6 +38,7 @@ export interface ChapterService {
     /** Chapters unless asked otherwise; `null` returns both kinds in one list. */
     type?: ChapterType | null,
   ): Promise<ChapterSelect[]>;
+  getChapterCount(storyId?: string): Promise<number>;
   getById(chapterId: string): Promise<ChapterSelect | undefined>;
   createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect>;
   updateChapter(
@@ -88,6 +90,10 @@ export interface ChapterService {
 export const createChapterService = (db: AppDrizzleClient): ChapterService => {
   const serverService = createServerService(db);
   return {
+    async getChapterCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, chapters, storyId);
+    },
+
     async getChaptersByStoryId(
       storyId,
       searchTerm,

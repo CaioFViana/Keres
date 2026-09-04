@@ -15,6 +15,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -36,6 +37,7 @@ export interface WorldRuleService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<WorldRuleWithTags[]>;
+  getWorldRuleCount(storyId?: string): Promise<number>;
   getById(worldRuleId: string): Promise<WorldRuleWithTags | undefined>;
   createWorldRule(
     currentUserId: string,
@@ -57,6 +59,10 @@ export interface WorldRuleService {
 export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService => {
   const serverService = createServerService(db);
   return {
+    async getWorldRuleCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, worldRules, storyId);
+    },
+
     async getWorldRulesByStoryId(
       storyId,
       searchTerm,

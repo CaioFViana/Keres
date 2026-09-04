@@ -13,6 +13,7 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { countActiveStoryEntities } from './storyEntityCount';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -67,6 +68,7 @@ export interface NewGalleryMedia {
 }
 
 export interface GalleryService {
+  getGalleryCount(storyId?: string): Promise<number>;
   getGalleriesByStoryId(storyId: string, filters?: GalleryFilters): Promise<GallerySelect[]>;
   getById(galleryId: string): Promise<GallerySelect | undefined>;
   /** This story's media with these bytes, if it already exists. The basis of dedupe on import. */
@@ -111,6 +113,10 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
   const serverService = createServerService(db);
 
   return {
+    async getGalleryCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, galleries, storyId);
+    },
+
     async getGalleriesByStoryId(storyId, filters = {}): Promise<GallerySelect[]> {
       const { searchTerm, mediaTypes, favoriteFilterState, sortBy, sortDirection } = filters;
 

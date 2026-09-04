@@ -115,6 +115,15 @@ import { createServerService } from '../ServerService';
 import { createStoryArcService } from './StoryArcService';
 import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
+import { createCharacterService } from './CharacterService';
+import { createChapterService } from './ChapterService';
+import { createLocationService } from './LocationService';
+import { createNoteService } from './NoteService';
+import { createWorldRuleService } from './WorldRuleService';
+import { createItemService } from './ItemService';
+import { createGalleryService } from './GalleryService';
+import { createTagService } from './TagService';
+import { createStorySchemaFieldService } from './StorySchemaFieldService';
 import { createFavoriteService } from './FavoriteService';
 import { cloneStoryForLocalImport } from './cloneStoryForLocalImport';
 import { deleteStoryChildRows, purgeStoryLocally } from './storyLocalPurge';
@@ -222,6 +231,17 @@ export interface StoryService {
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
   const serverService = createServerService(db);
   const favoriteService = createFavoriteService(db);
+  const characterService = createCharacterService(db);
+  const chapterService = createChapterService(db);
+  const locationService = createLocationService(db);
+  const sceneService = createSceneService(db);
+  const noteService = createNoteService(db);
+  const worldRuleService = createWorldRuleService(db);
+  const itemService = createItemService(db);
+  const galleryService = createGalleryService(db);
+  const tagService = createTagService(db);
+  const storySchemaFieldService = createStorySchemaFieldService(db);
+  const choiceService = createChoiceService(db);
   return {
     async getAllStories(currentLocalUserId?: string): Promise<StorySelect[]> {
       const rows = await db.select().from(stories).where(eq(stories.isDeleted, false)).all();
@@ -392,373 +412,90 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async getCharacterCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(characters)
-        .innerJoin(stories, eq(characters.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(characters.storyId, storyId),
-                eq(stories.isDeleted, false),
-                eq(characters.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(characters.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return characterService.getCharacterCount(storyId);
     },
 
     async getChoiceCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(choices)
-        .innerJoin(scenes, eq(choices.sceneId, scenes.id))
-        .innerJoin(stories, eq(scenes.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(stories.id, storyId),
-                eq(stories.isDeleted, false),
-                eq(scenes.isDeleted, false),
-                eq(choices.isDeleted, false),
-              )
-            : and(
-                eq(stories.isDeleted, false),
-                eq(scenes.isDeleted, false),
-                eq(choices.isDeleted, false),
-              ),
-        )
-        .get();
-      return result?.count || 0;
+      return choiceService.getChoiceCount(storyId);
     },
 
     async getLocationCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(locations)
-        .innerJoin(stories, eq(locations.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(stories.id, storyId),
-                eq(stories.isDeleted, false),
-                eq(locations.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(locations.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return locationService.getLocationCount(storyId);
     },
 
     async getChapterCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(chapters)
-        .innerJoin(stories, eq(chapters.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(chapters.storyId, storyId),
-                eq(stories.isDeleted, false),
-                eq(chapters.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(chapters.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return chapterService.getChapterCount(storyId);
     },
 
     async getSceneCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(scenes)
-        .innerJoin(stories, eq(scenes.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(stories.id, storyId),
-                eq(stories.isDeleted, false),
-                eq(scenes.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(scenes.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return sceneService.getSceneCount(storyId);
     },
 
     async getNoteCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(notes)
-        .innerJoin(stories, eq(notes.storyId, stories.id))
-        .where(
-          storyId
-            ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(notes.isDeleted, false))
-            : and(eq(stories.isDeleted, false), eq(notes.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return noteService.getNoteCount(storyId);
     },
 
     async getWorldRuleCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(worldRules)
-        .innerJoin(stories, eq(worldRules.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(stories.id, storyId),
-                eq(stories.isDeleted, false),
-                eq(worldRules.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(worldRules.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return worldRuleService.getWorldRuleCount(storyId);
     },
 
     async getItemCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(items)
-        .innerJoin(stories, eq(items.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(items.storyId, storyId),
-                eq(stories.isDeleted, false),
-                eq(items.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(items.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return itemService.getItemCount(storyId);
     },
 
     async getGalleryCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(galleries)
-        .innerJoin(stories, eq(galleries.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(galleries.storyId, storyId),
-                eq(stories.isDeleted, false),
-                eq(galleries.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(galleries.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return galleryService.getGalleryCount(storyId);
     },
 
     async getTagCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(tags)
-        .innerJoin(stories, eq(tags.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(tags.storyId, storyId),
-                eq(stories.isDeleted, false),
-                eq(tags.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(tags.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return tagService.getTagCount(storyId);
     },
 
     async getCustomAttributeCount(storyId?: string): Promise<number> {
-      const result = await db
-        .select({ count: count() })
-        .from(storySchemaFields)
-        .innerJoin(stories, eq(storySchemaFields.storyId, stories.id))
-        .where(
-          storyId
-            ? and(
-                eq(storySchemaFields.storyId, storyId),
-                eq(stories.isDeleted, false),
-                eq(storySchemaFields.isDeleted, false),
-              )
-            : and(eq(stories.isDeleted, false), eq(storySchemaFields.isDeleted, false)),
-        )
-        .get();
-      return result?.count || 0;
+      return storySchemaFieldService.getCustomAttributeCount(storyId);
     },
 
     async createCharacter(
       currentUserId: string,
       characterData: Create<CharacterInsert>,
     ): Promise<CharacterSelect> {
-      const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
-      const result = await db.insert(characters).values(newCharacter).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newCharacter.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newCharacter.storyId,
-        userIdToLog,
-        'create',
-        'Character',
-        newCharacter.id,
-        { ...newCharacter },
-      ); // Pass serializable data
-
-      return result;
+      return characterService.createCharacter(currentUserId, characterData);
     },
 
     async createChapter(
       currentUserId: string,
       chapterData: Create<ChapterInsert>,
     ): Promise<ChapterSelect> {
-      const newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
-      const result = await db.insert(chapters).values(newChapter).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newChapter.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newChapter.storyId,
-        userIdToLog,
-        'create',
-        'Chapter',
-        newChapter.id,
-        { ...newChapter },
-      ); // Pass serializable data
-
-      return result;
+      return chapterService.createChapter(currentUserId, chapterData);
     },
 
     async createLocation(
       currentUserId: string,
       locationData: Create<LocationInsert>,
     ): Promise<LocationSelect> {
-      const newLocation = prepareNewEntityData<LocationInsert>(locationData);
-      const result = await db.insert(locations).values(newLocation).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newLocation.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newLocation.storyId,
-        userIdToLog,
-        'create',
-        'Location',
-        newLocation.id,
-        { ...newLocation },
-      ); // Pass serializable data
-
-      return result;
+      return locationService.createLocation(currentUserId, locationData);
     },
 
     async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
-      const newScene = prepareNewEntityData<SceneInsert>(sceneData);
-      const result = await db.insert(scenes).values(newScene).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newScene.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newScene.storyId,
-        userIdToLog,
-        'create',
-        'Scene',
-        newScene.id,
-        { ...newScene },
-      ); // Pass serializable data
-
-      return result;
+      return sceneService.createScene(currentUserId, sceneData);
     },
 
     async createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect> {
-      const newNote = prepareNewEntityData<NoteInsert>(noteData);
-      const result = await db.insert(notes).values(newNote).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newNote.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, {
-        ...newNote,
-      }); // Pass serializable data
-
-      return result;
+      return noteService.createNote(currentUserId, noteData);
     },
 
     async createWorldRule(
       currentUserId: string,
       worldRuleData: Create<WorldRuleInsert>,
     ): Promise<WorldRuleSelect> {
-      const newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
-      const result = await db.insert(worldRules).values(newWorldRule).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newWorldRule.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newWorldRule.storyId,
-        userIdToLog,
-        'create',
-        'WorldRule',
-        newWorldRule.id,
-        { ...newWorldRule },
-      ); // Pass serializable data
-
-      return result;
+      return worldRuleService.createWorldRule(currentUserId, worldRuleData);
     },
 
     async createChoice(
       currentUserId: string,
       choiceData: Create<ChoiceInsert>,
     ): Promise<ChoiceSelect> {
-      const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
-      const result = await db.insert(choices).values(newChoice).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newChoice.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newChoice.storyId,
-        userIdToLog,
-        'create',
-        'Choice',
-        newChoice.id,
-        { ...newChoice },
-      ); // Pass serializable data
-
-      return result;
+      return choiceService.createChoice(currentUserId, choiceData);
     },
 
     async checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult> {
@@ -836,9 +573,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const { storyChapters, storyScenes, storyChoices } = await loadStoryGraph(db, storyId);
       const nonEmptyChapters = groupScenesByChapter(storyChapters, storyScenes);
       const { intraEdgesByChapter } = classifyEdges(nonEmptyChapters, storyChoices);
-
-      const sceneService = createSceneService(db);
-      const choiceService = createChoiceService(db);
 
       const sceneUpdates: { sceneId: string; changes: { index: number } }[] = [];
       for (const { chapter, scenes: chapterScenes } of nonEmptyChapters) {

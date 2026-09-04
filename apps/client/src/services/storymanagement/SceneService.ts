@@ -14,6 +14,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -34,6 +35,7 @@ export interface SceneService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<SceneSelect[]>;
+  getSceneCount(storyId?: string): Promise<number>;
   getById(sceneId: string): Promise<SceneSelect | undefined>;
   createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
   updateScene(
@@ -141,6 +143,10 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
   };
 
   return {
+    async getSceneCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, scenes, storyId);
+    },
+
     async getScenesByStoryId(
       storyId,
       searchTerm,

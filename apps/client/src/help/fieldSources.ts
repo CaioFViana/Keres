@@ -30,7 +30,7 @@ export const fieldSources: Record<string, string[]> = {
     'extraNotes',
     'relationType',
   ],
-  chapters: ['name', 'summary', 'order', 'isFavorite', 'extraNotes'],
+  chapters: ['name', 'summary', 'order', 'arcId', 'isFavorite', 'extraNotes'],
   scenes: [
     'name',
     'summary',
@@ -80,6 +80,7 @@ export const fieldSources: Record<string, string[]> = {
     'isFavorite',
   ],
   boards: ['name', 'description'],
+  arcs: ['title', 'description', 'themeOverride'],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes', 'choiceSearch'],
   plots: ['name', 'details', 'note'],
   routes: ['name', 'details', 'sceneId', 'selectedChoiceId'],
@@ -150,7 +151,16 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   Chapter: {
-    documented: ['name', 'index', 'summary', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],
+    documented: [
+      'name',
+      'index',
+      'summary',
+      'arcId',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   Character: {
@@ -202,6 +212,20 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'updatedAt',
     ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  StoryArc: {
+    documented: ['title', 'description', 'themeOverride', 'createdAt', 'updatedAt'],
+    invisible: [
+      'id',
+      'storyId',
+      'sortOrder',
+      'color',
+      'icon',
+      'isDefault',
+      'version',
+      'isDeleted',
+      'deletedAt',
+    ],
   },
   CharacterRelation: {
     documented: ['character1Id', 'character2Id', 'relationType', 'createdAt', 'updatedAt'],

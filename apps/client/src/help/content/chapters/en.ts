@@ -43,6 +43,12 @@ const page: HelpPage = {
           note: 'Helps review the overall rhythm.',
         },
         {
+          key: 'arcId',
+          label: 'Arc',
+          whatToWrite: 'Choose the arc, volume or phase this chapter belongs to.',
+          note: 'Scenes in the chapter inherit that arc.',
+        },
+        {
           key: 'order',
           label: 'Order',
           whatToWrite: 'The intended reading position.',

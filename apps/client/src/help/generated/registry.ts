@@ -11,6 +11,8 @@ import appSettings_en from '../content/app-settings/en';
 import appSettings_pt from '../content/app-settings/pt';
 import appearance_en from '../content/appearance/en';
 import appearance_pt from '../content/appearance/pt';
+import arcs_en from '../content/arcs/en';
+import arcs_pt from '../content/arcs/pt';
 import boards_en from '../content/boards/en';
 import boards_pt from '../content/boards/pt';
 import branchingBasics_en from '../content/branching-basics/en';
@@ -138,6 +140,7 @@ export type GeneratedHelpPageId =
   | 'add-server'
   | 'app-settings'
   | 'appearance'
+  | 'arcs'
   | 'boards'
   | 'branching-basics'
   | 'calendars'
@@ -219,6 +222,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   appearance: {
     en: appearance_en,
     pt: appearance_pt,
+  },
+  arcs: {
+    en: arcs_en,
+    pt: arcs_pt,
   },
   boards: {
     en: boards_en,

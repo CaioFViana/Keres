@@ -103,6 +103,10 @@
           "title": "Location map",
           "body": "A graph of places inside places and the links between them."
         },
+        "locationMapCanvas": {
+          "title": "Location map canvas",
+          "body": "Arrange places and markers over a visual map, then keep the routes and containment relations at hand."
+        },
         "items": {
           "title": "Items",
           "body": "Important objects, their initial state, and who holds them."
@@ -130,6 +134,10 @@
         "favorites": {
           "title": "Favorites",
           "body": "Highlight what matters now and filter lists by it."
+        },
+        "boards": {
+          "title": "Boards",
+          "body": "Pin characters, scenes, items and notes on a free canvas, then draw the connections that help you plan."
         }
       }
     },
@@ -368,6 +376,14 @@
       "location-map": {
         "title": "Your world's map",
         "body": "Which places sit inside other places, and how someone gets from one to another."
+      },
+      "location-map-canvas": {
+        "title": "Map your locations",
+        "body": "Place story locations and free markers on a visual canvas, while keeping their real routes and containment visible."
+      },
+      "board-canvas": {
+        "title": "Make connections on a board",
+        "body": "Put characters, scenes, objects and writing notes together in a canvas made for thinking through a story."
       },
       "dashboard": {
         "title": "Where the story stands",

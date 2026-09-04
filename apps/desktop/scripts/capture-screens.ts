@@ -105,6 +105,26 @@ const SCREENS: Screen[] = [
     settleMs: 3500,
     press: FIT,
   },
+  // Alice's example deliberately connects story entities and an editorial note on a board. Open
+  // the list first, then use its real row so the canvas receives the freshly installed board id.
+  {
+    name: 'board-canvas',
+    stack: 'BoardsStack',
+    story: 'alice-in-wonderland',
+    press: { en: 'Decision threads', pt: 'Fios de decisão' },
+    pressWaitMs: 2500,
+  },
+  // Beauty and the Beast supplies the castle map from the examples matrix. As with boards, the
+  // list resolves the per-installation id before opening the actual canvas.
+  {
+    name: 'location-map-canvas',
+    stack: 'LocationsStack',
+    screen: 'LocationMapList',
+    story: 'beauty-and-the-beast',
+    settleMs: 1200,
+    press: { en: 'Castle map', pt: 'Mapa do castelo' },
+    pressWaitMs: 2500,
+  },
 ];
 
 const LANGUAGES = (process.env.KERES_CAPTURE_LANGS || 'en,pt').split(',');

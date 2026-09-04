@@ -270,7 +270,11 @@ export async function captureScreens(win: BrowserWindow, planPath: string): Prom
         console.log(`[capture][debug] ${shot.name}: ${JSON.stringify(texto)}`);
       }
       const target = path.join(plan.outputDirectory, `${shot.name}.png`);
-      await fs.writeFile(target, image.toPNG());
+      // `capturePage()` returns physical pixels, which changes with the operating system's display
+      // scaling. The showcase is a fixed CSS viewport, so normalize the file to that viewport too:
+      // otherwise the page declares 1440×900 while a 125%-scaled Windows capture writes 1803×1128.
+      const normalized = image.resize({ width: shot.width, height: shot.height, quality: 'best' });
+      await fs.writeFile(target, normalized.toPNG());
       console.log(`[capture] ${shot.name}.png  ${shot.width}x${shot.height}`);
     }
     app.exit(0);

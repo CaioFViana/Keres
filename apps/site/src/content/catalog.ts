@@ -20,6 +20,7 @@ export const FEATURE_GROUPS = [
       'timing',
       'locations',
       'locationMap',
+      'locationMapCanvas',
       'items',
       'itemJourneys',
       'worldRules',
@@ -27,6 +28,7 @@ export const FEATURE_GROUPS = [
       'tags',
       'gallery',
       'favorites',
+      'boards',
     ],
   },
   {
@@ -97,6 +99,8 @@ export const SHOWCASE_SCREENS = [
   // O mapa de locais é uma faixa baixa: fotografado na janela cheia, sobrava meia página em
   // branco embaixo do desenho.
   { id: 'location-map', width: 1440, height: 560 },
+  { id: 'location-map-canvas', width: 1440, height: 900 },
+  { id: 'board-canvas', width: 1440, height: 900 },
   { id: 'dashboard', width: 1440, height: 900 },
 ] as const;
 

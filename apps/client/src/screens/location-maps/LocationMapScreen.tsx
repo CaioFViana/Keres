@@ -40,6 +40,7 @@ import { createLocationRelationService } from '../../services/storymanagement/Lo
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useLocationMapDraftStore } from '../../state/locationMapDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
+import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -59,6 +60,7 @@ const LocationMapScreen = () => {
   const { showNotification } = useNotificationStore();
   const navigateToEntity = useNavigateToEntityDetail();
   const canvasRef = useRef<LocationMapCanvasHandle>(null);
+  const showcaseRequest = readShowcaseRequest();
   const [map, setMap] = useState<LocationMapSelect | null>(null);
   const [content, setContent] = useState<LocationMapContentType>({ images: [], nodes: [] });
   const [savedContent, setSavedContent] = useState<LocationMapContentType>({
@@ -146,6 +148,16 @@ const LocationMapScreen = () => {
       savedContent,
     });
   }, [map, mapId, content, savedContent, storyId]);
+  // A location map mounts once before its asynchronous document arrives. On a normal opening that
+  // leaves the camera at the editing origin; for the website capture, frame the installed example
+  // after its pins are present so the screenshot actually documents the canvas.
+  useEffect(() => {
+    const isLocationMapShowcase =
+      showcaseRequest?.stack === 'LocationsStack' && showcaseRequest.screen === 'LocationMapList';
+    if (!isLocationMapShowcase || loading || !map || content.nodes.length === 0) return;
+    const frame = requestAnimationFrame(() => canvasRef.current?.fitToScreen());
+    return () => cancelAnimationFrame(frame);
+  }, [content.nodes.length, loading, map, showcaseRequest]);
   const save = useCallback(async () => {
     if (!userId || !map) return;
     try {

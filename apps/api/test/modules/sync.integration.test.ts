@@ -9,7 +9,7 @@ import {
   scenes,
   stories,
 } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -42,11 +42,7 @@ const createCharacter = (id: string, name: string, version = 0) => ({
 beforeEach(async () => {
   await truncateAll();
   ana = await registerUser('ana');
-  const { data } = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'A Queda', type: 'linear' },
-  });
-  storyId = data.id;
+  storyId = (await uploadTestStory(ana.token)).id;
 });
 
 describe('POST /sync/:storyId', () => {
@@ -410,10 +406,7 @@ describe('POST /sync/:storyId', () => {
    */
   it("rejects a Story update targeting a different story than the one in the URL, even one the pusher doesn't own", async () => {
     const bia = await registerUser('bia');
-    const { data: biaStory } = await request('POST', '/stories/', {
-      token: bia.token,
-      body: { title: "Bia's story", type: 'linear' },
-    });
+    const biaStory = await uploadTestStory(bia.token, "Bia's story");
 
     const { data } = await push(ana.token, storyId, [
       {
@@ -436,10 +429,7 @@ describe('POST /sync/:storyId', () => {
 
   it("rejects a Story delete targeting a different story than the one in the URL, even one the pusher doesn't own", async () => {
     const bia = await registerUser('bia');
-    const { data: biaStory } = await request('POST', '/stories/', {
-      token: bia.token,
-      body: { title: "Bia's story", type: 'linear' },
-    });
+    const biaStory = await uploadTestStory(bia.token, "Bia's story");
 
     const { data } = await push(ana.token, storyId, [
       { type: 'delete', entity: 'Story', id: biaStory.id, version: 1 },
@@ -772,8 +762,8 @@ describe('GET /sync/pullpreviews', () => {
    * never notice.
    */
   it("reports the story's actual lastOperationVersion, not the Story row's own version", async () => {
-    // Two pushes, not one: lastOperationVersion starts at 0 and the story's own creation (via
-    // POST /stories/, outside the operation log) never bumps it, so a single push landing on 1
+    // Two pushes, not one: lastOperationVersion starts at 0 and the snapshot import, outside the
+    // operation log, never bumps it, so a single push landing on 1
     // wouldn't distinguish "tracks real operations" from "coincidentally already 1". A second
     // push moving it to 2 does.
     await push(ana.token, storyId, [createCharacter(newId(), 'Keres')]);
@@ -934,10 +924,7 @@ describe('sync authorization hardening', () => {
 
   it('does not let a writer move a character into another story', async () => {
     const bia = await registerUser('bia');
-    const { data: biaStory } = await request('POST', '/stories/', {
-      token: bia.token,
-      body: { title: 'Outra', type: 'linear' },
-    });
+    const biaStory = await uploadTestStory(bia.token, 'Outra');
     await grantWriter(ana, bia, storyId);
     const characterId = newId();
     await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);

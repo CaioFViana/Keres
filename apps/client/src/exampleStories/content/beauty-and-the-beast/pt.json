@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "Um mercador arruinado colhe uma rosa que não lhe foi oferecida, e a dívida que contrai é paga pela filha que a pediu.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5Y4JJS92VMS71584SPQASF80B5"
     },
     {
       "id": "3RHY907SK09KVW2D3KBXBQGC6X",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "Bela recebe tudo no castelo, menos a única coisa que pede, e recusa a única coisa que lhe pedem, toda noite, por todo o tempo em que fica.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5Y4JJS92VMS71584SPQASF80B5"
     },
     {
       "id": "3B7MBBWTCYB5BXSZX3A70HR1FZ",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "As irmãs a seguram além do prazo de propósito. O que ela faz com o espelho decide qual dos dois finais a Fada permite.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5Y4JJS92VMS71584SPQASF80B5"
     }
   ],
   "scenes": [
@@ -2714,7 +2717,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "3BTX03KBYDNT42RERRB6BBW4YE",
@@ -3419,5 +3422,23 @@
     }
   ],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "5Y4JJS92VMS71584SPQASF80B5",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

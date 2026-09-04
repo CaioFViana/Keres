@@ -55,6 +55,19 @@ describe('story export integrity', () => {
     expect(findStoryExportIntegrityViolations(buildExport())).toEqual([]);
   });
 
+  it('refuses a chapter assigned to an Arc the package does not carry', () => {
+    const violations = findStoryExportIntegrityErrors(
+      buildExport({
+        storyArcs: [{ id: 'arc-a', storyId: 'story-1' }],
+        chapters: [{ id: 'chapter-1', storyId: 'story-1', name: 'One', arcId: 'arc-missing' }],
+      }),
+    );
+
+    expect(violations).toMatchObject([
+      { kind: 'dangling_reference', collection: 'chapters', ids: ['chapter-1'] },
+    ]);
+  });
+
   it('refuses the same pair of characters related twice', () => {
     const violations = findStoryExportIntegrityErrors(
       buildExport({

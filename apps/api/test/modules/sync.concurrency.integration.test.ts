@@ -7,7 +7,7 @@ import {
   TierLimitExceededError,
   tierEnforcementService,
 } from '../../src/services/TierEnforcementService';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -31,11 +31,7 @@ const createCharacter = (id: string, name: string) => ({
 beforeEach(async () => {
   await truncateAll();
   ana = await registerUser('ana');
-  const { data } = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'A Queda', type: 'linear' },
-  });
-  storyId = data.id;
+  storyId = (await uploadTestStory(ana.token)).id;
 });
 
 /**

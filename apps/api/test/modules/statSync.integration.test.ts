@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 /**
@@ -41,11 +41,7 @@ const statValue = (id: string, value: number, modeId: string | null = null) =>
 beforeEach(async () => {
   await truncateAll();
   ana = await registerUser('ana');
-  const { data } = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'A Queda', type: 'linear' },
-  });
-  storyId = data.id;
+  storyId = (await uploadTestStory(ana.token)).id;
   characterId = newId();
   statId = newId();
 

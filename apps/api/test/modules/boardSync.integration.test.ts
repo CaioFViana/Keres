@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let user: TestUser;
@@ -12,11 +12,7 @@ describe('boards through the sync endpoint', () => {
   beforeEach(async () => {
     await truncateAll();
     user = await registerUser('board-user');
-    const { data } = await request('POST', '/stories/', {
-      token: user.token,
-      body: { title: 'Board sync', type: 'linear' },
-    });
-    storyId = data.id;
+    storyId = (await uploadTestStory(user.token, 'Board sync')).id;
   });
 
   it('accepts a creation followed by an edit of the same board', async () => {

@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "Um casal de velhos sem filhos encontra uma criança dentro de um talo de bambu, e o bambuzal passa a pagar pelo sustento dela na mesma velocidade em que ela cresce.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "42TME5NTAAP4TYS69XA318P7ZV"
     },
     {
       "id": "6M6G64JEZYMA9WS96HET7RQ06Q",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "Kaguya-hime nunca recusa ninguém. Pede a cada um de cinco nobres uma coisa que não existe, e quatro deles voltam mentindo.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "42TME5NTAAP4TYS69XA318P7ZV"
     },
     {
       "id": "35XSVK3C9TWRWGE6Y2XBEZBH74",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "O Imperador não pode ser adiado com uma tarefa impossível, e a Lua não pode ser adiada de forma alguma. Tudo o que Kaguya-hime deixa para trás acaba não valendo nada para quem a queria.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "42TME5NTAAP4TYS69XA318P7ZV"
     }
   ],
   "scenes": [
@@ -1236,7 +1239,13 @@
         "minutesPerHour": 60,
         "hoursPerDay": 24,
         "daysPerWeek": 5,
-        "weekdayNames": ["Bambu", "Névoa", "Lua", "Vento", "Estrela"],
+        "weekdayNames": [
+          "Bambu",
+          "Névoa",
+          "Lua",
+          "Vento",
+          "Estrela"
+        ],
         "unitNames": {},
         "months": [
           {
@@ -2545,7 +2554,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "5RE90XMEW0CDRTM0J3CRTDR5KY",
@@ -3443,5 +3452,23 @@
   "storyBoards": [],
   "storyLocationMaps": [],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "42TME5NTAAP4TYS69XA318P7ZV",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

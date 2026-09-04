@@ -6,6 +6,7 @@ import {
   boards,
   chapterAnchors,
   storyCalendars,
+  storyArcs,
   chapters,
   characterRelations,
   characterScenes,
@@ -65,6 +66,7 @@ const id = {
   event: '',
   chapterAnchor: '',
   storyCalendar: '',
+  storyArc: '',
   board: '',
   locationMap: '',
   location: '',
@@ -214,10 +216,23 @@ beforeEach(async () => {
     statNotation: 'letter',
   } as never);
 
+  await db.insert(storyArcs).values({
+    id: id.storyArc,
+    storyId,
+    title: 'A chegada',
+    isDefault: true,
+  } as never);
   await db.insert(chapters).values([
-    { id: id.chapter, storyId, name: 'Primeira noite', index: 1 },
+    { id: id.chapter, storyId, name: 'Primeira noite', index: 1, arcId: id.storyArc },
     // An event, so the package carries both kinds of container and a chronology between them.
-    { id: id.event, storyId, name: 'A guerra de trezentos anos', index: 1, type: 'event' },
+    {
+      id: id.event,
+      storyId,
+      name: 'A guerra de trezentos anos',
+      index: 1,
+      type: 'event',
+      arcId: id.storyArc,
+    },
   ] as never);
 
   await db.insert(locations).values([
@@ -553,6 +568,7 @@ async function childrenOf(storyId: string) {
   const rows = async (table: any) =>
     await db.select().from(table).where(eq(table.storyId, storyId));
   return {
+    storyArcs: await rows(storyArcs),
     chapters: await rows(chapters),
     scenes: await rows(scenes),
     choices: await rows(choices),
@@ -649,6 +665,9 @@ describe('import of a package with one row of every kind', () => {
       return found;
     };
     const character = byName(after.characters, 'Ilda');
+    expect(after.storyArcs).toHaveLength(1);
+    expect(after.storyArcs[0].isDefault).toBe(true);
+    expect(after.chapters.every((chapter: any) => chapter.arcId === after.storyArcs[0].id)).toBe(true);
     const otherCharacter = byName(after.characters, 'Bento');
     const location = byName(after.locations, 'O farol');
     const scene = byName(after.scenes, 'A maré sobe');

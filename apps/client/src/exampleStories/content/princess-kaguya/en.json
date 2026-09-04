@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "An old couple with no children find one inside a bamboo stalk, and the grove keeps paying for her upkeep as fast as she grows.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "42TME5NTAAP4TYS69XA318P7ZV"
     },
     {
       "id": "6M6G64JEZYMA9WS96HET7RQ06Q",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "Kaguya-hime never refuses anyone. She asks each of five nobles for a thing that does not exist, and four of them come back lying.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "42TME5NTAAP4TYS69XA318P7ZV"
     },
     {
       "id": "35XSVK3C9TWRWGE6Y2XBEZBH74",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "The Emperor cannot be put off with an impossible task, and the Moon cannot be put off at all. Everything Kaguya-hime leaves behind turns out to be worthless to the people who wanted her.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "42TME5NTAAP4TYS69XA318P7ZV"
     }
   ],
   "scenes": [
@@ -1236,7 +1239,13 @@
         "minutesPerHour": 60,
         "hoursPerDay": 24,
         "daysPerWeek": 5,
-        "weekdayNames": ["Bamboo", "Mist", "Moon", "Wind", "Star"],
+        "weekdayNames": [
+          "Bamboo",
+          "Mist",
+          "Moon",
+          "Wind",
+          "Star"
+        ],
         "unitNames": {},
         "months": [
           {
@@ -2545,7 +2554,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "5RE90XMEW0CDRTM0J3CRTDR5KY",
@@ -3443,5 +3452,23 @@
   "storyBoards": [],
   "storyLocationMaps": [],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "42TME5NTAAP4TYS69XA318P7ZV",
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

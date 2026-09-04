@@ -238,6 +238,22 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     description: location.description,
   }));
 
+  // Examples are installed as current-format stories, not migrated at install time. They therefore
+  // carry the same default Arc that a newly created local Story receives, and every chapter belongs
+  // to it from the outset.
+  const storyArcs = [
+    {
+      ...base(id('arc-default'), storyId),
+      title: 'Arc',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+    },
+  ];
+
   const chapters = Array.from({ length: 3 }, (_, index) => {
     const old = source.chapters?.[index];
     return {
@@ -246,6 +262,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       storyId,
       name: old?.name,
       index: index + 1,
+      arcId: storyArcs[0].id,
       summary: old?.summary ?? null,
       isFavorite: false,
       extraNotes: old?.extraNotes ?? null,
@@ -990,6 +1007,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     favorites,
     chapterAnchors,
     storyCalendars,
+    storyArcs,
     storyBoards,
     storyLocationMaps,
     stats,

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { galleries } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -69,11 +69,7 @@ beforeEach(async () => {
   await truncateAll();
   ana = await registerUser('ana');
   bia = await registerUser('bia');
-  const { data } = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'A Queda', type: 'linear' },
-  });
-  storyId = data.id;
+  storyId = (await uploadTestStory(ana.token)).id;
 });
 
 describe('POST /media/:storyId/blobs/status', () => {
@@ -236,10 +232,7 @@ describe('GET /media/:storyId/blobs/:hash', () => {
   it('does not let a second story borrow media it never referenced', async () => {
     await upload(ana.token, PNG_HASH, PNG_BYTES);
     await referenceInGallery(PNG_HASH);
-    const { data: outra } = await request('POST', '/stories/', {
-      token: ana.token,
-      body: { title: 'Outra', type: 'linear' },
-    });
+    const outra = await uploadTestStory(ana.token, 'Outra');
 
     const { status } = await download(ana.token, PNG_HASH, outra.id);
 

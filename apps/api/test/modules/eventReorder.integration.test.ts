@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { chapters } from '../../src/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 /**
@@ -23,14 +23,7 @@ let chapterB: string;
 let eventA: string;
 let eventB: string;
 
-const createStory = async () => {
-  const { status, data } = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'A Queda', type: 'linear' },
-  });
-  if (status !== 200) throw new Error(`Could not create the story (${status}).`);
-  return data.id as string;
-};
+const createStory = async () => (await uploadTestStory(ana.token)).id;
 
 const seedContainer = async (
   id: string,

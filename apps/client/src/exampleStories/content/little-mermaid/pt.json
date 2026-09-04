@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "A mais nova de seis irmãs quer a superfície antes de ter permissão, e assim que a vê lhe explicam quanto vai custar querê-la.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5KGCBMDG1EF1ZBDBF34R4QMZ3R"
     },
     {
       "id": "5D461WEBAZSWYPMCAJ53D8HKNC",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "A Bruxa do Mar enuncia suas condições por inteiro e as cumpre à risca. O que ela omite não é mentira - é apenas o que ninguém pergunta.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5KGCBMDG1EF1ZBDBF34R4QMZ3R"
     },
     {
       "id": "0T8G49MXY19NWBZ7GTFGBFADZS",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "O príncipe se casa com a mulher que acredita tê-lo salvado, e à pequena sereia é oferecida uma única saída, que exige dela tirar uma vida.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5KGCBMDG1EF1ZBDBF34R4QMZ3R"
     }
   ],
   "scenes": [
@@ -2245,7 +2248,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "2JJF4PBQY4WHGDMB4TRCBEZ75D",
@@ -3200,5 +3203,23 @@
     }
   ],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "5KGCBMDG1EF1ZBDBF34R4QMZ3R",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

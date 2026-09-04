@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "Alice segue algo impossível por tédio e vai parar num lugar com regras próprias, nenhuma das quais alguém se dispõe a explicar.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5K5WF9F6DSNYS8V2SX5XW9KW0K"
     },
     {
       "id": "3J3T30CXGHN1EHF9270KT6NXDZ",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "O País das Maravilhas não é sem lei. Suas leis são perfeitamente coerentes e completamente arbitrárias, e Alice é a única presente que acha isso digno de objeção.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5K5WF9F6DSNYS8V2SX5XW9KW0K"
     },
     {
       "id": "45FMQ8ZDZAETK2QVAW2GRQWKDH",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "A Rainha sentencia primeiro e julga depois. Alice pode sair da corte em silêncio ou dizer em voz alta que aquilo tudo é um absurdo, e os dois caminhos terminam de formas diferentes.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5K5WF9F6DSNYS8V2SX5XW9KW0K"
     }
   ],
   "scenes": [
@@ -2658,7 +2661,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "7NYM3XF0FN7TFK8K1F5HPJ6FGF",
@@ -3380,5 +3383,23 @@
   ],
   "storyLocationMaps": [],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "5K5WF9F6DSNYS8V2SX5XW9KW0K",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

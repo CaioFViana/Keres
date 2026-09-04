@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FriendshipService } from '../../src/services/FriendshipService';
 import { StoryPermissionService } from '../../src/services/StoryPermissionService';
-import { registerUser, request, type TestUser } from '../helpers/app';
+import { registerUser, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -18,11 +18,7 @@ beforeEach(async () => {
   permissionService = new StoryPermissionService();
   await friendshipService.sendFriendRequest(ana.userId, bia.userId);
   await friendshipService.acceptFriendRequest(bia.userId, ana.userId);
-  const created = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'Shared story', type: 'linear' },
-  });
-  storyId = created.data.id;
+  storyId = (await uploadTestStory(ana.token, 'Shared story')).id;
 });
 
 describe('collaboration services', () => {

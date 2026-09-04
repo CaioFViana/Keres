@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "Cinderella's place in her father's house once her stepmother takes charge, and the royal invitation that finally gives her something to lose.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "1R6SHZ6BAH1AH556Q9KCQBX26J"
     },
     {
       "id": "06D75D8WYKM42APDSDZ80TTE47",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "The Fairy Godmother lends rather than gives. Everything Cinderella gains that night is borrowed against a deadline she agrees to in advance.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "1R6SHZ6BAH1AH556Q9KCQBX26J"
     },
     {
       "id": "4TAEB6B6YJWZR96RTDS031AN0R",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "The one thing the spell fails to take back travels the kingdom house by house, until the household that hid her has to answer the door.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "1R6SHZ6BAH1AH556Q9KCQBX26J"
     }
   ],
   "scenes": [
@@ -1182,7 +1185,14 @@
         "minutesPerHour": 60,
         "hoursPerDay": 24,
         "daysPerWeek": 6,
-        "weekdayNames": ["Moon", "Venus", "Mars", "Mercury", "Jupiter", "Saturn"],
+        "weekdayNames": [
+          "Moon",
+          "Venus",
+          "Mars",
+          "Mercury",
+          "Jupiter",
+          "Saturn"
+        ],
         "unitNames": {},
         "months": [
           {
@@ -2482,7 +2492,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "3RKMCE7M176WMZ9M36KZVYZA2D",
@@ -3380,5 +3390,23 @@
   "storyBoards": [],
   "storyLocationMaps": [],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "1R6SHZ6BAH1AH556Q9KCQBX26J",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

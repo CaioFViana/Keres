@@ -112,7 +112,6 @@ const FILES_OVER_THE_LIMIT = [
   'screens/characters/CharacterFormScreen.tsx',
   'screens/enterstack/ServerRegistrationScreen.tsx',
   'screens/locations/LocationFormScreen.tsx',
-  'screens/mainstorystack/StorySettingsScreen.tsx',
   'screens/narrative-elements/chapters/NarrativeElementsListScreen.tsx',
   'screens/narrative-elements/choices/ChoiceViewScreen.tsx',
   'screens/narrative-elements/scenes/SceneDetailScreen.tsx',

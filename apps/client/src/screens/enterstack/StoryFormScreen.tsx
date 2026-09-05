@@ -5,7 +5,8 @@ import EntityFormContainer from '@/src/components/common/forms/EntityFormContain
 import Button from '@/src/components/common/controls/Button/Button';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
+import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
+import type { Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,
@@ -57,16 +58,7 @@ const StoryFormScreen = () => {
   const canEdit = !storyId || canEditExisting;
   const canManageStoryPolicy = !storyId || canManageExistingPolicy;
 
-  const [title, setTitle] = useState('');
-  const [type, setType] = useState<'linear' | 'branching'>('linear');
-  const [description, setDescription] = useState<string | null>(null);
-  const [genre, setGenre] = useState<string | null>(null);
-  const [language, setLanguage] = useState<string | null>(null);
-  const [author, setAuthor] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
-
+  const identity = useStoryIdentityDraft();
   const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
   const [deleting, setDeleting] = useState(false);
@@ -83,15 +75,7 @@ const StoryFormScreen = () => {
           setLoading(true);
           const fetchedStory = await storyService().getStoryById(storyId, userId ?? undefined);
           if (fetchedStory) {
-            setTitle(fetchedStory.title);
-            setType(fetchedStory.type);
-            setDescription(fetchedStory.description);
-            setGenre(fetchedStory.genre);
-            setLanguage(fetchedStory.language);
-            setAuthor(fetchedStory.author);
-            setIsFavorite(fetchedStory.isFavorite);
-            setFavoriteBehavior(fetchedStory.favoriteBehavior);
-            setExtraNotes(fetchedStory.extraNotes);
+            identity.applyStoryIdentity(fetchedStory);
           } else {
             setError(t('story_not_found'));
           }
@@ -106,7 +90,7 @@ const StoryFormScreen = () => {
       }
     };
     loadStory();
-  }, [storyId, storyService, userId, t]);
+  }, [storyId, storyService, userId, t, identity.applyStoryIdentity]);
 
   useEffect(() => {
     if (storyId) return;
@@ -120,7 +104,7 @@ const StoryFormScreen = () => {
     runSave(async () => {
       if (!canEdit) return;
 
-      if (!title.trim()) {
+      if (!identity.title.trim()) {
         AppAlert.alert(t('error'), t('title_required'));
         return;
       }
@@ -139,14 +123,14 @@ const StoryFormScreen = () => {
           // edit them). Sending hardcoded defaults used to reset those fields, and a writer
           // sending `allowReaderComments: false` would now be rejected as owner-only policy.
           await storyService().updateStory(userId, storyId, {
-            title: title.trim(),
-            description,
-            genre,
-            language,
-            author,
-            isFavorite,
-            extraNotes,
-            ...(canManageStoryPolicy ? { favoriteBehavior } : {}),
+            title: identity.title.trim(),
+            description: identity.description,
+            genre: identity.genre,
+            language: identity.language,
+            author: identity.author,
+            isFavorite: identity.isFavorite,
+            extraNotes: identity.extraNotes,
+            ...(canManageStoryPolicy ? { favoriteBehavior: identity.favoriteBehavior } : {}),
           });
           AppAlert.alert(t('success'), t('story_updated_successfully'));
         } else {
@@ -155,15 +139,15 @@ const StoryFormScreen = () => {
             'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'
           > = {
             userId: userId!,
-            title: title.trim(),
-            type,
-            description,
-            genre,
-            language,
-            author,
-            isFavorite,
-            favoriteBehavior,
-            extraNotes,
+            title: identity.title.trim(),
+            type: identity.type,
+            description: identity.description,
+            genre: identity.genre,
+            language: identity.language,
+            author: identity.author,
+            isFavorite: identity.isFavorite,
+            favoriteBehavior: identity.favoriteBehavior,
+            extraNotes: identity.extraNotes,
             // Appearance is configured after creation under Customization. `null` selects the
             // application default and keeps old exports and newly-created stories consistent.
             theme: null,
@@ -306,26 +290,10 @@ const StoryFormScreen = () => {
       )}
 
       <StoryFieldsForm
-        title={title}
-        onTitleChange={setTitle}
-        type={type}
-        onTypeChange={setType}
+        {...identity.storyFieldsFormProps}
+        onTypeChange={identity.setType}
         typeDisabled={!!storyId || !canEdit}
         favoriteBehaviorDisabled={!canManageStoryPolicy}
-        description={description}
-        onDescriptionChange={setDescription}
-        genre={genre}
-        onGenreChange={setGenre}
-        author={author}
-        onAuthorChange={setAuthor}
-        language={language}
-        onLanguageChange={setLanguage}
-        isFavorite={isFavorite}
-        onIsFavoriteChange={setIsFavorite}
-        favoriteBehavior={favoriteBehavior}
-        onFavoriteBehaviorChange={setFavoriteBehavior}
-        extraNotes={extraNotes}
-        onExtraNotesChange={setExtraNotes}
         editable={canEdit}
       />
 

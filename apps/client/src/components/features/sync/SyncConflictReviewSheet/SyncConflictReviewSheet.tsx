@@ -1,17 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../../../db';
-import {
-  buildConflictSummaries,
-  collectConflictEntityRefs,
-  collectEntityRefs,
-} from '../../../../services/ConflictSummaryService';
-import {
-  createEntityNameBatchResolver,
-  createEntitySnapshotResolver,
-} from '../../../../services/EntityNameBatchResolver';
+import { useConflictReviewData } from '../../../../hooks/useConflictReviewData';
+import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
@@ -36,58 +28,14 @@ interface SyncConflictReviewSheetProps {
 const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visible, onClose }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const db = useDrizzle();
-
   const conflicts = useSyncConflictStore((state) => state.conflicts);
-  const isResolving = useSyncConflictStore((state) => state.isResolving);
-  const keepLocal = useSyncConflictStore((state) => state.keepLocal);
-  const keepServer = useSyncConflictStore((state) => state.keepServer);
-  const keepServerAndCloneBoard = useSyncConflictStore((state) => state.keepServerAndCloneBoard);
+  const { isResolving, keepLocal, keepServer, keepServerAndCloneBoard } = useSyncConflictActions();
   const userId = useUserSettingsStore((state) => state.userId);
   const selectedConflictId = useSyncConflictStore((state) => state.selectedConflictId);
   const selectConflict = useSyncConflictStore((state) => state.selectConflict);
   const clearSelection = useSyncConflictStore((state) => state.clearSelection);
-
-  const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
-  const [names, setNames] = useState<Map<string, string>>(new Map());
+  const { summaries } = useConflictReviewData(conflicts);
   const [detailConflictId, setDetailConflictId] = useState<string | null>(null);
-
-  // Two phases: first each conflict's own local row (it fills in what
-  // `deleted_on_server` leaves missing in `localValues`/`serverValues` - the name of a content
-  // entity, or a relation's IDs), and only then is it possible to know which other entities
-  // (the characters of a `CharacterRelation`, for instance) need their name resolved.
-  useEffect(() => {
-    let cancelled = false;
-    const snapshotRefs = collectConflictEntityRefs(conflicts);
-    if (snapshotRefs.length === 0) {
-      setSnapshots(new Map());
-      setNames(new Map());
-      return;
-    }
-    (async () => {
-      const resolvedSnapshots = await createEntitySnapshotResolver(db).resolveMany(snapshotRefs);
-      if (cancelled) return;
-      setSnapshots(resolvedSnapshots);
-
-      const nameRefs = collectEntityRefs(conflicts, resolvedSnapshots);
-      if (nameRefs.length === 0) {
-        setNames(new Map());
-        return;
-      }
-      const resolvedNames = await createEntityNameBatchResolver(db).resolveMany(nameRefs);
-      if (!cancelled) setNames(resolvedNames);
-    })().catch((error) => {
-      console.log('SyncConflictReviewSheet: failed to resolve entity names.', error);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [db, conflicts]);
-
-  const summaries = useMemo(
-    () => buildConflictSummaries(conflicts, snapshots, names, t),
-    [conflicts, snapshots, names, t],
-  );
 
   const sections = useMemo(() => {
     const relations = summaries.filter((summary) => summary.kind === 'relation');
@@ -111,12 +59,12 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
           text: t('conflict_confirm_action'),
           onPress: () => {
             setDetailConflictId(null);
-            void keepLocal(db, conflictId);
+            void keepLocal(conflictId);
           },
         },
       ]);
     },
-    [db, keepLocal, t],
+    [keepLocal, t],
   );
 
   const resolveKeepServer = useCallback(
@@ -128,12 +76,12 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
           style: 'destructive',
           onPress: () => {
             setDetailConflictId(null);
-            void keepServer(db, conflictId);
+            void keepServer(conflictId);
           },
         },
       ]);
     },
-    [db, keepServer, t],
+    [keepServer, t],
   );
 
   const resolveCloneBoard = useCallback(
@@ -146,7 +94,6 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
           onPress: () => {
             setDetailConflictId(null);
             void keepServerAndCloneBoard(
-              db,
               conflictId,
               userId,
               t('board_copy_name', { name: boardName }),
@@ -155,7 +102,7 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
         },
       ]);
     },
-    [db, keepServerAndCloneBoard, t, userId],
+    [keepServerAndCloneBoard, t, userId],
   );
 
   const styles = StyleSheet.create({

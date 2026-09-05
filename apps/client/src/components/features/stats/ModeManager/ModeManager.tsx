@@ -1,3 +1,4 @@
+import { getEntityAppearance } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +10,7 @@ import { AppAlert } from '../../../../utils/AppAlert';
 import Button from '../../../common/controls/Button/Button';
 import FormActions from '../../../common/controls/FormActions/FormActions';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '../../../common/display/EntityRelationList/EntityRelationList';
 import TextInput from '../../../common/inputs/TextInput/TextInput';
 
 /**
@@ -32,26 +34,19 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
   const [changes, setChanges] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const appearance = getEntityAppearance('Mode');
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        row: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 12,
-          borderBottomColor: colors.border,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-        },
-        name: { color: colors.text, fontSize: 15, fontWeight: '600' },
-        changes: { color: colors.textSecondary, marginTop: 4 },
+        actions: { flexDirection: 'row', gap: 10, marginLeft: 8 },
         iconButton: { padding: 8 },
+        changes: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
         // The app's inputs have `marginBottom: 0` (see commonStyles), so the vertical spacing has to come from
         // here - without it, label, field and button end up glued together.
         form: { marginTop: 20, gap: 8 },
         label: { color: colors.text, fontWeight: 'bold', marginTop: 8, marginBottom: 6 },
         firstLabel: { marginTop: 0 },
         saveButton: { marginTop: 12 },
-        empty: { color: colors.textSecondary, paddingVertical: 12 },
       }),
     [colors],
   );
@@ -107,19 +102,20 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
 
   return (
     <CollapsibleCard title={`${t('modes_title')} (${modes.length})`}>
-      {modes.length === 0 ? <Text style={styles.empty}>{t('modes_empty')}</Text> : null}
-      {modes.map((mode) => (
-        <View key={mode.id} style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{mode.name}</Text>
-            {mode.modeChanges ? (
-              <Text style={styles.changes} numberOfLines={2}>
-                {mode.modeChanges}
-              </Text>
-            ) : null}
-          </View>
-          {editable ? (
-            <>
+      <EntityRelationList
+        emptyText={t('modes_empty')}
+        items={modes.map((mode) => ({
+          id: mode.id,
+          title: mode.name,
+          icon: appearance.icon as keyof typeof Ionicons.glyphMap,
+          color: appearance.color,
+          details: mode.modeChanges ? (
+            <Text style={styles.changes} numberOfLines={2}>
+              {mode.modeChanges}
+            </Text>
+          ) : undefined,
+          trailing: editable ? (
+            <View style={styles.actions}>
               <TouchableOpacity
                 style={styles.iconButton}
                 accessibilityLabel={t('mode_edit')}
@@ -129,19 +125,19 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
                   setChanges(mode.modeChanges ?? '');
                 }}
               >
-                <Ionicons name="pencil-outline" size={20} color={colors.primary} />
+                <Ionicons name="create-outline" size={22} color={colors.primary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconButton}
                 accessibilityLabel={t('delete')}
                 onPress={() => handleDelete(mode)}
               >
-                <Ionicons name="trash-outline" size={20} color={colors.error} />
+                <Ionicons name="trash-outline" size={22} color={colors.error} />
               </TouchableOpacity>
-            </>
-          ) : null}
-        </View>
-      ))}
+            </View>
+          ) : undefined,
+        }))}
+      />
 
       {editable ? (
         <View style={styles.form}>

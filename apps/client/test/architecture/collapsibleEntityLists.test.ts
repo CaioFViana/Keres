@@ -29,8 +29,6 @@ const COLLAPSIBLE_CARDS_WITHOUT_ENTITY_ROWS = [
   'components/common/display/SummaryCard/SummaryCard.tsx',
   'components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor.tsx',
   'screens/mainstorystack/StoryAnalysisScreen.tsx',
-  // Still draws its own entity rows. Remove this name when it uses EntityRelationList.
-  'components/features/stats/ModeManager/ModeManager.tsx',
 ];
 
 describe('collapsible entity lists', () => {

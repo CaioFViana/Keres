@@ -1,16 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { OperationLogEntityType } from '@keres/shared';
-import { eq } from 'drizzle-orm';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import { useDrizzle } from '../../../db';
 import type { CommentSelect } from '../../../db/schema';
-import { servers, stories } from '../../../db/schema';
+import { useAuthorProfiles } from '../../../hooks/useAuthorProfiles';
 import { useCommentFieldLabel } from '../../../hooks/useCommentFieldLabel';
 import { useEntityName } from '../../../hooks/useEntityName';
-import type { ResolvedUserProfile } from '../../../hooks/useUserProfileResolver';
-import { useUserProfileResolver } from '../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../theme';
 import type { CommentCriticality } from '../../../utils/commentCriticality';
 import { CRITICALITY_ICONS } from '../../../utils/commentCriticality';
@@ -22,33 +18,14 @@ interface CommentListItemProps {
 
 const CommentListItem: React.FC<CommentListItemProps> = ({ comment, onPress }) => {
   const { colors } = useTheme();
-  const db = useDrizzle();
-  const resolveProfile = useUserProfileResolver();
   const { entityName } = useEntityName(
     comment.entityType as OperationLogEntityType,
     comment.entityId,
     comment.storyId,
   );
   const fieldLabel = useCommentFieldLabel(comment.entityType, comment.fieldKey, comment.fieldId);
-  const [author, setAuthor] = useState<ResolvedUserProfile | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const story = await db.query.stories.findFirst({
-        where: eq(stories.id, comment.storyId),
-        columns: { serverId: true },
-      });
-      const storyServer = story?.serverId
-        ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
-        : undefined;
-      const profile = await resolveProfile(comment.authorUserId, storyServer);
-      if (!cancelled) setAuthor(profile);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, comment.storyId, comment.authorUserId, resolveProfile]);
+  const profiles = useAuthorProfiles(comment.storyId, [comment.authorUserId]);
+  const author = profiles[comment.authorUserId] ?? null;
 
   const styles = StyleSheet.create({
     cardContainer: {

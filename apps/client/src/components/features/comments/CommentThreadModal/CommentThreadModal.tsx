@@ -4,15 +4,11 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Ionicons } from '@expo/vector-icons';
-import { eq } from 'drizzle-orm';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../../../db';
 import type { CommentSelect } from '../../../../db/schema';
-import { servers, stories } from '../../../../db/schema';
-import type { ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
-import { useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
+import { useAuthorProfiles } from '../../../../hooks/useAuthorProfiles';
 import { useTheme } from '../../../../theme';
 import { AppAlert } from '../../../../utils/AppAlert';
 import type { CommentCriticality } from '../../../../utils/commentCriticality';
@@ -65,10 +61,12 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const db = useDrizzle();
-  const resolveProfile = useUserProfileResolver();
+  const authorIds = useMemo(
+    () => comments.map((comment) => comment.authorUserId),
+    [comments],
+  );
+  const profiles = useAuthorProfiles(storyId, authorIds, visible);
 
-  const [profiles, setProfiles] = useState<Record<string, ResolvedUserProfile>>({});
   const [commentText, setCommentText] = useState('');
   const [excerptText, setExcerptText] = useState('');
   const [criticality, setCriticality] = useState<CommentCriticality>(DEFAULT_CRITICALITY);
@@ -78,30 +76,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     () => [...comments].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
     [comments],
   );
-
-  useEffect(() => {
-    if (!visible) return;
-    let cancelled = false;
-    (async () => {
-      const story = await db.query.stories.findFirst({
-        where: eq(stories.id, storyId),
-        columns: { serverId: true },
-      });
-      const storyServer = story?.serverId
-        ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
-        : undefined;
-      const uniqueAuthorIds = Array.from(new Set(comments.map((comment) => comment.authorUserId)));
-      const resolved = await Promise.all(
-        uniqueAuthorIds.map((authorId) => resolveProfile(authorId, storyServer)),
-      );
-      if (!cancelled) {
-        setProfiles(Object.fromEntries(resolved.map((profile) => [profile.id, profile])));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [visible, comments, db, storyId, resolveProfile]);
 
   const excerptMismatch =
     excerptText.trim().length > 0 && !fieldValueSnapshot.includes(excerptText.trim());

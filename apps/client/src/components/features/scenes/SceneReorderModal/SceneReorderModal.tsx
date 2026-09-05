@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../../../db';
 import type { SceneSelect } from '../../../../db/schema';
-import { useChapterStore } from '../../../../state/chapterStore';
+import { useBindChapterStore } from '../../../../hooks/useBindChapterStore';
 import { useTheme } from '../../../../theme';
 import { buildReorderItems } from '@keres/shared';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -31,32 +30,13 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const drizzleDb = useDrizzle();
-  const {
-    chapters,
-    fetchChapters,
-    setDbAndStoryId: setChapterDbAndStoryId,
-    initializeService: initializeChapterService,
-  } = useChapterStore();
+  const { chapters } = useBindChapterStore(storyId, isVisible);
 
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(initialChapterId);
 
   useEffect(() => {
     if (isVisible) setSelectedChapterId(initialChapterId);
   }, [initialChapterId, isVisible]);
-
-  useEffect(() => {
-    if (drizzleDb && storyId) {
-      setChapterDbAndStoryId(drizzleDb, storyId);
-      initializeChapterService();
-    }
-  }, [drizzleDb, storyId, setChapterDbAndStoryId, initializeChapterService]);
-
-  useEffect(() => {
-    if (isVisible && storyId) {
-      fetchChapters();
-    }
-  }, [isVisible, storyId, fetchChapters]);
 
   const sortedScenesInChapter = useMemo(() => {
     if (!selectedChapterId) return [];

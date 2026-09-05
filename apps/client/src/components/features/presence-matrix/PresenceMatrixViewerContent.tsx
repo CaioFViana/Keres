@@ -5,20 +5,8 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import type {
-  CharacterSelect,
-  ChapterSelect,
-  ItemJourneySelect,
-  ItemSelect,
-  SceneSelect,
-} from '../../../db/schema';
-import { useDrizzle } from '../../../db';
-import { createCharacterSceneService } from '../../../services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '../../../services/storymanagement/CharacterService';
-import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createItemJourneyService } from '../../../services/storymanagement/ItemJourneyService';
-import { createItemService } from '../../../services/storymanagement/ItemService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
+import type { CharacterSelect, ItemSelect } from '../../../db/schema';
+import { usePresenceMatrixCatalog } from '../../../hooks/usePresenceMatrixCatalog';
 import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
@@ -59,13 +47,9 @@ const PresenceMatrixViewerContent: React.FC<{
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
-  const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
   const notify = useNotificationStore((state) => state.showNotification);
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
-  const [characters, setCharacters] = useState<CharacterSelect[]>([]);
-  const [scenes, setScenes] = useState<SceneSelect[]>([]);
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
   /**
    * Events are out by default.
    *
@@ -74,20 +58,26 @@ const PresenceMatrixViewerContent: React.FC<{
    * things at once. Available, not assumed.
    */
   const [includeEvents, setIncludeEvents] = useState(false);
-  const [presence, setPresence] = useState<{ characterId: string; sceneId: string }[]>([]);
-  const [items, setItems] = useState<ItemSelect[]>([]);
   const [itemIds, setItemIds] = useState<string[]>(
     request.kind === 'item' && request.itemId ? [request.itemId] : [],
   );
-  const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
   const [ids, setIds] = useState<string[]>(
     request.kind === 'character' && request.characterId ? [request.characterId] : [],
   );
+  const {
+    characters,
+    scenes,
+    chapters,
+    presence,
+    items,
+    journeys,
+    loading,
+    fetchAllItemJourneys,
+  } = usePresenceMatrixCatalog(story?.id, itemIds, request.kind === 'item');
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [selectedItemDetailsId, setSelectedItemDetailsId] = useState<string | null>(null);
   const [bulkOrderVisible, setBulkOrderVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const characterColorOf = useCallback(
     (id: string) => seriesColor(Math.max(0, ids.indexOf(id)), ids.length),
@@ -101,48 +91,7 @@ const PresenceMatrixViewerContent: React.FC<{
     setIds(request.kind === 'character' && request.characterId ? [request.characterId] : []);
     setItemIds(request.kind === 'item' && request.itemId ? [request.itemId] : []);
   }, [request]);
-  useEffect(() => {
-    if (!story) return;
-    (async () => {
-      setLoading(true);
-      try {
-        const [cs, ss, hs, ps, loadedItems] = await Promise.all([
-          createCharacterService(db).getAllByStoryId(story.id),
-          createSceneService(db).getAllByStoryId(story.id),
-          // Both kinds: the matrix needs to *know* about events even while leaving them out,
-          // or a scene inside one is drawn with no container name and sorted to the front.
-          createChapterService(db).getAllByStoryId(story.id, null),
-          createCharacterSceneService(db).getRelationsByStoryId(story.id),
-          createItemService(db).getAllByStoryId(story.id),
-        ]);
-        setCharacters(cs.filter((x) => !x.isDeleted));
-        setScenes(ss.filter((x) => !x.isDeleted));
-        setChapters(hs.filter((x) => !x.isDeleted));
-        setPresence(ps.filter((x) => !x.isDeleted));
-        setItems(loadedItems.filter((x) => !x.isDeleted));
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [db, story]);
-  useEffect(() => {
-    if (!story || request.kind !== 'item') {
-      setJourneys([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const journeysByItem = await Promise.all(
-        itemIds.map((itemId) =>
-          createItemJourneyService(db).getItemJourneysByItemId(story.id, itemId),
-        ),
-      );
-      if (!cancelled) setJourneys(journeysByItem.flat().filter((entry) => !entry.isDeleted));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, itemIds, request.kind, story]);
+
   const selectedItems = useMemo(
     () =>
       itemIds.map((id) => items.find((entry) => entry.id === id)).filter(Boolean) as ItemSelect[],
@@ -223,15 +172,7 @@ const PresenceMatrixViewerContent: React.FC<{
       );
       setIds(ordered.map((entry) => entry.id));
     } else if (story) {
-      const allJourneys = (
-        await Promise.all(
-          items.map((entry) =>
-            createItemJourneyService(db).getItemJourneysByItemId(story.id, entry.id),
-          ),
-        )
-      )
-        .flat()
-        .filter((entry) => !entry.isDeleted);
+      const allJourneys = await fetchAllItemJourneys();
       const firstAppearance = (id: string) =>
         Math.min(
           ...allJourneys
@@ -244,7 +185,6 @@ const PresenceMatrixViewerContent: React.FC<{
           ? firstAppearance(a.id) - firstAppearance(b.id) || compareByNameThenCreation(a, b)
           : compareByNameThenCreation(a, b),
       );
-      setJourneys(allJourneys);
       setItemIds(ordered.map((entry) => entry.id));
     }
     setBulkOrderVisible(false);

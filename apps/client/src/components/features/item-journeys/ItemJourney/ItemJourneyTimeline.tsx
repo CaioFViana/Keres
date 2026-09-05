@@ -1,28 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../../../db';
-import type {
-  CharacterSelect,
-  ChapterSelect,
-  ChoiceSelect,
-  ItemJourneySelect,
-  ItemSelect,
-  SceneSelect,
-} from '../../../../db/schema';
+import type { ItemSelect } from '../../../../db/schema';
 import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { createCharacterService } from '../../../../services/storymanagement/CharacterService';
-import { createChapterService } from '../../../../services/storymanagement/ChapterService';
-import { createChoiceService } from '../../../../services/storymanagement/ChoiceService';
-import { createItemJourneyService } from '../../../../services/storymanagement/ItemJourneyService';
-import { createSceneService } from '../../../../services/storymanagement/SceneService';
+import { useItemJourneyTimelineData } from '../../../../hooks/useItemJourneyTimelineData';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useSceneCalendarDates } from '../../../../hooks/useSceneCalendarDates';
 import { useTheme } from '../../../../theme';
-import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
@@ -48,58 +35,11 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
-  const drizzleDb = useDrizzle();
   const { dateForScene } = useSceneCalendarDates(storyId);
-
-  const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
-  const [scenes, setScenes] = useState<SceneSelect[]>([]);
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
-  const [choices, setChoices] = useState<ChoiceSelect[]>([]);
-  const [characters, setCharacters] = useState<CharacterSelect[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadedRef = useRef(false);
-
-  const load = useCallback(async () => {
-    if (!drizzleDb || !storyId) return;
-    if (!loadedRef.current) setLoading(true);
-    try {
-      const [fetchedJourneys, fetchedScenes, fetchedChapters, fetchedChoices, fetchedCharacters] =
-        await Promise.all([
-          createItemJourneyService(drizzleDb).getItemJourneysByItemId(storyId, item.id),
-          createSceneService(drizzleDb).getAllByStoryId(storyId),
-          createChapterService(drizzleDb).getAllByStoryId(storyId),
-          createChoiceService(drizzleDb).getAllByStoryId(storyId),
-          createCharacterService(drizzleDb).getAllByStoryId(storyId),
-        ]);
-      setJourneys(fetchedJourneys);
-      setScenes(fetchedScenes);
-      setChapters(fetchedChapters);
-      setChoices(fetchedChoices);
-      setCharacters(fetchedCharacters);
-    } catch (err) {
-      console.error('Failed to load item journey timeline:', err);
-    } finally {
-      loadedRef.current = true;
-      setLoading(false);
-    }
-  }, [drizzleDb, storyId, item.id]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    const handleChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) {
-        load();
-      }
-    };
-    entityEventEmitter.on('item_journey_changed', handleChange);
-    return () => {
-      entityEventEmitter.off('item_journey_changed', handleChange);
-    };
-  }, [storyId, load]);
+  const { journeys, scenes, chapters, choices, characters, loading } = useItemJourneyTimelineData(
+    storyId,
+    item.id,
+  );
 
   const chapterColorById = buildChapterColors(chapters);
   const sceneById = new Map(scenes.map((scene) => [scene.id, scene]));

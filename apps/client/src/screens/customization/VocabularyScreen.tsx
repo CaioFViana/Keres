@@ -90,11 +90,10 @@ const VocabularyTermCard = memo(
             marginTop: 14,
           },
           title: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 },
-          labels: { flexDirection: 'row', gap: 10, marginBottom: 5 },
-          label: { color: colors.textSecondary, fontSize: 12, flex: 1 },
-          fields: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-          word: { flex: 1 },
+          fields: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+          column: { flex: 1, minWidth: 0 },
           gender: { width: 136 },
+          label: { color: colors.textSecondary, fontSize: 12, marginBottom: 5 },
           empty: { color: colors.textSecondary, fontSize: 12, marginTop: 7 },
         }),
       [colors],
@@ -103,30 +102,28 @@ const VocabularyTermCard = memo(
     return (
       <View style={styles.card}>
         <Text style={styles.title}>{t(`vocabulary_term_${type}`)}</Text>
-        <View style={styles.labels}>
-          <Text style={styles.label}>{t('vocabulary_singular')}</Text>
-          <Text style={styles.label}>{t('vocabulary_plural')}</Text>
-          {language === 'pt' && (
-            <Text style={[styles.label, { flex: 0, width: 136 }]}>{t('vocabulary_gender')}</Text>
-          )}
-        </View>
         <View style={styles.fields}>
-          <TextInput
-            style={styles.word}
-            testID={`vocabulary-${type}-singular`}
-            value={term.singular}
-            onChangeText={(value) => onChange(type, 'singular', value)}
-            editable={editable}
-          />
-          <TextInput
-            style={styles.word}
-            testID={`vocabulary-${type}-plural`}
-            value={term.plural}
-            onChangeText={(value) => onChange(type, 'plural', value)}
-            editable={editable}
-          />
+          <View style={styles.column}>
+            <Text style={styles.label}>{t('vocabulary_singular')}</Text>
+            <TextInput
+              testID={`vocabulary-${type}-singular`}
+              value={term.singular}
+              onChangeText={(value) => onChange(type, 'singular', value)}
+              editable={editable}
+            />
+          </View>
+          <View style={styles.column}>
+            <Text style={styles.label}>{t('vocabulary_plural')}</Text>
+            <TextInput
+              testID={`vocabulary-${type}-plural`}
+              value={term.plural}
+              onChangeText={(value) => onChange(type, 'plural', value)}
+              editable={editable}
+            />
+          </View>
           {language === 'pt' && (
             <View style={styles.gender}>
+              <Text style={styles.label}>{t('vocabulary_gender')}</Text>
               <SingleSelectPill
                 value={term.grammaticalGender}
                 onValueChange={(value) =>
@@ -138,6 +135,7 @@ const VocabularyTermCard = memo(
                   { value: 'neutral', label: t('vocabulary_gender_neutral') },
                 ]}
                 disabled={!editable}
+                style={{ marginBottom: 0 }}
               />
             </View>
           )}

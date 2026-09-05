@@ -10,12 +10,8 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useDrizzle } from '../../../../db';
-import type {
-  SuggestionServiceInterface,
-  SuggestionType,
-} from '../../../../services/storymanagement/SuggestionService';
-import { createSuggestionService } from '../../../../services/storymanagement/SuggestionService';
+import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import { useSuggestions } from '../../../../hooks/useSuggestions';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import Button from '@/src/components/common/controls/Button/Button'; // Reusing existing Button
@@ -42,44 +38,16 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const drizzleDb = useDrizzle();
   const { height: screenHeight } = useWindowDimensions();
   const commonInputStyles = getCommonInputStyles(colors);
+  const { suggestions, loading: loadingSuggestions, reload } = useSuggestions(storyId, type);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<[string, number][]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Initialize SuggestionService
-  const suggestionService: SuggestionServiceInterface | null = useMemo(() => {
-    if (drizzleDb) {
-      return createSuggestionService(drizzleDb);
-    }
-    return null;
-  }, [drizzleDb]);
-
-  const fetchSuggestions = useCallback(async () => {
-    if (!suggestionService || !type || !storyId) {
-      setSuggestions([]);
-      return;
-    }
-
-    setLoadingSuggestions(true);
-    try {
-      const fetched = await suggestionService.getSuggestions(type, storyId); // Use storyId prop
-      setSuggestions(fetched);
-    } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
-      setSuggestions([]);
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  }, [suggestionService, type, storyId]);
-
   useEffect(() => {
-    fetchSuggestions();
-  }, [fetchSuggestions, storyId]);
+    void reload();
+  }, [reload]);
 
   const filteredSuggestions = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
@@ -97,7 +65,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       closeSuggestions();
     } else {
       setShowSuggestions(true);
-      fetchSuggestions();
+      void reload();
     }
   };
 

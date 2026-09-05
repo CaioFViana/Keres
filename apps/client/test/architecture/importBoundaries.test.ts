@@ -85,21 +85,8 @@ const graph = new Map(sourceFiles.map((path) => [path, valueImportsOf(path)]));
  * drawing layer - its place is in a screen or a hook, with the data arriving by prop.
  */
 const COMPONENTS_THAT_STILL_FETCH = [
-  'components/common/forms/CustomAttributeFields/AttributeValueInput.tsx',
-  'components/common/forms/CustomAttributeFields/CustomAttributeDetailFields.tsx',
-  'components/common/inputs/SuggestionListInput/SuggestionListInput.tsx',
-  'components/common/inputs/SuggestionTextInput/SuggestionTextInput.tsx',
+  // App bootstrap: wires auth, sync and the local database before any screen mounts.
   'components/features/app/SyncInitializer.tsx',
-  'components/features/comments/CommentList/CommentList.tsx',
-  'components/features/comments/CommentThreadModal/CommentThreadModal.tsx',
-  'components/features/favorites/FavoritedByList/FavoritedByList.tsx',
-  'components/features/item-journeys/ItemJourney/ItemJourneyTimeline.tsx',
-  'components/features/list-items/CommentListItem.tsx',
-  'components/features/operation-log/OperationLogList/OperationLogList.tsx',
-  'components/features/presence-matrix/PresenceMatrixViewerContent.tsx',
-  'components/features/scenes/SceneReorderModal/SceneReorderModal.tsx',
-  'components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet.tsx',
-  'components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet.tsx',
 ];
 
 /**
@@ -112,12 +99,12 @@ const ENTITY_DETAIL_SCREEN =
 
 /** Shared lifecycle owners that refresh visible data from local entity events. */
 const SHARED_REFRESH_LIFECYCLE_OWNERS = [
-  'components/common/forms/CustomAttributeFields/CustomAttributeDetailFields.tsx',
   'components/features/app/SyncInitializer.tsx',
-  'components/features/comments/CommentList/CommentList.tsx',
-  'components/features/favorites/FavoritedByList/FavoritedByList.tsx',
-  'components/features/operation-log/OperationLogList/OperationLogList.tsx',
   'hooks/useAppearsInArcs.ts',
+  'hooks/useCustomAttributeValues.ts',
+  'hooks/useFavoriters.ts',
+  'hooks/useOperationLogs.ts',
+  'hooks/useStoryComments.ts',
   'hooks/useChapterNames.ts',
   'hooks/useEntityComments.ts',
   'hooks/useSeeAlsoRelations.ts',

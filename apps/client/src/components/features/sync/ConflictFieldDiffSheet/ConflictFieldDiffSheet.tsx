@@ -2,10 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../../../db';
 import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
 import type { PendingConflict } from '../../../../services/SyncConflictService';
-import { useSyncConflictStore } from '../../../../state/syncConflictStore';
+import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
@@ -36,11 +35,7 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const drizzleDb = useDrizzle();
-
-  const isResolving = useSyncConflictStore((state) => state.isResolving);
-  const keepLocal = useSyncConflictStore((state) => state.keepLocal);
-  const keepServer = useSyncConflictStore((state) => state.keepServer);
+  const { isResolving, keepLocal, keepServer } = useSyncConflictActions();
 
   const [fieldChoices, setFieldChoices] = useState<Record<string, FieldChoice>>({});
 
@@ -66,14 +61,14 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
           ]),
         )
       : undefined;
-    await keepLocal(drizzleDb, conflict.id, chosenValues);
+    await keepLocal(conflict.id, chosenValues);
     onClose();
-  }, [conflict, fieldChoices, hasServerChoice, keepLocal, drizzleDb, onClose]);
+  }, [conflict, fieldChoices, hasServerChoice, keepLocal, onClose]);
 
   const handleKeepServer = useCallback(async () => {
-    await keepServer(drizzleDb, conflict.id);
+    await keepServer(conflict.id);
     onClose();
-  }, [conflict.id, keepServer, drizzleDb, onClose]);
+  }, [conflict.id, keepServer, onClose]);
 
   const keepMineLabel = hasServerChoice ? t('conflict_apply_merge') : t('conflict_keep_mine');
 

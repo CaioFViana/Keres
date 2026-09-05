@@ -11,18 +11,11 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
   entityName = 'WorldRule';
 
   constructor() {
-    super(
-      'worldRules', // Pass table name as string
-      'id',
-      'version',
-      CreateWorldRuleDataSchema,
-      PartialWorldRuleSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateWorldRuleDataSchema, PartialWorldRuleSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(): Promise<void> {

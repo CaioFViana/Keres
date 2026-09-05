@@ -11,7 +11,7 @@ export class StoryArcSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StoryArc';
 
   constructor() {
-    super('storyArcs', 'id', 'version', CreateStoryArcDataSchema, PartialStoryArcSchema, {
+    super('id', 'version', CreateStoryArcDataSchema, PartialStoryArcSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

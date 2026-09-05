@@ -16,7 +16,7 @@ export class RouteSyncHandler extends BaseSyncEntityHandler<
 > {
   entityName = 'Route';
   constructor() {
-    super('routes', 'id', 'version', CreateRouteDataSchema, PartialRouteSchema, {
+    super('id', 'version', CreateRouteDataSchema, PartialRouteSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

@@ -12,7 +12,7 @@ export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
   entityName = 'ChoiceCheck';
 
   constructor() {
-    super('choiceChecks', 'id', 'version', CreateChoiceCheckDataSchema, PartialChoiceCheckSchema, {
+    super('id', 'version', CreateChoiceCheckDataSchema, PartialChoiceCheckSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

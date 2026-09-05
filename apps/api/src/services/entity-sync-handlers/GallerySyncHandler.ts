@@ -30,18 +30,11 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
   entityName = 'Gallery';
 
   constructor() {
-    super(
-      'galleries', // Pass table name as string
-      'id',
-      'version',
-      CreateGalleryDataSchema,
-      PartialGallerySchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateGalleryDataSchema, PartialGallerySchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   /**

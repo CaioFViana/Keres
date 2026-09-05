@@ -14,18 +14,11 @@ export class CharacterSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Character';
 
   constructor() {
-    super(
-      'characters', // Pass table name as string
-      'id',
-      'version',
-      CreateCharacterDataSchema,
-      PartialCharacterSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateCharacterDataSchema, PartialCharacterSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {

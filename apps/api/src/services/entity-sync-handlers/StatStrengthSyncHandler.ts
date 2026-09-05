@@ -16,18 +16,11 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StatStrength';
 
   constructor() {
-    super(
-      'statStrengths',
-      'id',
-      'version',
-      CreateStatStrengthDataSchema,
-      PartialStatStrengthSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStatStrengthDataSchema, PartialStatStrengthSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async assertStatExists(storyId: string, statId: string | null): Promise<void> {

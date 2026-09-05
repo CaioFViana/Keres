@@ -17,7 +17,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Scene';
 
   constructor() {
-    super('scenes', 'id', 'version', CreateSceneDataSchema, PartialSceneSchema, {
+    super('id', 'version', CreateSceneDataSchema, PartialSceneSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

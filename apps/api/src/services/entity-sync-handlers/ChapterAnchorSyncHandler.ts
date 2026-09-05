@@ -19,18 +19,11 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
   entityName = 'ChapterAnchor';
 
   constructor() {
-    super(
-      'chapterAnchors',
-      'id',
-      'version',
-      CreateChapterAnchorDataSchema,
-      PartialChapterAnchorSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateChapterAnchorDataSchema, PartialChapterAnchorSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async assertExists(

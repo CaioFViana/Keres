@@ -11,18 +11,11 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Note';
 
   constructor() {
-    super(
-      'notes', // Pass table name as string
-      'id',
-      'version',
-      CreateNoteDataSchema,
-      PartialNoteSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateNoteDataSchema, PartialNoteSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(): Promise<void> {

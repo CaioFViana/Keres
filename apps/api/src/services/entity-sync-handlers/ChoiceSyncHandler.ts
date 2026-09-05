@@ -17,18 +17,11 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Choice';
 
   constructor() {
-    super(
-      'choices', // Pass table name as string
-      'id',
-      'version',
-      CreateChoiceDataSchema,
-      PartialChoiceSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateChoiceDataSchema, PartialChoiceSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(

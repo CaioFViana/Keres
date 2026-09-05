@@ -1,6 +1,7 @@
 import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
+  EffectiveStoryRole,
   StoryUpdate,
   SyncConflictReason,
   UpdateStoryUpdate,
@@ -15,7 +16,26 @@ import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import type { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import type { z } from 'zod'; // Import Zod
 import { db } from '../../db';
-import * as dbSchema from '../../db/schema'; // Import the entire schema
+import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
+
+/**
+ * Shared API implementation for database-backed entity sync handlers. It provides generic OCC,
+ * tombstone, validation, lookup, and log-payload behavior; concrete handlers own their table's
+ * creation rules and any entity-specific access policy exposed to SyncPushService.
+ */
+
+/** Policy context supplied by the protocol coordinator, not by the database-backed entity itself. */
+export type SyncOperationPolicyContext = {
+  userId: string;
+  storyId: string;
+  role: EffectiveStoryRole;
+  allowReaderComments: boolean;
+  update: StoryUpdate;
+};
+
+export type SyncEntityMutationPolicyContext = SyncOperationPolicyContext & {
+  currentEntity: Record<string, any>;
+};
 
 /**
  * Refusal of an operation the *user* can resolve, as opposed to a programming or infrastructure error.
@@ -100,6 +120,14 @@ export interface SyncEntityHandler {
   createPayloadMatches(existing: any, incomingData: Record<string, any>): boolean;
   /** Counts non-deleted rows of this entity in the given stories. Used by TierEnforcementService. */
   countForStoryIds(storyIds: string[]): Promise<number>;
+  allowsReaderWrite(context: SyncOperationPolicyContext): boolean;
+  assertOperationAllowed(context: SyncOperationPolicyContext): void;
+  assertEntityMutationAllowed(context: SyncEntityMutationPolicyContext): void;
+  prepareDelete(
+    context: SyncEntityMutationPolicyContext,
+    update: DeleteStoryUpdate,
+  ): DeleteStoryUpdate;
+  tierLimitScope: 'story' | 'entity' | 'none';
   /** Deleted rows (tombstones), optionally restricted to one story. Used by AdminRecoveryService. */
   findDeleted(storyId?: string): Promise<
     Array<{
@@ -120,7 +148,7 @@ export abstract class BaseSyncEntityHandler<
 > implements SyncEntityHandler
 {
   abstract entityName: string;
-  protected _tableName: keyof typeof dbSchema; // Store the table name as a string
+  tierLimitScope: 'story' | 'entity' | 'none' = 'entity';
   protected idColumnName: string;
   protected storyIdColumnName?: string;
   protected userIdColumnName?: string;
@@ -130,17 +158,16 @@ export abstract class BaseSyncEntityHandler<
   protected createSchema: CreateType; // Zod schema for creation
   protected updateSchema: UpdateType; // Zod schema for updates
 
-  // Getter to dynamically retrieve the table object
+  /** The API entity-table registry is the sole mapping from a domain entity to host persistence. */
   protected get table(): PgTableWithColumns<any> {
-    const table = dbSchema[this._tableName];
+    const table = getApiEntityTable(this.entityName);
     if (!table) {
-      throw new Error(`Table '${this._tableName}' not found in schema.`);
+      throw new Error(`No table registered for sync entity '${this.entityName}'.`);
     }
     return table as PgTableWithColumns<any>;
   }
 
   constructor(
-    tableName: keyof typeof dbSchema, // Accept table name as string
     idColumnName: string,
     versionColumnName: string,
     createSchema: CreateType, // New: Zod schema for creation
@@ -152,7 +179,6 @@ export abstract class BaseSyncEntityHandler<
       deletedAtColumnName?: string;
     },
   ) {
-    this._tableName = tableName;
     this.idColumnName = idColumnName;
     this.versionColumnName = versionColumnName;
     this.createSchema = createSchema;
@@ -392,6 +418,21 @@ export abstract class BaseSyncEntityHandler<
     return entity[this.storyIdColumnName] === storyId;
   }
 
+  allowsReaderWrite(_context: SyncOperationPolicyContext): boolean {
+    return false;
+  }
+
+  assertOperationAllowed(_context: SyncOperationPolicyContext): void {}
+
+  assertEntityMutationAllowed(_context: SyncEntityMutationPolicyContext): void {}
+
+  prepareDelete(
+    _context: SyncEntityMutationPolicyContext,
+    update: DeleteStoryUpdate,
+  ): DeleteStoryUpdate {
+    return update;
+  }
+
   /**
    * Optimistic concurrency control: the operation is only accepted if the client built it on the version
    * the server holds right now.
@@ -500,17 +541,7 @@ export abstract class BaseSyncEntityHandler<
     }
   }
 
-  private payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
-    const sanitized = omitSyncImmutableFields(parsed);
-    if (this.entityName === 'Favorite') {
-      sanitized.userId = actingUserId;
-    }
-    if (this.entityName === 'Comment') {
-      sanitized.authorUserId = actingUserId;
-    }
-    if (this.entityName === 'Story') {
-      delete sanitized.userId;
-    }
-    return sanitized;
+  protected payloadForLog(parsed: Record<string, any>, _actingUserId: string): Record<string, any> {
+    return omitSyncImmutableFields(parsed);
   }
 }

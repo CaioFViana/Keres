@@ -21,18 +21,11 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'CharacterRelation';
 
   constructor() {
-    super(
-      'characterRelations',
-      'id',
-      'version',
-      CreateCharacterRelationDataSchema,
-      PartialCharacterRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateCharacterRelationDataSchema, PartialCharacterRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(

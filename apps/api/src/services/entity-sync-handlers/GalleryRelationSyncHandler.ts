@@ -32,18 +32,11 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'GalleryRelation';
 
   constructor() {
-    super(
-      'galleryRelations',
-      'id',
-      'version',
-      CreateGalleryRelationDataSchema,
-      PartialGalleryRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateGalleryRelationDataSchema, PartialGalleryRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelation(

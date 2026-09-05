@@ -2,16 +2,34 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
 import { db } from '../../db';
 import { favorites } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import {
+  BaseSyncEntityHandler,
+  SyncConflictError,
+  type SyncOperationPolicyContext,
+} from './BaseSyncEntityHandler';
 
+/**
+ * Sync handler for per-user favourites. Favourites are personal metadata: readers may synchronize
+ * their own rows and the entity does not consume a story-content quota, while all mutations remain
+ * restricted to the row's owner.
+ */
 export class FavoriteSyncHandler extends BaseSyncEntityHandler<
   typeof CreateFavoriteDataSchema,
   typeof PartialFavoriteSchema
 > {
   entityName = 'Favorite';
+  tierLimitScope = 'none' as const;
+
+  allowsReaderWrite(_context: SyncOperationPolicyContext): boolean {
+    return true;
+  }
+
+  protected payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
+    return { ...super.payloadForLog(parsed, actingUserId), userId: actingUserId };
+  }
 
   constructor() {
-    super('favorites', 'id', 'version', CreateFavoriteDataSchema, PartialFavoriteSchema, {
+    super('id', 'version', CreateFavoriteDataSchema, PartialFavoriteSchema, {
       storyIdColumnName: 'storyId',
       userIdColumnName: 'userId',
       isDeletedColumnName: 'isDeleted',

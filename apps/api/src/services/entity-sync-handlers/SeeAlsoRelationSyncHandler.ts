@@ -42,18 +42,11 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'SeeAlsoRelation';
 
   constructor() {
-    super(
-      'seeAlsoRelations',
-      'id',
-      'version',
-      CreateSeeAlsoRelationDataSchema,
-      PartialSeeAlsoRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateSeeAlsoRelationDataSchema, PartialSeeAlsoRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntity(storyId: string, ref: EntityRef): Promise<void> {

@@ -29,7 +29,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'TagRelation';
 
   constructor() {
-    super('tagRelations', 'id', 'version', CreateTagRelationDataSchema, PartialTagRelationSchema, {
+    super('id', 'version', CreateTagRelationDataSchema, PartialTagRelationSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

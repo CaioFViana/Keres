@@ -17,7 +17,7 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Suggestion';
 
   constructor() {
-    super('suggestions', 'id', 'version', CreateSuggestionDataSchema, PartialSuggestionSchema, {
+    super('id', 'version', CreateSuggestionDataSchema, PartialSuggestionSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

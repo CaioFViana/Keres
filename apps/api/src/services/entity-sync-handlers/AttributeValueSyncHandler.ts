@@ -17,18 +17,11 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
   entityName = 'AttributeValue';
 
   constructor() {
-    super(
-      'attributeValues',
-      'id',
-      'version',
-      CreateAttributeValueDataSchema,
-      PartialAttributeValueSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateAttributeValueDataSchema, PartialAttributeValueSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {

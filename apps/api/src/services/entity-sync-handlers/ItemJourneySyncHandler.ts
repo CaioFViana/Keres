@@ -17,7 +17,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
   entityName = 'ItemJourney';
 
   constructor() {
-    super('itemJourneys', 'id', 'version', CreateItemJourneyDataSchema, PartialItemJourneySchema, {
+    super('id', 'version', CreateItemJourneyDataSchema, PartialItemJourneySchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

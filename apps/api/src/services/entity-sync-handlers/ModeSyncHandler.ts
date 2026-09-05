@@ -12,7 +12,7 @@ export class ModeSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Mode';
 
   constructor() {
-    super('modes', 'id', 'version', CreateModeDataSchema, PartialModeSchema, {
+    super('id', 'version', CreateModeDataSchema, PartialModeSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

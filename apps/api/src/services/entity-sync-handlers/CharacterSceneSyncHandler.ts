@@ -18,7 +18,6 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
 
   constructor() {
     super(
-      'characterScenes', // Table name
       'id', // Now using a single 'id' column
       'version',
       CreateCharacterSceneDataSchema,

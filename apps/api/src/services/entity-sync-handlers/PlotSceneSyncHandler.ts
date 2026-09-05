@@ -16,7 +16,7 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
 > {
   entityName = 'PlotScene';
   constructor() {
-    super('plotScenes', 'id', 'version', CreatePlotSceneDataSchema, PartialPlotSceneSchema, {
+    super('id', 'version', CreatePlotSceneDataSchema, PartialPlotSceneSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

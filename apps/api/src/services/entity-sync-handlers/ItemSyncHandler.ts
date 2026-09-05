@@ -17,7 +17,7 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Item';
 
   constructor() {
-    super('items', 'id', 'version', CreateItemDataSchema, PartialItemSchema, {
+    super('id', 'version', CreateItemDataSchema, PartialItemSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

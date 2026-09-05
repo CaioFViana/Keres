@@ -17,7 +17,7 @@ export class TagSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Tag';
 
   constructor() {
-    super('tags', 'id', 'version', CreateTagDataSchema, PartialTagSchema, {
+    super('id', 'version', CreateTagDataSchema, PartialTagSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

@@ -19,18 +19,11 @@ export class StoryCalendarSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StoryCalendar';
 
   constructor() {
-    super(
-      'storyCalendars',
-      'id',
-      'version',
-      CreateStoryCalendarDataSchema,
-      PartialStoryCalendarSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStoryCalendarDataSchema, PartialStoryCalendarSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {

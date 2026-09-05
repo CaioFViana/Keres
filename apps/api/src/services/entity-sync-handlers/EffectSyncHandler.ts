@@ -12,7 +12,7 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Effect';
 
   constructor() {
-    super('effects', 'id', 'version', CreateEffectDataSchema, PartialEffectSchema, {
+    super('id', 'version', CreateEffectDataSchema, PartialEffectSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

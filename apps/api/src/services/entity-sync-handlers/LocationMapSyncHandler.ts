@@ -17,7 +17,7 @@ export class LocationMapSyncHandler extends BaseSyncEntityHandler<
   entityName = 'LocationMap';
 
   constructor() {
-    super('locationMaps', 'id', 'version', CreateLocationMapDataSchema, PartialLocationMapSchema, {
+    super('id', 'version', CreateLocationMapDataSchema, PartialLocationMapSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

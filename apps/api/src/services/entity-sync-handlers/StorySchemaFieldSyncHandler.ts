@@ -22,18 +22,11 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StorySchemaField';
 
   constructor() {
-    super(
-      'storySchemaFields',
-      'id',
-      'version',
-      CreateStorySchemaFieldDataSchema,
-      PartialStorySchemaFieldSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStorySchemaFieldDataSchema, PartialStorySchemaFieldSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {

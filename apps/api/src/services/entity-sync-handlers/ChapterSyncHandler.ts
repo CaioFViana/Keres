@@ -18,18 +18,11 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Chapter';
 
   constructor() {
-    super(
-      'chapters', // Pass table name as string
-      'id',
-      'version',
-      CreateChapterDataSchema,
-      PartialChapterSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateChapterDataSchema, PartialChapterSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {

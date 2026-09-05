@@ -23,18 +23,11 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'LocationRelation';
 
   constructor() {
-    super(
-      'locationRelations',
-      'id',
-      'version',
-      CreateLocationRelationDataSchema,
-      PartialLocationRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateLocationRelationDataSchema, PartialLocationRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private sortLocationIds(id1: string, id2: string): [string, string] {

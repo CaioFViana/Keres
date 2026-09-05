@@ -11,18 +11,11 @@ export class LocationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Location';
 
   constructor() {
-    super(
-      'locations', // Pass table name as string
-      'id',
-      'version',
-      CreateLocationDataSchema,
-      PartialLocationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateLocationDataSchema, PartialLocationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {

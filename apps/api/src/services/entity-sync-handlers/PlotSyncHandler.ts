@@ -16,7 +16,7 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
 > {
   entityName = 'Plot';
   constructor() {
-    super('plots', 'id', 'version', CreatePlotDataSchema, PartialPlotSchema, {
+    super('id', 'version', CreatePlotDataSchema, PartialPlotSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

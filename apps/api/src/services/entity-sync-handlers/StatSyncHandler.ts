@@ -12,7 +12,7 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Stat';
 
   constructor() {
-    super('stats', 'id', 'version', CreateStatDataSchema, PartialStatSchema, {
+    super('id', 'version', CreateStatDataSchema, PartialStatSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

@@ -11,22 +11,71 @@ import {
   reorderIndicesProblem,
   StoryReorderingStoryUpdateSchema,
 } from '@keres/shared';
+import { ownerOnlyFieldsIn } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db } from '../../db';
 import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import {
+  BaseSyncEntityHandler,
+  SyncConflictError,
+  type SyncEntityMutationPolicyContext,
+  type SyncOperationPolicyContext,
+} from './BaseSyncEntityHandler';
 
+/**
+ * Sync handler for the story root. Besides persisting the Story row and its reorder operations, it
+ * owns the root-only policy: a sync endpoint may only target its own story and identity/policy
+ * changes or deletion require the story owner.
+ */
 export class StorySyncHandler extends BaseSyncEntityHandler<
   typeof CreateStoryDataSchema,
   typeof PartialStorySchema
 > {
   entityName = 'Story';
+  tierLimitScope = 'story' as const;
+
+  assertOperationAllowed(context: SyncOperationPolicyContext): void {
+    const { role, storyId, update } = context;
+    if (update.type === 'create' && update.id !== storyId) {
+      throw new SyncConflictError(
+        'unauthorized',
+        'Cannot create a different story through this sync endpoint.',
+      );
+    }
+    if (update.type === 'delete' && role !== 'owner') {
+      throw new SyncConflictError('unauthorized', 'Only the story owner can delete the story.');
+    }
+    if (update.type === 'update' && role !== 'owner') {
+      const attempted = ownerOnlyFieldsIn(update.changes as Record<string, unknown> | undefined);
+      if (attempted.length > 0 || update.changes?.isDeleted === false) {
+        throw new SyncConflictError(
+          'unauthorized',
+          'Only the story owner can change story identity or policy.',
+        );
+      }
+    }
+  }
+
+  prepareDelete(
+    context: SyncEntityMutationPolicyContext,
+    update: DeleteStoryUpdate,
+  ): DeleteStoryUpdate {
+    if (context.role === 'owner' && (update.version === undefined || update.version === null)) {
+      return { ...update, version: context.currentEntity.version };
+    }
+    return update;
+  }
+
+  protected payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
+    const payload = super.payloadForLog(parsed, actingUserId);
+    delete payload.userId;
+    return payload;
+  }
 
   constructor() {
     super(
-      'stories', // Pass table name as string
       'id',
       'version',
       CreateStoryDataSchema, // Pass create schema

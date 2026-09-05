@@ -17,7 +17,7 @@ export class BoardSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Board';
 
   constructor() {
-    super('boards', 'id', 'version', CreateBoardDataSchema, PartialBoardSchema, {
+    super('id', 'version', CreateBoardDataSchema, PartialBoardSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',

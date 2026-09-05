@@ -16,18 +16,11 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StatRelation';
 
   constructor() {
-    super(
-      'statRelations',
-      'id',
-      'version',
-      CreateStatRelationDataSchema,
-      PartialStatRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStatRelationDataSchema, PartialStatRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateReferences(

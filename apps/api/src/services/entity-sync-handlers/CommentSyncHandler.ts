@@ -2,16 +2,48 @@ import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from
 import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
 import { db } from '../../db';
 import { comments } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import {
+  BaseSyncEntityHandler,
+  SyncConflictError,
+  type SyncEntityMutationPolicyContext,
+  type SyncOperationPolicyContext,
+} from './BaseSyncEntityHandler';
 
+/**
+ * Sync handler for collaborative comments. It enforces author identity for creation and edits,
+ * defines when readers may write comments, and lets a story owner moderate deletion while keeping
+ * comment content itself author-owned.
+ */
 export class CommentSyncHandler extends BaseSyncEntityHandler<
   typeof CreateCommentDataSchema,
   typeof PartialCommentSchema
 > {
   entityName = 'Comment';
+  tierLimitScope = 'none' as const;
+
+  allowsReaderWrite(context: SyncOperationPolicyContext): boolean {
+    return context.allowReaderComments;
+  }
+
+  assertEntityMutationAllowed(context: SyncEntityMutationPolicyContext): void {
+    if (
+      context.update.type === 'delete' &&
+      context.role !== 'owner' &&
+      context.currentEntity.authorUserId !== context.userId
+    ) {
+      throw new SyncConflictError(
+        'unauthorized',
+        'Only the comment author or the story owner can delete this comment.',
+      );
+    }
+  }
+
+  protected payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
+    return { ...super.payloadForLog(parsed, actingUserId), authorUserId: actingUserId };
+  }
 
   constructor() {
-    super('comments', 'id', 'version', CreateCommentDataSchema, PartialCommentSchema, {
+    super('id', 'version', CreateCommentDataSchema, PartialCommentSchema, {
       storyIdColumnName: 'storyId',
       userIdColumnName: 'authorUserId',
       isDeletedColumnName: 'isDeleted',
@@ -27,8 +59,6 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
         'A user can only create comments under their own identity.',
       );
     }
-    // The reader/allowReaderComments gate was already applied in SyncService.processAndRecordUpdates
-    // before this method was called - nothing extra to check here about it.
     const now = this.parseOperationTime(update.operationTime);
     await db.insert(comments).values({
       id: update.id!,
@@ -72,8 +102,4 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     delete changes.contentSnapshot;
     await super.update(userId, storyId, { ...update, changes }, currentEntity);
   }
-
-  // delete() is not overridden: authorization (a story's owner can delete any comment; a writer/reader
-  // only their own) is already resolved in SyncService.processAndRecordUpdates, the only place where the
-  // user's `role` is available without extending the SyncEntityHandler interface just for this case.
 }

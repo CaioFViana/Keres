@@ -17,18 +17,11 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
   entityName = 'ChoiceCheckGroup';
 
   constructor() {
-    super(
-      'choiceCheckGroups',
-      'id',
-      'version',
-      CreateChoiceCheckGroupDataSchema,
-      PartialChoiceCheckGroupSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateChoiceCheckGroupDataSchema, PartialChoiceCheckGroupSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(storyId: string, choiceId: string): Promise<void> {

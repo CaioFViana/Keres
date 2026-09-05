@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
-import FormActions from '../../components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
@@ -21,7 +20,7 @@ import { createStoryService } from '../../services/storymanagement/StoryService'
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonInputStyles } from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
 /**
@@ -186,7 +185,6 @@ const PackFormScreen = () => {
   ]);
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors),
     switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -194,6 +192,7 @@ const PackFormScreen = () => {
       marginBottom: 14,
     },
     switchLabels: { flex: 1, marginRight: 12 },
+    label: { fontSize: 16, fontWeight: 'bold', color: colors.text },
     switchHint: { color: colors.textSecondary, fontSize: 13 },
     nested: { marginLeft: 18 },
     cancelButton: { backgroundColor: colors.secondary },
@@ -225,95 +224,89 @@ const PackFormScreen = () => {
   );
 
   return (
-    // `KeyboardAwareScreen` is itself the scroll view; a second one nested inside it took the
-    // scrolling away from the one that knows where the keyboard is.
-    <EntityFormContainer>
-      <>
-        <FormField label={t('packs_source_story')}>
-          <SingleSelectPill
-            value={sourceStoryId}
-            onValueChange={(value) => value && chooseStory(value)}
-            options={stories.map((story) => ({ label: story.title, value: story.id }))}
-            placeholder={t('packs_source_placeholder')}
-            // Re-extraction is always from the story the pack came from; changing it would make the
-            // "same pack, new version" promise a lie.
-            disabled={Boolean(packId)}
-          />
-        </FormField>
-
-        <ScreenSection title={t('packs_contents')} />
-        {renderToggle(
-          'customAttributes',
-          'packs_toggle_attributes',
-          'packs_toggle_attributes_hint',
-        )}
-        {renderToggle('tags', 'packs_toggle_tags', 'packs_toggle_tags_hint')}
-        {renderToggle('stats', 'packs_toggle_stats', 'packs_toggle_stats_hint')}
-        {renderToggle('suggestions', 'packs_toggle_suggestions', 'packs_toggle_suggestions_hint')}
-        {renderToggle(
-          'suggestionsIncludeUsed',
-          'packs_toggle_suggestions_used',
-          'packs_toggle_suggestions_used_hint',
-          true,
-          !selection.suggestions,
-        )}
-
-        <ScreenSection title={t('packs_details')} />
-        <FormField label={t('name')}>
-          {(fieldAccessibility) => (
-            <TextInput
-              {...fieldAccessibility}
-              value={name}
-              onChangeText={setName}
-              placeholder={t('name')}
-              style={commonInputStyles.input}
-            />
-          )}
-        </FormField>
-        <FormField label={t('description')}>
-          {(fieldAccessibility) => (
-            <TextInput
-              {...fieldAccessibility}
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t('description')}
-              style={commonInputStyles.multiline}
-              multiline
-            />
-          )}
-        </FormField>
-        <FormField label={t('language')}>
-          {(fieldAccessibility) => (
-            <TextInput
-              {...fieldAccessibility}
-              value={language}
-              onChangeText={setLanguage}
-              placeholder={t('packs_language_placeholder')}
-              style={commonInputStyles.input}
-            />
-          )}
-        </FormField>
-        <FormField label={t('author')}>
-          {(fieldAccessibility) => (
-            <TextInput
-              {...fieldAccessibility}
-              value={authorName}
-              onChangeText={setAuthorName}
-              placeholder={t('author')}
-              style={commonInputStyles.input}
-            />
-          )}
-        </FormField>
-
-        <FormActions stackOnCompact style={{ marginTop: 20 }}>
+    <EntityFormContainer
+      actions={
+        <>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">
             {packId ? t('packs_reextract') : t('save')}
           </Button>
           <Button onPress={() => navigation.goBack()} style={styles.cancelButton}>
             {t('cancel')}
           </Button>
-        </FormActions>
-      </>
+        </>
+      }
+    >
+      <FormField label={t('packs_source_story')}>
+        <SingleSelectPill
+          value={sourceStoryId}
+          onValueChange={(value) => value && chooseStory(value)}
+          options={stories.map((story) => ({ label: story.title, value: story.id }))}
+          placeholder={t('packs_source_placeholder')}
+          // Re-extraction is always from the story the pack came from; changing it would make the
+          // "same pack, new version" promise a lie.
+          disabled={Boolean(packId)}
+        />
+      </FormField>
+
+      <ScreenSection title={t('packs_contents')} />
+      {renderToggle('customAttributes', 'packs_toggle_attributes', 'packs_toggle_attributes_hint')}
+      {renderToggle('tags', 'packs_toggle_tags', 'packs_toggle_tags_hint')}
+      {renderToggle('stats', 'packs_toggle_stats', 'packs_toggle_stats_hint')}
+      {renderToggle('suggestions', 'packs_toggle_suggestions', 'packs_toggle_suggestions_hint')}
+      {renderToggle(
+        'suggestionsIncludeUsed',
+        'packs_toggle_suggestions_used',
+        'packs_toggle_suggestions_used_hint',
+        true,
+        !selection.suggestions,
+      )}
+
+      <ScreenSection title={t('packs_details')} />
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('name')}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={description}
+            onChangeText={setDescription}
+            placeholder={t('description')}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+      <FormField label={t('language')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={language}
+            onChangeText={setLanguage}
+            placeholder={t('packs_language_placeholder')}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
+      <FormField label={t('author')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={authorName}
+            onChangeText={setAuthorName}
+            placeholder={t('author')}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
     </EntityFormContainer>
   );
 };

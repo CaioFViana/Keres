@@ -1,7 +1,7 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import type { CalendarDefinitionType } from '@keres/shared';
 import { calendarDaysPerYear, CalendarDefinitionSchema } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
@@ -24,7 +24,7 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
-import { commonFormStyleDefs, getCommonInputStyles } from '@/src/theme/commonStyles';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 /**
  * Describing a calendar.
@@ -148,7 +148,6 @@ const StoryCalendarFormScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        ...commonFormStyleDefs(colors),
         row: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
         summary: {
           fontSize: 13,
@@ -222,7 +221,22 @@ const StoryCalendarFormScreen = () => {
   }, [calendarId, parsed, persist, savedDefinition]);
 
   return (
-    <EntityFormContainer>
+    <EntityFormContainer
+      actions={
+        canEdit ? (
+          <>
+            <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
+            <Button
+              onPress={save}
+              disabled={saving || !parsed.success || !name.trim()}
+              testID="confirm-calendar-save"
+            >
+              {t('save')}
+            </Button>
+          </>
+        ) : undefined
+      }
+    >
       <FormField label={t('calendar_name')}>
         {(fieldAccessibility) => (
           <TextInput
@@ -296,13 +310,13 @@ const StoryCalendarFormScreen = () => {
 
       {showAdvanced && (
         <View>
-          <Text style={styles.label}>{t('calendar_clock')}</Text>
-          <Text style={styles.summary}>{t('calendar_clock_hint')}</Text>
-          <View style={styles.row}>
-            {numberField('hoursPerDay', t('calendar_hours_per_day'))}
-            {numberField('minutesPerHour', t('calendar_minutes_per_hour'))}
-            {numberField('secondsPerMinute', t('calendar_seconds_per_minute'))}
-          </View>
+          <ScreenSection title={t('calendar_clock')} description={t('calendar_clock_hint')}>
+            <View style={styles.row}>
+              {numberField('hoursPerDay', t('calendar_hours_per_day'))}
+              {numberField('minutesPerHour', t('calendar_minutes_per_hour'))}
+              {numberField('secondsPerMinute', t('calendar_seconds_per_minute'))}
+            </View>
+          </ScreenSection>
 
           <CalendarRowList
             title={t('calendar_eras')}
@@ -419,18 +433,6 @@ const StoryCalendarFormScreen = () => {
 
       {problem ? <Text style={styles.error}>{problem}</Text> : null}
 
-      {canEdit && (
-        <FormActions>
-          <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
-          <Button
-            onPress={save}
-            disabled={saving || !parsed.success || !name.trim()}
-            testID="confirm-calendar-save"
-          >
-            {t('save')}
-          </Button>
-        </FormActions>
-      )}
       {calendarId && savedDefinition && parsed.success && (
         <CalendarAnchorsModal
           visible={reviewingCalendarChange}

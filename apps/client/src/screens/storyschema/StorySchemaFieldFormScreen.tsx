@@ -19,7 +19,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
@@ -28,7 +27,7 @@ import { createStorySchemaFieldService } from '../../services/storymanagement/St
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { commonFormStyleDefs, getCommonInputStyles } from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
 type StorySchemaFieldFormScreenRouteProp = RouteProp<
@@ -183,18 +182,18 @@ const StorySchemaFieldFormScreen = () => {
     value,
   }));
 
-  const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors),
-    hint: { fontSize: 13, color: colors.textSecondary, marginTop: -2, marginBottom: 5 },
-    saveButton: { marginTop: 30 },
-  });
-
   if (loading) {
     return <ScreenLoading message={t('loading')} />;
   }
 
   return (
-    <EntityFormContainer>
+    <EntityFormContainer
+      actions={
+        <Button onPress={handleSave} disabled={saving}>
+          {saving ? t('saving') : t('save')}
+        </Button>
+      }
+    >
       <FormField label={t('attribute_display_name')}>
         {(fieldAccessibility) => (
           <TextInput
@@ -207,16 +206,19 @@ const StorySchemaFieldFormScreen = () => {
         )}
       </FormField>
 
-      <Text style={styles.label}>{t('attribute_internal_key')}</Text>
-      <Text style={styles.hint}>{t('attribute_internal_key_hint')}</Text>
-      <TextInput
-        placeholder={t('attribute_internal_key_placeholder')}
-        value={key}
-        onChangeText={handleKeyChange}
-        autoCapitalize="none"
-        editable={!isEditing}
-        style={[commonInputStyles.input, isEditing && { opacity: 0.6 }]}
-      />
+      <FormField label={t('attribute_internal_key')} help={t('attribute_internal_key_hint')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('attribute_internal_key_placeholder')}
+            value={key}
+            onChangeText={handleKeyChange}
+            autoCapitalize="none"
+            editable={!isEditing}
+            style={[commonInputStyles.input, isEditing && { opacity: 0.6 }]}
+          />
+        )}
+      </FormField>
 
       <FormField label={t('description')}>
         {(fieldAccessibility) => (
@@ -242,9 +244,10 @@ const StorySchemaFieldFormScreen = () => {
       </FormField>
 
       {type === AttributeType.ENTITY && (
-        <>
-          <Text style={styles.label}>{t('attribute_target_entity_type')}</Text>
-          <Text style={styles.hint}>{t('attribute_target_entity_type_hint')}</Text>
+        <FormField
+          label={t('attribute_target_entity_type')}
+          help={t('attribute_target_entity_type_hint')}
+        >
           <SingleSelectPill
             options={targetEntityTypeOptions}
             value={targetEntityType}
@@ -252,7 +255,7 @@ const StorySchemaFieldFormScreen = () => {
             placeholder={t('attribute_target_entity_type')}
             disabled={isEditing}
           />
-        </>
+        </FormField>
       )}
 
       <FormSwitchField
@@ -262,8 +265,7 @@ const StorySchemaFieldFormScreen = () => {
       />
 
       {type !== AttributeType.ENTITY && (
-        <>
-          <Text style={styles.label}>{t('attribute_default_value')}</Text>
+        <FormField label={t('attribute_default_value')}>
           <AttributeValueInput
             type={type}
             value={defaultValue || ''}
@@ -272,12 +274,8 @@ const StorySchemaFieldFormScreen = () => {
             storyId={storyId}
             suggestionFieldId={fieldId}
           />
-        </>
+        </FormField>
       )}
-
-      <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
-        {saving ? t('saving') : t('save')}
-      </Button>
     </EntityFormContainer>
   );
 };

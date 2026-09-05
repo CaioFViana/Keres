@@ -202,69 +202,8 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
   });
 
 /**
- * A form's skeleton: scrolling, title, field label, section, switch row
- * and the two footer buttons.
- *
- * A plain object, and not `StyleSheet.create`, so it can be spread inside the screen's own
- * `StyleSheet.create` - the same arrangement as `relationSectionStyleDefs`. The screen declares what is its
- * own after the spread and, if it needs to, overrides one entry without having to give up the
- * rest.
- *
- * It exists because these same measurements were copied across ten to twenty screens each, with
- * accidental variations of a comma or of a `color` - and `deleteButton` went as far as hard-coding
- * a literal `'red'` in five of them, ignoring the palette.
- */
-export const commonFormStyleDefs = (colors: ThemeColors, scrollBottomPadding?: number) => ({
-  scrollViewContent: {
-    padding: 20,
-    paddingBottom: scrollBottomPadding,
-    flexGrow: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold' as const,
-    color: colors.text,
-    marginBottom: 5,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold' as const,
-    color: colors.text,
-    marginTop: 15,
-    marginBottom: 5,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold' as const,
-    color: colors.text,
-    marginTop: 15,
-    marginBottom: 5,
-  },
-  switchContainer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    marginTop: 15,
-    marginBottom: 5,
-  },
-  saveButton: {
-    marginTop: 10,
-    marginBottom: 0,
-  },
-  deleteButton: {
-    backgroundColor: colors.error,
-    marginBottom: 15,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-  },
-});
-
-/**
  * A detail screen's skeleton: the entity's name, section titles, the footer's back button
- * and the empty state. The same arrangement as `commonFormStyleDefs`.
+ * and the empty state.
  */
 export const commonDetailStyleDefs = (colors: ThemeColors) => ({
   mainTitle: {

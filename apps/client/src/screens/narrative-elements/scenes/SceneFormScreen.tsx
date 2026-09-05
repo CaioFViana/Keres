@@ -49,7 +49,7 @@ import { useLocationStore } from '../../../state/locationStore'; // Import useLo
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import { commonFormStyleDefs, getCommonInputStyles } from '../../../theme/commonStyles';
+import { getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
@@ -699,7 +699,6 @@ const SceneFormScreen = () => {
   ];
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors),
     noteSection: {
       marginTop: 20,
       marginBottom: -10,
@@ -711,14 +710,21 @@ const SceneFormScreen = () => {
     effectsSection: {
       marginBottom: 30,
     },
-    numberWidthInput: {
-      width: '30%',
-    },
     row: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: 10,
       marginBottom: 10,
+    },
+    amountColumn: {
+      width: '30%',
+    },
+    typeColumn: {
+      flex: 1,
+      minWidth: 0,
+    },
+    typeSelect: {
+      marginBottom: 0,
     },
     timingHint: {
       color: colors.textSecondary,
@@ -781,23 +787,21 @@ const SceneFormScreen = () => {
         {t('scene_chapter_optional_hint')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{locationCopy.entity}</Text>
       {/*
         Optional since 1.6. An era, a war, a rumour heard in three cities is a scene with no single
         place, and requiring one was Keres deciding something about the story on the writer's
         behalf. `allowDeselect` is what lets them take it back off.
       */}
-      <SingleSelectPill
-        options={locationOptions}
-        value={locationId}
-        onValueChange={setLocationId}
-        placeholder={locationCopy.selectOptional}
-        multiple={false}
-        allowDeselect
-      />
-      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
-        {t('scene_location_optional_hint')}
-      </Text>
+      <FormField label={locationCopy.entity} help={t('scene_location_optional_hint')}>
+        <SingleSelectPill
+          options={locationOptions}
+          value={locationId}
+          onValueChange={setLocationId}
+          placeholder={locationCopy.selectOptional}
+          multiple={false}
+          allowDeselect
+        />
+      </FormField>
 
       <FormField label={t('name')}>
         {(fieldAccessibility) => (
@@ -839,39 +843,45 @@ const SceneFormScreen = () => {
         )}
       </FormField>
 
-      {/* New Scene Fields */}
-      <Text style={[styles.label, { color: colors.text }]}>{t('gap')}</Text>
-      <View style={styles.row}>
-        <TextInput
-          placeholder={t('gap_placeholder')}
-          value={gapInput}
-          onChangeText={(text) => isTimingInput(text) && setGapInput(text)}
-          keyboardType="numbers-and-punctuation"
-          style={[commonInputStyles.input, styles.numberWidthInput]}
-        />
-        <View style={{ flex: 1 }}>
-          <SingleSelectPill
-            options={gapDurationTypeOptions}
-            value={gapType}
-            onValueChange={setGapType}
-            placeholder={t('gap_type_placeholder')}
-            multiple={false}
-          />
+      <FormField label={t('gap')}>
+        <View style={styles.row}>
+          <View style={styles.amountColumn}>
+            <TextInput
+              placeholder={t('gap_placeholder')}
+              value={gapInput}
+              onChangeText={(text) => isTimingInput(text) && setGapInput(text)}
+              keyboardType="numbers-and-punctuation"
+              style={commonInputStyles.input}
+            />
+          </View>
+          <View style={styles.typeColumn}>
+            <SingleSelectPill
+              options={gapDurationTypeOptions}
+              value={gapType}
+              onValueChange={setGapType}
+              placeholder={t('gap_type_placeholder')}
+              multiple={false}
+              style={styles.typeSelect}
+            />
+          </View>
         </View>
-      </View>
+      </FormField>
       {parseTimingInput(gapInput) !== null && parseTimingInput(gapInput)! < 0 && (
         <Text style={styles.timingHint}>{t('negative_gap_timing_hint')}</Text>
       )}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('scene_fixed_date')}</Text>
-      <Text style={styles.timingHint}>{t('scene_fixed_date_hint')}</Text>
-      <TextInput
-        placeholder={t('scene_fixed_date_placeholder')}
-        value={calendarDateOverride}
-        onChangeText={setCalendarDateOverride}
-        autoCapitalize="none"
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('scene_fixed_date')} help={t('scene_fixed_date_hint')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('scene_fixed_date_placeholder')}
+            value={calendarDateOverride}
+            onChangeText={setCalendarDateOverride}
+            autoCapitalize="none"
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
       {calendarDateOverride.trim() ? (
         <SingleSelectPill
           options={[
@@ -887,25 +897,29 @@ const SceneFormScreen = () => {
         />
       ) : null}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('duration')}</Text>
-      <View style={styles.row}>
-        <TextInput
-          placeholder={t('duration_placeholder')}
-          value={durationInput}
-          onChangeText={(text) => isTimingInput(text) && setDurationInput(text)}
-          keyboardType="numbers-and-punctuation"
-          style={[commonInputStyles.input, styles.numberWidthInput]}
-        />
-        <View style={{ flex: 1 }}>
-          <SingleSelectPill
-            options={gapDurationTypeOptions}
-            value={durationType}
-            onValueChange={setDurationType}
-            placeholder={t('duration_type_placeholder')}
-            multiple={false}
-          />
+      <FormField label={t('duration')}>
+        <View style={styles.row}>
+          <View style={styles.amountColumn}>
+            <TextInput
+              placeholder={t('duration_placeholder')}
+              value={durationInput}
+              onChangeText={(text) => isTimingInput(text) && setDurationInput(text)}
+              keyboardType="numbers-and-punctuation"
+              style={commonInputStyles.input}
+            />
+          </View>
+          <View style={styles.typeColumn}>
+            <SingleSelectPill
+              options={gapDurationTypeOptions}
+              value={durationType}
+              onValueChange={setDurationType}
+              placeholder={t('duration_type_placeholder')}
+              multiple={false}
+              style={styles.typeSelect}
+            />
+          </View>
         </View>
-      </View>
+      </FormField>
       {parseTimingInput(durationInput) !== null && parseTimingInput(durationInput)! < 0 && (
         <Text style={styles.timingHint}>{t('negative_duration_timing_hint')}</Text>
       )}

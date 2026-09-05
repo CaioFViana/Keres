@@ -45,15 +45,9 @@ const translationKey: Partial<Record<OperationLogEntityType, string>> = {
   [OperationLogEntityType.User]: 'user',
 };
 
-const OPERATION_LOG_ONLY_TABLES: Partial<Record<OperationLogEntityType, unknown>> = {
-  [OperationLogEntityType.AttributeValue]: schema.attributeValues,
-  [OperationLogEntityType.ChoiceCheck]: schema.choiceChecks,
-  [OperationLogEntityType.ChoiceCheckGroup]: schema.choiceCheckGroups,
-  [OperationLogEntityType.Comment]: schema.comments,
-  [OperationLogEntityType.Effect]: schema.effects,
-  [OperationLogEntityType.Favorite]: schema.favorites,
+/** Local records referenced by operation logs that are not story-sync entities. */
+const SOLVER_ONLY_TABLES: Partial<Record<OperationLogEntityType, unknown>> = {
   [OperationLogEntityType.OperationLog]: schema.operationLogs,
-  [OperationLogEntityType.StorySchemaField]: schema.storySchemaFields,
   [OperationLogEntityType.User]: schema.users,
 };
 
@@ -69,7 +63,7 @@ export function createClientEntitySolverContext(
   return {
     storyId,
     async read(type, id): Promise<EntitySolverRow | undefined> {
-      const table = getEntityTable(type) ?? OPERATION_LOG_ONLY_TABLES[type];
+      const table = getEntityTable(type) ?? SOLVER_ONLY_TABLES[type];
       if (!table || !id) return undefined;
       const idColumn =
         type === OperationLogEntityType.User ? (table as any).idUser : (table as any).id;

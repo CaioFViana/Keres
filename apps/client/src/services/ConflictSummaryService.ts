@@ -2,8 +2,9 @@ import {
   CONFLICT_RELATION_ENTITY_TYPES,
   entityFieldMetadata,
   getEntityConflictLabelKey,
-  getEntityConflictReferences,
+  getEntityRowReferences,
   resolveEntityReferenceFieldType,
+  summarizeEntityConflictRelation,
 } from '@keres/shared';
 import type { TFunction } from 'i18next';
 import type { EntityRef } from './EntityNameBatchResolver';
@@ -143,26 +144,9 @@ export function collectEntityRefs(
   const refs: EntityRef[] = [];
   for (const conflict of conflicts) {
     if (RELATION_ENTITY_TYPES.has(conflict.entityType as any)) {
-      const targets = getEntityConflictReferences(conflict.entityType);
       const merged = mergedValuesOf(conflict, snapshots);
-      for (const target of targets) {
-        if (target.kind === 'fixed') {
-          const entityId = merged[target.field];
-          if (typeof entityId === 'string' && entityId) {
-            refs.push({ entityType: target.entityType, entityId });
-          }
-        } else {
-          const entityId = merged[target.idField];
-          const entityType = merged[target.typeField];
-          if (
-            typeof entityId === 'string' &&
-            entityId &&
-            typeof entityType === 'string' &&
-            entityType
-          ) {
-            refs.push({ entityType, entityId });
-          }
-        }
+      for (const target of getEntityRowReferences(conflict.entityType, merged)) {
+        refs.push({ entityType: target.entityType, entityId: target.id });
       }
       continue;
     }
@@ -197,70 +181,17 @@ function buildRelationSummary(
 ): { title: string; detail: string } {
   const merged = mergedValuesOf(conflict, snapshots);
   const unknown = t('unknown_entity');
-
-  switch (conflict.entityType) {
-    case 'CharacterRelation': {
-      const a = nameOf(names, 'Character', merged.character1Id, unknown);
-      const b = nameOf(names, 'Character', merged.character2Id, unknown);
-      return {
-        title: t('character_relation'),
-        detail: merged.relationType ? `${a} - ${b} (${merged.relationType})` : `${a} - ${b}`,
-      };
+  return (
+    summarizeEntityConflictRelation(conflict.entityType, merged, {
+      unknown,
+      nameOf: (entityType, entityId) =>
+        nameOf(names, entityType, typeof entityId === 'string' ? entityId : undefined, unknown),
+      translate: (key, values) => t(key, values),
+    }) ?? {
+      title: t(getEntityConflictLabelKey(conflict.entityType)),
+      detail: conflict.entityId,
     }
-    case 'TagRelation': {
-      const tag = nameOf(names, 'Tag', merged.tagId, unknown);
-      const target = nameOf(names, merged.relationType, merged.relationId, unknown);
-      return { title: t('tag_relation'), detail: `${tag} - ${target}` };
-    }
-    case 'NoteRelation': {
-      const note = nameOf(names, 'Note', merged.noteId, unknown);
-      const target = nameOf(names, merged.relationType, merged.relationId, unknown);
-      return { title: t('note_relation'), detail: `${note} - ${target}` };
-    }
-    case 'LocationRelation': {
-      const a = nameOf(names, 'Location', merged.locationAId, unknown);
-      const b = nameOf(names, 'Location', merged.locationBId, unknown);
-      const detail =
-        merged.relationType === 'contains'
-          ? t('location_contains_location', { parentName: a, childName: b })
-          : t('location_connected_to_location', { locationAName: a, locationBName: b });
-      return { title: t('location_relation'), detail };
-    }
-    case 'GalleryRelation': {
-      const gallery = nameOf(names, 'Gallery', merged.galleryId, unknown);
-      const owner = nameOf(names, merged.ownerType, merged.ownerId, unknown);
-      return { title: t('gallery_relation'), detail: `${gallery} - ${owner}` };
-    }
-    case 'CharacterScene': {
-      const character = nameOf(names, 'Character', merged.characterId, unknown);
-      const scene = nameOf(names, 'Scene', merged.sceneId, unknown);
-      return { title: t('character_scene_relation'), detail: `${character} - ${scene}` };
-    }
-    case 'ItemJourney': {
-      const item = nameOf(names, 'Item', merged.itemId, unknown);
-      const scene = nameOf(names, 'Scene', merged.sceneId, unknown);
-      return { title: t('item_journey'), detail: `${item} ${t('showed_in_scene')} ${scene}` };
-    }
-    case 'SeeAlsoRelation': {
-      const a = nameOf(names, merged.entityAType, merged.entityAId, unknown);
-      const b = nameOf(names, merged.entityBType, merged.entityBId, unknown);
-      return { title: t('see_also_relation'), detail: `${a} - ${b}` };
-    }
-    case 'StatRelation': {
-      const character = nameOf(names, 'Character', merged.characterId, unknown);
-      const stat = nameOf(names, 'Stat', merged.statId, unknown);
-      const owner = merged.modeId
-        ? `${character} · ${nameOf(names, 'Mode', merged.modeId, unknown)}`
-        : character;
-      const value = merged.value ?? unknown;
-      return { title: t('stat_relation'), detail: `${owner} - ${stat}: ${value}` };
-    }
-    default:
-      return {
-        title: t(getEntityConflictLabelKey(conflict.entityType)),
-        detail: conflict.entityId,
-      };
-  }
+  );
 }
 
 /**

@@ -41,6 +41,15 @@ export const galleryRelationEntityHandler: EntityDomainHandler = {
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'ownerId', typeField: 'ownerType' }],
   referenceFields: { galleryId: OperationLogEntityType.Gallery },
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('gallery_relation'),
+      detail: `${context.nameOf(OperationLogEntityType.Gallery, row.galleryId)} - ${context.nameOf(
+        typeof row.ownerType === 'string' ? row.ownerType : undefined,
+        row.ownerId,
+      )}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.GalleryRelation, entityId);
     if (!row) return undefined;

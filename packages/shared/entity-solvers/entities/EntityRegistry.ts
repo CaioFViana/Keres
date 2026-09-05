@@ -1,9 +1,13 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { chapterEntityHandler } from './ChapterEntityHandler';
 import { choiceEntityHandler } from './ChoiceEntityHandler';
-import type { EntityDomainHandler } from './contracts';
-import type { EntityConflictReference } from './contracts';
-import type { EntityExportReference } from './contracts';
+import type {
+  EntityConflictRelationSummary,
+  EntityConflictRelationSummaryContext,
+  EntityConflictReference,
+  EntityDomainHandler,
+  EntityExportReference,
+} from './contracts';
 import { sceneEntityHandler } from './SceneEntityHandler';
 import { routeEntityHandler } from './RouteEntityHandler';
 import { routeStepEntityHandler } from './RouteStepEntityHandler';
@@ -246,6 +250,18 @@ export function getEntityConflictReferences(
     entityType: target,
   }));
   return [...fixed, ...(handler.conflictReferences ?? [])];
+}
+
+/** Delegates a relation conflict's wording to the entity that owns its domain fields. */
+export function summarizeEntityConflictRelation(
+  entityType: string,
+  row: Record<string, unknown>,
+  context: EntityConflictRelationSummaryContext,
+): EntityConflictRelationSummary | undefined {
+  return getEntityDomainHandler(entityType as OperationLogEntityType)?.summarizeConflictRelation?.(
+    row,
+    context,
+  );
 }
 
 export interface EntityRowReference {

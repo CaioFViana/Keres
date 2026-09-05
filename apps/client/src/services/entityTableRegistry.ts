@@ -10,6 +10,7 @@ import * as schema from '../db/schema';
  * import the chapters table statically without repeating that switch in every path.
  */
 export const ENTITY_TABLES = {
+  AttributeValue: schema.attributeValues,
   Board: schema.boards,
   Chapter: schema.chapters,
   Character: schema.characters,
@@ -17,6 +18,11 @@ export const ENTITY_TABLES = {
   CharacterRelation: schema.characterRelations,
   CharacterScene: schema.characterScenes,
   Choice: schema.choices,
+  ChoiceCheck: schema.choiceChecks,
+  ChoiceCheckGroup: schema.choiceCheckGroups,
+  Comment: schema.comments,
+  Effect: schema.effects,
+  Favorite: schema.favorites,
   Gallery: schema.galleries,
   GalleryRelation: schema.galleryRelations,
   Item: schema.items,
@@ -37,6 +43,7 @@ export const ENTITY_TABLES = {
   StatStrength: schema.statStrengths,
   SeeAlsoRelation: schema.seeAlsoRelations,
   Story: schema.stories,
+  StorySchemaField: schema.storySchemaFields,
   Suggestion: schema.suggestions,
   Tag: schema.tags,
   TagRelation: schema.tagRelations,

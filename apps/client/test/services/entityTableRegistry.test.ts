@@ -1,9 +1,22 @@
 /**
  * @jest-environment node
  */
-import { getEntityTable, toEntityColumns } from '../../src/services/entityTableRegistry';
+import { getStorySyncEntityTypes } from '@keres/shared';
+import {
+  ENTITY_TABLES,
+  getEntityTable,
+  toEntityColumns,
+} from '../../src/services/entityTableRegistry';
 
 describe('entity table registry', () => {
+  it('provides a SQLite table adapter for every story-synchronized entity', () => {
+    const missing = getStorySyncEntityTypes().filter(
+      (entityType) => !Object.hasOwn(ENTITY_TABLES, entityType),
+    );
+
+    expect(missing).toEqual([]);
+  });
+
   it('resolves known tables and declines unknown entity names', () => {
     expect(getEntityTable('Character')).toBeDefined();
     expect(getEntityTable('Unknown')).toBeUndefined();

@@ -5,6 +5,8 @@ import {
   summarizeEntityPreview,
 } from '../../entity-solvers/boardEntitySummary';
 import {
+  CONFLICT_RELATION_ENTITY_TYPES,
+  getEntityDomainHandler,
   getStoryExportCollections,
   getStoryExportReferences,
   getStoryImportCollectionOrder,
@@ -113,5 +115,13 @@ describe('entity previews', () => {
         sceneId: '   ',
       }),
     ).toEqual([{ entityType: OperationLogEntityType.Character, id: 'character-1' }]);
+  });
+
+  it('requires every conflict relation to own its summary composition', () => {
+    const missing = [...CONFLICT_RELATION_ENTITY_TYPES].filter(
+      (entityType) => !getEntityDomainHandler(entityType)?.summarizeConflictRelation,
+    );
+
+    expect(missing).toEqual([]);
   });
 });

@@ -21,6 +21,15 @@ export const characterSceneEntityHandler: EntityDomainHandler = {
     characterId: OperationLogEntityType.Character,
     sceneId: OperationLogEntityType.Scene,
   },
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('character_scene_relation'),
+      detail: `${context.nameOf(OperationLogEntityType.Character, row.characterId)} - ${context.nameOf(
+        OperationLogEntityType.Scene,
+        row.sceneId,
+      )}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.CharacterScene, entityId);
     if (!row) return undefined;

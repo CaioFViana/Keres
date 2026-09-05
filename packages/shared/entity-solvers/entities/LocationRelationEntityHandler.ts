@@ -20,6 +20,23 @@ export const locationRelationEntityHandler: EntityDomainHandler = {
     locationAId: OperationLogEntityType.Location,
     locationBId: OperationLogEntityType.Location,
   },
+  summarizeConflictRelation(row, context) {
+    const first = context.nameOf(OperationLogEntityType.Location, row.locationAId);
+    const second = context.nameOf(OperationLogEntityType.Location, row.locationBId);
+    return {
+      title: context.translate('location_relation'),
+      detail:
+        row.relationType === 'contains'
+          ? context.translate('location_contains_location', {
+              parentName: first,
+              childName: second,
+            })
+          : context.translate('location_connected_to_location', {
+              locationAName: first,
+              locationBName: second,
+            }),
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.LocationRelation, entityId);
     if (!row) return undefined;

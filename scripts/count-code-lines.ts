@@ -1,26 +1,37 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { extname, join, resolve } from 'node:path';
+import { extname, join, relative } from 'node:path';
 import { repoRoot } from './lib/packages';
 
 /**
- * Counts lines of code (comments and blank lines excluded) per application and reports the
- * largest source files so the per-file size ceiling can steadily shrink.
+ * Counts lines of code (comments and blank lines excluded) per category and reports the
+ * largest files overall, keeping application code, tooling and content separate in the totals.
  *
  *   bun run code:lines
  *
  * A reading tool, not a check: nothing in CI depends on it.
  */
 
-const applications: [name: string, path: string, excluded?: string[]][] = [
+const applications: [name: string, path: string][] = [
   ['Shared', 'packages/shared'],
   ['API', 'apps/api'],
   ['ADM', 'apps/admin'],
-  ['Client', 'apps/client', ['apps/client/src/help', 'apps/client/src/storyDevices']],
-  ['Client-Help', 'apps/client/src/help'],
-  ['Client-StoryDevices', 'apps/client/src/storyDevices'],
+  ['Client', 'apps/client'],
   ['Desktop', 'apps/desktop'],
   ['Site', 'apps/site'],
 ];
+
+const categories: [name: string, path: string][] = [
+  ...applications,
+  ['Client-Help', 'apps/client/src/help'],
+  ['Client-StoryDevices', 'apps/client/src/storyDevices'],
+  ['Client-Narratives', 'apps/client/scripts/lib/narratives'],
+  ...applications.map(([name, path]): [string, string] => [`${name}-Scripts`, `${path}/scripts`]),
+  ['Repo-Scripts', 'scripts'],
+];
+// The most specific directory owns the file; nested categories never count it twice.
+const categoriesBySpecificity = [...categories].sort(
+  (left, right) => right[1].length - left[1].length,
+);
 
 // Dependency, build output, metadata or generated-code directories.
 const ignoredDirectories = new Set([
@@ -45,6 +56,7 @@ const sourceRoots = ['apps', 'packages', 'scripts'];
 
 interface FileLineCount {
   path: string;
+  category: string;
   lines: number;
 }
 
@@ -96,34 +108,7 @@ function countLines(filePath: string): number {
   return lines;
 }
 
-function countApplication(rootPath: string, excludedPaths: string[] = []) {
-  const code = { files: 0, lines: 0 };
-  const tests = { files: 0, lines: 0 };
-  const excludedDirectories = new Set(excludedPaths.map((excludedPath) => resolve(excludedPath)));
-
-  const visit = (directory: string, isTestDirectory = false): void => {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        const childDirectory = join(directory, entry.name);
-        if (
-          !ignoredDirectories.has(entry.name) &&
-          !excludedDirectories.has(resolve(childDirectory))
-        )
-          visit(childDirectory, isTestDirectory || entry.name === 'test');
-        continue;
-      }
-      if (!entry.isFile() || !codeExtensions.has(extname(entry.name))) continue;
-      const category = isTestDirectory ? tests : code;
-      category.files += 1;
-      category.lines += countLines(join(directory, entry.name));
-    }
-  };
-
-  visit(rootPath);
-  return { code, tests };
-}
-
-/** Collects every production source file once, independently of the application summary above. */
+/** A single inventory supplies both the category totals and the overall size reports. */
 function sourceFileLineCounts(): FileLineCount[] {
   const files: FileLineCount[] = [];
 
@@ -132,17 +117,17 @@ function sourceFileLineCounts(): FileLineCount[] {
       const childPath = join(directory, entry.name);
       if (entry.isDirectory()) {
         if (!ignoredDirectories.has(entry.name))
-          visit(childPath, isTestDirectory || entry.name === 'test');
+          visit(childPath, isTestDirectory || ['test', 'tests', '__tests__'].includes(entry.name));
         continue;
       }
-      if (
-        isTestDirectory ||
-        !entry.isFile() ||
-        !codeExtensions.has(extname(entry.name)) ||
-        /\.(test|spec)\.[jt]sx?$/.test(entry.name)
-      )
-        continue;
-      files.push({ path: childPath, lines: countLines(childPath) });
+      if (!entry.isFile() || !codeExtensions.has(extname(entry.name))) continue;
+      const path = relative(repoRoot, childPath).replaceAll('\\', '/');
+      const category =
+        isTestDirectory || /\.(test|spec)\.[jt]sx?$/.test(entry.name)
+          ? 'Tests'
+          : (categoriesBySpecificity.find(([, prefix]) => path.startsWith(`${prefix}/`))?.[0] ??
+            'Other');
+      files.push({ path, category, lines: countLines(childPath) });
     }
   };
 
@@ -150,48 +135,38 @@ function sourceFileLineCounts(): FileLineCount[] {
   return files;
 }
 
-const applicationsResults = applications.map(([name, relativePath, excludedPaths]) => ({
-  name,
-  ...countApplication(
-    join(repoRoot, relativePath),
-    (excludedPaths ?? []).map((excludedPath) => join(repoRoot, excludedPath)),
-  ),
-}));
-const results = applicationsResults.map(({ name, code }) => ({ name, ...code }));
-const tests = applicationsResults.reduce(
-  (sum, result) => ({
-    files: sum.files + result.tests.files,
-    lines: sum.lines + result.tests.lines,
-  }),
-  { files: 0, lines: 0 },
-);
-const total = [...results, tests].reduce(
+const sourceFiles = sourceFileLineCounts();
+const results = [...categories.map(([name]) => name), 'Other', 'Tests']
+  .map((name) => {
+    const files = sourceFiles.filter((file) => file.category === name);
+    return { name, files: files.length, lines: files.reduce((sum, file) => sum + file.lines, 0) };
+  })
+  .filter((result) => result.files > 0);
+const total = results.reduce(
   (sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }),
   { files: 0, lines: 0 },
 );
 
 console.table(
-  [...results, { name: 'Tests', ...tests }, { name: 'Total', ...total }].map((result) => ({
-    Application: result.name,
+  [...results, { name: 'Total', ...total }].map((result) => ({
+    Category: result.name,
     Files: result.files,
     'Lines of code': result.lines,
   })),
 );
 
-const sourceFiles = sourceFileLineCounts();
 const bySizeDescending = (left: FileLineCount, right: FileLineCount) =>
   right.lines - left.lines || left.path.localeCompare(right.path);
-const oversizedFiles = sourceFiles
-  .filter((file) => file.lines > fileLineLimit)
-  .sort(bySizeDescending);
-const nearLimitFiles = sourceFiles
-  .filter((file) => file.lines <= fileLineLimit)
-  .sort(bySizeDescending)
-  .slice(0, nearLimitFileCount);
 const formatFile = (file: FileLineCount) => ({
-  File: file.path.slice(repoRoot.length + 1).replaceAll('\\', '/'),
+  File: file.path,
   'Lines of code': file.lines,
 });
+
+const files = sourceFiles.filter((file) => file.category !== 'Tests').sort(bySizeDescending);
+const oversizedFiles = files.filter((file) => file.lines > fileLineLimit);
+const nearLimitFiles = files
+  .filter((file) => file.lines <= fileLineLimit)
+  .slice(0, nearLimitFileCount);
 
 console.log(`\nFiles above ${fileLineLimit} lines of code (${oversizedFiles.length})`);
 console.table(oversizedFiles.map(formatFile));

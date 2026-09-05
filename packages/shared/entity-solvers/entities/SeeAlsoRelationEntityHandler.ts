@@ -36,6 +36,18 @@ export const seeAlsoRelationEntityHandler: EntityDomainHandler = {
     { kind: 'dynamic', idField: 'entityAId', typeField: 'entityAType' },
     { kind: 'dynamic', idField: 'entityBId', typeField: 'entityBType' },
   ],
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('see_also_relation'),
+      detail: `${context.nameOf(
+        typeof row.entityAType === 'string' ? row.entityAType : undefined,
+        row.entityAId,
+      )} - ${context.nameOf(
+        typeof row.entityBType === 'string' ? row.entityBType : undefined,
+        row.entityBId,
+      )}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.SeeAlsoRelation, entityId);
     if (!row) return undefined;

@@ -44,6 +44,14 @@ export const itemJourneyEntityHandler: EntityDomainHandler = {
     }),
     searchField('extraNotes', 'field_extraNotes'),
   ],
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('item_journey'),
+      detail: `${context.nameOf(OperationLogEntityType.Item, row.itemId)} ${context.translate(
+        'showed_in_scene',
+      )} ${context.nameOf(OperationLogEntityType.Scene, row.sceneId)}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.ItemJourney, entityId);
     if (!row) return undefined;

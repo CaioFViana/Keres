@@ -14,6 +14,21 @@ export type EntityConflictReference =
   | { kind: 'fixed'; field: string; entityType: OperationLogEntityType }
   | { kind: 'dynamic'; idField: string; typeField: string };
 
+/** Dependencies supplied by a host after it batch-resolves relation participants. */
+export interface EntityConflictRelationSummaryContext {
+  /** Returns a readable participant name or the host's localized unknown-entity fallback. */
+  nameOf: (entityType: string | undefined, entityId: unknown) => string;
+  /** Keeps translation in the host while the entity owns the relation's composition. */
+  translate: (key: string, values?: Record<string, unknown>) => string;
+  unknown: string;
+}
+
+/** Compact, host-translated presentation for a conflicting relation row. */
+export interface EntityConflictRelationSummary {
+  title: string;
+  detail: string;
+}
+
 /** A same-story foreign key represented in a portable story export. */
 export interface EntityExportReference {
   field: string;
@@ -35,6 +50,14 @@ export interface EntityDomainHandler {
   conflictLabelKey?: string;
   isConflictRelation?: boolean;
   conflictReferences?: readonly EntityConflictReference[];
+  /**
+   * Explains a relation conflict after the host has loaded its referenced entity names in bulk.
+   * It contains no persistence access, React component, or concrete i18n implementation.
+   */
+  summarizeConflictRelation?: (
+    row: Record<string, unknown>,
+    context: EntityConflictRelationSummaryContext,
+  ) => EntityConflictRelationSummary;
   exportCollection?: string;
   exportReferences?: readonly EntityExportReference[];
   /**

@@ -26,6 +26,15 @@ export const characterRelationEntityHandler: EntityDomainHandler = {
     character1Id: OperationLogEntityType.Character,
     character2Id: OperationLogEntityType.Character,
   },
+  summarizeConflictRelation(row, context) {
+    const first = context.nameOf(OperationLogEntityType.Character, row.character1Id);
+    const second = context.nameOf(OperationLogEntityType.Character, row.character2Id);
+    const relationType = typeof row.relationType === 'string' ? row.relationType.trim() : '';
+    return {
+      title: context.translate('character_relation'),
+      detail: relationType ? `${first} - ${second} (${relationType})` : `${first} - ${second}`,
+    };
+  },
   advancedSearch: [
     searchField('relationType', 'field_relationType', 'string', {
       isSuggestion: true,

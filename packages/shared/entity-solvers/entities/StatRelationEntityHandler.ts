@@ -29,6 +29,17 @@ export const statRelationEntityHandler: EntityDomainHandler = {
     characterId: OperationLogEntityType.Character,
     modeId: OperationLogEntityType.Mode,
   },
+  summarizeConflictRelation(row, context) {
+    const character = context.nameOf(OperationLogEntityType.Character, row.characterId);
+    const owner = row.modeId
+      ? `${character} · ${context.nameOf(OperationLogEntityType.Mode, row.modeId)}`
+      : character;
+    const value = row.value ?? context.unknown;
+    return {
+      title: context.translate('stat_relation'),
+      detail: `${owner} - ${context.nameOf(OperationLogEntityType.Stat, row.statId)}: ${value}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.StatRelation, entityId);
     if (!row) return undefined;

@@ -19,6 +19,15 @@ export const noteRelationEntityHandler: EntityDomainHandler = {
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],
   referenceFields: { noteId: OperationLogEntityType.Note },
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('note_relation'),
+      detail: `${context.nameOf(OperationLogEntityType.Note, row.noteId)} - ${context.nameOf(
+        typeof row.relationType === 'string' ? row.relationType : undefined,
+        row.relationId,
+      )}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.NoteRelation, entityId);
     if (!row) return undefined;

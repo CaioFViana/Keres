@@ -38,6 +38,15 @@ export const tagRelationEntityHandler: EntityDomainHandler = {
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],
   referenceFields: { tagId: OperationLogEntityType.Tag },
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('tag_relation'),
+      detail: `${context.nameOf(OperationLogEntityType.Tag, row.tagId)} - ${context.nameOf(
+        typeof row.relationType === 'string' ? row.relationType : undefined,
+        row.relationId,
+      )}`,
+    };
+  },
   async resolveCompactName(context, entityId) {
     const row = await context.read(OperationLogEntityType.TagRelation, entityId);
     if (!row) return undefined;

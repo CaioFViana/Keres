@@ -162,4 +162,34 @@ Comparar as contagens iniciais ao final e revisar o boilerplate removido nos pil
 
 ## Documentação final
 
-Registrar três exemplos de referência — lista, formulário e detalhe — com orientação sobre quando usar cada container, como declarar ações, como tratar estados de carregamento e como compor uma exceção. Somente após estabilizar a API, avaliar uma regra de lint restrita a usos novos de infraestrutura duplicada, com exceções explícitas.
+A API compartilhada está estável o suficiente para servir de referência. Uma regra de lint restrita a usos novos de infraestrutura duplicada continua adiada: os resíduos restantes (`commonFormStyleDefs`/`commonDetailStyleDefs` em telas especializadas, headers de mapa/quadro, canvases) são exceções justificadas, não dívida a varrer neste lote.
+
+### Lista — `NoteListScreen`
+
+Usar `ScreenContainer` (sem rolagem própria) + `GenericFilterSortList`. A lista virtualizada é dona do viewport.
+
+- Header: `useScreenHeader` com `target: 'parent'` e ações declaradas (`id`, `icon`, `label`, `onPress`, `visible`). Sem `setOptions` nem ícones manuais.
+- Dados: `useEntityListScreen` devolve `listProps` (`EntityListFilterProps`) para busca, filtro, ordenação e favorito. Espalhar `{...listProps}` na lista.
+- O que fica na tela: `renderItem`, `filterOptions`, `sortOptions`, `entityName`, placeholders e regras específicas (ex.: recarregar tags no `tag_changed`).
+- Loading: `isInitialLoading` → `ScreenLoading`; `error` → `ScreenError`. Recargas posteriores não desmontam a lista.
+- Exceção: não envolver a lista num segundo componente de lista nem forçar `ScrollView`/`DetailContainer`. Mapas, canvases, calendário e análises usam `ScreenContainer` ou um header próprio (`renderActions`), nunca este shell de detalhe.
+
+### Formulário — `TagFormScreen`
+
+Usar `EntityFormContainer` (não o `FormContainer` da instalação). O container trata teclado, padding, título/descrição e a região de ações; validação, payload, exclusão e permissões continuam na tela.
+
+- Header: `useScreenHeader` só para o título da barra. Os botões de salvar/excluir vão em `actions`, compostos com `FormActions` pelo container.
+- Campos: `FormField` (label + controle filho, acessibilidade via callback) e `FormSwitchField`. Estilos de input vêm de `getCommonInputStyles`; não reaplicar padding do container no campo.
+- Operações: `useAsyncOperation` no save (bloqueia envio duplicado); `useConfirmDelete` na exclusão. Loading inicial usa `ScreenLoading`/`ScreenError` *antes* de montar o formulário, para não mostrar campos vazios como se fossem o rascunho.
+- Exceção: `ColdInstallScreen` permanece no `FormContainer` antigo (centralização vertical). Calendário, vocabulário e outros fluxos com confirmação própria reutilizam as primitivas (`FormField`, teclado) sem serem forçados a este container se o layout não couber.
+
+### Detalhe — `ItemDetailScreen`
+
+Usar `DetailContainer` (ScrollView + título + footer). Galeria, relações, comentários e metadados são filhos explícitos; o container não conhece `entityType`.
+
+- Header: `useScreenHeader` com ações condicionais (editar, atalhos de domínio). `visible` segue permissão/`canEdit`.
+- Ciclo de vida: `useEntityInitialLoad` e `useEntityEventSubscriptions` em efeitos separados. Reassinatura de listener nunca deve disparar o loader inicial.
+- Comentários: `createCommentFieldBindings` uma vez por tela; cada campo recebe `commentField('title')` etc. O snapshot é o valor exibido daquele campo.
+- Loading: carga inicial `ScreenLoading`/`ScreenError`. Atualização por evento substitui dados no lugar, sem desmontar o detalhe.
+- Exceção: detalhes com gestores que escrevem (relações, cenas) continuam emitindo no `entityEventEmitter` na própria tela. Headers de mapa/quadro usam `renderActions`. Não forçar `DetailContainer` em canvas, grafo, matriz de presença ou instalação.
+

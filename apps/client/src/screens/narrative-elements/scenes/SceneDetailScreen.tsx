@@ -28,7 +28,7 @@ import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import 
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
@@ -59,9 +59,11 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
-import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '../../../hooks/useEntityRefreshLifecycle';
 import { useTheme } from '../../../theme';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import type { NarrativeElementsScreenNavigationProp } from '../chapters/NarrativeElementsListScreen';
@@ -488,30 +490,24 @@ const SceneDetailScreen = () => {
   // initial fetch used to fetch and replace `scene` again on every re-subscription.
   useEntityInitialLoad(fetchScene);
 
-  // Notes, note relations and tags are kept fresh by useEntityRelations.
-  useEffect(() => {
-    if (sceneServiceRef.current) {
-      entityEventEmitter.on('scene_changed', handleSceneChange);
-      entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
-      entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
-      entityEventEmitter.on('item_journey_changed', handleItemJourneyChange); // Listen for item journey changes
-      entityEventEmitter.on('effect_changed', handleEffectChange); // Listen for effect changes
-
-      return () => {
-        entityEventEmitter.off('scene_changed', handleSceneChange);
-        entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange); // Cleanup listener
-        entityEventEmitter.off('item_changed', handleItemChange); // Cleanup listener
-        entityEventEmitter.off('item_journey_changed', handleItemJourneyChange); // Cleanup listener
-        entityEventEmitter.off('effect_changed', handleEffectChange); // Cleanup listener
-      };
-    }
-  }, [
-    handleSceneChange,
-    handleCharacterSceneChange,
-    handleItemChange,
-    handleItemJourneyChange,
-    handleEffectChange,
-  ]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'scene_changed', listener: handleSceneChange },
+        { event: 'character_scene_changed', listener: handleCharacterSceneChange },
+        { event: 'item_changed', listener: handleItemChange },
+        { event: 'item_journey_changed', listener: handleItemJourneyChange },
+        { event: 'effect_changed', listener: handleEffectChange },
+      ],
+      [
+        handleSceneChange,
+        handleCharacterSceneChange,
+        handleItemChange,
+        handleItemJourneyChange,
+        handleEffectChange,
+      ],
+    ),
+  );
 
   useEffect(() => {
     if (scene) {

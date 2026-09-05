@@ -14,20 +14,23 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import type { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+
 import type { TagsScreenNavigationProp } from './TagListScreen';
 
 // Define the parameter list for this screen
@@ -240,18 +243,15 @@ const TagDetailScreen = () => {
 
   useEntityInitialLoad(loadInitialTagData);
 
-  // Only subscribe here; a callback identity change must not reload the tag.
-  useEffect(() => {
-    if (tagServiceRef.current && selectedStory?.id) {
-      entityEventEmitter.on('tag_changed', handleTagChange);
-      entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
-
-      return () => {
-        entityEventEmitter.off('tag_changed', handleTagChange);
-        entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
-      };
-    }
-  }, [handleTagChange, selectedStory?.id, handleTagRelationChange]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'tag_changed', listener: handleTagChange },
+        { event: 'tag_relation_changed', listener: handleTagRelationChange },
+      ],
+      [handleTagChange, handleTagRelationChange],
+    ),
+  );
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {

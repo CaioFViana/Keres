@@ -19,14 +19,17 @@ import { createNoteRelationService } from '@/src/services/storymanagement/NoteRe
 import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
 import type { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -36,7 +39,7 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+
 import type { NotesScreenNavigationProp } from './NoteListScreen';
 
 // Define the parameter list for this screen
@@ -254,20 +257,16 @@ const NoteDetailScreen = () => {
 
   useEntityInitialLoad(loadInitialNoteData);
 
-  // Subscribing is intentionally separate from the initial loads above.
-  useEffect(() => {
-    if (noteServiceRef.current && selectedStory?.id) {
-      entityEventEmitter.on('note_changed', handleNoteChange);
-      entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
-      entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
-
-      return () => {
-        entityEventEmitter.off('note_changed', handleNoteChange);
-        entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
-        entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
-      };
-    }
-  }, [handleNoteChange, handleTagRelationChange, selectedStory?.id, handleNoteRelationChange]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'note_changed', listener: handleNoteChange },
+        { event: 'note_relation_changed', listener: handleNoteRelationChange },
+        { event: 'tag_relation_changed', listener: handleTagRelationChange },
+      ],
+      [handleNoteChange, handleNoteRelationChange, handleTagRelationChange],
+    ),
+  );
 
   useEffect(() => {
     if (note) {

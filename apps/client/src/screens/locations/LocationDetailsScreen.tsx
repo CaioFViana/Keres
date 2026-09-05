@@ -32,7 +32,10 @@ import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -54,7 +57,6 @@ import { useStoryStore } from '../../state/storyStore';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {
@@ -432,36 +434,28 @@ const LocationDetailsScreen = () => {
 
   useEntityInitialLoad(fetchLocationDetails);
 
-  // Keep subscription churn independent from the location's initial load.
-  useEffect(() => {
-    if (locationServiceRef.current) {
-      entityEventEmitter.on('location_changed', handleLocationChange);
-      entityEventEmitter.on('character_changed', handleCharacterChange);
-      entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange);
-      entityEventEmitter.on('scene_changed', handleSceneChange);
-      entityEventEmitter.on('item_changed', handleItemChange);
-      entityEventEmitter.on('item_journey_changed', handleItemJourneyChange);
-      entityEventEmitter.on('location_relation_changed', handleLocationRelationChange);
-
-      return () => {
-        entityEventEmitter.off('location_changed', handleLocationChange);
-        entityEventEmitter.off('character_changed', handleCharacterChange);
-        entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange);
-        entityEventEmitter.off('scene_changed', handleSceneChange);
-        entityEventEmitter.off('item_changed', handleItemChange);
-        entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
-        entityEventEmitter.off('location_relation_changed', handleLocationRelationChange);
-      };
-    }
-  }, [
-    handleLocationChange,
-    handleCharacterChange,
-    handleCharacterSceneChange,
-    handleSceneChange,
-    handleItemChange,
-    handleItemJourneyChange,
-    handleLocationRelationChange,
-  ]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'location_changed', listener: handleLocationChange },
+        { event: 'character_changed', listener: handleCharacterChange },
+        { event: 'character_scene_changed', listener: handleCharacterSceneChange },
+        { event: 'scene_changed', listener: handleSceneChange },
+        { event: 'item_changed', listener: handleItemChange },
+        { event: 'item_journey_changed', listener: handleItemJourneyChange },
+        { event: 'location_relation_changed', listener: handleLocationRelationChange },
+      ],
+      [
+        handleLocationChange,
+        handleCharacterChange,
+        handleCharacterSceneChange,
+        handleSceneChange,
+        handleItemChange,
+        handleItemJourneyChange,
+        handleLocationRelationChange,
+      ],
+    ),
+  );
 
   useEffect(() => {
     if (location) {

@@ -22,7 +22,10 @@ import { AppAlert } from '@/src/utils/AppAlert';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '@/src/hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useStoryArcs } from '@/src/hooks/useStoryArcs';
@@ -38,7 +41,6 @@ import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
 import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import {
@@ -49,7 +51,7 @@ import {
 import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
@@ -215,20 +217,16 @@ const ChapterDetailScreen = () => {
 
   useEntityInitialLoad(fetchChapter);
 
-  // Re-subscribing after a callback changes must not reload the chapter.
-  useEffect(() => {
-    if (chapterServiceRef.current) {
-      entityEventEmitter.on('chapter_changed', handleChapterChange);
-      entityEventEmitter.on('scene_changed', handleSceneChange); // Listen for scene changes
-      entityEventEmitter.on('location_changed', handleLocationChange); // Listen for location changes
-
-      return () => {
-        entityEventEmitter.off('chapter_changed', handleChapterChange);
-        entityEventEmitter.off('scene_changed', handleSceneChange); // Cleanup listener
-        entityEventEmitter.off('location_changed', handleLocationChange); // Cleanup listener
-      };
-    }
-  }, [handleChapterChange, handleSceneChange, handleLocationChange]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'chapter_changed', listener: handleChapterChange },
+        { event: 'scene_changed', listener: handleSceneChange },
+        { event: 'location_changed', listener: handleLocationChange },
+      ],
+      [handleChapterChange, handleSceneChange, handleLocationChange],
+    ),
+  );
 
   useEffect(() => {
     if (chapter) {

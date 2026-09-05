@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import type { EntityStoreCore } from '../state/createEntityStore';
 import { useStoryStore } from '../state/storyStore';
-import type { SortDirection } from '../types/entityFilters';
+import type { FavoriteFilterState, SortDirection } from '../types/entityFilters';
 import { debounce } from '../utils/debounce';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
 
 /**
  * Any store produced by `createEntityStore`. Kept structural rather than referencing
@@ -25,6 +25,24 @@ export interface UseEntityListScreenOptions<
   /** How long to wait after typing stops before querying. */
   searchDebounceMs?: number;
 }
+
+/** Filter/search/sort props that `GenericFilterSortList` receives via `{...listProps}`. */
+export type EntityListFilterProps = {
+  onSearch: (searchText: string) => void;
+  onSearchSubmit: () => void;
+  currentSearchTerm: string;
+  onFilterChange: (filterValues: string[]) => void;
+  selectedFilterValues: string[];
+  onSortChange: (sortValue: string | null) => void;
+  onSortDirectionChange: (direction: SortDirection) => void;
+  currentSortDirection: SortDirection;
+  currentSortValue: string | null;
+  onFavoriteFilterChange: (state: FavoriteFilterState) => void;
+  currentFavoriteFilterState: FavoriteFilterState;
+  onAdvancedSearch: (criteria: { [key: string]: any }) => void;
+  currentAdvancedSearchCriteria: { [key: string]: any };
+  isLoading: boolean;
+};
 
 /**
  * The wiring every entity list screen repeats.
@@ -132,38 +150,62 @@ export function useEntityListScreen<
 
   const isInitialLoading = !!storyId && loadedStoryId !== storyId;
 
-  useEffect(() => {
-    const handleChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) {
-        fetchItems();
-      }
-    };
-    entityEventEmitter.on(changeEvent, handleChange);
-    return () => {
-      entityEventEmitter.off(changeEvent, handleChange);
-    };
-  }, [changeEvent, storyId, fetchItems]);
+  const handleEntityChange = useCallback(
+    (changedStoryId: string) => {
+      if (changedStoryId === storyId) fetchItems();
+    },
+    [fetchItems, storyId],
+  );
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [{ event: changeEvent, listener: handleEntityChange }],
+      [changeEvent, handleEntityChange],
+    ),
+  );
 
-  const handleSortChange = (sortBy: string | null) => setSort(sortBy, sortDirection);
-  const handleSortDirectionChange = (direction: SortDirection) => setSort(activeSort, direction);
+  const handleSortChange = useCallback(
+    (sortBy: string | null) => setSort(sortBy, sortDirection),
+    [setSort, sortDirection],
+  );
+  const handleSortDirectionChange = useCallback(
+    (direction: SortDirection) => setSort(activeSort, direction),
+    [activeSort, setSort],
+  );
 
   // Spread into GenericFilterSortList; content, available filters and row rendering stay local.
-  const listProps = {
-    onSearch: setSearchQuery,
-    onSearchSubmit: handleSearchSubmit,
-    currentSearchTerm: searchQuery,
-    onFilterChange: setFilterTags,
-    selectedFilterValues: activeFilterTags,
-    onSortChange: handleSortChange,
-    onSortDirectionChange: handleSortDirectionChange,
-    currentSortDirection: sortDirection,
-    currentSortValue: activeSort,
-    onFavoriteFilterChange: setFavoriteFilter,
-    currentFavoriteFilterState: favoriteFilterState,
-    onAdvancedSearch: setAdvancedSearchCriteria,
-    currentAdvancedSearchCriteria: advancedSearchCriteria,
-    isLoading: loading,
-  };
+  const listProps: EntityListFilterProps = useMemo(
+    () => ({
+      onSearch: setSearchQuery,
+      onSearchSubmit: handleSearchSubmit,
+      currentSearchTerm: searchQuery,
+      onFilterChange: setFilterTags,
+      selectedFilterValues: activeFilterTags,
+      onSortChange: handleSortChange,
+      onSortDirectionChange: handleSortDirectionChange,
+      currentSortDirection: sortDirection,
+      currentSortValue: activeSort,
+      onFavoriteFilterChange: setFavoriteFilter,
+      currentFavoriteFilterState: favoriteFilterState,
+      onAdvancedSearch: setAdvancedSearchCriteria,
+      currentAdvancedSearchCriteria: advancedSearchCriteria,
+      isLoading: loading,
+    }),
+    [
+      activeFilterTags,
+      activeSort,
+      advancedSearchCriteria,
+      favoriteFilterState,
+      handleSearchSubmit,
+      handleSortChange,
+      handleSortDirectionChange,
+      loading,
+      searchQuery,
+      setAdvancedSearchCriteria,
+      setFavoriteFilter,
+      setFilterTags,
+      sortDirection,
+    ],
+  );
 
   return {
     listProps,

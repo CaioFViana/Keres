@@ -17,13 +17,16 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDrizzle } from '../../db';
 import type { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -31,7 +34,7 @@ import { useStoryRole } from '../../hooks/useStoryRole';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
 
@@ -142,18 +145,15 @@ const WorldRuleDetailScreen = () => {
 
   useEntityInitialLoad(fetchWorldRule);
 
-  // Subscription lifecycle is independent from loading the entity.
-  useEffect(() => {
-    if (worldRuleServiceRef.current) {
-      entityEventEmitter.on('worldrule_changed', handleWorldRuleChange);
-      entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
-
-      return () => {
-        entityEventEmitter.off('worldrule_changed', handleWorldRuleChange);
-        entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
-      };
-    }
-  }, [handleWorldRuleChange, handleTagRelationChange]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'worldrule_changed', listener: handleWorldRuleChange },
+        { event: 'tag_relation_changed', listener: handleTagRelationChange },
+      ],
+      [handleWorldRuleChange, handleTagRelationChange],
+    ),
+  );
 
   useScreenHeader({
     target: 'parent',

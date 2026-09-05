@@ -37,7 +37,10 @@ import { useDrizzle } from '../../db';
 import type { SceneSelect } from '../../db/schema'; // For available scenes
 import type { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityEventSubscriptions,
+  useEntityInitialLoad,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -365,33 +368,26 @@ const CharacterDetailScreen = () => {
 
   useEntityInitialLoad(fetchCharacter);
 
-  // Keep subscription changes from ever triggering a fresh entity load.
-  useEffect(() => {
-    if (characterServiceRef.current) {
-      entityEventEmitter.on('character_changed', handleCharacterChange);
-      entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for character relation changes
-      entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
-      entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
-      entityEventEmitter.on('item_journey_changed', handleItemJourneyChange); // Listen for item journey changes
-      entityEventEmitter.on('location_changed', handleLocationChange); // Listen for location changes
-
-      return () => {
-        entityEventEmitter.off('character_changed', handleCharacterChange);
-        entityEventEmitter.off('character_relation_changed', handleCharacterRelationChange);
-        entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange); // Remove this listener
-        entityEventEmitter.off('item_changed', handleItemChange);
-        entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
-        entityEventEmitter.off('location_changed', handleLocationChange);
-      };
-    }
-  }, [
-    handleCharacterChange,
-    handleCharacterRelationChange,
-    handleCharacterSceneChange,
-    handleItemChange,
-    handleItemJourneyChange,
-    handleLocationChange,
-  ]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [
+        { event: 'character_changed', listener: handleCharacterChange },
+        { event: 'character_relation_changed', listener: handleCharacterRelationChange },
+        { event: 'character_scene_changed', listener: handleCharacterSceneChange },
+        { event: 'item_changed', listener: handleItemChange },
+        { event: 'item_journey_changed', listener: handleItemJourneyChange },
+        { event: 'location_changed', listener: handleLocationChange },
+      ],
+      [
+        handleCharacterChange,
+        handleCharacterRelationChange,
+        handleCharacterSceneChange,
+        handleItemChange,
+        handleItemJourneyChange,
+        handleLocationChange,
+      ],
+    ),
+  );
 
   useEffect(() => {
     if (character) {

@@ -1,7 +1,9 @@
 import { AttributeType, isSuggestionAttributeType } from '@keres/shared';
 import type { FieldType, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { StorySchemaFieldSelect } from '../db/schema';
-import { customAttributeSuggestionType } from '../services/storymanagement/SuggestionService';
+
+/** Distinguishes a custom-field search key (`custom:<fieldId>`) from a native column name. */
+export const CUSTOM_FIELD_METADATA_PREFIX = 'custom:';
 
 function mapAttributeTypeToFieldType(type: string): FieldType {
   switch (type) {
@@ -31,25 +33,18 @@ export function buildCustomAttributeFieldMetadata(
   fields: StorySchemaFieldSelect[],
 ): EntityFieldMetadata[] {
   return fields.map((field) => ({
-    name: `custom:${field.id}`,
+    name: `${CUSTOM_FIELD_METADATA_PREFIX}${field.id}`,
     label: field.name,
     rawLabel: field.name,
     type: mapAttributeTypeToFieldType(field.type),
     isSearchable: true,
     isSuggestion: isSuggestionAttributeType(field.type),
     suggestionsSource: isSuggestionAttributeType(field.type)
-      ? customAttributeSuggestionType(field.id)
+      ? `${CUSTOM_FIELD_METADATA_PREFIX}${field.id}`
       : undefined,
     entityTargetType: field.targetEntityType,
   }));
 }
-
-/**
- * The prefix used by `buildCustomAttributeFieldMetadata` - used by the services to tell a "custom
- * field" search criterion key (which needs a subquery on AttributeValue) from a "native field" key (a
- * direct column on the table itself).
- */
-export const CUSTOM_FIELD_METADATA_PREFIX = 'custom:';
 
 export function extractCustomFieldId(metadataName: string): string | null {
   return metadataName.startsWith(CUSTOM_FIELD_METADATA_PREFIX)

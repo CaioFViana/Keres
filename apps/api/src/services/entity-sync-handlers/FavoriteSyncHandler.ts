@@ -2,11 +2,7 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
 import { db } from '../../db';
 import { favorites } from '../../db/schema';
-import {
-  BaseSyncEntityHandler,
-  SyncConflictError,
-  type SyncOperationPolicyContext,
-} from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**
  * Sync handler for per-user favourites. Favourites are personal metadata: readers may synchronize
@@ -20,7 +16,7 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Favorite';
   tierLimitScope = 'none' as const;
 
-  allowsReaderWrite(_context: SyncOperationPolicyContext): boolean {
+  allowsReaderWrite(): boolean {
     return true;
   }
 

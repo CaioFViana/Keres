@@ -2,6 +2,7 @@ import {
   AttributeType,
   type ChapterType,
   decodeAttributeValue,
+  inspectContiguousOneBasedIndexes,
   isValidAttributeDate,
   validateRouteTraversal,
 } from '@keres/shared';
@@ -599,14 +600,6 @@ function checkRouteTraversal(input: StoryAnalysisInput): StoryAnalysisFinding[] 
 }
 
 /** `null` when the list is already a contiguous 1..N; otherwise, what is wrong with it. */
-function inspectIndexes(indexes: number[]): 'duplicate' | 'start' | 'gap' | null {
-  if (indexes.length === 0) return null;
-  const sorted = [...indexes].sort((a, b) => a - b);
-  if (new Set(sorted).size !== sorted.length) return 'duplicate';
-  if (sorted[0] !== 1) return 'start';
-  return sorted.every((value, position) => value === position + 1) ? null : 'gap';
-}
-
 /**
  * A stretch that ends before it begins.
  *
@@ -686,7 +679,7 @@ function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[
    * numbering - an integrity finding, which the gentler mode does not silence.
    */
   const spine = input.chapters.filter((chapter) => (chapter.type ?? 'chapter') === 'chapter');
-  const chapterProblem = inspectIndexes(spine.map((chapter) => chapter.index));
+  const chapterProblem = inspectContiguousOneBasedIndexes(spine.map((chapter) => chapter.index));
   if (chapterProblem && spine.length > 0) {
     findings.push(
       buildFinding(
@@ -707,7 +700,9 @@ function checkNarrativeIndexes(input: StoryAnalysisInput): StoryAnalysisFinding[
   for (const chapter of input.chapters) {
     const chapterScenes = input.scenes.filter((scene) => scene.chapterId === chapter.id);
     if (chapterScenes.length === 0) continue;
-    const sceneProblem = inspectIndexes(chapterScenes.map((scene) => scene.index));
+    const sceneProblem = inspectContiguousOneBasedIndexes(
+      chapterScenes.map((scene) => scene.index),
+    );
     if (!sceneProblem) continue;
     findings.push(
       buildFinding(

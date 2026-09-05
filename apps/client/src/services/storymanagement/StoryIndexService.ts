@@ -1,3 +1,4 @@
+import { inspectContiguousOneBasedIndexes, type ChapterType } from '@keres/shared';
 import { and, asc, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChapterSelect, SceneSelect } from '../../db/schema';
@@ -20,6 +21,8 @@ export type StoryIndexProblemKind = 'gap' | 'duplicate' | 'start';
 export interface StoryIndexProblem {
   scope: 'chapters' | 'scenes';
   kind: StoryIndexProblemKind;
+  /** Events and chapters have independent 1..N sequences. */
+  chapterType?: ChapterType;
   /** The affected chapter; absent when the problem is in the chapters' own numbering. */
   chapterId?: string;
   chapterName?: string;
@@ -44,11 +47,7 @@ const byCurrentOrder = <T extends { index: number; createdAt: Date; id: string }
 
 /** `null` when the list is already 1..N; otherwise, the first problem found. */
 export function inspectIndexSequence(indexes: number[]): StoryIndexProblemKind | null {
-  if (indexes.length === 0) return null;
-  const sorted = [...indexes].sort((a, b) => a - b);
-  if (new Set(sorted).size !== sorted.length) return 'duplicate';
-  if (sorted[0] !== 1) return 'start';
-  return sorted.every((value, position) => value === position + 1) ? null : 'gap';
+  return inspectContiguousOneBasedIndexes(indexes);
 }
 
 export const createStoryIndexService = (db: AppDrizzleClient): StoryIndexService => {
@@ -76,8 +75,17 @@ export const createStoryIndexService = (db: AppDrizzleClient): StoryIndexService
       ]);
       const problems: StoryIndexProblem[] = [];
 
-      const chapterProblem = inspectIndexSequence(storyChapters.map((chapter) => chapter.index));
-      if (chapterProblem) problems.push({ scope: 'chapters', kind: chapterProblem });
+      for (const chapterType of ['chapter', 'event'] as const) {
+        const rows = storyChapters.filter((chapter) => (chapter.type ?? 'chapter') === chapterType);
+        const chapterProblem = inspectIndexSequence(rows.map((chapter) => chapter.index));
+        if (chapterProblem) {
+          problems.push({
+            scope: 'chapters',
+            kind: chapterProblem,
+            ...(chapterType === 'event' ? { chapterType } : {}),
+          });
+        }
+      }
 
       for (const chapter of storyChapters) {
         const chapterScenes = storyScenes.filter((scene) => scene.chapterId === chapter.id);
@@ -104,15 +112,22 @@ export const createStoryIndexService = (db: AppDrizzleClient): StoryIndexService
       // operation the server understands, so normalising also pushes the correct order over there - which is
       // how an already-divergent story heals.
       const orderedChapters = [...storyChapters].sort(byCurrentOrder);
-      const chapterOrder = orderedChapters.map((chapter, position) => ({
-        id: chapter.id,
-        newIndex: position + 1,
-      }));
-      const changedChapters = chapterOrder.filter(
-        (entry, position) => orderedChapters[position]!.index !== entry.newIndex,
-      ).length;
-      if (changedChapters > 0) {
-        await createChapterService(db).reorderChapters(currentUserId, storyId, chapterOrder);
+      const chapterService = createChapterService(db);
+      let changedChapters = 0;
+      for (const chapterType of ['chapter', 'event'] as const) {
+        const rows = orderedChapters.filter(
+          (chapter) => (chapter.type ?? 'chapter') === chapterType,
+        );
+        const reorder = rows.map((chapter, position) => ({
+          id: chapter.id,
+          newIndex: position + 1,
+        }));
+        const changed = reorder.filter(
+          (entry, position) => rows[position]!.index !== entry.newIndex,
+        ).length;
+        if (changed === 0) continue;
+        await chapterService.reorderChapters(currentUserId, storyId, reorder, chapterType);
+        changedChapters += changed;
       }
 
       const sceneService = createSceneService(db);

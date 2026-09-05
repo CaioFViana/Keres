@@ -39,6 +39,8 @@ export interface GalleryRelationService {
     galleryId: string,
     owner: GalleryOwnerRef,
   ): Promise<void>;
+  /** Soft-deletes every active owner link when its gallery is removed. */
+  unlinkAllForGallery(currentUserId: string, storyId: string, galleryId: string): Promise<number>;
   /** Reconciles a media file's owners to exactly this list. */
   setOwnersForGallery(
     currentUserId: string,
@@ -209,6 +211,17 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
         },
       );
       entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
+    },
+
+    async unlinkAllForGallery(currentUserId, storyId, galleryId): Promise<number> {
+      const relations = await this.getOwnersForGallery(storyId, galleryId);
+      for (const relation of relations) {
+        await this.unlinkGalleryFromOwner(currentUserId, storyId, galleryId, {
+          ownerId: relation.ownerId,
+          ownerType: relation.ownerType as GalleryOwnerEntity,
+        });
+      }
+      return relations.length;
     },
 
     async setOwnersForGallery(currentUserId, storyId, galleryId, owners): Promise<void> {

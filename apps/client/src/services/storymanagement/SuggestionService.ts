@@ -1,25 +1,7 @@
-import { and, eq, inArray, ne, sql } from 'drizzle-orm';
-import type { StorySchemaEntityType } from '@keres/shared';
-import {
-  AttributeType,
-  deriveAttributeKey,
-  encodeAttributeValue,
-  explodeAttributeUsageValue,
-  getSuggestionSource,
-  isSuggestionAttributeType,
-} from '@keres/shared';
-import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
-import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
+import { and, eq, ne, sql } from 'drizzle-orm';
+import { deriveAttributeKey } from '@keres/shared';
 import type { AppDrizzleClient, SuggestionInsert, SuggestionSelect } from '../../db';
-import {
-  characterRelations,
-  characters,
-  itemJourneys,
-  items,
-  attributeValues,
-  storySchemaFields,
-  suggestions,
-} from '../../db';
+import { suggestions } from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
@@ -28,120 +10,40 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-import { createAttributeValueService } from './AttributeValueService';
-import { createEntityNameBatchResolver } from '../EntityNameBatchResolver';
+import {
+  createSuggestionUsageService,
+  isNativeSuggestionType,
+  type SuggestionType,
+  type SuggestionUsage,
+} from './SuggestionUsageService';
+import {
+  isCustomAttributeSuggestionType,
+  isNamedListType,
+  isWorldPieceSuggestionType,
+  LIST_CATALOG_TYPE,
+  namedListType,
+  type NamedSuggestionList,
+  parseNamedListCatalogValue,
+} from './suggestionTypes';
 
-const CUSTOM_ATTRIBUTE_TYPE_PREFIX = 'custom:';
-export const LIST_CATALOG_TYPE = 'list_catalog';
-export const NAMED_LIST_TYPE_PREFIX = 'list_';
-export const WORLD_PIECE_TYPE_PREFIX = 'world_piece_type:';
-export const WORLD_PIECE_CATEGORY_TYPE = 'world_piece_category';
-
-/** A World Piece type catalogue is deliberately scoped by its fixed Section. */
-export function isWorldPieceSuggestionType(type: string): boolean {
-  return type.startsWith(WORLD_PIECE_TYPE_PREFIX) || type === WORLD_PIECE_CATEGORY_TYPE;
-}
-
-export function customAttributeSuggestionType(fieldId: string): string {
-  return `${CUSTOM_ATTRIBUTE_TYPE_PREFIX}${fieldId}`;
-}
-
-export function isNamedListType(type: string): boolean {
-  return type.startsWith(NAMED_LIST_TYPE_PREFIX) && type !== LIST_CATALOG_TYPE;
-}
-
-export function namedListType(id: string, slug: string): string {
-  return `${NAMED_LIST_TYPE_PREFIX}${id}_${slug}`;
-}
-
-/** ULID is 26 Crockford base32 chars. Display key is the slug after `list_<ulid>_`. */
-const NAMED_LIST_ULID_LENGTH = 26;
-
-export function namedListDisplayKey(type: string): string {
-  if (!isNamedListType(type)) return type;
-  const rest = type.slice(NAMED_LIST_TYPE_PREFIX.length);
-  if (rest.length > NAMED_LIST_ULID_LENGTH + 1 && rest[NAMED_LIST_ULID_LENGTH] === '_') {
-    return rest.slice(NAMED_LIST_ULID_LENGTH + 1);
-  }
-  return type;
-}
-
-export type NamedSuggestionList = { type: string; name: string };
-
-export function parseNamedListCatalogValue(value: string): NamedSuggestionList | null {
-  try {
-    const parsed = JSON.parse(value) as { type?: unknown; name?: unknown };
-    if (
-      typeof parsed.type === 'string' &&
-      isNamedListType(parsed.type) &&
-      typeof parsed.name === 'string' &&
-      parsed.name.trim()
-    ) {
-      return { type: parsed.type, name: parsed.name.trim() };
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-const suggestionConfig = {
-  character_gender: {
-    schema: characters,
-    column: characters.gender,
-    event: 'character_changed',
-  },
-  character_race: {
-    schema: characters,
-    column: characters.race,
-    event: 'character_changed',
-  },
-  character_subrace: {
-    schema: characters,
-    column: characters.subrace,
-    event: 'character_changed',
-  },
-  characterRelation_type: {
-    schema: characterRelations,
-    column: characterRelations.relationType,
-    event: 'character_relation_changed',
-  },
-  item_category: {
-    schema: items,
-    column: items.category,
-    event: 'item_changed',
-  },
-  item_initial_state: {
-    schema: items,
-    column: items.initialState,
-    event: 'item_changed',
-  },
-  item_state: {
-    schema: itemJourneys,
-    column: itemJourneys.newState,
-    event: 'item_journey_changed',
-  },
-};
-
-function getNativeSuggestionConfig(type: string) {
-  const persistence = suggestionConfig[type as keyof typeof suggestionConfig];
-  const domain = getSuggestionSource(type);
-  return persistence && domain ? { ...persistence, ...domain } : undefined;
-}
-
-export type SuggestionType = string;
-export type SuggestionUsageEntityType =
-  | Exclude<GlobalSearchEntityType, 'Plot'>
-  | 'CharacterRelation';
-export interface SuggestionUsage {
-  entityType: SuggestionUsageEntityType;
-  id: string;
-  title: string;
-  snippet: string;
-  context?: string;
-  characterIds?: string[];
-  characterNames?: string[];
-}
+export {
+  customAttributeSuggestionType,
+  isNamedListType,
+  isWorldPieceSuggestionType,
+  LIST_CATALOG_TYPE,
+  NAMED_LIST_TYPE_PREFIX,
+  namedListDisplayKey,
+  namedListType,
+  parseNamedListCatalogValue,
+  WORLD_PIECE_CATEGORY_TYPE,
+  WORLD_PIECE_TYPE_PREFIX,
+} from './suggestionTypes';
+export type { NamedSuggestionList } from './suggestionTypes';
+export type {
+  SuggestionType,
+  SuggestionUsage,
+  SuggestionUsageEntityType,
+} from './SuggestionUsageService';
 
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
@@ -192,29 +94,7 @@ export interface SuggestionServiceInterface {
 
 export const createSuggestionService = (db: AppDrizzleClient): SuggestionServiceInterface => {
   const serverService = createServerService(db);
-
-  const getSuggestionUsageCounts = async (
-    type: SuggestionType,
-    storyId: string,
-  ): Promise<[string, number][]> => {
-    if (!storyId || isNamedListType(type) || isWorldPieceSuggestionType(type)) return [];
-    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
-      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-      return createAttributeValueService(db).getValueUsageCounts(fieldId);
-    }
-
-    const config = getNativeSuggestionConfig(type);
-    if (!config) return [];
-    const dynamic = await db
-      .select({ value: config.column, count: sql<number>`count(*)` })
-      .from(config.schema)
-      .where(and(eq(config.schema.storyId, storyId), eq(config.schema.isDeleted, false)))
-      .groupBy(config.column)
-      .all();
-    return dynamic
-      .filter(({ value }) => typeof value === 'string' && Boolean(value))
-      .map(({ value, count }) => [value as string, count]);
-  };
+  const usageService = createSuggestionUsageService(db);
 
   const ensureUnique = async (storyId: string, type: string, value: string, excludeId?: string) => {
     const conditions = [
@@ -233,189 +113,17 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
     if (existing) throw new Error('Suggestion already exists for this field.');
   };
 
-  const getSuggestionUsages = async (
-    type: SuggestionType,
-    storyId: string,
-    value: string,
-  ): Promise<SuggestionUsage[]> => {
-    if (!storyId || !value || isNamedListType(type)) return [];
-    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
-      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-      const field = await db.query.storySchemaFields.findFirst({
-        where: and(eq(storySchemaFields.id, fieldId), eq(storySchemaFields.storyId, storyId)),
-      });
-      if (!field || !isSuggestionAttributeType(field.type)) return [];
-      const rows = await db
-        .select()
-        .from(attributeValues)
-        .where(
-          and(
-            eq(attributeValues.storyId, storyId),
-            eq(attributeValues.fieldId, fieldId),
-            eq(attributeValues.isDeleted, false),
-          ),
-        )
-        .all();
-      const matching = rows.filter((row) =>
-        explodeAttributeUsageValue(field.type as AttributeType, row.value ?? '').includes(value),
-      );
-      const refs = matching.flatMap((row) => {
-        const entityType = row.entityType as GlobalSearchEntityType;
-        return globalSearchFieldConfig[entityType] ? [{ entityType, entityId: row.entityId }] : [];
-      });
-      const titles = await createEntityNameBatchResolver(db).resolveMany(refs, {
-        includeDeleted: false,
-      });
-      return matching.flatMap((row) => {
-        const entityType = row.entityType as GlobalSearchEntityType;
-        if (entityType === 'Plot') return [];
-        const title = titles.get(`${entityType}:${row.entityId}`);
-        return title === undefined
-          ? []
-          : [{ entityType, id: row.entityId, title, snippet: `${field.name}: ${value}` }];
-      });
-    }
-
-    const config = getNativeSuggestionConfig(type);
-    if (!config) return [];
-    const rows = await db
-      .select()
-      .from(config.schema)
-      .where(
-        and(
-          eq((config.schema as any).storyId, storyId),
-          eq((config.schema as any).isDeleted, false),
-          eq(config.column as any, value),
-        ),
-      )
-      .all();
-    if (config.entityType === 'CharacterRelation') {
-      const ids = Array.from(
-        new Set(rows.flatMap((row: any) => [row.character1Id, row.character2Id])),
-      );
-      const names = new Map(
-        (
-          await db
-            .select({ id: characters.id, name: characters.name })
-            .from(characters)
-            .where(and(inArray(characters.id, ids), eq(characters.isDeleted, false)))
-            .all()
-        ).map((row) => [row.id, row.name]),
-      );
-      return rows.map((row: any) => ({
-        entityType: 'CharacterRelation' as const,
-        id: row.id,
-        title: `${names.get(row.character1Id) ?? ''} ↔ ${names.get(row.character2Id) ?? ''}`,
-        snippet: value,
-        characterIds: [row.character1Id, row.character2Id],
-        characterNames: [names.get(row.character1Id) ?? '', names.get(row.character2Id) ?? ''],
-      }));
-    }
-    const titleField =
-      config.entityType === 'Character' || config.entityType === 'Item' ? 'name' : 'newState';
-    return rows.map((row: any) => ({
-      entityType: config.entityType as SuggestionUsageEntityType,
-      id: row.id,
-      title: String(row[titleField] ?? ''),
-      snippet: `${config.field}: ${value}`,
-    }));
-  };
-
-  const renameSuggestionUsages = async (
-    currentUserId: string,
-    storyId: string,
-    type: SuggestionType,
-    oldValue: string,
-    newValue: string,
-  ) => {
-    const usages = await getSuggestionUsages(type, storyId, oldValue);
-    if (usages.length === 0) return 0;
-    await assertStoryIsWritable(db, storyId);
-    const userId = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-    if (type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX)) {
-      const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-      const field = await db.query.storySchemaFields.findFirst({
-        where: eq(storySchemaFields.id, fieldId),
-      });
-      if (!field) return 0;
-      const service = createAttributeValueService(db);
-      const rows = await db
-        .select()
-        .from(attributeValues)
-        .where(
-          and(
-            eq(attributeValues.storyId, storyId),
-            eq(attributeValues.fieldId, fieldId),
-            eq(attributeValues.isDeleted, false),
-          ),
-        )
-        .all();
-      const matching = rows.filter((row) =>
-        explodeAttributeUsageValue(field.type as AttributeType, row.value ?? '').includes(oldValue),
-      );
-      await Promise.all(
-        matching.map((row) => {
-          const next =
-            field.type === AttributeType.SUGGESTION_LIST
-              ? encodeAttributeValue(
-                  AttributeType.SUGGESTION_LIST,
-                  explodeAttributeUsageValue(AttributeType.SUGGESTION_LIST, row.value ?? '').map(
-                    (entry) => (entry === oldValue ? newValue : entry),
-                  ),
-                )
-              : newValue;
-          return service.saveValuesForEntity(
-            currentUserId,
-            storyId,
-            row.entityType as StorySchemaEntityType,
-            row.entityId,
-            { [fieldId]: next },
-          );
-        }),
-      );
-      return matching.length;
-    }
-    const config = getNativeSuggestionConfig(type);
-    if (!config) return 0;
-    const rows = await db
-      .select()
-      .from(config.schema)
-      .where(
-        and(
-          eq((config.schema as any).storyId, storyId),
-          eq((config.schema as any).isDeleted, false),
-          eq(config.column as any, oldValue),
-        ),
-      )
-      .all();
-    for (const row of rows as any[]) {
-      const updated = await db
-        .update(config.schema as any)
-        .set({
-          [config.field]: newValue,
-          updatedAt: new Date(),
-          version: sql`${(config.schema as any).version} + 1`,
-        })
-        .where(eq((config.schema as any).id, row.id))
-        .returning({ version: (config.schema as any).version })
-        .get();
-      if (!updated) continue;
-      await recordLocalOperation(db, storyId, userId, 'update', config.entityType, row.id, {
-        [config.field]: newValue,
-        version: updated.version,
-      });
-      entityEventEmitter.emit(config.event, storyId, row.id);
-    }
-    return rows.length;
-  };
-
   return {
     async getSuggestions(type, storyId) {
       if (!storyId) return [];
-      const isCustomAttribute = type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX);
+      const isCustomAttribute = isCustomAttributeSuggestionType(type);
       const isNamedList = isNamedListType(type);
-      const config = isCustomAttribute || isNamedList ? null : getNativeSuggestionConfig(type);
-      if (!isCustomAttribute && !isNamedList && !isWorldPieceSuggestionType(type) && !config) {
+      if (
+        !isCustomAttribute &&
+        !isNamedList &&
+        !isWorldPieceSuggestionType(type) &&
+        !isNativeSuggestionType(type)
+      ) {
         return [];
       }
 
@@ -433,15 +141,15 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         .all();
       stored.forEach(({ value }) => counts.set(value, counts.get(value) ?? 0));
 
-      (await getSuggestionUsageCounts(type, storyId)).forEach(([value, count]) => {
+      (await usageService.getSuggestionUsageCounts(type, storyId)).forEach(([value, count]) => {
         counts.set(value, (counts.get(value) ?? 0) + count);
       });
       return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
     },
 
-    getSuggestionUsageCounts,
+    getSuggestionUsageCounts: usageService.getSuggestionUsageCounts,
 
-    getSuggestionUsages,
+    getSuggestionUsages: usageService.getSuggestionUsages,
 
     async renameSuggestionValue(currentUserId, storyId, type, oldValue, newValue, renameUsages) {
       const normalizedValue = newValue.trim();
@@ -452,7 +160,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       const source = stored.find((suggestion) => suggestion.value === oldValue);
       const destination = stored.find((suggestion) => suggestion.value === normalizedValue);
       const merged = Boolean(destination && destination.id !== source?.id);
-      const usageCount = (await getSuggestionUsages(type, storyId, oldValue)).length;
+      const usageCount = (await usageService.getSuggestionUsages(type, storyId, oldValue)).length;
       if (merged && usageCount > 0 && !renameUsages) {
         throw new Error('Renaming to an existing saved value requires merging all story usages.');
       }
@@ -461,7 +169,13 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         else await this.updateSuggestion(currentUserId, source.id, normalizedValue);
       }
       const updatedUsages = renameUsages
-        ? await renameSuggestionUsages(currentUserId, storyId, type, oldValue, normalizedValue)
+        ? await usageService.renameSuggestionUsages(
+            currentUserId,
+            storyId,
+            type,
+            oldValue,
+            normalizedValue,
+          )
         : 0;
       return { updatedUsages, merged };
     },

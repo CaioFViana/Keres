@@ -3,6 +3,23 @@ export interface ReorderItem {
   newIndex: number;
 }
 
+export type ContiguousIndexProblem = 'duplicate' | 'start' | 'gap';
+
+/**
+ * Inspects persisted display indices rather than a reorder request. It lets maintenance tools and
+ * story analysis describe the same corrupt 1..N sequence before either asks the sync protocol to
+ * repair it.
+ */
+export function inspectContiguousOneBasedIndexes(
+  indexes: readonly number[],
+): ContiguousIndexProblem | null {
+  if (indexes.length === 0) return null;
+  const sorted = [...indexes].sort((a, b) => a - b);
+  if (new Set(sorted).size !== sorted.length) return 'duplicate';
+  if (sorted[0] !== 1) return 'start';
+  return sorted.every((value, position) => value === position + 1) ? null : 'gap';
+}
+
 /**
  * The final order of a dragged list, in the format synchronization expects: `newIndex`
  * **contiguous 1..N**.

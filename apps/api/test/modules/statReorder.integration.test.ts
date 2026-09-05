@@ -69,4 +69,14 @@ describe('reordering stats', () => {
     expect(data.conflicts?.[0]).toMatchObject({ reason: 'validation' });
     expect(await statOrders()).toEqual({ [courageId]: 0, [wisdomId]: 1 });
   });
+
+  it('rejects a repeated Stat ID even when the indices are sequential', async () => {
+    const { data } = await reorder([
+      { id: wisdomId, newIndex: 1 },
+      { id: wisdomId, newIndex: 2 },
+    ]);
+
+    expect(data.conflicts?.[0]).toMatchObject({ reason: 'validation' });
+    expect(await statOrders()).toEqual({ [courageId]: 0, [wisdomId]: 1 });
+  });
 });

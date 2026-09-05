@@ -1,4 +1,4 @@
-import type { StorySchemaEntityType } from '@keres/shared';
+import { completeReorderProblem, type StorySchemaEntityType } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StorySchemaFieldInsert, StorySchemaFieldSelect } from '../../db/schema';
@@ -180,16 +180,12 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         .all();
       const fieldsById = new Map(fields.map((field) => [field.id, field]));
 
-      const orderValues = newOrder.map(({ order }) => order).sort((a, b) => a - b);
-      const hasSequentialOrder = orderValues.every((order, index) => order === index);
-      if (
-        newOrder.length !== fields.length ||
-        new Set(newOrder.map(({ id }) => id)).size !== fields.length ||
-        newOrder.some(({ id }) => !fieldsById.has(id)) ||
-        !hasSequentialOrder
-      ) {
-        throw new Error('Attribute reorder must contain every field of the selected entity type.');
-      }
+      const reorderItems = newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 }));
+      const problem = completeReorderProblem(
+        fields.map((field) => field.id),
+        reorderItems,
+      );
+      if (problem) throw new Error(`Attribute reorder is invalid. ${problem}`);
 
       const changedFields = newOrder.filter(({ id, order }) => fieldsById.get(id)?.order !== order);
       if (changedFields.length === 0) return;
@@ -214,7 +210,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         .returning({ version: stories.version });
 
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
+        reorderItems,
         reorderTarget: 'StorySchemaField',
         schemaEntityType: entityType,
         version: story?.version,

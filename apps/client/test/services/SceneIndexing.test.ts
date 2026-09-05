@@ -144,6 +144,19 @@ describe('SceneService index handling', () => {
     );
     expect(logged.map((operation) => operation.entityId).sort()).toEqual(['b', 'c']);
   });
+
+  it('rejects an incomplete scene reorder before writing an operation the server would reject', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+
+    await expect(
+      service.reorderScenes(TEST_USER_ID, TEST_STORY_ID, 'chapter-1', [{ id: 'a', newIndex: 1 }]),
+    ).rejects.toThrow('exactly once');
+
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2']);
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+  });
 });
 
 describe('StoryIndexService', () => {

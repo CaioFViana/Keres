@@ -36,3 +36,24 @@ export function reorderIndicesProblem(indices: readonly number[]): string | null
   }
   return null;
 }
+
+/**
+ * Verifies the complete semantic contract of a persisted reorder: it must name every live row
+ * exactly once and give those rows a contiguous wire index. Hosts load the live IDs themselves;
+ * this pure rule keeps their client and API checks identical without coupling it to a database.
+ */
+export function completeReorderProblem(
+  expectedIds: Iterable<string>,
+  reorderItems: readonly ReorderItem[],
+): string | null {
+  const expected = new Set(expectedIds);
+  const received = new Set(reorderItems.map((item) => item.id));
+  if (
+    reorderItems.length !== expected.size ||
+    received.size !== expected.size ||
+    ![...received].every((id) => expected.has(id))
+  ) {
+    return 'Validation Error: Reorder items must contain every expected ID exactly once.';
+  }
+  return reorderIndicesProblem(reorderItems.map((item) => item.newIndex));
+}

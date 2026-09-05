@@ -1,4 +1,4 @@
-import { MAX_PRIMARY_STATS } from '@keres/shared';
+import { completeReorderProblem, MAX_PRIMARY_STATS } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StatInsert, StatSelect } from '../../db/schema';
@@ -139,16 +139,12 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
         .all();
       const byId = new Map(current.map((row) => [row.id, row]));
 
-      const orderValues = newOrder.map(({ order }) => order).sort((a, b) => a - b);
-      const isSequential = orderValues.every((order, index) => order === index);
-      if (
-        newOrder.length !== current.length ||
-        new Set(newOrder.map(({ id }) => id)).size !== current.length ||
-        newOrder.some(({ id }) => !byId.has(id)) ||
-        !isSequential
-      ) {
-        throw new Error('Stat reorder must contain every stat of the story exactly once.');
-      }
+      const reorderItems = newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 }));
+      const problem = completeReorderProblem(
+        current.map((stat) => stat.id),
+        reorderItems,
+      );
+      if (problem) throw new Error(`Stat reorder is invalid. ${problem}`);
 
       const changed = newOrder.filter(({ id, order }) => byId.get(id)?.order !== order);
       if (changed.length === 0) return;
@@ -173,7 +169,7 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
         ).at(0);
       });
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
+        reorderItems,
         reorderTarget: 'Stat',
         version: story?.version,
       });

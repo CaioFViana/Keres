@@ -107,6 +107,19 @@ describe('reordering events', () => {
     expect(await indexesOf('event')).toEqual({ [eventA]: 1, [eventB]: 2 });
   });
 
+  it('refuses a repeated event even when its indices are otherwise sequential', async () => {
+    const { data } = await reorder(
+      [
+        { id: eventA, newIndex: 1 },
+        { id: eventA, newIndex: 2 },
+      ],
+      'Event',
+    );
+
+    expect(data.conflicts?.[0]).toMatchObject({ reason: 'validation' });
+    expect(await indexesOf('event')).toEqual({ [eventA]: 1, [eventB]: 2 });
+  });
+
   /** A chapter is not part of the event space, even though it is in the same table. */
   it('refuses a payload that mixes in a chapter', async () => {
     const { data } = await reorder(

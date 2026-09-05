@@ -1,4 +1,4 @@
-import type { Scene } from '@keres/shared';
+import { completeReorderProblem, type Scene } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -419,19 +419,28 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       newOrder: { id: string; newIndex: number }[],
     ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
+      const current = await db
+        .select({ id: scenes.id, index: scenes.index })
+        .from(scenes)
+        .where(
+          and(
+            eq(scenes.storyId, storyId),
+            eq(scenes.chapterId, chapterId),
+            eq(scenes.isDeleted, false),
+          ),
+        )
+        .all();
+      const problem = completeReorderProblem(
+        current.map((scene) => scene.id),
+        newOrder,
+      );
+      if (problem) throw new Error(`Scene reorder is invalid. ${problem}`);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const currentById = new Map(current.map((scene) => [scene.id, scene]));
 
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
-          const originalScene = await tx.query.scenes.findFirst({
-            where: and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)),
-          });
-          if (!originalScene) {
-            console.warn(
-              `Scene with ID ${scene.id} not found in chapter ${chapterId} during reorder.`,
-            );
-            continue;
-          }
+          const originalScene = currentById.get(scene.id)!;
 
           if (originalScene.index !== scene.newIndex) {
             await tx

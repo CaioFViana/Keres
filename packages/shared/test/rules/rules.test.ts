@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { isSameEntity, SELF_LINK_ERROR, sortEntityPair } from '../../rules/entityPair';
 import { scenesToUnflag } from '../../rules/linearStoryScenes';
-import { buildReorderItems, reorderIndicesProblem } from '../../rules/reorderIndices';
+import {
+  buildReorderItems,
+  completeReorderProblem,
+  reorderIndicesProblem,
+} from '../../rules/reorderIndices';
 import { ownerOnlyFieldsIn, STORY_OWNER_ONLY_FIELDS } from '../../rules/storyOwnerFields';
 
 /**
@@ -79,6 +83,27 @@ describe('reorder indices', () => {
       { id: 'z', newIndex: 3 },
     ]);
     expect(reorderIndicesProblem(items.map((item) => item.newIndex))).toBeNull();
+  });
+
+  it('requires every expected ID exactly once as well as contiguous indices', () => {
+    expect(
+      completeReorderProblem(
+        ['a', 'b'],
+        [
+          { id: 'a', newIndex: 1 },
+          { id: 'b', newIndex: 2 },
+        ],
+      ),
+    ).toBeNull();
+    expect(
+      completeReorderProblem(
+        ['a'],
+        [
+          { id: 'a', newIndex: 1 },
+          { id: 'a', newIndex: 2 },
+        ],
+      ),
+    ).toContain('exactly once');
   });
 });
 

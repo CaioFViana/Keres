@@ -1,4 +1,4 @@
-import type { ChapterType } from '@keres/shared';
+import { completeReorderProblem, type ChapterType } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -392,24 +392,34 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       type: ChapterType = 'chapter',
     ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
+      const current = await db
+        .select({ id: chapters.id, index: chapters.index })
+        .from(chapters)
+        .where(
+          and(
+            eq(chapters.storyId, storyId),
+            eq(chapters.type, type),
+            eq(chapters.isDeleted, false),
+          ),
+        )
+        .all();
+      const problem = completeReorderProblem(
+        current.map((chapter) => chapter.id),
+        newOrder,
+      );
+      if (problem) throw new Error(`Chapter reorder is invalid. ${problem}`);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const currentById = new Map(current.map((chapter) => [chapter.id, chapter]));
 
       await db.transaction(async (tx) => {
         for (const chapter of newOrder) {
-          const originalChapter = await tx.query.chapters.findFirst({
-            where: eq(chapters.id, chapter.id),
-          });
-          if (!originalChapter) {
-            console.warn(`Chapter with ID ${chapter.id} not found during reorder.`);
-            continue;
-          }
+          const originalChapter = currentById.get(chapter.id)!;
 
           if (originalChapter.index !== chapter.newIndex) {
-            // Compare with chapter.newIndex
             await tx
               .update(chapters)
               .set({
-                index: chapter.newIndex, // Use chapter.newIndex
+                index: chapter.newIndex,
                 updatedAt: new Date(),
                 version: sql`${chapters.version} + 1`,
               })

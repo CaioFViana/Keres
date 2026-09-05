@@ -6,6 +6,7 @@ import type {
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { encodeReorderOperationPayload } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import * as schema from '../../db/schema';
 import type { OperationLogSelect } from '../../db/schema';
@@ -99,15 +100,7 @@ export class SyncPull {
         : update.type === 'update'
           ? update.changes
           : update.type === 'reorder'
-            ? {
-                reorderItems: update.reorderItems,
-                ...(update.entity === 'Story'
-                  ? {
-                      reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
-                      schemaEntityType: (update as StoryReorderingStoryUpdate).schemaEntityType,
-                    }
-                  : {}),
-              }
+            ? encodeReorderOperationPayload(update)
             : { id: update.id }; // For delete, just store the ID
 
     await this.context

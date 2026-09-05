@@ -15,6 +15,22 @@ export type PulledSyncOperationMetadata = {
 };
 
 /**
+ * Extracts the protocol-owned portion of a reorder for an operation log. Hosts retain their
+ * database-specific metadata and sanitization rules, but must never independently decide which
+ * Story reorder qualifiers survive persistence.
+ */
+export function encodeReorderOperationPayload(
+  update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+): Record<string, unknown> {
+  if (update.entity === 'Chapter') return { reorderItems: update.reorderItems };
+  return {
+    reorderItems: update.reorderItems,
+    ...(update.reorderTarget ? { reorderTarget: update.reorderTarget } : {}),
+    ...(update.schemaEntityType ? { schemaEntityType: update.schemaEntityType } : {}),
+  };
+}
+
+/**
  * Rebuilds the two entity-owned reorder wire formats from their common operation-log payload.
  * Storage hosts supply only primitive values, allowing API and client code to share this protocol
  * rule without sharing database code.

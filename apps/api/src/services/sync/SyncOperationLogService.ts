@@ -1,8 +1,4 @@
-import type {
-  ChapterReorderingStoryUpdate,
-  StoryReorderingStoryUpdate,
-  StoryUpdate,
-} from '@keres/shared';
+import { encodeReorderOperationPayload, type StoryUpdate } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../../db';
@@ -32,12 +28,7 @@ export class SyncOperationLogService {
     } else if (update.type === 'delete') {
       payload = { id: entityId };
     } else if (update.type === 'reorder') {
-      payload = {
-        reorderItems: (update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate)
-          .reorderItems,
-        reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
-        schemaEntityType: (update as StoryReorderingStoryUpdate).schemaEntityType,
-      };
+      payload = encodeReorderOperationPayload(update);
     }
 
     const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await db

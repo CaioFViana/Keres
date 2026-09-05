@@ -3,7 +3,7 @@ import type {
   CreateStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { ChapterReorderingStoryUpdateSchema, reorderIndicesProblem } from '@keres/shared';
+import { ChapterReorderingStoryUpdateSchema, completeReorderProblem } from '@keres/shared';
 import type { CreateChapterDataType } from '@keres/shared/';
 import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
@@ -95,24 +95,9 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
           },
         });
 
-        const existingSceneIds = new Set(existingScenes.map((s) => s.id));
-        const reorderSceneIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
-
-        // Ensure all reorder items correspond to existing scenes in this chapter
-        if (
-          reorderSceneIds.size !== existingSceneIds.size ||
-          ![...reorderSceneIds].every((id) => existingSceneIds.has(id))
-        ) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Reorder items do not match current scenes in chapter or contain invalid scene IDs.',
-          );
-        }
-
-        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
-        // `buildReorderItems` from it, and this handler enforces the same thing.
-        const problem = reorderIndicesProblem(
-          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        const problem = completeReorderProblem(
+          existingScenes.map((scene) => scene.id),
+          validatedReorderUpdate.reorderItems,
         );
         if (problem) {
           throw new SyncConflictError('validation', problem);

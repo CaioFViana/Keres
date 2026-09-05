@@ -288,33 +288,35 @@ describe('reordering chapters', () => {
     expect(versionOf('chapter-3')).toBe(2);
   });
 
-  it('skips an id that is not there instead of failing the whole reorder', async () => {
-    await chapterService().reorderChapters(TEST_USER_ID, TEST_STORY_ID, [
-      { id: 'ghost', newIndex: 1 },
-      { id: 'chapter-1', newIndex: 2 },
-      { id: 'chapter-2', newIndex: 3 },
-      { id: 'chapter-3', newIndex: 1 },
-    ]);
+  it('rejects an unknown or repeated id before recording an unsyncable reorder', async () => {
+    const before = await operations();
 
-    expect(await indexesInOrder()).toEqual(['chapter-3:1', 'chapter-1:2', 'chapter-2:3']);
+    await expect(
+      chapterService().reorderChapters(TEST_USER_ID, TEST_STORY_ID, [
+        { id: 'ghost', newIndex: 1 },
+        { id: 'chapter-1', newIndex: 2 },
+        { id: 'chapter-2', newIndex: 3 },
+        { id: 'chapter-3', newIndex: 1 },
+      ]),
+    ).rejects.toThrow('exactly once');
+
+    expect(await indexesInOrder()).toEqual(['chapter-1:1', 'chapter-2:2', 'chapter-3:3']);
+    expect(await operations()).toEqual(before);
   });
 
-  /**
-   * **The service does not enforce 1..N.** The rule lives in `@keres/shared/rules/reorderIndices`,
-   * applied by the caller through `buildReorderItems` and enforced by the server, which answers a
-   * `validation` conflict for anything else - and a `validation` conflict is not user-resolvable.
-   *
-   * So a caller that builds the list itself can write a local order the server will refuse forever.
-   * This is asserted as current behaviour, not endorsed: the Events feature adds a second index
-   * space, which doubles the number of callers that could get this wrong.
-   */
-  it('writes a non-contiguous order that the server would refuse', async () => {
-    await chapterService().reorderChapters(TEST_USER_ID, TEST_STORY_ID, [
-      { id: 'chapter-1', newIndex: 5 },
-      { id: 'chapter-2', newIndex: 9 },
-    ]);
+  it('rejects a non-contiguous order before the server has to reject it', async () => {
+    const before = await operations();
 
-    expect(await indexesInOrder()).toEqual(['chapter-3:3', 'chapter-1:5', 'chapter-2:9']);
+    await expect(
+      chapterService().reorderChapters(TEST_USER_ID, TEST_STORY_ID, [
+        { id: 'chapter-1', newIndex: 1 },
+        { id: 'chapter-2', newIndex: 3 },
+        { id: 'chapter-3', newIndex: 5 },
+      ]),
+    ).rejects.toThrow('sequential');
+
+    expect(await indexesInOrder()).toEqual(['chapter-1:1', 'chapter-2:2', 'chapter-3:3']);
+    expect(await operations()).toEqual(before);
   });
 });
 

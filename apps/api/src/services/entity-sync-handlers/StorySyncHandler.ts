@@ -8,7 +8,7 @@ import type { ChapterType } from '@keres/shared';
 import {
   CreateStoryDataSchema,
   PartialStorySchema,
-  reorderIndicesProblem,
+  completeReorderProblem,
   StoryReorderingStoryUpdateSchema,
 } from '@keres/shared';
 import { ownerOnlyFieldsIn } from '@keres/shared';
@@ -149,21 +149,11 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
             where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
             columns: { id: true, version: true },
           });
-          const statIds = new Set(existingStats.map((stat) => stat.id));
-          const reorderIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
-          const problem = reorderIndicesProblem(
-            validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+          const problem = completeReorderProblem(
+            existingStats.map((stat) => stat.id),
+            validatedReorderUpdate.reorderItems,
           );
-          if (
-            reorderIds.size !== statIds.size ||
-            ![...reorderIds].every((id) => statIds.has(id)) ||
-            problem
-          ) {
-            throw new SyncConflictError(
-              'validation',
-              problem ?? 'Validation Error: Stat reorder items must match the story stats.',
-            );
-          }
+          if (problem) throw new SyncConflictError('validation', problem);
           await Promise.all(
             validatedReorderUpdate.reorderItems.map((item) => {
               const stat = existingStats.find((candidate) => candidate.id === item.id)!;
@@ -196,20 +186,11 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           ),
           columns: { id: true, version: true },
         });
-        const fieldIds = new Set(existingFields.map((field) => field.id));
-        const reorderIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
-        const indices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
-        if (
-          reorderIds.size !== fieldIds.size ||
-          ![...reorderIds].every((id) => fieldIds.has(id)) ||
-          Math.min(...indices) !== 1 ||
-          Math.max(...indices) !== indices.length
-        ) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Attribute reorder items must match the selected type.',
-          );
-        }
+        const problem = completeReorderProblem(
+          existingFields.map((field) => field.id),
+          validatedReorderUpdate.reorderItems,
+        );
+        if (problem) throw new SyncConflictError('validation', problem);
 
         await db.transaction(async (tx) => {
           await Promise.all(
@@ -259,26 +240,9 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           },
         });
 
-        const existingChapterIds = new Set(existingChapters.map((c) => c.id));
-        const reorderChapterIds = new Set(
-          validatedReorderUpdate.reorderItems.map((item) => item.id),
-        );
-
-        // Ensure all reorder items correspond to existing chapters in this story
-        if (
-          reorderChapterIds.size !== existingChapterIds.size ||
-          ![...reorderChapterIds].every((id) => existingChapterIds.has(id))
-        ) {
-          throw new SyncConflictError(
-            'validation',
-            `Validation Error: Reorder items do not match the current ${reorderedType}s in the story or contain invalid IDs.`,
-          );
-        }
-
-        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
-        // `buildReorderItems` from it, and this handler enforces the same thing.
-        const problem = reorderIndicesProblem(
-          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        const problem = completeReorderProblem(
+          existingChapters.map((chapter) => chapter.id),
+          validatedReorderUpdate.reorderItems,
         );
         if (problem) {
           throw new SyncConflictError('validation', problem);

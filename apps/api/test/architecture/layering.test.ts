@@ -33,7 +33,7 @@ const sourceRelativeOf = (path: string) => relative(SOURCE_ROOT, path).split('\\
  * `toEqual` refuses both a new route here and a name left behind after its query moved down into a
  * service.
  */
-const ROUTES_THAT_STILL_QUERY = ['auth/auth.route.ts', 'media/media.route.ts'];
+const ROUTES_THAT_STILL_QUERY: string[] = [];
 
 describe('API layers', () => {
   it('finds the modules routes', () => {

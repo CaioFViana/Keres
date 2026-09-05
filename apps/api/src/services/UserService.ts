@@ -1,8 +1,9 @@
 import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
 import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'
 import { users } from '../db/schema/tables/users'; // Import the users schema
+import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { recoveryCodeService } from './RecoveryCodeService';
 
 export class TagAlreadyTakenError extends Error {
@@ -40,6 +41,71 @@ const PUBLIC_INFO_RETURNING = {
 };
 
 export class UserService {
+  /** Live account used at login: a soft-deleted row must fail like a missing one. */
+  async findLiveByUsername(username: string) {
+    return db.query.users.findFirst({
+      where: and(eq(users.username, username), eq(users.isDeleted, false)),
+    });
+  }
+
+  async isUsernameTaken(username: string): Promise<boolean> {
+    const existing = await db.query.users.findFirst({
+      where: eq(users.username, username),
+      columns: { id: true },
+    });
+    return !!existing;
+  }
+
+  async isLiveUser(userId: string): Promise<boolean> {
+    const user = await db.query.users.findFirst({
+      where: and(eq(users.id, userId), eq(users.isDeleted, false)),
+      columns: { id: true },
+    });
+    return !!user;
+  }
+
+  /**
+   * Inserts a new account. On a tag collision, retries with a unique suffix. Returns `taken`
+   * when the username is already claimed, including a race between the pre-check and the insert.
+   */
+  async createAccount(input: {
+    id: string;
+    username: string;
+    hashedPassword: string;
+    defaultTierId: string | null;
+  }): Promise<{ id: string; username: string; tag: string } | 'taken'> {
+    const values = {
+      id: input.id,
+      username: input.username,
+      password: input.hashedPassword,
+      tierId: input.defaultTierId,
+    };
+    try {
+      const [created] = await db
+        .insert(users)
+        .values({ ...values, tag: input.username })
+        .returning({ id: users.id, username: users.username, tag: users.tag });
+      if (!created) throw new Error('Failed to create user');
+      return created;
+    } catch (error) {
+      if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
+        try {
+          const [created] = await db
+            .insert(users)
+            .values({ ...values, tag: `${input.username}${input.id.slice(-4)}` })
+            .returning({ id: users.id, username: users.username, tag: users.tag });
+          if (!created) throw new Error('Failed to create user');
+          return created;
+        } catch (retryError) {
+          if (isUniqueViolation(retryError)) return 'taken';
+          throw retryError;
+        }
+      }
+      if (isUniqueViolation(error)) return 'taken';
+      throw error;
+    }
+  }
+
   async getUserById(userId: string): Promise<UserPublicInfo | undefined> {
     const user = await db.query.users.findFirst({
       columns: PUBLIC_INFO_COLUMNS,

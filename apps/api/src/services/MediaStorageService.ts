@@ -72,6 +72,19 @@ export class MediaStorageService {
     return { hash: actualHash, sizeBytes: bytes.byteLength };
   }
 
+  /** A hash is only downloadable when some live gallery row of *this* story points at it. */
+  async isReferencedInStory(storyId: string, hash: string): Promise<boolean> {
+    const referenced = await db.query.galleries.findFirst({
+      where: and(
+        eq(galleries.storyId, storyId),
+        eq(galleries.hash, hash),
+        eq(galleries.isDeleted, false),
+      ),
+      columns: { id: true },
+    });
+    return !!referenced;
+  }
+
   async read(hash: string): Promise<{
     body: Blob | ReadableStream<Uint8Array>;
     mimeType: string;

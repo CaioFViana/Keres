@@ -418,13 +418,13 @@ export abstract class BaseSyncEntityHandler<
     return entity[this.storyIdColumnName] === storyId;
   }
 
-  allowsReaderWrite(): boolean {
+  allowsReaderWrite(_context: SyncOperationPolicyContext): boolean {
     return false;
   }
 
-  assertOperationAllowed(): void {}
+  assertOperationAllowed(_context: SyncOperationPolicyContext): void {}
 
-  assertEntityMutationAllowed(): void {}
+  assertEntityMutationAllowed(_context: SyncEntityMutationPolicyContext): void {}
 
   prepareDelete(
     _context: SyncEntityMutationPolicyContext,
@@ -541,7 +541,7 @@ export abstract class BaseSyncEntityHandler<
     }
   }
 
-  protected payloadForLog(parsed: Record<string, any>): Record<string, any> {
+  protected payloadForLog(parsed: Record<string, any>, _actingUserId?: string): Record<string, any> {
     return omitSyncImmutableFields(parsed);
   }
 }

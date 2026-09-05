@@ -1,17 +1,13 @@
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { comparePassword, hashPassword } from '../../config/bcrypt';
 import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
-import { db } from '../../db';
-import { users } from '../../db/schema';
 import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { userService } from '../../services/UserService';
-import { isUniqueViolation, postgresErrorConstraint } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 import type { JWTPayload } from '../../index';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
@@ -89,9 +85,7 @@ export const authRoutes = new Elysia()
       // isDeleted excluded here (not just checked after the fact) so a soft-deleted account
       // fails exactly like a nonexistent one - both credentials-wise and message-wise -
       // instead of successfully logging in and only getting blocked by admin-gated routes.
-      const user = await db.query.users.findFirst({
-        where: and(eq(users.username, username), eq(users.isDeleted, false)),
-      });
+      const user = await userService.findLiveByUsername(username);
 
       if (!user) {
         set.status = 401;
@@ -160,11 +154,7 @@ export const authRoutes = new Elysia()
         return { message: 'Registration is currently closed.' };
       }
 
-      const existingUser = await db.query.users.findFirst({
-        where: eq(users.username, username),
-      });
-
-      if (existingUser) {
+      if (await userService.isUsernameTaken(username)) {
         set.status = 409;
         return { message: 'User already exists' };
       }
@@ -178,56 +168,16 @@ export const authRoutes = new Elysia()
       // chance someone already claimed this exact string as their tag (tags and
       // usernames share no uniqueness guarantee with each other), fall back to a
       // short unique suffix rather than failing registration outright.
-      let newUser;
-      try {
-        [newUser] = await db
-          .insert(users)
-          .values({
-            id: newUserId,
-            username,
-            tag: username,
-            password: hashedPassword,
-            tierId: defaultTierId,
-          })
-          .returning({ id: users.id, username: users.username, tag: users.tag });
-      } catch (error) {
-        if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
-          try {
-            [newUser] = await db
-              .insert(users)
-              .values({
-                id: newUserId,
-                username,
-                tag: `${username}${newUserId.slice(-4)}`,
-                password: hashedPassword,
-                tierId: defaultTierId,
-              })
-              .returning({ id: users.id, username: users.username, tag: users.tag });
-          } catch (retryError) {
-            // The tag was only the first constraint the database complained about: the username is taken too, and
-            // a new tag does not change that. Which of the two the database reports first varies from engine to
-            // engine - Postgres flags the username, SQLite flags the tag - so the outcome must not depend on it.
-            if (isUniqueViolation(retryError)) {
-              set.status = 409;
-              return { message: 'User already exists' };
-            }
-            throw retryError;
-          }
-        } else if (isUniqueViolation(error)) {
-          // Not the tag constraint - a concurrent registration for this exact username
-          // landed between the pre-check above and this insert. Blindly retrying with a
-          // suffixed tag (the tag-collision path) would just fail again on the *username*
-          // constraint, this time as an unhandled error instead of a clean response.
-          set.status = 409;
-          return { message: 'User already exists' };
-        } else {
-          throw error;
-        }
-      }
+      const newUser = await userService.createAccount({
+        id: newUserId,
+        username,
+        hashedPassword,
+        defaultTierId,
+      });
 
-      if (!newUser) {
-        set.status = 500;
-        return { message: 'Failed to create user' };
+      if (newUser === 'taken') {
+        set.status = 409;
+        return { message: 'User already exists' };
       }
 
       // Shown only now, in plain text - after this only each one's hash exists (see RecoveryCodeService).
@@ -380,11 +330,7 @@ export const authRoutes = new Elysia()
       // past - it says nothing about whether the account still exists or is still enabled.
       // Without re-checking the DB here, a deleted/banned user keeps minting fresh access
       // tokens off their still-valid refresh token indefinitely (there is no revocation list).
-      const dbUser = await db.query.users.findFirst({
-        where: and(eq(users.id, payload.userId), eq(users.isDeleted, false)),
-        columns: { id: true },
-      });
-      if (!dbUser) {
+      if (!(await userService.isLiveUser(payload.userId))) {
         set.status = 401;
         return { message: 'Invalid or expired refresh token' };
       }

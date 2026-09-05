@@ -1,9 +1,6 @@
 import { isSupportedMediaMimeType } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
 import { env } from '../../config/env';
-import { db } from '../../db';
-import { galleries } from '../../db/schema';
 import type { JWTPayload } from '../../index';
 import { mediaStorageService } from '../../services/MediaStorageService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
@@ -159,15 +156,7 @@ export const mediaRoutes = new Elysia()
         throw new Error('Invalid media hash.');
       }
 
-      const referenced = await db.query.galleries.findFirst({
-        where: and(
-          eq(galleries.storyId, params.storyId),
-          eq(galleries.hash, params.hash),
-          eq(galleries.isDeleted, false),
-        ),
-        columns: { id: true },
-      });
-      if (!referenced) {
+      if (!(await mediaStorageService.isReferencedInStory(params.storyId, params.hash))) {
         set.status = 404;
         throw new Error('Media not found in this story.');
       }

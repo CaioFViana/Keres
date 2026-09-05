@@ -58,7 +58,7 @@ describe('API layers', () => {
 });
 
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT = ['services/SyncService.ts'];
+const FILES_OVER_THE_LIMIT : Array<string> = [];
 
 describe('API file size', () => {
   it('does not allow new source files above the line ceiling', () => {

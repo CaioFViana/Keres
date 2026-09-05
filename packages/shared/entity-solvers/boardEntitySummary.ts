@@ -1,4 +1,4 @@
-import { OperationLogEntityType } from '../metadata/OperationLogEntityType';
+import type { OperationLogEntityType } from '../metadata/OperationLogEntityType';
 import type { BoardPinEntity } from '../schemas/BoardSchemas';
 import type { EntitySolverRow } from './contracts';
 import { getEntityDomainHandler } from './entities/EntityRegistry';

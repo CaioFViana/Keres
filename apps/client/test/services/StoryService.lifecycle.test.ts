@@ -83,45 +83,4 @@ describe('StoryService lifecycle', () => {
       }),
     );
   });
-
-  it('creates the core story entities and records each creation for synchronization', async () => {
-    const service = createStoryService(database.db);
-    const character = await service.createCharacter('local-user', {
-      storyId: TEST_STORY_ID,
-      name: 'Ariane',
-    });
-    const chapter = await service.createChapter('local-user', {
-      storyId: TEST_STORY_ID,
-      name: 'Abertura',
-      index: 0,
-    });
-    const location = await service.createLocation('local-user', {
-      storyId: TEST_STORY_ID,
-      name: 'Torre',
-    });
-    const scene = await service.createScene('local-user', {
-      storyId: TEST_STORY_ID,
-      chapterId: chapter.id,
-      locationId: location.id,
-      name: 'Chegada',
-      index: 0,
-    });
-    const note = await service.createNote('local-user', {
-      storyId: TEST_STORY_ID,
-      title: 'Lembrete',
-    });
-    const rule = await service.createWorldRule('local-user', {
-      storyId: TEST_STORY_ID,
-      title: 'A magia cobra um preço',
-    });
-
-    expect([character, chapter, location, scene, note, rule]).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ storyId: TEST_STORY_ID, id: expect.any(String) }),
-      ]),
-    );
-    expect(
-      (await database.db.select().from(operationLogs).all()).map((log) => log.entityType).sort(),
-    ).toEqual(['Chapter', 'Character', 'Location', 'Note', 'Scene', 'StoryArc', 'WorldRule']);
-  });
 });

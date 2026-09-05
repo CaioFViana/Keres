@@ -11,15 +11,15 @@ import { and, eq, max } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, withTransaction } from '../../db';
 import { operationLog, stories } from '../../db/schema';
-import { eventManager } from '../../utils/EventManager';
 import { AppError } from '../../utils/errors';
+import { eventManager } from '../../utils/EventManager';
 import { logger } from '../../utils/logger';
 import type { SyncEntityHandler } from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
-import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { storyPermissionService } from '../StoryPermissionService';
+import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflictDetails';
-import { SyncOperationLogService } from './SyncOperationLogService';
+import type { SyncOperationLogService } from './SyncOperationLogService';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates

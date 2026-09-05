@@ -1,5 +1,6 @@
+import type { OperationLogEntityType } from '@keres/shared';
+import { getEntityDomainHandler } from '@keres/shared';
 import { and, eq, inArray } from 'drizzle-orm';
-import { getEntityDomainHandler, OperationLogEntityType } from '@keres/shared';
 import type { AppDrizzleClient } from '../db';
 import { getEntityTable } from './entityTableRegistry';
 

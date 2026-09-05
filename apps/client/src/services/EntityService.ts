@@ -1,4 +1,5 @@
-import { OperationLogEntityType, resolveBasicOperationLogEntityName } from '@keres/shared';
+import type { OperationLogEntityType } from '@keres/shared';
+import { resolveBasicOperationLogEntityName } from '@keres/shared';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
 import { resolveAdvancedEntityName } from './EntityAdvancedNameResolver';

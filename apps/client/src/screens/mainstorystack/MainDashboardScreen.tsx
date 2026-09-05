@@ -15,7 +15,7 @@ import { useDrizzle } from '../../db'; // Import useDrizzle
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
-import { createStoryService } from '../../services/storymanagement/StoryService';
+import { createStoryContentMetricsService } from '../../services/storymanagement/StoryContentMetricsService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSyncConflictStore } from '../../state/syncConflictStore';
@@ -101,48 +101,21 @@ const MainDashboardScreen = () => {
   const fetchCounts = useCallback(async () => {
     if (selectedStory?.id && db) {
       try {
-        const storyService = createStoryService(db);
         const storyId = selectedStory.id;
-        const [
-          characters,
-          locations,
-          chapters,
-          scenes,
-          choices,
-          notes,
-          worldRules,
-          items,
-          galleryItems,
-          tags,
-          customAttributes,
-          forks,
-        ] = await Promise.all([
-          storyService.getCharacterCount(storyId),
-          storyService.getLocationCount(storyId),
-          storyService.getChapterCount(storyId),
-          storyService.getSceneCount(storyId),
-          storyService.getChoiceCount(storyId),
-          storyService.getNoteCount(storyId),
-          storyService.getWorldRuleCount(storyId),
-          storyService.getItemCount(storyId),
-          storyService.getGalleryCount(storyId),
-          storyService.getTagCount(storyId),
-          storyService.getCustomAttributeCount(storyId),
-          storyService.getBranchingStoryForkCount(storyId),
-        ]);
+        const counts = await createStoryContentMetricsService(db).getContentCounts(storyId);
 
-        setCharacterCount(characters);
-        setLocationCount(locations);
-        setChapterCount(chapters);
-        setSceneCount(scenes);
-        setChoiceCount(choices);
-        setNoteCount(notes);
-        setWorldRuleCount(worldRules);
-        setItemCount(items);
-        setGalleryCount(galleryItems);
-        setTagCount(tags);
-        setCustomAttributeCount(customAttributes);
-        setForkCount(forks);
+        setCharacterCount(counts.characterCount);
+        setLocationCount(counts.locationCount);
+        setChapterCount(counts.chapterCount);
+        setSceneCount(counts.sceneCount);
+        setChoiceCount(counts.choiceCount);
+        setNoteCount(counts.noteCount);
+        setWorldRuleCount(counts.worldRuleCount);
+        setItemCount(counts.itemCount);
+        setGalleryCount(counts.galleryCount);
+        setTagCount(counts.tagCount);
+        setCustomAttributeCount(counts.customAttributeCount);
+        setForkCount(counts.branchingStoryForkCount);
       } catch (error) {
         console.error('Error fetching entity counts:', error);
       }

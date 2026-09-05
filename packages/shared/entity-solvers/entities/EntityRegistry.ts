@@ -1,4 +1,4 @@
-import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import type { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { chapterEntityHandler } from './ChapterEntityHandler';
 import { choiceEntityHandler } from './ChoiceEntityHandler';
 import type {

@@ -3,6 +3,7 @@ import {
   entityFieldMetadata,
   getEntityConflictLabelKey,
   getEntityRowReferences,
+  getSimpleDisplayName,
   resolveEntityReferenceFieldType,
   summarizeEntityConflictRelation,
 } from '@keres/shared';
@@ -238,17 +239,12 @@ export function buildConflictSummaries(
       conflict.entityType === 'Board' && conflict.contestedFields.includes('content');
     const canQuickResolve = isBinaryContentConflict(conflict) || offerBoardClone;
     const emptyLabel = t('conflict_empty_value');
-    // `name`/`title` covers most entities, but not all: Choice has neither of the
-    // two (the identifying field is `text`), and Gallery has an optional `title`, falling back to the file
-    // name (the same rule `EntityNameBatchResolver.ts` already uses). And neither of the two can
-    // come from `localValues`/`serverValues` alone: a `deleted_on_server` conflict does not carry the
-    // name on either side (see `mergedValuesOf`) - that is why the local row's snapshot
-    // enters as a third level, before falling back to the raw ID.
+    // The entity handler owns its display field and fallback (Choice.text, Gallery.fileName,
+    // Effect.triggerName, etc.). A deleted_on_server conflict may carry none of them in either
+    // payload, so the local row snapshot remains the final input before falling back to the raw ID.
     const mergedContent = mergedValuesOf(conflict, snapshots);
-    const entityName = formatValue(
-      mergedContent.name ?? mergedContent.title ?? mergedContent.text ?? mergedContent.fileName,
-      conflict.entityId,
-    );
+    const entityName =
+      getSimpleDisplayName(conflict.entityType, mergedContent) ?? conflict.entityId;
 
     const displayValue = (field: string, value: unknown): string => {
       const targetType = resolveEntityReferenceFieldType(field);

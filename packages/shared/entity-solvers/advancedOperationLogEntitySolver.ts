@@ -1,4 +1,4 @@
-import { OperationLogEntityType } from '../metadata/OperationLogEntityType';
+import type { OperationLogEntityType } from '../metadata/OperationLogEntityType';
 import type { EntitySolverContext } from './contracts';
 import { getEntityDomainHandler } from './entities/EntityRegistry';
 

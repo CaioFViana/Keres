@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
+import { createStoryContentMetricsService } from '../../services/storymanagement/StoryContentMetricsService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
@@ -124,6 +125,9 @@ const StorySelectionScreen = () => {
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
+  const storyContentMetricsService = useRef(
+    createStoryContentMetricsService(drizzleClient),
+  ).current;
   const serverService = useRef(createServerService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
   const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
@@ -175,41 +179,20 @@ const StorySelectionScreen = () => {
 
   const fetchSummary = useCallback(async () => {
     try {
-      const storyCounts = await storyService.getStoryCounts();
-      const characterCount = await storyService.getCharacterCount();
-      const choiceCount = await storyService.getChoiceCount();
-      const locationCount = await storyService.getLocationCount();
-      const chapterCount = await storyService.getChapterCount();
-      const sceneCount = await storyService.getSceneCount();
-      const noteCount = await storyService.getNoteCount();
-      const worldRuleCount = await storyService.getWorldRuleCount();
-      const itemCount = await storyService.getItemCount();
-      const galleryCount = await storyService.getGalleryCount();
-      const tagCount = await storyService.getTagCount();
-      const customAttributeCount = await storyService.getCustomAttributeCount();
-      const branchingStoryForkCount = await storyService.getBranchingStoryForkCount();
+      const [storyCounts, contentCounts] = await Promise.all([
+        storyContentMetricsService.getCatalogCounts(),
+        storyContentMetricsService.getContentCounts(),
+      ]);
 
       updateSummary({
-        totalStories: storyCounts.totalStories,
-        branchingStories: storyCounts.branchingStories,
-        characterCount,
-        choiceCount,
-        locationCount,
-        chapterCount,
-        sceneCount,
-        noteCount,
-        worldRuleCount,
-        itemCount,
-        galleryCount,
-        tagCount,
-        customAttributeCount,
-        branchingStoryForkCount,
+        ...storyCounts,
+        ...contentCounts,
       });
     } catch (error) {
       console.error(t('error_fetching_summary'), error);
       AppAlert.alert(t('error'), t('failed_to_load_summary_data'));
     }
-  }, [storyService, updateSummary, t]);
+  }, [storyContentMetricsService, updateSummary, t]);
 
   useEffect(() => {
     if (isFocused) {

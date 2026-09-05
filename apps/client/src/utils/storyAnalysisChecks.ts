@@ -6,6 +6,33 @@
  * returns finished findings, without touching DB/React - which allows testing each check in isolation
  * and reusing the same result in both the dashboard summary and the report screen.
  */
+import {
+  checkBranchingDeadEnds,
+  checkChoiceSatisfiability,
+  checkChoices,
+  checkRouteTraversal,
+  checkSceneFinishWithChoices,
+  checkSceneReachability,
+} from './storyAnalysis/branchingChecks';
+import {
+  checkCharacters,
+  checkDuplicateRelations,
+  checkItems,
+  checkLocations,
+  checkStorySchema,
+  checkTags,
+} from './storyAnalysis/completenessChecks';
+import {
+  checkAnchorsRunForwards,
+  checkNarrativeIndexes,
+} from './storyAnalysis/narrativeIndexChecks';
+import type {
+  RunStoryAnalysisOptions,
+  StoryAnalysisFinding,
+  StoryAnalysisInput,
+} from './storyAnalysis/types';
+import { StoryAnalysisCancelledError } from './storyAnalysis/types';
+
 export {
   COMPLETENESS_FINDING_KEYS,
   StoryAnalysisCancelledError,
@@ -36,33 +63,6 @@ export {
   type StoryAnalysisProgress,
   type StoryAnalysisSeverity
 } from './storyAnalysis/types';
-
-import {
-  checkBranchingDeadEnds,
-  checkChoiceSatisfiability,
-  checkChoices,
-  checkRouteTraversal,
-  checkSceneFinishWithChoices,
-  checkSceneReachability,
-} from './storyAnalysis/branchingChecks';
-import {
-  checkCharacters,
-  checkDuplicateRelations,
-  checkItems,
-  checkLocations,
-  checkStorySchema,
-  checkTags,
-} from './storyAnalysis/completenessChecks';
-import {
-  checkAnchorsRunForwards,
-  checkNarrativeIndexes,
-} from './storyAnalysis/narrativeIndexChecks';
-import type {
-  RunStoryAnalysisOptions,
-  StoryAnalysisFinding,
-  StoryAnalysisInput,
-} from './storyAnalysis/types';
-import { StoryAnalysisCancelledError } from './storyAnalysis/types';
 
 /**
  * Fast checks, O(entities) - safe to run every time the story changes (the dashboard badge, say). They

@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntityDomainHandler } from './contracts';
 import { displayFirst } from './displayName';
 
@@ -23,6 +24,17 @@ export const effectEntityHandler: EntityDomainHandler = {
   ],
   displayName: displayFirst('triggerName', 'effectType'),
   referenceFields: { itemId: OperationLogEntityType.Item },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.Effect, entityId);
+    if (!row) return undefined;
+    const effectType = stringValue(row, 'effectType') ?? 'effect';
+    const itemId = stringValue(row, 'itemId');
+    const itemName = itemId
+      ? await resolveCompactEntityLabel(context, OperationLogEntityType.Item, itemId)
+      : null;
+    const target = itemName ?? stringValue(row, 'triggerName');
+    return target ? `${effectType}: ${target}` : effectType;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Effect, entityId);
     if (!row) return { name: undefined, type: context.translate('effect') };

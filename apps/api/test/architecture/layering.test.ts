@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 const MODULES_ROOT = resolve(__dirname, '../../src/modules');
 const SOURCE_ROOT = resolve(__dirname, '../../src');
+const STORY_PACKAGE_ROOT = resolve(SOURCE_ROOT, 'services/story-packages');
 
 function listFiles(directory: string, suffix: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -57,7 +58,7 @@ describe('API layers', () => {
 });
 
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT = ['services/StoryExportImportService.ts', 'services/SyncService.ts'];
+const FILES_OVER_THE_LIMIT = ['services/SyncService.ts'];
 
 describe('API file size', () => {
   it('does not allow new source files above the line ceiling', () => {
@@ -67,5 +68,30 @@ describe('API file size', () => {
       .sort();
 
     expect(oversized).toEqual([...FILES_OVER_THE_LIMIT].sort());
+  });
+});
+
+describe('story package persistence boundary', () => {
+  it('keeps generic collection SQL out of import phases', () => {
+    const importPhaseFiles = listFiles(STORY_PACKAGE_ROOT, '.ts').filter((path) =>
+      /DatabaseStoryPackage.+Import\.ts$/.test(path),
+    );
+    const directWriters = importPhaseFiles
+      .filter((path) => readFileSync(path, 'utf8').includes('.insert('))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(directWriters).toEqual([]);
+  });
+});
+
+describe('recovery entity labels', () => {
+  it('keeps relationship-specific labels in shared entity handlers', () => {
+    const recoveryDisplayNames = readFileSync(
+      resolve(SOURCE_ROOT, 'services/AdminRecoveryDisplayNames.ts'),
+      'utf8',
+    );
+
+    expect(recoveryDisplayNames).not.toMatch(/\bswitch\s*\(/);
   });
 });

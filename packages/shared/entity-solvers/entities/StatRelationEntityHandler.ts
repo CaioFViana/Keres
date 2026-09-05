@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntityDomainHandler } from './contracts';
 
 const stringValue = (row: Record<string, unknown> | undefined, field: string) => {
@@ -27,6 +28,28 @@ export const statRelationEntityHandler: EntityDomainHandler = {
     statId: OperationLogEntityType.Stat,
     characterId: OperationLogEntityType.Character,
     modeId: OperationLogEntityType.Mode,
+  },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.StatRelation, entityId);
+    if (!row) return undefined;
+    const [character, stat] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Character,
+        stringValue(row, 'characterId') ?? '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Stat,
+        stringValue(row, 'statId') ?? '',
+      ),
+    ]);
+    const modeId = stringValue(row, 'modeId');
+    const mode = modeId ? await context.read(OperationLogEntityType.Mode, modeId) : undefined;
+    const owner = modeId
+      ? `${character} · ${stringValue(mode, 'name') ?? modeId.slice(0, 8)}`
+      : character;
+    return `${owner} · ${stat} = ${numberValue(row, 'value') ?? '?'}`;
   },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.StatRelation, entityId);

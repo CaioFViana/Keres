@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
 import { displayField } from './displayName';
@@ -43,6 +44,23 @@ export const itemJourneyEntityHandler: EntityDomainHandler = {
     }),
     searchField('extraNotes', 'field_extraNotes'),
   ],
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.ItemJourney, entityId);
+    if (!row) return undefined;
+    const [item, scene] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Item,
+        typeof row.itemId === 'string' ? row.itemId : '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Scene,
+        typeof row.sceneId === 'string' ? row.sceneId : '',
+      ),
+    ]);
+    return `${item} @ ${scene}`;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.ItemJourney, entityId);
     if (!row) return { name: undefined, type: context.translate('item_journey') };

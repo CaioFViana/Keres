@@ -50,4 +50,12 @@ export interface EntityDomainHandler {
     context: EntitySolverContext,
     entityId: string,
   ) => Promise<string | undefined>;
+  /**
+   * Short, untranslated label for dense host UIs such as recovery lists. Relations resolve their
+   * own referenced entities here; hosts only provide a read-through context.
+   */
+  resolveCompactName?: (
+    context: EntitySolverContext,
+    entityId: string,
+  ) => Promise<string | undefined>;
 }

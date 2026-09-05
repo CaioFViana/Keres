@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntitySolverContext } from '../contracts';
 import { resolveEntityReference } from '../EntityReferenceResolver';
 import type { EntityDomainHandler } from './contracts';
@@ -40,6 +41,24 @@ export const galleryRelationEntityHandler: EntityDomainHandler = {
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'ownerId', typeField: 'ownerType' }],
   referenceFields: { galleryId: OperationLogEntityType.Gallery },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.GalleryRelation, entityId);
+    if (!row) return undefined;
+    const ownerType = stringValue(row, 'ownerType') ?? '?';
+    const [gallery, owner] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Gallery,
+        stringValue(row, 'galleryId') ?? '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        ownerType as OperationLogEntityType,
+        stringValue(row, 'ownerId') ?? '',
+      ),
+    ]);
+    return `${gallery} → ${ownerType}:${owner}`;
+  },
   async resolveReference(context, entityId) {
     return {
       name: await resolveName(context, entityId),

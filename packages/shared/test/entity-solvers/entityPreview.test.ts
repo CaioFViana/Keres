@@ -9,6 +9,7 @@ import {
   getStoryExportReferences,
   getStoryImportCollectionOrder,
   getStorySyncEntityTypes,
+  getEntityRowReferences,
 } from '../../entity-solvers/entities/EntityRegistry';
 import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
 
@@ -93,5 +94,24 @@ describe('entity previews', () => {
     expect(getStorySyncEntityTypes()).not.toContain(OperationLogEntityType.User);
     expect(getStorySyncEntityTypes()).not.toContain(OperationLogEntityType.OperationLog);
     expect(getStorySyncEntityTypes()).toContain(OperationLogEntityType.StoryArc);
+  });
+
+  it('reads fixed and polymorphic row references from the owning handler', () => {
+    expect(
+      getEntityRowReferences(OperationLogEntityType.TagRelation, {
+        tagId: 'tag-1',
+        relationId: 'scene-1',
+        relationType: OperationLogEntityType.Scene,
+      }),
+    ).toEqual([
+      { entityType: OperationLogEntityType.Tag, id: 'tag-1' },
+      { entityType: OperationLogEntityType.Scene, id: 'scene-1' },
+    ]);
+    expect(
+      getEntityRowReferences(OperationLogEntityType.CharacterScene, {
+        characterId: 'character-1',
+        sceneId: '   ',
+      }),
+    ).toEqual([{ entityType: OperationLogEntityType.Character, id: 'character-1' }]);
   });
 });

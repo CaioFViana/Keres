@@ -247,3 +247,33 @@ export function getEntityConflictReferences(
   }));
   return [...fixed, ...(handler.conflictReferences ?? [])];
 }
+
+export interface EntityRowReference {
+  entityType: string;
+  id: string;
+}
+
+/**
+ * Reads the references declared by an entity handler from one untyped persisted row. This keeps
+ * hosts from recreating a relation switch merely to batch-load labels for recovery or audit UIs.
+ */
+export function getEntityRowReferences(
+  entityType: string,
+  row: Record<string, unknown>,
+): readonly EntityRowReference[] {
+  const stringAt = (field: string): string | undefined => {
+    const value = row[field];
+    return typeof value === 'string' && value.trim() ? value : undefined;
+  };
+
+  return getEntityConflictReferences(entityType).flatMap((reference) => {
+    if (reference.kind === 'fixed') {
+      const id = stringAt(reference.field);
+      return id ? [{ entityType: reference.entityType, id }] : [];
+    }
+
+    const id = stringAt(reference.idField);
+    const targetType = stringAt(reference.typeField);
+    return id && targetType ? [{ entityType: targetType, id }] : [];
+  });
+}

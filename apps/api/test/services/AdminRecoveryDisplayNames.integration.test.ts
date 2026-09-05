@@ -8,11 +8,13 @@ import {
   galleries,
   items,
   locations,
+  modes,
   notes,
   routes,
   scenes,
   stories,
   storySchemaFields,
+  stats,
   tags,
   users,
   worldRules,
@@ -44,6 +46,8 @@ const ids = {
   gallery: '',
   galleryNoTitle: '',
   route: '',
+  mode: '',
+  stat: '',
 };
 
 /** An id that does not exist in the database, to exercise the fallback label. */
@@ -123,6 +127,13 @@ beforeEach(async () => {
     { id: ids.characterA, storyId: ids.story, name: 'Lia' },
     { id: ids.characterB, storyId: ids.story, name: 'Rui' },
   ] as never);
+  await db.insert(modes).values({
+    id: ids.mode,
+    storyId: ids.story,
+    characterId: ids.characterA,
+    name: 'Furiosa',
+  } as never);
+  await db.insert(stats).values({ id: ids.stat, storyId: ids.story, name: 'Coragem' } as never);
   await db.insert(items).values({ id: ids.item, storyId: ids.story, name: 'A bússola' } as never);
   await db.insert(tags).values({ id: ids.tag, storyId: ids.story, name: 'mar' } as never);
   await db.insert(notes).values({ id: ids.note, storyId: ids.story, title: 'Pesquisa' } as never);
@@ -249,6 +260,20 @@ describe('enrichDeletedDisplayNames', () => {
           entityType: 'Character',
         }),
         'Patente=Capitã',
+      ],
+      [deleted('Mode', newId(), { characterId: ids.characterA, name: 'Furiosa' }), 'Lia · Furiosa'],
+      [
+        deleted('StatStrength', newId(), { statId: ids.stat, label: 'Brava', minValue: 3 }),
+        'Coragem · Brava ≥ 3',
+      ],
+      [
+        deleted('StatRelation', newId(), {
+          characterId: ids.characterA,
+          modeId: ids.mode,
+          statId: ids.stat,
+          value: 7,
+        }),
+        'Lia · Furiosa · Coragem = 7',
       ],
     ];
 

@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntityDomainHandler } from './contracts';
 import { displayField } from './displayName';
 
@@ -23,6 +24,15 @@ export const statStrengthEntityHandler: EntityDomainHandler = {
   displayName: displayField('label'),
   help: { source: 'stats', fields: ['label', 'minValue'] },
   referenceFields: { statId: OperationLogEntityType.Stat },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.StatStrength, entityId);
+    if (!row) return undefined;
+    const statId = stringValue(row, 'statId');
+    const ladder = statId
+      ? await resolveCompactEntityLabel(context, OperationLogEntityType.Stat, statId)
+      : '*';
+    return `${ladder} · ${stringValue(row, 'label') ?? '?'} ≥ ${numberValue(row, 'minValue') ?? '?'}`;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.StatStrength, entityId);
     if (!row) return { name: undefined, type: context.translate('stat_strength') };

@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntityDomainHandler } from './contracts';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
@@ -18,6 +19,25 @@ export const locationRelationEntityHandler: EntityDomainHandler = {
   referenceFields: {
     locationAId: OperationLogEntityType.Location,
     locationBId: OperationLogEntityType.Location,
+  },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.LocationRelation, entityId);
+    if (!row) return undefined;
+    const [first, second] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Location,
+        typeof row.locationAId === 'string' ? row.locationAId : '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Location,
+        typeof row.locationBId === 'string' ? row.locationBId : '',
+      ),
+    ]);
+    const relationType =
+      typeof row.relationType === 'string' && row.relationType.trim() ? row.relationType : null;
+    return relationType ? `${first} → ${second} · ${relationType}` : `${first} → ${second}`;
   },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.LocationRelation, entityId);

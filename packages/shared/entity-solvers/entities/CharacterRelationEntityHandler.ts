@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
 
@@ -31,6 +32,25 @@ export const characterRelationEntityHandler: EntityDomainHandler = {
       suggestionsSource: 'characterRelation_type',
     }),
   ],
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.CharacterRelation, entityId);
+    if (!row) return undefined;
+    const [first, second] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Character,
+        typeof row.character1Id === 'string' ? row.character1Id : '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Character,
+        typeof row.character2Id === 'string' ? row.character2Id : '',
+      ),
+    ]);
+    const relationType =
+      typeof row.relationType === 'string' && row.relationType.trim() ? row.relationType : null;
+    return relationType ? `${first} ↔ ${second} · ${relationType}` : `${first} ↔ ${second}`;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.CharacterRelation, entityId);
     if (!row) return { name: undefined, type: context.translate('character_relation') };

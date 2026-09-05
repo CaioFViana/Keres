@@ -97,6 +97,7 @@ export * from './entity-solvers/contracts';
 export * from './entity-solvers/boardEntitySummary';
 export * from './entity-solvers/advancedOperationLogEntitySolver';
 export * from './entity-solvers/basicOperationLogEntitySolver';
+export * from './entity-solvers/compactEntityName';
 export * from './entity-solvers/entityReferenceFields';
 export * from './entity-solvers/entities/contracts';
 export * from './entity-solvers/entities/ChapterEntityHandler';

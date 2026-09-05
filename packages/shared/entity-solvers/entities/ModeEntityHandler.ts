@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import { searchField } from './advancedSearch';
 import type { EntityDomainHandler } from './contracts';
 import { displayField } from './displayName';
@@ -28,6 +29,16 @@ export const modeEntityHandler: EntityDomainHandler = {
     searchField('name', 'field_name'),
     searchField('modeChanges', 'field_modeChanges'),
   ],
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.Mode, entityId);
+    if (!row) return undefined;
+    const character = await resolveCompactEntityLabel(
+      context,
+      OperationLogEntityType.Character,
+      typeof row.characterId === 'string' ? row.characterId : '',
+    );
+    return nameOf(row) ? `${character} · ${nameOf(row)}` : character;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Mode, entityId);
     if (!row) return { name: undefined, type: context.translate('mode') };

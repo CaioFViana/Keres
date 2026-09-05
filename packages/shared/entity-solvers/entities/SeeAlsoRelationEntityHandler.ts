@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntitySolverContext } from '../contracts';
 import { resolveEntityReference } from '../EntityReferenceResolver';
 import type { EntityDomainHandler } from './contracts';
@@ -35,6 +36,23 @@ export const seeAlsoRelationEntityHandler: EntityDomainHandler = {
     { kind: 'dynamic', idField: 'entityAId', typeField: 'entityAType' },
     { kind: 'dynamic', idField: 'entityBId', typeField: 'entityBType' },
   ],
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.SeeAlsoRelation, entityId);
+    if (!row) return undefined;
+    const [first, second] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        stringValue(row, 'entityAType') as OperationLogEntityType,
+        stringValue(row, 'entityAId') ?? '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        stringValue(row, 'entityBType') as OperationLogEntityType,
+        stringValue(row, 'entityBId') ?? '',
+      ),
+    ]);
+    return `${first} ↔ ${second}`;
+  },
   async resolveReference(context, entityId) {
     return {
       name: await resolveName(context, entityId),

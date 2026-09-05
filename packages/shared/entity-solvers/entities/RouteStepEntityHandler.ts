@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntityDomainHandler } from './contracts';
 
 const nameOf = (row: Record<string, unknown> | undefined) => {
@@ -24,8 +25,26 @@ export const routeStepEntityHandler: EntityDomainHandler = {
     fields: ['sceneId', 'selectedChoiceId'],
   },
   referenceFields: {
+    routeId: OperationLogEntityType.Route,
     sceneId: OperationLogEntityType.Scene,
     selectedChoiceId: OperationLogEntityType.Choice,
+  },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.RouteStep, entityId);
+    if (!row) return undefined;
+    const [route, scene] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Route,
+        typeof row.routeId === 'string' ? row.routeId : '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Scene,
+        typeof row.sceneId === 'string' ? row.sceneId : '',
+      ),
+    ]);
+    return `${route} @ ${scene}`;
   },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.RouteStep, entityId);

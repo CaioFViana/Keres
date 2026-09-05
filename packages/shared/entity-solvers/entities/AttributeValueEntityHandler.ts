@@ -22,7 +22,18 @@ export const attributeValueEntityHandler: EntityDomainHandler = {
     },
   ],
   displayName: displayField('value'),
+  conflictReferences: [{ kind: 'dynamic', idField: 'entityId', typeField: 'entityType' }],
   referenceFields: { fieldId: OperationLogEntityType.StorySchemaField },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.AttributeValue, entityId);
+    if (!row) return undefined;
+    const value = stringValue(row, 'value') ?? '(empty)';
+    const fieldId = stringValue(row, 'fieldId');
+    if (!fieldId) return value;
+    const field = await context.read(OperationLogEntityType.StorySchemaField, fieldId);
+    const fieldName = stringValue(field, 'name');
+    return fieldName ? `${fieldName}=${value}` : value;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.AttributeValue, entityId);
     if (!row) return { name: undefined, type: context.translate('custom_attribute_value') };

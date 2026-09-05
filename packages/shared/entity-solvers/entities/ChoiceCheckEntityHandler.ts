@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntityDomainHandler } from './contracts';
 
 const textOf = (row: Record<string, unknown> | undefined) =>
@@ -17,7 +18,27 @@ export const choiceCheckEntityHandler: EntityDomainHandler = {
     { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: false },
     { field: 'itemId', targetEntityType: OperationLogEntityType.Item, required: false },
   ],
-  referenceFields: { groupId: OperationLogEntityType.ChoiceCheckGroup },
+  referenceFields: {
+    groupId: OperationLogEntityType.ChoiceCheckGroup,
+    itemId: OperationLogEntityType.Item,
+    sceneId: OperationLogEntityType.Scene,
+  },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.ChoiceCheck, entityId);
+    if (!row) return undefined;
+    const group = await context.read(
+      OperationLogEntityType.ChoiceCheckGroup,
+      typeof row.groupId === 'string' ? row.groupId : '',
+    );
+    const choiceId = typeof group?.choiceId === 'string' ? group.choiceId : undefined;
+    const choice = choiceId
+      ? await resolveCompactEntityLabel(context, OperationLogEntityType.Choice, choiceId)
+      : undefined;
+    const result = [choice, row.mode, row.type]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .join(' · ');
+    return result || undefined;
+  },
   async resolveReference(context, entityId) {
     const check = await context.read(OperationLogEntityType.ChoiceCheck, entityId);
     const group = check

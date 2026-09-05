@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import { resolveEntityReference } from '../EntityReferenceResolver';
 import type { EntityDomainHandler } from './contracts';
 
@@ -18,6 +19,24 @@ export const noteRelationEntityHandler: EntityDomainHandler = {
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],
   referenceFields: { noteId: OperationLogEntityType.Note },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.NoteRelation, entityId);
+    if (!row) return undefined;
+    const targetType = stringValue(row, 'relationType') ?? '?';
+    const [note, target] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Note,
+        stringValue(row, 'noteId') ?? '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        targetType as OperationLogEntityType,
+        stringValue(row, 'relationId') ?? '',
+      ),
+    ]);
+    return `${note} → ${targetType}:${target}`;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.NoteRelation, entityId);
     if (!row) return { name: undefined, type: context.translate('note_relation') };

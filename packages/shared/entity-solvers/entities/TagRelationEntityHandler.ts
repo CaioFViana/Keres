@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import type { EntitySolverContext } from '../contracts';
 import { resolveEntityReference } from '../EntityReferenceResolver';
 import type { EntityDomainHandler } from './contracts';
@@ -37,6 +38,24 @@ export const tagRelationEntityHandler: EntityDomainHandler = {
   isConflictRelation: true,
   conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],
   referenceFields: { tagId: OperationLogEntityType.Tag },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.TagRelation, entityId);
+    if (!row) return undefined;
+    const targetType = stringValue(row, 'relationType') ?? '?';
+    const [tag, target] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Tag,
+        stringValue(row, 'tagId') ?? '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        targetType as OperationLogEntityType,
+        stringValue(row, 'relationId') ?? '',
+      ),
+    ]);
+    return `#${tag} → ${targetType}:${target}`;
+  },
   async resolveReference(context, entityId) {
     return {
       name: await resolveName(context, entityId),

@@ -13,6 +13,7 @@ export const chapterAnchorEntityHandler: EntityDomainHandler = {
   referenceFields: {
     chapterId: OperationLogEntityType.Chapter,
     startSceneId: OperationLogEntityType.Scene,
+    endSceneId: OperationLogEntityType.Scene,
   },
   exportReferences: [
     { field: 'chapterId', targetEntityType: OperationLogEntityType.Chapter, required: true },

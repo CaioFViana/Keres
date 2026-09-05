@@ -1,4 +1,5 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
 import { getEntityDomainHandler } from './EntityRegistry';
 import type { EntityDomainHandler } from './contracts';
 
@@ -11,6 +12,18 @@ const stringValue = (row: Record<string, unknown> | undefined, field: string) =>
 export const favoriteEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Favorite,
   exportCollection: 'favorites',
+  conflictReferences: [{ kind: 'dynamic', idField: 'entityId', typeField: 'entityType' }],
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.Favorite, entityId);
+    if (!row) return undefined;
+    const targetType = stringValue(row, 'entityType') ?? '?';
+    const target = await resolveCompactEntityLabel(
+      context,
+      targetType as OperationLogEntityType,
+      stringValue(row, 'entityId') ?? '',
+    );
+    return `★ ${targetType}:${target}`;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.Favorite, entityId);
     const targetType = stringValue(row, 'entityType') as OperationLogEntityType;

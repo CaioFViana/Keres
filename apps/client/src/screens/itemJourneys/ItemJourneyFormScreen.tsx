@@ -1,5 +1,10 @@
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -8,19 +13,17 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { ItemJourney } from '@keres/shared/entities/Item';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
@@ -29,13 +32,8 @@ import { useSceneStore } from '../../state/sceneStore'; // Assuming SceneStore f
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
@@ -89,12 +87,11 @@ const ItemJourneyFormScreen = () => {
     initializeService: initializeCharacterService,
   } = useCharacterStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
@@ -156,6 +153,8 @@ const ItemJourneyFormScreen = () => {
   } = useEntityRelations({ entityType: 'ItemJourney', entityId: currentItemJourneyId });
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentItemJourneyId;
   const journey = itemCopy.itemJourney;
@@ -163,15 +162,10 @@ const ItemJourneyFormScreen = () => {
     entity: journey,
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   useEffect(() => {
     const loadItemJourney = async () => {
@@ -204,86 +198,83 @@ const ItemJourneyFormScreen = () => {
     loadItemJourney();
   }, [currentItemJourneyId, isEditing, selectedStory?.id, t]);
 
-  const handleSave = async () => {
-    if (!itemId) {
-      AppAlert.alert(t('error'), itemCopy.required);
-      return;
-    }
-    if (!sceneId) {
-      AppAlert.alert(t('error'), t('scene_required'));
-      return;
-    }
-    if (!newState.trim()) {
-      AppAlert.alert(t('error'), t('new_state_required'));
-      return;
-    }
-    if (!userId || !selectedStory?.id) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const itemJourneyData: Omit<
-        ItemJourney,
-        'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-      > = {
-        storyId: selectedStory.id,
-        itemId: itemId!,
-        sceneId: sceneId!,
-        newCharacterOwnerId: newCharacterOwnerId,
-        newState: newState.trim(),
-        extraNotes: extraNotes,
-      };
-
-      let savedItemJourneyId: string | undefined = currentItemJourneyId;
-
-      if (isEditing && currentItemJourneyId) {
-        const savedItemJourney = await itemJourneyServiceRef.current!.updateItemJourney(
-          userId,
-          currentItemJourneyId,
-          itemJourneyData,
-        );
-        savedItemJourneyId = savedItemJourney.id;
-        AppAlert.alert(
-          t('success'),
-          t('vocabulary_entity_updated', { entity: journey, ending: 'a' }),
-        );
-      } else {
-        const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(
-          userId,
-          itemJourneyData,
-        );
-        savedItemJourneyId = savedItemJourney.id;
-        setCurrentItemJourneyId(savedItemJourney.id);
-        AppAlert.alert(
-          t('success'),
-          t('vocabulary_entity_created', { entity: journey, ending: 'a' }),
-        );
+  const handleSave = () =>
+    runSave(async () => {
+      if (!itemId) {
+        AppAlert.alert(t('error'), itemCopy.required);
+        return;
+      }
+      if (!sceneId) {
+        AppAlert.alert(t('error'), t('scene_required'));
+        return;
+      }
+      if (!newState.trim()) {
+        AppAlert.alert(t('error'), t('new_state_required'));
+        return;
+      }
+      if (!userId || !selectedStory?.id) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
       }
 
-      if (savedItemJourneyId) {
-        await persistTagRelations(savedItemJourneyId);
-        await persistNoteRelations(savedItemJourneyId);
-        await seeAlsoManagerRef.current?.persistPending(savedItemJourneyId);
-      }
-      entityEventEmitter.emit('item_journey_changed', selectedStory.id, savedItemJourneyId);
+      try {
+        const itemJourneyData: Omit<
+          ItemJourney,
+          'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        > = {
+          storyId: selectedStory.id,
+          itemId: itemId!,
+          sceneId: sceneId!,
+          newCharacterOwnerId: newCharacterOwnerId,
+          newState: newState.trim(),
+          extraNotes: extraNotes,
+        };
 
-      if (!isEditing && savedItemJourneyId) {
-        navigation.dispatch(
-          StackActions.replace('ItemJourneyForm', { itemJourneyId: savedItemJourneyId }),
-        );
-      } else {
-        navigation.goBack();
+        let savedItemJourneyId: string | undefined = currentItemJourneyId;
+
+        if (isEditing && currentItemJourneyId) {
+          const savedItemJourney = await itemJourneyServiceRef.current!.updateItemJourney(
+            userId,
+            currentItemJourneyId,
+            itemJourneyData,
+          );
+          savedItemJourneyId = savedItemJourney.id;
+          AppAlert.alert(
+            t('success'),
+            t('vocabulary_entity_updated', { entity: journey, ending: 'a' }),
+          );
+        } else {
+          const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(
+            userId,
+            itemJourneyData,
+          );
+          savedItemJourneyId = savedItemJourney.id;
+          setCurrentItemJourneyId(savedItemJourney.id);
+          AppAlert.alert(
+            t('success'),
+            t('vocabulary_entity_created', { entity: journey, ending: 'a' }),
+          );
+        }
+
+        if (savedItemJourneyId) {
+          await persistTagRelations(savedItemJourneyId);
+          await persistNoteRelations(savedItemJourneyId);
+          await seeAlsoManagerRef.current?.persistPending(savedItemJourneyId);
+        }
+        entityEventEmitter.emit('item_journey_changed', selectedStory.id, savedItemJourneyId);
+
+        if (!isEditing && savedItemJourneyId) {
+          navigation.dispatch(
+            StackActions.replace('ItemJourneyForm', { itemJourneyId: savedItemJourneyId }),
+          );
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save item journey:', err);
+        AppAlert.alert(t('error'), t('vocabulary_failed_to_save_entity', { entity: journey }));
       }
-    } catch (err) {
-      console.error('Failed to save item journey:', err);
-      AppAlert.alert(t('error'), t('vocabulary_failed_to_save_entity', { entity: journey }));
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -302,7 +293,7 @@ const ItemJourneyFormScreen = () => {
       successMessage: t('vocabulary_entity_deleted', { entity: journey, ending: 'a' }),
       failureKey: 'failed_to_delete_item_journey',
       failureMessage: t('vocabulary_failed_to_delete_entity', { entity: journey }),
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await itemJourneyServiceRef.current!.deleteItemJourney(userId, currentItemJourneyId);
         entityEventEmitter.emit('item_journey_changed', selectedStory?.id, currentItemJourneyId);
@@ -334,92 +325,104 @@ const ItemJourneyFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
-    saveButton: { marginTop: 20, marginBottom: 0 },
     noteSection: { marginTop: 20, marginBottom: 10 },
     tagSection: { marginTop: 20, marginBottom: 10 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={t('item_journey_form_description')}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {t('vocabulary_save_entity', { entity: journey })}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {t('vocabulary_delete_entity', { entity: journey })}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {t('item_journey_form_description')}
-      </Text>
+      <FormField label={itemCopy.entity}>
+        <SingleSelectPill
+          options={itemOptions}
+          value={itemId}
+          onValueChange={setItemId}
+          placeholder={itemCopy.select}
+          multiple={false}
+          allowDeselect={true}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{itemCopy.entity}</Text>
-      <SingleSelectPill
-        options={itemOptions}
-        value={itemId}
-        onValueChange={setItemId}
-        placeholder={itemCopy.select}
-        multiple={false}
-        allowDeselect={true}
-      />
+      <FormField label={sceneCopy.entity}>
+        <SingleSelectPill
+          options={sceneOptions}
+          value={sceneId}
+          onValueChange={setSceneId}
+          placeholder={sceneCopy.select}
+          multiple={false}
+          allowDeselect={true}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{sceneCopy.entity}</Text>
-      <SingleSelectPill
-        options={sceneOptions}
-        value={sceneId}
-        onValueChange={setSceneId}
-        placeholder={sceneCopy.select}
-        multiple={false}
-        allowDeselect={true}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>
-        {t('item_journey_new_character_owner_label', {
+      <FormField
+        label={t('item_journey_new_character_owner_label', {
           character: characterTerm,
           ending: characterOwnerEnding,
           prefix: characterOwnerPrefix,
         })}
-      </Text>
-      <SingleSelectPill
-        options={characterOptions}
-        value={newCharacterOwnerId}
-        onValueChange={setNewCharacterOwnerId}
-        placeholder={t('select_item_journey_new_character_owner', {
-          character: characterTerm,
-          ending: characterOwnerEnding,
-          prefix: characterOwnerPrefix,
-        })}
-        multiple={false}
-        allowDeselect={true}
-      />
+      >
+        <SingleSelectPill
+          options={characterOptions}
+          value={newCharacterOwnerId}
+          onValueChange={setNewCharacterOwnerId}
+          placeholder={t('select_item_journey_new_character_owner', {
+            character: characterTerm,
+            ending: characterOwnerEnding,
+            prefix: characterOwnerPrefix,
+          })}
+          multiple={false}
+          allowDeselect={true}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('new_state')}</Text>
-      <SuggestionTextInput
-        placeholder={t('new_state_placeholder')}
-        value={newState || ''}
-        onChangeText={setNewState}
-        type="item_state"
-        storyId={selectedStory?.id || ''}
-      />
+      <FormField label={t('new_state')}>
+        <SuggestionTextInput
+          placeholder={t('new_state_placeholder')}
+          value={newState || ''}
+          onChangeText={setNewState}
+          type="item_state"
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('extra_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('extra_notes_placeholder')}
+            value={extraNotes || ''}
+            onChangeText={setExtraNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+          <ScreenSection title={t('tags_title')} />
           <MultiSelectPill
             options={availableTags.map((tag) => ({
               label: tag.name,
@@ -436,7 +439,7 @@ const ItemJourneyFormScreen = () => {
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+          <ScreenSection title={t('notes_title')} />
           <NoteManager
             noteRelations={itemJourneyNoteRelations}
             availableNotes={allNotes}
@@ -461,16 +464,7 @@ const ItemJourneyFormScreen = () => {
           />
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{t('vocabulary_save_entity', { entity: journey })}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {t('vocabulary_delete_entity', { entity: journey })}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

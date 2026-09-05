@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Button, SingleSelectPill } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
@@ -6,7 +7,7 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
@@ -28,7 +29,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -51,14 +51,10 @@ const StorySettingsScreen = () => {
   const serverService = useCallback(() => createServerService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore();
 
-  useFocusEffect(
-    useCallback(() => {
-      // A leaf `Drawer.Screen` again, now that the calendars have their own drawer entry - so this
-      // is its own title, not the parent's.
-      navigation.setOptions({ title: t('story_settings_title'), headerRight: undefined });
-      setDocumentTitle(t('story_settings_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'self',
+    title: t('story_settings_title'),
+  });
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'linear' | 'branching'>('linear');
@@ -931,12 +927,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
     marginBottom: 5,
   },
   preferencesCard: {

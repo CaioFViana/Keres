@@ -1,21 +1,26 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill, { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Chapter } from '@keres/shared/entities/Chapter';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +30,6 @@ import type { ChapterSelect, StoryArcSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
@@ -35,13 +39,8 @@ import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../../theme/commonStyles';
+import { getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 
@@ -62,12 +61,11 @@ const ChapterFormScreen = () => {
   const { selectedStory, activeArcId } = useStoryStore();
   const vocab = useStoryVocabulary();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
@@ -104,21 +102,18 @@ const ChapterFormScreen = () => {
   const customDefaultsAppliedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentChapterId;
   const copy = useVocabularyEntityCopy(isEvent ? 'Event' : 'Chapter');
   const arcCopy = useVocabularyEntityCopy('Arc');
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   useEffect(() => {
     const loadChapter = async () => {
@@ -179,102 +174,99 @@ const ChapterFormScreen = () => {
     }
   }, [isEditing, customFields]);
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      AppAlert.alert(t('error'), t('name_required'));
-      return;
-    }
-    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
-    if (missingRequiredField) {
-      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-      return;
-    }
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!selectedStory?.id) {
-      AppAlert.alert(t('error'), t('no_story_selected'));
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      let chapterData: Omit<
-        Chapter,
-        | 'id'
-        | 'storyId'
-        | 'createdAt'
-        | 'updatedAt'
-        | 'version'
-        | 'isDeleted'
-        | 'deletedAt'
-        | 'index'
-      > = {
-        name: name.trim(),
-        summary,
-        isFavorite,
-        extraNotes,
-        arcId,
-      };
-
-      let savedChapter: ChapterSelect;
-
-      if (isEditing) {
-        savedChapter = await chapterServiceRef.current!.updateChapter(
-          userId,
-          currentChapterId!,
-          chapterData,
-        );
-        AppAlert.alert(t('success'), copy.updated);
-      } else {
-        // The next index within its own kind: chapters and events number independently, so the two
-        // spaces would collide if this counted across both.
-        const containerType = isEvent ? 'event' : 'chapter';
-        const siblings = await chapterServiceRef.current!.getAllByStoryId(
-          selectedStory.id,
-          containerType,
-        );
-        const nextIndex =
-          siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
-        savedChapter = await chapterServiceRef.current!.createChapter(userId, {
-          ...chapterData,
-          storyId: selectedStory.id,
-          index: nextIndex,
-          type: containerType,
-        });
-        AppAlert.alert(t('success'), copy.created);
-        setCurrentChapterId(savedChapter.id);
+  const handleSave = () =>
+    runSave(async () => {
+      if (!name.trim()) {
+        AppAlert.alert(t('error'), t('name_required'));
+        return;
+      }
+      const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+      if (missingRequiredField) {
+        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+        return;
+      }
+      if (!userId) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
+      }
+      if (!selectedStory?.id) {
+        AppAlert.alert(t('error'), t('no_story_selected'));
+        return;
       }
 
-      if (savedChapter.id) {
-        await persistTagRelations(savedChapter.id);
-        await persistNoteRelations(savedChapter.id);
-        await seeAlsoManagerRef.current?.persistPending(savedChapter.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(
-          userId,
-          selectedStory.id,
-          'Chapter',
-          savedChapter.id,
-          customValues,
-        );
-      }
+      try {
+        let chapterData: Omit<
+          Chapter,
+          | 'id'
+          | 'storyId'
+          | 'createdAt'
+          | 'updatedAt'
+          | 'version'
+          | 'isDeleted'
+          | 'deletedAt'
+          | 'index'
+        > = {
+          name: name.trim(),
+          summary,
+          isFavorite,
+          extraNotes,
+          arcId,
+        };
 
-      entityEventEmitter.emit('chapter_changed', selectedStory.id, savedChapter.id);
+        let savedChapter: ChapterSelect;
 
-      if (!isEditing && savedChapter.id) {
-        navigation.dispatch(StackActions.replace('ChapterForm', { chapterId: savedChapter.id }));
-      } else {
-        navigation.goBack();
+        if (isEditing) {
+          savedChapter = await chapterServiceRef.current!.updateChapter(
+            userId,
+            currentChapterId!,
+            chapterData,
+          );
+          AppAlert.alert(t('success'), copy.updated);
+        } else {
+          // The next index within its own kind: chapters and events number independently, so the two
+          // spaces would collide if this counted across both.
+          const containerType = isEvent ? 'event' : 'chapter';
+          const siblings = await chapterServiceRef.current!.getAllByStoryId(
+            selectedStory.id,
+            containerType,
+          );
+          const nextIndex =
+            siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
+          savedChapter = await chapterServiceRef.current!.createChapter(userId, {
+            ...chapterData,
+            storyId: selectedStory.id,
+            index: nextIndex,
+            type: containerType,
+          });
+          AppAlert.alert(t('success'), copy.created);
+          setCurrentChapterId(savedChapter.id);
+        }
+
+        if (savedChapter.id) {
+          await persistTagRelations(savedChapter.id);
+          await persistNoteRelations(savedChapter.id);
+          await seeAlsoManagerRef.current?.persistPending(savedChapter.id);
+          await createAttributeValueService(drizzleDb).saveValuesForEntity(
+            userId,
+            selectedStory.id,
+            'Chapter',
+            savedChapter.id,
+            customValues,
+          );
+        }
+
+        entityEventEmitter.emit('chapter_changed', selectedStory.id, savedChapter.id);
+
+        if (!isEditing && savedChapter.id) {
+          navigation.dispatch(StackActions.replace('ChapterForm', { chapterId: savedChapter.id }));
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save chapter:', err);
+        AppAlert.alert(t('error'), copy.failedToSave);
       }
-    } catch (err) {
-      console.error('Failed to save chapter:', err);
-      AppAlert.alert(t('error'), copy.failedToSave);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -294,7 +286,7 @@ const ChapterFormScreen = () => {
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_chapter',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await chapterServiceRef.current!.deleteChapter(userId, currentChapterId);
         entityEventEmitter.emit('chapter_changed', selectedStory?.id, currentChapterId);
@@ -311,7 +303,6 @@ const ChapterFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: {
       // Renamed from tagSection for clarity.
       marginTop: 20,
@@ -321,74 +312,77 @@ const ChapterFormScreen = () => {
       marginTop: 20,
       marginBottom: 0,
     },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {copy.deleteLabel}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-      <TextInput
-        placeholder={t('name_placeholder')}
-        value={name}
-        onChangeText={setName}
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('name_placeholder')}
+            value={name}
+            onChangeText={setName}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
       {arcs.length > 1 ? (
         <>
-          <Text style={[styles.label, { color: colors.text }]}>{vocab.term('Arc')}</Text>
-          <SingleSelectPill
-            options={arcs.map((arc) => ({
-              label: arc.title,
-              value: arc.id,
-              color: arc.color,
-            }))}
-            value={arcId}
-            onValueChange={setArcId}
-            placeholder={arcCopy.select}
-            allowDeselect={false}
-          />
+          <FormField label={vocab.term('Arc')}>
+            <SingleSelectPill
+              options={arcs.map((arc) => ({
+                label: arc.title,
+                value: arc.id,
+                color: arc.color,
+              }))}
+              value={arcId}
+              onValueChange={setArcId}
+              placeholder={arcCopy.select}
+              allowDeselect={false}
+            />
+          </FormField>
         </>
       ) : null}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('summary')}</Text>
-      <TextInput
-        placeholder={t('summary_placeholder')}
-        value={summary || ''}
-        onChangeText={setSummary}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('summary')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('summary_placeholder')}
+            value={summary || ''}
+            onChangeText={setSummary}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_favorite')}
-        </Text>
-        <ThemedSwitch
-          value={isFavorite}
-          onValueChange={setIsFavorite}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-        />
-      </View>
+      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
       {/*
         Only while creating. Changing the kind afterwards moves the container between two index
@@ -397,33 +391,30 @@ const ChapterFormScreen = () => {
       */}
       {!isEditing && (
         <>
-          <View style={styles.switchContainer}>
-            <Text
-              style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}
-            >
-              {t('chapter_is_event')}
-            </Text>
-            <ThemedSwitch
-              value={isEvent}
-              onValueChange={setIsEvent}
-              testID="chapter-is-event"
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
+          <FormSwitchField
+            label={t('chapter_is_event')}
+            value={isEvent}
+            onValueChange={setIsEvent}
+            testID="chapter-is-event"
+          />
           <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 5 }}>
             {t('chapter_is_event_hint')}
           </Text>
         </>
       )}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('extra_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('extra_notes_placeholder')}
+            value={extraNotes || ''}
+            onChangeText={setExtraNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       <CustomAttributeFields
         storyId={selectedStory?.id || ''}
@@ -485,16 +476,7 @@ const ChapterFormScreen = () => {
           />
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{copy.saveLabel}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {copy.deleteLabel}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

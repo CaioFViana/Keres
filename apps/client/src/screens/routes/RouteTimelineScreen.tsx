@@ -1,8 +1,9 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import StoryTimelineCanvas, {
@@ -17,7 +18,6 @@ import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail
 import { useRouteChronology } from '@/src/hooks/useRouteChronology';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useTranslation } from 'react-i18next';
@@ -42,13 +42,10 @@ export default function RouteTimelineScreen() {
   const selectedStep = steps.find((step) => step.id === selectedStepId);
   const navigate = useNavigateToEntityDetail();
 
-  useFocusEffect(
-    useCallback(() => {
-      const title = route ? t('route_timeline_title', { route: route.name }) : t('route_timeline');
-      setDocumentTitle(title);
-      navigation.getParent()?.setOptions({ title, headerRight: undefined });
-    }, [navigation, route, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: route ? t('route_timeline_title', { route: route.name }) : t('route_timeline'),
+  });
   useEffect(() => canvas.current?.fitToScreen(), [scaleMode]);
 
   const styles = useMemo(
@@ -56,7 +53,6 @@ export default function RouteTimelineScreen() {
       StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.background },
         notice: { color: colors.textSecondary, fontSize: 12, margin: 14, marginBottom: 8 },
-        invalid: { color: colors.error },
         controls: { position: 'absolute', right: 14, bottom: 18, gap: 8 },
         control: {
           width: 42,

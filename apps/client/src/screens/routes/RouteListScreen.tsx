@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo } from 'react';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useNavigation } from '@react-navigation/native';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -14,7 +14,6 @@ import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'Routes'>;
@@ -52,24 +51,19 @@ export default function RouteListScreen() {
     [colors],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('routes_title'));
-      navigation.getParent()?.setOptions({
-        title: t('routes_title'),
-        headerRight: () =>
-          canEdit ? (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('RouteForm', {})}
-              accessibilityLabel={t('create_route')}
-              style={{ marginRight: 15 }}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
-          ) : null,
-      });
-    }, [canEdit, colors.text, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('routes_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('create_route'),
+        onPress: () => navigation.navigate('RouteForm', {}),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (!selectedStory?.id)
     return <ScreenError message={t('no_story_selected')} onGoBack={() => navigation.goBack()} />;

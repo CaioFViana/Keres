@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -26,7 +26,6 @@ import type { LocationWithTags } from '../../services/storymanagement/LocationSe
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
@@ -44,23 +43,12 @@ const LocationsScreen = () => {
   const navigation = useNavigation<LocationsScreenNavigationProp>();
 
   const {
+    listProps,
     items: locations,
-    loading,
     isInitialLoading,
     error,
     storyId,
-    searchQuery,
-    activeFilterTags,
-    favoriteFilterState,
-    activeSort,
-    sortDirection,
     advancedSearchCriteria: storeAdvancedSearchCriteria,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFilterTagsChange,
-    handleFavoriteFilterChange,
     setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria,
     toggleFavorite,
   } = useEntityListScreen({
@@ -73,11 +61,7 @@ const LocationsScreen = () => {
   const tagService = useRef(createTagService(drizzleDb)).current;
   const { canEdit } = useStoryRole(storyId);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
-    headerButton: { marginLeft: 15 },
-  });
+  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
   // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
   const fetchTags = useCallback(async () => {
@@ -105,48 +89,31 @@ const LocationsScreen = () => {
     return () => entityEventEmitter.off('tag_changed', handleTagChange);
   }, [fetchTags, storyId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(term('Location', true));
-      navigation.getParent()?.setOptions({
-        title: term('Location', true),
-        headerRight: () => (
-          <View style={styles.headerRightContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('LocationView')}
-              style={styles.headerButton}
-              accessibilityLabel={t('location_graph_title')}
-            >
-              <Ionicons name="git-network-outline" size={26} color={colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('LocationMapList')}
-              style={styles.headerButton}
-              accessibilityLabel={t('location_map_list_title')}
-            >
-              <Ionicons name="map-outline" size={26} color={colors.text} />
-            </TouchableOpacity>
-            {canEdit && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('LocationForm', { locationId: undefined })}
-                style={styles.headerButton}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ),
-      });
-    }, [
-      navigation,
-      colors.text,
-      t,
-      styles.headerRightContainer,
-      styles.headerButton,
-      canEdit,
-      term,
-    ]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: term('Location', true),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'git-network-outline',
+        label: t('location_graph_title'),
+        onPress: () => navigation.navigate('LocationView'),
+      },
+      {
+        id: 'action-1',
+        icon: 'map-outline',
+        label: t('location_map_list_title'),
+        onPress: () => navigation.navigate('LocationMapList'),
+      },
+      {
+        id: 'action-2',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('LocationForm', { locationId: undefined }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const handleToggleFavorite = useCallback(
     async (locationId: string, isFavorite: boolean) => {
@@ -200,28 +167,17 @@ const LocationsScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
+        {...listProps}
         data={locations}
         renderItem={memoizedRenderItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
-        currentSearchTerm={searchQuery}
         filterOptions={memoizedTagFilterOptions}
-        onFilterChange={handleFilterTagsChange}
-        selectedFilterValues={activeFilterTags}
         sortOptions={memoizedSortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
         entityName="Location"
         storyId={storyId || ''}
         onAdvancedSearch={setStoreAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
-        isLoading={loading}
       />
     </View>
   );

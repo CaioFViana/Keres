@@ -1,3 +1,8 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -22,16 +27,15 @@ import type { Effect } from '@keres/shared/entities/Effect';
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
 import type { SceneSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
 import { useOpenGalleryMediaViewer } from '../../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../../hooks/useStoryRole';
@@ -57,8 +61,6 @@ import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
 import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
 import { useTheme } from '../../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
@@ -80,7 +82,6 @@ const SceneDetailScreen = () => {
   const locationCopy = useVocabularyEntityCopy('Location');
   const { selectedStory } = useStoryStore();
   const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
@@ -178,9 +179,7 @@ const SceneDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
     subTitle: {
       fontSize: 20,
       fontWeight: '600',
@@ -570,28 +569,19 @@ const SceneDetailScreen = () => {
     });
   }, [navigateToDetail, location, navigation, sceneId]);
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('SceneForm', { sceneId: sceneId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, sceneId, colors.text, canEdit],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: renderHeaderRight,
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('SceneForm', { sceneId: sceneId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
@@ -626,12 +616,26 @@ const SceneDetailScreen = () => {
     }
   };
 
+  const commentField = createCommentFieldBindings({
+    storyId: scene.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={scene.name}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{scene.name}</Text>
       {chapter ? (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
@@ -642,21 +646,8 @@ const SceneDetailScreen = () => {
       ) : null}
       <TagList tags={sceneTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
-        storyId={scene.storyId}
+        {...commentField('summary', scene.summary || t('common_na'))}
         label={t('summary')}
-        value={scene.summary || t('common_na')}
-        comments={commentsByField['summary'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'summary' },
-            { ...input, contentSnapshot: scene.summary || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
       {dateForScene(scene) && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
@@ -683,26 +674,13 @@ const SceneDetailScreen = () => {
         value={scene.isFavorite ? t('common_yes') : t('common_no')}
       />
       <CommentableDetailField
-        storyId={scene.storyId}
+        {...commentField('extraNotes', scene.extraNotes || t('common_na'))}
         label={t('extra_notes')}
-        value={scene.extraNotes || t('common_na')}
-        comments={commentsByField['extraNotes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'extraNotes' },
-            { ...input, contentSnapshot: scene.extraNotes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       {location && (
         <>
-          <Text style={styles.sectionTitle}>{locationCopy.entity}</Text>
+          <ScreenSection title={locationCopy.entity} />
           <TouchableOpacity
             onPress={handleLocationPress}
             style={styles.locationLink}
@@ -720,7 +698,7 @@ const SceneDetailScreen = () => {
         </>
       )}
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={sceneId}
         ownerType="Scene"
@@ -769,7 +747,7 @@ const SceneDetailScreen = () => {
 
       {isBranching && (
         <>
-          <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+          <ScreenSection title={t('effects_title')} />
           {sceneEffects.length === 0 && (
             <DetailField label={t('effects_title')} value={t('no_effects')} />
           )}
@@ -799,11 +777,7 @@ const SceneDetailScreen = () => {
         entityType="Scene"
         entityId={scene.id}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

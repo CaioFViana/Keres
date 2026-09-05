@@ -1,3 +1,5 @@
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import {
@@ -10,9 +12,9 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -25,7 +27,6 @@ import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 const BIO_MAX_LENGTH = 200;
 
@@ -38,7 +39,7 @@ type MyProfileScreenNavigationProp = NativeStackNavigationProp<
 const MyProfileScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  useDocumentTitle(t('my_profile_title'));
+
   const { colors } = useTheme();
   const navigation = useNavigation<MyProfileScreenNavigationProp>();
   const route = useRoute<MyProfileScreenRouteProp>();
@@ -91,11 +92,10 @@ const MyProfileScreen = () => {
     };
   }, [drizzleDb, serverId, t]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({ title: t('my_profile_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('my_profile_title'),
+  });
 
   const handleSave = async () => {
     if (!server) return;
@@ -122,7 +122,6 @@ const MyProfileScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     previewContainer: { alignItems: 'center', marginBottom: 20 },
-    label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
     charCount: {
       fontSize: 12,
       color: colors.textSecondary,
@@ -152,29 +151,35 @@ const MyProfileScreen = () => {
         <Avatar color={avatarColor} icon={avatarIcon} seed={server.idUser} size={96} />
       </View>
 
-      <Text style={styles.label}>{t('avatar_color')}</Text>
-      <ColorPickerInput
-        currentColor={avatarColor || ''}
-        onSelectColor={setAvatarColor}
-        placeholder={t('select_avatar_color')}
-      />
+      <FormField label={t('avatar_color')}>
+        <ColorPickerInput
+          currentColor={avatarColor || ''}
+          onSelectColor={setAvatarColor}
+          placeholder={t('select_avatar_color')}
+        />
+      </FormField>
 
-      <Text style={styles.label}>{t('avatar_icon')}</Text>
-      <IconPickerInput
-        currentIcon={avatarIcon}
-        onSelectIcon={setAvatarIcon}
-        placeholder={t('select_avatar_icon')}
-      />
+      <FormField label={t('avatar_icon')}>
+        <IconPickerInput
+          currentIcon={avatarIcon}
+          onSelectIcon={setAvatarIcon}
+          placeholder={t('select_avatar_icon')}
+        />
+      </FormField>
 
-      <Text style={styles.label}>{t('bio')}</Text>
-      <TextInput
-        placeholder={t('bio_placeholder')}
-        value={bio}
-        onChangeText={(text) => setBio(text.slice(0, BIO_MAX_LENGTH))}
-        style={[commonInputStyles.multiline, { minHeight: 4 * 20 }]}
-        multiline
-        maxLength={BIO_MAX_LENGTH}
-      />
+      <FormField label={t('bio')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('bio_placeholder')}
+            value={bio}
+            onChangeText={(text) => setBio(text.slice(0, BIO_MAX_LENGTH))}
+            style={[commonInputStyles.multiline, { minHeight: 4 * 20 }]}
+            multiline
+            maxLength={BIO_MAX_LENGTH}
+          />
+        )}
+      </FormField>
       <Text style={styles.charCount}>
         {bio.length}/{BIO_MAX_LENGTH}
       </Text>

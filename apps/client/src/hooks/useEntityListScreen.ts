@@ -144,7 +144,29 @@ export function useEntityListScreen<
     };
   }, [changeEvent, storyId, fetchItems]);
 
+  const handleSortChange = (sortBy: string | null) => setSort(sortBy, sortDirection);
+  const handleSortDirectionChange = (direction: SortDirection) => setSort(activeSort, direction);
+
+  // Spread into GenericFilterSortList; content, available filters and row rendering stay local.
+  const listProps = {
+    onSearch: setSearchQuery,
+    onSearchSubmit: handleSearchSubmit,
+    currentSearchTerm: searchQuery,
+    onFilterChange: setFilterTags,
+    selectedFilterValues: activeFilterTags,
+    onSortChange: handleSortChange,
+    onSortDirectionChange: handleSortDirectionChange,
+    currentSortDirection: sortDirection,
+    currentSortValue: activeSort,
+    onFavoriteFilterChange: setFavoriteFilter,
+    currentFavoriteFilterState: favoriteFilterState,
+    onAdvancedSearch: setAdvancedSearchCriteria,
+    currentAdvancedSearchCriteria: advancedSearchCriteria,
+    isLoading: loading,
+  };
+
   return {
+    listProps,
     items,
     loading,
     /** True only until this screen has received its first response for the selected story. */
@@ -161,8 +183,8 @@ export function useEntityListScreen<
 
     handleSearch: setSearchQuery,
     handleSearchSubmit,
-    handleSortChange: (sortBy: string | null) => setSort(sortBy, sortDirection),
-    handleSortDirectionChange: (direction: SortDirection) => setSort(activeSort, direction),
+    handleSortChange,
+    handleSortDirectionChange,
     handleFilterTagsChange: setFilterTags,
     handleFavoriteFilterChange: setFavoriteFilter,
     setAdvancedSearchCriteria,

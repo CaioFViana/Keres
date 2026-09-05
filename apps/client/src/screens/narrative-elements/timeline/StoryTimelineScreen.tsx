@@ -1,7 +1,8 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -13,7 +14,6 @@ import { useTheme } from '@/src/theme';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 
 const TIMELINE_CONTROL_LABELS = {
@@ -59,14 +59,10 @@ const StoryTimelineScreen = () => {
     exportTimeline,
   } = timeline;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('story_timeline_title'));
-      navigation
-        .getParent()
-        ?.setOptions({ title: t('story_timeline_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('story_timeline_title'),
+  });
   useEffect(() => {
     canvas.current?.fitToScreen();
   }, [eventPlacement, scaleMode]);

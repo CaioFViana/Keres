@@ -1,4 +1,9 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill, {
   SingleSelectPill,
@@ -7,13 +12,12 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Choice } from '@keres/shared/entities/Choice';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import type { Effect } from '@keres/shared/entities/Effect';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +26,6 @@ import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
 import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
@@ -34,13 +37,8 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../../theme/commonStyles';
+import { getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 
 type ChoiceFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChoiceForm'>;
@@ -73,12 +71,11 @@ const ChoiceFormScreen = () => {
     initializeService: initializeItemService,
   } = useItemStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const choiceCheckGroupServiceRef = useRef<ReturnType<
@@ -149,19 +146,16 @@ const ChoiceFormScreen = () => {
   } = useEntityRelations({ entityType: 'Choice', entityId: currentChoiceId });
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentChoiceId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   useEffect(() => {
     const loadChoice = async () => {
@@ -233,76 +227,73 @@ const ChoiceFormScreen = () => {
     }
   }, [isBranching, fetchChecksAndEffects]);
 
-  const handleSave = async () => {
-    if (!text.trim()) {
-      AppAlert.alert(t('error'), t('text_required')); // Use text_required
-      return;
-    }
-    if (!sceneId) {
-      AppAlert.alert(t('error'), sceneCopy.required);
-      return;
-    }
-    if (!nextSceneId) {
-      AppAlert.alert(t('error'), t('next_scene_required'));
-      return;
-    }
-    if (!userId || !selectedStory?.id) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const choiceData: Omit<
-        Choice,
-        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-      > = {
-        sceneId: sceneId,
-        nextSceneId: nextSceneId,
-        text: text.trim(), // Use text
-        notes: notes && notes.trim() ? notes.trim() : null,
-      };
-
-      let savedChoiceId: string | undefined = currentChoiceId;
-
-      if (isEditing && currentChoiceId) {
-        const savedChoice = await choiceServiceRef.current!.updateChoice(
-          userId,
-          currentChoiceId,
-          choiceData,
-        );
-        savedChoiceId = savedChoice.id;
-        AppAlert.alert(t('success'), copy.updated);
-      } else {
-        const savedChoice = await choiceServiceRef.current!.createChoice(userId, {
-          ...choiceData,
-          storyId: selectedStory.id,
-        });
-        savedChoiceId = savedChoice.id;
-        setCurrentChoiceId(savedChoice.id);
-        AppAlert.alert(t('success'), copy.created);
+  const handleSave = () =>
+    runSave(async () => {
+      if (!text.trim()) {
+        AppAlert.alert(t('error'), t('text_required')); // Use text_required
+        return;
+      }
+      if (!sceneId) {
+        AppAlert.alert(t('error'), sceneCopy.required);
+        return;
+      }
+      if (!nextSceneId) {
+        AppAlert.alert(t('error'), t('next_scene_required'));
+        return;
+      }
+      if (!userId || !selectedStory?.id) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
       }
 
-      if (savedChoiceId) {
-        await persistTagRelations(savedChoiceId);
-        await persistNoteRelations(savedChoiceId);
-        await seeAlsoManagerRef.current?.persistPending(savedChoiceId);
-      }
-      entityEventEmitter.emit('choice_changed', selectedStory.id, savedChoiceId);
+      try {
+        const choiceData: Omit<
+          Choice,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        > = {
+          sceneId: sceneId,
+          nextSceneId: nextSceneId,
+          text: text.trim(), // Use text
+          notes: notes && notes.trim() ? notes.trim() : null,
+        };
 
-      if (!isEditing && savedChoiceId) {
-        navigation.dispatch(StackActions.replace('ChoiceForm', { choiceId: savedChoiceId }));
-      } else {
-        navigation.goBack();
+        let savedChoiceId: string | undefined = currentChoiceId;
+
+        if (isEditing && currentChoiceId) {
+          const savedChoice = await choiceServiceRef.current!.updateChoice(
+            userId,
+            currentChoiceId,
+            choiceData,
+          );
+          savedChoiceId = savedChoice.id;
+          AppAlert.alert(t('success'), copy.updated);
+        } else {
+          const savedChoice = await choiceServiceRef.current!.createChoice(userId, {
+            ...choiceData,
+            storyId: selectedStory.id,
+          });
+          savedChoiceId = savedChoice.id;
+          setCurrentChoiceId(savedChoice.id);
+          AppAlert.alert(t('success'), copy.created);
+        }
+
+        if (savedChoiceId) {
+          await persistTagRelations(savedChoiceId);
+          await persistNoteRelations(savedChoiceId);
+          await seeAlsoManagerRef.current?.persistPending(savedChoiceId);
+        }
+        entityEventEmitter.emit('choice_changed', selectedStory.id, savedChoiceId);
+
+        if (!isEditing && savedChoiceId) {
+          navigation.dispatch(StackActions.replace('ChoiceForm', { choiceId: savedChoiceId }));
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save choice:', err);
+        AppAlert.alert(t('error'), copy.failedToSave);
       }
-    } catch (err) {
-      console.error('Failed to save choice:', err);
-      AppAlert.alert(t('error'), copy.failedToSave);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -321,7 +312,7 @@ const ChoiceFormScreen = () => {
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_choice',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await choiceServiceRef.current!.deleteChoice(userId, currentChoiceId);
         entityEventEmitter.emit('choice_changed', selectedStory?.id, currentChoiceId);
@@ -608,10 +599,8 @@ const ChoiceFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: { marginTop: 20, marginBottom: -10 },
     tagSection: { marginTop: 20, marginBottom: 0 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
     sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
     card: {
       borderWidth: 1,
@@ -641,60 +630,75 @@ const ChoiceFormScreen = () => {
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {copy.deleteLabel}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
+      <FormField label={t('text')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('text_placeholder')}
+            value={text}
+            onChangeText={setText}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('text')}</Text>
-      <TextInput
-        placeholder={t('text_placeholder')}
-        value={text}
-        onChangeText={setText}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('vocabulary_parent_entity', { entity: sceneCopy.entity })}>
+        <SingleSelectPill
+          options={sceneOptions}
+          value={sceneId}
+          onValueChange={setSceneId}
+          placeholder={sceneCopy.select}
+          multiple={false}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>
-        {t('vocabulary_parent_entity', { entity: sceneCopy.entity })}
-      </Text>
-      <SingleSelectPill
-        options={sceneOptions}
-        value={sceneId}
-        onValueChange={setSceneId}
-        placeholder={sceneCopy.select}
-        multiple={false}
-      />
+      <FormField label={t('vocabulary_next_entity', { entity: sceneCopy.entity })}>
+        <SingleSelectPill
+          options={sceneOptions}
+          value={nextSceneId}
+          onValueChange={setNextSceneId}
+          placeholder={sceneCopy.select}
+          multiple={false}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>
-        {t('vocabulary_next_entity', { entity: sceneCopy.entity })}
-      </Text>
-      <SingleSelectPill
-        options={sceneOptions}
-        value={nextSceneId}
-        onValueChange={setNextSceneId}
-        placeholder={sceneCopy.select}
-        multiple={false}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('choice_notes')}</Text>
-      <TextInput
-        placeholder={t('choice_notes_placeholder')}
-        value={notes || ''}
-        onChangeText={setNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('choice_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('choice_notes_placeholder')}
+            value={notes || ''}
+            onChangeText={setNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
@@ -714,7 +718,7 @@ const ChoiceFormScreen = () => {
 
       {currentChoiceId && selectedStory?.id && isBranching && (
         <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('checks_title')}</Text>
+          <ScreenSection title={t('checks_title')} />
           <Text style={styles.sectionDescription}>{t('checks_groups_and_note')}</Text>
 
           {checkGroups.map((group) => {
@@ -891,7 +895,7 @@ const ChoiceFormScreen = () => {
 
       {currentChoiceId && selectedStory?.id && isBranching && (
         <View style={[styles.tagSection, styles.effectsSection]}>
-          <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+          <ScreenSection title={t('effects_title')} />
 
           {choiceEffects.map((effect) => (
             <View key={effect.id} style={styles.card}>
@@ -983,16 +987,7 @@ const ChoiceFormScreen = () => {
           />
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{copy.saveLabel}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {copy.deleteLabel}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

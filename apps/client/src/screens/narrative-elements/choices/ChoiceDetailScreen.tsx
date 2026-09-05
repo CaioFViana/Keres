@@ -1,3 +1,9 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -13,18 +19,20 @@ import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import type { Effect } from '@keres/shared/entities/Effect';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
 import type { ChoiceSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityInitialLoad,
+  useEntityEventSubscriptions,
+} from '../../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../../hooks/useStoryRole';
 import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
 import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
@@ -35,10 +43,7 @@ import { createItemService } from '../../../services/storymanagement/ItemService
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../../theme/commonStyles';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import { setDocumentTitle } from '../../../utils/documentTitle';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
@@ -59,7 +64,6 @@ const ChoiceDetailScreen = () => {
   const copy = useVocabularyEntityCopy('Choice');
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
@@ -123,9 +127,7 @@ const ChoiceDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
     sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
     card: {
       borderWidth: 1,
@@ -233,12 +235,12 @@ const ChoiceDetailScreen = () => {
   useEntityInitialLoad(fetchChoice);
 
   // The choice is loaded above; this effect owns only event subscriptions.
-  useEffect(() => {
-    entityEventEmitter.on('choice_changed', handleChoiceChange);
-    return () => {
-      entityEventEmitter.off('choice_changed', handleChoiceChange);
-    };
-  }, [handleChoiceChange]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [{ event: 'choice_changed', listener: handleChoiceChange }],
+      [handleChoiceChange],
+    ),
+  );
 
   useEffect(() => {
     if (choice && isBranching) {
@@ -256,25 +258,19 @@ const ChoiceDetailScreen = () => {
     [navigateToDetail],
   );
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ChoiceForm', { choiceId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, choiceId, colors.text, canEdit],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('ChoiceForm', { choiceId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
@@ -286,12 +282,26 @@ const ChoiceDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: choice.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={choice.text}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{choice.text}</Text>
       <TagList tags={choiceTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <TouchableOpacity
@@ -323,44 +333,18 @@ const ChoiceDetailScreen = () => {
       </TouchableOpacity>
 
       <CommentableDetailField
-        storyId={choice.storyId}
+        {...commentField('text', choice.text || t('common_na'))}
         label={t('text')}
-        value={choice.text || t('common_na')}
-        comments={commentsByField['text'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'text' },
-            { ...input, contentSnapshot: choice.text || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       <CommentableDetailField
-        storyId={choice.storyId}
+        {...commentField('notes', choice.notes || t('common_na'))}
         label={t('choice_notes')}
-        value={choice.notes || t('common_na')}
-        comments={commentsByField['notes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'notes' },
-            { ...input, contentSnapshot: choice.notes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       {isBranching && (
         <View style={styles.choiceEffectContainer}>
-          <Text style={styles.sectionTitle}>{t('checks_title')}</Text>
+          <ScreenSection title={t('checks_title')} />
           <Text style={styles.sectionDescription}>{t('checks_groups_and_note')}</Text>
           {checkGroups.length === 0 && (
             <DetailField label={t('checks_title')} value={t('no_check_groups')} />
@@ -387,7 +371,7 @@ const ChoiceDetailScreen = () => {
             );
           })}
 
-          <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+          <ScreenSection title={t('effects_title')} />
           {choiceEffects.length === 0 && (
             <DetailField label={t('effects_title')} value={t('no_effects')} />
           )}
@@ -427,11 +411,7 @@ const ChoiceDetailScreen = () => {
         createdAt={choice.createdAt}
         updatedAt={choice.updatedAt}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

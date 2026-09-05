@@ -1,3 +1,7 @@
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
@@ -18,14 +22,12 @@ import ScenePresenceList, {
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { Ionicons } from '@expo/vector-icons';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
@@ -33,7 +35,6 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
@@ -52,10 +53,7 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useStoryStore } from '../../state/storyStore';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
@@ -67,7 +65,7 @@ type LocationDetailScreenRouteProp = RouteProp<LocationStackParamList, 'Location
 
 const LocationDetailsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
+
   const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<LocationDetailScreenRouteProp>();
@@ -77,10 +75,9 @@ const LocationDetailsScreen = () => {
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const drizzleDb = useDrizzle();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
   const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
   const characterServiceRef = useRef<CharacterService | null>(null); // Ref for CharacterService
@@ -142,27 +139,21 @@ const LocationDetailsScreen = () => {
     }
   }, [drizzleDb]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: () =>
-          location && canEdit ? (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('LocationForm', { locationId: location.id })}
-            >
-              <Ionicons
-                name="pencil-outline"
-                size={24}
-                color={colors.primary}
-                style={{ marginRight: 15 }}
-              />
-            </TouchableOpacity>
-          ) : null,
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, location, headerTitle, colors, canEdit]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'edit',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => {
+          if (location && canEdit) navigation.navigate('LocationForm', { locationId: location.id });
+        },
+        visible: !!(location && canEdit),
+      },
+    ],
+  });
 
   const fetchLocationDetails = useCallback(async () => {
     if (!locationServiceRef.current || !locationId) {
@@ -493,16 +484,6 @@ const LocationDetailsScreen = () => {
     fetchAllLocationRelationsInStory,
   ]);
 
-  const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
-  });
-
   const locationCharacterEntries = useMemo(() => {
     const scenesById = new Map(
       allScenes
@@ -531,99 +512,51 @@ const LocationDetailsScreen = () => {
     return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: location.storyId,
+    mentionSourceId: location.id,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
-    >
-      <Text style={styles.mainTitle}>{location.name}</Text>
+    <DetailContainer title={location.name}>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
-      {(() => {
-        const commentableFieldProps = {
-          storyId: location.storyId,
-          // Mentions of other entities in this one's text become links; it never links to itself.
-          mentionSourceId: location.id,
-          canComment,
-          isStoryOwner,
-          currentUserId,
-          onDeleteComment: deleteComment,
-          onUpdateComment: updateComment,
-        };
-        return (
-          <>
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('description')}
-              value={location.description || t('common_na')}
-              comments={commentsByField['description'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'description' },
-                  { ...input, contentSnapshot: location.description || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('field_climate')}
-              value={location.climate || t('common_na')}
-              comments={commentsByField['climate'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'climate' },
-                  { ...input, contentSnapshot: location.climate || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('field_culture')}
-              value={location.culture || t('common_na')}
-              comments={commentsByField['culture'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'culture' },
-                  { ...input, contentSnapshot: location.culture || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('field_politics')}
-              value={location.politics || t('common_na')}
-              comments={commentsByField['politics'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'politics' },
-                  { ...input, contentSnapshot: location.politics || t('common_na') },
-                )
-              }
-            />
+      <CommentableDetailField
+        {...commentField('description', location.description || t('common_na'))}
+        label={t('description')}
+      />
+      <CommentableDetailField
+        {...commentField('climate', location.climate || t('common_na'))}
+        label={t('field_climate')}
+      />
+      <CommentableDetailField
+        {...commentField('culture', location.culture || t('common_na'))}
+        label={t('field_culture')}
+      />
+      <CommentableDetailField
+        {...commentField('politics', location.politics || t('common_na'))}
+        label={t('field_politics')}
+      />
 
-            <CustomAttributeDetailFields
-              storyId={location.storyId}
-              entityType="Location"
-              entityId={locationId}
-            />
+      <CustomAttributeDetailFields
+        storyId={location.storyId}
+        entityType="Location"
+        entityId={locationId}
+      />
 
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('extra_notes')}
-              value={location.extraNotes || t('common_na')}
-              comments={commentsByField['extraNotes'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'extraNotes' },
-                  { ...input, contentSnapshot: location.extraNotes || t('common_na') },
-                )
-              }
-            />
-          </>
-        );
-      })()}
+      <CommentableDetailField
+        {...commentField('extraNotes', location.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={locationId}
         ownerType="Location"
@@ -697,7 +630,7 @@ const LocationDetailsScreen = () => {
         entityType="Location"
         entityId={location.id}
       />
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

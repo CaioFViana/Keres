@@ -1,3 +1,8 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -19,16 +24,15 @@ import ScenePresenceList, {
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { Ionicons } from '@expo/vector-icons';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { SceneSelect } from '../../db/schema'; // For available scenes
 import type { CharacterSelect } from '../../db/schemas/characters';
@@ -36,7 +40,6 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -54,9 +57,7 @@ import { createLocationService } from '../../services/storymanagement/LocationSe
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { CharacterStatPanel } from '../../components/features/stats/CharacterStatPanel/CharacterStatPanel';
@@ -89,7 +90,6 @@ const CharacterDetailScreen = () => {
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const locationCopy = useVocabularyEntityCopy('Location');
   const { userId } = useUserSettingsStore(); // Get userId from store
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
@@ -164,9 +164,7 @@ const CharacterDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
     subTitle: {
       fontSize: 20,
       fontWeight: '600',
@@ -516,39 +514,26 @@ const CharacterDetailScreen = () => {
     }
   };
 
-  const renderHeaderRight = useCallback(
-    () => (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {selectedStory?.type === 'linear' && (
-          <TouchableOpacity
-            onPress={() => openPresenceMatrix(characterId)}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="map-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        )}
-        {canEdit && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CharacterForm', { characterId })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="pencil-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        )}
-      </View>
-    ),
-    [navigation, characterId, colors.text, canEdit, openPresenceMatrix, selectedStory?.type],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: renderHeaderRight,
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'map-outline',
+        label: t('presence_matrix_title'),
+        onPress: () => openPresenceMatrix(characterId),
+        visible: !!(selectedStory?.type === 'linear'),
+      },
+      {
+        id: 'action-1',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('CharacterForm', { characterId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const characterLocationEntries = useMemo(() => {
     const pairs = characterSceneRelations.flatMap((relation) => {
@@ -576,179 +561,90 @@ const CharacterDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: character.storyId,
+    mentionSourceId: character.id,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={character.name}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{character.name}</Text>
       <TagList tags={characterTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
 
-      {(() => {
-        const commentableFieldProps = {
-          storyId: character.storyId,
-          // Mentions of other entities in this one's text become links; it never links to itself.
-          mentionSourceId: character.id,
-          canComment,
-          isStoryOwner,
-          currentUserId,
-          onDeleteComment: deleteComment,
-          onUpdateComment: updateComment,
-        };
-        return (
-          <>
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('gender')}
-              value={character.gender || t('common_na')}
-              comments={commentsByField['gender'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'gender' },
-                  { ...input, contentSnapshot: character.gender || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('race')}
-              value={character.race || t('common_na')}
-              comments={commentsByField['race'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'race' },
-                  { ...input, contentSnapshot: character.race || t('common_na') },
-                )
-              }
-            />
-            {character.subrace && (
-              <CommentableDetailField
-                {...commentableFieldProps}
-                label={t('subrace')}
-                value={character.subrace}
-                comments={commentsByField['subrace'] ?? []}
-                onAddComment={(input) =>
-                  addComment(
-                    { fieldKey: 'subrace' },
-                    { ...input, contentSnapshot: character.subrace },
-                  )
-                }
-              />
-            )}
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('description')}
-              value={character.description || t('common_na')}
-              comments={commentsByField['description'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'description' },
-                  { ...input, contentSnapshot: character.description || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('personality')}
-              value={character.personality || t('common_na')}
-              comments={commentsByField['personality'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'personality' },
-                  { ...input, contentSnapshot: character.personality || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('motivation')}
-              value={character.motivation || t('common_na')}
-              comments={commentsByField['motivation'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'motivation' },
-                  { ...input, contentSnapshot: character.motivation || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('qualities')}
-              value={character.qualities || t('common_na')}
-              comments={commentsByField['qualities'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'qualities' },
-                  { ...input, contentSnapshot: character.qualities || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('weaknesses')}
-              value={character.weaknesses || t('common_na')}
-              comments={commentsByField['weaknesses'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'weaknesses' },
-                  { ...input, contentSnapshot: character.weaknesses || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('biography')}
-              value={character.biography || t('common_na')}
-              comments={commentsByField['biography'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'biography' },
-                  { ...input, contentSnapshot: character.biography || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('planned_timeline')}
-              value={character.plannedTimeline || t('common_na')}
-              comments={commentsByField['plannedTimeline'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'plannedTimeline' },
-                  { ...input, contentSnapshot: character.plannedTimeline || t('common_na') },
-                )
-              }
-            />
+      <CommentableDetailField
+        {...commentField('gender', character.gender || t('common_na'))}
+        label={t('gender')}
+      />
+      <CommentableDetailField
+        {...commentField('race', character.race || t('common_na'))}
+        label={t('race')}
+      />
+      {character.subrace && (
+        <CommentableDetailField
+          {...commentField('subrace', character.subrace)}
+          label={t('subrace')}
+        />
+      )}
+      <CommentableDetailField
+        {...commentField('description', character.description || t('common_na'))}
+        label={t('description')}
+      />
+      <CommentableDetailField
+        {...commentField('personality', character.personality || t('common_na'))}
+        label={t('personality')}
+      />
+      <CommentableDetailField
+        {...commentField('motivation', character.motivation || t('common_na'))}
+        label={t('motivation')}
+      />
+      <CommentableDetailField
+        {...commentField('qualities', character.qualities || t('common_na'))}
+        label={t('qualities')}
+      />
+      <CommentableDetailField
+        {...commentField('weaknesses', character.weaknesses || t('common_na'))}
+        label={t('weaknesses')}
+      />
+      <CommentableDetailField
+        {...commentField('biography', character.biography || t('common_na'))}
+        label={t('biography')}
+      />
+      <CommentableDetailField
+        {...commentField('plannedTimeline', character.plannedTimeline || t('common_na'))}
+        label={t('planned_timeline')}
+      />
 
-            <CustomAttributeDetailFields
-              storyId={character.storyId}
-              entityType="Character"
-              entityId={characterId}
-            />
+      <CustomAttributeDetailFields
+        storyId={character.storyId}
+        entityType="Character"
+        entityId={characterId}
+      />
 
-            <DetailField
-              label={t('is_favorite')}
-              value={character.isFavorite ? t('common_yes') : t('common_no')}
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('extra_notes')}
-              value={character.extraNotes || t('common_na')}
-              comments={commentsByField['extraNotes'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'extraNotes' },
-                  { ...input, contentSnapshot: character.extraNotes || t('common_na') },
-                )
-              }
-            />
-          </>
-        );
-      })()}
+      <DetailField
+        label={t('is_favorite')}
+        value={character.isFavorite ? t('common_yes') : t('common_no')}
+      />
+      <CommentableDetailField
+        {...commentField('extraNotes', character.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={characterId}
         ownerType="Character"
@@ -758,7 +654,7 @@ const CharacterDetailScreen = () => {
 
       {statSystemEnabled ? (
         <>
-          <Text style={styles.sectionTitle}>{t('stats_title')}</Text>
+          <ScreenSection title={t('stats_title')} />
           <CharacterStatPanel
             characterId={characterId}
             characterName={character.name}
@@ -846,11 +742,7 @@ const CharacterDetailScreen = () => {
         entityType="Character"
         entityId={character.id}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

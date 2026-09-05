@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Button, SingleSelectPill, TextInput } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -10,14 +11,13 @@ import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/utils/AppAlert';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import {
   STORY_VOCABULARY_ENTITY_TYPES,
   type GrammaticalGender,
   type StoryVocabulary,
   type StoryVocabularyEntityType,
 } from '@keres/shared/entities/Story';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -175,12 +175,10 @@ const VocabularyScreen = () => {
   const loadedDraftRef = useRef<string | null>(null);
   const vocabularySignature = JSON.stringify(selectedStoryVocabulary);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('vocabulary_title'), headerRight: undefined });
-      setDocumentTitle(t('vocabulary_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('vocabulary_title'),
+  });
 
   useEffect(() => {
     if (!selectedStoryId) {

@@ -1,30 +1,28 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import type { PackSelectionType } from '@keres/shared';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
 import FormActions from '../../components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
 import type { StorySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { createPackService } from '../../services/storymanagement/PackService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 /**
  * Making a pack out of a story, or re-extracting one.
@@ -55,10 +53,9 @@ const PackFormScreen = () => {
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
   const { userId } = useUserSettingsStore();
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
-  const scrollBottomPadding = useFormScrollBottomPadding();
-  useDocumentTitle(packId ? t('packs_reextract') : t('packs_create'));
+
+  useScreenHeader({ target: 'parent', title: packId ? t('packs_reextract') : t('packs_create') });
 
   const [stories, setStories] = useState<StorySelect[]>([]);
   const [sourceStoryId, setSourceStoryId] = useState<string | null>(null);
@@ -189,7 +186,7 @@ const PackFormScreen = () => {
   ]);
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
+    ...commonFormStyleDefs(colors),
     switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -197,18 +194,13 @@ const PackFormScreen = () => {
       marginBottom: 14,
     },
     switchLabels: { flex: 1, marginRight: 12 },
-    actions: { marginTop: 20, gap: 10 },
     switchHint: { color: colors.textSecondary, fontSize: 13 },
     nested: { marginLeft: 18 },
     cancelButton: { backgroundColor: colors.secondary },
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   const renderToggle = (
@@ -235,23 +227,21 @@ const PackFormScreen = () => {
   return (
     // `KeyboardAwareScreen` is itself the scroll view; a second one nested inside it took the
     // scrolling away from the one that knows where the keyboard is.
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
-    >
+    <EntityFormContainer>
       <>
-        <Text style={styles.label}>{t('packs_source_story')}</Text>
-        <SingleSelectPill
-          value={sourceStoryId}
-          onValueChange={(value) => value && chooseStory(value)}
-          options={stories.map((story) => ({ label: story.title, value: story.id }))}
-          placeholder={t('packs_source_placeholder')}
-          // Re-extraction is always from the story the pack came from; changing it would make the
-          // "same pack, new version" promise a lie.
-          disabled={Boolean(packId)}
-        />
+        <FormField label={t('packs_source_story')}>
+          <SingleSelectPill
+            value={sourceStoryId}
+            onValueChange={(value) => value && chooseStory(value)}
+            options={stories.map((story) => ({ label: story.title, value: story.id }))}
+            placeholder={t('packs_source_placeholder')}
+            // Re-extraction is always from the story the pack came from; changing it would make the
+            // "same pack, new version" promise a lie.
+            disabled={Boolean(packId)}
+          />
+        </FormField>
 
-        <Text style={styles.sectionTitle}>{t('packs_contents')}</Text>
+        <ScreenSection title={t('packs_contents')} />
         {renderToggle(
           'customAttributes',
           'packs_toggle_attributes',
@@ -268,36 +258,52 @@ const PackFormScreen = () => {
           !selection.suggestions,
         )}
 
-        <Text style={styles.sectionTitle}>{t('packs_details')}</Text>
-        <Text style={styles.label}>{t('name')}</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder={t('name')}
-          style={commonInputStyles.input}
-        />
-        <Text style={styles.label}>{t('description')}</Text>
-        <TextInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder={t('description')}
-          style={commonInputStyles.multiline}
-          multiline
-        />
-        <Text style={styles.label}>{t('language')}</Text>
-        <TextInput
-          value={language}
-          onChangeText={setLanguage}
-          placeholder={t('packs_language_placeholder')}
-          style={commonInputStyles.input}
-        />
-        <Text style={styles.label}>{t('author')}</Text>
-        <TextInput
-          value={authorName}
-          onChangeText={setAuthorName}
-          placeholder={t('author')}
-          style={commonInputStyles.input}
-        />
+        <ScreenSection title={t('packs_details')} />
+        <FormField label={t('name')}>
+          {(fieldAccessibility) => (
+            <TextInput
+              {...fieldAccessibility}
+              value={name}
+              onChangeText={setName}
+              placeholder={t('name')}
+              style={commonInputStyles.input}
+            />
+          )}
+        </FormField>
+        <FormField label={t('description')}>
+          {(fieldAccessibility) => (
+            <TextInput
+              {...fieldAccessibility}
+              value={description}
+              onChangeText={setDescription}
+              placeholder={t('description')}
+              style={commonInputStyles.multiline}
+              multiline
+            />
+          )}
+        </FormField>
+        <FormField label={t('language')}>
+          {(fieldAccessibility) => (
+            <TextInput
+              {...fieldAccessibility}
+              value={language}
+              onChangeText={setLanguage}
+              placeholder={t('packs_language_placeholder')}
+              style={commonInputStyles.input}
+            />
+          )}
+        </FormField>
+        <FormField label={t('author')}>
+          {(fieldAccessibility) => (
+            <TextInput
+              {...fieldAccessibility}
+              value={authorName}
+              onChangeText={setAuthorName}
+              placeholder={t('author')}
+              style={commonInputStyles.input}
+            />
+          )}
+        </FormField>
 
         <FormActions stackOnCompact style={{ marginTop: 20 }}>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">
@@ -308,7 +314,7 @@ const PackFormScreen = () => {
           </Button>
         </FormActions>
       </>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

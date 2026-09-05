@@ -1,3 +1,5 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import {
   ScreenError,
   ScreenLoading,
@@ -33,7 +35,6 @@ import { useConnectivityStore } from '../../state/connectivityStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 
 /**
@@ -70,7 +71,7 @@ export function buildStoryPublicUrl(serverUrl: string, storyId: string): string 
 
 const PublishStoryScreen = () => {
   const { t } = useTranslation();
-  useDocumentTitle(t('publish_story_title'));
+  useScreenHeader({ target: 'self', title: t('publish_story_title') });
   const { colors } = useTheme();
   useBackButtonHandler();
   const drizzleDb = useDrizzle();
@@ -334,7 +335,6 @@ const PublishStoryScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 6 },
     sectionDescription: {
       fontSize: 14,
       color: colors.textSecondary,
@@ -441,7 +441,7 @@ const PublishStoryScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>{t('publish_story_title')}</Text>
+      <ScreenSection title={t('publish_story_title')} />
       <Text style={styles.sectionDescription}>{t('publish_story_description')}</Text>
 
       {rows.length === 0 ? (

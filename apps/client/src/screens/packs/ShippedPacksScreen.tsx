@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -20,7 +21,6 @@ import {
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { getLanguageOptions } from '../../utils/i18n';
 
 /**
@@ -58,7 +58,7 @@ const ShippedPacksScreen = () => {
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
-  useDocumentTitle(t('shipped_packs_title'));
+  useScreenHeader({ target: 'parent', title: t('shipped_packs_title') });
 
   const [groups, setGroups] = useState<ShippedPackGroup[]>([]);
   const [installingSlug, setInstallingSlug] = useState<string | null>(null);

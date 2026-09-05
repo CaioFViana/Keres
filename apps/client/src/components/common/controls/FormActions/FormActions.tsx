@@ -1,4 +1,4 @@
-import React, { Children, useMemo } from 'react';
+import React, { Children, isValidElement, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
@@ -40,6 +40,18 @@ interface Props {
   stackOnCompact?: boolean;
 }
 
+function actionChildren(
+  children: React.ReactNode,
+  prefix = '',
+): { child: React.ReactNode; key: string }[] {
+  return Children.toArray(children).flatMap((child, index) => {
+    const key = `${prefix}/${isValidElement(child) ? (child.key ?? index) : index}`;
+    return isValidElement<{ children?: React.ReactNode }>(child) && child.type === React.Fragment
+      ? actionChildren(child.props.children, key)
+      : [{ child, key }];
+  });
+}
+
 const FormActions: React.FC<Props> = ({ children, style, natural, stackOnCompact }) => {
   const { isCompact } = useResponsiveLayout();
   const share = !natural && !isCompact;
@@ -67,11 +79,11 @@ const FormActions: React.FC<Props> = ({ children, style, natural, stackOnCompact
 
   return (
     <View style={[styles.row, style]}>
-      {Children.map(children, (child) =>
-        child == null || child === false ? null : (
-          <View style={share ? styles.share : undefined}>{child}</View>
-        ),
-      )}
+      {actionChildren(children).map(({ child, key }) => (
+        <View key={key} style={share ? styles.share : undefined}>
+          {child}
+        </View>
+      ))}
     </View>
   );
 };

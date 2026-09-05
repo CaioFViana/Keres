@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../../theme/commonStyles';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
@@ -46,7 +47,6 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useTheme } from '../../../theme';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import {
   formatSceneGap,
@@ -179,12 +179,10 @@ const ChoiceViewScreen = () => {
   const isLinearFlow = selectedStory?.type === 'linear';
   const screenTitle = isLinearFlow ? t('story_flow_title') : t('story_map_title');
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(screenTitle);
-      navigation.getParent()?.setOptions({ title: screenTitle, headerRight: undefined });
-    }, [navigation, screenTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: screenTitle,
+  });
 
   const graphChoices = useMemo(() => {
     if (!isLinearFlow) return choices;

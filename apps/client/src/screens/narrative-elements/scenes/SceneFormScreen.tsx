@@ -1,6 +1,11 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
@@ -14,13 +19,12 @@ import SceneCharacterManager from '@/src/components/features/characters/Characte
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import type { Effect } from '@keres/shared/entities/Effect';
 import type { Scene } from '@keres/shared/entities/Scene';
 import { parseCalendarDateCoordinate } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
@@ -29,7 +33,6 @@ import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
@@ -46,13 +49,8 @@ import { useLocationStore } from '../../../state/locationStore'; // Import useLo
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 
@@ -109,12 +107,11 @@ const SceneFormScreen = () => {
     initializeService: initializeItemService,
   } = useItemStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
@@ -236,19 +233,16 @@ const SceneFormScreen = () => {
   const customDefaultsAppliedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentSceneId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   const fetchCharacterSceneRelations = useCallback(async () => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId) {
@@ -423,133 +417,133 @@ const SceneFormScreen = () => {
     }
   }, [isEditing, customFields]);
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      AppAlert.alert(t('error'), t('name_required'));
-      return;
-    }
-    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
-    if (missingRequiredField) {
-      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-      return;
-    }
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!selectedStory?.id) {
-      AppAlert.alert(t('error'), t('no_story_selected'));
-      return;
-    }
+  const handleSave = () =>
+    runSave(async () => {
+      if (!name.trim()) {
+        AppAlert.alert(t('error'), t('name_required'));
+        return;
+      }
+      const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+      if (missingRequiredField) {
+        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+        return;
+      }
+      if (!userId) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
+      }
+      if (!selectedStory?.id) {
+        AppAlert.alert(t('error'), t('no_story_selected'));
+        return;
+      }
 
-    const gap = parseTimingInput(gapInput);
-    const duration = parseTimingInput(durationInput);
-    if ((gapInput !== '' && gap === null) || (durationInput !== '' && duration === null)) {
-      AppAlert.alert(t('error'), t('scene_timing_invalid'));
-      return;
-    }
-    if (calendarDateOverride.trim() && !parseCalendarDateCoordinate(calendarDateOverride.trim())) {
-      AppAlert.alert(t('error'), t('scene_fixed_date_invalid'));
-      return;
-    }
+      const gap = parseTimingInput(gapInput);
+      const duration = parseTimingInput(durationInput);
+      if ((gapInput !== '' && gap === null) || (durationInput !== '' && duration === null)) {
+        AppAlert.alert(t('error'), t('scene_timing_invalid'));
+        return;
+      }
+      if (
+        calendarDateOverride.trim() &&
+        !parseCalendarDateCoordinate(calendarDateOverride.trim())
+      ) {
+        AppAlert.alert(t('error'), t('scene_fixed_date_invalid'));
+        return;
+      }
 
-    setLoading(true);
+      try {
+        const sceneData: Omit<
+          Scene,
+          | 'id'
+          | 'storyId'
+          | 'createdAt'
+          | 'updatedAt'
+          | 'version'
+          | 'isDeleted'
+          | 'deletedAt'
+          | 'index'
+        > = {
+          chapterId: chapterId,
+          locationId: locationId,
+          name: name.trim(),
+          summary,
+          isFavorite,
+          extraNotes,
+          gap,
+          gapType,
+          calendarDateOverride: calendarDateOverride.trim() || null,
+          calendarDateOverrideCalendarId: calendarDateOverride.trim()
+            ? calendarDateOverrideCalendarId
+            : null,
+          duration,
+          durationType,
+          isStart,
+          isFinish,
+        };
 
-    try {
-      const sceneData: Omit<
-        Scene,
-        | 'id'
-        | 'storyId'
-        | 'createdAt'
-        | 'updatedAt'
-        | 'version'
-        | 'isDeleted'
-        | 'deletedAt'
-        | 'index'
-      > = {
-        chapterId: chapterId,
-        locationId: locationId,
-        name: name.trim(),
-        summary,
-        isFavorite,
-        extraNotes,
-        gap,
-        gapType,
-        calendarDateOverride: calendarDateOverride.trim() || null,
-        calendarDateOverrideCalendarId: calendarDateOverride.trim()
-          ? calendarDateOverrideCalendarId
-          : null,
-        duration,
-        durationType,
-        isStart,
-        isFinish,
-      };
+        let savedSceneId: string | undefined = currentSceneId;
 
-      let savedSceneId: string | undefined = currentSceneId;
+        if (isEditing && currentSceneId) {
+          const originalScene = await sceneServiceRef.current!.getById(currentSceneId);
+          if (!originalScene) {
+            throw new Error(copy.notFound);
+          }
 
-      if (isEditing && currentSceneId) {
-        const originalScene = await sceneServiceRef.current!.getById(currentSceneId);
-        if (!originalScene) {
-          throw new Error(copy.notFound);
+          // Changing chapter (the position in the new queue and closing the hole in the old one) is the
+          // service's responsibility: here the screen only says which chapter the scene is going to.
+          const savedScene = await sceneServiceRef.current!.updateScene(
+            userId,
+            currentSceneId,
+            sceneData,
+          );
+          savedSceneId = savedScene.id;
+          AppAlert.alert(t('success'), copy.updated);
+        } else {
+          // --- CREATE NEW SCENE LOGIC ---
+          const allScenesInChapter = (
+            await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
+          ).filter((scn) => scn.chapterId === chapterId);
+          // A chapter's first scene is 1, and not 0: the same convention as the chapters and the only one
+          // the API accepts when those scenes are reordered later.
+          const nextIndex =
+            allScenesInChapter.length > 0
+              ? Math.max(...allScenesInChapter.map((scn) => scn.index || 0)) + 1
+              : 1;
+          const savedScene = await sceneServiceRef.current!.createScene(userId, {
+            ...sceneData,
+            storyId: selectedStory.id,
+            index: nextIndex,
+          });
+          savedSceneId = savedScene.id;
+          setCurrentSceneId(savedScene.id);
+          AppAlert.alert(t('success'), copy.created);
         }
 
-        // Changing chapter (the position in the new queue and closing the hole in the old one) is the
-        // service's responsibility: here the screen only says which chapter the scene is going to.
-        const savedScene = await sceneServiceRef.current!.updateScene(
-          userId,
-          currentSceneId,
-          sceneData,
-        );
-        savedSceneId = savedScene.id;
-        AppAlert.alert(t('success'), copy.updated);
-      } else {
-        // --- CREATE NEW SCENE LOGIC ---
-        const allScenesInChapter = (
-          await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
-        ).filter((scn) => scn.chapterId === chapterId);
-        // A chapter's first scene is 1, and not 0: the same convention as the chapters and the only one
-        // the API accepts when those scenes are reordered later.
-        const nextIndex =
-          allScenesInChapter.length > 0
-            ? Math.max(...allScenesInChapter.map((scn) => scn.index || 0)) + 1
-            : 1;
-        const savedScene = await sceneServiceRef.current!.createScene(userId, {
-          ...sceneData,
-          storyId: selectedStory.id,
-          index: nextIndex,
-        });
-        savedSceneId = savedScene.id;
-        setCurrentSceneId(savedScene.id);
-        AppAlert.alert(t('success'), copy.created);
-      }
+        if (savedSceneId) {
+          await persistTagRelations(savedSceneId);
+          await persistNoteRelations(savedSceneId);
+          await seeAlsoManagerRef.current?.persistPending(savedSceneId);
+          await persistPendingCharacterSceneRelations(savedSceneId);
+          await createAttributeValueService(drizzleDb).saveValuesForEntity(
+            userId,
+            selectedStory.id,
+            'Scene',
+            savedSceneId,
+            customValues,
+          );
+          entityEventEmitter.emit('scene_changed', selectedStory.id, savedSceneId);
+        }
 
-      if (savedSceneId) {
-        await persistTagRelations(savedSceneId);
-        await persistNoteRelations(savedSceneId);
-        await seeAlsoManagerRef.current?.persistPending(savedSceneId);
-        await persistPendingCharacterSceneRelations(savedSceneId);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(
-          userId,
-          selectedStory.id,
-          'Scene',
-          savedSceneId,
-          customValues,
-        );
-        entityEventEmitter.emit('scene_changed', selectedStory.id, savedSceneId);
+        if (!isEditing && savedSceneId) {
+          navigation.dispatch(StackActions.replace('SceneForm', { sceneId: savedSceneId }));
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save scene:', err);
+        AppAlert.alert(t('error'), copy.failedToSave);
       }
-
-      if (!isEditing && savedSceneId) {
-        navigation.dispatch(StackActions.replace('SceneForm', { sceneId: savedSceneId }));
-      } else {
-        navigation.goBack();
-      }
-    } catch (err) {
-      console.error('Failed to save scene:', err);
-      AppAlert.alert(t('error'), copy.failedToSave);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -569,7 +563,7 @@ const SceneFormScreen = () => {
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_scene',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await sceneServiceRef.current!.deleteScene(userId, currentSceneId);
         entityEventEmitter.emit('scene_changed', selectedStory?.id, currentSceneId);
@@ -705,7 +699,7 @@ const SceneFormScreen = () => {
   ];
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
+    ...commonFormStyleDefs(colors),
     noteSection: {
       marginTop: 20,
       marginBottom: -10,
@@ -713,12 +707,6 @@ const SceneFormScreen = () => {
     tagSection: {
       marginTop: 20,
       marginBottom: 0,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
     },
     effectsSection: {
       marginBottom: 30,
@@ -755,30 +743,40 @@ const SceneFormScreen = () => {
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {copy.deleteLabel}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
-
-      <Text style={[styles.label, { color: colors.text }]}>{chapterCopy.entity}</Text>
-      <SingleSelectPill
-        options={chapterOptions}
-        value={chapterId}
-        onValueChange={setChapterId}
-        placeholder={chapterCopy.selectOptional}
-        multiple={false}
-        allowDeselect
-      />
+      <FormField label={chapterCopy.entity}>
+        <SingleSelectPill
+          options={chapterOptions}
+          value={chapterId}
+          onValueChange={setChapterId}
+          placeholder={chapterCopy.selectOptional}
+          multiple={false}
+          allowDeselect
+        />
+      </FormField>
       <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
         {t('scene_chapter_optional_hint')}
       </Text>
@@ -801,42 +799,45 @@ const SceneFormScreen = () => {
         {t('scene_location_optional_hint')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-      <TextInput
-        placeholder={t('name_placeholder')}
-        value={name}
-        onChangeText={setName}
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('name_placeholder')}
+            value={name}
+            onChangeText={setName}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('summary')}</Text>
-      <TextInput
-        placeholder={t('summary_placeholder')}
-        value={summary || ''}
-        onChangeText={setSummary}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('summary')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('summary_placeholder')}
+            value={summary || ''}
+            onChangeText={setSummary}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_favorite')}
-        </Text>
-        <ThemedSwitch
-          value={isFavorite}
-          onValueChange={setIsFavorite}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-        />
-      </View>
+      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('extra_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('extra_notes_placeholder')}
+            value={extraNotes || ''}
+            onChangeText={setExtraNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       {/* New Scene Fields */}
       <Text style={[styles.label, { color: colors.text }]}>{t('gap')}</Text>
@@ -909,27 +910,9 @@ const SceneFormScreen = () => {
         <Text style={styles.timingHint}>{t('negative_duration_timing_hint')}</Text>
       )}
 
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_start_scene')}
-        </Text>
-        <ThemedSwitch
-          value={isStart}
-          onValueChange={setIsStart}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-        />
-      </View>
+      <FormSwitchField label={t('is_start_scene')} value={isStart} onValueChange={setIsStart} />
 
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_finish_scene')}
-        </Text>
-        <ThemedSwitch
-          value={isFinish}
-          onValueChange={setIsFinish}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-        />
-      </View>
+      <FormSwitchField label={t('is_finish_scene')} value={isFinish} onValueChange={setIsFinish} />
       {/* End New Scene Fields */}
 
       <CustomAttributeFields
@@ -1000,7 +983,7 @@ const SceneFormScreen = () => {
 
       {currentSceneId && selectedStory?.id && isBranching && (
         <View style={[styles.tagSection, styles.effectsSection]}>
-          <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+          <ScreenSection title={t('effects_title')} />
 
           {sceneEffects.map((effect) => (
             <View key={effect.id} style={styles.card}>
@@ -1065,16 +1048,7 @@ const SceneFormScreen = () => {
           </TouchableOpacity>
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{copy.saveLabel}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {copy.deleteLabel}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

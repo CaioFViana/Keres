@@ -1,7 +1,8 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
@@ -41,7 +41,7 @@ const StorySchemaListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  useDocumentTitle(t('story_schema_management_title'));
+
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaListScreenNavigationProp>();
   const { selectedStory } = useStoryStore();
@@ -54,35 +54,27 @@ const StorySchemaListScreen = () => {
   const fields = useStorySchemaFields(storyId, activeEntityType);
   const { canEdit } = useStoryRole(storyId);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('story_schema_management_title'),
-        headerRight: canEdit
-          ? () => (
-              <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-                {fields.length > 1 && (
-                  <TouchableOpacity
-                    accessibilityLabel={t('reorder_attributes_title')}
-                    onPress={() => setIsReorderModalVisible(true)}
-                  >
-                    <Ionicons name="swap-vertical" size={26} color={colors.text} />
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  accessibilityLabel={t('create_attribute_title')}
-                  onPress={() =>
-                    navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })
-                  }
-                >
-                  <Ionicons name="add" size={30} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-            )
-          : undefined,
-      });
-    }, [activeEntityType, canEdit, colors.text, fields.length, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('story_schema_management_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'swap-vertical',
+        label: t('reorder_attributes_title'),
+        onPress: () => setIsReorderModalVisible(true),
+        visible: !!(canEdit && fields.length > 1),
+      },
+      {
+        id: 'action-1',
+        icon: 'add',
+        label: t('create_attribute_title'),
+        onPress: () =>
+          navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const commonContainerStyles = getCommonContainerStyles(colors);
 

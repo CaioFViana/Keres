@@ -1,10 +1,10 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { GalleryStackParamList } from '../../navigation/MainSystemStack';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import GalleryDetailContent from './GalleryDetailContent';
 
 type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;
@@ -18,7 +18,7 @@ type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;
 const GalleryDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  useDocumentTitle(t('gallery_title'));
+  useScreenHeader({ target: 'parent', title: t('gallery_title') });
   const navigation = useNavigation();
   const route = useRoute<GalleryDetailRouteProp>();
 

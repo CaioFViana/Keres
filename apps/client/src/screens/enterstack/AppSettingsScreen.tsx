@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -24,7 +25,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
@@ -33,7 +33,7 @@ type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerPar
 const SettingsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  useDocumentTitle(t('settings_title'));
+  useScreenHeader({ target: 'self', title: t('settings_title') });
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -280,11 +280,6 @@ const styles = StyleSheet.create({
   },
   settings: {
     flexShrink: 0,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
   },
   settingItem: {
     flexDirection: 'row',

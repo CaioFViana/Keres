@@ -1,18 +1,15 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Button, ThemePickerModal } from '@/src/components/common';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { themeDisplayOptions } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -21,11 +18,6 @@ import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { AppAlert } from '@/src/utils/AppAlert';
 import ThemePreview from './ThemePreview';
 
-type AppearanceNavigation = NativeStackNavigationProp<
-  CustomizationStackParamList,
-  'StoryAppearance'
->;
-
 /** Edits the Story-wide theme. Arc forms reuse ThemePickerModal for an optional override. */
 const StoryAppearanceScreen = () => {
   // The drawer owns the visible header. Register its back action against this nested stack so the
@@ -33,7 +25,6 @@ const StoryAppearanceScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
-  const navigation = useNavigation<AppearanceNavigation>();
   const drizzleDb = useDrizzle();
   const storyService = useMemo(() => createStoryService(drizzleDb), [drizzleDb]);
   const { selectedStory, setSelectedStory } = useStoryStore();
@@ -49,12 +40,10 @@ const StoryAppearanceScreen = () => {
     setThemeName(selectedStory?.theme || 'default');
   }, [selectedStory?.id, selectedStory?.theme]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('appearance_title'), headerRight: undefined });
-      setDocumentTitle(t('appearance_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('appearance_title'),
+  });
 
   const handlePreview = useCallback(
     (nextThemeName: string) => applyTheme(nextThemeName),

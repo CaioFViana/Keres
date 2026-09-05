@@ -1,4 +1,7 @@
-import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,19 +10,16 @@ import Button from '../../components/common/controls/Button/Button';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '../../components/common/feedback/ScreenState/ScreenState';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { createStatService } from '../../services/storymanagement/StatService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 type StatFormNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatForm'>;
 
@@ -36,7 +36,6 @@ const StatFormScreen = () => {
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const data = useStoryStats(storyId);
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const [name, setName] = useState('');
   const [isPrimary, setIsPrimary] = useState(true);
@@ -44,12 +43,11 @@ const StatFormScreen = () => {
   const [saving, setSaving] = useState(false);
 
   const title = isEditing ? t('stat_form_edit') : t('stat_form_new');
-  useDocumentTitle(title);
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title, headerRight: undefined });
-    }, [navigation, title]),
-  );
+
+  useScreenHeader({
+    target: 'parent',
+    title: title,
+  });
 
   useEffect(() => {
     if (!statId) return;
@@ -60,7 +58,6 @@ const StatFormScreen = () => {
     setLoading(false);
   }, [data.stats, statId]);
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const styles = useMemo(
     () =>
@@ -136,17 +133,18 @@ const StatFormScreen = () => {
   if (loading) return <ScreenLoading padded message={t('loading')} />;
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 }}
-    >
-      <Text style={styles.label}>{t('name')}</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder={t('stat_name_placeholder')}
-        style={commonInputStyles.input}
-      />
+    <EntityFormContainer>
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('stat_name_placeholder')}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
       <View style={[styles.switchRow, { marginTop: 20 }]}>
         <View style={{ flex: 1, marginRight: 12 }}>
@@ -172,7 +170,7 @@ const StatFormScreen = () => {
       <Button onPress={handleSave} disabled={saving}>
         {saving ? t('saving') : t('save')}
       </Button>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

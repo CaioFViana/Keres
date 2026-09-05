@@ -1,8 +1,9 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import type { Story } from '@keres/shared/entities/Story';
-import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +21,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -132,7 +132,7 @@ const StorySelectionScreen = () => {
   const { setSelectedStory } = useStoryStore();
   const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
   const { t } = useTranslation();
-  useDocumentTitle(t('story_selection_title'));
+
   const { showNotification } = useNotificationStore();
   const [serverNamesById, setServerNamesById] = useState<Record<string, string>>({});
 
@@ -215,23 +215,13 @@ const StorySelectionScreen = () => {
     navigation.navigate('StoryForm', {});
   }, [navigation]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('story_selection_title'),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-            <TouchableOpacity
-              onPress={handleCreateNewStory}
-              accessibilityLabel={t('create_new_story')}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-        ),
-      });
-    }, [colors.text, handleCreateNewStory, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('story_selection_title'),
+    actions: [
+      { id: 'action-0', icon: 'add', label: t('create_new_story'), onPress: handleCreateNewStory },
+    ],
+  });
 
   const handleEditStory = (storyId: string) => {
     navigation.navigate('StoryForm', { storyId });
@@ -290,9 +280,6 @@ const StorySelectionScreen = () => {
       fontSize: 12,
       color: colors.textSecondary,
       marginTop: 2,
-    },
-    favoriteButton: {
-      padding: 5,
     },
   });
 

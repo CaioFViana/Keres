@@ -1,6 +1,10 @@
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
@@ -14,19 +18,17 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Item } from '@keres/shared/entities/Item'; // Import Item entity
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
@@ -35,13 +37,8 @@ import { useCharacterStore } from '../../state/characterStore'; // Assuming Char
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
@@ -72,12 +69,11 @@ const ItemFormScreen = () => {
     initializeService: initializeCharacterService,
   } = useCharacterStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
@@ -127,19 +123,16 @@ const ItemFormScreen = () => {
   const customDefaultsAppliedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentItemId; // Changed
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   useEffect(() => {
     const loadItem = async () => {
@@ -184,83 +177,84 @@ const ItemFormScreen = () => {
     }
   }, [isEditing, customFields]);
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      // Changed from text.trim()
-      AppAlert.alert(t('error'), copy.required);
-      return;
-    }
-    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
-    if (missingRequiredField) {
-      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-      return;
-    }
-    if (!userId || !selectedStory?.id) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const itemData: Omit<
-        Item,
-        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-      > = {
-        // Changed
-        name: name.trim(),
-        category: category,
-        description: description,
-        initialState: initialState,
-        isFavorite: isFavorite,
-        extraNotes: extraNotes,
-        characterOwnerId: characterOwnerId,
-      };
-
-      let savedItemId: string | undefined = currentItemId; // Changed
-
-      if (isEditing && currentItemId) {
-        // Changed
-        const savedItem = await itemServiceRef.current!.updateItem(userId, currentItemId, itemData); // Changed
-        savedItemId = savedItem.id;
-        AppAlert.alert(t('success'), copy.updated);
-      } else {
-        const savedItem = await itemServiceRef.current!.createItem(userId, {
-          ...itemData,
-          storyId: selectedStory.id,
-        }); // Changed
-        savedItemId = savedItem.id;
-        setCurrentItemId(savedItem.id);
-        AppAlert.alert(t('success'), copy.created);
+  const handleSave = () =>
+    runSave(async () => {
+      if (!name.trim()) {
+        // Changed from text.trim()
+        AppAlert.alert(t('error'), copy.required);
+        return;
+      }
+      const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+      if (missingRequiredField) {
+        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+        return;
+      }
+      if (!userId || !selectedStory?.id) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
       }
 
-      if (savedItemId) {
-        await persistTagRelations(savedItemId);
-        await persistNoteRelations(savedItemId);
-        await seeAlsoManagerRef.current?.persistPending(savedItemId);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(
-          userId,
-          selectedStory.id,
-          'Item',
-          savedItemId,
-          customValues,
-        );
-      }
-      entityEventEmitter.emit('item_changed', selectedStory.id, savedItemId); // Changed
+      try {
+        const itemData: Omit<
+          Item,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        > = {
+          // Changed
+          name: name.trim(),
+          category: category,
+          description: description,
+          initialState: initialState,
+          isFavorite: isFavorite,
+          extraNotes: extraNotes,
+          characterOwnerId: characterOwnerId,
+        };
 
-      if (!isEditing && savedItemId) {
-        // Changed
-        navigation.dispatch(StackActions.replace('ItemForm', { itemId: savedItemId })); // Changed
-      } else {
-        navigation.goBack();
+        let savedItemId: string | undefined = currentItemId; // Changed
+
+        if (isEditing && currentItemId) {
+          // Changed
+          const savedItem = await itemServiceRef.current!.updateItem(
+            userId,
+            currentItemId,
+            itemData,
+          ); // Changed
+          savedItemId = savedItem.id;
+          AppAlert.alert(t('success'), copy.updated);
+        } else {
+          const savedItem = await itemServiceRef.current!.createItem(userId, {
+            ...itemData,
+            storyId: selectedStory.id,
+          }); // Changed
+          savedItemId = savedItem.id;
+          setCurrentItemId(savedItem.id);
+          AppAlert.alert(t('success'), copy.created);
+        }
+
+        if (savedItemId) {
+          await persistTagRelations(savedItemId);
+          await persistNoteRelations(savedItemId);
+          await seeAlsoManagerRef.current?.persistPending(savedItemId);
+          await createAttributeValueService(drizzleDb).saveValuesForEntity(
+            userId,
+            selectedStory.id,
+            'Item',
+            savedItemId,
+            customValues,
+          );
+        }
+        entityEventEmitter.emit('item_changed', selectedStory.id, savedItemId); // Changed
+
+        if (!isEditing && savedItemId) {
+          // Changed
+          navigation.dispatch(StackActions.replace('ItemForm', { itemId: savedItemId })); // Changed
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save item:', err); // Changed
+        AppAlert.alert(t('error'), copy.failedToSave);
       }
-    } catch (err) {
-      console.error('Failed to save item:', err); // Changed
-      AppAlert.alert(t('error'), copy.failedToSave);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -279,7 +273,7 @@ const ItemFormScreen = () => {
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_item',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await itemServiceRef.current!.deleteItem(userId, currentItemId);
         entityEventEmitter.emit('item_changed', selectedStory?.id, currentItemId);
@@ -297,99 +291,112 @@ const ItemFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: { marginTop: 20, marginBottom: -10 },
     tagSection: { marginTop: 20, marginBottom: 0 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {copy.deleteLabel}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
+      <FormField label={copy.entity}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={copy.entity}
+            value={name}
+            onChangeText={setName}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{copy.entity}</Text>
-      <TextInput
-        placeholder={copy.entity}
-        value={name}
-        onChangeText={setName}
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('description_placeholder')}
+            value={description || ''}
+            onChangeText={setDescription}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-      <TextInput
-        placeholder={t('description_placeholder')}
-        value={description || ''}
-        onChangeText={setDescription}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
-      <SuggestionTextInput
-        placeholder={t('category_placeholder')}
-        value={category || ''}
-        onChangeText={setCategory}
-        type="item_category"
-        storyId={selectedStory?.id || ''}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('initial_state')}</Text>
-      <SuggestionTextInput
-        placeholder={t('initial_state_placeholder')}
-        value={initialState || ''}
-        onChangeText={setInitialState}
-        type="item_initial_state"
-        storyId={selectedStory?.id || ''}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>
-        {t('item_character_owner_label', {
-          character: term('Character'),
-          ending: characterOwnerEnding,
-        })}
-      </Text>
-      <SingleSelectPill
-        options={characterOptions}
-        value={characterOwnerId}
-        onValueChange={setCharacterOwnerId}
-        placeholder={t('select_item_character_owner', {
-          character: term('Character'),
-          ending: characterOwnerEnding,
-        })}
-        multiple={false}
-      />
-
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_favorite')}
-        </Text>
-        <ThemedSwitch
-          value={isFavorite}
-          onValueChange={setIsFavorite}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+      <FormField label={t('category')}>
+        <SuggestionTextInput
+          placeholder={t('category_placeholder')}
+          value={category || ''}
+          onChangeText={setCategory}
+          type="item_category"
+          storyId={selectedStory?.id || ''}
         />
-      </View>
+      </FormField>
+
+      <FormField label={t('initial_state')}>
+        <SuggestionTextInput
+          placeholder={t('initial_state_placeholder')}
+          value={initialState || ''}
+          onChangeText={setInitialState}
+          type="item_initial_state"
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
+
+      <FormField label={t('extra_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('extra_notes_placeholder')}
+            value={extraNotes || ''}
+            onChangeText={setExtraNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField
+        label={t('item_character_owner_label', {
+          character: term('Character'),
+          ending: characterOwnerEnding,
+        })}
+      >
+        <SingleSelectPill
+          options={characterOptions}
+          value={characterOwnerId}
+          onValueChange={setCharacterOwnerId}
+          placeholder={t('select_item_character_owner', {
+            character: term('Character'),
+            ending: characterOwnerEnding,
+          })}
+          multiple={false}
+        />
+      </FormField>
+
+      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
       <CustomAttributeFields
         storyId={selectedStory?.id || ''}
@@ -440,16 +447,7 @@ const ItemFormScreen = () => {
           />
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{copy.saveLabel}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {copy.deleteLabel}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

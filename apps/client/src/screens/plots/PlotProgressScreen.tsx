@@ -1,6 +1,6 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,7 +11,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
 import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
@@ -77,7 +76,6 @@ const PlotProgressScreen = () => {
     () =>
       StyleSheet.create({
         scrollContent: { paddingBottom: scrollBottomPadding },
-        headerRightButton: { marginRight: 15 },
         summary: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
         hint: { color: colors.textSecondary, fontSize: 13, marginTop: 8, marginBottom: 16 },
         row: {
@@ -96,8 +94,6 @@ const PlotProgressScreen = () => {
           overflow: 'hidden',
           marginTop: 10,
         },
-        // The pieces touch one another inside the track; only the bar's ends are
-        // rounded, by the track's own `overflow: hidden`.
         segments: { flexDirection: 'row', height: '100%' },
         segment: { height: '100%' },
         legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
@@ -135,37 +131,19 @@ const PlotProgressScreen = () => {
     }
   }, [average, colors, entries, notify, selectedStory, t]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('plot_progress_title'));
-      navigation.getParent()?.setOptions({
-        title: t('plot_progress_title'),
-        headerRight: () => (
-          <TouchableOpacity
-            onPress={exportCoverage}
-            disabled={saving || entries.length === 0}
-            style={styles.headerRightButton}
-            accessibilityLabel={t('plot_coverage_export')}
-          >
-            <Ionicons
-              name="image-outline"
-              size={24}
-              color={entries.length === 0 ? colors.textSecondary : colors.text}
-            />
-          </TouchableOpacity>
-        ),
-      });
-    }, [
-      colors.text,
-      colors.textSecondary,
-      entries.length,
-      exportCoverage,
-      navigation,
-      saving,
-      styles.headerRightButton,
-      t,
-    ]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('plot_progress_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'image-outline',
+        label: t('plot_coverage_export'),
+        onPress: exportCoverage,
+        disabled: saving || entries.length === 0,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={t('loading_plots')} />;

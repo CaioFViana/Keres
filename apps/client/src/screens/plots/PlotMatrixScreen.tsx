@@ -1,10 +1,11 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -15,7 +16,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getDistinctSeriesColor } from '@keres/shared';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
@@ -133,15 +133,10 @@ const PlotMatrixScreen = () => {
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
   const selectedPlot = plots.find((plot) => plot.id === selectedPlotId);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('plot_matrix_title'));
-      navigation.getParent()?.setOptions({
-        title: t('plot_matrix_title'),
-        headerRight: undefined,
-      });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('plot_matrix_title'),
+  });
 
   const exportMatrix = useCallback(async () => {
     if (!selectedStory || layout.rows.length === 0) return;

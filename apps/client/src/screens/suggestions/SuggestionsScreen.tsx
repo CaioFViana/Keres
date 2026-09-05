@@ -1,3 +1,5 @@
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -31,7 +33,6 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 type SuggestionGroup = { type: string; label: string; key: string; name?: string };
@@ -63,7 +64,7 @@ const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
-  useDocumentTitle(t('standard_suggestions_title'));
+
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -201,73 +202,57 @@ const SuggestionsScreen = () => {
     ]);
   }, [loadGroups, selectedType, storyId, suggestionService, t, userId]);
 
+  useScreenHeader({
+    target: 'parent',
+    title: t('standard_suggestions_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('suggestion_new_list'),
+        onPress: () => {
+          setCreatingList(true);
+          setRenamingList(false);
+          setCopying(false);
+        },
+        visible: !!canEdit,
+      },
+      {
+        id: 'action-1',
+        icon: 'copy-outline',
+        label: t('suggestion_copy_to'),
+        onPress: () => {
+          setCopying(true);
+          setCopyTargets([]);
+        },
+        visible: !!(canEdit && selectedType && stored.length > 0),
+      },
+      {
+        id: 'action-2',
+        icon: 'pencil-outline',
+        label: t('suggestion_rename_list'),
+        onPress: () => {
+          setRenamingList(true);
+          setRenameListName(selectedGroup?.name ?? '');
+          setCreatingList(false);
+          setCopying(false);
+        },
+        visible: !!(canEdit && selectedType && isNamedListType(selectedType)),
+      },
+      {
+        id: 'action-3',
+        icon: 'trash-outline',
+        label: t('suggestion_delete_list'),
+        onPress: removeNamedList,
+        visible: !!(canEdit && selectedType && isNamedListType(selectedType)),
+      },
+    ],
+  });
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('standard_suggestions_title'),
-        headerRight: () =>
-          canEdit ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  setCreatingList(true);
-                  setRenamingList(false);
-                  setCopying(false);
-                }}
-                accessibilityLabel={t('suggestion_new_list')}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-              {selectedType && stored.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setCopying(true);
-                    setCopyTargets([]);
-                  }}
-                  accessibilityLabel={t('suggestion_copy_to')}
-                >
-                  <Ionicons name="copy-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
-              )}
-              {selectedType && isNamedListType(selectedType) && (
-                <>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setRenamingList(true);
-                      setRenameListName(selectedGroup?.name ?? '');
-                      setCreatingList(false);
-                      setCopying(false);
-                    }}
-                    accessibilityLabel={t('suggestion_rename_list')}
-                  >
-                    <Ionicons name="pencil-outline" size={24} color={colors.text} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={removeNamedList}
-                    accessibilityLabel={t('suggestion_delete_list')}
-                  >
-                    <Ionicons name="trash-outline" size={24} color={colors.error} />
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          ) : undefined,
-      });
       loadGroups();
       loadValues();
-    }, [
-      canEdit,
-      colors.error,
-      colors.text,
-      loadGroups,
-      loadValues,
-      navigation,
-      removeNamedList,
-      selectedGroup?.name,
-      selectedType,
-      stored.length,
-      t,
-    ]),
+    }, [loadGroups, loadValues]),
   );
   useEffect(() => {
     loadValues();
@@ -391,14 +376,6 @@ const SuggestionsScreen = () => {
     value: { flex: 1, color: colors.text, fontSize: 16 },
     storyValue: { flex: 1, color: colors.textSecondary, fontSize: 16 },
     usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
-    sectionTitle: {
-      color: colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '700',
-      marginTop: 12,
-      marginBottom: 2,
-      textTransform: 'uppercase',
-    },
     icon: { padding: 7 },
     empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
     copyList: { marginBottom: 12 },
@@ -406,7 +383,6 @@ const SuggestionsScreen = () => {
     copyLabel: { flex: 1, color: colors.text },
     modalContent: { padding: 16, gap: 12 },
     modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
-    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   });
 
   const groupsList = isCompact ? (
@@ -468,9 +444,7 @@ const SuggestionsScreen = () => {
         </View>
       )}
       <ScrollView>
-        {stored.length > 0 && (
-          <Text style={styles.sectionTitle}>{t('suggestion_saved_values')}</Text>
-        )}
+        {stored.length > 0 && <ScreenSection title={t('suggestion_saved_values')} />}
         {stored.map((suggestion) => (
           <TouchableOpacity
             key={suggestion.id}
@@ -487,9 +461,7 @@ const SuggestionsScreen = () => {
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         ))}
-        {storyValues.length > 0 && (
-          <Text style={styles.sectionTitle}>{t('suggestion_values_in_story')}</Text>
-        )}
+        {storyValues.length > 0 && <ScreenSection title={t('suggestion_values_in_story')} />}
         {storyValues.map(([value, usageCount]) => (
           <TouchableOpacity
             key={value}

@@ -1,9 +1,11 @@
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -16,7 +18,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteSteps'>;
 type ScreenRoute = RouteProp<PlotsStackParamList, 'RouteSteps'>;
@@ -75,13 +76,10 @@ export default function RouteStepsScreen() {
     const chapter = scene ? chapterNameOf(scene.chapterId) : undefined;
     return `${scene?.name ?? t('unknown_scene')}${chapter ? ` · ${chapter}` : ''}`;
   };
-  useFocusEffect(
-    useCallback(() => {
-      const title = t('edit_route_steps');
-      setDocumentTitle(title);
-      navigation.getParent()?.setOptions({ title, headerRight: () => <View /> });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('edit_route_steps'),
+  });
   const selectStart = (id: string | null) => {
     setStart(id);
     if (id) setSteps([{ sceneId: id, selectedChoiceId: null }]);
@@ -125,13 +123,14 @@ export default function RouteStepsScreen() {
       <Text style={styles.help}>{t('route_steps_guided_help')}</Text>
       {steps.length === 0 ? (
         <>
-          <Text style={styles.label}>{t('route_start_scene')}</Text>
-          <SingleSelectPill
-            options={scenes.map((scene) => ({ value: scene.id, label: label(scene.id) }))}
-            value={start}
-            onValueChange={selectStart}
-            placeholder={t('route_select_start_scene')}
-          />
+          <FormField label={t('route_start_scene')}>
+            <SingleSelectPill
+              options={scenes.map((scene) => ({ value: scene.id, label: label(scene.id) }))}
+              value={start}
+              onValueChange={selectStart}
+              placeholder={t('route_select_start_scene')}
+            />
+          </FormField>
         </>
       ) : (
         steps.map((step, index) => (
@@ -140,20 +139,21 @@ export default function RouteStepsScreen() {
             <Text style={styles.name}>{label(step.sceneId)}</Text>
             {choicesFrom(step.sceneId).length ? (
               <>
-                <Text style={styles.label}>{t('route_choice')}</Text>
-                <SingleSelectPill
-                  options={[
-                    { value: END_ROUTE, label: t('route_end_here_option') },
-                    ...choicesFrom(step.sceneId).map((choice) => ({
-                      value: choice.id,
-                      label: choice.text,
-                    })),
-                  ]}
-                  value={step.selectedChoiceId}
-                  onValueChange={(id) => selectChoice(index, id)}
-                  placeholder={t('route_end_or_select_choice')}
-                  allowDeselect
-                />
+                <FormField label={t('route_choice')}>
+                  <SingleSelectPill
+                    options={[
+                      { value: END_ROUTE, label: t('route_end_here_option') },
+                      ...choicesFrom(step.sceneId).map((choice) => ({
+                        value: choice.id,
+                        label: choice.text,
+                      })),
+                    ]}
+                    value={step.selectedChoiceId}
+                    onValueChange={(id) => selectChoice(index, id)}
+                    placeholder={t('route_end_or_select_choice')}
+                    allowDeselect
+                  />
+                </FormField>
               </>
             ) : (
               <Text style={styles.end}>{t('route_no_available_choices')}</Text>

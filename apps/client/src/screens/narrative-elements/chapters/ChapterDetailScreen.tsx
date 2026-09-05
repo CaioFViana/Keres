@@ -1,3 +1,7 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -21,7 +25,6 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
@@ -34,8 +37,7 @@ import { useStoryStore } from '@/src/state/storyStore';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
 import { useTheme } from '@/src/theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -44,13 +46,12 @@ import {
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
-import { Ionicons } from '@expo/vector-icons';
 import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
 
 // Define the parameter list for this screen
@@ -73,7 +74,6 @@ const ChapterDetailScreen = () => {
   const vocab = useStoryVocabulary();
   const { arcs, showSelector } = useStoryArcs();
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
@@ -124,16 +124,7 @@ const ChapterDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
-  const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
-    },
-  });
+  const styles = StyleSheet.create({ ...commonDetailStyleDefs(colors) });
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current) {
@@ -263,57 +254,26 @@ const ChapterDetailScreen = () => {
       .catch((error) => console.error('ChapterDetailScreen: failed to read the spine.', error));
   }, [isConvertVisible, chapter, chapterId, drizzleDb]);
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/*
-            Changing the kind is not an edit to a field: it moves the container between two index
-            spaces and renumbers both. It sits beside the pencil rather than inside the form for
-            that reason - see `ChapterService.convertChapterType`.
-          */}
-          <TouchableOpacity
-            onPress={() => setIsConvertVisible(true)}
-            style={{ marginRight: 15 }}
-            accessibilityLabel={
-              chapter?.type === 'event' ? chapterNounCopy.convertTo : eventCopy.convertTo
-            }
-            testID="convert-container"
-          >
-            <Ionicons
-              name={chapter?.type === 'event' ? 'book-outline' : 'hourglass-outline'}
-              size={24}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="pencil-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      ) : null,
-    [
-      navigation,
-      chapterId,
-      colors.text,
-      canEdit,
-      chapter?.type,
-      chapterNounCopy.convertTo,
-      eventCopy.convertTo,
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: chapter?.type === 'event' ? 'book-outline' : 'hourglass-outline',
+        label: chapter?.type === 'event' ? chapterNounCopy.convertTo : eventCopy.convertTo,
+        onPress: () => setIsConvertVisible(true),
+        visible: !!canEdit,
+      },
+      {
+        id: 'action-1',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('ChapterForm', { chapterId: chapterId }),
+        visible: !!canEdit,
+      },
     ],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: renderHeaderRight,
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  });
 
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
@@ -327,29 +287,23 @@ const ChapterDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: chapter.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
-    >
-      <Text style={styles.mainTitle}>{chapter.name}</Text>
+    <DetailContainer title={chapter.name}>
       <TagList tags={chapterTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
-        storyId={chapter.storyId}
+        {...commentField('summary', chapter.summary || t('common_na'))}
         label={t('summary')}
-        value={chapter.summary || t('common_na')}
-        comments={commentsByField['summary'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'summary' },
-            { ...input, contentSnapshot: chapter.summary || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
       {selectedStory?.type === 'linear' && (
         <>
@@ -397,21 +351,8 @@ const ChapterDetailScreen = () => {
         value={chapter.isFavorite ? t('common_yes') : t('common_no')}
       />
       <CommentableDetailField
-        storyId={chapter.storyId}
+        {...commentField('extraNotes', chapter.extraNotes || t('common_na'))}
         label={t('extra_notes')}
-        value={chapter.extraNotes || t('common_na')}
-        comments={commentsByField['extraNotes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'extraNotes' },
-            { ...input, contentSnapshot: chapter.extraNotes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       <AnchorManager
@@ -479,7 +420,7 @@ const ChapterDetailScreen = () => {
       />
 
       <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
+        <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
       </View>
 
       <ConvertContainerModal
@@ -500,7 +441,7 @@ const ChapterDetailScreen = () => {
           }
         }}
       />
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

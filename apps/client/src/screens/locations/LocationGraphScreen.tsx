@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -22,7 +23,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type {
   GraphLocationRelation,
   LocationGraphNode,
@@ -113,14 +113,10 @@ const LocationGraphScreen = () => {
     return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
   }, [storyId, loadGraph]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('location_graph_title'));
-      navigation
-        .getParent()
-        ?.setOptions({ title: t('location_graph_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('location_graph_title'),
+  });
 
   const graphRelations = useMemo(
     (): GraphLocationRelation[] =>

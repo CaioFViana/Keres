@@ -1,12 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -21,8 +20,6 @@ import type {
   TagsStackParamList,
 } from '../../navigation/MainSystemStack';
 import { useTagStore } from '../../state/tagStore';
-import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type TagsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'TagsStack'>, // Corrected to TagsStack
@@ -32,26 +29,15 @@ export type TagsScreenNavigationProp = CompositeNavigationProp<
 const TagsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  const { colors } = useTheme();
+
   const navigation = useNavigation<TagsScreenNavigationProp>();
 
   const {
+    listProps,
     items: tags,
-    loading,
     isInitialLoading,
     error,
     storyId,
-    searchQuery,
-    activeSort,
-    sortDirection,
-    favoriteFilterState,
-    advancedSearchCriteria,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFavoriteFilterChange,
-    setAdvancedSearchCriteria,
     toggleFavorite,
   } = useEntityListScreen({
     useStore: useTagStore,
@@ -59,22 +45,18 @@ const TagsScreen = () => {
     changeEvent: 'tag_changed',
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('tags_title'));
-      navigation.getParent()?.setOptions({
-        title: t('tags_title'),
-        headerRight: () => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('TagForm', { tagId: undefined })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="add" size={30} color={colors.text} />
-          </TouchableOpacity>
-        ),
-      });
-    }, [navigation, colors.text, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('tags_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('TagForm', { tagId: undefined }),
+      },
+    ],
+  });
 
   const handleToggleFavorite = useCallback(
     async (tagId: string, isFavorite: boolean) => {
@@ -109,10 +91,6 @@ const TagsScreen = () => {
     ];
   }, [t]);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-  });
-
   if (isInitialLoading) {
     return <ScreenLoading message={t('loading_tags')} />;
   }
@@ -122,33 +100,22 @@ const TagsScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer>
       <GenericFilterSortList
+        {...listProps}
         data={tags}
         renderItem={memoizedTagListItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_tags')}
-        currentSearchTerm={searchQuery} // Display local state for responsive input
-        filterOptions={[]} // No tag filtering by other tags for TagsScreen
-        onFilterChange={() => {}} // No tag filtering by other tags for TagsScreen
-        selectedFilterValues={[]} // No tag filtering by other tags for TagsScreen
+        filterOptions={[]}
+        onFilterChange={() => {}}
+        selectedFilterValues={[]}
         sortOptions={memoizedSortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
-        disableTagFilter={true} // Disable the tag filter select since there are no filter options
+        disableTagFilter={true}
         entityName="Tag"
         storyId={storyId || ''}
-        onAdvancedSearch={setAdvancedSearchCriteria} // Pass the setter
-        currentAdvancedSearchCriteria={advancedSearchCriteria} // Pass the criteria
-        isLoading={loading}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 

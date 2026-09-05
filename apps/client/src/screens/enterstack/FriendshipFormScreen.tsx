@@ -1,3 +1,5 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import FormField from '@/src/components/common/forms/FormField/FormField';
 import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -19,7 +21,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -39,7 +40,7 @@ const FriendshipFormScreen = () => {
 
   const { colors } = useTheme();
   const { t } = useTranslation();
-  useDocumentTitle(t('add_new_friendship'));
+  useScreenHeader({ target: 'parent', title: t('add_new_friendship') });
   const drizzleClient = useDrizzle();
   // Stable references: recreating these every render would change their identity, which sits
   // in the effect/callback dependency arrays below and would otherwise re-trigger them forever.
@@ -184,23 +185,24 @@ const FriendshipFormScreen = () => {
     <View style={commonContainerStyles.container}>
       <Text style={[styles.title, { color: colors.text }]}>{t('add_new_friendship')}</Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-      <SingleSelectPill
-        options={servers.map((server) => ({
-          label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
-          value: server.id,
-        }))}
-        value={selectedServerId || null}
-        onValueChange={(itemValue) => {
-          setSelectedServerId(itemValue || '');
-          // Changing the server invalidates any tag already checked against the previous one.
-          setFriendUsername(null);
-          setFriendFound(null);
-          setResolvedFriendUserId(null);
-        }}
-        placeholder={servers.length === 0 ? t('no_servers_available') : t('select_server')}
-        multiple={false}
-      />
+      <FormField label={t('server')}>
+        <SingleSelectPill
+          options={servers.map((server) => ({
+            label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
+            value: server.id,
+          }))}
+          value={selectedServerId || null}
+          onValueChange={(itemValue) => {
+            setSelectedServerId(itemValue || '');
+            // Changing the server invalidates any tag already checked against the previous one.
+            setFriendUsername(null);
+            setFriendFound(null);
+            setResolvedFriendUserId(null);
+          }}
+          placeholder={servers.length === 0 ? t('no_servers_available') : t('select_server')}
+          multiple={false}
+        />
+      </FormField>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
       <View style={styles.inputWithButton}>

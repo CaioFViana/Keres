@@ -1,9 +1,14 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
@@ -17,9 +22,11 @@ import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '../../db';
 import type { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityInitialLoad,
+  useEntityEventSubscriptions,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -29,9 +36,6 @@ import { useItemStore } from '../../state/itemStore';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
@@ -69,7 +73,6 @@ const ItemJourneyDetailScreen = () => {
     neutral: 'Novo(a)',
   });
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
@@ -150,10 +153,7 @@ const ItemJourneyDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-    subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
     relationLink: { flexDirection: 'row', alignItems: 'center' },
   });
 
@@ -208,12 +208,12 @@ const ItemJourneyDetailScreen = () => {
   useEntityInitialLoad(fetchItemJourney);
 
   // Event subscriptions never initiate an item-journey load.
-  useEffect(() => {
-    entityEventEmitter.on('item_journey_changed', handleItemJourneyChange);
-    return () => {
-      entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
-    };
-  }, [handleItemJourneyChange]);
+  useEntityEventSubscriptions(
+    useMemo(
+      () => [{ event: 'item_journey_changed', listener: handleItemJourneyChange }],
+      [handleItemJourneyChange],
+    ),
+  );
 
   const relatedItem = items.find((item) => item.id === itemJourney?.itemId);
   const relatedScene = scenes.find((scene) => scene.id === itemJourney?.sceneId);
@@ -236,25 +236,19 @@ const ItemJourneyDetailScreen = () => {
     navigateToDetail('Character', newCharacterOwner.id);
   }, [navigateToDetail, newCharacterOwner]);
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ItemJourneyForm', { itemJourneyId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, itemJourneyId, colors.text, canEdit],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('ItemJourneyForm', { itemJourneyId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return (
@@ -277,12 +271,26 @@ const ItemJourneyDetailScreen = () => {
     );
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: itemJourney.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={headerTitle}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{headerTitle}</Text>
       <TagList tags={itemJourneyTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {relatedItem && (
@@ -294,38 +302,12 @@ const ItemJourneyDetailScreen = () => {
         </TouchableOpacity>
       )}
       <CommentableDetailField
-        storyId={itemJourney.storyId}
+        {...commentField('newState', itemJourney.newState || t('common_na'))}
         label={t('item_state')}
-        value={itemJourney.newState || t('common_na')}
-        comments={commentsByField['newState'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'newState' },
-            { ...input, contentSnapshot: itemJourney.newState || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
       <CommentableDetailField
-        storyId={itemJourney.storyId}
+        {...commentField('extraNotes', itemJourney.extraNotes || t('common_na'))}
         label={t('extra_notes')}
-        value={itemJourney.extraNotes || t('common_na')}
-        comments={commentsByField['extraNotes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'extraNotes' },
-            { ...input, contentSnapshot: itemJourney.extraNotes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
       {relatedScene && (
         <TouchableOpacity
@@ -382,11 +364,7 @@ const ItemJourneyDetailScreen = () => {
         createdAt={itemJourney.createdAt}
         updatedAt={itemJourney.updatedAt}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

@@ -1,3 +1,6 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
@@ -7,23 +10,19 @@ import {
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
-import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { PlotSceneSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
@@ -53,7 +52,6 @@ const PlotDetailScreen = () => {
       }),
     [navigateToDetail, navigation, plotId],
   );
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const { plotById, relationsOf, sceneById, chapterNameOf, coverageOf, loading } = useStoryPlots(
     selectedStory?.id,
@@ -65,11 +63,9 @@ const PlotDetailScreen = () => {
   const coverage = coverageOf(plotId);
   const headerTitle = plot?.name ?? t('plot_details_title');
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        ...commonDetailStyleDefs(colors),
         ...relationSectionStyleDefs(colors),
         coverage: {
           fontSize: 14,
@@ -85,26 +81,19 @@ const PlotDetailScreen = () => {
     [colors],
   );
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('PlotForm', { plotId })}
-          style={{ marginRight: 15 }}
-          accessibilityLabel={t('edit_plot')}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [canEdit, colors.text, navigation, plotId, t],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
-      setDocumentTitle(headerTitle);
-    }, [headerTitle, navigation, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit_plot'),
+        onPress: () => navigation.navigate('PlotForm', { plotId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={t('loading_plot_details')} />;
@@ -117,11 +106,14 @@ const PlotDetailScreen = () => {
   }
 
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={plot.name}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{plot.name}</Text>
       <Text style={styles.coverage}>
         {t('plot_coverage_value', {
           covered: coverage.covered,
@@ -162,11 +154,7 @@ const PlotDetailScreen = () => {
         entityType="Plot"
         entityId={plot.id}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

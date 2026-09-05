@@ -1,5 +1,6 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
 
@@ -77,12 +77,11 @@ const StatLadderScreen = () => {
   const [generatorStep, setGeneratorStep] = useState('10');
 
   const title = stat ? `${stat.name} · ${t('stat_ladder_title')}` : t('stat_ladder_default_title');
-  useDocumentTitle(title);
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title, headerRight: undefined });
-    }, [navigation, title]),
-  );
+
+  useScreenHeader({
+    target: 'parent',
+    title: title,
+  });
 
   useEffect(() => {
     if (hydrated || data.loading) return;

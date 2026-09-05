@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -23,7 +23,6 @@ import type {
 } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type PlotsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'PlotsStack'>,
@@ -53,12 +52,6 @@ const PlotListScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
-    headerRightContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginRight: 15,
-      gap: 15,
-    },
     emptyText: {
       color: colors.textSecondary,
       textAlign: 'center',
@@ -66,62 +59,52 @@ const PlotListScreen = () => {
     },
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('plots_title'));
-      navigation.getParent()?.setOptions({
-        title: t('plots_title'),
-        headerRight: () => (
-          <View style={styles.headerRightContainer}>
-            {selectedStory?.type === 'linear' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('PlotReader')}
-                accessibilityLabel={t('plot_reader_title')}
-              >
-                <Ionicons name="book-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            {selectedStory?.type === 'branching' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Routes')}
-                accessibilityLabel={t('routes_title')}
-              >
-                <Ionicons name="trail-sign-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            {selectedStory?.type === 'branching' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('StoryNavigator')}
-                accessibilityLabel={t('story_navigator_title')}
-              >
-                <Ionicons name="play-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              onPress={() => navigation.navigate('PlotMatrix')}
-              accessibilityLabel={t('plot_matrix_title')}
-            >
-              <Ionicons name="grid-outline" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('PlotProgress')}
-              accessibilityLabel={t('plot_progress_title')}
-            >
-              <Ionicons name="stats-chart-outline" size={24} color={colors.text} />
-            </TouchableOpacity>
-            {canEdit && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('PlotForm', {})}
-                accessibilityLabel={t('create_plot')}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ),
-      });
-    }, [navigation, colors.text, t, canEdit, selectedStory?.type, styles.headerRightContainer]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('plots_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'book-outline',
+        label: t('plot_reader_title'),
+        onPress: () => navigation.navigate('PlotReader'),
+        visible: !!(selectedStory?.type === 'linear'),
+      },
+      {
+        id: 'action-1',
+        icon: 'trail-sign-outline',
+        label: t('routes_title'),
+        onPress: () => navigation.navigate('Routes'),
+        visible: !!(selectedStory?.type === 'branching'),
+      },
+      {
+        id: 'action-2',
+        icon: 'play-outline',
+        label: t('story_navigator_title'),
+        onPress: () => navigation.navigate('StoryNavigator'),
+        visible: !!(selectedStory?.type === 'branching'),
+      },
+      {
+        id: 'action-3',
+        icon: 'grid-outline',
+        label: t('plot_matrix_title'),
+        onPress: () => navigation.navigate('PlotMatrix'),
+      },
+      {
+        id: 'action-4',
+        icon: 'stats-chart-outline',
+        label: t('plot_progress_title'),
+        onPress: () => navigation.navigate('PlotProgress'),
+      },
+      {
+        id: 'action-5',
+        icon: 'add',
+        label: t('create_plot'),
+        onPress: () => navigation.navigate('PlotForm', {}),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const visiblePlots = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();

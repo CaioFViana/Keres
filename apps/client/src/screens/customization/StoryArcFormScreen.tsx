@@ -1,9 +1,10 @@
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Button, TextInput, ThemePickerModal } from '@/src/components/common';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -13,8 +14,6 @@ import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { resolveEffectiveTheme } from '@/src/utils/storyArcFilter';
 import { themeDisplayOptions } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,7 +39,7 @@ const StoryArcFormScreen = () => {
   const { userId } = useUserSettingsStore();
   const notify = useNotificationStore((state) => state.showNotification);
   const vocab = useStoryVocabulary();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [themeOverride, setThemeOverride] = useState<string | null>(null);
@@ -65,15 +64,15 @@ const StoryArcFormScreen = () => {
       });
   }, [arcId, db]);
 
+  useScreenHeader({
+    target: 'parent',
+    title: arcId ? vocab.term('Arc') : t('arc_form_title_new', { arc: vocab.term('Arc') }),
+    documentTitle: vocab.term('Arc'),
+  });
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: arcId ? vocab.term('Arc') : t('arc_form_title_new', { arc: vocab.term('Arc') }),
-        headerRight: undefined,
-      });
-      setDocumentTitle(vocab.term('Arc'));
       return restoreSavedTheme;
-    }, [arcId, navigation, restoreSavedTheme, t, vocab]),
+    }, [restoreSavedTheme]),
   );
 
   const handleSave = async () => {
@@ -115,7 +114,6 @@ const StoryArcFormScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        label: { color: colors.textSecondary, fontSize: 13, marginBottom: 6, marginTop: 12 },
         hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginBottom: 8 },
         card: {
           backgroundColor: colors.card,
@@ -135,16 +133,28 @@ const StoryArcFormScreen = () => {
   );
 
   return (
-    <KeyboardAwareScreen
-      contentContainerStyle={[
-        getCommonContainerStyles(colors).container,
-        { paddingBottom: scrollBottomPadding },
-      ]}
-    >
-      <Text style={styles.label}>{t('name')}</Text>
-      <TextInput value={title} onChangeText={setTitle} editable={canEdit} />
-      <Text style={styles.label}>{t('description')}</Text>
-      <TextInput value={description} onChangeText={setDescription} editable={canEdit} multiline />
+    <EntityFormContainer>
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={title}
+            onChangeText={setTitle}
+            editable={canEdit}
+          />
+        )}
+      </FormField>
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={description}
+            onChangeText={setDescription}
+            editable={canEdit}
+            multiline
+          />
+        )}
+      </FormField>
       <View style={styles.card}>
         <View style={styles.cardHeading}>
           <Ionicons name="color-palette-outline" size={24} color={colors.primary} />
@@ -199,7 +209,7 @@ const StoryArcFormScreen = () => {
           setPickerVisible(false);
         }}
       />
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

@@ -1,3 +1,8 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
@@ -11,20 +16,18 @@ import CommentableDetailField from '@/src/components/features/comments/Commentab
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
-import { Ionicons } from '@expo/vector-icons';
 import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
 import type { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
@@ -33,8 +36,6 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { NotesScreenNavigationProp } from './NoteListScreen';
 
@@ -47,7 +48,7 @@ type NoteDetailScreenRouteProp = RouteProp<NoteDetailScreenParamList, 'NoteDetai
 
 const NoteDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
+  useTheme();
   const navigation = useNavigation<NotesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<NoteDetailScreenRouteProp>();
@@ -60,7 +61,6 @@ const NoteDetailScreen = () => {
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   // Initialize services only once when drizzleDb is available
   useEffect(() => {
@@ -106,11 +106,6 @@ const NoteDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
-
-  const commonContainerStyles = getCommonContainerStyles(colors);
-  const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-  });
 
   const fetchNote = useCallback(async () => {
     if (!noteServiceRef.current) {
@@ -281,28 +276,19 @@ const NoteDetailScreen = () => {
     }
   }, [note, fetchTagsForNote, processNoteRelations]);
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('NoteForm', { noteId: noteId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, noteId, colors.text, canEdit],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: renderHeaderRight,
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('NoteForm', { noteId: noteId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={t('loading_note_details')} />;
@@ -318,53 +304,41 @@ const NoteDetailScreen = () => {
     );
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: note.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={note.title}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{note.title}</Text>
       <TagList tags={noteTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
-        storyId={note.storyId}
+        {...commentField('body', note.body || t('common_na'))}
         label={t('body')}
-        value={note.body || t('common_na')}
-        comments={commentsByField['body'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'body' },
-            { ...input, contentSnapshot: note.body || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       <CustomAttributeDetailFields storyId={note.storyId} entityType="Note" entityId={noteId} />
 
       <CommentableDetailField
-        storyId={note.storyId}
+        {...commentField('extraNotes', note.extraNotes || t('common_na'))}
         label={t('extra_notes')}
-        value={note.extraNotes || t('common_na')}
-        comments={commentsByField['extraNotes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'extraNotes' },
-            { ...input, contentSnapshot: note.extraNotes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={noteId}
         ownerType="Note"
@@ -387,11 +361,7 @@ const NoteDetailScreen = () => {
         entityType="Note"
         entityId={note.id}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

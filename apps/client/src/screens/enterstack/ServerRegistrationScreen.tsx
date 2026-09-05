@@ -1,3 +1,5 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import FormField from '@/src/components/common/forms/FormField/FormField';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -34,7 +36,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { normalizeServerUrl } from '../../utils/serverUrl';
 
@@ -60,7 +61,10 @@ const ServerRegistrationScreen = () => {
   const route =
     useRoute<NativeStackScreenProps<RootStackParamList, 'ServerRegistration'>['route']>();
   const { serverId } = route.params || {};
-  useDocumentTitle(serverId ? t('edit_server') : t('register_new_server'));
+  useScreenHeader({
+    target: 'parent',
+    title: serverId ? t('edit_server') : t('register_new_server'),
+  });
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -598,44 +602,60 @@ const ServerRegistrationScreen = () => {
         </Text>
       )}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('server_address')}</Text>
-      <TextInput
-        placeholder={t('server_address_placeholder')}
-        value={serverAddress}
-        onChangeText={setServerAddress}
-        style={commonInputStyles.input}
-        keyboardType="url"
-        autoCapitalize="none"
-        editable={!hostedSameOrigin}
-      />
+      <FormField label={t('server_address')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('server_address_placeholder')}
+            value={serverAddress}
+            onChangeText={setServerAddress}
+            style={commonInputStyles.input}
+            keyboardType="url"
+            autoCapitalize="none"
+            editable={!hostedSameOrigin}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('server_name_optional')}</Text>
-      <TextInput
-        placeholder={t('server_name_placeholder')}
-        value={serverName}
-        onChangeText={setServerName}
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('server_name_optional')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('server_name_placeholder')}
+            value={serverName}
+            onChangeText={setServerName}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('username')}</Text>
-      <TextInput
-        placeholder={t('username_placeholder')}
-        value={username}
-        onChangeText={setUsername}
-        style={commonInputStyles.input}
-        autoCapitalize="none"
-      />
+      <FormField label={t('username')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('username_placeholder')}
+            value={username}
+            onChangeText={setUsername}
+            style={commonInputStyles.input}
+            autoCapitalize="none"
+          />
+        )}
+      </FormField>
 
       {!serverId && (mode === 'login' || mode === 'register') && (
         <>
-          <Text style={[styles.label, { color: colors.text }]}>{t('password')}</Text>
-          <TextInput
-            placeholder={t('password_placeholder')}
-            value={password}
-            onChangeText={setPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
-          />
+          <FormField label={t('password')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('password_placeholder')}
+                value={password}
+                onChangeText={setPassword}
+                style={commonInputStyles.input}
+                secureTextEntry
+              />
+            )}
+          </FormField>
         </>
       )}
 
@@ -649,45 +669,61 @@ const ServerRegistrationScreen = () => {
 
       {!serverId && mode === 'register' && (
         <>
-          <Text style={[styles.label, { color: colors.text }]}>{t('confirm_new_password')}</Text>
-          <TextInput
-            placeholder={t('confirm_new_password_placeholder')}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
-          />
+          <FormField label={t('confirm_new_password')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('confirm_new_password_placeholder')}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                style={commonInputStyles.input}
+                secureTextEntry
+              />
+            )}
+          </FormField>
         </>
       )}
 
       {!serverId && mode === 'recover' && (
         <>
-          <Text style={[styles.label, { color: colors.text }]}>{t('recovery_code_label')}</Text>
-          <TextInput
-            placeholder={t('recovery_code_placeholder')}
-            value={recoveryCode}
-            onChangeText={setRecoveryCode}
-            style={commonInputStyles.input}
-            autoCapitalize="characters"
-          />
+          <FormField label={t('recovery_code_label')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('recovery_code_placeholder')}
+                value={recoveryCode}
+                onChangeText={setRecoveryCode}
+                style={commonInputStyles.input}
+                autoCapitalize="characters"
+              />
+            )}
+          </FormField>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('new_password')}</Text>
-          <TextInput
-            placeholder={t('new_password_placeholder')}
-            value={password}
-            onChangeText={setPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
-          />
+          <FormField label={t('new_password')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('new_password_placeholder')}
+                value={password}
+                onChangeText={setPassword}
+                style={commonInputStyles.input}
+                secureTextEntry
+              />
+            )}
+          </FormField>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('confirm_new_password')}</Text>
-          <TextInput
-            placeholder={t('confirm_new_password_placeholder')}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
-          />
+          <FormField label={t('confirm_new_password')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('confirm_new_password_placeholder')}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                style={commonInputStyles.input}
+                secureTextEntry
+              />
+            )}
+          </FormField>
 
           <TouchableOpacity onPress={() => setMode('login')} style={styles.linkRow}>
             <Text style={[styles.linkText, { color: colors.primary }]}>{t('back_to_login')}</Text>
@@ -697,14 +733,18 @@ const ServerRegistrationScreen = () => {
 
       {serverId && ( // Option to change password for existing server
         <>
-          <Text style={[styles.label, { color: colors.text }]}>{t('new_password_optional')}</Text>
-          <TextInput
-            placeholder={t('new_password_placeholder')}
-            value={password}
-            onChangeText={setPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
-          />
+          <FormField label={t('new_password_optional')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('new_password_placeholder')}
+                value={password}
+                onChangeText={setPassword}
+                style={commonInputStyles.input}
+                secureTextEntry
+              />
+            )}
+          </FormField>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('change_password_warning')}
           </Text>
@@ -762,12 +802,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     lineHeight: 20,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
-  },
   modeToggleRow: {
     flexDirection: 'row',
     borderWidth: 1,
@@ -815,11 +849,6 @@ const styles = StyleSheet.create({
   registerButton: {
     marginTop: 35,
     marginBottom: 0,
-  },
-  deleteButton: {
-    marginTop: 10,
-    marginBottom: 15,
-    // A cor vem do tema no ponto de uso: este StyleSheet vive fora do componente.
   },
 });
 

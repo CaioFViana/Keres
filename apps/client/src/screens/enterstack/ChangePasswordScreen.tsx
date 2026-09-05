@@ -1,3 +1,6 @@
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import {
   ScreenError,
@@ -7,9 +10,9 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -24,7 +27,6 @@ import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
@@ -37,7 +39,7 @@ type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<
 const ChangePasswordScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  useDocumentTitle(t('change_password_title'));
+
   const { colors } = useTheme();
   const navigation = useNavigation<ChangePasswordScreenNavigationProp>();
   const route = useRoute<ChangePasswordScreenRouteProp>();
@@ -91,11 +93,10 @@ const ChangePasswordScreen = () => {
     };
   }, [drizzleDb, serverId, t]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({ title: t('change_password_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('change_password_title'),
+  });
 
   const handleSave = async () => {
     if (!server) return;
@@ -217,7 +218,6 @@ const ChangePasswordScreen = () => {
 
   const styles = StyleSheet.create({
     scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
-    label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
     saveButton: { marginTop: 20 },
     linkRow: { marginTop: 8, alignSelf: 'flex-start' },
     linkText: { fontSize: 14, fontWeight: '600', color: colors.primary },
@@ -227,7 +227,6 @@ const ChangePasswordScreen = () => {
       marginTop: 30,
       marginBottom: 20,
     },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: colors.text },
     sectionHint: { color: colors.textSecondary, fontSize: 13, marginBottom: 16, lineHeight: 18 },
     recoveryCodesBox: {
       borderWidth: 1,
@@ -260,7 +259,7 @@ const ChangePasswordScreen = () => {
         style={commonContainerStyles.container}
         contentContainerStyle={styles.scrollViewContent}
       >
-        <Text style={styles.sectionTitle}>{t('recovery_codes_title')}</Text>
+        <ScreenSection title={t('recovery_codes_title')} />
         <Text style={styles.sectionHint}>{t('recovery_codes_warning')}</Text>
         <View style={styles.recoveryCodesBox}>
           {recoveryCodesToShow.map((code) => (
@@ -288,14 +287,18 @@ const ChangePasswordScreen = () => {
     >
       {mode === 'change' && (
         <>
-          <Text style={styles.label}>{t('current_password')}</Text>
-          <TextInput
-            placeholder={t('current_password_placeholder')}
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
-          />
+          <FormField label={t('current_password')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('current_password_placeholder')}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                style={commonInputStyles.input}
+                secureTextEntry
+              />
+            )}
+          </FormField>
           <TouchableOpacity onPress={() => setMode('recover')} style={styles.linkRow}>
             <Text style={styles.linkText}>{t('forgot_current_password_link')}</Text>
           </TouchableOpacity>
@@ -304,34 +307,46 @@ const ChangePasswordScreen = () => {
 
       {mode === 'recover' && (
         <>
-          <Text style={styles.label}>{t('recovery_code_label')}</Text>
-          <TextInput
-            placeholder={t('recovery_code_placeholder')}
-            value={recoveryCode}
-            onChangeText={setRecoveryCode}
-            style={commonInputStyles.input}
-            autoCapitalize="characters"
-          />
+          <FormField label={t('recovery_code_label')}>
+            {(fieldAccessibility) => (
+              <TextInput
+                {...fieldAccessibility}
+                placeholder={t('recovery_code_placeholder')}
+                value={recoveryCode}
+                onChangeText={setRecoveryCode}
+                style={commonInputStyles.input}
+                autoCapitalize="characters"
+              />
+            )}
+          </FormField>
         </>
       )}
 
-      <Text style={styles.label}>{t('new_password')}</Text>
-      <TextInput
-        placeholder={t('new_password_placeholder')}
-        value={newPassword}
-        onChangeText={setNewPassword}
-        style={commonInputStyles.input}
-        secureTextEntry
-      />
+      <FormField label={t('new_password')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('new_password_placeholder')}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            style={commonInputStyles.input}
+            secureTextEntry
+          />
+        )}
+      </FormField>
 
-      <Text style={styles.label}>{t('confirm_new_password')}</Text>
-      <TextInput
-        placeholder={t('confirm_new_password_placeholder')}
-        value={confirmNewPassword}
-        onChangeText={setConfirmNewPassword}
-        style={commonInputStyles.input}
-        secureTextEntry
-      />
+      <FormField label={t('confirm_new_password')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('confirm_new_password_placeholder')}
+            value={confirmNewPassword}
+            onChangeText={setConfirmNewPassword}
+            style={commonInputStyles.input}
+            secureTextEntry
+          />
+        )}
+      </FormField>
 
       {mode === 'change' ? (
         <Button
@@ -360,7 +375,7 @@ const ChangePasswordScreen = () => {
         <>
           <View style={styles.sectionDivider} />
 
-          <Text style={styles.sectionTitle}>{t('regenerate_recovery_codes_title')}</Text>
+          <ScreenSection title={t('regenerate_recovery_codes_title')} />
           <Text style={styles.sectionHint}>{t('regenerate_recovery_codes_hint')}</Text>
           <Button
             onPress={handleRegenerateRecoveryCodes}

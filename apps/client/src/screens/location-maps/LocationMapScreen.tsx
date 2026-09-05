@@ -1,6 +1,7 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +45,6 @@ import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
@@ -176,49 +176,36 @@ const LocationMapScreen = () => {
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(map?.name ?? t('location_map_list_title'));
-      navigation.getParent()?.setOptions({
-        title: map?.name ?? t('location_map_list_title'),
-        headerRight: canEdit
-          ? () => (
-              <LocationMapHeaderActions
-                dirty={dirty}
-                saving={saving}
-                onRevert={revert}
-                onSave={() => void save()}
-                layoutEditing={layoutEditing}
-                connectionMode={connectionMode}
-                onToggleLayout={() => {
-                  setLayoutEditing((current) => !current);
-                  setConnectionMode(false);
-                  setOpenedNodeId(null);
-                  setOpenedMarkerId(null);
-                }}
-                onToggleConnectionMode={() => {
-                  setConnectionMode((current) => !current);
-                  setLayoutEditing(false);
-                  setOpenedNodeId(null);
-                  setOpenedMarkerId(null);
-                }}
-              />
-            )
-          : undefined,
-      });
-    }, [
-      canEdit,
-      connectionMode,
-      dirty,
-      layoutEditing,
-      map?.name,
-      navigation,
-      revert,
-      save,
-      saving,
-      t,
-    ]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: map?.name ?? t('location_map_list_title'),
+    renderActions: useCallback(
+      () =>
+        canEdit ? (
+          <LocationMapHeaderActions
+            dirty={dirty}
+            saving={saving}
+            onRevert={revert}
+            onSave={() => void save()}
+            layoutEditing={layoutEditing}
+            connectionMode={connectionMode}
+            onToggleLayout={() => {
+              setLayoutEditing((current) => !current);
+              setConnectionMode(false);
+              setOpenedNodeId(null);
+              setOpenedMarkerId(null);
+            }}
+            onToggleConnectionMode={() => {
+              setConnectionMode((current) => !current);
+              setLayoutEditing(false);
+              setOpenedNodeId(null);
+              setOpenedMarkerId(null);
+            }}
+          />
+        ) : null,
+      [canEdit, connectionMode, dirty, layoutEditing, revert, save, saving],
+    ),
+  });
   const galleryMediaById = useMemo(() => {
     const next: Record<
       string,

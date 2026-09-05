@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import {
   ScreenError,
@@ -13,7 +14,7 @@ import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasCon
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +47,6 @@ import {
   getBoardPinAppearance,
   worldPieceSectionFromBoardPinGroup,
 } from '../../utils/boardPinAppearance';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
 import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -229,35 +229,33 @@ const BoardCanvasScreen = () => {
     });
   }, [board, boardId, content, savedContent, storyId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(board?.name ?? t('boards_title'));
-      navigation.getParent()?.setOptions({
-        title: board?.name ?? t('boards_title'),
-        headerRight: canEdit
-          ? () => (
-              <BoardCanvasHeaderActions
-                dirty={dirty}
-                layoutEditing={layoutEditing}
-                connectionMode={connectionMode}
-                onRevert={revert}
-                onSave={() => void save()}
-                onToggleLayout={() => {
-                  setLayoutEditing((current) => !current);
-                  setConnectionMode(false);
-                  setLayoutSelectedNodeId(null);
-                }}
-                onToggleConnectionMode={() => {
-                  setConnectionMode((current) => !current);
-                  setLayoutEditing(false);
-                  setLayoutSelectedNodeId(null);
-                }}
-              />
-            )
-          : undefined,
-      });
-    }, [board?.name, canEdit, dirty, layoutEditing, connectionMode, navigation, revert, save, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: board?.name ?? t('boards_title'),
+    renderActions: useCallback(
+      () =>
+        canEdit ? (
+          <BoardCanvasHeaderActions
+            dirty={dirty}
+            layoutEditing={layoutEditing}
+            connectionMode={connectionMode}
+            onRevert={revert}
+            onSave={() => void save()}
+            onToggleLayout={() => {
+              setLayoutEditing((current) => !current);
+              setConnectionMode(false);
+              setLayoutSelectedNodeId(null);
+            }}
+            onToggleConnectionMode={() => {
+              setConnectionMode((current) => !current);
+              setLayoutEditing(false);
+              setLayoutSelectedNodeId(null);
+            }}
+          />
+        ) : null,
+      [canEdit, dirty, layoutEditing, connectionMode, revert, save],
+    ),
+  });
 
   const titles = useMemo(() => {
     const map: Record<

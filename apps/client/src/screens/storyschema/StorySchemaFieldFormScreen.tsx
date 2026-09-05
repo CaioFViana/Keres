@@ -1,10 +1,12 @@
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { StorySchemaEntityType } from '@keres/shared';
 import {
   AttributeKeyRegex,
@@ -13,27 +15,21 @@ import {
   STORY_SCHEMA_ENTITY_TYPES,
 } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { commonFormStyleDefs, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 type StorySchemaFieldFormScreenRouteProp = RouteProp<
   CustomizationStackParamList,
@@ -57,12 +53,11 @@ const StorySchemaFieldFormScreen = () => {
   const storyId = selectedStory?.id;
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
-  const commonContainerStyles = getCommonContainerStyles(colors);
+
   const commonInputStyles = getCommonInputStyles(colors);
 
   const isEditing = !!fieldId;
-  useDocumentTitle(isEditing ? t('edit_attribute_title') : t('create_attribute_title'));
+
   const existingFields = useStorySchemaFields(storyId, entityType);
 
   const [name, setName] = useState('');
@@ -76,14 +71,10 @@ const StorySchemaFieldFormScreen = () => {
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: isEditing ? t('edit_attribute_title') : t('create_attribute_title'),
-        headerRight: undefined,
-      });
-    }, [navigation, isEditing, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: isEditing ? t('edit_attribute_title') : t('create_attribute_title'),
+  });
 
   useEffect(() => {
     if (!isEditing) {
@@ -193,7 +184,7 @@ const StorySchemaFieldFormScreen = () => {
   }));
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
+    ...commonFormStyleDefs(colors),
     hint: { fontSize: 13, color: colors.textSecondary, marginTop: -2, marginBottom: 5 },
     saveButton: { marginTop: 30 },
   });
@@ -203,17 +194,18 @@ const StorySchemaFieldFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
-    >
-      <Text style={styles.label}>{t('attribute_display_name')}</Text>
-      <TextInput
-        placeholder={t('attribute_display_name_placeholder')}
-        value={name}
-        onChangeText={handleNameChange}
-        style={commonInputStyles.input}
-      />
+    <EntityFormContainer>
+      <FormField label={t('attribute_display_name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('attribute_display_name_placeholder')}
+            value={name}
+            onChangeText={handleNameChange}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
       <Text style={styles.label}>{t('attribute_internal_key')}</Text>
       <Text style={styles.hint}>{t('attribute_internal_key_hint')}</Text>
@@ -226,23 +218,28 @@ const StorySchemaFieldFormScreen = () => {
         style={[commonInputStyles.input, isEditing && { opacity: 0.6 }]}
       />
 
-      <Text style={styles.label}>{t('description')}</Text>
-      <TextInput
-        placeholder={t('attribute_description_placeholder')}
-        value={description || ''}
-        onChangeText={setDescription}
-        style={[commonInputStyles.multiline, { minHeight: 3 * 20 }]}
-        multiline
-      />
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('attribute_description_placeholder')}
+            value={description || ''}
+            onChangeText={setDescription}
+            style={[commonInputStyles.multiline, { minHeight: 3 * 20 }]}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <Text style={styles.label}>{t('attribute_type_label')}</Text>
-      <SingleSelectPill
-        options={typeOptions}
-        value={type}
-        onValueChange={(value) => setType((value as AttributeType) || AttributeType.TEXT)}
-        placeholder={t('attribute_type_label')}
-        disabled={isEditing}
-      />
+      <FormField label={t('attribute_type_label')}>
+        <SingleSelectPill
+          options={typeOptions}
+          value={type}
+          onValueChange={(value) => setType((value as AttributeType) || AttributeType.TEXT)}
+          placeholder={t('attribute_type_label')}
+          disabled={isEditing}
+        />
+      </FormField>
 
       {type === AttributeType.ENTITY && (
         <>
@@ -258,14 +255,11 @@ const StorySchemaFieldFormScreen = () => {
         </>
       )}
 
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { marginTop: 0 }]}>{t('attribute_required')}</Text>
-        <ThemedSwitch
-          value={isRequired}
-          onValueChange={setIsRequired}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-        />
-      </View>
+      <FormSwitchField
+        label={t('attribute_required')}
+        value={isRequired}
+        onValueChange={setIsRequired}
+      />
 
       {type !== AttributeType.ENTITY && (
         <>
@@ -284,7 +278,7 @@ const StorySchemaFieldFormScreen = () => {
       <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
         {saving ? t('saving') : t('save')}
       </Button>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

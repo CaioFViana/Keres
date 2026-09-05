@@ -111,7 +111,6 @@ const FILES_OVER_THE_LIMIT = [
   'screens/characters/CharacterDetailScreen.tsx',
   'screens/characters/CharacterFormScreen.tsx',
   'screens/enterstack/ServerRegistrationScreen.tsx',
-  'screens/locations/LocationDetailsScreen.tsx',
   'screens/locations/LocationFormScreen.tsx',
   'screens/mainstorystack/StorySettingsScreen.tsx',
   'screens/narrative-elements/chapters/NarrativeElementsListScreen.tsx',
@@ -119,8 +118,6 @@ const FILES_OVER_THE_LIMIT = [
   'screens/narrative-elements/choices/ChoiceViewScreen.tsx',
   'screens/narrative-elements/scenes/SceneDetailScreen.tsx',
   'screens/narrative-elements/scenes/SceneFormScreen.tsx',
-  'services/storymanagement/StoryService.ts',
-  'services/storymanagement/SuggestionService.ts',
   'utils/storyAnalysisChecks.ts',
 ];
 

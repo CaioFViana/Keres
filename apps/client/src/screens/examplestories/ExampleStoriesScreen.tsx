@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +22,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { getLanguageOptions } from '../../utils/i18n';
 
 /**
@@ -81,7 +81,7 @@ function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string):
 const ExampleStoriesScreen = () => {
   useBackButtonHandler();
   const { t, i18n } = useTranslation();
-  useDocumentTitle(t('examples_title'));
+  useScreenHeader({ target: 'self', title: t('examples_title') });
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();

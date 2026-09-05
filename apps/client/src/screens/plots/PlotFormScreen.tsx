@@ -1,17 +1,20 @@
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import PlotSceneManager from '@/src/components/features/plots/PlotSceneManager/PlotSceneManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { createPlotService } from '../../services/storymanagement/PlotService';
@@ -19,13 +22,8 @@ import { createPlotSceneService } from '../../services/storymanagement/PlotScene
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 type PlotFormScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotForm'>;
@@ -43,7 +41,7 @@ const PlotFormScreen = () => {
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const plotService = useCallback(() => createPlotService(drizzleDb), [drizzleDb]);
   const plotSceneService = useCallback(() => createPlotSceneService(drizzleDb), [drizzleDb]);
   const {
@@ -56,37 +54,25 @@ const PlotFormScreen = () => {
   const [name, setName] = useState('');
   const [details, setDetails] = useState('');
   const [loading, setLoading] = useState(isEditing);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        ...commonFormStyleDefs(colors, scrollBottomPadding),
-        description: {
-          color: colors.textSecondary,
-          marginBottom: 20,
-        },
         saveButton: {
           marginTop: 20,
           marginBottom: 0,
         },
-        deleteButton: {
-          backgroundColor: colors.error,
-          marginTop: 10,
-          marginBottom: 15,
-        },
       }),
-    [colors, scrollBottomPadding],
+    [],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const title = isEditing ? t('edit_plot') : t('create_plot');
-      setDocumentTitle(title);
-      navigation.getParent()?.setOptions({ title, headerRight: () => <View /> });
-    }, [isEditing, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: isEditing ? t('edit_plot') : t('create_plot'),
+  });
 
   useEffect(() => {
     if (!isEditing) return;
@@ -106,34 +92,33 @@ const PlotFormScreen = () => {
     loadPlot();
   }, [isEditing, plotId, plotService]);
 
-  const handleSave = async () => {
-    if (!selectedStory?.id || !userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!name.trim()) {
-      AppAlert.alert(t('error'), t('plot_name_required'));
-      return;
-    }
-    setLoading(true);
-    try {
-      const saved = await plotService().save(userId, {
-        id: plotId,
-        storyId: selectedStory.id,
-        name,
-        details: details.trim() || null,
-      });
-      if (isEditing) navigation.goBack();
-      // A new plot has no relations yet. Keep the author in its form so scenes can be added right
-      // away, rather than sending them to the read-only detail screen.
-      else navigation.replace('PlotForm', { plotId: saved.id });
-    } catch (error) {
-      console.error('Failed to save plot:', error);
-      AppAlert.alert(t('error'), t('failed_to_save_plot'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleSave = () =>
+    runSave(async () => {
+      if (!selectedStory?.id || !userId) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
+      }
+      if (!name.trim()) {
+        AppAlert.alert(t('error'), t('plot_name_required'));
+        return;
+      }
+
+      try {
+        const saved = await plotService().save(userId, {
+          id: plotId,
+          storyId: selectedStory.id,
+          name,
+          details: details.trim() || null,
+        });
+        if (isEditing) navigation.goBack();
+        // A new plot has no relations yet. Keep the author in its form so scenes can be added right
+        // away, rather than sending them to the read-only detail screen.
+        else navigation.replace('PlotForm', { plotId: saved.id });
+      } catch (error) {
+        console.error('Failed to save plot:', error);
+        AppAlert.alert(t('error'), t('failed_to_save_plot'));
+      }
+    });
 
   const handleDelete = () => {
     if (!userId || !plotId) {
@@ -145,7 +130,7 @@ const PlotFormScreen = () => {
       messageKey: 'delete_plot_message',
       successKey: 'plot_deleted_successfully',
       failureKey: 'failed_to_delete_plot',
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await plotService().delete(userId, plotId);
         navigation.navigate('Plots');
@@ -184,37 +169,38 @@ const PlotFormScreen = () => {
   };
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={isEditing ? t('edit_plot') : t('create_plot')}
+      description={t('plot_form_description')}
     >
-      <Text style={styles.title}>{isEditing ? t('edit_plot') : t('create_plot')}</Text>
-      <Text style={styles.description}>{t('plot_form_description')}</Text>
+      <FormField label={t('plot_name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('plot_name_placeholder')}
+            value={name}
+            onChangeText={setName}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={styles.label}>{t('plot_name')}</Text>
-      <TextInput
-        placeholder={t('plot_name_placeholder')}
-        value={name}
-        onChangeText={setName}
-        style={commonInputStyles.input}
-      />
-
-      <Text style={styles.label}>{t('plot_details')}</Text>
-      <TextInput
-        placeholder={t('plot_details_placeholder')}
-        value={details}
-        onChangeText={setDetails}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('plot_details')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('plot_details_placeholder')}
+            value={details}
+            onChangeText={setDetails}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       {isEditing && selectedStory?.id ? (
         <PlotSceneManager
@@ -231,17 +217,23 @@ const PlotFormScreen = () => {
 
       {isEditing ? (
         <FormActions stackOnCompact>
-          <Button onPress={handleSave}>{t('save_changes')}</Button>
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {t('save_changes')}
+          </Button>
+          <Button
+            onPress={handleDelete}
+            style={{ backgroundColor: colors.error }}
+            disabled={saving || deleting}
+          >
             {t('delete_plot_title')}
           </Button>
         </FormActions>
       ) : (
-        <Button onPress={handleSave} style={styles.saveButton}>
+        <Button onPress={handleSave} style={styles.saveButton} disabled={saving || deleting}>
           {t('create_plot')}
         </Button>
       )}
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

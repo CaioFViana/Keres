@@ -1,3 +1,8 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
@@ -10,26 +15,22 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 import { useDrizzle } from '../../db';
 import type { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
@@ -43,7 +44,7 @@ type WorldRuleDetailScreenRouteProp = RouteProp<WorldRuleDetailScreenParamList, 
 
 const WorldRuleDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
+  useTheme();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<WorldRuleDetailScreenRouteProp>();
@@ -54,7 +55,6 @@ const WorldRuleDetailScreen = () => {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('WorldRule');
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   // Initialize services only once when drizzleDb is available
   useEffect(() => {
@@ -84,11 +84,6 @@ const WorldRuleDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'WorldRule', entityId: worldRuleId });
-
-  const commonContainerStyles = getCommonContainerStyles(colors);
-  const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-  });
 
   const fetchWorldRule = useCallback(async () => {
     if (!worldRuleServiceRef.current) {
@@ -160,28 +155,19 @@ const WorldRuleDetailScreen = () => {
     }
   }, [handleWorldRuleChange, handleTagRelationChange]);
 
-  const renderHeaderRight = useCallback(
-    () =>
-      canEdit ? (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('WorldRuleForm', { worldRuleId: worldRuleId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ) : null,
-    [navigation, worldRuleId, colors.text, canEdit],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: renderHeaderRight,
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('WorldRuleForm', { worldRuleId: worldRuleId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
@@ -195,69 +181,44 @@ const WorldRuleDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: worldRule.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={worldRule.title}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{worldRule.title}</Text>
       <TagList tags={worldRule.tags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
-        storyId={worldRule.storyId}
+        {...commentField('section', t(`world_piece_section_${worldRule.section}`))}
         label={t('world_piece_section')}
-        value={t(`world_piece_section_${worldRule.section}`)}
-        comments={commentsByField['section'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'section' },
-            { ...input, contentSnapshot: t(`world_piece_section_${worldRule.section}`) },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       {(['type', 'category', 'behavior', 'usability', 'danger'] as const).map((field) => (
         <CommentableDetailField
+          {...commentField(field, worldRule[field] || t('common_na'))}
           key={field}
-          storyId={worldRule.storyId}
           label={t(field === 'category' ? 'category' : `world_piece_${field}`)}
-          value={worldRule[field] || t('common_na')}
-          comments={commentsByField[field] ?? []}
-          canComment={canComment}
-          isStoryOwner={isStoryOwner}
-          currentUserId={currentUserId}
-          onAddComment={(input) =>
-            addComment(
-              { fieldKey: field },
-              { ...input, contentSnapshot: worldRule[field] || t('common_na') },
-            )
-          }
-          onDeleteComment={deleteComment}
-          onUpdateComment={updateComment}
         />
       ))}
 
       <CommentableDetailField
-        storyId={worldRule.storyId}
+        {...commentField('description', worldRule.description || t('common_na'))}
         label={t('description')}
-        value={worldRule.description || t('common_na')}
-        comments={commentsByField['description'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'description' },
-            { ...input, contentSnapshot: worldRule.description || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       <CustomAttributeDetailFields
@@ -267,24 +228,11 @@ const WorldRuleDetailScreen = () => {
       />
 
       <CommentableDetailField
-        storyId={worldRule.storyId}
+        {...commentField('extraNotes', worldRule.extraNotes || t('common_na'))}
         label={t('extra_notes')}
-        value={worldRule.extraNotes || t('common_na')}
-        comments={commentsByField['extraNotes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'extraNotes' },
-            { ...input, contentSnapshot: worldRule.extraNotes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={worldRuleId}
         ownerType="WorldRule"
@@ -318,11 +266,7 @@ const WorldRuleDetailScreen = () => {
         entityId={worldRule.id}
       />
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

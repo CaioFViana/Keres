@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -25,9 +24,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
@@ -35,30 +32,19 @@ const CharactersScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
+
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const { openCharacterList } = useOpenPresenceMatrixViewer();
 
   const {
+    listProps,
     items: characters,
-    loading,
     isInitialLoading,
     error,
     storyId,
-    searchQuery,
-    activeFilterTags,
-    favoriteFilterState,
-    activeSort,
-    sortDirection,
     advancedSearchCriteria: storeAdvancedSearchCriteria,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFilterTagsChange,
-    handleFavoriteFilterChange,
     setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria,
     toggleFavorite,
   } = useEntityListScreen({
@@ -74,9 +60,6 @@ const CharactersScreen = () => {
   const { canEdit } = useStoryRole(storyId);
 
   // Styles are always defined at the top
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-  });
 
   // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
   const fetchTags = useCallback(async () => {
@@ -130,36 +113,32 @@ const CharactersScreen = () => {
     return () => entityEventEmitter.off('character_relation_changed', refresh);
   }, [fetchRelations, storyId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(term('Character', true));
-      navigation.getParent()?.setOptions({
-        title: term('Character', true),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 }}>
-            {selectedStory?.type === 'linear' && (
-              <TouchableOpacity
-                onPress={openCharacterList}
-                accessibilityLabel={t('presence_matrix_title')}
-              >
-                <Ionicons name="map-outline" size={26} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={() => navigation.navigate('CharacterRelationView')}>
-              <Ionicons name="git-network-outline" size={26} color={colors.text} />
-            </TouchableOpacity>
-            {canEdit && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ),
-      });
-    }, [navigation, colors.text, t, canEdit, openCharacterList, selectedStory?.type, term]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: term('Character', true),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'map-outline',
+        label: t('presence_matrix_title'),
+        onPress: openCharacterList,
+        visible: !!(selectedStory?.type === 'linear'),
+      },
+      {
+        id: 'action-1',
+        icon: 'git-network-outline',
+        label: t('character_relation_map_title'),
+        onPress: () => navigation.navigate('CharacterRelationView'),
+      },
+      {
+        id: 'action-2',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('CharacterForm', { characterId: undefined }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const handleToggleFavorite = useCallback(
     async (characterId: string, isFavorite: boolean) => {
@@ -220,32 +199,21 @@ const CharactersScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer>
       <GenericFilterSortList
+        {...listProps}
         data={characters}
         renderItem={memoizedRenderItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_entities', { entities: term('Character', true) })}
-        currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
-        onFilterChange={handleFilterTagsChange}
-        selectedFilterValues={activeFilterTags}
         sortOptions={memoizedSortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
         entityName="Character"
         storyId={storyId || ''}
         onAdvancedSearch={setStoreAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
-        isLoading={loading}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 

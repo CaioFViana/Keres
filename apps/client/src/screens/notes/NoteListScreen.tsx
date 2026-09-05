@@ -1,12 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -25,8 +24,6 @@ import type {
 import type { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useNoteStore } from '../../state/noteStore';
-import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
@@ -37,7 +34,7 @@ export type NotesScreenNavigationProp = CompositeNavigationProp<
 const NotesScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  const { colors } = useTheme();
+
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<NotesScreenNavigationProp>();
 
@@ -45,24 +42,11 @@ const NotesScreen = () => {
   const tagService = useRef(createTagService(drizzleDb)).current;
 
   const {
+    listProps,
     items: notes,
-    loading,
     isInitialLoading,
     error,
     storyId,
-    searchQuery,
-    activeFilterTags,
-    activeSort,
-    sortDirection,
-    favoriteFilterState,
-    advancedSearchCriteria,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFilterTagsChange,
-    handleFavoriteFilterChange,
-    setAdvancedSearchCriteria,
     toggleFavorite,
   } = useEntityListScreen({
     useStore: useNoteStore,
@@ -98,24 +82,19 @@ const NotesScreen = () => {
     return () => entityEventEmitter.off('tag_changed', handleTagChange);
   }, [fetchTags, storyId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('notes_title'));
-      navigation.getParent()?.setOptions({
-        title: t('notes_title'),
-        headerRight: canEdit
-          ? () => (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('NoteForm', { noteId: undefined })}
-                style={{ marginRight: 15 }}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )
-          : undefined,
-      });
-    }, [navigation, colors.text, t, canEdit]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('notes_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('NoteForm', { noteId: undefined }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const handleToggleFavorite = useCallback(
     async (noteId: string, isFavorite: boolean) => {
@@ -154,10 +133,6 @@ const NotesScreen = () => {
     ];
   }, [t]);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-  });
-
   if (isInitialLoading) {
     return <ScreenLoading message={t('loading_notes')} />;
   }
@@ -167,33 +142,20 @@ const NotesScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer>
       <GenericFilterSortList
+        {...listProps}
         data={notes}
         renderItem={memoizedNoteListItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_notes')}
-        currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
-        onFilterChange={handleFilterTagsChange}
-        selectedFilterValues={activeFilterTags}
         sortOptions={memoizedSortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
         disableTagFilter={false}
         entityName="Note"
         storyId={storyId || ''}
-        onAdvancedSearch={setAdvancedSearchCriteria}
-        currentAdvancedSearchCriteria={advancedSearchCriteria}
-        isLoading={loading}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 

@@ -1,6 +1,10 @@
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
@@ -14,22 +18,20 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import {
   WORLD_PIECE_SECTIONS,
   type WorldPieceSection,
   type WorldRule,
 } from '@keres/shared/entities/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
@@ -37,13 +39,8 @@ import { createWorldRuleService } from '../../services/storymanagement/WorldRule
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
@@ -60,11 +57,10 @@ const WorldRuleFormScreen = () => {
   const { worldRuleId: initialWorldRuleId } = route.params || {}; // Renamed to initialWorldRuleId
   const { selectedStory } = useStoryStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
@@ -105,19 +101,16 @@ const WorldRuleFormScreen = () => {
   const customDefaultsAppliedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentWorldRuleId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   useEffect(() => {
     const loadWorldRule = async () => {
@@ -167,90 +160,87 @@ const WorldRuleFormScreen = () => {
     }
   }, [isEditing, customFields]);
 
-  const handleSave = async () => {
-    if (!title.trim()) {
-      AppAlert.alert(t('error'), copy.required);
-      return;
-    }
-    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
-    if (missingRequiredField) {
-      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-      return;
-    }
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!selectedStory?.id) {
-      AppAlert.alert(t('error'), t('no_story_selected'));
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const worldRuleData: Omit<
-        WorldRule,
-        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-      > = {
-        title: title.trim(),
-        description: description,
-        section,
-        type,
-        category,
-        behavior,
-        usability,
-        danger,
-        isFavorite: isFavorite,
-        extraNotes: extraNotes,
-      };
-      let savedWorldRule: WorldRule;
-
-      if (isEditing) {
-        savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(
-          userId,
-          currentWorldRuleId!,
-          worldRuleData,
-        );
-        AppAlert.alert(t('success'), copy.updated);
-      } else {
-        savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, {
-          ...worldRuleData,
-          storyId: selectedStory.id,
-        });
-        AppAlert.alert(t('success'), copy.created);
-        setCurrentWorldRuleId(savedWorldRule.id);
+  const handleSave = () =>
+    runSave(async () => {
+      if (!title.trim()) {
+        AppAlert.alert(t('error'), copy.required);
+        return;
+      }
+      const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+      if (missingRequiredField) {
+        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+        return;
+      }
+      if (!userId) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
+      }
+      if (!selectedStory?.id) {
+        AppAlert.alert(t('error'), t('no_story_selected'));
+        return;
       }
 
-      if (savedWorldRule.id) {
-        await persistTagRelations(savedWorldRule.id);
-        await persistNoteRelations(savedWorldRule.id);
-        await seeAlsoManagerRef.current?.persistPending(savedWorldRule.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(
-          userId,
-          selectedStory.id,
-          'WorldRule',
-          savedWorldRule.id,
-          customValues,
-        );
-      }
+      try {
+        const worldRuleData: Omit<
+          WorldRule,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        > = {
+          title: title.trim(),
+          description: description,
+          section,
+          type,
+          category,
+          behavior,
+          usability,
+          danger,
+          isFavorite: isFavorite,
+          extraNotes: extraNotes,
+        };
+        let savedWorldRule: WorldRule;
 
-      entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRule.id);
+        if (isEditing) {
+          savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(
+            userId,
+            currentWorldRuleId!,
+            worldRuleData,
+          );
+          AppAlert.alert(t('success'), copy.updated);
+        } else {
+          savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, {
+            ...worldRuleData,
+            storyId: selectedStory.id,
+          });
+          AppAlert.alert(t('success'), copy.created);
+          setCurrentWorldRuleId(savedWorldRule.id);
+        }
 
-      if (!isEditing && savedWorldRule.id) {
-        navigation.dispatch(
-          StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRule.id }),
-        );
-      } else {
-        navigation.goBack();
+        if (savedWorldRule.id) {
+          await persistTagRelations(savedWorldRule.id);
+          await persistNoteRelations(savedWorldRule.id);
+          await seeAlsoManagerRef.current?.persistPending(savedWorldRule.id);
+          await createAttributeValueService(drizzleDb).saveValuesForEntity(
+            userId,
+            selectedStory.id,
+            'WorldRule',
+            savedWorldRule.id,
+            customValues,
+          );
+        }
+
+        entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRule.id);
+
+        if (!isEditing && savedWorldRule.id) {
+          navigation.dispatch(
+            StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRule.id }),
+          );
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save world rule:', err);
+        AppAlert.alert(t('error'), copy.failedToSave);
       }
-    } catch (err) {
-      console.error('Failed to save world rule:', err);
-      AppAlert.alert(t('error'), copy.failedToSave);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -269,7 +259,7 @@ const WorldRuleFormScreen = () => {
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_world_rule',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await worldRuleServiceRef.current!.deleteWorldRule(userId, currentWorldRuleId);
         entityEventEmitter.emit('worldrule_changed', selectedStory?.id, currentWorldRuleId);
@@ -286,16 +276,6 @@ const WorldRuleFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
-    saveButton: {
-      marginTop: 30,
-      marginBottom: 0,
-    },
-    deleteButton: {
-      backgroundColor: colors.error,
-      marginTop: 10,
-      marginBottom: 15,
-    },
     tagSection: {
       marginTop: 20,
       marginBottom: 0,
@@ -305,127 +285,148 @@ const WorldRuleFormScreen = () => {
       marginTop: 20,
       marginBottom: -10,
     },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {copy.deleteLabel}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
+      <FormField label={t('title')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('world_rule_title_placeholder')}
+            value={title}
+            onChangeText={setTitle}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-      <TextInput
-        placeholder={t('world_rule_title_placeholder')}
-        value={title}
-        onChangeText={setTitle}
-        style={commonInputStyles.input}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_section')}</Text>
-      <SingleSelectPill
-        options={WORLD_PIECE_SECTIONS.map((value) => ({
-          value,
-          label: t(`world_piece_section_${value}`),
-        }))}
-        value={section}
-        onValueChange={(next) => {
-          const nextSection = (next ?? 'rule') as WorldPieceSection;
-          if (nextSection !== section && type) setType(null);
-          setSection(nextSection);
-        }}
-        placeholder={t('world_piece_section')}
-        multiple={false}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_type')}</Text>
-      <SuggestionTextInput
-        placeholder={t('world_piece_type_placeholder')}
-        value={type || ''}
-        onChangeText={setType}
-        type={`world_piece_type:${section}`}
-        storyId={selectedStory?.id || ''}
-      />
-
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_favorite')}
-        </Text>
-        <ThemedSwitch
-          value={isFavorite}
-          onValueChange={setIsFavorite}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+      <FormField label={t('world_piece_section')}>
+        <SingleSelectPill
+          options={WORLD_PIECE_SECTIONS.map((value) => ({
+            value,
+            label: t(`world_piece_section_${value}`),
+          }))}
+          value={section}
+          onValueChange={(next) => {
+            const nextSection = (next ?? 'rule') as WorldPieceSection;
+            if (nextSection !== section && type) setType(null);
+            setSection(nextSection);
+          }}
+          placeholder={t('world_piece_section')}
+          multiple={false}
         />
-      </View>
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-      <TextInput
-        placeholder={t('world_rule_description_placeholder')}
-        value={description || ''}
-        onChangeText={setDescription}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('world_piece_type')}>
+        <SuggestionTextInput
+          placeholder={t('world_piece_type_placeholder')}
+          value={type || ''}
+          onChangeText={setType}
+          type={`world_piece_type:${section}`}
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
-      <SuggestionTextInput
-        placeholder={t('category_placeholder')}
-        value={category || ''}
-        onChangeText={setCategory}
-        type="world_piece_category"
-        storyId={selectedStory?.id || ''}
-      />
+      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_behavior')}</Text>
-      <TextInput
-        placeholder={t('world_piece_behavior_placeholder')}
-        value={behavior || ''}
-        onChangeText={setBehavior}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('world_rule_description_placeholder')}
+            value={description || ''}
+            onChangeText={setDescription}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_usability')}</Text>
-      <TextInput
-        placeholder={t('world_piece_usability_placeholder')}
-        value={usability || ''}
-        onChangeText={setUsability}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('category')}>
+        <SuggestionTextInput
+          placeholder={t('category_placeholder')}
+          value={category || ''}
+          onChangeText={setCategory}
+          type="world_piece_category"
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('world_piece_danger')}</Text>
-      <TextInput
-        placeholder={t('world_piece_danger_placeholder')}
-        value={danger || ''}
-        onChangeText={setDanger}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('world_piece_behavior')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('world_piece_behavior_placeholder')}
+            value={behavior || ''}
+            onChangeText={setBehavior}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('world_rule_extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('world_piece_usability')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('world_piece_usability_placeholder')}
+            value={usability || ''}
+            onChangeText={setUsability}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('world_piece_danger')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('world_piece_danger_placeholder')}
+            value={danger || ''}
+            onChangeText={setDanger}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('extra_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('world_rule_extra_notes_placeholder')}
+            value={extraNotes || ''}
+            onChangeText={setExtraNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       <CustomAttributeFields
         storyId={selectedStory?.id || ''}
@@ -474,16 +475,7 @@ const WorldRuleFormScreen = () => {
           />
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{copy.saveLabel}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {copy.deleteLabel}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

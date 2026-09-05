@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import {
   calendarDaysPerYear,
@@ -25,7 +26,6 @@ import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/utils/AppAlert';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -101,27 +101,23 @@ const StoryCalendarListScreen = () => {
     });
   }, [primary, story?.timelineEpochDay, story?.timelineEpochSeconds]);
 
+  useScreenHeader({
+    target: 'parent',
+    title: t('calendar_list_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('calendar_add'),
+        onPress: () => navigation.navigate('StoryCalendarForm', {}),
+        visible: !!canEdit,
+      },
+    ],
+  });
   useFocusEffect(
     useCallback(() => {
-      // The drawer owns the header, so the title has to be set on the parent - see
-      // `StorySettingsScreen` for what happens when it is not.
-      navigation.getParent()?.setOptions({
-        title: t('calendar_list_title'),
-        headerRight: canEdit
-          ? () => (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('StoryCalendarForm', {})}
-                style={{ marginRight: 15 }}
-                accessibilityLabel={t('calendar_add')}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )
-          : undefined,
-      });
-      setDocumentTitle(t('calendar_list_title'));
       void reload();
-    }, [canEdit, colors.text, navigation, reload, t]),
+    }, [reload]),
   );
 
   const promote = useCallback(

@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, Text } from 'react-native';
 
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 //import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
@@ -20,7 +20,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSyncConflictStore } from '../../state/syncConflictStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 const MainDashboardScreen = () => {
@@ -50,12 +49,6 @@ const MainDashboardScreen = () => {
   const [analysisIssueCount, setAnalysisIssueCount] = useState<number | undefined>(undefined);
 
   const backPressTimer = useRef<number | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(selectedStory?.title || t('dashboard_title'));
-    }, [selectedStory?.title, t]),
-  );
 
   useEffect(() => {
     const backAction = () => {
@@ -167,24 +160,24 @@ const MainDashboardScreen = () => {
     return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
   }, [selectedStory?.id, fetchCounts, runAnalysis]);
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => {
-            if (selectedStory?.id) {
-              navigation.navigate('StorySettings', { storyId: selectedStory.id });
-            } else {
-              showNotification(t('no_story_selected_for_settings'), 'warning'); // New translation key
-            }
-          }}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="settings-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, selectedStory?.id, showNotification, t, colors.text]); // Dependencies
+  useScreenHeader({
+    target: 'self',
+    title: selectedStory?.title || t('dashboard_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'settings-outline',
+        label: t('story_settings_title'),
+        onPress: () => {
+          if (selectedStory?.id) {
+            navigation.navigate('StorySettings', { storyId: selectedStory.id });
+          } else {
+            showNotification(t('no_story_selected_for_settings'), 'warning'); // New translation key
+          }
+        },
+      },
+    ],
+  }); // Dependencies
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
@@ -211,28 +204,6 @@ const MainDashboardScreen = () => {
       fontSize: 16,
       color: colors.textSecondary,
       marginBottom: 5,
-    },
-    input: {
-      height: 40,
-      borderColor: colors.primary,
-      borderWidth: 1,
-      borderRadius: 5,
-      paddingHorizontal: 10,
-      marginBottom: 10,
-      color: colors.text,
-      backgroundColor: colors.surface,
-    },
-    buttonContainer: {
-      marginTop: 10,
-      marginBottom: 20,
-      borderColor: colors.primary,
-      borderWidth: 1,
-      borderRadius: 5,
-    },
-    themedText: {
-      fontSize: 16,
-      color: colors.primary,
-      marginTop: 10,
     },
   });
 

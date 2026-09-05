@@ -1,6 +1,10 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
@@ -15,21 +19,19 @@ import { CharacterStatValuesEditor } from '@/src/components/features/stats/Chara
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
+import { StackActions, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
@@ -42,13 +44,8 @@ import { createStatRelationService } from '../../services/storymanagement/StatRe
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 
@@ -69,12 +66,11 @@ const CharacterFormScreen = () => {
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
-  const scrollBottomPadding = useFormScrollBottomPadding();
+
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
@@ -144,19 +140,16 @@ const CharacterFormScreen = () => {
   } = useEntityRelations({ entityType: 'Character', entityId: currentCharacterId });
 
   const [loading, setLoading] = useState(true);
+  const { pending: saving, run: runSave } = useAsyncOperation();
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!currentCharacterId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(formTitle);
-      navigation.getParent()?.setOptions({
-        title: formTitle,
-        headerRight: () => <View />,
-      });
-    }, [navigation, formTitle]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: formTitle,
+  });
 
   const fetchAllCharactersInStory = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) {
@@ -249,100 +242,97 @@ const CharacterFormScreen = () => {
     }
   }, [isEditing, customFields]);
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      AppAlert.alert(t('error'), t('name_required'));
-      return;
-    }
-    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
-    if (missingRequiredField) {
-      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-      return;
-    }
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!selectedStory?.id) {
-      AppAlert.alert(t('error'), t('no_story_selected'));
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const characterData: Omit<
-        Character,
-        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-      > = {
-        name: name.trim(),
-        title: title ? title.trim() : null,
-        description,
-        gender,
-        race,
-        subrace,
-        personality,
-        motivation,
-        qualities,
-        weaknesses,
-        biography,
-        plannedTimeline,
-        isFavorite,
-        extraNotes,
-      };
-
-      let savedCharacter: Character;
-
-      if (isEditing) {
-        savedCharacter = await characterServiceRef.current!.updateCharacter(
-          userId,
-          currentCharacterId!,
-          characterData,
-        );
-        AppAlert.alert(t('success'), copy.updated);
-      } else {
-        savedCharacter = await characterServiceRef.current!.createCharacter(userId, {
-          ...characterData,
-          storyId: selectedStory.id,
-        });
-        AppAlert.alert(t('success'), copy.created);
-        setCurrentCharacterId(savedCharacter.id); // Set the ID for the newly created character
+  const handleSave = () =>
+    runSave(async () => {
+      if (!name.trim()) {
+        AppAlert.alert(t('error'), t('name_required'));
+        return;
+      }
+      const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+      if (missingRequiredField) {
+        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+        return;
+      }
+      if (!userId) {
+        AppAlert.alert(t('error'), t('user_not_identified'));
+        return;
+      }
+      if (!selectedStory?.id) {
+        AppAlert.alert(t('error'), t('no_story_selected'));
+        return;
       }
 
-      if (savedCharacter.id) {
-        await persistTagRelations(savedCharacter.id);
-        await persistNoteRelations(savedCharacter.id);
-        await seeAlsoManagerRef.current?.persistPending(savedCharacter.id);
-        await persistPendingCharacterRelations(savedCharacter.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(
-          userId,
-          selectedStory.id,
-          'Character',
-          savedCharacter.id,
-          customValues,
-        );
-      }
+      try {
+        const characterData: Omit<
+          Character,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        > = {
+          name: name.trim(),
+          title: title ? title.trim() : null,
+          description,
+          gender,
+          race,
+          subrace,
+          personality,
+          motivation,
+          qualities,
+          weaknesses,
+          biography,
+          plannedTimeline,
+          isFavorite,
+          extraNotes,
+        };
 
-      entityEventEmitter.emit('character_changed', selectedStory.id, savedCharacter.id); // Emit change event
+        let savedCharacter: Character;
 
-      // After saving character, if it's a new character, relations can now be added
-      // Or if it was an edit, relations data might need a refresh.
-      if (!isEditing && savedCharacter.id) {
-        // If it was a new character, relations section will become editable now
-        // A full reload or navigate might be better here to ensure all states are correct
-        navigation.dispatch(
-          StackActions.replace('CharacterForm', { characterId: savedCharacter.id }),
-        ); // Fixed navigation.replace
-      } else {
-        navigation.goBack();
+        if (isEditing) {
+          savedCharacter = await characterServiceRef.current!.updateCharacter(
+            userId,
+            currentCharacterId!,
+            characterData,
+          );
+          AppAlert.alert(t('success'), copy.updated);
+        } else {
+          savedCharacter = await characterServiceRef.current!.createCharacter(userId, {
+            ...characterData,
+            storyId: selectedStory.id,
+          });
+          AppAlert.alert(t('success'), copy.created);
+          setCurrentCharacterId(savedCharacter.id); // Set the ID for the newly created character
+        }
+
+        if (savedCharacter.id) {
+          await persistTagRelations(savedCharacter.id);
+          await persistNoteRelations(savedCharacter.id);
+          await seeAlsoManagerRef.current?.persistPending(savedCharacter.id);
+          await persistPendingCharacterRelations(savedCharacter.id);
+          await createAttributeValueService(drizzleDb).saveValuesForEntity(
+            userId,
+            selectedStory.id,
+            'Character',
+            savedCharacter.id,
+            customValues,
+          );
+        }
+
+        entityEventEmitter.emit('character_changed', selectedStory.id, savedCharacter.id); // Emit change event
+
+        // After saving character, if it's a new character, relations can now be added
+        // Or if it was an edit, relations data might need a refresh.
+        if (!isEditing && savedCharacter.id) {
+          // If it was a new character, relations section will become editable now
+          // A full reload or navigate might be better here to ensure all states are correct
+          navigation.dispatch(
+            StackActions.replace('CharacterForm', { characterId: savedCharacter.id }),
+          ); // Fixed navigation.replace
+        } else {
+          navigation.goBack();
+        }
+      } catch (err) {
+        console.error('Failed to save character:', err);
+        AppAlert.alert(t('error'), copy.failedToSave);
       }
-    } catch (err) {
-      console.error('Failed to save character:', err);
-      AppAlert.alert(t('error'), copy.failedToSave);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
   const handleDelete = () => {
     if (!userId) {
@@ -362,7 +352,7 @@ const CharacterFormScreen = () => {
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_character',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setLoading,
+      onLoadingChange: setDeleting,
       onConfirm: async () => {
         await characterServiceRef.current!.deleteCharacter(userId, currentCharacterId);
         entityEventEmitter.emit('character_changed', selectedStory?.id, currentCharacterId);
@@ -463,7 +453,6 @@ const CharacterFormScreen = () => {
   };
 
   const styles = StyleSheet.create({
-    ...commonFormStyleDefs(colors, scrollBottomPadding),
     noteSection: {
       // Renamed from tagSection for clarity.
       marginTop: 20,
@@ -473,155 +462,192 @@ const CharacterFormScreen = () => {
       marginTop: 20,
       marginBottom: 0,
     },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+    return <ScreenLoading />;
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
+          {isEditing && (
+            <Button
+              onPress={handleDelete}
+              style={{ backgroundColor: colors.error }}
+              disabled={saving || deleting}
+            >
+              {copy.deleteLabel}
+            </Button>
+          )}
+        </>
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>{formTitle}</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{copy.formDescription}</Text>
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('name_placeholder')}
+            value={name}
+            onChangeText={setName}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-      <TextInput
-        placeholder={t('name_placeholder')}
-        value={name}
-        onChangeText={setName}
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('title')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('character_title_placeholder')}
+            value={title || ''}
+            onChangeText={setTitle}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-      <TextInput
-        placeholder={t('character_title_placeholder')}
-        value={title || ''}
-        onChangeText={setTitle}
-        style={commonInputStyles.input}
-      />
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('description_placeholder')}
+            value={description || ''}
+            onChangeText={setDescription}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-      <TextInput
-        placeholder={t('description_placeholder')}
-        value={description || ''}
-        onChangeText={setDescription}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('gender')}</Text>
-      <SuggestionTextInput
-        placeholder={t('gender_placeholder')}
-        value={gender || ''}
-        onChangeText={setGender}
-        type="character_gender"
-        storyId={selectedStory?.id || ''}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('race')}</Text>
-      <SuggestionTextInput
-        placeholder={t('race_placeholder')}
-        value={race || ''}
-        onChangeText={setRace}
-        type="character_race"
-        storyId={selectedStory?.id || ''}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('subrace')}</Text>
-      <SuggestionTextInput
-        placeholder={t('subrace_placeholder')}
-        value={subrace || ''}
-        onChangeText={setSubrace}
-        type="character_subrace"
-        storyId={selectedStory?.id || ''}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('personality')}</Text>
-      <TextInput
-        placeholder={t('personality_placeholder')}
-        value={personality || ''}
-        onChangeText={setPersonality}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('motivation')}</Text>
-      <TextInput
-        placeholder={t('motivation_placeholder')}
-        value={motivation || ''}
-        onChangeText={setMotivation}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('qualities')}</Text>
-      <TextInput
-        placeholder={t('qualities_placeholder')}
-        value={qualities || ''}
-        onChangeText={setQualities}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('weaknesses')}</Text>
-      <TextInput
-        placeholder={t('weaknesses_placeholder')}
-        value={weaknesses || ''}
-        onChangeText={setWeaknesses}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('biography')}</Text>
-      <TextInput
-        placeholder={t('biography_placeholder')}
-        value={biography || ''}
-        onChangeText={setBiography}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('planned_timeline')}</Text>
-      <TextInput
-        placeholder={t('planned_timeline_placeholder')}
-        value={plannedTimeline || ''}
-        onChangeText={setPlannedTimeline}
-        style={commonInputStyles.multiline}
-        multiline
-      />
-
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_favorite')}
-        </Text>
-        <ThemedSwitch
-          value={isFavorite}
-          onValueChange={setIsFavorite}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+      <FormField label={t('gender')}>
+        <SuggestionTextInput
+          placeholder={t('gender_placeholder')}
+          value={gender || ''}
+          onChangeText={setGender}
+          type="character_gender"
+          storyId={selectedStory?.id || ''}
         />
-      </View>
+      </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={commonInputStyles.multiline}
-        multiline
-      />
+      <FormField label={t('race')}>
+        <SuggestionTextInput
+          placeholder={t('race_placeholder')}
+          value={race || ''}
+          onChangeText={setRace}
+          type="character_race"
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
+
+      <FormField label={t('subrace')}>
+        <SuggestionTextInput
+          placeholder={t('subrace_placeholder')}
+          value={subrace || ''}
+          onChangeText={setSubrace}
+          type="character_subrace"
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
+
+      <FormField label={t('personality')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('personality_placeholder')}
+            value={personality || ''}
+            onChangeText={setPersonality}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('motivation')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('motivation_placeholder')}
+            value={motivation || ''}
+            onChangeText={setMotivation}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('qualities')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('qualities_placeholder')}
+            value={qualities || ''}
+            onChangeText={setQualities}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('weaknesses')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('weaknesses_placeholder')}
+            value={weaknesses || ''}
+            onChangeText={setWeaknesses}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('biography')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('biography_placeholder')}
+            value={biography || ''}
+            onChangeText={setBiography}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormField label={t('planned_timeline')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('planned_timeline_placeholder')}
+            value={plannedTimeline || ''}
+            onChangeText={setPlannedTimeline}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+
+      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
+
+      <FormField label={t('extra_notes')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            placeholder={t('extra_notes_placeholder')}
+            value={extraNotes || ''}
+            onChangeText={setExtraNotes}
+            style={commonInputStyles.multiline}
+            multiline
+          />
+        )}
+      </FormField>
 
       <CustomAttributeFields
         storyId={selectedStory?.id || ''}
@@ -731,16 +757,7 @@ const CharacterFormScreen = () => {
           />
         </View>
       )}
-
-      <FormActions stackOnCompact style={styles.saveButton}>
-        <Button onPress={handleSave}>{copy.saveLabel}</Button>
-        {isEditing && (
-          <Button onPress={handleDelete} style={{ backgroundColor: colors.error }}>
-            {copy.deleteLabel}
-          </Button>
-        )}
-      </FormActions>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

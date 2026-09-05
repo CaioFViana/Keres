@@ -1,8 +1,9 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +27,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { AppAlert } from '../../utils/AppAlert';
 
 type Navigation = CompositeNavigationProp<
@@ -78,25 +78,19 @@ const BoardListScreen = () => {
     return () => entityEventEmitter.off('board_changed', onChange);
   }, [reload, storyId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('boards_title'));
-      navigation.getParent()?.setOptions({
-        title: t('boards_title'),
-        headerRight: canEdit
-          ? () => (
-              <TouchableOpacity
-                onPress={() => setCreateVisible(true)}
-                style={{ marginRight: 15 }}
-                accessibilityLabel={t('board_create_title')}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )
-          : undefined,
-      });
-    }, [canEdit, colors.text, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('boards_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('board_create_title'),
+        onPress: () => setCreateVisible(true),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),

@@ -1,3 +1,8 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -14,19 +19,20 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 import { useDrizzle } from '../../db';
 import type { CharacterSelect, ItemSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import {
+  useEntityInitialLoad,
+  useEntityEventSubscriptions,
+} from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -34,9 +40,6 @@ import { createCharacterService } from '../../services/storymanagement/Character
 import { createItemService } from '../../services/storymanagement/ItemService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
@@ -49,7 +52,7 @@ type ItemDetailScreenRouteProp = RouteProp<ItemDetailScreenParamList, 'ItemDetai
 
 const ItemDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
+  useTheme();
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const { openItem: openJourneyMap } = useOpenPresenceMatrixViewer();
@@ -64,7 +67,6 @@ const ItemDetailScreen = () => {
     neutral: 'o',
   });
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
@@ -102,11 +104,6 @@ const ItemDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
-
-  const commonContainerStyles = getCommonContainerStyles(colors);
-  const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-  });
 
   const fetchItem = useCallback(async () => {
     if (!itemServiceRef.current) {
@@ -162,12 +159,9 @@ const ItemDetailScreen = () => {
   useEntityInitialLoad(fetchItem);
 
   // Event subscriptions never initiate an item load.
-  useEffect(() => {
-    entityEventEmitter.on('item_changed', handleItemChange);
-    return () => {
-      entityEventEmitter.off('item_changed', handleItemChange);
-    };
-  }, [handleItemChange]);
+  useEntityEventSubscriptions(
+    useMemo(() => [{ event: 'item_changed', listener: handleItemChange }], [handleItemChange]),
+  );
 
   useEffect(() => {
     if (item) {
@@ -175,33 +169,26 @@ const ItemDetailScreen = () => {
     }
   }, [item, fetchAllCharacters]);
 
-  const renderHeaderRight = useCallback(
-    () => (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {selectedStory?.type === 'linear' && (
-          <TouchableOpacity onPress={() => openJourneyMap(itemId)} style={{ marginRight: 15 }}>
-            <Ionicons name="map-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        )}
-        {canEdit && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ItemForm', { itemId })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="pencil-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        )}
-      </View>
-    ),
-    [navigation, itemId, colors.text, canEdit, openJourneyMap, selectedStory?.type],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'map-outline',
+        label: t('presence_matrix_item_title'),
+        onPress: () => openJourneyMap(itemId),
+        visible: !!(selectedStory?.type === 'linear'),
+      },
+      {
+        id: 'action-1',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('ItemForm', { itemId }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
@@ -217,97 +204,60 @@ const ItemDetailScreen = () => {
     ? allCharacters.find((c) => c.id === item.characterOwnerId)
     : undefined;
 
+  const commentField = createCommentFieldBindings({
+    storyId: item.storyId,
+    mentionSourceId: item.id,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={item.name}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{item.name}</Text>
-      {(() => {
-        const commentableFieldProps = {
-          storyId: item.storyId,
-          // Mentions of other entities in this one's text become links; it never links to itself.
-          mentionSourceId: item.id,
-          canComment,
-          isStoryOwner,
-          currentUserId,
-          onDeleteComment: deleteComment,
-          onUpdateComment: updateComment,
-        };
-        return (
-          <>
-            <TagList tags={itemTags} variant="chip" emptyMessage={t('no_tags_found')} />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('description')}
-              value={item.description || t('common_na')}
-              comments={commentsByField['description'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'description' },
-                  { ...input, contentSnapshot: item.description || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('category')}
-              value={item.category || t('common_na')}
-              comments={commentsByField['category'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'category' },
-                  { ...input, contentSnapshot: item.category || t('common_na') },
-                )
-              }
-            />
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('initial_state')}
-              value={item.initialState || t('common_na')}
-              comments={commentsByField['initialState'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'initialState' },
-                  { ...input, contentSnapshot: item.initialState || t('common_na') },
-                )
-              }
-            />
-            <DetailField
-              label={t('item_character_owner_label', {
-                character: term('Character'),
-                ending: characterOwnerEnding,
-              })}
-              value={owner?.name || t('common_na')}
-            />
+      <TagList tags={itemTags} variant="chip" emptyMessage={t('no_tags_found')} />
+      <CommentableDetailField
+        {...commentField('description', item.description || t('common_na'))}
+        label={t('description')}
+      />
+      <CommentableDetailField
+        {...commentField('category', item.category || t('common_na'))}
+        label={t('category')}
+      />
+      <CommentableDetailField
+        {...commentField('initialState', item.initialState || t('common_na'))}
+        label={t('initial_state')}
+      />
+      <DetailField
+        label={t('item_character_owner_label', {
+          character: term('Character'),
+          ending: characterOwnerEnding,
+        })}
+        value={owner?.name || t('common_na')}
+      />
 
-            <CustomAttributeDetailFields
-              storyId={item.storyId}
-              entityType="Item"
-              entityId={itemId}
-            />
+      <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
 
-            <CommentableDetailField
-              {...commentableFieldProps}
-              label={t('extra_notes')}
-              value={item.extraNotes || t('common_na')}
-              comments={commentsByField['extraNotes'] ?? []}
-              onAddComment={(input) =>
-                addComment(
-                  { fieldKey: 'extraNotes' },
-                  { ...input, contentSnapshot: item.extraNotes || t('common_na') },
-                )
-              }
-            />
-            <DetailField
-              label={t('is_favorite')}
-              value={item.isFavorite ? t('common_yes') : t('common_no')}
-            />
-          </>
-        );
-      })()}
+      <CommentableDetailField
+        {...commentField('extraNotes', item.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
+      <DetailField
+        label={t('is_favorite')}
+        value={item.isFavorite ? t('common_yes') : t('common_no')}
+      />
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={itemId}
         ownerType="Item"
@@ -349,11 +299,7 @@ const ItemDetailScreen = () => {
         entityType="Item"
         entityId={item.id}
       />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

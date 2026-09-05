@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +17,6 @@ import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/utils/AppAlert';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 
 const StoryArcListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -39,25 +39,23 @@ const StoryArcListScreen = () => {
     setArcs(await service.getArcsForStory(story.id));
   }, [canEdit, db, story?.id, userId]);
 
+  useScreenHeader({
+    target: 'parent',
+    title: t('arcs_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('StoryArcForm', {}),
+        visible: !!canEdit,
+      },
+    ],
+  });
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('arcs_title'),
-        headerRight: canEdit
-          ? () => (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('StoryArcForm', {})}
-                style={{ marginRight: 15 }}
-                accessibilityLabel={t('add')}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )
-          : undefined,
-      });
-      setDocumentTitle(t('arcs_title'));
       void reload();
-    }, [canEdit, colors.text, navigation, reload, t]),
+    }, [reload]),
   );
 
   const handleDelete = (arc: StoryArcSelect) => {

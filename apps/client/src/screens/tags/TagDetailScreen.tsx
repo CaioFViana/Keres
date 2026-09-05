@@ -1,3 +1,7 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
@@ -7,26 +11,22 @@ import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEnt
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import { Ionicons } from '@expo/vector-icons';
 import type { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
 import { useEntityComments } from '../../hooks/useEntityComments';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { TagsScreenNavigationProp } from './TagListScreen';
 
@@ -49,7 +49,6 @@ const TagDetailScreen = () => {
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation(); // Initialize useTranslation
   const { selectedStory } = useStoryStore();
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   // Initialize tagService only once when drizzleDb is available
   useEffect(() => {
@@ -99,9 +98,7 @@ const TagDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
     detailText: {
       fontSize: 16,
       color: colors.text,
@@ -262,27 +259,18 @@ const TagDetailScreen = () => {
     }
   }, [allTagRelations, selectedStory?.id, processTagRelations]);
 
-  const renderHeaderRight = useCallback(
-    () => (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('TagForm', { tagId: tagId })}
-        style={{ marginRight: 15 }}
-      >
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ),
-    [navigation, tagId, colors.text],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: headerTitle,
-        headerRight: renderHeaderRight, // Pass the memoized component
-      });
-      setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: headerTitle,
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('edit'),
+        onPress: () => navigation.navigate('TagForm', { tagId: tagId }),
+      },
+    ],
+  });
 
   if (loading) {
     return <ScreenLoading padded message={t('loading_tag_details')} />;
@@ -298,12 +286,26 @@ const TagDetailScreen = () => {
     );
   }
 
+  const commentField = createCommentFieldBindings({
+    storyId: tag.storyId,
+    canComment: canComment,
+    isStoryOwner: isStoryOwner,
+    currentUserId: currentUserId,
+    onDeleteComment: deleteComment,
+    onUpdateComment: updateComment,
+    commentsByField,
+    addComment,
+  });
+
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    <DetailContainer
+      title={tag.name}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
     >
-      <Text style={styles.mainTitle}>{tag.name}</Text>
       {tag.color && (
         <View style={styles.colorDisplayContainer}>
           <View style={[styles.colorCircle, { backgroundColor: tag.color }]} />
@@ -314,21 +316,8 @@ const TagDetailScreen = () => {
       )}
 
       <CommentableDetailField
-        storyId={tag.storyId}
+        {...commentField('extraNotes', tag.extraNotes || t('common_na'))}
         label={t('extra_notes')}
-        value={tag.extraNotes || t('common_na')}
-        comments={commentsByField['extraNotes'] ?? []}
-        canComment={canComment}
-        isStoryOwner={isStoryOwner}
-        currentUserId={currentUserId}
-        onAddComment={(input) =>
-          addComment(
-            { fieldKey: 'extraNotes' },
-            { ...input, contentSnapshot: tag.extraNotes || t('common_na') },
-          )
-        }
-        onDeleteComment={deleteComment}
-        onUpdateComment={updateComment}
       />
 
       <RelatedEntitiesList
@@ -339,11 +328,7 @@ const TagDetailScreen = () => {
 
       <EntityMetadata version={tag.version} createdAt={tag.createdAt} updatedAt={tag.updatedAt} />
       <FavoritedByList storyId={tag.storyId} entityId={tagId} entityType="Tag" />
-
-      <View style={styles.buttonContainer}>
-        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-      </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

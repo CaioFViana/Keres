@@ -1,14 +1,14 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { WorldRulesStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 
 const SECTION_ICONS: Record<WorldPieceSection, keyof typeof Ionicons.glyphMap> = {
@@ -30,12 +30,10 @@ const WorldIndexScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<WorldRulesStackParamList, 'WorldIndex'>>();
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('world_title'), headerRight: undefined });
-      setDocumentTitle(t('world_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('world_title'),
+  });
 
   const styles = useMemo(
     () =>

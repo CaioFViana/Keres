@@ -39,6 +39,22 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
+it('ignores a repeated confirmation while the deletion is pending', async () => {
+  let finish!: () => void;
+  const onConfirm = jest.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const { buttons } = await openDialog({ onConfirm });
+  const first = pressDelete(buttons);
+  await pressDelete(buttons);
+  expect(onConfirm).toHaveBeenCalledTimes(1);
+  finish();
+  await first;
+});
+
 afterEach(() => {
   jest.restoreAllMocks();
 });

@@ -1,6 +1,7 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +23,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 
@@ -32,7 +32,7 @@ type StatListNavigationProp = NativeStackNavigationProp<CustomizationStackParamL
 const StatListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  useDocumentTitle(t('stats_title'));
+
   const { colors } = useTheme();
   const navigation = useNavigation<StatListNavigationProp>();
   const drizzleDb = useDrizzle();
@@ -196,23 +196,19 @@ const StatListScreen = () => {
     userId,
   ]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('stats_title'),
-        headerRight:
-          canEdit && statSystem
-            ? () => (
-                <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-                  <TouchableOpacity onPress={handleCreate} accessibilityLabel={t('add')}>
-                    <Ionicons name="add" size={30} color={colors.text} />
-                  </TouchableOpacity>
-                </View>
-              )
-            : undefined,
-      });
-    }, [canEdit, colors.text, handleCreate, navigation, statSystem, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('stats_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('add'),
+        onPress: handleCreate,
+        visible: !!(canEdit && statSystem),
+      },
+    ],
+  });
 
   if (!storyId) {
     return (

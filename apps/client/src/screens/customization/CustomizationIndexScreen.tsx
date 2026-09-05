@@ -1,13 +1,13 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 
 /**
  * The four ways a story can be shaped beyond its own text.
@@ -34,15 +34,10 @@ const CustomizationIndexScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'CustomizationIndex'>>();
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('customization_title'),
-        headerRight: undefined,
-      });
-      setDocumentTitle(t('customization_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('customization_title'),
+  });
 
   const entries: Entry[] = [
     {

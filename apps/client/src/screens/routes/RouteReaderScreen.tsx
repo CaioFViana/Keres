@@ -1,11 +1,12 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -15,7 +16,6 @@ import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteReader'>;
 type ScreenRoute = RouteProp<PlotsStackParamList, 'RouteReader'>;
@@ -56,25 +56,19 @@ export default function RouteReaderScreen() {
       }),
     [colors],
   );
-  useFocusEffect(
-    useCallback(() => {
-      const title = route ? t('route_reader_title', { route: route.name }) : t('route_reader');
-      setDocumentTitle(title);
-      navigation.getParent()?.setOptions({
-        title,
-        headerRight: () =>
-          route ? (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('RouteTimeline', { routeId })}
-              accessibilityLabel={t('route_timeline')}
-              style={{ marginRight: 15 }}
-            >
-              <Text style={{ color: colors.text, fontSize: 20 }}>◷</Text>
-            </TouchableOpacity>
-          ) : null,
-      });
-    }, [colors.text, navigation, route, routeId, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: route ? t('route_reader_title', { route: route.name }) : t('route_reader'),
+    actions: [
+      {
+        id: 'timeline',
+        icon: 'time-outline',
+        label: t('route_timeline'),
+        onPress: () => navigation.navigate('RouteTimeline', { routeId }),
+        visible: !!route,
+      },
+    ],
+  });
   if (loading) return <ScreenLoading message={t('loading_routes')} />;
   if (!route)
     return <ScreenError message={t('route_not_found')} onGoBack={() => navigation.goBack()} />;

@@ -1,4 +1,3 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Button, SingleSelectPill } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import {
@@ -9,6 +8,7 @@ import EntityFormContainer from '@/src/components/common/forms/EntityFormContain
 import StoryCollaborationSection from '@/src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
 import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -83,7 +83,7 @@ const StorySettingsScreen = () => {
       }
     };
     void loadStory();
-  }, [storyId, storyService, userId, t, identity.applyStoryIdentity]);
+  }, [storyId, storyService, userId, t, identity.applyStoryIdentity, identity]);
 
   const handleSave = () =>
     runSave(async () => {
@@ -158,7 +158,9 @@ const StorySettingsScreen = () => {
         setConverting(false);
         if (!compatibility.compatible) {
           const reasonLines = compatibility.reasons
-            .map((reason) => `• ${reason.chapterName}: ${t(`linear_incompatibility_${reason.kind}`)}`)
+            .map(
+              (reason) => `• ${reason.chapterName}: ${t(`linear_incompatibility_${reason.kind}`)}`,
+            )
             .join('\n');
           AppAlert.alert(
             t('cannot_convert_to_linear_title'),
@@ -231,7 +233,10 @@ const StorySettingsScreen = () => {
 
   if (!storyId) {
     return (
-      <ScreenError message={t('no_story_selected_for_settings')} onGoBack={() => navigation.goBack()} />
+      <ScreenError
+        message={t('no_story_selected_for_settings')}
+        onGoBack={() => navigation.goBack()}
+      />
     );
   }
   if (loading || converting) return <ScreenLoading />;
@@ -276,7 +281,12 @@ const StorySettingsScreen = () => {
         editable={canEdit}
       />
 
-      <View style={[styles.preferencesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.preferencesCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
         <View
           style={[
             styles.preferenceRow,

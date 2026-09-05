@@ -256,7 +256,9 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
             console.error('Failed to unlink story from server:', err);
             AppAlert.alert(
               t('error'),
-              isOfflineError(err) ? t('unlink_from_server_offline') : t('unlink_from_server_failed'),
+              isOfflineError(err)
+                ? t('unlink_from_server_offline')
+                : t('unlink_from_server_failed'),
             );
           } finally {
             setServerActionLoading(false);

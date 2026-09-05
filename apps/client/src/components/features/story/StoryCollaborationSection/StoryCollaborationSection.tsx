@@ -31,7 +31,11 @@ export default function StoryCollaborationSection({
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {collaboration.serverId && (
         <View
-          style={[styles.preferenceRow, styles.preferenceRowDivider, { borderBottomColor: colors.border }]}
+          style={[
+            styles.preferenceRow,
+            styles.preferenceRowDivider,
+            { borderBottomColor: colors.border },
+          ]}
         >
           <View style={styles.preferenceBody}>
             <Text style={[styles.preferenceTitle, { color: colors.text }]}>
@@ -106,7 +110,9 @@ export default function StoryCollaborationSection({
                     </View>
                     <Button
                       onPress={collaboration.handleAddCollaborator}
-                      disabled={!collaboration.selectedFriendId || collaboration.serverActionLoading}
+                      disabled={
+                        !collaboration.selectedFriendId || collaboration.serverActionLoading
+                      }
                       style={styles.addCollaboratorButton}
                     >
                       {t('add')}
@@ -153,12 +159,11 @@ export default function StoryCollaborationSection({
                     </Button>
                   </View>
                 ))}
-                {collaboration.collaborators !== null &&
-                  collaboration.collaborators.length > 0 && (
-                    <Text style={{ color: colors.textSecondary, marginTop: 5 }}>
-                      {t('unlink_blocked_by_collaborators')}
-                    </Text>
-                  )}
+                {collaboration.collaborators !== null && collaboration.collaborators.length > 0 && (
+                  <Text style={{ color: colors.textSecondary, marginTop: 5 }}>
+                    {t('unlink_blocked_by_collaborators')}
+                  </Text>
+                )}
                 <Button
                   onPress={collaboration.handleUnlinkFromServer}
                   disabled={

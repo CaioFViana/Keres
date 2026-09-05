@@ -1,10 +1,11 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
-import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import Button from '@/src/components/common/controls/Button/Button';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
 import type { Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -17,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -90,7 +90,7 @@ const StoryFormScreen = () => {
       }
     };
     loadStory();
-  }, [storyId, storyService, userId, t, identity.applyStoryIdentity]);
+  }, [storyId, storyService, userId, t, identity.applyStoryIdentity, identity]);
 
   useEffect(() => {
     if (storyId) return;

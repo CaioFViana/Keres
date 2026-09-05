@@ -1,10 +1,15 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import FormField from '@/src/components/common/forms/FormField/FormField';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { APP_RELEASE, canTalkToServer } from '@keres/shared';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRecoveryCodesPanel';
+import ServerRegistrationFields, {
+  type ServerAuthMode,
+} from '@/src/components/features/servers/ServerRegistrationFields';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
@@ -13,17 +18,8 @@ import type {
 } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import apiClient, { apiUrl } from '../../services/apiClient';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
@@ -34,9 +30,10 @@ import {
 } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { authenticateWithKeresServer, keresAuthAlertMessage } from '../../utils/keresServerAuth';
 import { normalizeServerUrl } from '../../utils/serverUrl';
 
 type RootStackParamList = {
@@ -66,29 +63,22 @@ const ServerRegistrationScreen = () => {
     title: serverId ? t('edit_server') : t('register_new_server'),
   });
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
-  const scrollBottomPadding = useFormScrollBottomPadding();
   const serverService = useRef(createServerService(drizzleDb)).current;
   const { setActiveServer } = useUserSettingsStore();
 
-  const [mode, setMode] = useState<'login' | 'register' | 'recover'>('login');
+  const [mode, setMode] = useState<ServerAuthMode>('login');
   const [serverAddress, setServerAddress] = useState('');
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState(''); // Password will only be used for registration, not for editing
-  const [confirmPassword, setConfirmPassword] = useState(''); // Only used when mode === 'register'
-  const [recoveryCode, setRecoveryCode] = useState(''); // Only used when mode === 'recover'
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [serverName, setServerName] = useState('');
-  const [loading, setLoading] = useState(true); // Changed to true to indicate loading initially
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  /**
-   * Freshly issued recovery codes, shown exactly once before leaving the screen - after this only each
-   * one's hash exists on the server, there is no way to recover them again.
-   */
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
 
-  // Only the HTML served by the API (the keres-hosted meta). Electron has `keresAuth` and does not enter.
   const hostedSameOrigin = usesHttpOnlyCookieSession();
   const lockedServerAddress = hostedSameOrigin ? hostedApiOrigin() : null;
 
@@ -102,7 +92,6 @@ const ServerRegistrationScreen = () => {
             setServerAddress(lockedServerAddress ?? fetchedServer.url);
             setUsername(fetchedServer.userName);
             setServerName(fetchedServer.name || '');
-            // Password is not loaded for editing for security reasons
           } else {
             setError(t('server_not_found'));
           }
@@ -113,30 +102,23 @@ const ServerRegistrationScreen = () => {
           setLoading(false);
         }
       } else {
-        if (lockedServerAddress) {
-          setServerAddress(lockedServerAddress);
-        }
+        if (lockedServerAddress) setServerAddress(lockedServerAddress);
         setLoading(false);
       }
     };
-    loadServer();
+    void loadServer();
   }, [serverId, serverService, t, lockedServerAddress]);
 
   const handleSave = useCallback(async () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
     if (!addressToSave || !username.trim()) {
-      AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit')); // New translation key
+      AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit'));
       return;
     }
-
     if (!serverId && !password.trim()) {
-      // Password is required only for new registration
-      AppAlert.alert(t('error'), t('password_required_for_registration')); // New translation key
+      AppAlert.alert(t('error'), t('password_required_for_registration'));
       return;
     }
-
-    // Sync, auth and the hosted session all assume one live row per URL. Check before
-    // /auth/register so a duplicate address cannot create an account and then fail locally.
     if (!serverId) {
       const duplicateServer = await serverService.getServerByUrl(addressToSave);
       if (duplicateServer) {
@@ -144,10 +126,6 @@ const ServerRegistrationScreen = () => {
         return;
       }
     }
-
-    // Creating a brand-new account (as opposed to logging into an existing one) needs its
-    // own, stricter checks - a typo'd password here would lock the user out of an account
-    // they just made, with nothing yet synced anywhere to recover from.
     if (!serverId && mode === 'register') {
       if (password.length < MIN_PASSWORD_LENGTH) {
         AppAlert.alert(t('error'), t('new_password_too_short'));
@@ -159,18 +137,15 @@ const ServerRegistrationScreen = () => {
       }
     }
 
-    // The userId from useUserSettingsStore is the local client ID, not the server-specific ID.
-    // We will get the server-specific userId from the login/registration response.
-
     setLoading(true);
     setError(null);
 
-    let existingServer = null; // Declare existingServer here
+    let existingServer = null;
     if (serverId) {
       existingServer = await serverService.getServerById(serverId);
       if (!existingServer) {
         setError(t('server_not_found'));
-        setLoading(false); // Ensure loading is reset if server not found
+        setLoading(false);
         return;
       }
       if (normalizeServerUrl(existingServer.url) !== normalizeServerUrl(addressToSave)) {
@@ -183,169 +158,74 @@ const ServerRegistrationScreen = () => {
       }
     }
 
-    let serverUserId: string | null = null; // Variable to hold the server-provided userId
-    let serverUserTag: string | null = existingServer?.tag ?? null;
     const existingTokens = existingServer
       ? await authTokenManager.getTokens(existingServer.id)
       : null;
-    let newAccessToken = existingTokens?.accessToken || '';
-    let newRefreshToken = existingTokens?.refreshToken || '';
-    let tokensChanged = false;
-    // It only exists in /auth/register's response - it is the one time these codes appear in plain text,
-    // so the screen needs them before leaving (see recoveryCodesToShow).
-    let issuedRecoveryCodes: string[] | null = null;
+    const isNewServer = !serverId;
+    const isPasswordProvided = password.trim().length > 0;
+    const isUrlChanged = !!(existingServer && existingServer.url !== addressToSave);
+    const isRegistering = isNewServer && mode === 'register';
 
     try {
-      // 1. Server Check (/kerescheck) - always check if server is reachable
-      const keresCheckUrl = apiUrl(addressToSave, '/kerescheck');
-      const checkResponse = await apiClient.get(keresCheckUrl, {
-        timeout: 5000,
-        validateStatus: () => true,
+      const auth = await authenticateWithKeresServer({
+        address: addressToSave,
+        username,
+        password,
+        isRegistering,
+        needsAuth: isNewServer || isPasswordProvided || isUrlChanged,
+        urlChangedWithoutPassword: isUrlChanged && !isPasswordProvided,
+        existingUserId: existingServer?.idUser || null,
+        existingTag: existingServer?.tag ?? null,
       });
-
-      if (
-        checkResponse.status !== 200 ||
-        !checkResponse.data ||
-        typeof checkResponse.data.version !== 'string'
-      ) {
-        AppAlert.alert(t('error'), t('invalid_keres_server'));
-        setLoading(false); // Ensure loading is reset on error
-        return;
-      }
-
-      /**
-       * A server that cannot speak this build's synchronization protocol is refused here rather
-       * than after the account exists.
-       *
-       * The server refuses the sync itself - that is the half which protects old apps, since they
-       * do not have this check - but finding out at registration is the difference between "this
-       * will not work, here is why" and an account that appears to work until the first sync fails
-       * forever. It gates on the protocol, not the release: two versions that never changed the
-       * wire stay compatible, which is the whole reason the two numbers are separate.
-       */
-      if (!canTalkToServer(checkResponse.data.syncProtocol)) {
-        AppAlert.alert(
-          t('error'),
-          t('server_version_mismatch', {
-            serverVersion: checkResponse.data.version,
-            appVersion: APP_RELEASE.version,
-          }),
-        );
-        setLoading(false);
-        return;
-      }
-      // 2. Auth (/auth/login or /auth/register) - only for new registration or if password is provided for update.
-      // `mode` only ever matters for a brand-new server (`!serverId`) - the toggle isn't even
-      // shown otherwise - but the `!serverId` guard here is kept anyway so a stale `mode`
-      // value can never send an edit-existing-connection save through /auth/register.
-      const isNewServer = !serverId;
-      const isPasswordProvided = password.trim().length > 0;
-      const isUrlChanged = existingServer && existingServer.url !== addressToSave;
-      const isRegistering = isNewServer && mode === 'register';
-
-      if (isNewServer || isPasswordProvided || isUrlChanged) {
-        if (isUrlChanged && !isPasswordProvided) {
-          AppAlert.alert(t('error'), t('password_required_for_url_change'));
-          setLoading(false);
-          return;
-        }
-
-        const authUrl = apiUrl(addressToSave, isRegistering ? '/auth/register' : '/auth/login');
-        const authResponse = await apiClient.post(
-          authUrl,
-          { username, password },
-          {
-            timeout: 5000,
-            validateStatus: () => true,
-          },
-        );
-
-        if (
-          authResponse.status !== 200 ||
-          !authResponse.data ||
-          !authResponse.data.accessToken ||
-          !authResponse.data.refreshToken ||
-          !authResponse.data.userId
-        ) {
-          // Added check for userId
-          if (authResponse.status === 401) {
-            AppAlert.alert(t('error'), t('invalid_credentials'));
-            setLoading(false); // Make sure loading is set to false here as well
-            return;
-          } else if (authResponse.status === 409) {
-            AppAlert.alert(t('error'), t('user_already_exists'));
-            setLoading(false); // Make sure loading is set to false here as well
-            return;
-          } else if (authResponse.status === 403) {
-            AppAlert.alert(t('error'), t('registration_closed'));
-            setLoading(false);
-            return;
-          } else {
-            AppAlert.alert(t('error'), `${t('server_error')}: ${authResponse.status}`);
-            setLoading(false); // Make sure loading is set to false here as well
-            return;
-          }
-        }
-        newAccessToken = authResponse.data.accessToken;
-        newRefreshToken = authResponse.data.refreshToken;
-        tokensChanged = true;
-        serverUserId = authResponse.data.userId; // Extract the server-provided userId
-        serverUserTag = authResponse.data.tag ?? serverUserTag;
-        if (isRegistering && Array.isArray(authResponse.data.recoveryCodes)) {
-          issuedRecoveryCodes = authResponse.data.recoveryCodes;
-        }
-      } else {
-        // If not re-authenticating, use the existing server's idUser
-        serverUserId = existingServer?.idUser || null;
-      }
-
-      if (!serverUserId) {
-        // Ensure serverUserId is available
-        AppAlert.alert(t('error'), t('user_not_identified_on_server')); // New translation key
+      if (!auth.ok) {
+        AppAlert.alert(t('error'), keresAuthAlertMessage(t, auth));
         setLoading(false);
         return;
       }
 
       const serverData = {
-        idUser: serverUserId, // Use the server-provided userId
+        idUser: auth.userId,
         userName: username,
-        tag: serverUserTag,
+        tag: auth.tag,
         name: serverName || addressToSave,
         url: addressToSave,
       };
 
-      let savedServer;
-      if (serverId) {
-        await serverService.updateServer(serverId, serverData);
-        savedServer = await serverService.getServerById(serverId); // Retrieve updated server
-        AppAlert.alert(t('success'), t('server_updated_successfully'));
-      } else {
-        savedServer = await serverService.createServer({ ...serverData, lastSyncDate: new Date() }); // Create and get the new server
-        AppAlert.alert(t('success'), t('server_registered_successfully'));
-      }
+      const savedServer = serverId
+        ? await serverService
+            .updateServer(serverId, serverData)
+            .then(() => serverService.getServerById(serverId))
+        : await serverService.createServer({ ...serverData, lastSyncDate: new Date() });
+      AppAlert.alert(
+        t('success'),
+        serverId ? t('server_updated_successfully') : t('server_registered_successfully'),
+      );
 
       if (savedServer) {
-        if (tokensChanged) {
-          await authTokenManager.updateTokens(savedServer.id, newAccessToken, newRefreshToken);
+        if (auth.tokensChanged) {
+          await authTokenManager.updateTokens(savedServer.id, auth.accessToken, auth.refreshToken);
+        } else if (existingTokens) {
+          await authTokenManager.updateTokens(
+            savedServer.id,
+            existingTokens.accessToken,
+            existingTokens.refreshToken,
+          );
         }
-        setActiveServer(savedServer); // Set the active server in Zustand store
+        setActiveServer(savedServer);
         entityEventEmitter.emit('server_connection_changed');
       }
-      if (issuedRecoveryCodes) {
-        // It stays on the screen showing the codes - it only leaves once the person confirms they saved them.
-        setRecoveryCodesToShow(issuedRecoveryCodes);
+      if (auth.recoveryCodes) {
+        setRecoveryCodesToShow(auth.recoveryCodes);
       } else {
         navigation.goBack();
       }
     } catch (err) {
-      let errorMessage = t('failed_to_save_server'); // New translation key
-
-      if (err instanceof ServerUrlAlreadyRegisteredError) {
-        errorMessage = t('server_url_already_registered');
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-
+      const errorMessage =
+        err instanceof ServerUrlAlreadyRegisteredError
+          ? t('server_url_already_registered')
+          : err instanceof Error
+            ? err.message
+            : t('failed_to_save_server');
       setError(errorMessage);
       AppAlert.alert(t('error'), errorMessage);
     } finally {
@@ -366,11 +246,6 @@ const ServerRegistrationScreen = () => {
     setActiveServer,
   ]);
 
-  /**
-   * Restores access with a recovery code instead of the current password - see the feature plan in
-   * RecoveryCodeService (apps/api). It only exists for a new connection (`!serverId`): editing an already
-   * registered one uses the ordinary "New Password" field, which does not need to prove identity again.
-   */
   const handleRecover = useCallback(async () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
     if (!addressToSave || !username.trim() || !recoveryCode.trim()) {
@@ -385,7 +260,6 @@ const ServerRegistrationScreen = () => {
       AppAlert.alert(t('error'), t('passwords_do_not_match'));
       return;
     }
-
     const duplicateServer = await serverService.getServerByUrl(addressToSave);
     if (duplicateServer) {
       AppAlert.alert(t('error'), t('server_url_already_registered'));
@@ -396,17 +270,16 @@ const ServerRegistrationScreen = () => {
     setError(null);
     try {
       const outcome = await redeemRecoveryCode(addressToSave, username, recoveryCode, password);
-
       if (!outcome.success) {
-        if (outcome.reason === 'invalid_code') {
-          AppAlert.alert(t('error'), t('recovery_code_invalid'));
-        } else {
-          AppAlert.alert(t('error'), `${t('server_error')}: ${outcome.status}`);
-        }
+        AppAlert.alert(
+          t('error'),
+          outcome.reason === 'invalid_code'
+            ? t('recovery_code_invalid')
+            : `${t('server_error')}: ${outcome.status}`,
+        );
         setLoading(false);
         return;
       }
-
       const savedServer = await serverService.createServer({
         idUser: outcome.result.userId,
         userName: username,
@@ -451,405 +324,113 @@ const ServerRegistrationScreen = () => {
   ]);
 
   const handleDeleteServer = useCallback(() => {
-    AppAlert.alert(
-      t('delete_server_title'),
-      t('delete_server_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (serverId) {
-              try {
-                setLoading(true);
-                await serverService.deleteServer(serverId);
-                AppAlert.alert(t('success'), t('server_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete server:', err);
-                if (err instanceof ServerHasOwnedStoriesError) {
-                  const message = t('cannot_delete_server_owned_stories_message', {
-                    stories: err.ownedStories.map((story) => story.title).join(', '),
-                  });
-                  setError(message);
-                  AppAlert.alert(t('cannot_delete_server_owned_stories_title'), message);
-                } else {
-                  setError(t('failed_to_delete_server'));
-                  AppAlert.alert(t('error'), t('failed_to_delete_server'));
-                }
-              } finally {
-                setLoading(false);
-              }
+    AppAlert.alert(t('delete_server_title'), t('delete_server_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: async () => {
+          if (!serverId) return;
+          try {
+            setLoading(true);
+            await serverService.deleteServer(serverId);
+            AppAlert.alert(t('success'), t('server_deleted_successfully'));
+            navigation.goBack();
+          } catch (err) {
+            console.error('Failed to delete server:', err);
+            if (err instanceof ServerHasOwnedStoriesError) {
+              const message = t('cannot_delete_server_owned_stories_message', {
+                stories: err.ownedStories.map((story) => story.title).join(', '),
+              });
+              setError(message);
+              AppAlert.alert(t('cannot_delete_server_owned_stories_title'), message);
+            } else {
+              setError(t('failed_to_delete_server'));
+              AppAlert.alert(t('error'), t('failed_to_delete_server'));
             }
-          },
-          style: 'destructive',
+          } finally {
+            setLoading(false);
+          }
         },
-      ],
-      { cancelable: true },
-    );
+      },
+    ]);
   }, [serverId, serverService, navigation, t]);
 
-  if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.text, marginTop: 10 }}>{t('loading_server_data')}</Text>
-      </View>
-    );
-  }
-
+  if (loading) return <ScreenLoading message={t('loading_server_data')} />;
   if (error && serverId) {
-    // Only show error if editing existing server and something went wrong
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.error }}>{error}</Text>
-        <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-      </View>
-    );
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
-
   if (recoveryCodesToShow) {
     return (
-      <KeyboardAwareScreen
-        style={commonContainerStyles.container}
-        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}
-      >
-        <Text style={[styles.title, { color: colors.text }]}>{t('recovery_codes_title')}</Text>
-        <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-          {t('recovery_codes_warning')}
-        </Text>
-        <View style={[styles.recoveryCodesBox, { borderColor: colors.border }]}>
-          {recoveryCodesToShow.map((code) => (
-            <Text key={code} selectable style={[styles.recoveryCode, { color: colors.text }]}>
-              {code}
-            </Text>
-          ))}
-        </View>
-        <Button
-          onPress={() => {
-            setRecoveryCodesToShow(null);
-            navigation.goBack();
-          }}
-          style={styles.registerButton}
-        >
-          {t('recovery_codes_continue_button')}
-        </Button>
-      </KeyboardAwareScreen>
+      <ServerRecoveryCodesPanel
+        codes={recoveryCodesToShow}
+        onContinue={() => {
+          setRecoveryCodesToShow(null);
+          navigation.goBack();
+        }}
+      />
     );
   }
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}
+    <EntityFormContainer
+      title={serverId ? t('edit_server') : t('register_new_server')}
+      description={serverId ? t('edit_server_description') : t('register_new_server_description')}
+      actions={
+        serverId ? (
+          <FormActions stackOnCompact>
+            <Button onPress={handleSave} disabled={loading}>
+              {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
+            </Button>
+            <Button
+              onPress={handleDeleteServer}
+              style={{ backgroundColor: colors.error }}
+              disabled={loading}
+            >
+              {t('delete_server')}
+            </Button>
+          </FormActions>
+        ) : (
+          <Button onPress={mode === 'recover' ? handleRecover : handleSave} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color={colors.onPrimary} />
+            ) : mode === 'recover' ? (
+              t('reset_password_button')
+            ) : mode === 'register' ? (
+              t('create_account')
+            ) : (
+              t('register_server')
+            )}
+          </Button>
+        )
+      }
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {serverId ? t('edit_server') : t('register_new_server')}
-      </Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-        {serverId ? t('edit_server_description') : t('register_new_server_description')}
-      </Text>
-
-      {!serverId && mode !== 'recover' && (
-        <View style={[styles.modeToggleRow, { borderColor: colors.border }]}>
-          <TouchableOpacity
-            style={[
-              styles.modeToggleButton,
-              mode === 'login' && { backgroundColor: colors.primary },
-            ]}
-            onPress={() => setMode('login')}
-          >
-            <Text
-              style={[
-                styles.modeToggleText,
-                { color: mode === 'login' ? colors.onPrimary : colors.text },
-              ]}
-            >
-              {t('log_in')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.modeToggleButton,
-              mode === 'register' && { backgroundColor: colors.primary },
-            ]}
-            onPress={() => setMode('register')}
-          >
-            <Text
-              style={[
-                styles.modeToggleText,
-                { color: mode === 'register' ? colors.onPrimary : colors.text },
-              ]}
-            >
-              {t('create_account')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!serverId && mode === 'recover' && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-          {t('recover_account_description')}
-        </Text>
-      )}
-
-      {hostedSameOrigin && (
-        <Text style={[styles.hostedNotice, { color: colors.textSecondary }]}>
-          {t('hosted_web_same_origin_notice')}
-        </Text>
-      )}
-
-      <FormField label={t('server_address')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('server_address_placeholder')}
-            value={serverAddress}
-            onChangeText={setServerAddress}
-            style={commonInputStyles.input}
-            keyboardType="url"
-            autoCapitalize="none"
-            editable={!hostedSameOrigin}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('server_name_optional')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('server_name_placeholder')}
-            value={serverName}
-            onChangeText={setServerName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('username')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('username_placeholder')}
-            value={username}
-            onChangeText={setUsername}
-            style={commonInputStyles.input}
-            autoCapitalize="none"
-          />
-        )}
-      </FormField>
-
-      {!serverId && (mode === 'login' || mode === 'register') && (
-        <>
-          <FormField label={t('password')}>
-            {(fieldAccessibility) => (
-              <TextInput
-                {...fieldAccessibility}
-                placeholder={t('password_placeholder')}
-                value={password}
-                onChangeText={setPassword}
-                style={commonInputStyles.input}
-                secureTextEntry
-              />
-            )}
-          </FormField>
-        </>
-      )}
-
-      {!serverId && mode === 'login' && (
-        <TouchableOpacity onPress={() => setMode('recover')} style={styles.linkRow}>
-          <Text style={[styles.linkText, { color: colors.primary }]}>
-            {t('forgot_password_link')}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {!serverId && mode === 'register' && (
-        <>
-          <FormField label={t('confirm_new_password')}>
-            {(fieldAccessibility) => (
-              <TextInput
-                {...fieldAccessibility}
-                placeholder={t('confirm_new_password_placeholder')}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                style={commonInputStyles.input}
-                secureTextEntry
-              />
-            )}
-          </FormField>
-        </>
-      )}
-
-      {!serverId && mode === 'recover' && (
-        <>
-          <FormField label={t('recovery_code_label')}>
-            {(fieldAccessibility) => (
-              <TextInput
-                {...fieldAccessibility}
-                placeholder={t('recovery_code_placeholder')}
-                value={recoveryCode}
-                onChangeText={setRecoveryCode}
-                style={commonInputStyles.input}
-                autoCapitalize="characters"
-              />
-            )}
-          </FormField>
-
-          <FormField label={t('new_password')}>
-            {(fieldAccessibility) => (
-              <TextInput
-                {...fieldAccessibility}
-                placeholder={t('new_password_placeholder')}
-                value={password}
-                onChangeText={setPassword}
-                style={commonInputStyles.input}
-                secureTextEntry
-              />
-            )}
-          </FormField>
-
-          <FormField label={t('confirm_new_password')}>
-            {(fieldAccessibility) => (
-              <TextInput
-                {...fieldAccessibility}
-                placeholder={t('confirm_new_password_placeholder')}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                style={commonInputStyles.input}
-                secureTextEntry
-              />
-            )}
-          </FormField>
-
-          <TouchableOpacity onPress={() => setMode('login')} style={styles.linkRow}>
-            <Text style={[styles.linkText, { color: colors.primary }]}>{t('back_to_login')}</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      {serverId && ( // Option to change password for existing server
-        <>
-          <FormField label={t('new_password_optional')}>
-            {(fieldAccessibility) => (
-              <TextInput
-                {...fieldAccessibility}
-                placeholder={t('new_password_placeholder')}
-                value={password}
-                onChangeText={setPassword}
-                style={commonInputStyles.input}
-                secureTextEntry
-              />
-            )}
-          </FormField>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('change_password_warning')}
-          </Text>
-        </>
-      )}
-
-      {serverId ? (
-        <FormActions stackOnCompact>
-          <Button onPress={handleSave} disabled={loading}>
-            {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
-          </Button>
-          <Button
-            onPress={handleDeleteServer}
-            style={{ backgroundColor: colors.error }}
-            disabled={loading}
-          >
-            {t('delete_server')}
-          </Button>
-        </FormActions>
-      ) : (
-        <Button
-          onPress={mode === 'recover' ? handleRecover : handleSave}
-          style={styles.registerButton}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.onPrimary} />
-          ) : mode === 'recover' ? (
-            t('reset_password_button')
-          ) : mode === 'register' ? (
-            t('create_account')
-          ) : (
-            t('register_server')
-          )}
-        </Button>
-      )}
-
-      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
-    </KeyboardAwareScreen>
+      <ServerRegistrationFields
+        serverId={serverId}
+        mode={mode}
+        onModeChange={setMode}
+        hostedSameOrigin={hostedSameOrigin}
+        serverAddress={serverAddress}
+        onServerAddressChange={setServerAddress}
+        serverName={serverName}
+        onServerNameChange={setServerName}
+        username={username}
+        onUsernameChange={setUsername}
+        password={password}
+        onPasswordChange={setPassword}
+        confirmPassword={confirmPassword}
+        onConfirmPasswordChange={setConfirmPassword}
+        recoveryCode={recoveryCode}
+        onRecoveryCodeChange={setRecoveryCode}
+        inputStyle={commonInputStyles.input}
+      />
+      {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+    </EntityFormContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollViewContent: {
-    padding: 20,
-    flexGrow: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  hostedNotice: {
-    fontSize: 14,
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  modeToggleRow: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  modeToggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  linkRow: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  linkText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  recoveryCodesBox: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
-  },
-  recoveryCode: {
-    fontSize: 16,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-    marginBottom: 8,
-  },
-  modeToggleText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  errorText: {
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  registerButton: {
-    marginTop: 35,
-    marginBottom: 0,
-  },
+  errorText: { marginTop: 10, textAlign: 'center' },
 });
 
 export default ServerRegistrationScreen;

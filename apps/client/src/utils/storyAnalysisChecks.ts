@@ -34,9 +34,17 @@ export {
   type StoryAnalysisFinding,
   type StoryAnalysisInput,
   type StoryAnalysisProgress,
-  type StoryAnalysisSeverity,
+  type StoryAnalysisSeverity
 } from './storyAnalysis/types';
 
+import {
+  checkBranchingDeadEnds,
+  checkChoiceSatisfiability,
+  checkChoices,
+  checkRouteTraversal,
+  checkSceneFinishWithChoices,
+  checkSceneReachability,
+} from './storyAnalysis/branchingChecks';
 import {
   checkCharacters,
   checkDuplicateRelations,
@@ -49,14 +57,6 @@ import {
   checkAnchorsRunForwards,
   checkNarrativeIndexes,
 } from './storyAnalysis/narrativeIndexChecks';
-import {
-  checkBranchingDeadEnds,
-  checkChoiceSatisfiability,
-  checkChoices,
-  checkRouteTraversal,
-  checkSceneFinishWithChoices,
-  checkSceneReachability,
-} from './storyAnalysis/branchingChecks';
 import type {
   RunStoryAnalysisOptions,
   StoryAnalysisFinding,

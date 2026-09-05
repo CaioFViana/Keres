@@ -124,6 +124,18 @@ export async function applyReorderToLocalDb(
             version: sql`${schema.storySchemaFields.version} + 1`,
           })
           .where(eq(schema.storySchemaFields.id, item.id));
+      } else if (
+        update.entity === 'Story' &&
+        (update as StoryReorderingStoryUpdate).reorderTarget === 'Stat'
+      ) {
+        await tx
+          .update(schema.stats)
+          .set({
+            order: item.newIndex - 1,
+            updatedAt: operationTime,
+            version: sql`${schema.stats.version} + 1`,
+          })
+          .where(eq(schema.stats.id, item.id));
       } else if (update.entity === 'Story') {
         // Reordering chapters within a story
         await tx

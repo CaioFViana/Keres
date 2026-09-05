@@ -153,10 +153,11 @@ export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
    *
    * Absent means its chapters, which is what this operation meant before anything else shared it.
    * Each target owns an independent 1..N space inside its table - `StorySchemaField` has one per
-   * entity type, and `Event` has one of its own inside `chapters`, because a chapter's index is
-   * narrative order and an event's is not.
+   * entity type; `Event` has one of its own inside `chapters`, because a chapter's index is
+   * narrative order and an event's is not; and `Stat` is stored zero-based even though this wire
+   * format consistently remains one-based.
    */
-  reorderTarget: z.enum(['StorySchemaField', 'Event']).optional(),
+  reorderTarget: z.enum(['StorySchemaField', 'Event', 'Stat']).optional(),
   // The closed set, and not `z.string()`: the column stores exactly these values, and an unknown type
   // would only produce a query that finds nothing - silently.
   schemaEntityType: z.enum(STORY_SCHEMA_ENTITY_TYPES).optional(),

@@ -15,7 +15,7 @@ import { ownerOnlyFieldsIn } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db } from '../../db';
-import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
+import { chapters, galleries, stats, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import {
   BaseSyncEntityHandler,
@@ -142,6 +142,44 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
         currentEntity[this.versionColumnName],
         validatedReorderUpdate.id!,
       );
+
+      if (validatedReorderUpdate.reorderTarget === 'Stat') {
+        await db.transaction(async (tx) => {
+          const existingStats = await tx.query.stats.findMany({
+            where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
+            columns: { id: true, version: true },
+          });
+          const statIds = new Set(existingStats.map((stat) => stat.id));
+          const reorderIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
+          const problem = reorderIndicesProblem(
+            validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+          );
+          if (
+            reorderIds.size !== statIds.size ||
+            ![...reorderIds].every((id) => statIds.has(id)) ||
+            problem
+          ) {
+            throw new SyncConflictError(
+              'validation',
+              problem ?? 'Validation Error: Stat reorder items must match the story stats.',
+            );
+          }
+          await Promise.all(
+            validatedReorderUpdate.reorderItems.map((item) => {
+              const stat = existingStats.find((candidate) => candidate.id === item.id)!;
+              return tx
+                .update(stats)
+                .set({ order: item.newIndex - 1, updatedAt: new Date(), version: stat.version + 1 })
+                .where(eq(stats.id, item.id));
+            }),
+          );
+          await tx
+            .update(stories)
+            .set({ updatedAt: new Date(), version: currentEntity.version + 1 })
+            .where(eq(stories.id, validatedReorderUpdate.id!));
+        });
+        return;
+      }
 
       if (validatedReorderUpdate.reorderTarget === 'StorySchemaField') {
         if (!validatedReorderUpdate.schemaEntityType) {

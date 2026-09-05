@@ -2,7 +2,7 @@ import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StatInsert, StatSelect } from '../../db/schema';
-import { stats } from '../../db/schema';
+import { stats, stories } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -154,19 +154,29 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
       if (changed.length === 0) return;
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      // One update operation per row, and not a Story 'reorder': the server's reorder is exclusive to
-      // Chapter/Scene/StorySchemaField and would refuse an unknown target.
-      for (const stat of changed) {
-        const [updated] = await db
-          .update(stats)
-          .set({ order: stat.order, updatedAt: new Date(), version: sql`${stats.version} + 1` })
-          .where(eq(stats.id, stat.id))
-          .returning({ version: stats.version });
-        await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Stat', stat.id, {
-          order: stat.order,
-          version: updated?.version,
-        });
-      }
+      const now = new Date();
+      const story = await db.transaction(async (tx) => {
+        await Promise.all(
+          changed.map((stat) =>
+            tx
+              .update(stats)
+              .set({ order: stat.order, updatedAt: now, version: sql`${stats.version} + 1` })
+              .where(eq(stats.id, stat.id)),
+          ),
+        );
+        return (
+          await tx
+            .update(stories)
+            .set({ version: sql`${stories.version} + 1`, updatedAt: now })
+            .where(eq(stories.id, storyId))
+            .returning({ version: stories.version })
+        ).at(0);
+      });
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
+        reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
+        reorderTarget: 'Stat',
+        version: story?.version,
+      });
       entityEventEmitter.emit('stat_changed', storyId);
     },
 

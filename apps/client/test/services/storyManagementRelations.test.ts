@@ -10,6 +10,7 @@ import { createLocationRelationService } from '../../src/services/storymanagemen
 import { createNoteRelationService } from '../../src/services/storymanagement/NoteRelationService';
 import { createSeeAlsoRelationService } from '../../src/services/storymanagement/SeeAlsoRelationService';
 import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
+import { createStatService } from '../../src/services/storymanagement/StatService';
 import { createSuggestionService } from '../../src/services/storymanagement/SuggestionService';
 import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -372,6 +373,46 @@ describe('StorySchemaFieldService', () => {
       reorderItems: [
         { id: second.id, newIndex: 1 },
         { id: first.id, newIndex: 2 },
+      ],
+    });
+  });
+});
+
+describe('StatService', () => {
+  it('reorders all stats through one story-level sync operation', async () => {
+    const service = createStatService(database.db);
+    const courage = await service.createStat(USER_ID, {
+      storyId: STORY_ID,
+      name: 'Courage',
+      order: 0,
+    });
+    const wisdom = await service.createStat(USER_ID, {
+      storyId: STORY_ID,
+      name: 'Wisdom',
+      order: 1,
+    });
+
+    await service.reorderStats(USER_ID, STORY_ID, [
+      { id: wisdom.id, order: 0 },
+      { id: courage.id, order: 1 },
+    ]);
+
+    expect(
+      (await service.getStatsByStoryId(STORY_ID)).map(({ id, order }) => ({ id, order })),
+    ).toEqual([
+      { id: wisdom.id, order: 0 },
+      { id: courage.id, order: 1 },
+    ]);
+    const operations = await database.db.select().from(schema.operationLogs).all();
+    const reorders = operations.filter(
+      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
+    );
+    expect(reorders).toHaveLength(1);
+    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
+      reorderTarget: 'Stat',
+      reorderItems: [
+        { id: wisdom.id, newIndex: 1 },
+        { id: courage.id, newIndex: 2 },
       ],
     });
   });

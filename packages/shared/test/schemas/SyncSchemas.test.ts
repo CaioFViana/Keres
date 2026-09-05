@@ -3,6 +3,7 @@ import {
   ChapterReorderingStoryUpdateSchema,
   CreateStoryUpdateSchema,
   DeleteStoryUpdateSchema,
+  StoryReorderingStoryUpdateSchema,
   StoryUpdateSchema,
   StoryUpdatesArraySchema,
   SyncConflictSchema,
@@ -138,6 +139,21 @@ describe('StoryUpdateSchema', () => {
     expect(
       ChapterReorderingStoryUpdateSchema.safeParse({ ...reorder, entity: 'Scene' }).success,
     ).toBe(false);
+  });
+
+  it('accepts stats as a story-level reorder target', () => {
+    const reorder = {
+      type: 'reorder' as const,
+      entity: 'Story' as const,
+      id: STORY_ID,
+      reorderTarget: 'Stat' as const,
+      reorderItems: [
+        { id: ulid('stat1'), newIndex: 1 },
+        { id: ulid('stat2'), newIndex: 2 },
+      ],
+    };
+
+    expect(StoryReorderingStoryUpdateSchema.parse(reorder)).toMatchObject(reorder);
   });
 
   it('rejects an operation type outside the union', () => {

@@ -99,7 +99,15 @@ export class SyncPull {
         : update.type === 'update'
           ? update.changes
           : update.type === 'reorder'
-            ? { reorderItems: update.reorderItems }
+            ? {
+                reorderItems: update.reorderItems,
+                ...(update.entity === 'Story'
+                  ? {
+                      reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
+                      schemaEntityType: (update as StoryReorderingStoryUpdate).schemaEntityType,
+                    }
+                  : {}),
+              }
             : { id: update.id }; // For delete, just store the ID
 
     await this.context

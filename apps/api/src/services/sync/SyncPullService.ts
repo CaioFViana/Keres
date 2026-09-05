@@ -1,13 +1,11 @@
 import type {
-  ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   DeleteStoryUpdate,
   EffectiveStoryRole,
-  StoryReorderingStoryUpdate,
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { decodePulledReorderOperation, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { and, eq, gt, max, ne, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../../db';
@@ -240,26 +238,8 @@ export class SyncPullService {
         ...metadata,
       } as DeleteStoryUpdate;
     }
-    if (operation.operationType === 'reorder' && operation.entityType === 'Chapter') {
-      return {
-        type: 'reorder',
-        entity: 'Chapter',
-        reorderItems: (payload.reorderItems ?? []) as { id: string; newIndex: number }[],
-        ...metadata,
-      } as ChapterReorderingStoryUpdate;
-    }
-    if (operation.operationType === 'reorder' && operation.entityType === 'Story') {
-      return {
-        type: 'reorder',
-        entity: 'Story',
-        reorderItems: (payload.reorderItems ?? []) as { id: string; newIndex: number }[],
-        reorderTarget: payload.reorderTarget as 'StorySchemaField' | undefined,
-        schemaEntityType: payload.schemaEntityType as string | undefined,
-        ...metadata,
-      } as StoryReorderingStoryUpdate;
-    }
     if (operation.operationType === 'reorder') {
-      throw new Error(`Unhandled reorder entity type: ${operation.entityType}`);
+      return decodePulledReorderOperation(operation.entityType, payload, metadata);
     }
     throw new Error(`Unknown sync operation: ${operation.operationType}/${operation.entityType}`);
   }

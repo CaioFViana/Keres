@@ -114,11 +114,8 @@ const FILES_OVER_THE_LIMIT = [
   'screens/locations/LocationFormScreen.tsx',
   'screens/mainstorystack/StorySettingsScreen.tsx',
   'screens/narrative-elements/chapters/NarrativeElementsListScreen.tsx',
-  'screens/narrative-elements/choices/ChoiceFormScreen.tsx',
   'screens/narrative-elements/choices/ChoiceViewScreen.tsx',
   'screens/narrative-elements/scenes/SceneDetailScreen.tsx',
-  'screens/narrative-elements/scenes/SceneFormScreen.tsx',
-  'utils/storyAnalysisChecks.ts',
 ];
 
 /** Counts only meaningful source lines, leaving comments and visual spacing out of the ceiling. */

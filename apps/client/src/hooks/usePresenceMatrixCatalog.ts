@@ -59,7 +59,9 @@ export function usePresenceMatrixCatalog(
     let cancelled = false;
     (async () => {
       const journeysByItem = await Promise.all(
-        itemIds.map((itemId) => createItemJourneyService(db).getItemJourneysByItemId(storyId, itemId)),
+        itemIds.map((itemId) =>
+          createItemJourneyService(db).getItemJourneysByItemId(storyId, itemId),
+        ),
       );
       if (!cancelled) setJourneys(journeysByItem.flat().filter((entry) => !entry.isDeleted));
     })();

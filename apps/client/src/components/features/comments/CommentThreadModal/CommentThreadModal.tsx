@@ -61,10 +61,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const authorIds = useMemo(
-    () => comments.map((comment) => comment.authorUserId),
-    [comments],
-  );
+  const authorIds = useMemo(() => comments.map((comment) => comment.authorUserId), [comments]);
   const profiles = useAuthorProfiles(storyId, authorIds, visible);
 
   const [commentText, setCommentText] = useState('');

@@ -541,7 +541,10 @@ export abstract class BaseSyncEntityHandler<
     }
   }
 
-  protected payloadForLog(parsed: Record<string, any>, _actingUserId?: string): Record<string, any> {
+  protected payloadForLog(
+    parsed: Record<string, any>,
+    _actingUserId?: string,
+  ): Record<string, any> {
     return omitSyncImmutableFields(parsed);
   }
 }

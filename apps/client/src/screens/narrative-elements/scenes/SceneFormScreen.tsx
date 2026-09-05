@@ -1,6 +1,5 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
-import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
@@ -16,31 +15,30 @@ import MultiSelectPill, {
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
+import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
+import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
-import type { Effect } from '@keres/shared/entities/Effect';
 import type { Scene } from '@keres/shared/entities/Scene';
 import { parseCalendarDateCoordinate } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
+import { useEntityEffects } from '../../../hooks/useEntityEffects';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
+import { useSceneCharacterPresence } from '../../../hooks/useSceneCharacterPresence';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
-import type { CharacterSceneServiceInterface } from '../../../services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '../../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import { createEffectService } from '../../../services/storymanagement/EffectService';
-import { createLocationService } from '../../../services/storymanagement/LocationService'; // Import LocationService
+
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useChapterStore } from '../../../state/chapterStore'; // Import useChapterStore
 import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
@@ -51,6 +49,7 @@ import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 import { AppAlert } from '../../../utils/AppAlert';
+import { parseTimingInput } from '../../../utils/sceneTimingInput';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 
@@ -59,14 +58,6 @@ type SceneFormScreenNavigationProp = NativeStackNavigationProp<
   NarrativeElementsStackParamList,
   'SceneForm'
 >;
-
-const isTimingInput = (value: string) => /^-?\d*$/.test(value);
-const MAX_SCENE_TIMING = 2147483647;
-const parseTimingInput = (value: string): number | null => {
-  if (!value || value === '-') return null;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && Math.abs(parsed) <= MAX_SCENE_TIMING ? parsed : null;
-};
 
 const SceneFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -114,9 +105,6 @@ const SceneFormScreen = () => {
 
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
-  const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
-  const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
-  const effectServiceRef = useRef<ReturnType<typeof createEffectService> | null>(null);
 
   const isBranching = selectedStory?.type === 'branching';
 
@@ -125,66 +113,35 @@ const SceneFormScreen = () => {
       if (!sceneServiceRef.current) {
         sceneServiceRef.current = createSceneService(drizzleDb);
       }
-      if (!locationServiceRef.current) {
-        locationServiceRef.current = createLocationService(drizzleDb); // Initialize LocationService
-      }
-      if (!characterSceneServiceRef.current) {
-        characterSceneServiceRef.current = createCharacterSceneService(drizzleDb); // Initialize CharacterSceneService
-      }
-      if (!effectServiceRef.current) {
-        effectServiceRef.current = createEffectService(drizzleDb);
-      }
     }
   }, [drizzleDb]);
 
   useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setItemDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeItemService();
-      fetchItems();
-    }
-  }, [drizzleDb, selectedStory?.id, setItemDbAndStoryId, initializeItemService, fetchItems]);
-
-  // Initialize Chapter Service and fetch chapters
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setChapterDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeChapterService();
-      fetchChapters();
-    }
+    if (!drizzleDb || !selectedStory?.id) return;
+    setItemDbAndStoryId(drizzleDb, selectedStory.id);
+    initializeItemService();
+    fetchItems();
+    setChapterDbAndStoryId(drizzleDb, selectedStory.id);
+    initializeChapterService();
+    fetchChapters();
+    setLocationDbAndStoryId(drizzleDb, selectedStory.id);
+    initializeLocationService();
+    fetchLocations();
+    setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
+    initializeCharacterService();
+    fetchCharacters();
   }, [
     drizzleDb,
     selectedStory?.id,
+    setItemDbAndStoryId,
+    initializeItemService,
+    fetchItems,
     setChapterDbAndStoryId,
     initializeChapterService,
     fetchChapters,
-  ]);
-
-  // Initialize Location Service and fetch locations
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setLocationDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeLocationService();
-      fetchLocations();
-    }
-  }, [
-    drizzleDb,
-    selectedStory?.id,
     setLocationDbAndStoryId,
     initializeLocationService,
     fetchLocations,
-  ]);
-
-  // Initialize Character Service and fetch characters
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeCharacterService();
-      fetchCharacters();
-    }
-  }, [
-    drizzleDb,
-    selectedStory?.id,
     setCharacterDbAndStoryId,
     initializeCharacterService,
     fetchCharacters,
@@ -208,13 +165,21 @@ const SceneFormScreen = () => {
   const [isStart, setIsStart] = useState(false);
   const [isFinish, setIsFinish] = useState(false);
 
-  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
-  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]);
-  // While the scene does not exist yet, present characters stay here instead of being written to the database -
-  // `sceneId: ''` until the replay in `persistPendingCharacterSceneRelations` after the main save.
-  const [pendingCharacterSceneRelations, setPendingCharacterSceneRelations] = useState<
-    CharacterScene[]
-  >([]);
+  const {
+    characterSceneRelations,
+    pendingCharacterSceneRelations,
+    fetchCharacterSceneRelations,
+    handleSaveCharacterSceneRelation,
+    handleDeleteCharacterSceneRelation,
+    persistPendingCharacterSceneRelations,
+  } = useSceneCharacterPresence(currentSceneId, selectedStory?.id);
+  const {
+    effects: sceneEffects,
+    handleAddEffect,
+    handleUpdateEffect,
+    handleChangeEffectType,
+    handleDeleteEffect,
+  } = useEntityEffects('Scene', currentSceneId, selectedStory?.id, isBranching);
 
   const {
     availableTags,
@@ -243,116 +208,6 @@ const SceneFormScreen = () => {
     target: 'parent',
     title: formTitle,
   });
-
-  const fetchCharacterSceneRelations = useCallback(async () => {
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId) {
-      setCharacterSceneRelations([]);
-      return;
-    }
-    try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForScene(
-        selectedStory.id,
-        currentSceneId,
-      );
-      setCharacterSceneRelations(fetchedRelations);
-    } catch (err) {
-      console.error('Failed to fetch character-scene relations:', err);
-    }
-  }, [selectedStory?.id, currentSceneId]);
-
-  const fetchSceneEffects = useCallback(async () => {
-    if (!effectServiceRef.current || !selectedStory?.id || !currentSceneId) {
-      setSceneEffects([]);
-      return;
-    }
-    try {
-      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(
-        selectedStory.id,
-        'Scene',
-        currentSceneId,
-      );
-      setSceneEffects(fetchedEffects);
-    } catch (err) {
-      console.error('Failed to fetch scene effects:', err);
-    }
-  }, [selectedStory?.id, currentSceneId]);
-
-  useEffect(() => {
-    if (isBranching) {
-      fetchSceneEffects();
-    }
-  }, [isBranching, fetchSceneEffects]);
-
-  const handleAddEffect = async () => {
-    if (!userId || !selectedStory?.id || !currentSceneId || !effectServiceRef.current) {
-      return;
-    }
-    try {
-      const newEffect = await effectServiceRef.current.createEffect(userId, {
-        storyId: selectedStory.id,
-        entityType: 'Scene',
-        entityId: currentSceneId,
-        effectType: 'itemGrant',
-        itemId: null,
-        triggerName: null,
-      });
-      setSceneEffects((prev) => [...prev, newEffect]);
-      entityEventEmitter.emit('effect_changed', selectedStory.id, currentSceneId);
-    } catch (err) {
-      console.error('Failed to add effect:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_effect'));
-    }
-  };
-
-  const handleUpdateEffect = async (
-    effectId: string,
-    changes: Partial<
-      Omit<
-        Effect,
-        | 'id'
-        | 'storyId'
-        | 'entityType'
-        | 'entityId'
-        | 'createdAt'
-        | 'updatedAt'
-        | 'version'
-        | 'isDeleted'
-        | 'deletedAt'
-      >
-    >,
-  ) => {
-    if (!userId || !effectServiceRef.current) {
-      return;
-    }
-    try {
-      const updatedEffect = await effectServiceRef.current.updateEffect(userId, effectId, changes);
-      setSceneEffects((prev) =>
-        prev.map((effect) => (effect.id === effectId ? updatedEffect : effect)),
-      );
-      entityEventEmitter.emit('effect_changed', selectedStory?.id, currentSceneId);
-    } catch (err) {
-      console.error('Failed to update effect:', err);
-      AppAlert.alert(t('error'), t('failed_to_save_effect'));
-    }
-  };
-
-  const handleChangeEffectType = (effectId: string, effectType: Effect['effectType']) => {
-    handleUpdateEffect(effectId, { effectType, itemId: null, triggerName: null });
-  };
-
-  const handleDeleteEffect = async (effectId: string) => {
-    if (!userId || !effectServiceRef.current) {
-      return;
-    }
-    try {
-      await effectServiceRef.current.deleteEffect(userId, effectId);
-      setSceneEffects((prev) => prev.filter((effect) => effect.id !== effectId));
-      entityEventEmitter.emit('effect_changed', selectedStory?.id, currentSceneId);
-    } catch (err) {
-      console.error('Failed to delete effect:', err);
-      AppAlert.alert(t('error'), t('failed_to_delete_effect'));
-    }
-  };
 
   useEffect(() => {
     const loadSceneAndData = async () => {
@@ -572,132 +427,19 @@ const SceneFormScreen = () => {
     });
   };
 
-  const handleTagSelectionChange = useCallback(
-    (newSelection: string[]) => {
-      setSelectedTagIds(newSelection);
-    },
-    [setSelectedTagIds],
+  const chapterOptions = useMemo(
+    () => chapters.map((chapter) => ({ label: chapter.name, value: chapter.id })),
+    [chapters],
   );
-
-  const handleSaveCharacterSceneRelation = async (relation: CharacterScene) => {
-    if (!currentSceneId) {
-      setPendingCharacterSceneRelations((prev) => {
-        const existingIndex = prev.findIndex((r) => r.id === relation.id);
-        return existingIndex > -1
-          ? prev.map((r, index) => (index === existingIndex ? relation : r))
-          : [...prev, relation];
-      });
-      AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
-      return;
-    }
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) {
-      AppAlert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await characterSceneServiceRef.current.saveCharacterScene(
-        userId,
-        relation,
-      );
-      setCharacterSceneRelations((prev) => {
-        const existingIndex = prev.findIndex((r) => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        } else {
-          return [...prev, savedRelation];
-        }
-      });
-      entityEventEmitter.emit('character_scene_changed', selectedStory.id, currentSceneId);
-      AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
-    } catch (error) {
-      AppAlert.alert(t('error'), t('failed_to_save_character_scene'));
-      console.error('Failed to save character-scene relation:', error);
-    }
-  };
-
-  const handleDeleteCharacterSceneRelation = async (relationId: string) => {
-    if (!currentSceneId) {
-      setPendingCharacterSceneRelations((prev) => prev.filter((r) => r.id !== relationId));
-      AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
-      return;
-    }
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) {
-      AppAlert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await characterSceneServiceRef.current.deleteCharacterScene(
-        userId,
-        relationId,
-      );
-      if (success) {
-        setCharacterSceneRelations((prev) => prev.filter((r) => r.id !== relationId));
-        entityEventEmitter.emit('character_scene_changed', selectedStory.id, currentSceneId);
-        AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
-      } else {
-        AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
-      }
-    } catch (error) {
-      AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
-      console.error('Failed to delete character-scene relation:', error);
-    }
-  };
-
-  /**
-   * Actually writes the relations accumulated while the scene did not exist yet - `sceneId` held
-   * '' in place of the id (the form's placeholder, see `SceneCharacterManager`); it swaps in the real id
-   * here.
-   */
-  const persistPendingCharacterSceneRelations = async (targetSceneId: string) => {
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) return;
-    for (const pending of pendingCharacterSceneRelations) {
-      await characterSceneServiceRef.current.saveCharacterScene(userId, {
-        ...pending,
-        sceneId: targetSceneId,
-      });
-    }
-    if (pendingCharacterSceneRelations.length > 0) {
-      setPendingCharacterSceneRelations([]);
-      entityEventEmitter.emit('character_scene_changed', selectedStory.id, targetSceneId);
-    }
-  };
-
-  const chapterOptions = useMemo(() => {
-    return chapters.map((chapter) => ({ label: chapter.name, value: chapter.id }));
-  }, [chapters]);
-
-  const locationOptions = useMemo(() => {
-    return locations.map((location) => ({ label: location.name, value: location.id }));
-  }, [locations]);
-
+  const locationOptions = useMemo(
+    () => locations.map((location) => ({ label: location.name, value: location.id })),
+    [locations],
+  );
   const itemOptions = useMemo(
     () =>
       items.filter((item) => !item.isDeleted).map((item) => ({ label: item.name, value: item.id })),
     [items],
   );
-
-  const effectTypeOptions = useMemo(
-    () => [
-      { label: t('effect_type_item_grant'), value: 'itemGrant' },
-      { label: t('effect_type_item_take'), value: 'itemTake' },
-      { label: t('effect_type_trigger_set'), value: 'triggerSet' },
-      { label: t('effect_type_trigger_unset'), value: 'triggerUnset' },
-    ],
-    [t],
-  );
-
-  const gapDurationTypeOptions = [
-    { label: t('seconds'), value: 'seconds' },
-    { label: t('minutes'), value: 'minutes' },
-    { label: t('hours'), value: 'hours' },
-    { label: t('days'), value: 'days' },
-    { label: t('weeks'), value: 'weeks' },
-    { label: t('months'), value: 'months' },
-    { label: t('years'), value: 'years' },
-    { label: t('millennia'), value: 'millennia' },
-    { label: t('eons'), value: 'eons' },
-  ];
-
   const styles = StyleSheet.create({
     noteSection: {
       marginTop: 20,
@@ -707,45 +449,6 @@ const SceneFormScreen = () => {
       marginTop: 20,
       marginBottom: 0,
     },
-    effectsSection: {
-      marginBottom: 30,
-    },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 10,
-      marginBottom: 10,
-    },
-    amountColumn: {
-      width: '30%',
-    },
-    typeColumn: {
-      flex: 1,
-      minWidth: 0,
-    },
-    typeSelect: {
-      marginBottom: 0,
-    },
-    timingHint: {
-      color: colors.textSecondary,
-      fontSize: 12,
-      lineHeight: 17,
-      marginTop: -4,
-      marginBottom: 10,
-    },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-    cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
-    fieldFlex: { flex: 1 },
-    removeLink: { color: colors.error, fontWeight: '600' },
-    addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
   });
 
   if (loading) {
@@ -843,86 +546,22 @@ const SceneFormScreen = () => {
         )}
       </FormField>
 
-      <FormField label={t('gap')}>
-        <View style={styles.row}>
-          <View style={styles.amountColumn}>
-            <TextInput
-              placeholder={t('gap_placeholder')}
-              value={gapInput}
-              onChangeText={(text) => isTimingInput(text) && setGapInput(text)}
-              keyboardType="numbers-and-punctuation"
-              style={commonInputStyles.input}
-            />
-          </View>
-          <View style={styles.typeColumn}>
-            <SingleSelectPill
-              options={gapDurationTypeOptions}
-              value={gapType}
-              onValueChange={setGapType}
-              placeholder={t('gap_type_placeholder')}
-              multiple={false}
-              style={styles.typeSelect}
-            />
-          </View>
-        </View>
-      </FormField>
-      {parseTimingInput(gapInput) !== null && parseTimingInput(gapInput)! < 0 && (
-        <Text style={styles.timingHint}>{t('negative_gap_timing_hint')}</Text>
-      )}
-
-      <FormField label={t('scene_fixed_date')} help={t('scene_fixed_date_hint')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('scene_fixed_date_placeholder')}
-            value={calendarDateOverride}
-            onChangeText={setCalendarDateOverride}
-            autoCapitalize="none"
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-      {calendarDateOverride.trim() ? (
-        <SingleSelectPill
-          options={[
-            { label: t('calendar_standard_title'), value: '__gregorian__' },
-            ...calendars.map((calendar) => ({ label: calendar.name, value: calendar.id })),
-          ]}
-          value={calendarDateOverrideCalendarId ?? '__gregorian__'}
-          onValueChange={(value) =>
-            setCalendarDateOverrideCalendarId(value === '__gregorian__' ? null : value)
-          }
-          placeholder={t('scene_fixed_date_calendar')}
-          multiple={false}
-        />
-      ) : null}
-
-      <FormField label={t('duration')}>
-        <View style={styles.row}>
-          <View style={styles.amountColumn}>
-            <TextInput
-              placeholder={t('duration_placeholder')}
-              value={durationInput}
-              onChangeText={(text) => isTimingInput(text) && setDurationInput(text)}
-              keyboardType="numbers-and-punctuation"
-              style={commonInputStyles.input}
-            />
-          </View>
-          <View style={styles.typeColumn}>
-            <SingleSelectPill
-              options={gapDurationTypeOptions}
-              value={durationType}
-              onValueChange={setDurationType}
-              placeholder={t('duration_type_placeholder')}
-              multiple={false}
-              style={styles.typeSelect}
-            />
-          </View>
-        </View>
-      </FormField>
-      {parseTimingInput(durationInput) !== null && parseTimingInput(durationInput)! < 0 && (
-        <Text style={styles.timingHint}>{t('negative_duration_timing_hint')}</Text>
-      )}
+      <SceneTimingFields
+        gapInput={gapInput}
+        onGapInputChange={setGapInput}
+        gapType={gapType}
+        onGapTypeChange={setGapType}
+        durationInput={durationInput}
+        onDurationInputChange={setDurationInput}
+        durationType={durationType}
+        onDurationTypeChange={setDurationType}
+        calendarDateOverride={calendarDateOverride}
+        onCalendarDateOverrideChange={setCalendarDateOverride}
+        calendarDateOverrideCalendarId={calendarDateOverrideCalendarId}
+        onCalendarDateOverrideCalendarIdChange={setCalendarDateOverrideCalendarId}
+        calendars={calendars}
+        inputStyle={commonInputStyles.input}
+      />
 
       <FormSwitchField label={t('is_start_scene')} value={isStart} onValueChange={setIsStart} />
 
@@ -945,7 +584,7 @@ const SceneFormScreen = () => {
               color: tag.color || colors.primaryContainer,
             }))}
             selectedValues={selectedTagIds}
-            onSelectionChange={handleTagSelectionChange}
+            onSelectionChange={setSelectedTagIds}
             placeholder={t('select_tags_for_scene')}
             label={t('scene_tags')}
           />
@@ -996,71 +635,16 @@ const SceneFormScreen = () => {
       )}
 
       {currentSceneId && selectedStory?.id && isBranching && (
-        <View style={[styles.tagSection, styles.effectsSection]}>
-          <ScreenSection title={t('effects_title')} />
-
-          {sceneEffects.map((effect) => (
-            <View key={effect.id} style={styles.card}>
-              <View style={styles.cardRow}>
-                <View style={styles.fieldFlex}>
-                  <Text style={styles.cardRowLabel}>{t('effect_type')}</Text>
-                  <SingleSelectPill
-                    options={effectTypeOptions}
-                    value={effect.effectType}
-                    onValueChange={(value) =>
-                      value && handleChangeEffectType(effect.id, value as Effect['effectType'])
-                    }
-                    multiple={false}
-                  />
-                </View>
-              </View>
-
-              {(effect.effectType === 'itemGrant' || effect.effectType === 'itemTake') && (
-                <View style={styles.cardRow}>
-                  <View style={styles.fieldFlex}>
-                    <Text style={styles.cardRowLabel}>{itemCopy.entity}</Text>
-                    <SingleSelectPill
-                      options={itemOptions}
-                      value={effect.itemId}
-                      onValueChange={(value) => handleUpdateEffect(effect.id, { itemId: value })}
-                      placeholder={t('select_item')}
-                      multiple={false}
-                      allowDeselect={true}
-                    />
-                  </View>
-                </View>
-              )}
-
-              {(effect.effectType === 'triggerSet' || effect.effectType === 'triggerUnset') && (
-                <View style={styles.cardRow}>
-                  <View style={styles.fieldFlex}>
-                    <Text style={styles.cardRowLabel}>{t('check_trigger_name')}</Text>
-                    <TextInput
-                      placeholder={t('check_trigger_name_placeholder')}
-                      value={effect.triggerName || ''}
-                      onChangeText={(value) =>
-                        handleUpdateEffect(effect.id, { triggerName: value || null })
-                      }
-                      style={commonInputStyles.input}
-                    />
-                  </View>
-                </View>
-              )}
-
-              <TouchableOpacity onPress={() => handleDeleteEffect(effect.id)}>
-                <Text style={styles.removeLink}>{t('remove_effect')}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-
-          {sceneEffects.length === 0 && (
-            <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>{t('no_effects')}</Text>
-          )}
-
-          <TouchableOpacity onPress={handleAddEffect}>
-            <Text style={styles.addLink}>{t('add_effect')}</Text>
-          </TouchableOpacity>
-        </View>
+        <EffectListEditor
+          effects={sceneEffects}
+          itemOptions={itemOptions}
+          itemLabel={itemCopy.entity}
+          inputStyle={commonInputStyles.input}
+          onChangeType={handleChangeEffectType}
+          onUpdate={handleUpdateEffect}
+          onDelete={handleDeleteEffect}
+          onAdd={handleAddEffect}
+        />
       )}
     </EntityFormContainer>
   );

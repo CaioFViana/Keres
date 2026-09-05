@@ -1,5 +1,9 @@
 import React from 'react';
-import { getWorldPieceSectionAppearance , OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
+import {
+  getWorldPieceSectionAppearance,
+  OperationLogEntityType,
+  summarizeEntityPreview,
+} from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../../theme';

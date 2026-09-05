@@ -64,16 +64,8 @@ const PresenceMatrixViewerContent: React.FC<{
   const [ids, setIds] = useState<string[]>(
     request.kind === 'character' && request.characterId ? [request.characterId] : [],
   );
-  const {
-    characters,
-    scenes,
-    chapters,
-    presence,
-    items,
-    journeys,
-    loading,
-    fetchAllItemJourneys,
-  } = usePresenceMatrixCatalog(story?.id, itemIds, request.kind === 'item');
+  const { characters, scenes, chapters, presence, items, journeys, loading, fetchAllItemJourneys } =
+    usePresenceMatrixCatalog(story?.id, itemIds, request.kind === 'item');
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [selectedItemDetailsId, setSelectedItemDetailsId] = useState<string | null>(null);

@@ -1,24 +1,12 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
-import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import FormField from '@/src/components/common/forms/FormField/FormField';
-import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
-import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import CustomAttributeFields, {
+import {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
-import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
-import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import type { RouteProp } from '@react-navigation/native';
@@ -26,10 +14,9 @@ import { StackActions, useNavigation, useRoute } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
@@ -48,6 +35,7 @@ import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { CharacterFormContent } from './CharacterFormContent';
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
 type CharacterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -56,7 +44,6 @@ type CharacterFormScreenNavigationProp = NativeStackNavigationProp<
 >; // Corrected type alias
 
 const CharacterFormScreen = () => {
-  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<CharacterFormScreenNavigationProp>(); // Use the specific navigation type
   const route = useRoute<CharacterFormScreenRouteProp>();
@@ -104,8 +91,8 @@ const CharacterFormScreen = () => {
   const [plannedTimeline, setPlannedTimeline] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
+  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
 
-  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
   // Modes and stat values only exist once the character has an id, so the two blocks below appear only
   // when editing - creating with modes already in place would require a pending queue like the relations'
   // one, with no gain: the author has only just named the character.
@@ -137,7 +124,10 @@ const CharacterFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'Character', entityId: currentCharacterId });
+  } = useEntityRelations({
+    entityType: 'Character',
+    entityId: currentCharacterId,
+  });
 
   const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
@@ -323,7 +313,9 @@ const CharacterFormScreen = () => {
           // If it was a new character, relations section will become editable now
           // A full reload or navigate might be better here to ensure all states are correct
           navigation.dispatch(
-            StackActions.replace('CharacterForm', { characterId: savedCharacter.id }),
+            StackActions.replace('CharacterForm', {
+              characterId: savedCharacter.id,
+            }),
           ); // Fixed navigation.replace
         } else {
           navigation.goBack();
@@ -435,7 +427,6 @@ const CharacterFormScreen = () => {
   /**
    * Actually saves the relations accumulated while the character did not exist yet -
    * `character1Id`/`character2Id` held '' in place of the id (the form's placeholder, see
-   * `CharacterRelationManager`); it swaps in the real id here.
    */
   const persistPendingCharacterRelations = async (targetCharacterId: string) => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !userId) return;
@@ -469,296 +460,71 @@ const CharacterFormScreen = () => {
   }
 
   return (
-    <EntityFormContainer
-      title={formTitle}
-      description={copy.formDescription}
-      actions={
-        <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {copy.deleteLabel}
-            </Button>
-          )}
-        </>
-      }
-    >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('title')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('character_title_placeholder')}
-            value={title || ''}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('description')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('gender')}>
-        <SuggestionTextInput
-          placeholder={t('gender_placeholder')}
-          value={gender || ''}
-          onChangeText={setGender}
-          type="character_gender"
-          storyId={selectedStory?.id || ''}
-        />
-      </FormField>
-
-      <FormField label={t('race')}>
-        <SuggestionTextInput
-          placeholder={t('race_placeholder')}
-          value={race || ''}
-          onChangeText={setRace}
-          type="character_race"
-          storyId={selectedStory?.id || ''}
-        />
-      </FormField>
-
-      <FormField label={t('subrace')}>
-        <SuggestionTextInput
-          placeholder={t('subrace_placeholder')}
-          value={subrace || ''}
-          onChangeText={setSubrace}
-          type="character_subrace"
-          storyId={selectedStory?.id || ''}
-        />
-      </FormField>
-
-      <FormField label={t('personality')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('personality_placeholder')}
-            value={personality || ''}
-            onChangeText={setPersonality}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('motivation')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('motivation_placeholder')}
-            value={motivation || ''}
-            onChangeText={setMotivation}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('qualities')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('qualities_placeholder')}
-            value={qualities || ''}
-            onChangeText={setQualities}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('weaknesses')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('weaknesses_placeholder')}
-            value={weaknesses || ''}
-            onChangeText={setWeaknesses}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('biography')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('biography_placeholder')}
-            value={biography || ''}
-            onChangeText={setBiography}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('planned_timeline')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('planned_timeline_placeholder')}
-            value={plannedTimeline || ''}
-            onChangeText={setPlannedTimeline}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
-
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <CustomAttributeFields
-        storyId={selectedStory?.id || ''}
-        fields={customFields}
-        values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-      />
-
-      <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
-          onSelectionChange={handleTagSelectionChange}
-          placeholder={t('select_tags_for_character')}
-          label={t('character_tags')}
-        />
-      </View>
-
-      {selectedStory?.id && currentCharacterId && (
-        <View style={styles.noteSection}>
-          <ModeManager
-            modes={characterModes}
-            editable
-            onCreate={async (mode) => {
-              await modeService().createMode(userId!, {
-                storyId: selectedStory.id,
-                characterId: currentCharacterId,
-                ...mode,
-                // The highest + 1: counting would repeat an existing mode's number after a deletion in the middle of
-                // the list.
-                order: Math.max(0, ...characterModes.map((existing) => existing.order + 1)),
-              });
-            }}
-            onUpdate={(modeId, mode) => modeService().updateMode(userId!, modeId, mode)}
-            onDelete={(modeId) => modeService().deleteMode(userId!, modeId)}
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && currentCharacterId && selectedStory.statSystem && (
-        <View style={styles.noteSection}>
-          <CharacterStatValuesEditor
-            characterId={currentCharacterId}
-            data={statData}
-            editable
-            onSetValue={({ modeId, statId, value }) =>
-              statRelationService().setValue(userId!, {
-                storyId: selectedStory.id,
-                characterId: currentCharacterId,
-                modeId,
-                statId,
-                value,
-              })
-            }
-            onClearValue={({ modeId, statId }) =>
-              statRelationService().clearValue(userId!, {
-                characterId: currentCharacterId,
-                modeId,
-                statId,
-              })
-            }
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <CharacterRelationManager
-            characterRelations={currentCharacterId ? characterRelations : pendingCharacterRelations}
-            characters={allCharacters}
-            onSave={handleSaveRelation}
-            onDelete={handleDeleteRelation}
-            editable={true} // Editable in form screen
-            currentStoryId={selectedStory.id}
-            currentCharacterId={currentCharacterId ?? ''}
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <NoteManager
-            noteRelations={characterNoteRelations}
-            availableNotes={allNotes}
-            onSave={saveNoteRelation}
-            onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentCharacterId ?? ''}
-            currentEntityType="Character"
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && (
-        <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Character"
-            entityId={currentCharacterId ?? ''}
-            editable={true}
-          />
-        </View>
-      )}
-    </EntityFormContainer>
+    <CharacterFormContent
+      formTitle={formTitle}
+      formDescription={copy.formDescription}
+      copy={copy}
+      handleSave={handleSave}
+      saving={saving}
+      deleting={deleting}
+      isEditing={isEditing}
+      handleDelete={handleDelete}
+      colors={colors}
+      t={t}
+      name={name}
+      setName={setName}
+      title={title}
+      setTitle={setTitle}
+      description={description}
+      setDescription={setDescription}
+      gender={gender}
+      setGender={setGender}
+      race={race}
+      setRace={setRace}
+      subrace={subrace}
+      setSubrace={setSubrace}
+      personality={personality}
+      setPersonality={setPersonality}
+      motivation={motivation}
+      setMotivation={setMotivation}
+      qualities={qualities}
+      setQualities={setQualities}
+      weaknesses={weaknesses}
+      setWeaknesses={setWeaknesses}
+      biography={biography}
+      setBiography={setBiography}
+      plannedTimeline={plannedTimeline}
+      setPlannedTimeline={setPlannedTimeline}
+      isFavorite={isFavorite}
+      setIsFavorite={setIsFavorite}
+      extraNotes={extraNotes}
+      setExtraNotes={setExtraNotes}
+      commonInputStyles={commonInputStyles}
+      selectedStory={selectedStory}
+      customFields={customFields}
+      customValues={customValues}
+      setCustomValues={setCustomValues}
+      styles={styles}
+      availableTags={availableTags}
+      selectedTagIds={selectedTagIds}
+      handleTagSelectionChange={handleTagSelectionChange}
+      currentCharacterId={currentCharacterId}
+      characterModes={characterModes}
+      modeService={modeService}
+      userId={userId}
+      statData={statData}
+      statRelationService={statRelationService}
+      characterRelations={characterRelations}
+      pendingCharacterRelations={pendingCharacterRelations}
+      allCharacters={allCharacters}
+      handleSaveRelation={handleSaveRelation}
+      handleDeleteRelation={handleDeleteRelation}
+      characterNoteRelations={characterNoteRelations}
+      allNotes={allNotes}
+      saveNoteRelation={saveNoteRelation}
+      deleteNoteRelation={deleteNoteRelation}
+      seeAlsoManagerRef={seeAlsoManagerRef}
+    />
   );
 };
-
 export default CharacterFormScreen;

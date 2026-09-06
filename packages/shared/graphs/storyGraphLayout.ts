@@ -69,7 +69,6 @@ const LABEL_MAX_LINES = 2;
 /** Characters per line that fit within NODE_WIDTH in the font used on the nodes. */
 const LABEL_MAX_CHARS = 20;
 
-
 /**
  * Chapter colours chosen to work on a light *and* a dark background.
  *
@@ -676,4 +675,3 @@ function layOutDetachedNodes(detached: WorkNode[], flowWidth: number, flowHeight
     node.layer = firstLayer + Math.floor(index / columns);
   });
 }
-

@@ -1,5 +1,13 @@
 import type { GraphLayoutDirection } from './graphLayoutDirection';
-import type { Cubic, GraphEdge, GraphEdgeKind, GraphNode, GraphPoint, PlacedEdge, WorkEdge } from './storyGraphLayout';
+import type {
+  Cubic,
+  GraphEdge,
+  GraphEdgeKind,
+  GraphNode,
+  GraphPoint,
+  PlacedEdge,
+  WorkEdge,
+} from './storyGraphLayout';
 const GRAPH_PADDING = 28;
 const LAYER_GAP = 92;
 

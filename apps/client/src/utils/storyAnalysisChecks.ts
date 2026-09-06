@@ -61,7 +61,7 @@ export {
   type StoryAnalysisFinding,
   type StoryAnalysisInput,
   type StoryAnalysisProgress,
-  type StoryAnalysisSeverity
+  type StoryAnalysisSeverity,
 } from './storyAnalysis/types';
 
 /**

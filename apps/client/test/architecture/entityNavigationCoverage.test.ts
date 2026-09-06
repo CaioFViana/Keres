@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const SOURCE_ROOT = resolve(__dirname, '../../src');
-const navigation = readFileSync(join(SOURCE_ROOT, 'navigation/MainSystemStack.tsx'), 'utf8');
+const navigation = ['MainSystemStack.tsx', 'MainSystemStacks.tsx']
+  .map((file) => readFileSync(join(SOURCE_ROOT, 'navigation', file), 'utf8'))
+  .join('\n');
 const entityNavigation = readFileSync(join(SOURCE_ROOT, 'utils/entityNavigation.ts'), 'utf8');
 
 const valuesOf = (property: 'stack' | 'screen') =>

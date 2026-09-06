@@ -1,28 +1,19 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
-import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import FormField from '@/src/components/common/forms/FormField/FormField';
-import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import CustomAttributeFields, {
+import {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { Location } from '@keres/shared/entities/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -42,6 +33,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { LocationFormContent } from './LocationFormContent';
 
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;
 type LocationFormScreenNavigationProp = NativeStackNavigationProp<
@@ -501,167 +493,54 @@ const LocationFormScreen = () => {
   }
 
   return (
-    <EntityFormContainer
-      title={formTitle}
-      description={copy.formDescription}
-      actions={
-        <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {copy.deleteLabel}
-            </Button>
-          )}
-        </>
-      }
-    >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('description')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('field_climate')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('climate_placeholder')}
-            value={climate || ''}
-            onChangeText={setClimate}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('field_culture')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('culture_placeholder')}
-            value={culture || ''}
-            onChangeText={setCulture}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormField label={t('field_politics')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('politics_placeholder')}
-            value={politics || ''}
-            onChangeText={setPolitics}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-
-      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
-
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-
-      <CustomAttributeFields
-        storyId={selectedStory?.id || ''}
-        fields={customFields}
-        values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-      />
-
-      <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
-          onSelectionChange={handleTagSelectionChange}
-          placeholder={t('select_tags_for_location')}
-          label={t('location_tags')}
-        />
-      </View>
-
-      {selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <NoteManager
-            noteRelations={locationNoteRelations}
-            availableNotes={allNotes}
-            onSave={saveNoteRelation}
-            onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentLocationId ?? ''}
-            currentEntityType="Location"
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <LocationRelationManager
-            currentLocationId={currentLocationId ?? ''}
-            allLocations={allLocations}
-            allLocationRelations={
-              currentLocationId ? allLocationRelations : pendingLocationRelations
-            }
-            onSetParent={handleSetParent}
-            onAddChild={handleAddChild}
-            onAddConnection={handleAddConnection}
-            onRemoveRelation={handleRemoveLocationRelation}
-            editable={true}
-          />
-        </View>
-      )}
-
-      {selectedStory?.id && (
-        <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Location"
-            entityId={currentLocationId ?? ''}
-            editable={true}
-          />
-        </View>
-      )}
-    </EntityFormContainer>
+    <LocationFormContent
+      allLocationRelations={allLocationRelations}
+      allLocations={allLocations}
+      allNotes={allNotes}
+      availableTags={availableTags}
+      climate={climate}
+      colors={colors}
+      commonInputStyles={commonInputStyles}
+      copy={copy}
+      culture={culture}
+      currentLocationId={currentLocationId}
+      customFields={customFields}
+      customValues={customValues}
+      deleteNoteRelation={deleteNoteRelation}
+      deleting={deleting}
+      description={description}
+      extraNotes={extraNotes}
+      formDescription={copy.formDescription}
+      formTitle={formTitle}
+      handleAddChild={handleAddChild}
+      handleAddConnection={handleAddConnection}
+      handleDelete={handleDelete}
+      handleRemoveLocationRelation={handleRemoveLocationRelation}
+      handleSave={handleSave}
+      handleSetParent={handleSetParent}
+      handleTagSelectionChange={handleTagSelectionChange}
+      isEditing={isEditing}
+      isFavorite={isFavorite}
+      locationNoteRelations={locationNoteRelations}
+      name={name}
+      pendingLocationRelations={pendingLocationRelations}
+      politics={politics}
+      saving={saving}
+      saveNoteRelation={saveNoteRelation}
+      seeAlsoManagerRef={seeAlsoManagerRef}
+      selectedStory={selectedStory}
+      selectedTagIds={selectedTagIds}
+      setClimate={setClimate}
+      setCulture={setCulture}
+      setCustomValues={setCustomValues}
+      setDescription={setDescription}
+      setExtraNotes={setExtraNotes}
+      setIsFavorite={setIsFavorite}
+      setName={setName}
+      setPolitics={setPolitics}
+      styles={styles}
+      t={t}
+    />
   );
 };
 

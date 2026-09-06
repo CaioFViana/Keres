@@ -205,8 +205,8 @@
             "grammaticalGender": "neutral"
           },
           "Arc": {
-            "singular": "Arc",
-            "plural": "Arcs",
+            "singular": "Campaign",
+            "plural": "Campaigns",
             "grammaticalGender": "neutral"
           }
         }

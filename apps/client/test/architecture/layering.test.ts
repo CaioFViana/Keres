@@ -105,16 +105,7 @@ describe('client layers', () => {
  * and a name that stays listed after having been broken up.
  */
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT = [
-  'components/features/presence-matrix/PresenceMatrixViewerContent.tsx',
-  'navigation/MainSystemStack.tsx',
-  'screens/characters/CharacterDetailScreen.tsx',
-  'screens/characters/CharacterFormScreen.tsx',
-  'screens/locations/LocationFormScreen.tsx',
-  'screens/narrative-elements/chapters/NarrativeElementsListScreen.tsx',
-  'screens/narrative-elements/choices/ChoiceViewScreen.tsx',
-  'screens/narrative-elements/scenes/SceneDetailScreen.tsx',
-];
+const FILES_OVER_THE_LIMIT: Array<string> = [];
 
 /** Counts only meaningful source lines, leaving comments and visual spacing out of the ceiling. */
 function codeLineCount(content: string): number {

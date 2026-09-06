@@ -169,6 +169,10 @@ const nearLimitFiles = files
   .slice(0, nearLimitFileCount);
 
 console.log(`\nFiles above ${fileLineLimit} lines of code (${oversizedFiles.length})`);
-console.table(oversizedFiles.map(formatFile));
+if (oversizedFiles.length === 0) {
+  console.log(`All non-test source files are at or below ${fileLineLimit} lines of code.`);
+} else {
+  console.table(oversizedFiles.map(formatFile));
+}
 console.log(`\nTop ${nearLimitFileCount} files at or below ${fileLineLimit} lines of code`);
 console.table(nearLimitFiles.map(formatFile));

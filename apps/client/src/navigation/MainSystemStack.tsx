@@ -1,15 +1,12 @@
 // The stack definitions live in MainSystemStacks; this file composes the drawer.
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 import {
   CommonActions,
-  DrawerActions,
   getFocusedRouteNameFromRoute,
   StackActions,
-  useNavigation,
 } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +14,6 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
-import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
@@ -44,6 +40,13 @@ import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
+import {
+  ArcContextDrawerScreen,
+  drawerIcon,
+  DrawerToggleButton,
+  type MainDashboardScreenNavigationProp,
+  mainSystemStackRootScreens,
+} from './MainSystemDrawerHelpers';
 
 export type {
   BoardStackParamList,
@@ -59,10 +62,37 @@ export type {
   OperationLogStackParamList,
   PlotsStackParamList,
   TagsStackParamList,
-  WorldRulesStackParamList
+  WorldRulesStackParamList,
 } from './MainSystemStacks';
 
-import { BoardsStackNavigator, CharacterStackNavigator, CommentsStackNavigator, CustomizationStackNavigator, GalleryStackNavigator, ItemStackNavigator, LocationStackNavigator, NarrativeElementsStackNavigator, NoteStackNavigator, OperationLogStackNavigator, PlotsStackNavigator, TagStackNavigator, WorldRuleStackNavigator, type BoardStackParamList, type CharacterStackParamList, type CommentsStackParamList, type CustomizationStackParamList, type GalleryStackParamList, type ItemStackParamList, type LocationStackParamList, type NarrativeElementsStackParamList, type NotesStackParamList, type OperationLogStackParamList, type PlotsStackParamList, type TagsStackParamList, type WorldRulesStackParamList } from './MainSystemStacks';
+import {
+  BoardsStackNavigator,
+  CharacterStackNavigator,
+  CommentsStackNavigator,
+  CustomizationStackNavigator,
+  GalleryStackNavigator,
+  ItemStackNavigator,
+  LocationStackNavigator,
+  NarrativeElementsStackNavigator,
+  NoteStackNavigator,
+  OperationLogStackNavigator,
+  PlotsStackNavigator,
+  TagStackNavigator,
+  WorldRuleStackNavigator,
+  type BoardStackParamList,
+  type CharacterStackParamList,
+  type CommentsStackParamList,
+  type CustomizationStackParamList,
+  type GalleryStackParamList,
+  type ItemStackParamList,
+  type LocationStackParamList,
+  type NarrativeElementsStackParamList,
+  type NotesStackParamList,
+  type OperationLogStackParamList,
+  type PlotsStackParamList,
+  type TagsStackParamList,
+  type WorldRulesStackParamList,
+} from './MainSystemStacks';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -93,47 +123,6 @@ export type MainSystemDrawerParamList = {
 };
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
-
-const mainSystemStackRootScreens = new Set([
-  'Characters',
-  'NarrativeElements',
-  'Items',
-  'ItemJourneys',
-  'Locations',
-  'GalleryList',
-  'BoardList',
-  'Tags',
-  'WorldIndex',
-  'Notes',
-  'Plots',
-  'OperationLog',
-  'CommentsList',
-  'CustomizationIndex',
-  // The roots of the stacks the drawer opens directly: without them the header draws a back arrow on top
-  // of the list itself, which is precisely the place there is no going back from.
-  'HelpIndex',
-  'DeviceIndex',
-]);
-
-/// Main Drawer
-type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
-
-const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
-  function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
-    return <Ionicons name={name} color={color} size={size} />;
-  };
-
-const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => (
-  <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />
-);
-
-const ArcContextDrawerScreen = () => {
-  const navigation = useNavigation<MainDashboardScreenNavigationProp>();
-  React.useEffect(() => {
-    navigation.navigate('MainDashboard');
-  }, [navigation]);
-  return null;
-};
 
 const MainSystemNavigator = () => {
   const { colors } = useTheme();

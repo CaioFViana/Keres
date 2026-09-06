@@ -1,11 +1,10 @@
-import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
-import { describeStoryIntegrityViolations, findStoryExportIntegrityErrors } from '@keres/shared';
-import { applyNarrative } from './lib/applyExampleNarrative';
-import { exampleStoryNarratives } from './lib/exampleStoryNarrative';
+import { CURRENT_STORY_FORMAT_VERSION, describeStoryIntegrityViolations, findStoryExportIntegrityErrors } from '@keres/shared';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyNarrative } from './lib/applyExampleNarrative';
+import { exampleStoryNarratives } from './lib/exampleStoryNarrative';
 
 type Language = 'en' | 'pt';
 type StoryDocument = Record<string, any>;
@@ -238,9 +237,9 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     description: location.description,
   }));
 
-  // Examples are installed as current-format stories, not migrated at install time. They therefore
-  // carry the same default Arc that a newly created local Story receives, and every chapter belongs
-  // to it from the outset.
+  // The current story format always owns one default Arc internally. Examples deliberately do
+  // not add authored arcs beyond that mandatory container: their narratives are too short to need
+  // campaign-level grouping.
   const storyArcs = [
     {
       ...base(id('arc-default'), storyId),
@@ -589,6 +588,8 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
   });
 
   let choices: any[] = [];
+  let routes: any[] = [];
+  let routeSteps: any[] = [];
   let choiceCheckGroups: any[] = [];
   let choiceChecks: any[] = [];
   let plots: any[] = [];
@@ -609,6 +610,30 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
       nextSceneId: scenes[to].id,
       text: '',
     }));
+    const routeDefinitions = [
+      { name: language === 'pt' ? 'Caminho principal' : 'Main route', sceneIndexes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11] },
+      { name: language === 'pt' ? 'Atalho revelado' : 'Revealed shortcut', sceneIndexes: [0, 3, 6, 7, 10] },
+    ];
+    routes = routeDefinitions.map((route, index) => ({
+      ...base(id(`route-${index}`), storyId),
+      name: route.name,
+      details: language === 'pt' ? 'Um percurso possível pelas escolhas da história.' : 'One possible traversal through the story choices.',
+    }));
+    routeSteps = routeDefinitions.flatMap((route, routeIndex) =>
+      route.sceneIndexes.map((sceneIndex, position) => {
+        const nextSceneIndex = route.sceneIndexes[position + 1];
+        const selectedChoice = choices.find(
+          (choice) => choice.sceneId === scenes[sceneIndex].id && choice.nextSceneId === scenes[nextSceneIndex]?.id,
+        );
+        return {
+          ...base(id(`route-step-${routeIndex}-${position}`), storyId),
+          routeId: routes[routeIndex].id,
+          position: position + 1,
+          sceneId: scenes[sceneIndex].id,
+          selectedChoiceId: selectedChoice?.id ?? null,
+        };
+      }),
+    );
     choiceCheckGroups = [0, 1, 2, 3].map((index) => ({
       ...base(id(`choice-check-group-${index}`), storyId),
       choiceId: choices[12 + index].id,
@@ -998,8 +1023,8 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     itemJourneys,
     plots,
     plotScenes,
-    routes: [],
-    routeSteps: [],
+    routes,
+    routeSteps,
     storySchemaFields,
     attributeValues,
     comments,

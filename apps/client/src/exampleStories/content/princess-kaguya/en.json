@@ -1239,7 +1239,13 @@
         "minutesPerHour": 60,
         "hoursPerDay": 24,
         "daysPerWeek": 5,
-        "weekdayNames": ["Bamboo", "Mist", "Moon", "Wind", "Star"],
+        "weekdayNames": [
+          "Bamboo",
+          "Mist",
+          "Moon",
+          "Wind",
+          "Star"
+        ],
         "unitNames": {},
         "months": [
           {

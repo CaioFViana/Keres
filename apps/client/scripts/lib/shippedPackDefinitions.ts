@@ -127,8 +127,8 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
         grammaticalGender: { en: 'neutral', pt: 'feminine' },
       },
       Arc: {
-        singular: { en: 'Arc', pt: 'Arco' },
-        plural: { en: 'Arcs', pt: 'Arcos' },
+        singular: { en: 'Campaign', pt: 'Campanha' },
+        plural: { en: 'Campaigns', pt: 'Campanhas' },
         grammaticalGender: { en: 'neutral', pt: 'masculine' },
       },
     },

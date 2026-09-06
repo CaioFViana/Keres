@@ -3,7 +3,7 @@
   "version": "1.8.0",
   "main": "index.ts",
   "types": "index.ts",
-  "license": "ISC",
+  "license": "MPL-2.0",
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

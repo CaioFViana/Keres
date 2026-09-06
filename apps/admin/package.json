@@ -2,6 +2,7 @@
   "name": "@keres/admin",
   "version": "1.8.0",
   "private": true,
+  "license": "MPL-2.0",
   "type": "module",
   "scripts": {
     "start": "vite",

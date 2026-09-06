@@ -2,6 +2,7 @@
   "name": "@keres/client",
   "main": "expo-router/entry",
   "version": "1.8.0",
+  "license": "MPL-2.0",
   "scripts": {
     "prestart": "bun scripts/generate-indexes.ts",
     "start": "expo start",

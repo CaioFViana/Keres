@@ -4,7 +4,7 @@
   "author": "",
   "description": "",
   "keywords": [],
-  "license": "ISC",
+  "license": "MPL-2.0",
   "private": true,
   "scripts": {
     "client:start": "bun run --cwd apps/client start",

@@ -21,7 +21,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MPL-2.0",
   "private": true,
   "dependencies": {
     "@aws-sdk/client-s3": "^3.817.0",

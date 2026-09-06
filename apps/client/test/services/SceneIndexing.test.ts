@@ -62,6 +62,22 @@ afterEach(() => {
 });
 
 describe('SceneService index handling', () => {
+  it('assigns a new scene to the end of its chapter', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+
+    const created = await service.createScene(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      chapterId: 'chapter-1',
+      locationId: 'location-1',
+      name: 'Cena nova',
+    });
+
+    expect(created.index).toBe(3);
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2', `${created.id}:3`]);
+  });
+
   it('closes the gap left in the chapter when a scene is deleted', async () => {
     const service = createSceneService(database.db);
     await seedScene('a', 'chapter-1', 1);

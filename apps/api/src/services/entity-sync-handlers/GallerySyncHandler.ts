@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateGalleryDataType,
   CreateStoryUpdate,
@@ -103,7 +104,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -130,7 +131,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
     // The row becomes a tombstone above, but the hash may be used by another Gallery (in the same story

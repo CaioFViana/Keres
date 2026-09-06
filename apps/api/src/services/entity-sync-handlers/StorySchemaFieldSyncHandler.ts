@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
@@ -75,7 +76,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     // entityType and key are immutable after creation: AttributeValue references the field by fieldId (not
     // by key), so nothing would technically break, but changing the entity type or the key underneath
@@ -95,7 +96,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     const alreadyDeleted = !!currentEntity.isDeleted;
     await super.delete(userId, storyId, update, currentEntity);

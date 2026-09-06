@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreatePlotDataType,
   CreateStoryUpdate,
@@ -53,7 +54,7 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     await this.assertLinear(storyId);
     await super.update(userId, storyId, update, currentEntity);
@@ -62,7 +63,7 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     await this.assertLinear(storyId);
     await super.delete(userId, storyId, update, currentEntity);

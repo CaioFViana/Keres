@@ -191,7 +191,7 @@ export class SyncPullService {
   }
 
   private toStoryUpdate(operation: typeof operationLog.$inferSelect): StoryUpdate {
-    const payload = operation.payload as Record<string, any>;
+    const payload = operation.payload as Record<string, unknown>;
     const operationTime = operation.createdAt.toISOString();
     // entityVersion was added after operationVersion. Retain the old fallback for historical rows.
     const entityVersion = operation.entityVersion ?? operation.operationVersion;
@@ -205,7 +205,7 @@ export class SyncPullService {
     };
 
     if (operation.operationType === 'create') {
-      const data = {
+      const data: Record<string, unknown> = {
         ...payload,
         createdAt: operationTime,
         updatedAt: operationTime,
@@ -213,7 +213,7 @@ export class SyncPullService {
         isDeleted: false,
         deletedAt: null,
       };
-      delete (data as Record<string, any>).storyId;
+      delete data.storyId;
       return {
         type: 'create',
         entity: operation.entityType,
@@ -222,8 +222,12 @@ export class SyncPullService {
       } as CreateStoryUpdate;
     }
     if (operation.operationType === 'update') {
-      const changes = { ...payload, updatedAt: operationTime, version: entityVersion };
-      delete (changes as Record<string, any>).storyId;
+      const changes: Record<string, unknown> = {
+        ...payload,
+        updatedAt: operationTime,
+        version: entityVersion,
+      };
+      delete changes.storyId;
       return {
         type: 'update',
         entity: operation.entityType,

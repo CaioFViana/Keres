@@ -164,7 +164,7 @@ describe('gallery relation sync handler', () => {
         storyId,
         create('GalleryRelation', id, { galleryId, ownerId: owners[ownerType], ownerType }),
       );
-      expect(await handler.findById(id)).toMatchObject({
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({
         galleryId,
         ownerId: owners[ownerType],
         ownerType,
@@ -197,7 +197,7 @@ describe('gallery relation sync handler', () => {
       ),
     ).rejects.toThrow(/already linked/i);
 
-    const current = await handler.findById(id);
+    const current = await handler.findByIdOrThrow(id);
     await handler.update(
       userId,
       storyId,
@@ -209,7 +209,7 @@ describe('gallery relation sync handler', () => {
       } as UpdateStoryUpdate,
       current,
     );
-    expect(await handler.findById(id)).toMatchObject({
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({
       ownerId: owners.Item,
       ownerType: 'Item',
       version: 2,

@@ -37,7 +37,10 @@ export interface SceneService {
   ): Promise<SceneSelect[]>;
   getSceneCount(storyId?: string): Promise<number>;
   getById(sceneId: string): Promise<SceneSelect | undefined>;
-  createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
+  createScene(
+    currentUserId: string,
+    sceneData: Omit<Create<SceneInsert>, 'index'>,
+  ): Promise<SceneSelect>;
   updateScene(
     currentUserId: string,
     sceneId: string,
@@ -222,9 +225,15 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       return decorateFavorite(db, 'Scene', scene);
     },
 
-    async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
+    async createScene(
+      currentUserId: string,
+      sceneData: Omit<Create<SceneInsert>, 'index'>,
+    ): Promise<SceneSelect> {
       await assertStoryIsWritable(db, sceneData.storyId);
-      let newScene = prepareNewEntityData<SceneInsert>(sceneData);
+      let newScene = prepareNewEntityData<SceneInsert>({
+        ...sceneData,
+        index: await nextIndexInChapter(sceneData.storyId, sceneData.chapterId ?? null),
+      });
       const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
       newScene = favorite.data;
       const result = await db.insert(scenes).values(newScene).returning().get();

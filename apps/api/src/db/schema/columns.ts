@@ -3,6 +3,15 @@ import * as sqlite from 'drizzle-orm/sqlite-core';
 import { usingSqlite } from '../dialect';
 
 /**
+ * Drizzle exposes separate generic types for equivalent PostgreSQL and SQLite builders. Runtime
+ * compatibility is established by the modes selected in this module; keep the type bridge here so
+ * services and table definitions never need a dialect assertion of their own.
+ */
+function asPostgresCompatible<T>(builder: unknown): T {
+  return builder as T;
+}
+
+/**
  * One table definition, two dialects.
  *
  * drizzle has no dialect-agnostic schema: `pgTable` and `sqliteTable` are different builders, with
@@ -26,33 +35,39 @@ import { usingSqlite } from '../dialect';
  */
 
 /** `pgTable`/`sqliteTable`. The signature is the same in both. */
-export const table = (usingSqlite ? sqlite.sqliteTable : pg.pgTable) as typeof pg.pgTable;
+export const table = asPostgresCompatible<typeof pg.pgTable>(
+  usingSqlite ? sqlite.sqliteTable : pg.pgTable,
+);
 
-export const text = (usingSqlite ? sqlite.text : pg.text) as typeof pg.text;
+export const text = asPostgresCompatible<typeof pg.text>(usingSqlite ? sqlite.text : pg.text);
 
-export const integer = (usingSqlite ? sqlite.integer : pg.integer) as typeof pg.integer;
+export const integer = asPostgresCompatible<typeof pg.integer>(
+  usingSqlite ? sqlite.integer : pg.integer,
+);
 
 /**
  * A number with decimals. `real` exists in both dialects and the inferred type is `number` on both
  * sides, so services cannot tell the difference - the same criterion as the columns above.
  */
-export const real = (usingSqlite ? sqlite.real : pg.real) as typeof pg.real;
+export const real = asPostgresCompatible<typeof pg.real>(usingSqlite ? sqlite.real : pg.real);
 
 /** A 64-bit integer. SQLite's `INTEGER` is already 64 bits; on Postgres it is `bigint`. */
-export const bigintNumber = (
+export const bigintNumber = asPostgresCompatible<
+  (name: string) => ReturnType<typeof pg.bigint<string, 'number'>>
+>(
   usingSqlite
     ? (name: string) => sqlite.integer(name)
     : (name: string) => pg.bigint(name, { mode: 'number' })
-) as (name: string) => ReturnType<typeof pg.bigint<string, 'number'>>;
+);
 
-export const boolean = (
+export const boolean = asPostgresCompatible<typeof pg.boolean>(
   usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'boolean' }) : pg.boolean
-) as typeof pg.boolean;
+);
 
 /** A nullable date/time. */
-export const timestamp = (
+export const timestamp = asPostgresCompatible<typeof pg.timestamp>(
   usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'timestamp_ms' }) : pg.timestamp
-) as typeof pg.timestamp;
+);
 
 /**
  * A required date/time, filled with "now" when the inserter does not provide one.
@@ -64,7 +79,9 @@ export const timestamp = (
  * amounts to the same thing for whoever inserts through drizzle - and that is the only path here,
  * since no write in this API is done in raw SQL.
  */
-export const timestampNow = (
+export const timestampNow = asPostgresCompatible<
+  (name: string) => ReturnType<ReturnType<ReturnType<typeof pg.timestamp>['notNull']>['defaultNow']>
+>(
   usingSqlite
     ? (name: string) =>
         sqlite
@@ -72,30 +89,26 @@ export const timestampNow = (
           .notNull()
           .$defaultFn(() => new Date())
     : (name: string) => pg.timestamp(name).notNull().defaultNow()
-) as (
-  name: string,
-  // The type has to carry the "has a default" mark, otherwise drizzle starts requiring
-  // `createdAt`/`updatedAt` on every insert.
-) => ReturnType<ReturnType<ReturnType<typeof pg.timestamp>['notNull']>['defaultNow']>;
+);
 
 /** Documento JSON. `jsonb` no Postgres, texto serializado pelo drizzle no SQLite. */
-export const json = (
+export const json = asPostgresCompatible<typeof pg.jsonb>(
   usingSqlite ? (name: string) => sqlite.text(name, { mode: 'json' }) : pg.jsonb
-) as typeof pg.jsonb;
+);
 
-export const index = (usingSqlite ? sqlite.index : pg.index) as typeof pg.index;
+export const index = asPostgresCompatible<typeof pg.index>(usingSqlite ? sqlite.index : pg.index);
 
-export const uniqueIndex = (
+export const uniqueIndex = asPostgresCompatible<typeof pg.uniqueIndex>(
   usingSqlite ? sqlite.uniqueIndex : pg.uniqueIndex
-) as typeof pg.uniqueIndex;
+);
 
-export const unique = (usingSqlite ? sqlite.unique : pg.unique) as typeof pg.unique;
+export const unique = asPostgresCompatible<typeof pg.unique>(usingSqlite ? sqlite.unique : pg.unique);
 
 /**
  * Uma tabela sob outro nome, para a mesma tabela aparecer duas vezes numa consulta.
  * `FriendshipService` usa isso para juntar `users` com ela mesma (quem enviou e quem recebeu).
  */
-export const alias = (usingSqlite ? sqlite.alias : pg.alias) as typeof pg.alias;
+export const alias = asPostgresCompatible<typeof pg.alias>(usingSqlite ? sqlite.alias : pg.alias);
 
 /**
  * A closed set of values.
@@ -115,5 +128,5 @@ export function dbEnum<const T extends readonly [string, ...string[]]>(name: str
     ? (columnName: string) => sqlite.text(columnName, { enum: values })
     : pgType;
 
-  return Object.assign(column, { enumValues: values }) as typeof pgType;
+  return asPostgresCompatible<typeof pgType>(Object.assign(column, { enumValues: values }));
 }

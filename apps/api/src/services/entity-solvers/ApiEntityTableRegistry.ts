@@ -1,11 +1,19 @@
 import { OperationLogEntityType } from '@keres/shared';
+import type { PgColumn, PgTableWithColumns } from 'drizzle-orm/pg-core';
 import * as schema from '../../db/schema';
+
+type ApiEntityTable = PgTableWithColumns<{
+  name: string;
+  schema: string | undefined;
+  columns: Record<string, PgColumn>;
+  dialect: 'pg';
+}>;
 
 /**
  * PostgreSQL table adapter for the portable entity handlers. Entity semantics stay in
  * `@keres/shared`; this is only the API's physical storage mapping.
  */
-export const API_ENTITY_TABLES: Partial<Record<OperationLogEntityType, any>> = {
+export const API_ENTITY_TABLES = {
   [OperationLogEntityType.AttributeValue]: schema.attributeValues,
   [OperationLogEntityType.Board]: schema.boards,
   [OperationLogEntityType.Chapter]: schema.chapters,
@@ -48,7 +56,7 @@ export const API_ENTITY_TABLES: Partial<Record<OperationLogEntityType, any>> = {
   [OperationLogEntityType.TagRelation]: schema.tagRelations,
   [OperationLogEntityType.User]: schema.users,
   [OperationLogEntityType.WorldRule]: schema.worldRules,
-};
+} as unknown as Partial<Record<OperationLogEntityType, ApiEntityTable>>;
 
 export function getApiEntityTable(entityType: string) {
   return API_ENTITY_TABLES[entityType as OperationLogEntityType];

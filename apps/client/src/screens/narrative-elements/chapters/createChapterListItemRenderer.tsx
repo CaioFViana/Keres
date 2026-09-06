@@ -52,7 +52,7 @@ export const createChapterListItemRenderer = (props: any) => {
     tagsBySceneId,
   } = props;
 
-  return ({ item }: { item: ChapterSelect }) => {
+  return function ChapterListItemRenderer({ item }: { item: ChapterSelect }) {
     const query = searchQuery.trim().toLocaleLowerCase();
     const allChapterScenes = scenesWithFavoriteState.filter((scene: SceneSelect) =>
       sceneBelongsToGroup(scene, item.id),

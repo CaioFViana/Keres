@@ -96,6 +96,21 @@ describe('client layers', () => {
   });
 });
 
+describe('scene form responsibilities', () => {
+  it('keeps store initialization and persistence coordination outside the screen', () => {
+    const screen = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/narrative-elements/scenes/SceneFormScreen.tsx'),
+      'utf8',
+    );
+
+    expect(screen).toContain('useSceneFormResources');
+    expect(screen).toContain('useSceneFormState');
+    expect(screen).toContain('saveSceneWithRelations');
+    expect(screen).not.toMatch(/state\/(chapter|character|item|location)Store/);
+    expect(screen).not.toMatch(/createSceneService|setDbAndStoryId|initializeService/);
+  });
+});
+
 /**
  * A per-file size ceiling.
  *

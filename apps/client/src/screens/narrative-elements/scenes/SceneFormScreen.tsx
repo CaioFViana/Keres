@@ -5,9 +5,7 @@ import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import CustomAttributeFields, {
-  getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill, {
@@ -20,7 +18,6 @@ import SceneTimingFields from '@/src/components/features/scenes/SceneTimingField
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import type { Scene } from '@keres/shared/entities/Scene';
 import { parseCalendarDateCoordinate } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
@@ -28,7 +25,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityEffects } from '../../../hooks/useEntityEffects';
@@ -39,11 +35,10 @@ import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
 
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useChapterStore } from '../../../state/chapterStore'; // Import useChapterStore
-import { useCharacterStore } from '../../../state/characterStore'; // Import useCharacterStore
-import { useItemStore } from '../../../state/itemStore';
-import { useLocationStore } from '../../../state/locationStore'; // Import useLocationStore
+import {
+  saveSceneWithRelations,
+  type SceneFormData,
+} from '../../../services/storymanagement/SceneSaveCoordinator';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
@@ -52,6 +47,8 @@ import { AppAlert } from '../../../utils/AppAlert';
 import { parseTimingInput } from '../../../utils/sceneTimingInput';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import { useSceneFormResources } from './useSceneFormResources';
+import { useSceneFormState } from './useSceneFormState';
 
 type SceneFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<
@@ -74,96 +71,62 @@ const SceneFormScreen = () => {
   const { selectedStory } = useStoryStore();
   const { calendars } = useStoryCalendar(selectedStory?.id);
   const {
+    drizzleDb,
+    sceneServiceRef,
     chapters,
-    fetchChapters,
-    setDbAndStoryId: setChapterDbAndStoryId,
-    initializeService: initializeChapterService,
-  } = useChapterStore(); // For chapter selection
-  const {
     locations,
-    fetchLocations,
-    setDbAndStoryId: setLocationDbAndStoryId,
-    initializeService: initializeLocationService,
-  } = useLocationStore(); // For location selection
-  const {
     characters,
-    fetchCharacters,
-    setDbAndStoryId: setCharacterDbAndStoryId,
-    initializeService: initializeCharacterService,
-  } = useCharacterStore(); // For character selection
-  const {
     items,
-    fetchItems,
-    setDbAndStoryId: setItemDbAndStoryId,
-    initializeService: initializeItemService,
-  } = useItemStore();
+  } = useSceneFormResources(selectedStory?.id);
 
   const commonInputStyles = getCommonInputStyles(colors);
-  const drizzleDb = useDrizzle();
-
   const confirmDelete = useConfirmDelete();
-
-  const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
-
   const isBranching = selectedStory?.type === 'branching';
-
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!sceneServiceRef.current) {
-        sceneServiceRef.current = createSceneService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
-
-  useEffect(() => {
-    if (!drizzleDb || !selectedStory?.id) return;
-    setItemDbAndStoryId(drizzleDb, selectedStory.id);
-    initializeItemService();
-    fetchItems();
-    setChapterDbAndStoryId(drizzleDb, selectedStory.id);
-    initializeChapterService();
-    fetchChapters();
-    setLocationDbAndStoryId(drizzleDb, selectedStory.id);
-    initializeLocationService();
-    fetchLocations();
-    setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
-    initializeCharacterService();
-    fetchCharacters();
-  }, [
+  const customFields = useStorySchemaFields(selectedStory?.id, 'Scene');
+  const {
+    currentSceneId,
+    setCurrentSceneId,
+    chapterId,
+    setChapterId,
+    locationId,
+    setLocationId,
+    name,
+    setName,
+    summary,
+    setSummary,
+    isFavorite,
+    setIsFavorite,
+    extraNotes,
+    setExtraNotes,
+    gapInput,
+    setGapInput,
+    gapType,
+    setGapType,
+    calendarDateOverride,
+    setCalendarDateOverride,
+    calendarDateOverrideCalendarId,
+    setCalendarDateOverrideCalendarId,
+    durationInput,
+    setDurationInput,
+    durationType,
+    setDurationType,
+    isStart,
+    setIsStart,
+    isFinish,
+    setIsFinish,
+    customValues,
+    setCustomValues,
+    loading,
+    isEditing,
+  } = useSceneFormState({
+    initialSceneId,
+    initialChapterId,
+    storyId: selectedStory?.id,
     drizzleDb,
-    selectedStory?.id,
-    setItemDbAndStoryId,
-    initializeItemService,
-    fetchItems,
-    setChapterDbAndStoryId,
-    initializeChapterService,
-    fetchChapters,
-    setLocationDbAndStoryId,
-    initializeLocationService,
-    fetchLocations,
-    setCharacterDbAndStoryId,
-    initializeCharacterService,
-    fetchCharacters,
-  ]);
-
-  const [currentSceneId, setCurrentSceneId] = useState<string | undefined>(initialSceneId);
-  const [chapterId, setChapterId] = useState<string | null>(null); // State for selected chapter
-  const [locationId, setLocationId] = useState<string | null>(null); // State for selected location
-  const [name, setName] = useState('');
-  const [summary, setSummary] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
-  const [gapInput, setGapInput] = useState('');
-  const [gapType, setGapType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
-  const [calendarDateOverride, setCalendarDateOverride] = useState('');
-  const [calendarDateOverrideCalendarId, setCalendarDateOverrideCalendarId] = useState<
-    string | null
-  >(null);
-  const [durationInput, setDurationInput] = useState('');
-  const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
-  const [isStart, setIsStart] = useState(false);
-  const [isFinish, setIsFinish] = useState(false);
+    sceneServiceRef,
+    customFields,
+  });
 
   const {
     characterSceneRelations,
@@ -193,15 +156,8 @@ const SceneFormScreen = () => {
     persistNoteRelations,
   } = useEntityRelations({ entityType: 'Scene', entityId: currentSceneId });
 
-  const customFields = useStorySchemaFields(selectedStory?.id, 'Scene');
-  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
-  const customDefaultsAppliedRef = useRef(false);
-
-  const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
   const [deleting, setDeleting] = useState(false);
-
-  const isEditing = !!currentSceneId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useScreenHeader({
@@ -210,67 +166,8 @@ const SceneFormScreen = () => {
   });
 
   useEffect(() => {
-    const loadSceneAndData = async () => {
-      if (!sceneServiceRef.current || !selectedStory?.id) {
-        console.warn('Scene service or selected story not available.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        if (isEditing) {
-          const fetchedScene = await sceneServiceRef.current.getById(currentSceneId!);
-          if (fetchedScene) {
-            setChapterId(fetchedScene.chapterId);
-            setLocationId(fetchedScene.locationId); // Set locationId
-            setName(fetchedScene.name);
-            setSummary(fetchedScene.summary);
-            setIsFavorite(fetchedScene.isFavorite);
-            setExtraNotes(fetchedScene.extraNotes);
-            setGapInput(fetchedScene.gap === null ? '' : String(fetchedScene.gap));
-            setGapType(fetchedScene.gapType);
-            setCalendarDateOverride(fetchedScene.calendarDateOverride ?? '');
-            setCalendarDateOverrideCalendarId(fetchedScene.calendarDateOverrideCalendarId);
-            setDurationInput(fetchedScene.duration === null ? '' : String(fetchedScene.duration));
-            setDurationType(fetchedScene.durationType);
-            setIsStart(fetchedScene.isStart);
-            setIsFinish(fetchedScene.isFinish);
-
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentSceneId!,
-            );
-            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
-          } else {
-            console.warn('Scene not found:', currentSceneId);
-          }
-        } else if (initialChapterId) {
-          setChapterId(initialChapterId);
-        }
-      } catch (err) {
-        console.error('Failed to load scene:', err);
-      } finally {
-        setLoading(false);
-        fetchCharacterSceneRelations(); // Fetch character-scene relations
-      }
-    };
-    loadSceneAndData();
-  }, [
-    currentSceneId,
-    drizzleDb,
-    fetchCharacterSceneRelations,
-    initialChapterId,
-    isEditing,
-    selectedStory?.id,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
-      setCustomValues(getDefaultCustomAttributeValues(customFields));
-      customDefaultsAppliedRef.current = true;
-    }
-  }, [isEditing, customFields]);
+    void fetchCharacterSceneRelations();
+  }, [fetchCharacterSceneRelations]);
 
   const handleSave = () =>
     runSave(async () => {
@@ -307,17 +204,7 @@ const SceneFormScreen = () => {
       }
 
       try {
-        const sceneData: Omit<
-          Scene,
-          | 'id'
-          | 'storyId'
-          | 'createdAt'
-          | 'updatedAt'
-          | 'version'
-          | 'isDeleted'
-          | 'deletedAt'
-          | 'index'
-        > = {
+        const sceneData: SceneFormData = {
           chapterId: chapterId,
           locationId: locationId,
           name: name.trim(),
@@ -336,60 +223,34 @@ const SceneFormScreen = () => {
           isFinish,
         };
 
-        let savedSceneId: string | undefined = currentSceneId;
+        const { sceneId: savedSceneId, created } = await saveSceneWithRelations({
+          sceneService: sceneServiceRef.current!,
+          userId,
+          storyId: selectedStory.id,
+          currentSceneId,
+          sceneData,
+          notFoundMessage: copy.notFound,
+          persistRelations: async (sceneId) => {
+            await persistTagRelations(sceneId);
+            await persistNoteRelations(sceneId);
+            await seeAlsoManagerRef.current?.persistPending(sceneId);
+            await persistPendingCharacterSceneRelations(sceneId);
+          },
+          persistCustomAttributes: (sceneId) =>
+            createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'Scene',
+              sceneId,
+              customValues,
+            ),
+        });
+        if (created) setCurrentSceneId(savedSceneId);
+        entityEventEmitter.emit('scene_changed', selectedStory.id, savedSceneId);
 
-        if (isEditing && currentSceneId) {
-          const originalScene = await sceneServiceRef.current!.getById(currentSceneId);
-          if (!originalScene) {
-            throw new Error(copy.notFound);
-          }
+        AppAlert.alert(t('success'), isEditing ? copy.updated : copy.created);
 
-          // Changing chapter (the position in the new queue and closing the hole in the old one) is the
-          // service's responsibility: here the screen only says which chapter the scene is going to.
-          const savedScene = await sceneServiceRef.current!.updateScene(
-            userId,
-            currentSceneId,
-            sceneData,
-          );
-          savedSceneId = savedScene.id;
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          // --- CREATE NEW SCENE LOGIC ---
-          const allScenesInChapter = (
-            await sceneServiceRef.current!.getAllByStoryId(selectedStory.id)
-          ).filter((scn) => scn.chapterId === chapterId);
-          // A chapter's first scene is 1, and not 0: the same convention as the chapters and the only one
-          // the API accepts when those scenes are reordered later.
-          const nextIndex =
-            allScenesInChapter.length > 0
-              ? Math.max(...allScenesInChapter.map((scn) => scn.index || 0)) + 1
-              : 1;
-          const savedScene = await sceneServiceRef.current!.createScene(userId, {
-            ...sceneData,
-            storyId: selectedStory.id,
-            index: nextIndex,
-          });
-          savedSceneId = savedScene.id;
-          setCurrentSceneId(savedScene.id);
-          AppAlert.alert(t('success'), copy.created);
-        }
-
-        if (savedSceneId) {
-          await persistTagRelations(savedSceneId);
-          await persistNoteRelations(savedSceneId);
-          await seeAlsoManagerRef.current?.persistPending(savedSceneId);
-          await persistPendingCharacterSceneRelations(savedSceneId);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'Scene',
-            savedSceneId,
-            customValues,
-          );
-          entityEventEmitter.emit('scene_changed', selectedStory.id, savedSceneId);
-        }
-
-        if (!isEditing && savedSceneId) {
+        if (created) {
           navigation.dispatch(StackActions.replace('SceneForm', { sceneId: savedSceneId }));
         } else {
           navigation.goBack();
@@ -566,8 +427,6 @@ const SceneFormScreen = () => {
       <FormSwitchField label={t('is_start_scene')} value={isStart} onValueChange={setIsStart} />
 
       <FormSwitchField label={t('is_finish_scene')} value={isFinish} onValueChange={setIsFinish} />
-      {/* End New Scene Fields */}
-
       <CustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}

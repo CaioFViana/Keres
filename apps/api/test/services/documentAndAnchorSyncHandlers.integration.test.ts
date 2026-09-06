@@ -88,7 +88,7 @@ describe('JSON-document sync handlers', () => {
       const handler = build();
       const id = newId();
       await handler.create(userId, storyId, create(entity, id, data));
-      const created = await handler.findById(id);
+      const created = await handler.findByIdOrThrow(id);
       expect(created).toMatchObject({ id, storyId, version: 1, isDeleted: false });
 
       await handler.update(
@@ -102,11 +102,11 @@ describe('JSON-document sync handlers', () => {
         },
         created,
       );
-      const updated = await handler.findById(id);
+      const updated = await handler.findByIdOrThrow(id);
       expect(updated).toMatchObject({ ...changes, version: 2 });
 
       await handler.delete(userId, storyId, { type: 'delete', entity, id, version: 2 }, updated);
-      expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 3 });
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 3 });
     },
   );
 
@@ -116,7 +116,7 @@ describe('JSON-document sync handlers', () => {
       const handler = build();
       const id = newId();
       await handler.create(userId, storyId, create(entity, id, data));
-      const current = await handler.findById(id);
+      const current = await handler.findByIdOrThrow(id);
       const results = await Promise.allSettled([
         handler.update(
           userId,
@@ -144,7 +144,7 @@ describe('JSON-document sync handlers', () => {
 
       expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
       expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
-      expect(await handler.findById(id)).toMatchObject({ version: 2 });
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 2 });
     },
   );
 });
@@ -166,7 +166,7 @@ describe('ChapterAnchorSyncHandler', () => {
       endOffsetUnit: null,
     };
     await handler.create(userId, storyId, create('ChapterAnchor', id, data));
-    const created = await handler.findById(id);
+    const created = await handler.findByIdOrThrow(id);
     expect(created).toMatchObject({ storyId, chapterId, startSceneId: sceneId, version: 1 });
 
     await handler.update(
@@ -180,7 +180,7 @@ describe('ChapterAnchorSyncHandler', () => {
       } as never,
       created,
     );
-    const updated = await handler.findById(id);
+    const updated = await handler.findByIdOrThrow(id);
     expect(updated).toMatchObject({ endSceneId: sceneId, endPosition: 'end', version: 2 });
     await handler.delete(
       userId,
@@ -188,7 +188,7 @@ describe('ChapterAnchorSyncHandler', () => {
       { type: 'delete', entity: 'ChapterAnchor', id, version: 2 } as never,
       updated,
     );
-    expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 3 });
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 3 });
   });
 
   it('refuses an anchor whose referenced scene is absent or belongs to another story', async () => {
@@ -229,7 +229,7 @@ describe('ChapterAnchorSyncHandler', () => {
       endOffsetUnit: null,
     };
     await handler.create(userId, storyId, create('ChapterAnchor', id, data));
-    const current = await handler.findById(id);
+    const current = await handler.findByIdOrThrow(id);
     const results = await Promise.allSettled([
       handler.update(
         userId,
@@ -257,6 +257,6 @@ describe('ChapterAnchorSyncHandler', () => {
 
     expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
     expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
-    expect(await handler.findById(id)).toMatchObject({ version: 2 });
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({ version: 2 });
   });
 });

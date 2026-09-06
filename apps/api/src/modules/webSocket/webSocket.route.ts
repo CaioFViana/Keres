@@ -3,7 +3,11 @@ import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { eventManager } from '../../utils/EventManager'; // Import eventManager
 import { logger } from '../../utils/logger';
-import { RealtimeSessionService, type RealtimeEvent } from '../../services/RealtimeSessionService';
+import {
+  RealtimeSessionService,
+  type RealtimeEvent,
+  type RealtimeSocket,
+} from '../../services/RealtimeSessionService';
 
 const realtimeSessions = new RealtimeSessionService({
   eventBus: eventManager,
@@ -28,12 +32,13 @@ export const wsRoutes = new Elysia().decorate('user', null as JWTPayload | null)
     }
   },
   async open(ws) {
-    await realtimeSessions.openEvents(ws as any, (ws.data as any).query?.ticket);
+    const data = ws.data as unknown as { query?: { ticket?: string } };
+    await realtimeSessions.openEvents(ws as unknown as RealtimeSocket, data.query?.ticket);
   },
   async message(ws, message) {
-    await realtimeSessions.handleEventMessage(ws as any, message);
+    await realtimeSessions.handleEventMessage(ws as unknown as RealtimeSocket, message);
   },
   close(ws) {
-    realtimeSessions.closeEvents(ws as any);
+    realtimeSessions.closeEvents(ws as unknown as RealtimeSocket);
   },
 });

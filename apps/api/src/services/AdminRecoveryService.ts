@@ -137,7 +137,10 @@ export class AdminRecoveryService {
 
     // 'Story' does not belong to another story - for it, `storyId` (the context parameter the rest of the
     // sync pipeline uses to attribute the log) is the story's own id.
-    const storyId: string = entityType === 'Story' ? id : current.storyId;
+    const storyId = entityType === 'Story' ? id : current.storyId;
+    if (typeof storyId !== 'string') {
+      throw new RecoveryEntityNotFoundError();
+    }
 
     const update: UpdateStoryUpdate = {
       type: 'update',

@@ -127,7 +127,7 @@ describe('note relation sync handler', () => {
         storyId,
         create('NoteRelation', id, { noteId, relationId: entities[relationType], relationType }),
       );
-      expect(await handler.findById(id)).toMatchObject({
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({
         noteId,
         relationId: entities[relationType],
         relationType,
@@ -148,7 +148,7 @@ describe('note relation sync handler', () => {
         relationType: 'Character',
       }),
     );
-    const current = await handler.findById(id);
+    const current = await handler.findByIdOrThrow(id);
     await expect(
       handler.update(
         userId,
@@ -204,7 +204,7 @@ describe('note relation sync handler', () => {
       handler.create(userId, storyId, create('NoteRelation', newId(), data)),
     ).rejects.toThrow(/already exists/i);
 
-    const current = await handler.findById(firstId);
+    const current = await handler.findByIdOrThrow(firstId);
     await handler.delete(
       userId,
       storyId,

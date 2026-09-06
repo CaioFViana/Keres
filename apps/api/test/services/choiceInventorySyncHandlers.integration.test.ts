@@ -10,6 +10,7 @@ import { EffectSyncHandler } from '../../src/services/entity-sync-handlers/Effec
 import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
 import { SceneSyncHandler } from '../../src/services/entity-sync-handlers/SceneSyncHandler';
+import type { SyncEntityHandler } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -180,25 +181,25 @@ describe('choice and inventory sync entity handlers', () => {
       }),
     );
 
-    expect(await item.findById(itemId)).toMatchObject({ name: 'Chave de ônix', version: 1 });
-    expect(await effect.findById(effectId)).toMatchObject({
+    expect(await item.findByIdOrThrow(itemId)).toMatchObject({ name: 'Chave de ônix', version: 1 });
+    expect(await effect.findByIdOrThrow(effectId)).toMatchObject({
       entityId: firstSceneId,
       itemId,
       effectType: 'itemGrant',
     });
-    expect(await choice.findById(choiceId)).toMatchObject({
+    expect(await choice.findByIdOrThrow(choiceId)).toMatchObject({
       sceneId: firstSceneId,
       nextSceneId: secondSceneId,
     });
-    expect(await group.findById(groupId)).toMatchObject({ choiceId, combinator: 'AND' });
-    expect(await check.findById(checkId)).toMatchObject({
+    expect(await group.findByIdOrThrow(groupId)).toMatchObject({ choiceId, combinator: 'AND' });
+    expect(await check.findByIdOrThrow(checkId)).toMatchObject({
       groupId,
       itemId,
       itemPresence: 'has',
       mode: 'enable',
     });
 
-    const currentChoice = await choice.findById(choiceId);
+    const currentChoice = await choice.findByIdOrThrow(choiceId);
     await choice.update(
       userId,
       storyId,
@@ -210,18 +211,19 @@ describe('choice and inventory sync entity handlers', () => {
       } as UpdateStoryUpdate,
       currentChoice,
     );
-    expect(await choice.findById(choiceId)).toMatchObject({ text: 'Usar a chave', version: 2 });
+    expect(await choice.findByIdOrThrow(choiceId)).toMatchObject({ text: 'Usar a chave', version: 2 });
 
-    for (const [entity, id, handler] of [
+    const deletionCases: Array<[string, string, SyncEntityHandler]> = [
       ['ChoiceCheck', checkId, check],
       ['ChoiceCheckGroup', groupId, group],
       ['Choice', choiceId, choice],
       ['Effect', effectId, effect],
       ['Item', itemId, item],
-    ] as const) {
-      const current = await handler.findById(id);
+    ];
+    for (const [entity, id, handler] of deletionCases) {
+      const current = await handler.findByIdOrThrow(id);
       await handler.delete(userId, storyId, remove(entity, id, current.version), current);
-      expect(await handler.findById(id)).toMatchObject({ isDeleted: true });
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true });
     }
   });
 
@@ -234,7 +236,7 @@ describe('choice and inventory sync entity handlers', () => {
    */
   it('a Scene reports a version conflict instead of silently dropping a concurrent edit', async () => {
     const scenes = new SceneSyncHandler();
-    const current = await scenes.findById(firstSceneId);
+    const current = await scenes.findByIdOrThrow(firstSceneId);
 
     const stale = scenes.update(
       userId,
@@ -249,7 +251,7 @@ describe('choice and inventory sync entity handlers', () => {
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
-    expect((await scenes.findById(firstSceneId)).name).toBe('Chegada');
+    expect((await scenes.findByIdOrThrow(firstSceneId)).name).toBe('Chegada');
   });
 
   it('a Choice reports a version conflict instead of silently dropping a concurrent edit', async () => {
@@ -265,7 +267,7 @@ describe('choice and inventory sync entity handlers', () => {
         notes: null,
       }),
     );
-    const current = await choice.findById(choiceId);
+    const current = await choice.findByIdOrThrow(choiceId);
 
     const stale = choice.update(
       userId,
@@ -280,7 +282,7 @@ describe('choice and inventory sync entity handlers', () => {
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
-    expect((await choice.findById(choiceId)).text).toBe('Abrir o portão');
+    expect((await choice.findByIdOrThrow(choiceId)).text).toBe('Abrir o portão');
   });
 
   it('refuses dependent writes when a check, group or effect would reference another story row that is absent', async () => {
@@ -404,7 +406,7 @@ describe('choice and inventory sync entity handlers', () => {
           id: checkId,
           changes: { itemId: 'missing-item', version: 1 },
         } as UpdateStoryUpdate,
-        await checks.findById(checkId),
+        await checks.findByIdOrThrow(checkId),
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
     await expect(
@@ -417,7 +419,7 @@ describe('choice and inventory sync entity handlers', () => {
           id: effectId,
           changes: { itemId: 'missing-item', version: 1 },
         } as UpdateStoryUpdate,
-        await effects.findById(effectId),
+        await effects.findByIdOrThrow(effectId),
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
@@ -460,7 +462,7 @@ describe('choice and inventory sync entity handlers', () => {
         triggerState: null,
       }),
     );
-    const groupCurrent = await groups.findById(groupId);
+    const groupCurrent = await groups.findByIdOrThrow(groupId);
     await expect(
       groups.update(
         userId,
@@ -475,7 +477,7 @@ describe('choice and inventory sync entity handlers', () => {
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
-    const checkCurrent = await checks.findById(checkId);
+    const checkCurrent = await checks.findByIdOrThrow(checkId);
     await expect(
       checks.update(
         userId,
@@ -489,6 +491,6 @@ describe('choice and inventory sync entity handlers', () => {
         checkCurrent,
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
-    expect(await checks.findById(checkId)).toMatchObject({ sceneId: firstSceneId, version: 1 });
+    expect(await checks.findByIdOrThrow(checkId)).toMatchObject({ sceneId: firstSceneId, version: 1 });
   });
 });

@@ -22,7 +22,7 @@ export class SyncOperationLogService {
   }): Promise<{ id: string; operationVersion: number }> {
     const { storyId, userId, update, entityId, entityVersion } = args;
     const handler = this.entityHandlers.get(update.entity);
-    let payload: Record<string, any> = {};
+    let payload: Record<string, unknown> = {};
     if (handler) {
       payload = handler.sanitizePayloadForLog(update, userId);
     } else if (update.type === 'delete') {
@@ -46,8 +46,8 @@ export class SyncOperationLogService {
       storyId,
       userId,
       operationVersion: nextOperationVersion,
-      operationType: operationTypeEnum.enumValues.includes(update.type as any)
-        ? (update.type as any)
+      operationType: (operationTypeEnum.enumValues as readonly string[]).includes(update.type)
+        ? (update.type as (typeof operationTypeEnum.enumValues)[number])
         : 'update',
       entityType: update.entity,
       entityId: entityId || ulid(),

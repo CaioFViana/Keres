@@ -11,9 +11,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { ServerSelect } from '../db/schema';
-import { useNotificationStore } from '../state/notificationStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import i18n from '../utils/i18n';
 import type { KeresAxiosInstance } from './apiClient';
 import { createKeresAxiosInstance, isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -34,6 +32,7 @@ import type { SyncContext } from './sync/SyncContext';
 import { SyncPull } from './sync/SyncPull';
 import { SyncPush } from './sync/SyncPush';
 import { SyncMedia } from './sync/SyncMedia';
+import { createAppSyncNotifier, type SyncNotifier } from './sync/SyncNotifier';
 import { protectRemoteUpdate, syncEntityKey } from './sync/syncPure';
 import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './sync/syncEvents';
 
@@ -55,9 +54,9 @@ export class SyncEngineService {
   private media: SyncMedia;
   private _db: AppDrizzleClient | null = null;
   private _conflictService: SyncConflictService | null = null;
-  private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
+  private entityHandlers: Map<string, ClientSyncEntityHandler>;
 
-  private constructor() {
+  private constructor(private readonly notifier: SyncNotifier) {
     this.client = createKeresAxiosInstance();
     this.scheduler = new SyncScheduler({
       readiness: () => ({
@@ -96,7 +95,7 @@ export class SyncEngineService {
 
   public static getInstance(): SyncEngineService {
     if (!SyncEngineService.instance) {
-      SyncEngineService.instance = new SyncEngineService();
+      SyncEngineService.instance = new SyncEngineService(createAppSyncNotifier());
     }
     return SyncEngineService.instance;
   }
@@ -199,7 +198,6 @@ export class SyncEngineService {
    */
   /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
   private async performSync(): Promise<boolean> {
-    const { showNotification } = useNotificationStore.getState();
     if (!this.storyId) {
       console.log('No storyId set for sync operation.');
       return false;
@@ -408,25 +406,13 @@ export class SyncEngineService {
         // item - a single flaky entity type shouldn't flood the user with a
         // notification for every record it touches.
         if (entitiesUpdated.length > 0) {
-          showNotification(
-            i18n.t('sync_updates_received', {
-              count: totalUpdates,
-              entities: entitiesUpdated.join(', '),
-            }),
-            'info',
-          );
+          this.notifier.remoteUpdatesReceived(totalUpdates, entitiesUpdated);
         }
         if (failedEntities.length > 0) {
-          showNotification(
-            i18n.t('sync_failed_to_apply_updates', { entities: failedEntities.join(', ') }),
-            'error',
-          );
+          this.notifier.remoteUpdatesFailed(failedEntities);
         }
         if (conflictsDetected > 0) {
-          showNotification(
-            i18n.t('sync_conflicts_detected', { count: conflictsDetected }),
-            'warning',
-          );
+          this.notifier.conflictsDetected(conflictsDetected);
         }
         // Emit events after the whole pull so a batch causes one refresh per
         // affected entity type instead of one query per operation.
@@ -537,7 +523,7 @@ export class SyncEngineService {
           `Error pushing local operations for story ${this.storyId}:`,
           pushError?.message || pushError,
         );
-        showNotification(i18n.t('sync_push_failed'), 'error');
+        this.notifier.pushFailed();
       }
 
       // 5. Update local story's lastServerSyncedLog and cached role
@@ -574,7 +560,7 @@ export class SyncEngineService {
         return true;
       }
       console.log('Error during sync operation:', error?.message || error);
-      showNotification(i18n.t('sync_failed'), 'error');
+      this.notifier.syncFailed();
       return false;
     }
   }

@@ -105,7 +105,7 @@ describe('schema and see-also sync entity handlers', () => {
       }),
     );
 
-    const field = await fields.findById(fieldId);
+    const field = await fields.findByIdOrThrow(fieldId);
     await fields.update(
       userId,
       storyId,
@@ -117,7 +117,7 @@ describe('schema and see-also sync entity handlers', () => {
       } as UpdateStoryUpdate,
       field,
     );
-    const value = await values.findById(valueId);
+    const value = await values.findByIdOrThrow(valueId);
     await values.update(
       userId,
       storyId,
@@ -129,19 +129,19 @@ describe('schema and see-also sync entity handlers', () => {
       } as UpdateStoryUpdate,
       value,
     );
-    expect(await fields.findById(fieldId)).toMatchObject({
+    expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({
       name: 'Origem divina',
       key: 'origem',
       version: 2,
     });
-    expect(await values.findById(valueId)).toMatchObject({ value: 'Olimpo', version: 2 });
+    expect(await values.findByIdOrThrow(valueId)).toMatchObject({ value: 'Olimpo', version: 2 });
 
-    const updatedValue = await values.findById(valueId);
-    const updatedField = await fields.findById(fieldId);
+    const updatedValue = await values.findByIdOrThrow(valueId);
+    const updatedField = await fields.findByIdOrThrow(fieldId);
     await values.delete(userId, storyId, remove('AttributeValue', valueId, 2), updatedValue);
     await fields.delete(userId, storyId, remove('StorySchemaField', fieldId, 2), updatedField);
-    expect(await values.findById(valueId)).toMatchObject({ isDeleted: true });
-    expect(await fields.findById(fieldId)).toMatchObject({
+    expect(await values.findByIdOrThrow(valueId)).toMatchObject({ isDeleted: true });
+    expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({
       isDeleted: true,
       key: expect.stringContaining('__deleted_'),
     });
@@ -166,7 +166,7 @@ describe('schema and see-also sync entity handlers', () => {
       }),
     );
 
-    const field = await fields.findById(fieldId);
+    const field = await fields.findByIdOrThrow(fieldId);
     await fields.update(
       userId,
       storyId,
@@ -184,7 +184,7 @@ describe('schema and see-also sync entity handlers', () => {
       field,
     );
 
-    expect(await fields.findById(fieldId)).toMatchObject({
+    expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({
       name: 'Lar atual',
       type: AttributeType.ENTITY,
       targetEntityType: 'Location',
@@ -204,7 +204,7 @@ describe('schema and see-also sync entity handlers', () => {
         entityBId: characterId,
       }),
     );
-    const created = await handler.findById(id);
+    const created = await handler.findByIdOrThrow(id);
 
     expect(created).toMatchObject({ storyId, version: 1, isDeleted: false });
     expect([
@@ -212,7 +212,7 @@ describe('schema and see-also sync entity handlers', () => {
       `${created.entityBType}:${created.entityBId}`,
     ]).toEqual([`Character:${characterId}`, `Location:${locationId}`].sort());
     await handler.delete(userId, storyId, remove('SeeAlsoRelation', id, 1), created);
-    expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 2 });
   });
 
   it('rejects self-links, duplicate links in reverse order, and attempts to retarget an existing link', async () => {
@@ -265,7 +265,7 @@ describe('schema and see-also sync entity handlers', () => {
           id: relationId,
           changes: { entityAId: locationId, version: 1 },
         } as UpdateStoryUpdate,
-        await handler.findById(relationId),
+        await handler.findByIdOrThrow(relationId),
       ),
     ).rejects.toThrow(/cannot change the linked entities/i);
   });
@@ -286,7 +286,7 @@ describe('schema and see-also sync entity handlers', () => {
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
 
     const locations = new LocationSyncHandler();
-    const current = await locations.findById(locationId);
+    const current = await locations.findByIdOrThrow(locationId);
     await locations.delete(
       userId,
       storyId,

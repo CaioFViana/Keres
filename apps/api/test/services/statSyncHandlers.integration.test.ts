@@ -68,7 +68,7 @@ beforeEach(async () => {
 
 describe('Stat', () => {
   it('creates a primary stat by default', async () => {
-    const row = await statHandler.findById(statId);
+    const row = await statHandler.findByIdOrThrow(statId);
 
     expect(row).toMatchObject({ name: 'Coragem', isPrimary: true, storyId });
   });
@@ -95,7 +95,7 @@ describe('Stat', () => {
       create('Stat', secondaryId, { name: 'Reputação', isPrimary: false }),
     );
 
-    expect((await statHandler.findById(secondaryId)).isPrimary).toBe(false);
+    expect((await statHandler.findByIdOrThrow(secondaryId)).isPrimary).toBe(false);
   });
 
   it('refuses to promote a secondary stat when the primaries are full', async () => {
@@ -108,7 +108,7 @@ describe('Stat', () => {
     for (let index = 1; index < MAX_PRIMARY_STATS; index += 1) {
       await statHandler.create(userId, storyId, create('Stat', newId(), { name: `Stat ${index}` }));
     }
-    const current = await statHandler.findById(secondaryId);
+    const current = await statHandler.findByIdOrThrow(secondaryId);
 
     await expect(
       statHandler.update(
@@ -138,8 +138,8 @@ describe('StatStrength', () => {
       create('StatStrength', statTier, { statId, label: 'F', minValue: 0 }),
     );
 
-    expect((await strengthHandler.findById(defaultTier)).statId).toBeNull();
-    expect((await strengthHandler.findById(statTier)).statId).toBe(statId);
+    expect((await strengthHandler.findByIdOrThrow(defaultTier)).statId).toBeNull();
+    expect((await strengthHandler.findByIdOrThrow(statTier)).statId).toBe(statId);
   });
 
   it('flags a repeated floor inside the story default ladder as a conflict', async () => {
@@ -186,7 +186,7 @@ describe('StatStrength', () => {
       storyId,
       create('StatStrength', movingId, { statId, label: 'C', minValue: 50 }),
     );
-    const current = await strengthHandler.findById(movingId);
+    const current = await strengthHandler.findByIdOrThrow(movingId);
 
     await expect(
       strengthHandler.update(
@@ -336,7 +336,7 @@ describe('StatRelation', () => {
       storyId,
       create('StatRelation', conflictingId, { characterId: otherCharacterId, statId, value: 20 }),
     );
-    const current = await valueHandler.findById(currentId);
+    const current = await valueHandler.findByIdOrThrow(currentId);
 
     await expect(
       valueHandler.update(
@@ -346,7 +346,7 @@ describe('StatRelation', () => {
         current,
       ),
     ).rejects.toMatchObject({ reason: 'validation' });
-    expect(await valueHandler.findById(currentId)).toMatchObject({
+    expect(await valueHandler.findByIdOrThrow(currentId)).toMatchObject({
       characterId,
       value: 10,
       version: 1,
@@ -411,7 +411,7 @@ describe('Mode', () => {
       create('Mode', modeId, { characterId, name: 'Ferida' }),
     );
 
-    expect(await modeHandler.findById(modeId)).toBeDefined();
+    expect(await modeHandler.findByIdOrThrow(modeId)).toBeDefined();
   });
 
   it('does not let an update retarget a mode to a character that is absent or from another story', async () => {
@@ -421,7 +421,7 @@ describe('Mode', () => {
       storyId,
       create('Mode', modeId, { characterId, name: 'Ferida' }),
     );
-    const current = await modeHandler.findById(modeId);
+    const current = await modeHandler.findByIdOrThrow(modeId);
 
     await expect(
       modeHandler.update(
@@ -431,7 +431,7 @@ describe('Mode', () => {
         current,
       ),
     ).rejects.toThrow(SyncConflictError);
-    expect(await modeHandler.findById(modeId)).toMatchObject({ characterId, version: 1 });
+    expect(await modeHandler.findByIdOrThrow(modeId)).toMatchObject({ characterId, version: 1 });
   });
 });
 

@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStatDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateStatDataSchema, MAX_PRIMARY_STATS, PartialStatSchema } from '@keres/shared';
 import { and, count, eq, ne } from 'drizzle-orm';
@@ -72,7 +73,7 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 

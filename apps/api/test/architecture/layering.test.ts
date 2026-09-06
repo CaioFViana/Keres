@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -93,5 +94,59 @@ describe('recovery entity labels', () => {
     );
 
     expect(recoveryDisplayNames).not.toMatch(/\bswitch\s*\(/);
+  });
+});
+
+describe('sync protocol type boundaries', () => {
+  it('keeps the shared handler contract free of explicit any', () => {
+    const source = readFileSync(
+      resolve(SOURCE_ROOT, 'services/entity-sync-handlers/BaseSyncEntityHandler.ts'),
+      'utf8',
+    );
+    const start = source.indexOf('export type SyncEntity =');
+    const end = source.indexOf('export abstract class BaseSyncEntityHandler');
+    const contract = source.slice(start, end);
+
+    expect(contract).not.toMatch(/:\s*any\b|\bas\s+any\b|Record<string,\s*any>/);
+  });
+
+  it('does not allow explicit any in protocol coordinators', () => {
+    const coordinators = [
+      'services/sync/SyncOperationLogService.ts',
+      'services/sync/SyncPullService.ts',
+      'services/sync/SyncPushService.ts',
+    ];
+    const explicitAny = /:\s*any\b|\bas\s+any\b|Record<string,\s*any>/;
+
+    const offenders = coordinators.filter((file) =>
+      explicitAny.test(readFileSync(resolve(SOURCE_ROOT, file), 'utf8')),
+    );
+
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('API explicit any boundary', () => {
+  it('does not allow explicit any in application source', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => {
+        const source = ts.createSourceFile(
+          file,
+          readFileSync(file, 'utf8'),
+          ts.ScriptTarget.Latest,
+          true,
+        );
+        let found = false;
+        const visit = (node: ts.Node): void => {
+          if (node.kind === ts.SyntaxKind.AnyKeyword) found = true;
+          if (!found) ts.forEachChild(node, visit);
+        };
+        visit(source);
+        return found;
+      })
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
   });
 });

@@ -116,10 +116,10 @@ export const mediaRoutes = new Elysia()
           await file.arrayBuffer(),
         );
         return { hash: stored.hash, sizeBytes: stored.sizeBytes, mimeType };
-      } catch (error: any) {
+      } catch (error: unknown) {
         // A hash mismatch is invalid client data, not a server failure.
         set.status = 400;
-        throw new Error(error?.message || 'Failed to store media.');
+        throw new Error(error instanceof Error ? error.message : 'Failed to store media.');
       }
     },
     {

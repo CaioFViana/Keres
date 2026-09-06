@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateAttributeValueDataType,
   CreateStoryUpdate,
@@ -60,7 +61,7 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     await super.update(userId, storyId, update, currentEntity);
   }
@@ -69,7 +70,7 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }

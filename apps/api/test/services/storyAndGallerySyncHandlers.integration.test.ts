@@ -79,7 +79,7 @@ describe('story and gallery sync entity handlers', () => {
       }),
     );
 
-    const current = await stories.findById(storyId);
+    const current = await stories.findByIdOrThrow(storyId);
     expect(current.createdAt).toEqual(new Date(operationTime));
     await stories.update(
       userId,
@@ -96,9 +96,9 @@ describe('story and gallery sync entity handlers', () => {
       } as any,
       current,
     );
-    expect(await chapters.findById(firstChapterId)).toMatchObject({ index: 2, version: 2 });
-    expect(await chapters.findById(secondChapterId)).toMatchObject({ index: 1, version: 2 });
-    expect(await stories.findById(storyId)).toMatchObject({ version: 2 });
+    expect(await chapters.findByIdOrThrow(firstChapterId)).toMatchObject({ index: 2, version: 2 });
+    expect(await chapters.findByIdOrThrow(secondChapterId)).toMatchObject({ index: 1, version: 2 });
+    expect(await stories.findByIdOrThrow(storyId)).toMatchObject({ version: 2 });
   });
 
   it('validates gallery MIME consistency on create and update', async () => {
@@ -143,7 +143,7 @@ describe('story and gallery sync entity handlers', () => {
         extraNotes: null,
       }),
     );
-    const current = await galleries.findById(id);
+    const current = await galleries.findByIdOrThrow(id);
     await galleries.update(
       userId,
       storyId,
@@ -155,7 +155,7 @@ describe('story and gallery sync entity handlers', () => {
       } as UpdateStoryUpdate,
       current,
     );
-    expect(await galleries.findById(id)).toMatchObject({
+    expect(await galleries.findByIdOrThrow(id)).toMatchObject({
       mimeType: 'audio/mpeg',
       mediaType: 'audio',
       version: 2,
@@ -191,7 +191,7 @@ describe('story and gallery sync entity handlers', () => {
         extraNotes: null,
       }),
     );
-    const current = await galleries.findById(id);
+    const current = await galleries.findByIdOrThrow(id);
 
     const stale = galleries.update(
       userId,
@@ -206,6 +206,6 @@ describe('story and gallery sync entity handlers', () => {
     );
 
     await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
-    expect((await galleries.findById(id)).fileName).toBe('nyx.png');
+    expect((await galleries.findByIdOrThrow(id)).fileName).toBe('nyx.png');
   });
 });

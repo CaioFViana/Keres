@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateChoiceDataType,
   CreateStoryUpdate,
@@ -102,7 +103,7 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     // If story is linear, prevent direct updates of choices
     if (await this._isStoryLinear(storyId)) {
@@ -134,7 +135,7 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     // If story is linear, prevent direct deletion of choices
     if (await this._isStoryLinear(storyId)) {

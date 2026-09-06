@@ -14,7 +14,11 @@ import { operationLog, stories } from '../../db/schema';
 import { AppError } from '../../utils/errors';
 import { eventManager } from '../../utils/EventManager';
 import { logger } from '../../utils/logger';
-import type { SyncEntityHandler } from '../entity-sync-handlers/BaseSyncEntityHandler';
+import type {
+  SyncEntityRow,
+  SyncEntityHandler,
+  SyncPayload,
+} from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { storyPermissionService } from '../StoryPermissionService';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
@@ -148,7 +152,7 @@ export class SyncPushService {
         continue;
       }
 
-      let currentEntity: any;
+      let currentEntity: SyncEntityRow | undefined;
 
       /** Contexto que a tela de conflito usa para montar o comparativo lado a lado. */
       const conflictContext = (): Partial<SyncConflict> => ({
@@ -171,7 +175,7 @@ export class SyncPushService {
       /** Filled in inside the transaction when the operation writes something new. */
       let writeResult: {
         logged: { id: string; operationVersion: number };
-        entityAfter: any;
+        entityAfter: SyncEntityRow | undefined;
       } | null = null;
 
       try {
@@ -224,7 +228,7 @@ export class SyncPushService {
               const matchesRecordedCreate =
                 !!recordedCreate &&
                 handler.createPayloadMatches(
-                  recordedCreate.payload as Record<string, any>,
+                  (recordedCreate.payload ?? {}) as SyncPayload,
                   createData,
                 );
               if (!matchesCurrent && !matchesRecordedCreate) {

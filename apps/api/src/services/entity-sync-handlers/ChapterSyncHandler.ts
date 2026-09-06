@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
@@ -66,7 +67,7 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate | ChapterReorderingStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     if (update.type === 'reorder' && update.entity === 'Chapter') {
       // Refined check
@@ -76,7 +77,7 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
       // Perform version check for the Chapter itself
       this.checkVersionConflict(
         validatedReorderUpdate.version!,
-        currentEntity[this.versionColumnName],
+        currentEntity.version,
         validatedReorderUpdate.id!,
       );
 

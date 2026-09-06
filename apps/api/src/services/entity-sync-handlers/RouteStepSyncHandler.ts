@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateRouteStepDataType,
   CreateStoryUpdate,
@@ -77,7 +78,7 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
       deletedAt: null,
     });
   }
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: any) {
+  async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: SyncStoredEntityFor<typeof this.createSchema>) {
     const changes = this.updateSchema.parse(update.changes);
     await this.validate(
       storyId,
@@ -87,7 +88,7 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
     );
     await super.update(userId, storyId, update, current);
   }
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, current: any) {
+  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, current: SyncStoredEntityFor<typeof this.createSchema>) {
     await super.delete(userId, storyId, update, current);
   }
 }

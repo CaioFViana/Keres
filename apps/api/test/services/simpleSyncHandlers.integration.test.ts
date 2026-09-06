@@ -10,6 +10,7 @@ import { PlotSyncHandler } from '../../src/services/entity-sync-handlers/PlotSyn
 import { SuggestionSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionSyncHandler';
 import { TagSyncHandler } from '../../src/services/entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
+import type { SyncEntityHandler } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -36,22 +37,7 @@ beforeEach(async () => {
   } as never);
 });
 
-type Handler = {
-  create: (userId: string, storyId: string, update: CreateStoryUpdate) => Promise<void>;
-  update: (
-    userId: string,
-    storyId: string,
-    update: UpdateStoryUpdate,
-    current: any,
-  ) => Promise<void>;
-  delete: (
-    userId: string,
-    storyId: string,
-    update: DeleteStoryUpdate,
-    current: any,
-  ) => Promise<void>;
-  findById: (id: string) => Promise<any>;
-};
+type Handler = SyncEntityHandler;
 
 const cases: Array<
   [string, () => Handler, Record<string, unknown>, Record<string, unknown>, string, unknown]
@@ -181,7 +167,7 @@ describe('simple sync entity handlers', () => {
         id: secondId,
         data: secondData,
       } as CreateStoryUpdate);
-      const second = await handler.findById(secondId);
+      const second = await handler.findByIdOrThrow(secondId);
 
       const rename = handler.update(
         userId,
@@ -196,7 +182,7 @@ describe('simple sync entity handlers', () => {
       );
 
       await expect(rename).rejects.toThrow(/already exists/i);
-      expect((await handler.findById(secondId)).name).toBe(secondData.name);
+      expect((await handler.findByIdOrThrow(secondId)).name).toBe(secondData.name);
     },
   );
 
@@ -211,7 +197,7 @@ describe('simple sync entity handlers', () => {
         id,
         data,
       } as CreateStoryUpdate);
-      const created = await handler.findById(id);
+      const created = await handler.findByIdOrThrow(id);
       expect(created).toMatchObject({ id, storyId, version: 1, isDeleted: false });
 
       await handler.update(
@@ -220,7 +206,7 @@ describe('simple sync entity handlers', () => {
         { type: 'update', entity, id, changes: { ...changes, version: 1 } } as UpdateStoryUpdate,
         created,
       );
-      const updated = await handler.findById(id);
+      const updated = await handler.findByIdOrThrow(id);
       expect(updated).toMatchObject({ [changedField]: expectedValue, version: 2 });
 
       await handler.delete(
@@ -229,7 +215,7 @@ describe('simple sync entity handlers', () => {
         { type: 'delete', entity, id, version: 2 } as DeleteStoryUpdate,
         updated,
       );
-      expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 3 });
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 3 });
     },
   );
 });

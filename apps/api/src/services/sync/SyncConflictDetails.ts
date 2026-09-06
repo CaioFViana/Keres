@@ -49,7 +49,7 @@ export async function getChangedFieldsSinceVersion(
 }
 
 /** Converts database Date values before they are shown in the client's conflict comparison. */
-export function serializeSyncEntity(entity: Record<string, any>): Record<string, any> {
+export function serializeSyncEntity(entity: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(entity).map(([key, value]) => [
       key,

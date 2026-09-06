@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RealtimeSessionService } from '../../src/services/RealtimeSessionService';
 
-const listeners = new Map<string, Set<(event: any) => void>>();
+const listeners = new Map<string, Set<(event: never) => void>>();
 let now = 1_000;
 let service: RealtimeSessionService;
 const canReadStory = vi.fn();
@@ -22,7 +22,8 @@ beforeEach(() => {
         listeners.set(key, callbacks);
       },
       off: (key, callback) => listeners.get(key)?.delete(callback),
-      emit: (key, event) => listeners.get(key)?.forEach((callback) => callback(event)),
+      emit: (key, event) =>
+        listeners.get(key)?.forEach((callback) => callback(event as never)),
     },
     canReadStory,
     getReadableStoryIds,
@@ -82,7 +83,8 @@ describe('RealtimeSessionService', () => {
           listeners.set(key, callbacks);
         },
         off: (key, callback) => listeners.get(key)?.delete(callback),
-        emit: (key, event) => listeners.get(key)?.forEach((callback) => callback(event)),
+        emit: (key, event) =>
+          listeners.get(key)?.forEach((callback) => callback(event as never)),
       },
       canReadStory,
       getReadableStoryIds,
@@ -119,7 +121,7 @@ describe('RealtimeSessionService', () => {
     service.subscribeToStory(socket, 'user-1', 'story-1');
     listeners
       .get('storyUpdate:story-1')
-      ?.forEach((listener) => listener({ maxOperationVersion: 42 }));
+      ?.forEach((listener) => listener({ maxOperationVersion: 42 } as never));
 
     expect(listeners.get('storyUpdate:story-1')?.size).toBe(1);
     expect(socket.send).toHaveBeenCalledTimes(1);

@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
@@ -20,6 +21,7 @@ import { mediaStorageService } from '../MediaStorageService';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,
+  type SyncEntityRow,
   type SyncEntityMutationPolicyContext,
   type SyncOperationPolicyContext,
 } from './BaseSyncEntityHandler';
@@ -68,7 +70,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     return update;
   }
 
-  protected payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
+  protected payloadForLog(parsed: Record<string, unknown>, actingUserId: string): Record<string, unknown> {
     const payload = super.payloadForLog(parsed, actingUserId);
     delete payload.userId;
     return payload;
@@ -96,8 +98,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
    * delete story B just by knowing its ULID. "Belonging to the story" for the Story itself can only mean
    * "being that story".
    */
-  checkBelongsToStory(entity: any, storyId: string): boolean {
-    return entity[this.idColumnName] === storyId;
+  checkBelongsToStory(entity: SyncEntityRow, storyId: string): boolean {
+    return entity.id === storyId;
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
@@ -130,7 +132,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate | StoryReorderingStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     if (update.type === 'reorder' && update.entity === 'Story') {
       const validatedReorderUpdate: StoryReorderingStoryUpdate =
@@ -139,7 +141,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       // Perform version check for the Story itself
       this.checkVersionConflict(
         validatedReorderUpdate.version!,
-        currentEntity[this.versionColumnName],
+        currentEntity.version,
         validatedReorderUpdate.id!,
       );
 
@@ -288,7 +290,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
 

@@ -195,7 +195,7 @@ describe('tag relation sync handler', () => {
       storyId,
       create('TagRelation', id, { tagId, relationId: entities[relationType], relationType }),
     );
-    expect(await handler.findById(id)).toMatchObject({
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({
       tagId,
       relationId: entities[relationType],
       relationType,

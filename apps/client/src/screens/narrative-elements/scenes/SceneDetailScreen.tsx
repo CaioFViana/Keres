@@ -145,7 +145,17 @@ const SceneDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, copy, t]);
+  }, [
+    sceneServiceRef,
+    sceneId,
+    setScene,
+    setLoading,
+    setError,
+    setHeaderTitle,
+    navigation,
+    copy,
+    t,
+  ]);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current || !scene?.chapterId) {
@@ -159,7 +169,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch chapter details:', err);
       setChapter(null);
     }
-  }, [scene?.chapterId]);
+  }, [chapterServiceRef, scene?.chapterId]);
 
   const fetchLocation = useCallback(async () => {
     if (!locationServiceRef.current || !scene?.locationId) {
@@ -173,7 +183,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch location details:', err);
       setLocation(null);
     }
-  }, [scene?.locationId]);
+  }, [locationServiceRef, scene?.locationId]);
 
   const fetchPreviousNextScenes = useCallback(async () => {
     if (
@@ -200,7 +210,7 @@ const SceneDetailScreen = () => {
       setPreviousScene(undefined);
       setNextScene(undefined);
     }
-  }, [selectedStory?.id, sceneId, scene?.chapterId, selectedStory?.type]);
+  }, [sceneServiceRef, selectedStory?.id, sceneId, scene?.chapterId, selectedStory?.type]);
 
   const fetchChoicesForScene = useCallback(async () => {
     if (
@@ -229,7 +239,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch choices for scene:', err);
       setChoicesForScene([]);
     }
-  }, [selectedStory?.id, sceneId, selectedStory?.type]);
+  }, [choiceServiceRef, selectedStory?.id, sceneId, selectedStory?.type]);
 
   const fetchIncomingChoicesForScene = useCallback(async () => {
     if (
@@ -255,7 +265,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch incoming choices for scene:', err);
       setIncomingChoicesForScene([]);
     }
-  }, [selectedStory?.id, sceneId, selectedStory?.type]);
+  }, [choiceServiceRef, selectedStory?.id, sceneId, selectedStory?.type]);
 
   const fetchSceneNames = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id || selectedStory.type !== 'branching') {
@@ -268,7 +278,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch scene name lookups:', err);
     }
-  }, [selectedStory?.id, selectedStory?.type]);
+  }, [sceneServiceRef, selectedStory?.id, selectedStory?.type]);
 
   const fetchCharacterSceneRelations = useCallback(async () => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !sceneId) {
@@ -284,7 +294,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch character-scene relations:', err);
     }
-  }, [selectedStory?.id, sceneId]);
+  }, [characterSceneServiceRef, selectedStory?.id, sceneId]);
 
   const fetchAllItems = useCallback(async () => {
     if (!itemServiceRef.current || !selectedStory?.id) {
@@ -297,7 +307,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all items:', err);
     }
-  }, [selectedStory?.id]);
+  }, [itemServiceRef, selectedStory?.id]);
 
   const fetchItemJourneysForScene = useCallback(async () => {
     if (!itemJourneyServiceRef.current || !selectedStory?.id || !sceneId) {
@@ -313,7 +323,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch item journeys for scene:', err);
     }
-  }, [selectedStory?.id, sceneId]);
+  }, [itemJourneyServiceRef, selectedStory?.id, sceneId]);
 
   const fetchSceneEffects = useCallback(async () => {
     if (!effectServiceRef.current || !selectedStory?.id || !sceneId) {
@@ -330,7 +340,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch scene effects:', err);
     }
-  }, [selectedStory?.id, sceneId]);
+  }, [effectServiceRef, selectedStory?.id, sceneId]);
 
   const handleEffectChange = useCallback(
     (changedStoryId: string, changedEntityId: string) => {
@@ -382,6 +392,7 @@ const SceneDetailScreen = () => {
     },
     [
       sceneId,
+      sceneServiceRef,
       navigation,
       setScene,
       setHeaderTitle,
@@ -500,6 +511,11 @@ const SceneDetailScreen = () => {
     ],
   });
 
+  const itemNamesById = useMemo(
+    () => Object.fromEntries(allItems.map((item) => [item.id, item.name])),
+    [allItems],
+  );
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -512,10 +528,6 @@ const SceneDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
-  const itemNamesById = useMemo(
-    () => Object.fromEntries(allItems.map((item) => [item.id, item.name])),
-    [allItems],
-  );
   const commentField = createCommentFieldBindings({
     storyId: scene.storyId,
     canComment: canComment,

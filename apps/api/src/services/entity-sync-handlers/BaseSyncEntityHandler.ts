@@ -13,10 +13,10 @@ import {
 } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, sql } from 'drizzle-orm';
-import type { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import type { z } from 'zod'; // Import Zod
 import { db } from '../../db';
 import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
+import { syncValuesMatch } from './syncValueComparison';
 
 /**
  * Shared API implementation for database-backed entity sync handlers. It provides generic OCC,
@@ -33,8 +33,40 @@ export type SyncOperationPolicyContext = {
   update: StoryUpdate;
 };
 
+/**
+ * Minimal, verified shape shared by every persisted entity that participates in synchronization.
+ * Entity-specific handlers may refine it after their own schema validation.
+ */
+export type SyncEntity = Record<string, unknown> & {
+  version: number;
+};
+
+export type SyncStoredEntity<T extends Record<string, unknown>> = T & Record<string, unknown> & {
+  id: string;
+  version: number;
+  storyId?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+};
+
+export type SyncStoredEntityFor<T extends z.ZodType<Record<string, unknown>>> = SyncStoredEntity<
+  z.output<T>
+>;
+
+/**
+ * Temporary bridge for rows read through Drizzle's runtime table registry. The registry selects a
+ * table by string, so it cannot expose a table-specific row type yet; keep that escape hatch in
+ * one place instead of leaking `any` through every protocol method.
+ */
+export type SyncEntityRow = SyncEntity;
+
+/** Payloads cross a schema-validation boundary, so unknown values are intentional here. */
+export type SyncPayload = Record<string, unknown>;
+
 export type SyncEntityMutationPolicyContext = SyncOperationPolicyContext & {
-  currentEntity: Record<string, any>;
+  currentEntity: SyncEntityRow;
 };
 
 /**
@@ -62,62 +94,29 @@ export class SyncConflictError extends Error {
   }
 }
 
-/**
- * JSONB does not preserve object-key insertion order. A raw `JSON.stringify` comparison therefore
- * treats `{ nodes: [], edges: [] }` and the identical JSONB value read back as
- * `{ edges: [], nodes: [] }` as different. Entity create retries must compare JSON by value.
- */
-function valuesMatch(left: unknown, right: unknown): boolean {
-  if (left instanceof Date || right instanceof Date) {
-    const leftTime = left instanceof Date ? left.getTime() : new Date(String(left)).getTime();
-    const rightTime = right instanceof Date ? right.getTime() : new Date(String(right)).getTime();
-    return leftTime === rightTime;
-  }
-  if (Array.isArray(left) || Array.isArray(right)) {
-    return (
-      Array.isArray(left) &&
-      Array.isArray(right) &&
-      left.length === right.length &&
-      left.every((value, index) => valuesMatch(value, right[index]))
-    );
-  }
-  if (typeof left === 'object' && left !== null && typeof right === 'object' && right !== null) {
-    const leftRecord = left as Record<string, unknown>;
-    const rightRecord = right as Record<string, unknown>;
-    const leftKeys = Object.keys(leftRecord).sort();
-    const rightKeys = Object.keys(rightRecord).sort();
-    return (
-      leftKeys.length === rightKeys.length &&
-      leftKeys.every(
-        (key, index) => key === rightKeys[index] && valuesMatch(leftRecord[key], rightRecord[key]),
-      )
-    );
-  }
-  return (left ?? null) === (right ?? null);
-}
-
 export interface SyncEntityHandler {
   entityName: string;
-  findById(id: string): Promise<any | undefined>;
+  findById(id: string): Promise<SyncEntityRow | undefined>;
+  findByIdOrThrow(id: string): Promise<SyncEntityRow>;
   create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void>;
   update(
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncEntityRow,
   ): Promise<void>;
   delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncEntityRow,
   ): Promise<void>;
-  checkOwnership(entity: any, userId: string): boolean;
-  checkBelongsToStory(entity: any, storyId: string): boolean;
+  checkOwnership(entity: SyncEntityRow, userId: string): boolean;
+  checkBelongsToStory(entity: SyncEntityRow, storyId: string): boolean;
   /** The payload the log should relay: what was written, not the client's raw JSON. */
-  sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): Record<string, any>;
+  sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): SyncPayload;
   /** A resent create: does the sanitised payload describe the same row that already exists? */
-  createPayloadMatches(existing: any, incomingData: Record<string, any>): boolean;
+  createPayloadMatches(existing: SyncPayload, incomingData: SyncPayload): boolean;
   /** Counts non-deleted rows of this entity in the given stories. Used by TierEnforcementService. */
   countForStoryIds(storyIds: string[]): Promise<number>;
   allowsReaderWrite(context: SyncOperationPolicyContext): boolean;
@@ -143,8 +142,8 @@ export interface SyncEntityHandler {
 }
 
 export abstract class BaseSyncEntityHandler<
-  CreateType extends z.ZodType<Record<string, any>>,
-  UpdateType extends z.ZodType<Record<string, any>>,
+  CreateType extends z.ZodType<Record<string, unknown>>,
+  UpdateType extends z.ZodType<Record<string, unknown>>,
 > implements SyncEntityHandler
 {
   abstract entityName: string;
@@ -159,12 +158,16 @@ export abstract class BaseSyncEntityHandler<
   protected updateSchema: UpdateType; // Zod schema for updates
 
   /** The API entity-table registry is the sole mapping from a domain entity to host persistence. */
-  protected get table(): PgTableWithColumns<any> {
+  protected get table() {
     const table = getApiEntityTable(this.entityName);
     if (!table) {
       throw new Error(`No table registered for sync entity '${this.entityName}'.`);
     }
-    return table as PgTableWithColumns<any>;
+    return table;
+  }
+
+  private column(name: string) {
+    return this.table[name];
   }
 
   constructor(
@@ -189,22 +192,32 @@ export abstract class BaseSyncEntityHandler<
     this.deletedAtColumnName = options?.deletedAtColumnName;
   }
 
-  async findById(id: string): Promise<any | undefined> {
+  // The runtime table registry cannot infer a row type for a concrete handler. The public
+  // `SyncEntityHandler` contract above narrows this value before protocol coordination uses it.
+  async findById(id: string): Promise<SyncStoredEntityFor<CreateType> | undefined> {
     const results = await db
       .select()
       .from(this.table)
-      .where(eq((this.table as any)[this.idColumnName], id))
+      .where(eq(this.column(this.idColumnName), id))
       .limit(1);
-    return results.at(0);
+    return results.at(0) as SyncStoredEntityFor<CreateType> | undefined;
+  }
+
+  async findByIdOrThrow(id: string): Promise<SyncStoredEntityFor<CreateType>> {
+    const entity = await this.findById(id);
+    if (!entity) {
+      throw new Error(`${this.entityName} ${id} not found.`);
+    }
+    return entity;
   }
 
   async countForStoryIds(storyIds: string[]): Promise<number> {
     if (!this.storyIdColumnName || storyIds.length === 0) {
       return 0;
     }
-    const conditions = [inArray((this.table as any)[this.storyIdColumnName], storyIds)];
+    const conditions = [inArray(this.column(this.storyIdColumnName), storyIds)];
     if (this.isDeletedColumnName) {
-      conditions.push(eq((this.table as any)[this.isDeletedColumnName], false));
+      conditions.push(eq(this.column(this.isDeletedColumnName), false));
     }
     const [row] = await db
       .select({ count: count() })
@@ -226,21 +239,28 @@ export abstract class BaseSyncEntityHandler<
     if (!this.isDeletedColumnName) {
       return [];
     }
-    const conditions = [eq((this.table as any)[this.isDeletedColumnName], true)];
+    const conditions = [eq(this.column(this.isDeletedColumnName), true)];
     if (storyId && this.storyIdColumnName) {
-      conditions.push(eq((this.table as any)[this.storyIdColumnName], storyId));
+      conditions.push(eq(this.column(this.storyIdColumnName), storyId));
     }
     const rows = await db
       .select()
       .from(this.table)
       .where(and(...conditions));
-    return rows.map((r: any) => {
+    return rows.map((r) => {
       const row = r as Record<string, unknown>;
+      const id = row[this.idColumnName];
+      const rowStoryId = this.storyIdColumnName ? row[this.storyIdColumnName] : null;
+      const deletedAt = this.deletedAtColumnName ? row[this.deletedAtColumnName] : null;
+      const version = row[this.versionColumnName];
+      if (typeof id !== 'string' || typeof version !== 'number') {
+        throw new Error(`Invalid persisted sync row for ${this.entityName}.`);
+      }
       return {
-        id: r[this.idColumnName],
-        storyId: this.storyIdColumnName ? r[this.storyIdColumnName] : null,
-        deletedAt: this.deletedAtColumnName ? r[this.deletedAtColumnName] : null,
-        version: r[this.versionColumnName],
+        id,
+        storyId: typeof rowStoryId === 'string' ? rowStoryId : null,
+        deletedAt: deletedAt instanceof Date ? deletedAt : null,
+        version,
         name: getSimpleDisplayName(this.entityName, row),
         row,
       };
@@ -253,12 +273,12 @@ export abstract class BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<CreateType>,
   ): Promise<void> {
     // `isDeleted`/`deletedAt` are handled outside validation because they are not an ordinary field edit:
     // they are the *restoration* of a deleted entity. Extracting them before validating avoids depending on
     // every entity schema accepting those fields.
-    const incomingChanges: Record<string, any> = { ...update.changes };
+    const incomingChanges: Record<string, unknown> = { ...update.changes };
     const restoreRequested = incomingChanges.isDeleted === false;
     delete incomingChanges.isDeleted;
     delete incomingChanges.deletedAt;
@@ -277,30 +297,30 @@ export abstract class BaseSyncEntityHandler<
         `Conflict: ${this.entityName} ${update.id} was deleted on the server.`,
         {
           clientVersion: update.changes.version,
-          serverVersion: currentEntity[this.versionColumnName],
+          serverVersion: this.readVersion(currentEntity),
         },
       );
     }
 
     this.checkVersionConflict(
       update.changes.version,
-      currentEntity[this.versionColumnName],
+      this.readVersion(currentEntity),
       update.id!,
     );
 
     // Validate incoming changes against the update schema.
     const validatedChanges: z.infer<UpdateType> = this.updateSchema.parse(incomingChanges);
-    this.stripImmutableFields(validatedChanges as Record<string, any>);
-    this.keepOnlyProvidedKeys(validatedChanges as Record<string, any>, incomingChanges);
+    this.stripImmutableFields(validatedChanges as Record<string, unknown>);
+    this.keepOnlyProvidedKeys(validatedChanges as Record<string, unknown>, incomingChanges);
 
     // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
-    const changes: Record<string, any> = {
+    const changes: Record<string, unknown> = {
       ...validatedChanges, // Use validated changes
       updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       [this.versionColumnName]:
-        sql`${(this.table as any)[this.versionColumnName]} + 1` as SQL<number>,
+        sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
     };
 
     if (restoreRequested && this.isDeletedColumnName && this.deletedAtColumnName) {
@@ -320,11 +340,11 @@ export abstract class BaseSyncEntityHandler<
       .set(changes)
       .where(
         and(
-          eq((this.table as any)[this.idColumnName], update.id!),
-          eq((this.table as any)[this.versionColumnName], currentEntity[this.versionColumnName]),
+          eq(this.column(this.idColumnName), update.id!),
+          eq(this.column(this.versionColumnName), this.readVersion(currentEntity)),
         ),
       )
-      .returning({ id: (this.table as any)[this.idColumnName] });
+      .returning({ id: this.column(this.idColumnName) });
 
     if (!updated) {
       throw new SyncConflictError(
@@ -332,7 +352,7 @@ export abstract class BaseSyncEntityHandler<
         `Conflict: ${this.entityName} ${update.id} was modified concurrently.`,
         {
           clientVersion: update.changes.version,
-          serverVersion: currentEntity[this.versionColumnName],
+          serverVersion: this.readVersion(currentEntity),
         },
       );
     }
@@ -342,7 +362,7 @@ export abstract class BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<CreateType>,
   ): Promise<void> {
     if (!this.isDeletedColumnName || !this.deletedAtColumnName) {
       throw new Error(
@@ -356,7 +376,7 @@ export abstract class BaseSyncEntityHandler<
       return;
     }
 
-    this.checkVersionConflict(update.version!, currentEntity[this.versionColumnName], update.id!);
+    this.checkVersionConflict(update.version!, this.readVersion(currentEntity), update.id!);
 
     // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
@@ -367,16 +387,16 @@ export abstract class BaseSyncEntityHandler<
         [this.isDeletedColumnName]: true,
         [this.deletedAtColumnName]: clientOperationTime, // Use client's operationTime for deletedAt
         [this.versionColumnName]:
-          sql`${(this.table as any)[this.versionColumnName]} + 1` as SQL<number>,
+          sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
         updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       })
       .where(
         and(
-          eq((this.table as any)[this.idColumnName], update.id!),
-          eq((this.table as any)[this.versionColumnName], currentEntity[this.versionColumnName]),
+          eq(this.column(this.idColumnName), update.id!),
+          eq(this.column(this.versionColumnName), this.readVersion(currentEntity)),
         ),
       )
-      .returning({ id: (this.table as any)[this.idColumnName] });
+      .returning({ id: this.column(this.idColumnName) });
 
     if (!deleted) {
       throw new SyncConflictError(
@@ -384,7 +404,7 @@ export abstract class BaseSyncEntityHandler<
         `Conflict: ${this.entityName} ${update.id} was modified concurrently.`,
         {
           clientVersion: update.version,
-          serverVersion: currentEntity[this.versionColumnName],
+          serverVersion: this.readVersion(currentEntity),
         },
       );
     }
@@ -402,7 +422,15 @@ export abstract class BaseSyncEntityHandler<
     return clientOperationTime;
   }
 
-  checkOwnership(entity: any, userId: string): boolean {
+  private readVersion(entity: Record<string, unknown>): number {
+    const version = entity[this.versionColumnName];
+    if (typeof version !== 'number') {
+      throw new Error(`Invalid persisted version for ${this.entityName}.`);
+    }
+    return version;
+  }
+
+  checkOwnership(entity: SyncStoredEntityFor<CreateType>, userId: string): boolean {
     if (!this.userIdColumnName) {
       // If there's no userIdColumnName, ownership might not be applicable or checked elsewhere
       return true;
@@ -410,7 +438,7 @@ export abstract class BaseSyncEntityHandler<
     return entity[this.userIdColumnName] === userId;
   }
 
-  checkBelongsToStory(entity: any, storyId: string): boolean {
+  checkBelongsToStory(entity: SyncStoredEntityFor<CreateType>, storyId: string): boolean {
     if (!this.storyIdColumnName) {
       // If there's no storyIdName, it might be a top-level entity like Story itself
       return true;
@@ -463,17 +491,17 @@ export abstract class BaseSyncEntityHandler<
     );
   }
 
-  sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): Record<string, any> {
+  sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): Record<string, unknown> {
     if (update.type === 'create') {
-      const parsed = this.createSchema.parse(update.data) as Record<string, any>;
+      const parsed = this.createSchema.parse(update.data) as Record<string, unknown>;
       return this.payloadForLog(parsed, actingUserId);
     }
     if (update.type === 'update') {
-      const incoming: Record<string, any> = { ...(update as UpdateStoryUpdate).changes };
+      const incoming: Record<string, unknown> = { ...(update as UpdateStoryUpdate).changes };
       const restoreRequested = incoming.isDeleted === false;
       delete incoming.isDeleted;
       delete incoming.deletedAt;
-      const parsed = this.updateSchema.parse(incoming) as Record<string, any>;
+      const parsed = this.updateSchema.parse(incoming) as Record<string, unknown>;
       this.keepOnlyProvidedKeys(parsed, incoming);
       const payload = this.payloadForLog(parsed, actingUserId);
       if (restoreRequested) {
@@ -495,10 +523,10 @@ export abstract class BaseSyncEntityHandler<
     return {};
   }
 
-  createPayloadMatches(existing: any, incomingData: Record<string, any>): boolean {
-    let parsed: Record<string, any>;
+  createPayloadMatches(existing: Record<string, unknown>, incomingData: Record<string, unknown>): boolean {
+    let parsed: Record<string, unknown>;
     try {
-      parsed = this.createSchema.parse(incomingData) as Record<string, any>;
+      parsed = this.createSchema.parse(incomingData) as Record<string, unknown>;
     } catch {
       return false;
     }
@@ -506,7 +534,7 @@ export abstract class BaseSyncEntityHandler<
       if (SYNC_CLIENT_IMMUTABLE_FIELD_SET.has(key)) continue;
       if (key === 'userId' || key === 'authorUserId') continue;
       if (value === undefined) continue;
-      if (!valuesMatch(existing?.[key], value)) {
+      if (!syncValuesMatch(existing?.[key], value)) {
         return false;
       }
     }
@@ -517,7 +545,7 @@ export abstract class BaseSyncEntityHandler<
    * `storyId`/`userId`/`id` in an update's body are a transplant or identity theft. `version` is the OCC
    * base and stays out of this check.
    */
-  protected assertNoImmutableFieldWrites(changes: Record<string, any>): void {
+  protected assertNoImmutableFieldWrites(changes: Record<string, unknown>): void {
     const attempted = ['id', 'storyId', 'userId', 'authorUserId', 'lastOperationVersion'].filter(
       (field) => changes[field] !== undefined,
     );
@@ -529,22 +557,22 @@ export abstract class BaseSyncEntityHandler<
   }
 
   /** Zod `.partial()` keeps `.default()` active; without this, a name-only patch would reset isFavorite. */
-  protected keepOnlyProvidedKeys(parsed: Record<string, any>, provided: Record<string, any>): void {
+  protected keepOnlyProvidedKeys(parsed: Record<string, unknown>, provided: Record<string, unknown>): void {
     for (const key of Object.keys(parsed)) {
       if (!(key in provided)) delete parsed[key];
     }
   }
 
-  protected stripImmutableFields(changes: Record<string, any>): void {
+  protected stripImmutableFields(changes: Record<string, unknown>): void {
     for (const field of SYNC_CLIENT_IMMUTABLE_FIELD_SET) {
       delete changes[field];
     }
   }
 
   protected payloadForLog(
-    parsed: Record<string, any>,
+    parsed: Record<string, unknown>,
     _actingUserId?: string,
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     return omitSyncImmutableFields(parsed);
   }
 }

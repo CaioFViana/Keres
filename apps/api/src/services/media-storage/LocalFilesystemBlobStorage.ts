@@ -53,7 +53,7 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
 
     try {
       await rename(temporaryPath, destination);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // On some systems (Windows especially), the race above shows up as a rename error. If the winner left
       // the same destination ready, it is still a success.
       if (await Bun.file(destination).exists()) {
@@ -73,8 +73,8 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
   async delete(key: string): Promise<void> {
     try {
       await unlink(this.absolutePath(key));
-    } catch (error: any) {
-      if (error?.code !== 'ENOENT') {
+    } catch (error: unknown) {
+      if (!isErrorWithCode(error, 'ENOENT')) {
         throw error;
       }
     }
@@ -84,8 +84,8 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
     let entries: string[];
     try {
       entries = await readdir(this.temporaryRoot);
-    } catch (error: any) {
-      if (error?.code === 'ENOENT') {
+    } catch (error: unknown) {
+      if (isErrorWithCode(error, 'ENOENT')) {
         return 0;
       }
       throw error;
@@ -103,4 +103,8 @@ export class LocalFilesystemBlobStorage implements BlobStorage {
     }
     return removed;
   }
+}
+
+function isErrorWithCode(error: unknown, code: string): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
 }

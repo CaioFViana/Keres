@@ -12,6 +12,7 @@ import { ItemJourneySyncHandler } from '../../src/services/entity-sync-handlers/
 import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
 import { SceneSyncHandler } from '../../src/services/entity-sync-handlers/SceneSyncHandler';
+import type { SyncEntityHandler } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -140,7 +141,7 @@ describe('collaboration sync entity handlers', () => {
       create('Favorite', favoriteId, { userId, entityId: characterId, entityType: 'Character' }),
     );
 
-    const comment = await comments.findById(commentId);
+    const comment = await comments.findByIdOrThrow(commentId);
     await comments.update(
       userId,
       storyId,
@@ -152,22 +153,22 @@ describe('collaboration sync entity handlers', () => {
       } as UpdateStoryUpdate,
       comment,
     );
-    expect(await comments.findById(commentId)).toMatchObject({
+    expect(await comments.findByIdOrThrow(commentId)).toMatchObject({
       commentText: 'Nome aprovado',
       version: 2,
     });
-    expect(await favorites.findById(favoriteId)).toMatchObject({
+    expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({
       userId,
       entityId: characterId,
       isDeleted: false,
     });
 
-    const favorite = await favorites.findById(favoriteId);
+    const favorite = await favorites.findByIdOrThrow(favoriteId);
     await favorites.delete(userId, storyId, remove('Favorite', favoriteId, 1), favorite);
-    const updatedComment = await comments.findById(commentId);
+    const updatedComment = await comments.findByIdOrThrow(commentId);
     await comments.delete(userId, storyId, remove('Comment', commentId, 2), updatedComment);
-    expect(await favorites.findById(favoriteId)).toMatchObject({ isDeleted: true });
-    expect(await comments.findById(commentId)).toMatchObject({ isDeleted: true });
+    expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({ isDeleted: true });
+    expect(await comments.findByIdOrThrow(commentId)).toMatchObject({ isDeleted: true });
   });
 
   it('connects a character and item state transition to an existing scene', async () => {
@@ -199,19 +200,19 @@ describe('collaboration sync entity handlers', () => {
       }),
     );
 
-    expect(await characterScenes.findById(characterSceneId)).toMatchObject({
+    expect(await characterScenes.findByIdOrThrow(characterSceneId)).toMatchObject({
       characterId,
       sceneId,
       version: 1,
     });
-    expect(await journeys.findById(journeyId)).toMatchObject({
+    expect(await journeys.findByIdOrThrow(journeyId)).toMatchObject({
       itemId,
       sceneId,
       newCharacterOwnerId: characterId,
       newState: 'ativada',
     });
 
-    const journey = await journeys.findById(journeyId);
+    const journey = await journeys.findByIdOrThrow(journeyId);
     await journeys.update(
       userId,
       storyId,
@@ -223,15 +224,16 @@ describe('collaboration sync entity handlers', () => {
       } as UpdateStoryUpdate,
       journey,
     );
-    expect(await journeys.findById(journeyId)).toMatchObject({ newState: 'consumida', version: 2 });
+    expect(await journeys.findByIdOrThrow(journeyId)).toMatchObject({ newState: 'consumida', version: 2 });
 
-    for (const [entity, id, handler, version] of [
+    const deletionCases: Array<[string, string, SyncEntityHandler, number]> = [
       ['ItemJourney', journeyId, journeys, 2],
       ['CharacterScene', characterSceneId, characterScenes, 1],
-    ] as const) {
-      const current = await handler.findById(id);
+    ];
+    for (const [entity, id, handler, version] of deletionCases) {
+      const current = await handler.findByIdOrThrow(id);
       await handler.delete(userId, storyId, remove(entity, id, version), current);
-      expect(await handler.findById(id)).toMatchObject({ isDeleted: true });
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true });
     }
   });
 
@@ -258,7 +260,7 @@ describe('collaboration sync entity handlers', () => {
       storyId,
       create('CharacterScene', linkId, { characterId, sceneId }),
     );
-    const current = await handler.findById(linkId);
+    const current = await handler.findByIdOrThrow(linkId);
     await expect(
       handler.update(
         userId,
@@ -272,7 +274,7 @@ describe('collaboration sync entity handlers', () => {
         current,
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
-    expect(await handler.findById(linkId)).toMatchObject({ characterId, sceneId, version: 1 });
+    expect(await handler.findByIdOrThrow(linkId)).toMatchObject({ characterId, sceneId, version: 1 });
   });
 
   it('never lets one user create, update, or delete another user’s favorite', async () => {
@@ -307,7 +309,7 @@ describe('collaboration sync entity handlers', () => {
         entityType: 'Character',
       }),
     );
-    const favorite = await favorites.findById(favoriteId);
+    const favorite = await favorites.findByIdOrThrow(favoriteId);
 
     await expect(
       favorites.update(
@@ -325,7 +327,7 @@ describe('collaboration sync entity handlers', () => {
     await expect(
       favorites.delete(outsiderId, storyId, remove('Favorite', favoriteId, 1), favorite),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
-    expect(await favorites.findById(favoriteId)).toMatchObject({ isDeleted: false, version: 1 });
+    expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({ isDeleted: false, version: 1 });
   });
 
   it('keeps a favorite attached to its original user, story and entity even if its owner sends those fields', async () => {
@@ -340,7 +342,7 @@ describe('collaboration sync entity handlers', () => {
         entityType: 'Character',
       }),
     );
-    const current = await favorites.findById(favoriteId);
+    const current = await favorites.findByIdOrThrow(favoriteId);
     await favorites.update(
       userId,
       storyId,
@@ -358,7 +360,7 @@ describe('collaboration sync entity handlers', () => {
       } as UpdateStoryUpdate,
       current,
     );
-    expect(await favorites.findById(favoriteId)).toMatchObject({
+    expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({
       userId,
       storyId,
       entityId: characterId,
@@ -418,7 +420,7 @@ describe('collaboration sync entity handlers', () => {
       storyId,
       create('Scene', noLocationId, baseScene({ chapterId: null })),
     );
-    expect(await scenesHandler.findById(noLocationId)).toMatchObject({ locationId: null });
+    expect(await scenesHandler.findByIdOrThrow(noLocationId)).toMatchObject({ locationId: null });
   });
 
   it('keeps one start/finish only in linear stories and leaves branching scene flags independent', async () => {
@@ -447,11 +449,11 @@ describe('collaboration sync entity handlers', () => {
       storyId,
       create('Scene', nextLinearId, sceneData(nextLinearId)),
     );
-    expect(await scenesHandler.findById(sceneId)).toMatchObject({
+    expect(await scenesHandler.findByIdOrThrow(sceneId)).toMatchObject({
       isStart: false,
       isFinish: false,
     });
-    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({
+    expect(await scenesHandler.findByIdOrThrow(nextLinearId)).toMatchObject({
       isStart: true,
       isFinish: true,
     });
@@ -463,11 +465,11 @@ describe('collaboration sync entity handlers', () => {
       storyId,
       create('Scene', branchSceneId, sceneData(branchSceneId)),
     );
-    expect(await scenesHandler.findById(nextLinearId)).toMatchObject({
+    expect(await scenesHandler.findByIdOrThrow(nextLinearId)).toMatchObject({
       isStart: true,
       isFinish: true,
     });
-    expect(await scenesHandler.findById(branchSceneId)).toMatchObject({
+    expect(await scenesHandler.findByIdOrThrow(branchSceneId)).toMatchObject({
       isStart: true,
       isFinish: true,
     });

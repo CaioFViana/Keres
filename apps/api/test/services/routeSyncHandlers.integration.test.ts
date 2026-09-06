@@ -84,7 +84,7 @@ describe('Route sync handlers', () => {
       id: routeId,
       data: { name: 'Train', details: null },
     } as CreateStoryUpdate);
-    const route = await routeHandler.findById(routeId);
+    const route = await routeHandler.findByIdOrThrow(routeId);
     await routeHandler.update(
       userId,
       storyId,
@@ -109,7 +109,7 @@ describe('Route sync handlers', () => {
       id: secondStepId,
       data: { routeId, position: 2, sceneId: secondSceneId, selectedChoiceId: null },
     } as CreateStoryUpdate);
-    const secondStep = await stepHandler.findById(secondStepId);
+    const secondStep = await stepHandler.findByIdOrThrow(secondStepId);
     await stepHandler.delete(
       userId,
       storyId,
@@ -122,11 +122,11 @@ describe('Route sync handlers', () => {
       secondStep,
     );
 
-    expect(await routeHandler.findById(routeId)).toMatchObject({
+    expect(await routeHandler.findByIdOrThrow(routeId)).toMatchObject({
       name: 'Train ending',
       version: 2,
     });
-    expect(await stepHandler.findById(secondStepId)).toMatchObject({ isDeleted: true, version: 2 });
+    expect(await stepHandler.findByIdOrThrow(secondStepId)).toMatchObject({ isDeleted: true, version: 2 });
   });
 
   it('rejects a step whose choice does not leave its scene', async () => {
@@ -168,7 +168,7 @@ describe('Route sync handlers', () => {
       id: routeId,
       data: { name: 'Original', details: null },
     } as CreateStoryUpdate);
-    const current = await handler.findById(routeId);
+    const current = await handler.findByIdOrThrow(routeId);
     await handler.update(
       userId,
       storyId,
@@ -191,13 +191,13 @@ describe('Route sync handlers', () => {
           id: routeId,
           changes: { name: 'Offline edit', version: 1 },
         } as UpdateStoryUpdate,
-        await handler.findById(routeId),
+        await handler.findByIdOrThrow(routeId),
       ),
     ).rejects.toMatchObject({
       reason: 'version_conflict',
       clientVersion: 1,
       serverVersion: 2,
     });
-    expect(await handler.findById(routeId)).toMatchObject({ name: 'Server edit', version: 2 });
+    expect(await handler.findByIdOrThrow(routeId)).toMatchObject({ name: 'Server edit', version: 2 });
   });
 });

@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
 import { db } from '../../db';
@@ -38,7 +39,7 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  protected payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
+  protected payloadForLog(parsed: Record<string, unknown>, actingUserId: string): Record<string, unknown> {
     return { ...super.payloadForLog(parsed, actingUserId), authorUserId: actingUserId };
   }
 
@@ -84,7 +85,7 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
   ): Promise<void> {
     // Editing the text/excerpt/criticality is always restricted to the author, even for the story's owner
     // - the owner only has an elevated *deletion* privilege (see SyncService.ts), not the right to edit

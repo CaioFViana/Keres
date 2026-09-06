@@ -48,23 +48,6 @@ import {
   mainSystemStackRootScreens,
 } from './MainSystemDrawerHelpers';
 
-export type {
-  BoardStackParamList,
-  CharacterStackParamList,
-  CommentsStackParamList,
-  CustomizationStackParamList,
-  GalleryStackParamList,
-  ItemDetailScreenParamList,
-  ItemStackParamList,
-  LocationStackParamList,
-  NarrativeElementsStackParamList,
-  NotesStackParamList,
-  OperationLogStackParamList,
-  PlotsStackParamList,
-  TagsStackParamList,
-  WorldRulesStackParamList,
-} from './MainSystemStacks';
-
 import {
   BoardsStackNavigator,
   CharacterStackNavigator,
@@ -92,6 +75,23 @@ import {
   type PlotsStackParamList,
   type TagsStackParamList,
   type WorldRulesStackParamList,
+} from './MainSystemStacks';
+
+export type {
+  BoardStackParamList,
+  CharacterStackParamList,
+  CommentsStackParamList,
+  CustomizationStackParamList,
+  GalleryStackParamList,
+  ItemDetailScreenParamList,
+  ItemStackParamList,
+  LocationStackParamList,
+  NarrativeElementsStackParamList,
+  NotesStackParamList,
+  OperationLogStackParamList,
+  PlotsStackParamList,
+  TagsStackParamList,
+  WorldRulesStackParamList,
 } from './MainSystemStacks';
 
 export type MainSystemDrawerParamList = {

@@ -17,27 +17,9 @@ import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLa
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../../utils/storyTransfer';
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
-import { getDistinctSeriesColor } from '@keres/shared';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
-
-const SERIES_COLORS = [
-  '#0B6E99',
-  '#D64545',
-  '#6D4BC3',
-  '#C87800',
-  '#16803C',
-  '#B23A7A',
-  '#655CDB',
-  '#A55A18',
-  '#007C83',
-  '#A94141',
-  '#4D749E',
-  '#8D6B13',
-];
-const MAX_VISIBLE_SERIES = 12;
-const seriesColor = (index: number, total: number) =>
-  getDistinctSeriesColor(index, total, SERIES_COLORS);
+import { MAX_VISIBLE_SERIES, seriesColor } from './presenceMatrixConstants';
 type BulkOrder = 'appearance' | 'alphabetical';
 
 const PresenceMatrixViewerContent: React.FC<{

@@ -28,6 +28,7 @@ import { useEntityEffects } from '../../../hooks/useEntityEffects';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
+import { saveEntityWithSecondaryData } from '../../../services/storymanagement/EntityFormSaveCoordinator';
 import { useItemStore } from '../../../state/itemStore';
 import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
@@ -141,7 +142,11 @@ const ChoiceFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'Choice', entityId: currentChoiceId });
+  } = useEntityRelations({
+    entityType: 'Choice',
+    entityId: currentChoiceId,
+    preserveDraftOnEntityCreation: true,
+  });
 
   const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
@@ -163,15 +168,15 @@ const ChoiceFormScreen = () => {
       }
       try {
         setLoading(true);
-        if (isEditing) {
-          const fetchedChoice = await choiceServiceRef.current.getById(currentChoiceId!);
+        if (initialChoiceId) {
+          const fetchedChoice = await choiceServiceRef.current.getById(initialChoiceId);
           if (fetchedChoice) {
             setSceneId(fetchedChoice.sceneId);
             setNextSceneId(fetchedChoice.nextSceneId);
             setText(fetchedChoice.text); // Use text
             setNotes(fetchedChoice.notes);
           } else {
-            console.warn('Choice not found:', currentChoiceId);
+            console.warn('Choice not found:', initialChoiceId);
           }
         }
       } catch (err) {
@@ -181,7 +186,7 @@ const ChoiceFormScreen = () => {
       }
     };
     loadChoice();
-  }, [currentChoiceId, isEditing, selectedStory?.id, t]);
+  }, [initialChoiceId, selectedStory?.id, t]);
 
   const handleSave = () =>
     runSave(async () => {
@@ -213,34 +218,26 @@ const ChoiceFormScreen = () => {
           notes: notes && notes.trim() ? notes.trim() : null,
         };
 
-        let savedChoiceId: string | undefined = currentChoiceId;
-
-        if (isEditing && currentChoiceId) {
-          const savedChoice = await choiceServiceRef.current!.updateChoice(
-            userId,
-            currentChoiceId,
-            choiceData,
-          );
-          savedChoiceId = savedChoice.id;
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          const savedChoice = await choiceServiceRef.current!.createChoice(userId, {
-            ...choiceData,
-            storyId: selectedStory.id,
-          });
-          savedChoiceId = savedChoice.id;
-          setCurrentChoiceId(savedChoice.id);
-          AppAlert.alert(t('success'), copy.created);
-        }
-
-        if (savedChoiceId) {
-          await persistTagRelations(savedChoiceId);
-          await persistNoteRelations(savedChoiceId);
-          await seeAlsoManagerRef.current?.persistPending(savedChoiceId);
-        }
+        const { entityId: savedChoiceId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentChoiceId,
+          createEntity: () =>
+            choiceServiceRef.current!.createChoice(userId, {
+              ...choiceData,
+              storyId: selectedStory.id,
+            }),
+          updateEntity: (choiceId) =>
+            choiceServiceRef.current!.updateChoice(userId, choiceId, choiceData),
+          onEntityPersisted: setCurrentChoiceId,
+          persistSecondaryData: async (choiceId) => {
+            await persistTagRelations(choiceId);
+            await persistNoteRelations(choiceId);
+            await seeAlsoManagerRef.current?.persistPending(choiceId);
+          },
+        });
         entityEventEmitter.emit('choice_changed', selectedStory.id, savedChoiceId);
+        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
-        if (!isEditing && savedChoiceId) {
+        if (created) {
           navigation.dispatch(StackActions.replace('ChoiceForm', { choiceId: savedChoiceId }));
         } else {
           navigation.goBack();

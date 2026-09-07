@@ -1,5 +1,6 @@
 import type { Scene } from '@keres/shared';
 import type { SceneService } from './SceneService';
+import { saveEntityWithSecondaryData } from './EntityFormSaveCoordinator';
 
 export type SceneFormData = Omit<
   Scene,
@@ -36,24 +37,20 @@ export async function saveSceneWithRelations({
   persistRelations: SceneRelationsPersistence;
   persistCustomAttributes: SceneRelationsPersistence;
 }): Promise<{ sceneId: string; created: boolean }> {
-  const created = !currentSceneId;
-  let sceneId: string;
+  const result = await saveEntityWithSecondaryData({
+    currentEntityId: currentSceneId,
+    createEntity: () => sceneService.createScene(userId, { ...sceneData, storyId }),
+    updateEntity: async (sceneId) => {
+      const originalScene = await sceneService.getById(sceneId);
+      if (!originalScene) throw new Error(notFoundMessage);
+      return sceneService.updateScene(userId, sceneId, sceneData);
+    },
+    onEntityPersisted: onScenePersisted,
+    persistSecondaryData: async (sceneId) => {
+      await persistRelations(sceneId);
+      await persistCustomAttributes(sceneId);
+    },
+  });
 
-  if (currentSceneId) {
-    const originalScene = await sceneService.getById(currentSceneId);
-    if (!originalScene) {
-      throw new Error(notFoundMessage);
-    }
-    sceneId = (await sceneService.updateScene(userId, currentSceneId, sceneData)).id;
-  } else {
-    sceneId = (await sceneService.createScene(userId, { ...sceneData, storyId })).id;
-  }
-
-  // Retain the persisted identity before secondary writes. If one of them fails, the caller can
-  // retry as an update of this row instead of creating a duplicate scene.
-  onScenePersisted(sceneId);
-  await persistRelations(sceneId);
-  await persistCustomAttributes(sceneId);
-
-  return { sceneId, created };
+  return { sceneId: result.entityId, created: result.created };
 }

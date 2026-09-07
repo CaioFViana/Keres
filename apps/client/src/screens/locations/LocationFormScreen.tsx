@@ -22,6 +22,7 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
@@ -107,7 +108,11 @@ const LocationFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'Location', entityId: currentLocationId });
+  } = useEntityRelations({
+    entityType: 'Location',
+    entityId: currentLocationId,
+    preserveDraftOnEntityCreation: true,
+  });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Location');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -287,8 +292,8 @@ const LocationFormScreen = () => {
 
       try {
         setLoading(true);
-        if (isEditing) {
-          const fetchedLocation = await locationServiceRef.current.getById(currentLocationId!);
+        if (initialLocationId) {
+          const fetchedLocation = await locationServiceRef.current.getById(initialLocationId);
           if (fetchedLocation) {
             setName(fetchedLocation.name);
             setDescription(fetchedLocation.description);
@@ -299,11 +304,11 @@ const LocationFormScreen = () => {
             setExtraNotes(fetchedLocation.extraNotes);
 
             const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentLocationId!,
+              initialLocationId,
             );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
-            console.warn('Location not found:', currentLocationId);
+            console.warn('Location not found:', initialLocationId);
           }
         }
       } catch (err) {
@@ -313,7 +318,7 @@ const LocationFormScreen = () => {
       }
     };
     loadLocation();
-  }, [currentLocationId, drizzleDb, isEditing, selectedStory?.id, t]);
+  }, [drizzleDb, initialLocationId, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -356,43 +361,37 @@ const LocationFormScreen = () => {
           extraNotes,
         };
 
-        let savedLocation: Location;
+        const { entityId: savedLocationId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentLocationId,
+          createEntity: () =>
+            locationServiceRef.current!.createLocation(userId, {
+              ...locationData,
+              storyId: selectedStory.id,
+            }),
+          updateEntity: (locationId) =>
+            locationServiceRef.current!.updateLocation(userId, locationId, locationData),
+          onEntityPersisted: setCurrentLocationId,
+          persistSecondaryData: async (locationId) => {
+            await persistTagRelations(locationId);
+            await persistNoteRelations(locationId);
+            await seeAlsoManagerRef.current?.persistPending(locationId);
+            await persistPendingLocationRelations(locationId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'Location',
+              locationId,
+              customValues,
+            );
+          },
+        });
 
-        if (isEditing) {
-          savedLocation = await locationServiceRef.current!.updateLocation(
-            userId,
-            currentLocationId!,
-            locationData,
-          );
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          savedLocation = await locationServiceRef.current!.createLocation(userId, {
-            ...locationData,
-            storyId: selectedStory.id,
-          });
-          AppAlert.alert(t('success'), copy.created);
-          setCurrentLocationId(savedLocation.id);
-        }
+        entityEventEmitter.emit('location_changed', selectedStory.id, savedLocationId);
+        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
-        if (savedLocation.id) {
-          await persistTagRelations(savedLocation.id);
-          await persistNoteRelations(savedLocation.id);
-          await seeAlsoManagerRef.current?.persistPending(savedLocation.id);
-          await persistPendingLocationRelations(savedLocation.id);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'Location',
-            savedLocation.id,
-            customValues,
-          );
-        }
-
-        entityEventEmitter.emit('location_changed', selectedStory.id, savedLocation.id);
-
-        if (!isEditing && savedLocation.id) {
+        if (created) {
           navigation.dispatch(
-            StackActions.replace('LocationForm', { locationId: savedLocation.id }),
+            StackActions.replace('LocationForm', { locationId: savedLocationId }),
           );
         } else {
           navigation.goBack();
@@ -462,9 +461,11 @@ const LocationFormScreen = () => {
           otherId,
         );
       }
+      setPendingLocationRelations((current) =>
+        current.filter((relation) => relation.id !== pending.id),
+      );
     }
     if (pendingLocationRelations.length > 0) {
-      setPendingLocationRelations([]);
       fetchAllLocationRelationsInStory();
     }
   };

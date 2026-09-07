@@ -1,6 +1,6 @@
 import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
 import type { TagRelationEntities } from '@keres/shared/entities/Tag';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import type { TagSelect } from '../db/schema';
@@ -25,6 +25,8 @@ export interface UseEntityRelationsOptions {
    * only the tag half of the hook.
    */
   withNotes?: boolean;
+  /** Keep creation-time selections buffered when the newly persisted id becomes available. */
+  preserveDraftOnEntityCreation?: boolean;
 }
 
 /**
@@ -39,12 +41,17 @@ export function useEntityRelations({
   entityType,
   entityId,
   withNotes = true,
+  preserveDraftOnEntityCreation = false,
 }: UseEntityRelationsOptions) {
   const drizzleDb = useDrizzle();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
+  const initialEntityIdRef = useRef(entityId);
+  const hydrationEntityId = preserveDraftOnEntityCreation
+    ? initialEntityIdRef.current
+    : entityId;
 
   // Services are cheap factories over a stable db handle, so a memo replaces the
   // ref-plus-init-effect dance the screens were doing.
@@ -81,17 +88,21 @@ export function useEntityRelations({
   }, [services, storyId]);
 
   const refreshSelectedTags = useCallback(async () => {
-    if (!services || !storyId || !entityId) {
+    if (!services || !storyId || !hydrationEntityId) {
       setSelectedTagIds([]);
       return;
     }
     try {
-      const tags = await services.tagRelation.getTagsForEntity(storyId, entityId, entityType);
+      const tags = await services.tagRelation.getTagsForEntity(
+        storyId,
+        hydrationEntityId,
+        entityType,
+      );
       setSelectedTagIds(tags.map((tag) => tag.id));
     } catch (err) {
       console.error(`Failed to fetch tags for ${entityType}:`, err);
     }
-  }, [services, storyId, entityId, entityType]);
+  }, [services, storyId, hydrationEntityId, entityType]);
 
   const refreshNotes = useCallback(async () => {
     if (!services || !storyId || !withNotes) {
@@ -106,21 +117,21 @@ export function useEntityRelations({
   }, [services, storyId, withNotes]);
 
   const refreshNoteRelations = useCallback(async () => {
-    if (!services || !storyId || !entityId || !withNotes) {
+    if (!services || !storyId || !hydrationEntityId || !withNotes) {
       setNoteRelations([]);
       return;
     }
     try {
       const relations = await services.noteRelation.getRelationsForEntity(
         storyId,
-        entityId,
+        hydrationEntityId,
         entityType as NoteRelationEntities,
       );
       setNoteRelations(relations);
     } catch (err) {
       console.error(`Failed to fetch note relations for ${entityType}:`, err);
     }
-  }, [services, storyId, entityId, entityType, withNotes]);
+  }, [services, storyId, hydrationEntityId, entityType, withNotes]);
 
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -149,7 +160,10 @@ export function useEntityRelations({
     };
     const handleTagRelationChange = (changedStoryId: string, changedEntityId?: string) => {
       // Tag relation events carry the entity they belong to; ignore other entities'.
-      if (changedStoryId === storyId && (!changedEntityId || changedEntityId === entityId)) {
+      if (
+        changedStoryId === storyId &&
+        (!changedEntityId || changedEntityId === hydrationEntityId)
+      ) {
         refreshSelectedTags();
       }
     };
@@ -177,7 +191,7 @@ export function useEntityRelations({
   }, [
     withNotes,
     storyId,
-    entityId,
+    hydrationEntityId,
     refreshNotes,
     refreshNoteRelations,
     refreshSelectedTags,
@@ -287,8 +301,10 @@ export function useEntityRelations({
           relationId: targetEntityId,
           relationType: pending.relationType,
         });
+        setPendingNoteRelations((current) =>
+          current.filter((relation) => relation.id !== pending.id),
+        );
       }
-      setPendingNoteRelations([]);
       entityEventEmitter.emit('note_relation_changed', storyId, targetEntityId);
     },
     [services, storyId, userId, pendingNoteRelations],
@@ -311,7 +327,7 @@ export function useEntityRelations({
     allNotes,
     // With no entity yet, the fetched `noteRelations` is always empty - it shows the local buffer instead,
     // transparently to the consumer (NoteRelationManager cannot tell the difference).
-    noteRelations: entityId ? noteRelations : pendingNoteRelations,
+    noteRelations: hydrationEntityId ? noteRelations : pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,

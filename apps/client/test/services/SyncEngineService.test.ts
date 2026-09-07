@@ -223,13 +223,13 @@ beforeEach(async () => {
   mockSyncStoryMedia.mockClear();
 
   engine = createAppSyncEngine();
-  engine.bindDatabase(database.db);
+  await engine.bindDatabase(database.db);
   await seedServer();
-  engine.activateStory(STORY_ID, { ...SERVER, idUser: 'server-user' } as never);
+  await engine.activateStory(STORY_ID, { ...SERVER, idUser: 'server-user' } as never);
 });
 
 afterEach(async () => {
-  engine.deactivateStory();
+  await engine.deactivateStory();
   delete (axios.defaults as any).adapter;
   database.close();
   jest.restoreAllMocks();
@@ -1073,7 +1073,7 @@ describe('when the server cannot be reached', () => {
 
 describe('guards before a cycle runs', () => {
   it('does nothing without a story', async () => {
-    engine.deactivateStory();
+    await engine.deactivateStory();
 
     await expect(runOneCycle()).resolves.toBe(false);
     expect(seen).toEqual([]);
@@ -1103,13 +1103,13 @@ describe('guards before a cycle runs', () => {
 });
 
 describe('engine control surface', () => {
-  it('exposes explicit context lifecycle transitions', () => {
+  it('exposes explicit context lifecycle transitions', async () => {
     expect(engine.lifecycle).toBe('active');
 
     engine.stopSync();
     expect(engine.lifecycle).toBe('active');
 
-    engine.deactivateStory();
+    await engine.deactivateStory();
     expect(engine.lifecycle).toBe('idle');
   });
 
@@ -1121,15 +1121,54 @@ describe('engine control surface', () => {
     expect(request).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the active context stable until an in-flight cycle finishes', async () => {
+    let finishCycle!: () => void;
+    const contextsSeen: string[] = [];
+    jest.spyOn(engine as any, 'performSync').mockImplementation(async () => {
+      contextsSeen.push((engine as any).storyId);
+      await new Promise<void>((resolve) => {
+        finishCycle = resolve;
+      });
+      contextsSeen.push((engine as any).storyId);
+      return false;
+    });
+
+    engine.startSync();
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    let transitionFinished = false;
+    const transition = engine
+      .activateStory('story-2', {
+        ...SERVER,
+        id: 'server-2',
+        idUser: 'server-user',
+        url: 'http://servidor-2',
+      } as never)
+      .then(() => {
+        transitionFinished = true;
+      });
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    expect(transitionFinished).toBe(false);
+    expect((engine as any).storyId).toBe(STORY_ID);
+
+    finishCycle();
+    await transition;
+
+    expect(contextsSeen).toEqual([STORY_ID, STORY_ID]);
+    expect((engine as any).storyId).toBe('story-2');
+    expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
+  });
+
   it('reset clears every connection-bound dependency so a later story cannot inherit it', async () => {
-    const resetScheduler = jest
-      .spyOn((engine as any).scheduler, 'reset')
+    const stopScheduler = jest
+      .spyOn((engine as any).scheduler, 'stopAndWait')
       .mockResolvedValue(undefined);
     const resetMedia = jest.spyOn((engine as any).media, 'reset');
 
     await engine.reset();
 
-    expect(resetScheduler).toHaveBeenCalledTimes(1);
+    expect(stopScheduler).toHaveBeenCalledTimes(1);
     expect(resetMedia).toHaveBeenCalledTimes(1);
     expect((engine as any).storyId).toBeNull();
     expect((engine as any).activeServer).toBeNull();

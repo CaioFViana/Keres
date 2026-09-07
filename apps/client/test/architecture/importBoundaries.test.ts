@@ -143,6 +143,8 @@ describe('import boundaries', () => {
     expect(engine).toContain('public constructor(private readonly dependencies: SyncEngineDependencies)');
     expect(engine).toContain('public activateStory(');
     expect(engine).toContain('public deactivateStory(');
+    expect(engine).toContain('private transitionContext(');
+    expect(engine).toContain('await this.scheduler.stopAndWait()');
     expect(engine).toContain('public get lifecycle()');
     expect(engine).not.toMatch(/static\s+(?:instance|getInstance)/);
     expect(engine).not.toMatch(/entityEventEmitter|authTokenManager|createAppSyncNotifier/);

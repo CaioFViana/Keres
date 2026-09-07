@@ -32,6 +32,7 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characterOwnerId
 import { useStoryStore } from '../../state/storyStore';
@@ -116,7 +117,11 @@ const ItemFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'Item', entityId: currentItemId });
+  } = useEntityRelations({
+    entityType: 'Item',
+    entityId: currentItemId,
+    preserveDraftOnEntityCreation: true,
+  });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Item');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -142,8 +147,8 @@ const ItemFormScreen = () => {
       }
       try {
         setLoading(true);
-        if (isEditing) {
-          const fetchedItem = await itemServiceRef.current.getById(currentItemId!);
+        if (initialItemId) {
+          const fetchedItem = await itemServiceRef.current.getById(initialItemId);
           if (fetchedItem) {
             setName(fetchedItem.name);
             setCategory(fetchedItem.category);
@@ -154,11 +159,11 @@ const ItemFormScreen = () => {
             setCharacterOwnerId(fetchedItem.characterOwnerId);
 
             const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentItemId!,
+              initialItemId,
             );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
-            console.warn('Item not found:', currentItemId);
+            console.warn('Item not found:', initialItemId);
           }
         }
       } catch (err) {
@@ -168,7 +173,7 @@ const ItemFormScreen = () => {
       }
     };
     loadItem();
-  }, [currentItemId, drizzleDb, isEditing, selectedStory?.id, t]);
+  }, [drizzleDb, initialItemId, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -209,42 +214,33 @@ const ItemFormScreen = () => {
           characterOwnerId: characterOwnerId,
         };
 
-        let savedItemId: string | undefined = currentItemId; // Changed
-
-        if (isEditing && currentItemId) {
-          // Changed
-          const savedItem = await itemServiceRef.current!.updateItem(
-            userId,
-            currentItemId,
-            itemData,
-          ); // Changed
-          savedItemId = savedItem.id;
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          const savedItem = await itemServiceRef.current!.createItem(userId, {
-            ...itemData,
-            storyId: selectedStory.id,
-          }); // Changed
-          savedItemId = savedItem.id;
-          setCurrentItemId(savedItem.id);
-          AppAlert.alert(t('success'), copy.created);
-        }
-
-        if (savedItemId) {
-          await persistTagRelations(savedItemId);
-          await persistNoteRelations(savedItemId);
-          await seeAlsoManagerRef.current?.persistPending(savedItemId);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'Item',
-            savedItemId,
-            customValues,
-          );
-        }
+        const { entityId: savedItemId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentItemId,
+          createEntity: () =>
+            itemServiceRef.current!.createItem(userId, {
+              ...itemData,
+              storyId: selectedStory.id,
+            }),
+          updateEntity: (itemId) =>
+            itemServiceRef.current!.updateItem(userId, itemId, itemData),
+          onEntityPersisted: setCurrentItemId,
+          persistSecondaryData: async (itemId) => {
+            await persistTagRelations(itemId);
+            await persistNoteRelations(itemId);
+            await seeAlsoManagerRef.current?.persistPending(itemId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'Item',
+              itemId,
+              customValues,
+            );
+          },
+        });
         entityEventEmitter.emit('item_changed', selectedStory.id, savedItemId); // Changed
+        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
-        if (!isEditing && savedItemId) {
+        if (created) {
           // Changed
           navigation.dispatch(StackActions.replace('ItemForm', { itemId: savedItemId })); // Changed
         } else {

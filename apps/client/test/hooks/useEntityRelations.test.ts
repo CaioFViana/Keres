@@ -110,6 +110,17 @@ beforeEach(() => {
   tagRelationService.getTagsForEntity.mockResolvedValue([TAGS[0]]);
   noteService.getNotesByStoryId.mockResolvedValue(NOTES);
   storedRelations = [RELATION];
+  noteRelationService.saveNoteRelation.mockImplementation(async (_userId: string, relation: any) => {
+    const saved = { ...RELATION, ...relation, id: relation.id ?? RELATION.id };
+    const index = storedRelations.findIndex((stored) => stored.id === saved.id);
+    storedRelations =
+      index > -1
+        ? storedRelations.map((stored, storedIndex) =>
+            storedIndex === index ? saved : stored,
+          )
+        : [...storedRelations, saved];
+    return saved;
+  });
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -141,6 +152,26 @@ describe('loading', () => {
 
     await waitFor(() => expect(result.current.availableTags).toEqual(TAGS));
     expect(result.current.selectedTagIds).toEqual([]);
+    expect(tagRelationService.getTagsForEntity).not.toHaveBeenCalled();
+  });
+
+  it('preserves creation-time selections when the persisted id becomes available', async () => {
+    let entityId: string | undefined;
+    const view = await renderHook(() =>
+      useEntityRelations({
+        entityType: ENTITY_TYPE,
+        entityId,
+        preserveDraftOnEntityCreation: true,
+      } as never),
+    );
+    await waitFor(() => expect(view.result.current.availableTags).toEqual(TAGS));
+    await act(async () => view.result.current.setSelectedTagIds(['t2']));
+    tagRelationService.getTagsForEntity.mockClear();
+
+    entityId = 'new-rule';
+    await view.rerender({});
+
+    expect(view.result.current.selectedTagIds).toEqual(['t2']);
     expect(tagRelationService.getTagsForEntity).not.toHaveBeenCalled();
   });
 
@@ -223,6 +254,47 @@ describe('persisting the tag selection', () => {
 });
 
 describe('note relations', () => {
+  it('removes each persisted draft so a retry resumes after a partial failure', async () => {
+    let failSecond = true;
+    noteRelationService.saveNoteRelation.mockImplementation(
+      async (_userId: string, relation: { noteId: string }) => {
+        if (relation.noteId === 'n2' && failSecond) throw new Error('second relation failed');
+        return { ...RELATION, ...relation, id: `saved-${relation.noteId}` };
+      },
+    );
+    const view = await renderHook(() =>
+      useEntityRelations({
+        entityType: ENTITY_TYPE,
+        entityId: undefined,
+        preserveDraftOnEntityCreation: true,
+      } as never),
+    );
+    await waitFor(() => expect(view.result.current.availableTags).toEqual(TAGS));
+    await act(async () => {
+      await view.result.current.saveNoteRelation({ noteId: 'n1' } as never);
+      await view.result.current.saveNoteRelation({ noteId: 'n2' } as never);
+    });
+
+    let persistenceError: unknown;
+    await act(async () => {
+      try {
+        await view.result.current.persistNoteRelations('new-rule');
+      } catch (error) {
+        persistenceError = error;
+      }
+    });
+    expect(persistenceError).toEqual(new Error('second relation failed'));
+    expect(view.result.current.noteRelations.map((relation) => relation.noteId)).toEqual(['n2']);
+
+    failSecond = false;
+    await act(async () => view.result.current.persistNoteRelations('new-rule'));
+
+    expect(view.result.current.noteRelations).toEqual([]);
+    expect(
+      noteRelationService.saveNoteRelation.mock.calls.map(([, relation]) => relation.noteId),
+    ).toEqual(['n1', 'n2', 'n2']);
+  });
+
   it('adds a saved relation to the list', async () => {
     storedRelations = [];
     const { result } = await renderHook(() =>

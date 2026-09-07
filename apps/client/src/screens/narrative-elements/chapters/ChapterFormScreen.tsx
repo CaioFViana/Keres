@@ -26,13 +26,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../../db';
-import type { ChapterSelect, StoryArcSelect } from '../../../db/schema';
+import type { StoryArcSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
+import { saveEntityWithSecondaryData } from '../../../services/storymanagement/EntityFormSaveCoordinator';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
 import { createStoryArcService } from '../../../services/storymanagement/StoryArcService';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
@@ -95,7 +96,11 @@ const ChapterFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'Chapter', entityId: currentChapterId });
+  } = useEntityRelations({
+    entityType: 'Chapter',
+    entityId: currentChapterId,
+    preserveDraftOnEntityCreation: true,
+  });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Chapter');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -125,8 +130,8 @@ const ChapterFormScreen = () => {
 
       try {
         setLoading(true);
-        if (isEditing) {
-          const fetchedChapter = await chapterServiceRef.current.getById(currentChapterId!);
+        if (initialChapterId) {
+          const fetchedChapter = await chapterServiceRef.current.getById(initialChapterId);
           if (fetchedChapter) {
             setName(fetchedChapter.name);
             setSummary(fetchedChapter.summary);
@@ -136,11 +141,11 @@ const ChapterFormScreen = () => {
             setArcId(fetchedChapter.arcId ?? null);
 
             const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentChapterId!,
+              initialChapterId,
             );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
-            console.warn('Chapter not found:', currentChapterId);
+            console.warn('Chapter not found:', initialChapterId);
           }
         }
       } catch (err) {
@@ -150,7 +155,7 @@ const ChapterFormScreen = () => {
       }
     };
     loadChapter();
-  }, [currentChapterId, drizzleDb, isEditing, selectedStory?.id, t]);
+  }, [drizzleDb, initialChapterId, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!selectedStory?.id) return;
@@ -213,52 +218,46 @@ const ChapterFormScreen = () => {
           arcId,
         };
 
-        let savedChapter: ChapterSelect;
+        const { entityId: savedChapterId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentChapterId,
+          createEntity: async () => {
+            // The next index within its own kind: chapters and events number independently.
+            const containerType = isEvent ? 'event' : 'chapter';
+            const siblings = await chapterServiceRef.current!.getAllByStoryId(
+              selectedStory.id,
+              containerType,
+            );
+            const nextIndex =
+              siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
+            return chapterServiceRef.current!.createChapter(userId, {
+              ...chapterData,
+              storyId: selectedStory.id,
+              index: nextIndex,
+              type: containerType,
+            });
+          },
+          updateEntity: (chapterId) =>
+            chapterServiceRef.current!.updateChapter(userId, chapterId, chapterData),
+          onEntityPersisted: setCurrentChapterId,
+          persistSecondaryData: async (chapterId) => {
+            await persistTagRelations(chapterId);
+            await persistNoteRelations(chapterId);
+            await seeAlsoManagerRef.current?.persistPending(chapterId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'Chapter',
+              chapterId,
+              customValues,
+            );
+          },
+        });
 
-        if (isEditing) {
-          savedChapter = await chapterServiceRef.current!.updateChapter(
-            userId,
-            currentChapterId!,
-            chapterData,
-          );
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          // The next index within its own kind: chapters and events number independently, so the two
-          // spaces would collide if this counted across both.
-          const containerType = isEvent ? 'event' : 'chapter';
-          const siblings = await chapterServiceRef.current!.getAllByStoryId(
-            selectedStory.id,
-            containerType,
-          );
-          const nextIndex =
-            siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
-          savedChapter = await chapterServiceRef.current!.createChapter(userId, {
-            ...chapterData,
-            storyId: selectedStory.id,
-            index: nextIndex,
-            type: containerType,
-          });
-          AppAlert.alert(t('success'), copy.created);
-          setCurrentChapterId(savedChapter.id);
-        }
+        entityEventEmitter.emit('chapter_changed', selectedStory.id, savedChapterId);
+        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
-        if (savedChapter.id) {
-          await persistTagRelations(savedChapter.id);
-          await persistNoteRelations(savedChapter.id);
-          await seeAlsoManagerRef.current?.persistPending(savedChapter.id);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'Chapter',
-            savedChapter.id,
-            customValues,
-          );
-        }
-
-        entityEventEmitter.emit('chapter_changed', selectedStory.id, savedChapter.id);
-
-        if (!isEditing && savedChapter.id) {
-          navigation.dispatch(StackActions.replace('ChapterForm', { chapterId: savedChapter.id }));
+        if (created) {
+          navigation.dispatch(StackActions.replace('ChapterForm', { chapterId: savedChapterId }));
         } else {
           navigation.goBack();
         }

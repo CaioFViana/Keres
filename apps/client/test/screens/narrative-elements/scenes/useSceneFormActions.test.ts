@@ -56,7 +56,7 @@ import type { SceneFormState } from '../../../../src/screens/narrative-elements/
 const createState = (overrides: Partial<SceneFormState> = {}): SceneFormState =>
   ({
     currentSceneId: undefined,
-    setCurrentSceneId: jest.fn(),
+    retainPersistedSceneId: jest.fn(),
     chapterId: null,
     setChapterId: jest.fn(),
     locationId: null,
@@ -150,7 +150,7 @@ it('coordinates persistence, notification and replacement after creation', async
 
   await act(async () => view.result.current.handleSave());
 
-  expect(state.setCurrentSceneId).toHaveBeenCalledWith('scene-1');
+  expect(state.retainPersistedSceneId).toHaveBeenCalledWith('scene-1');
   expect(persistTagRelations).toHaveBeenCalledWith('scene-1');
   expect(persistNoteRelations).toHaveBeenCalledWith('scene-1');
   expect(persistCharacterRelations).toHaveBeenCalledWith('scene-1');

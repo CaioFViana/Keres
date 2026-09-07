@@ -26,6 +26,7 @@ import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
 import { useItemStore } from '../../state/itemStore'; // Assuming ItemStore for items
 import { useSceneStore } from '../../state/sceneStore'; // Assuming SceneStore for scenes
@@ -150,7 +151,11 @@ const ItemJourneyFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'ItemJourney', entityId: currentItemJourneyId });
+  } = useEntityRelations({
+    entityType: 'ItemJourney',
+    entityId: currentItemJourneyId,
+    preserveDraftOnEntityCreation: true,
+  });
 
   const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
@@ -175,9 +180,9 @@ const ItemJourneyFormScreen = () => {
       }
       try {
         setLoading(true);
-        if (isEditing) {
+        if (initialItemJourneyId) {
           const fetchedItemJourney = await itemJourneyServiceRef.current.getById(
-            currentItemJourneyId!,
+            initialItemJourneyId,
           );
           if (fetchedItemJourney) {
             setItemId(fetchedItemJourney.itemId);
@@ -186,7 +191,7 @@ const ItemJourneyFormScreen = () => {
             setNewState(fetchedItemJourney.newState);
             setExtraNotes(fetchedItemJourney.extraNotes);
           } else {
-            console.warn('Item journey not found:', currentItemJourneyId);
+            console.warn('Item journey not found:', initialItemJourneyId);
           }
         }
       } catch (err) {
@@ -196,7 +201,7 @@ const ItemJourneyFormScreen = () => {
       }
     };
     loadItemJourney();
-  }, [currentItemJourneyId, isEditing, selectedStory?.id, t]);
+  }, [initialItemJourneyId, selectedStory?.id, t]);
 
   const handleSave = () =>
     runSave(async () => {
@@ -230,40 +235,33 @@ const ItemJourneyFormScreen = () => {
           extraNotes: extraNotes,
         };
 
-        let savedItemJourneyId: string | undefined = currentItemJourneyId;
-
-        if (isEditing && currentItemJourneyId) {
-          const savedItemJourney = await itemJourneyServiceRef.current!.updateItemJourney(
-            userId,
-            currentItemJourneyId,
-            itemJourneyData,
-          );
-          savedItemJourneyId = savedItemJourney.id;
-          AppAlert.alert(
-            t('success'),
-            t('vocabulary_entity_updated', { entity: journey, ending: 'a' }),
-          );
-        } else {
-          const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(
-            userId,
-            itemJourneyData,
-          );
-          savedItemJourneyId = savedItemJourney.id;
-          setCurrentItemJourneyId(savedItemJourney.id);
-          AppAlert.alert(
-            t('success'),
-            t('vocabulary_entity_created', { entity: journey, ending: 'a' }),
-          );
-        }
-
-        if (savedItemJourneyId) {
-          await persistTagRelations(savedItemJourneyId);
-          await persistNoteRelations(savedItemJourneyId);
-          await seeAlsoManagerRef.current?.persistPending(savedItemJourneyId);
-        }
+        const { entityId: savedItemJourneyId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentItemJourneyId,
+          createEntity: () =>
+            itemJourneyServiceRef.current!.createItemJourney(userId, itemJourneyData),
+          updateEntity: (itemJourneyId) =>
+            itemJourneyServiceRef.current!.updateItemJourney(
+              userId,
+              itemJourneyId,
+              itemJourneyData,
+            ),
+          onEntityPersisted: setCurrentItemJourneyId,
+          persistSecondaryData: async (itemJourneyId) => {
+            await persistTagRelations(itemJourneyId);
+            await persistNoteRelations(itemJourneyId);
+            await seeAlsoManagerRef.current?.persistPending(itemJourneyId);
+          },
+        });
         entityEventEmitter.emit('item_journey_changed', selectedStory.id, savedItemJourneyId);
+        AppAlert.alert(
+          t('success'),
+          t(created ? 'vocabulary_entity_created' : 'vocabulary_entity_updated', {
+            entity: journey,
+            ending: 'a',
+          }),
+        );
 
-        if (!isEditing && savedItemJourneyId) {
+        if (created) {
           navigation.dispatch(
             StackActions.replace('ItemJourneyForm', { itemJourneyId: savedItemJourneyId }),
           );

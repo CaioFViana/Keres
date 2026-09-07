@@ -1,7 +1,7 @@
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import type { RefObject } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient, SceneSelect } from '../../../db';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
 import type { SceneService } from '../../../services/storymanagement/SceneService';
@@ -46,6 +46,9 @@ export function useSceneFormState({
   const [loading, setLoading] = useState(true);
   const customDefaultsAppliedRef = useRef(false);
   const isEditing = !!currentSceneId;
+  const retainPersistedSceneId = useCallback((sceneId: string) => {
+    setCurrentSceneId(sceneId);
+  }, []);
 
   useEffect(() => {
     const applyScene = (scene: SceneSelect) => {
@@ -72,12 +75,12 @@ export function useSceneFormState({
       }
       try {
         setLoading(true);
-        if (currentSceneId) {
-          const scene = await sceneServiceRef.current.getById(currentSceneId);
+        if (initialSceneId) {
+          const scene = await sceneServiceRef.current.getById(initialSceneId);
           if (scene) {
             applyScene(scene);
             const values = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentSceneId,
+              initialSceneId,
             );
             setCustomValues(Object.fromEntries(values.map((value) => [value.fieldId, value.value])));
           }
@@ -92,9 +95,9 @@ export function useSceneFormState({
     };
     void load();
   }, [
-    currentSceneId,
     drizzleDb,
     initialChapterId,
+    initialSceneId,
     sceneServiceRef,
     storyId,
   ]);
@@ -108,7 +111,7 @@ export function useSceneFormState({
 
   return {
     currentSceneId,
-    setCurrentSceneId,
+    retainPersistedSceneId,
     chapterId,
     setChapterId,
     locationId,

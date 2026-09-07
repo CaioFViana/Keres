@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db, withTransaction } from '../../src/db';
+import { db, withTransaction, withWriteTransaction } from '../../src/db';
 import { users } from '../../src/db/schema';
 import { truncateAll } from '../helpers/database';
 
@@ -62,6 +62,44 @@ describe('withTransaction', () => {
     expect(await db.query.users.findFirst({ where: eq(users.id, 'outer-user') })).toBeDefined();
     expect(
       await db.query.users.findFirst({ where: eq(users.id, 'savepoint-user') }),
+    ).toBeUndefined();
+  });
+
+  it('rolls back a semantic write transaction on either driver', async () => {
+    await expect(
+      withWriteTransaction(async (tx) => {
+        await tx.insert(users).values({
+          id: 'write-user',
+          username: 'write-user',
+          tag: 'write-user',
+          password: 'secret',
+        });
+        expect(await db.query.users.findFirst({ where: eq(users.id, 'write-user') })).toBeDefined();
+        throw new Error('abort write transaction');
+      }),
+    ).rejects.toThrow('abort write transaction');
+
+    expect(await db.query.users.findFirst({ where: eq(users.id, 'write-user') })).toBeUndefined();
+  });
+
+  it('joins a semantic write transaction to an active transaction', async () => {
+    await expect(
+      withTransaction(async (outerTx) => {
+        await withWriteTransaction(async (writeTx) => {
+          expect(writeTx).toBe(outerTx);
+          await writeTx.insert(users).values({
+            id: 'joined-write-user',
+            username: 'joined-write-user',
+            tag: 'joined-write-user',
+            password: 'secret',
+          });
+        });
+        throw new Error('abort joined transaction');
+      }),
+    ).rejects.toThrow('abort joined transaction');
+
+    expect(
+      await db.query.users.findFirst({ where: eq(users.id, 'joined-write-user') }),
     ).toBeUndefined();
   });
 });

@@ -82,6 +82,8 @@ export class SyncEngineService {
   private _db: AppDrizzleClient | null = null;
   private _conflictService: SyncConflictService | null = null;
   private entityHandlers: Map<string, ClientSyncEntityHandler>;
+  private contextTransition: Promise<void> = Promise.resolve();
+  private pendingContextTransitions = 0;
 
   public constructor(private readonly dependencies: SyncEngineDependencies) {
     this.client = dependencies.createClient();
@@ -126,29 +128,38 @@ export class SyncEngineService {
     return this.scheduler.isRunning ? 'running' : 'active';
   }
 
-  public bindDatabase(dbInstance: AppDrizzleClient): void {
-    this._db = dbInstance;
-    this._conflictService = null; // Recreated on demand, already bound to the new database.
-    // Propagate the db instance to all registered handlers
-    this.entityHandlers.forEach((handler) => handler.setDb(dbInstance));
+  public bindDatabase(dbInstance: AppDrizzleClient): Promise<void> {
+    if (this._db === dbInstance && this.pendingContextTransitions === 0) {
+      return Promise.resolve();
+    }
+    return this.transitionContext(() => {
+      this._db = dbInstance;
+      this._conflictService = null; // Recreated on demand, already bound to the new database.
+      // Propagate the db instance to all registered handlers
+      this.entityHandlers.forEach((handler) => handler.setDb(dbInstance));
 
-    // Authentication resolves the server through the database bound to this engine instance.
-    const serverService = this.dependencies.createServerService(dbInstance);
-    this.dependencies.tokenProvider.setGetServerById(serverService.getServerById);
+      // Authentication resolves the server through the database bound to this engine instance.
+      const serverService = this.dependencies.createServerService(dbInstance);
+      this.dependencies.tokenProvider.setGetServerById(serverService.getServerById);
+    });
   }
 
-  public activateStory(storyId: string, server: ServerSelect): void {
-    if (!this._db) throw new Error('SyncEngineService: bind the database before activating a story.');
+  public activateStory(storyId: string, server: ServerSelect): Promise<void> {
     if (!storyId) throw new Error('SyncEngineService: a story is required for activation.');
     if (!server.url) throw new Error('SyncEngineService: a server URL is required for activation.');
 
-    this.stopSync();
-    this.storyId = storyId;
-    this.activeServer = server;
-    this.client = this.dependencies.createClient(server.url);
-    this.client.setTokenProvider(this.dependencies.tokenProvider);
-    this.client.setActiveServer(server);
-    console.log(`SyncEngineService activated for story ${storyId} with server: ${server.url}`);
+    return this.transitionContext(() => {
+      if (!this._db) {
+        throw new Error('SyncEngineService: bind the database before activating a story.');
+      }
+      this.storyId = storyId;
+      this.activeServer = server;
+      this.client = this.dependencies.createClient(server.url);
+      this.client.setTokenProvider(this.dependencies.tokenProvider);
+      this.client.setActiveServer(server);
+      this.scheduler.resume();
+      console.log(`SyncEngineService activated for story ${storyId} with server: ${server.url}`);
+    });
   }
 
   public startSync(intervalTimeMs?: number): void {
@@ -163,22 +174,18 @@ export class SyncEngineService {
     this.scheduler.stop();
   }
 
-  public deactivateStory(): void {
-    this.stopSync();
-    this.storyId = null;
-    this.activeServer = null;
-    this.client.defaults.baseURL = undefined;
+  public deactivateStory(): Promise<void> {
+    return this.transitionContext(() => this.clearStoryContext());
   }
 
-  public async reset(): Promise<void> {
-    await this.scheduler.reset();
-    this.storyId = null;
-    this.activeServer = null;
-    this.client.defaults.baseURL = undefined;
-    this._db = null;
-    this._conflictService = null;
-    this.media.reset();
-    console.log('Sync engine has been reset, database instance cleared.');
+  public reset(): Promise<void> {
+    return this.transitionContext(() => {
+      this.clearStoryContext();
+      this._db = null;
+      this._conflictService = null;
+      this.media.reset();
+      console.log('Sync engine has been reset, database instance cleared.');
+    });
   }
 
   public fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]> {
@@ -220,6 +227,32 @@ export class SyncEngineService {
     return this._conflictService;
   }
 
+  /** Serializes context mutations and keeps the active cycle on one stable set of dependencies. */
+  private transitionContext(change: () => void): Promise<void> {
+    this.scheduler.stop();
+    this.pendingContextTransitions += 1;
+    const transition = this.contextTransition.then(async () => {
+      await this.scheduler.stopAndWait();
+      change();
+    });
+    this.contextTransition = transition.catch(() => {});
+    return transition.finally(() => {
+      this.pendingContextTransitions -= 1;
+    });
+  }
+
+  private clearStoryContext(): void {
+    this.storyId = null;
+    this.activeServer = null;
+    this.client.defaults.baseURL = undefined;
+  }
+
+  /** Used only by the active cycle itself; awaiting its own idle state would deadlock. */
+  private deactivateStoryFromActiveCycle(): void {
+    this.scheduler.stop();
+    this.clearStoryContext();
+  }
+
   /**
    * The version the user based their edit on.
    *
@@ -237,13 +270,13 @@ export class SyncEngineService {
 
     if (!this.client.defaults.baseURL) {
       console.log('No server URL set for sync operation.');
-      this.deactivateStory();
+      this.deactivateStoryFromActiveCycle();
       return false;
     }
 
     if (!this._db) {
       console.log('Drizzle client (db) is not initialized. Cannot perform sync.');
-      this.deactivateStory();
+      this.deactivateStoryFromActiveCycle();
       return false;
     }
 
@@ -262,7 +295,7 @@ export class SyncEngineService {
 
       if (!localStory) {
         console.log(`Story with ID ${this.storyId} not found locally.`);
-        this.deactivateStory();
+        this.deactivateStoryFromActiveCycle();
         return false;
       }
 

@@ -94,7 +94,7 @@ const ColdInstallScreen = () => {
     // erased. Reattach them as soon as the fresh schema exists, before server registration
     // can attempt to persist tokens or start its first synchronization.
     setAuthDb(drizzleDb);
-    syncEngine.bindDatabase(drizzleDb);
+    await syncEngine.bindDatabase(drizzleDb);
 
     // Create initial client settings in SQLite
     await createClientSettings(drizzleDb, {

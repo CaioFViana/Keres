@@ -11,7 +11,11 @@ export function useSceneFormAssociations(
 ) {
   const characterPresence = useSceneCharacterPresence(sceneId, storyId);
   const effects = useEntityEffects('Scene', sceneId, storyId, isBranching);
-  const relations = useEntityRelations({ entityType: 'Scene', entityId: sceneId });
+  const relations = useEntityRelations({
+    entityType: 'Scene',
+    entityId: sceneId,
+    preserveDraftOnEntityCreation: true,
+  });
   const { fetchCharacterSceneRelations } = characterPresence;
 
   useEffect(() => {

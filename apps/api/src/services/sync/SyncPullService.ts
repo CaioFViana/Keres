@@ -6,10 +6,10 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { decodePulledReorderOperation, MAX_SYNC_PULL_BATCH } from '@keres/shared';
-import { and, eq, gt, max, ne, sql } from 'drizzle-orm';
+import { and, eq, gt, max, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../../db';
-import { usingSqlite } from '../../db/dialect';
+import { lockStoryForUpdate } from '../../db/sqlOperators';
 import { favorites, operationLog, stories } from '../../db/schema';
 import { eventManager } from '../../utils/EventManager';
 import { AppError } from '../../utils/errors';
@@ -122,12 +122,7 @@ export class SyncPullService {
     storyId: string,
   ): Promise<{ count: number; maxOperationVersion: number }> {
     return db.transaction(async (tx) => {
-      // SQLite serialises writers itself; Postgres needs the Story lock alongside append operations.
-      if (!usingSqlite) {
-        await tx.execute(
-          sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
-        );
-      }
+      await lockStoryForUpdate(tx, storyId);
 
       const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
         tx

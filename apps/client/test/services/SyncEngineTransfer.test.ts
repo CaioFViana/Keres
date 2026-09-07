@@ -164,13 +164,13 @@ beforeEach(async () => {
   installAdapter();
 
   engine = createAppSyncEngine();
-  engine.bindDatabase(database.db);
+  await engine.bindDatabase(database.db);
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(async () => {
-  engine.deactivateStory();
+  await engine.deactivateStory();
   delete (axios.defaults as any).adapter;
   database.close();
   jest.restoreAllMocks();

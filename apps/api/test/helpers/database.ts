@@ -35,7 +35,10 @@ export async function truncateAll(): Promise<void> {
     return;
   }
 
-  const result = await db.execute<{ tablename: string }>(
+  const postgresDb = db as unknown as {
+    execute<T>(query: unknown): Promise<{ rows: T[] }>;
+  };
+  const result = await postgresDb.execute<{ tablename: string }>(
     sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
   );
 
@@ -44,7 +47,7 @@ export async function truncateAll(): Promise<void> {
     return;
   }
 
-  await db.execute(sql.raw(`TRUNCATE TABLE ${tables.join(', ')} RESTART IDENTITY CASCADE`));
+  await postgresDb.execute(sql.raw(`TRUNCATE TABLE ${tables.join(', ')} RESTART IDENTITY CASCADE`));
 }
 
 /**

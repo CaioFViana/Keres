@@ -137,4 +137,26 @@ describe('SyncScheduler', () => {
     await reset;
     expect(resetFinished).toBe(true);
   });
+
+  it('rejects new requests while waiting for the active cycle to stop', async () => {
+    let finish!: (offline: boolean) => void;
+    performSync.mockImplementation(() => new Promise<boolean>((resolve) => (finish = resolve)));
+    scheduler.start();
+    await flush();
+
+    const stopped = scheduler.stopAndWait();
+    scheduler.request();
+    finish(false);
+    await stopped;
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+
+    scheduler.resume();
+    scheduler.request();
+    await flush();
+    expect(performSync).toHaveBeenCalledTimes(2);
+    finish(false);
+    await scheduler.stopAndWait();
+  });
 });

@@ -126,7 +126,7 @@ export function useSceneFormActions({
           currentSceneId: state.currentSceneId,
           sceneData,
           notFoundMessage: copy.notFound,
-          onScenePersisted: state.setCurrentSceneId,
+          onScenePersisted: state.retainPersistedSceneId,
           persistRelations: async (persistedSceneId) => {
             await persistTagRelations(persistedSceneId);
             await persistNoteRelations(persistedSceneId);

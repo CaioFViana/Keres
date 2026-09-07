@@ -155,12 +155,30 @@ describe('database portability boundary', () => {
   it('exports only the database operations covered by the shared contract', () => {
     const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
 
-    expect(databaseModule).toContain('export interface CompatibleDb extends CommonDatabaseOperations');
-    expect(databaseModule).toContain(
-      "'query' | 'select' | 'selectDistinct' | 'insert' | 'update' | 'delete' | 'execute'",
-    );
+    expect(databaseModule).toContain('PostgresDb[Operation] & SqliteDb[Operation]');
+    expect(databaseModule).toContain('export type CompatibleDb = CommonDatabaseOperations');
     expect(databaseModule).not.toMatch(/export type CompatibleDb\s*=\s*NodePgDatabase/);
+    expect(databaseModule).not.toMatch(/CompatibleTransactionConfig|PgTransactionConfig|SQLiteTransactionConfig/);
+    expect(databaseModule).not.toMatch(/\| 'execute'/);
     expect(databaseModule.match(/as unknown as CompatibleDb/g)).toHaveLength(1);
+  });
+
+  it('keeps dialect-specific builders and raw execution inside database infrastructure', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !sourceRelativeOf(file).startsWith('db/'))
+      .filter((file) => /drizzle-orm\/(?:pg-core|sqlite-core)/.test(readFileSync(file, 'utf8')))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+
+    const rawExecutionOffenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !sourceRelativeOf(file).startsWith('db/'))
+      .filter((file) => /\b(?:db|tx)\.execute\s*\(/.test(readFileSync(file, 'utf8')))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(rawExecutionOffenders).toEqual([]);
   });
 
   it('keeps native driver access inside database infrastructure', () => {

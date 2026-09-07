@@ -4,8 +4,6 @@ import * as dotenv from 'dotenv';
 import { drizzle as drizzleLibsql, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
-import type { PgTransactionConfig } from 'drizzle-orm/pg-core';
-import type { SQLiteTransactionConfig } from 'drizzle-orm/sqlite-core';
 import { Pool } from 'pg';
 import { logger } from '../utils/logger';
 import { usingSqlite } from './dialect';
@@ -36,25 +34,43 @@ dotenv.config({ path: '../.env' });
  */
 type PostgresDb = NodePgDatabase<typeof schema>;
 type SqliteDb = LibSQLDatabase<typeof schema>;
-type CommonDatabaseOperations = Pick<
-  PostgresDb,
-  'query' | 'select' | 'selectDistinct' | 'insert' | 'update' | 'delete' | 'execute'
->;
-type CompatibleTransactionConfig = PgTransactionConfig | SQLiteTransactionConfig;
+type CommonOperation =
+  | 'select'
+  | 'selectDistinct'
+  | 'insert'
+  | 'update'
+  | 'delete';
 
-export interface CompatibleDb extends CommonDatabaseOperations {
-  transaction<T>(
-    work: (tx: CompatibleDb) => Promise<T>,
-    config?: CompatibleTransactionConfig,
-  ): Promise<T>;
-}
+type CommonRelationalQueries = {
+  [TableName in keyof PostgresDb['query'] & keyof SqliteDb['query']]: {
+    findFirst: PostgresDb['query'][TableName]['findFirst'] &
+      SqliteDb['query'][TableName]['findFirst'];
+    findMany: PostgresDb['query'][TableName]['findMany'] &
+      SqliteDb['query'][TableName]['findMany'];
+  };
+};
+
+/**
+ * Both native adapters must contribute their signatures to the application surface. An
+ * intersection is intentional here: it keeps the overloads accepted by each Drizzle driver while
+ * preventing PostgreSQL alone from defining what "compatible" means.
+ */
+type CommonDatabaseOperations = {
+  query: CommonRelationalQueries;
+} & {
+  [Operation in CommonOperation]: PostgresDb[Operation] & SqliteDb[Operation];
+};
+
+export type CompatibleDb = CommonDatabaseOperations & {
+  transaction<T>(work: (tx: CompatibleDb) => Promise<T>): Promise<T>;
+};
 
 /**
  * The schemas use equivalent runtime modes for every shared column (Date, boolean, JSON and number).
  * Drizzle models the two drivers with unrelated generic types, so this is the one deliberate bridge
  * from libSQL to the application's compatible surface.
  */
-function exposeCompatibleDb(database: PostgresDb | SqliteDb): CompatibleDb {
+function exposeCompatibleDb(database: unknown): CompatibleDb {
   return database as unknown as CompatibleDb;
 }
 
@@ -160,6 +176,35 @@ const rawDb = exposeCompatibleDb(databaseMigrationTarget.connection);
  * just below that resolves to the transaction active in this `AsyncLocalStorage` when there is one.
  */
 const transactionContext = new AsyncLocalStorage<CompatibleDb>();
+
+/**
+ * Starts a transaction intended to write. Callers express the semantic requirement, while this
+ * boundary chooses the driver-specific locking mode. SQLite acquires its write lock immediately;
+ * PostgreSQL keeps its ordinary transaction and uses the narrower advisory/row locks where needed.
+ */
+export function withWriteTransaction<T>(
+  work: (tx: CompatibleDb) => Promise<T>,
+): Promise<T> {
+  const activeTransaction = transactionContext.getStore();
+  if (activeTransaction) {
+    return work(activeTransaction);
+  }
+
+  if (databaseMigrationTarget.dialect === 'sqlite') {
+    return databaseMigrationTarget.connection.transaction(
+      (nativeTx) => {
+        const tx = exposeCompatibleDb(nativeTx);
+        return transactionContext.run(tx, () => work(tx));
+      },
+      { behavior: 'immediate' },
+    );
+  }
+
+  return databaseMigrationTarget.connection.transaction((nativeTx) => {
+    const tx = exposeCompatibleDb(nativeTx);
+    return transactionContext.run(tx, () => work(tx));
+  });
+}
 
 /**
  * Like `db.transaction(callback)`, but the `callback` runs with the transaction hidden in the async

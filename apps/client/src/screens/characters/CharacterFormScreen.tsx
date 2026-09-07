@@ -22,6 +22,7 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
@@ -127,6 +128,7 @@ const CharacterFormScreen = () => {
   } = useEntityRelations({
     entityType: 'Character',
     entityId: currentCharacterId,
+    preserveDraftOnEntityCreation: true,
   });
 
   const [loading, setLoading] = useState(true);
@@ -180,8 +182,8 @@ const CharacterFormScreen = () => {
 
       try {
         setLoading(true);
-        if (isEditing) {
-          const fetchedCharacter = await characterServiceRef.current.getById(currentCharacterId!);
+        if (initialCharacterId) {
+          const fetchedCharacter = await characterServiceRef.current.getById(initialCharacterId);
           if (fetchedCharacter) {
             setName(fetchedCharacter.name);
             setTitle(fetchedCharacter.title);
@@ -199,31 +201,31 @@ const CharacterFormScreen = () => {
             setExtraNotes(fetchedCharacter.extraNotes);
 
             const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentCharacterId!,
+              initialCharacterId,
             );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
-            console.warn('Character not found:', currentCharacterId);
+            console.warn('Character not found:', initialCharacterId);
           }
         }
       } catch (err) {
         console.error('Failed to load character:', err);
       } finally {
         setLoading(false);
-        fetchAllCharactersInStory();
-        fetchRelationsForCharacter();
       }
     };
     loadCharacterAndData();
   }, [
-    currentCharacterId,
     drizzleDb,
-    isEditing,
+    initialCharacterId,
     selectedStory?.id,
     t,
-    fetchAllCharactersInStory,
-    fetchRelationsForCharacter,
   ]);
+
+  useEffect(() => {
+    void fetchAllCharactersInStory();
+    void fetchRelationsForCharacter();
+  }, [fetchAllCharactersInStory, fetchRelationsForCharacter]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -273,48 +275,42 @@ const CharacterFormScreen = () => {
           extraNotes,
         };
 
-        let savedCharacter: Character;
+        const { entityId: savedCharacterId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentCharacterId,
+          createEntity: () =>
+            characterServiceRef.current!.createCharacter(userId, {
+              ...characterData,
+              storyId: selectedStory.id,
+            }),
+          updateEntity: (characterId) =>
+            characterServiceRef.current!.updateCharacter(userId, characterId, characterData),
+          onEntityPersisted: setCurrentCharacterId,
+          persistSecondaryData: async (characterId) => {
+            await persistTagRelations(characterId);
+            await persistNoteRelations(characterId);
+            await seeAlsoManagerRef.current?.persistPending(characterId);
+            await persistPendingCharacterRelations(characterId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'Character',
+              characterId,
+              customValues,
+            );
+          },
+        });
 
-        if (isEditing) {
-          savedCharacter = await characterServiceRef.current!.updateCharacter(
-            userId,
-            currentCharacterId!,
-            characterData,
-          );
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          savedCharacter = await characterServiceRef.current!.createCharacter(userId, {
-            ...characterData,
-            storyId: selectedStory.id,
-          });
-          AppAlert.alert(t('success'), copy.created);
-          setCurrentCharacterId(savedCharacter.id); // Set the ID for the newly created character
-        }
-
-        if (savedCharacter.id) {
-          await persistTagRelations(savedCharacter.id);
-          await persistNoteRelations(savedCharacter.id);
-          await seeAlsoManagerRef.current?.persistPending(savedCharacter.id);
-          await persistPendingCharacterRelations(savedCharacter.id);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'Character',
-            savedCharacter.id,
-            customValues,
-          );
-        }
-
-        entityEventEmitter.emit('character_changed', selectedStory.id, savedCharacter.id); // Emit change event
+        entityEventEmitter.emit('character_changed', selectedStory.id, savedCharacterId); // Emit change event
+        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
         // After saving character, if it's a new character, relations can now be added
         // Or if it was an edit, relations data might need a refresh.
-        if (!isEditing && savedCharacter.id) {
+        if (created) {
           // If it was a new character, relations section will become editable now
           // A full reload or navigate might be better here to ensure all states are correct
           navigation.dispatch(
             StackActions.replace('CharacterForm', {
-              characterId: savedCharacter.id,
+              characterId: savedCharacterId,
             }),
           ); // Fixed navigation.replace
         } else {
@@ -436,8 +432,10 @@ const CharacterFormScreen = () => {
         character1Id: pending.character1Id === '' ? targetCharacterId : pending.character1Id,
         character2Id: pending.character2Id === '' ? targetCharacterId : pending.character2Id,
       });
+      setPendingCharacterRelations((current) =>
+        current.filter((relation) => relation.id !== pending.id),
+      );
     }
-    setPendingCharacterRelations([]);
     if (pendingCharacterRelations.length > 0) {
       entityEventEmitter.emit('character_relation_changed', selectedStory.id, targetCharacterId);
     }

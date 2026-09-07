@@ -25,6 +25,7 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -41,7 +42,7 @@ const NoteFormScreen = () => {
   const route = useRoute<NoteFormScreenRouteProp>();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
-  const { noteId } = route.params || {};
+  const { noteId: initialNoteId } = route.params || {};
   const { selectedStory } = useStoryStore();
 
   const commonInputStyles = getCommonInputStyles(colors);
@@ -49,6 +50,7 @@ const NoteFormScreen = () => {
   const noteService = useCallback(() => createNoteService(drizzleDb), [drizzleDb]);
   const confirmDelete = useConfirmDelete();
 
+  const [currentNoteId, setCurrentNoteId] = useState<string | undefined>(initialNoteId);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -56,7 +58,12 @@ const NoteFormScreen = () => {
 
   // Notes can't be attached to other notes, so only the tag half of the hook applies.
   const { availableTags, selectedTagIds, setSelectedTagIds, persistTagRelations } =
-    useEntityRelations({ entityType: 'Note', entityId: noteId, withNotes: false });
+    useEntityRelations({
+      entityType: 'Note',
+      entityId: currentNoteId,
+      withNotes: false,
+      preserveDraftOnEntityCreation: true,
+    });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Note');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -66,7 +73,7 @@ const NoteFormScreen = () => {
   const { pending: saving, run: runSave } = useAsyncOperation();
   const [deleting, setDeleting] = useState(false);
 
-  const isEditing = !!noteId;
+  const isEditing = !!currentNoteId;
 
   useScreenHeader({
     target: 'parent',
@@ -75,13 +82,13 @@ const NoteFormScreen = () => {
 
   useEffect(() => {
     const loadNote = async () => {
-      if (!isEditing) {
+      if (!initialNoteId) {
         setLoading(false);
         return;
       }
       try {
         setLoading(true);
-        const fetchedNote = await noteService().getById(noteId!);
+        const fetchedNote = await noteService().getById(initialNoteId);
         if (fetchedNote) {
           setTitle(fetchedNote.title);
           setBody(fetchedNote.body);
@@ -89,11 +96,11 @@ const NoteFormScreen = () => {
           setExtraNotes(fetchedNote.extraNotes);
 
           const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-            noteId!,
+            initialNoteId,
           );
           setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
         } else {
-          console.warn('Note not found:', noteId);
+          console.warn('Note not found:', initialNoteId);
         }
       } catch (err) {
         console.error('Failed to load note:', err);
@@ -102,7 +109,7 @@ const NoteFormScreen = () => {
       }
     };
     loadNote();
-  }, [drizzleDb, noteId, isEditing, noteService, t]);
+  }, [drizzleDb, initialNoteId, noteService, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -142,31 +149,31 @@ const NoteFormScreen = () => {
           extraNotes: extraNotes,
         };
 
-        let currentNoteId = noteId;
+        const { created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentNoteId,
+          createEntity: () =>
+            noteService().createNote(userId, {
+              ...noteData,
+              storyId: selectedStory.id,
+            }),
+          updateEntity: (noteId) => noteService().updateNote(userId, noteId, noteData),
+          onEntityPersisted: setCurrentNoteId,
+          persistSecondaryData: async (noteId) => {
+            await persistTagRelations(noteId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'Note',
+              noteId,
+              customValues,
+            );
+          },
+        });
 
-        if (isEditing) {
-          await noteService().updateNote(userId, noteId!, noteData);
-          AppAlert.alert(t('success'), t('note_updated_successfully'));
-        } else {
-          const newNote = await noteService().createNote(userId, {
-            ...noteData,
-            storyId: selectedStory.id,
-          });
-          AppAlert.alert(t('success'), t('note_created_successfully'));
-          currentNoteId = newNote.id; // Get the ID of the newly created note
-        }
-
-        if (currentNoteId) {
-          await persistTagRelations(currentNoteId);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'Note',
-            currentNoteId,
-            customValues,
-          );
-        }
-
+        AppAlert.alert(
+          t('success'),
+          t(created ? 'note_created_successfully' : 'note_updated_successfully'),
+        );
         navigation.goBack();
       } catch (err) {
         console.error('Failed to save note:', err);
@@ -179,7 +186,7 @@ const NoteFormScreen = () => {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
-    if (!noteId) {
+    if (!currentNoteId) {
       return;
     }
 
@@ -190,7 +197,7 @@ const NoteFormScreen = () => {
       failureKey: 'failed_to_delete_note',
       onLoadingChange: setDeleting,
       onConfirm: async () => {
-        await noteService().deleteNote(userId, noteId);
+        await noteService().deleteNote(userId, currentNoteId);
         navigation.goBack();
       },
     });

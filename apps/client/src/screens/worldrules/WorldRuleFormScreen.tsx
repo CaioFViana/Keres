@@ -35,6 +35,7 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -94,7 +95,11 @@ const WorldRuleFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({ entityType: 'WorldRule', entityId: currentWorldRuleId });
+  } = useEntityRelations({
+    entityType: 'WorldRule',
+    entityId: currentWorldRuleId,
+    preserveDraftOnEntityCreation: true,
+  });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'WorldRule');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -122,8 +127,8 @@ const WorldRuleFormScreen = () => {
 
       try {
         setLoading(true);
-        if (isEditing) {
-          const fetchedWorldRule = await worldRuleServiceRef.current.getById(currentWorldRuleId!);
+        if (initialWorldRuleId) {
+          const fetchedWorldRule = await worldRuleServiceRef.current.getById(initialWorldRuleId);
           if (fetchedWorldRule) {
             setTitle(fetchedWorldRule.title);
             setDescription(fetchedWorldRule.description);
@@ -137,11 +142,11 @@ const WorldRuleFormScreen = () => {
             setExtraNotes(fetchedWorldRule.extraNotes);
 
             const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              currentWorldRuleId!,
+              initialWorldRuleId,
             );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
-            console.warn('World rule not found:', currentWorldRuleId);
+            console.warn('World rule not found:', initialWorldRuleId);
           }
         }
       } catch (err) {
@@ -151,7 +156,7 @@ const WorldRuleFormScreen = () => {
       }
     };
     loadWorldRule();
-  }, [currentWorldRuleId, drizzleDb, isEditing, selectedStory?.id, t]);
+  }, [drizzleDb, initialWorldRuleId, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -196,42 +201,36 @@ const WorldRuleFormScreen = () => {
           isFavorite: isFavorite,
           extraNotes: extraNotes,
         };
-        let savedWorldRule: WorldRule;
+        const { entityId: savedWorldRuleId, created } = await saveEntityWithSecondaryData({
+          currentEntityId: currentWorldRuleId,
+          createEntity: () =>
+            worldRuleServiceRef.current!.createWorldRule(userId, {
+              ...worldRuleData,
+              storyId: selectedStory.id,
+            }),
+          updateEntity: (worldRuleId) =>
+            worldRuleServiceRef.current!.updateWorldRule(userId, worldRuleId, worldRuleData),
+          onEntityPersisted: setCurrentWorldRuleId,
+          persistSecondaryData: async (worldRuleId) => {
+            await persistTagRelations(worldRuleId);
+            await persistNoteRelations(worldRuleId);
+            await seeAlsoManagerRef.current?.persistPending(worldRuleId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(
+              userId,
+              selectedStory.id,
+              'WorldRule',
+              worldRuleId,
+              customValues,
+            );
+          },
+        });
 
-        if (isEditing) {
-          savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(
-            userId,
-            currentWorldRuleId!,
-            worldRuleData,
-          );
-          AppAlert.alert(t('success'), copy.updated);
-        } else {
-          savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, {
-            ...worldRuleData,
-            storyId: selectedStory.id,
-          });
-          AppAlert.alert(t('success'), copy.created);
-          setCurrentWorldRuleId(savedWorldRule.id);
-        }
+        entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRuleId);
+        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
-        if (savedWorldRule.id) {
-          await persistTagRelations(savedWorldRule.id);
-          await persistNoteRelations(savedWorldRule.id);
-          await seeAlsoManagerRef.current?.persistPending(savedWorldRule.id);
-          await createAttributeValueService(drizzleDb).saveValuesForEntity(
-            userId,
-            selectedStory.id,
-            'WorldRule',
-            savedWorldRule.id,
-            customValues,
-          );
-        }
-
-        entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRule.id);
-
-        if (!isEditing && savedWorldRule.id) {
+        if (created) {
           navigation.dispatch(
-            StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRule.id }),
+            StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRuleId }),
           );
         } else {
           navigation.goBack();

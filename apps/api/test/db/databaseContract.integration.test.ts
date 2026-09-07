@@ -106,4 +106,27 @@ describe('database compatibility contract', () => {
     await db.delete(users).where(eq(users.id, 'mutable-user'));
     expect(await db.query.users.findFirst({ where: eq(users.id, 'mutable-user') })).toBeUndefined();
   });
+
+  it('supports distinct selections through the shared builder surface', async () => {
+    await db.insert(users).values([
+      {
+        id: 'distinct-user-1',
+        username: 'distinct-user-1',
+        tag: 'distinct-user-1',
+        password: 'secret',
+        isAdmin: false,
+      },
+      {
+        id: 'distinct-user-2',
+        username: 'distinct-user-2',
+        tag: 'distinct-user-2',
+        password: 'secret',
+        isAdmin: false,
+      },
+    ]);
+
+    const rows = await db.selectDistinct({ isAdmin: users.isAdmin }).from(users);
+    expect(rows).toContainEqual({ isAdmin: false });
+    expect(rows.filter(({ isAdmin }) => isAdmin === false)).toHaveLength(1);
+  });
 });

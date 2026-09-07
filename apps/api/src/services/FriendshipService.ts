@@ -1,12 +1,12 @@
 import type { EnrichedFriendship, Friendship } from '@keres/shared';
 import { FriendStatus } from '@keres/shared';
 import { and, eq, ne, or, sql } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
 import { ulid } from 'ulid';
-import { db } from '../db';
+import { db, withWriteTransaction } from '../db';
+import { alias } from '../db/schema/columns';
 import { friendships } from '../db/schema/tables/friendships';
 import { users } from '../db/schema/tables/users';
-import { lockUserPair, writeTransactionConfig } from '../db/sqlOperators';
+import { lockUserPair } from '../db/sqlOperators';
 import { AppError } from '../utils/errors';
 import { storyPermissionService } from './StoryPermissionService';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
@@ -56,7 +56,7 @@ export class FriendshipService {
     await this.checkUserExistence(senderId);
     await this.checkUserExistence(receiverId);
 
-    const created = await db.transaction(async (tx) => {
+    const created = await withWriteTransaction(async (tx) => {
       // Serializes any concurrent sendFriendRequest between this exact pair of users, in
       // either direction. Without this, two requests racing in opposite directions (A→B and
       // B→A) can both read "no existing row" before either commits and create two independent
@@ -124,7 +124,7 @@ export class FriendshipService {
 
       const newFriendship = await tx.insert(friendships).values(newFriendshipData).returning();
       return newFriendship[0];
-    }, writeTransactionConfig);
+    });
 
     this.notifyChanged(senderId, receiverId);
     return created;

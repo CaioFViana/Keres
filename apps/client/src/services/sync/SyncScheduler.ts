@@ -22,9 +22,9 @@ export class SyncScheduler {
   private running = false;
   private inFlight = false;
   private queued = false;
-  private activeOperations = 0;
   private idleResolvers = new Set<() => void>();
   private generation = 0;
+  private suspended = false;
   private intervalTimeMs = SYNC_INTERVAL_MS;
 
   public constructor(private readonly options: SyncSchedulerOptions) {}
@@ -56,6 +56,7 @@ export class SyncScheduler {
     }
 
     this.intervalTimeMs = intervalTimeMs || this.intervalTimeMs;
+    this.suspended = false;
     this.running = true;
     this.generation += 1;
     const generation = this.generation;
@@ -81,6 +82,7 @@ export class SyncScheduler {
   }
 
   public request(): void {
+    if (this.suspended) return;
     const readiness = this.options.readiness();
     if (!readiness.storyId || !readiness.hasDatabase || !readiness.hasServer) return;
     void this.runExclusive().catch((error) => {
@@ -89,8 +91,10 @@ export class SyncScheduler {
   }
 
   public stop(): void {
+    this.suspended = true;
     this.running = false;
     this.generation += 1;
+    this.queued = false;
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -98,11 +102,19 @@ export class SyncScheduler {
     }
   }
 
-  public async reset(): Promise<void> {
+  /** Stops accepting work and resolves only after the active cycle has finished. */
+  public async stopAndWait(): Promise<void> {
     this.stop();
-    this.queued = false;
     await this.waitForIdle();
-    this.inFlight = false;
+  }
+
+  /** Allows explicit requests again after the owning context has been configured. */
+  public resume(): void {
+    this.suspended = false;
+  }
+
+  public async reset(): Promise<void> {
+    await this.stopAndWait();
   }
 
   private async runExclusive(): Promise<boolean> {
@@ -115,29 +127,18 @@ export class SyncScheduler {
       let wasOffline = false;
       do {
         this.queued = false;
-        wasOffline = await this.performTracked();
+        wasOffline = await this.options.performSync();
       } while (this.queued);
       return wasOffline;
     } finally {
       this.inFlight = false;
-    }
-  }
-
-  private async performTracked(): Promise<boolean> {
-    this.activeOperations += 1;
-    try {
-      return await this.options.performSync();
-    } finally {
-      this.activeOperations -= 1;
-      if (this.activeOperations === 0) {
-        for (const resolve of this.idleResolvers) resolve();
-        this.idleResolvers.clear();
-      }
+      for (const resolve of this.idleResolvers) resolve();
+      this.idleResolvers.clear();
     }
   }
 
   private async waitForIdle(): Promise<void> {
-    if (this.activeOperations === 0) return;
+    if (!this.inFlight) return;
     await new Promise<void>((resolve) => this.idleResolvers.add(resolve));
   }
 }

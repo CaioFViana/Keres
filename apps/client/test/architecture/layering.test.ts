@@ -116,6 +116,27 @@ describe('scene form responsibilities', () => {
   });
 });
 
+describe('multi-step form persistence', () => {
+  const forms = [
+    'screens/characters/CharacterFormScreen.tsx',
+    'screens/locations/LocationFormScreen.tsx',
+    'screens/worldrules/WorldRuleFormScreen.tsx',
+    'screens/items/ItemFormScreen.tsx',
+    'screens/notes/NoteFormScreen.tsx',
+    'screens/narrative-elements/chapters/ChapterFormScreen.tsx',
+    'screens/narrative-elements/choices/ChoiceFormScreen.tsx',
+    'screens/itemJourneys/ItemJourneyFormScreen.tsx',
+  ];
+
+  it.each(forms)('%s retains identity and preserves creation drafts', (relativePath) => {
+    const form = readFileSync(resolve(SOURCE_ROOT, relativePath), 'utf8');
+
+    expect(form).toContain('saveEntityWithSecondaryData');
+    expect(form).toContain('preserveDraftOnEntityCreation: true');
+    expect(form).not.toMatch(/getById\(current(?:Character|Location|WorldRule|Item|Note|Chapter|Choice|ItemJourney)Id/);
+  });
+});
+
 /**
  * A per-file size ceiling.
  *

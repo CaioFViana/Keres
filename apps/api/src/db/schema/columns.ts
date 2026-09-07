@@ -3,6 +3,18 @@ import * as sqlite from 'drizzle-orm/sqlite-core';
 import { usingSqlite } from '../dialect';
 
 /**
+ * Table shape consumed by the application's dynamic entity registry. The reference schema is
+ * declared with PostgreSQL builders, while this type remains inside the schema infrastructure so
+ * services never import a dialect package directly.
+ */
+export type ApplicationTable = pg.PgTableWithColumns<{
+  name: string;
+  schema: string | undefined;
+  columns: Record<string, pg.PgColumn>;
+  dialect: 'pg';
+}>;
+
+/**
  * Drizzle exposes separate generic types for equivalent PostgreSQL and SQLite builders. Runtime
  * compatibility is established by the modes selected in this module; keep the type bridge here so
  * services and table definitions never need a dialect assertion of their own.

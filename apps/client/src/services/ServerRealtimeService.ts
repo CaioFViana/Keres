@@ -5,7 +5,7 @@ import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createPublicationService } from './PublicationService';
-import { SyncEngineService } from './SyncEngineService';
+import type { ServerStoryPreview } from './SyncEngineService';
 import { createStoryService } from './storymanagement/StoryService';
 
 const RETRY_MS = 5_000;
@@ -16,6 +16,17 @@ type ServerEvent =
   | { type: 'stories.catalog-changed' }
   | { type: 'story.published'; storyId: string }
   | { type: 'server.heartbeat' };
+
+export interface RealtimeSyncEngine {
+  requestSync(reason: 'websocket'): void;
+  fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]>;
+  downloadAndImportStory(
+    queriedServerId: string,
+    storyId: string,
+    userId: string,
+    role: ServerStoryPreview['role'],
+  ): Promise<void>;
+}
 
 /** One server connection. WebSocket only signals work; HTTP remains authoritative. */
 export class ServerRealtimeService {
@@ -29,6 +40,7 @@ export class ServerRealtimeService {
     private readonly db: AppDrizzleClient,
     private readonly server: ServerSelect,
     private readonly userId: string,
+    private readonly syncEngine: RealtimeSyncEngine,
   ) {}
 
   start(storyId?: string): void {
@@ -86,7 +98,7 @@ export class ServerRealtimeService {
           // are never redelivered (the server's eventManager is in memory, not a durable queue) - without this, a
           // story only started synchronizing again on the next local edit, leaving state stuck for an indefinite
           // time after a network drop.
-          SyncEngineService.getInstance().requestSync('websocket');
+          this.syncEngine.requestSync('websocket');
         }
         // WebSocket events are intentionally ephemeral. Refresh once on every connection so
         // profile/friendship changes made while this device was offline are not left stale
@@ -144,13 +156,13 @@ export class ServerRealtimeService {
     }
     console.log(`Realtime event from ${this.server.name}: ${event.type}`);
     if (event.type === 'story.changed') {
-      SyncEngineService.getInstance().requestSync('websocket');
+      this.syncEngine.requestSync('websocket');
     } else if (event.type === 'friendships.changed') {
       await createFriendshipService(this.db).syncFriendshipsWithServer(this.userId, this.server);
     } else if (event.type === 'story.published') {
       await createPublicationService(this.db).syncPublicationsWithServer(this.server);
     } else if (event.type === 'stories.catalog-changed') {
-      const engine = SyncEngineService.getInstance();
+      const engine = this.syncEngine;
       const previews = await engine.fetchServerStoryPreviews(this.server);
       const localStories = await this.db.query.stories.findMany({ columns: { id: true } });
       const localIds = new Set(localStories.map((story) => story.id));

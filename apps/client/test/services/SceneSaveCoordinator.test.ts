@@ -24,6 +24,7 @@ describe('saveSceneWithRelations', () => {
       storyId: 'story-1',
       sceneData,
       notFoundMessage: 'not found',
+      onScenePersisted: jest.fn(),
       persistRelations: async (sceneId) => {
         completed.push(`relations:${sceneId}`);
       },
@@ -47,6 +48,7 @@ describe('saveSceneWithRelations', () => {
         storyId: 'story-1',
         sceneData,
         notFoundMessage: 'not found',
+        onScenePersisted: jest.fn(),
         persistRelations: async () => {
           throw new Error('relation failed');
         },
@@ -56,4 +58,43 @@ describe('saveSceneWithRelations', () => {
 
     expect(persistCustomAttributes).not.toHaveBeenCalled();
   });
+
+  it.each(['relations', 'attributes'] as const)(
+    'retries a creation after a %s failure without creating another scene',
+    async (failingStep) => {
+      const sceneService = createSceneService();
+      sceneService.getById.mockResolvedValue({ id: 'scene-1' } as never);
+      sceneService.updateScene.mockResolvedValue({ id: 'scene-1' } as never);
+      let retainedSceneId: string | undefined;
+      let attempt = 0;
+      const persistRelations = jest.fn(async () => {
+        if (failingStep === 'relations' && attempt === 0) throw new Error('relations failed');
+      });
+      const persistCustomAttributes = jest.fn(async () => {
+        if (failingStep === 'attributes' && attempt === 0) throw new Error('attributes failed');
+      });
+      const save = () =>
+        saveSceneWithRelations({
+          sceneService,
+          userId: 'user-1',
+          storyId: 'story-1',
+          currentSceneId: retainedSceneId,
+          sceneData,
+          notFoundMessage: 'not found',
+          onScenePersisted: (sceneId) => {
+            retainedSceneId = sceneId;
+          },
+          persistRelations,
+          persistCustomAttributes,
+        });
+
+      await expect(save()).rejects.toThrow(`${failingStep} failed`);
+      expect(retainedSceneId).toBe('scene-1');
+      attempt += 1;
+      await expect(save()).resolves.toEqual({ sceneId: 'scene-1', created: false });
+
+      expect(sceneService.createScene).toHaveBeenCalledTimes(1);
+      expect(sceneService.updateScene).toHaveBeenCalledTimes(1);
+    },
+  );
 });

@@ -4,6 +4,8 @@ import * as dotenv from 'dotenv';
 import { drizzle as drizzleLibsql, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
+import type { PgTransactionConfig } from 'drizzle-orm/pg-core';
+import type { SQLiteTransactionConfig } from 'drizzle-orm/sqlite-core';
 import { Pool } from 'pg';
 import { logger } from '../utils/logger';
 import { usingSqlite } from './dialect';
@@ -22,9 +24,8 @@ dotenv.config({ path: '../.env' });
  * `withTransaction` below, which is the backbone of synchronization. libSQL speaks SQLite through an
  * async API, so none of that had to change.
  *
- * The exported type is Postgres's in both cases, for the same reason as `schema/columns.ts`: the
- * column builders were chosen so the inferred types are identical, so whoever queries cannot tell one
- * from the other.
+ * The exported contract contains only operations exercised against both drivers. Driver-specific
+ * capabilities stay behind this module.
  */
 /**
  * Operations guaranteed by Keres' PostgreSQL and libSQL adapters.
@@ -33,19 +34,31 @@ dotenv.config({ path: '../.env' });
  * only together with a contract test that runs against both engines; engine-specific calls belong in
  * a dialect adapter, never in a service.
  */
-export type CompatibleDb = NodePgDatabase<typeof schema>;
+type PostgresDb = NodePgDatabase<typeof schema>;
 type SqliteDb = LibSQLDatabase<typeof schema>;
+type CommonDatabaseOperations = Pick<
+  PostgresDb,
+  'query' | 'select' | 'selectDistinct' | 'insert' | 'update' | 'delete' | 'execute'
+>;
+type CompatibleTransactionConfig = PgTransactionConfig | SQLiteTransactionConfig;
+
+export interface CompatibleDb extends CommonDatabaseOperations {
+  transaction<T>(
+    work: (tx: CompatibleDb) => Promise<T>,
+    config?: CompatibleTransactionConfig,
+  ): Promise<T>;
+}
 
 /**
  * The schemas use equivalent runtime modes for every shared column (Date, boolean, JSON and number).
  * Drizzle models the two drivers with unrelated generic types, so this is the one deliberate bridge
  * from libSQL to the application's compatible surface.
  */
-function asCompatibleDb(sqliteDb: SqliteDb): CompatibleDb {
-  return sqliteDb as unknown as CompatibleDb;
+function exposeCompatibleDb(database: PostgresDb | SqliteDb): CompatibleDb {
+  return database as unknown as CompatibleDb;
 }
 
-function createPostgresDb(): CompatibleDb {
+function createPostgresDb(): PostgresDb {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     // Explicit instead of relying on `pg`'s defaults, since this pool is shared by the whole
@@ -123,7 +136,7 @@ function sanitiseClient<T extends object>(client: T): T {
   });
 }
 
-function createSqliteDb(): CompatibleDb {
+function createSqliteDb(): SqliteDb {
   const client = sanitiseClient(createClient({ url: process.env.DATABASE_URL! }));
   // Without foreign keys SQLite silently accepts a row pointing at an id that does not exist - Postgres
   // never did, and the schema counts on that. It is off by default.
@@ -131,10 +144,14 @@ function createSqliteDb(): CompatibleDb {
   // It suits 2-5 clients: readers do not block one another; the file survives a process reboot without
   // losing the journal. Multi-instance production is still Postgres.
   void client.execute('PRAGMA journal_mode = WAL');
-  return asCompatibleDb(drizzleLibsql(client, { schema, logger: false }));
+  return drizzleLibsql(client, { schema, logger: false });
 }
 
-const rawDb: CompatibleDb = usingSqlite ? createSqliteDb() : createPostgresDb();
+export const databaseMigrationTarget = usingSqlite
+  ? ({ dialect: 'sqlite', connection: createSqliteDb() } as const)
+  : ({ dialect: 'postgres', connection: createPostgresDb() } as const);
+
+const rawDb = exposeCompatibleDb(databaseMigrationTarget.connection);
 
 /**
  * Makes a transaction implicitly visible to every call to the `db` exported below made during `fn` -
@@ -150,11 +167,12 @@ const transactionContext = new AsyncLocalStorage<CompatibleDb>();
  * rollback always covers work performed by inner services. Code that needs an independent savepoint
  * must call `db.transaction(...)`: through the Proxy below it resolves to the active transaction.
  */
-export function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
-  if (transactionContext.getStore()) {
-    return fn();
+export function withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>): Promise<T> {
+  const activeTransaction = transactionContext.getStore();
+  if (activeTransaction) {
+    return fn(activeTransaction);
   }
-  return rawDb.transaction((tx) => transactionContext.run(tx as unknown as CompatibleDb, fn));
+  return rawDb.transaction((tx) => transactionContext.run(tx, () => fn(tx)));
 }
 
 /**
@@ -165,10 +183,10 @@ export function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
  * rather than to the object the method actually came from - without this, drizzle's internal methods
  * would break trying to read state from `this` in the wrong place.
  */
-export const db: CompatibleDb = new Proxy(rawDb, {
+export const db: CompatibleDb = new Proxy<CompatibleDb>(rawDb, {
   get(target, prop) {
     const active = transactionContext.getStore() ?? target;
-    const value = (active as unknown as Record<string | symbol, unknown>)[prop];
+    const value = Reflect.get(active, prop, active);
     return typeof value === 'function' ? value.bind(active) : value;
   },
-}) as CompatibleDb;
+});

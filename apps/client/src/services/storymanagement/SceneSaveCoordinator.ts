@@ -22,6 +22,7 @@ export async function saveSceneWithRelations({
   currentSceneId,
   sceneData,
   notFoundMessage,
+  onScenePersisted,
   persistRelations,
   persistCustomAttributes,
 }: {
@@ -31,6 +32,7 @@ export async function saveSceneWithRelations({
   currentSceneId?: string;
   sceneData: SceneFormData;
   notFoundMessage: string;
+  onScenePersisted: (sceneId: string) => void;
   persistRelations: SceneRelationsPersistence;
   persistCustomAttributes: SceneRelationsPersistence;
 }): Promise<{ sceneId: string; created: boolean }> {
@@ -47,6 +49,9 @@ export async function saveSceneWithRelations({
     sceneId = (await sceneService.createScene(userId, { ...sceneData, storyId })).id;
   }
 
+  // Retain the persisted identity before secondary writes. If one of them fails, the caller can
+  // retry as an update of this row instead of creating a duplicate scene.
+  onScenePersisted(sceneId);
   await persistRelations(sceneId);
   await persistCustomAttributes(sceneId);
 

@@ -182,10 +182,10 @@ export class SyncPushService {
         // Writing the entity and recording it in the operation log run in the same transaction: without
         // that, a failure between the two steps (say, the process dying) left the entity changed but
         // invisible to other clients, and a resend of the same operation by the very client that originated
-        // it hit a false `version_conflict` against its own work. `db` resolves to this transaction in any
-        // call made during `withTransaction`, including inside the entity handlers - they do not need to
-        // know about it.
-        await withTransaction(async () => {
+        // it hit a false `version_conflict` against its own work. The callback receives the transaction
+        // explicitly for local queries. Calls inside legacy handlers still resolve `db` to this same
+        // transaction through the compatibility context.
+        await withTransaction(async (tx) => {
           // Creation handlers historically own their insert timestamps, and several of them do not
           // call BaseSyncEntityHandler.parseOperationTime(). Validate at the protocol boundary as
           // well, so a client clock cannot place *any* operation ahead of the server's history.
@@ -212,7 +212,7 @@ export class SyncPushService {
               // The entity may have changed since its creation, so its current row is not always
               // the correct reference for a retried create. The server's operation log preserves
               // the original accepted create payload and is the authoritative idempotency record.
-              const [recordedCreate] = await db
+              const [recordedCreate] = await tx
                 .select({ payload: operationLog.payload })
                 .from(operationLog)
                 .where(

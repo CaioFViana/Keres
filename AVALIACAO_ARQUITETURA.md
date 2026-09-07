@@ -2,13 +2,29 @@
 
 Data: 6 de setembro de 2026.
 
+Revisão atual: commit `b26c5ca7`, comparado com seu pai `cc13b6e9`.
+
 ## Escopo e resultado
 
 Avaliação qualitativa da estrutura do monorepo e de uma amostra dos fluxos de sincronização, persistência, interface e testes. Não representa uma auditoria exaustiva de todos os arquivos nem uma auditoria de segurança.
 
-**Avaliação geral: aproximadamente 7,5/10 em manutenção e legibilidade.** A nota é um julgamento qualitativo, não uma métrica automática. O projeto tem boa separação entre aplicações e proteções contra regressões, mas algumas áreas exigem conhecer estado global, convenções implícitas e detalhes de infraestrutura para fazer mudanças com segurança.
+**Avaliação geral atual: aproximadamente 8/10 em manutenção e legibilidade, ante 7,5/10 na avaliação inicial.** A nota é um julgamento qualitativo, não uma métrica automática. O projeto tem boa separação entre aplicações e proteções contra regressões, mas algumas áreas exigem conhecer estado global, convenções implícitas e detalhes de infraestrutura para fazer mudanças com segurança.
 
 Não há indicação, nesta análise, de necessidade de reescrever a arquitetura. As melhorias podem ser incrementais.
+
+## Evolução após o último commit
+
+| Ponto | Situação atual |
+| --- | --- |
+| D01 — Responsabilidades da tela | Corrigido; apresentação, estado, associações e ações possuem fronteiras próprias |
+| D02 — Mensagem prematura de sucesso | Corrigido; recuperação de falha parcial tratada separadamente em D09 |
+| D03 — Dependências globais | Corrigido; composição externa e ciclo de vida explícito adicionados |
+| D04 — Compatibilidade dos bancos | Superfície comum delimitada e validada nos dois motores; ponte interna permanece |
+| D05 — `any` nos contratos | Corrigido; `any` explícito proibido e fronteira dinâmica isolada e testada |
+| D06 — Transações | Callback recebe a transação ativa; aninhamento e savepoints validados nos dois motores |
+| D07 — Cobertura | Novos testes locais; pisos globais inalterados e cobertura atual não medida |
+| D08 — Comentários | Limpeza parcial; redundância e mistura de idiomas permanecem |
+| D09 — Repetição de salvamento após falha | Corrigido; a identidade persistida é retida antes das etapas secundárias |
 
 ## Arquitetura geral
 
@@ -75,110 +91,125 @@ Referências: [README.pt.md](README.pt.md), [banco da API](apps/api/src/db/index
 
 ### D01 — Tela de cena concentra responsabilidades demais
 
-**Status: resolvido.**
+**Status: corrigido.**
 
-O cálculo do índice de uma nova cena passou para `SceneService`, enquanto a gravação da cena, relações e atributos é coordenada por `SceneSaveCoordinator`. Estado e hidratação do formulário ficam em `useSceneFormState`; criação do serviço e inicialização dos quatro stores ficam em `useSceneFormResources`.
+A tela passou de 653 para 361 linhas físicas e agora se limita à composição dos hooks e à apresentação dos campos. O cálculo do índice fica em `SceneService`, enquanto `SceneSaveCoordinator` coordena a gravação base e as persistências secundárias.
 
-`SceneFormScreen.tsx` agora se concentra na composição dos campos, validações de interação, feedback e navegação. Um teste de arquitetura impede que a tela volte a inicializar diretamente os stores ou o serviço de cenas, e os fluxos extraídos possuem testes próprios.
+Estado, hidratação e valores padrão ficam em `useSceneFormState`; criação do serviço e inicialização dos stores ficam em `useSceneFormResources`; relações, presença de personagens e efeitos ficam em `useSceneFormAssociations`. `useSceneFormActions` concentra validação, salvamento, exclusão, atributos, eventos, feedback e navegação.
 
-Referências: [SceneFormScreen.tsx](apps/client/src/screens/narrative-elements/scenes/SceneFormScreen.tsx), [SceneService.ts](apps/client/src/services/storymanagement/SceneService.ts), [SceneSaveCoordinator.ts](apps/client/src/services/storymanagement/SceneSaveCoordinator.ts), [useSceneFormState.ts](apps/client/src/screens/narrative-elements/scenes/useSceneFormState.ts), [useSceneFormResources.ts](apps/client/src/screens/narrative-elements/scenes/useSceneFormResources.ts) e [testes de arquitetura](apps/client/test/architecture/layering.test.ts).
+Testes próprios do hook de ações verificam rejeição de entrada inválida, persistência completa e exclusão. O teste arquitetural impede que coordenação de persistência, alertas, eventos ou os hooks de associações retornem diretamente à tela.
+
+Referências: [SceneFormScreen.tsx](apps/client/src/screens/narrative-elements/scenes/SceneFormScreen.tsx), [SceneService.ts](apps/client/src/services/storymanagement/SceneService.ts), [SceneSaveCoordinator.ts](apps/client/src/services/storymanagement/SceneSaveCoordinator.ts), [useSceneFormState.ts](apps/client/src/screens/narrative-elements/scenes/useSceneFormState.ts), [useSceneFormResources.ts](apps/client/src/screens/narrative-elements/scenes/useSceneFormResources.ts), [useSceneFormAssociations.ts](apps/client/src/screens/narrative-elements/scenes/useSceneFormAssociations.ts), [useSceneFormActions.ts](apps/client/src/screens/narrative-elements/scenes/useSceneFormActions.ts), [testes das ações](apps/client/test/screens/narrative-elements/scenes/useSceneFormActions.test.ts).
 
 ### D02 — Mensagem de sucesso antecede a conclusão da gravação
 
-**Prioridade: alta.**
+**Status: corrigido quanto ao momento da mensagem.**
 
-No fluxo de salvar cena, `AppAlert.alert` comunica sucesso após criar ou atualizar a cena, antes de persistir tags, notas, relações, personagens e atributos personalizados. Uma falha posterior pode produzir feedback contraditório para o usuário.
+A tela agora aguarda `saveSceneWithRelations` concluir a persistência de relações e atributos antes de comunicar sucesso. O apontamento anterior de mensagem prematura não descreve mais o código atual.
 
-O achado é a ordem das operações no código. Não foi reproduzida uma falha em execução nem demonstrado que todas as gravações associadas são atômicas.
+Isso não garante atomicidade ou recuperação segura de gravações parciais: o risco de repetir uma criação após falha está registrado separadamente em D09.
 
-**Melhoria sugerida:** comunicar sucesso somente depois de concluir a operação completa e definir explicitamente o comportamento diante de falhas parciais. Avaliar a transação apropriada para gravações que precisem ser indivisíveis.
-
-Referência: [SceneFormScreen.tsx](apps/client/src/screens/narrative-elements/scenes/SceneFormScreen.tsx), linhas 349–389 no momento da inspeção.
+Referências: [SceneFormScreen.tsx](apps/client/src/screens/narrative-elements/scenes/SceneFormScreen.tsx), [SceneSaveCoordinator.ts](apps/client/src/services/storymanagement/SceneSaveCoordinator.ts), [testes do coordenador](apps/client/test/services/SceneSaveCoordinator.test.ts).
 
 ### D03 — Dependências globais e estado mutável dificultam isolamento
 
-**Prioridade: média.**
+**Status: corrigido.**
 
-`SyncEngineService` é singleton e mantém banco, história e servidor ativos como estado mutável. Também acessa diretamente notificações, traduções e eventos. Para entender uma operação, é necessário saber quem configurou esse estado anteriormente.
+`SyncEngineService` não possui mais construtor privado, `getInstance` ou criação interna de dependências concretas. Seu construtor público recebe `SyncEngineDependencies`, que inclui notificações, publicação de eventos, autenticação, cliente HTTP, handlers, serviços de conflito/servidor e operações de transferência. Testes podem criar instâncias independentes e substituir essas dependências sem acessar estado global da classe.
 
-O coordenador mistura sincronização com apresentação de mensagens, aumentando o acoplamento e a preparação necessária nos testes. A divisão interna entre push, pull, mídia e agendamento já é uma boa base para melhorar esse ponto.
+A escolha das implementações concretas e da instância única usada pelo aplicativo foi movida para `appSyncEngine`, a raiz de composição. O contexto agora possui operações explícitas de `bindDatabase`, `activateStory`, `stopSync`, `deactivateStory` e `reset`, além do estado observável `unbound`, `idle`, `active` ou `running`. Parar o agendamento não apaga mais silenciosamente a história ativa; encerrar o contexto é uma operação separada.
 
-**Melhoria sugerida:** injetar dependências de notificação e contexto; explicitar o ciclo de vida do coordenador; preferir resultados ou eventos de domínio que uma camada superior converta em mensagens.
+Um teste de arquitetura impede que singleton, emissor global, gerenciador de autenticação ou adaptador concreto de notificações retornem ao serviço. Os chamadores e testes foram migrados para a nova composição e para o ciclo de vida explícito.
 
-Referências: [SyncEngineService.ts](apps/client/src/services/SyncEngineService.ts), [testes do coordenador](apps/client/test/services/SyncEngineService.test.ts).
+Referências: [SyncEngineService.ts](apps/client/src/services/SyncEngineService.ts), [appSyncEngine.ts](apps/client/src/services/sync/appSyncEngine.ts), [SyncInitializer.tsx](apps/client/src/components/features/app/SyncInitializer.tsx), [teste de arquitetura](apps/client/test/architecture/importBoundaries.test.ts).
 
 ### D04 — Compatibilidade entre bancos depende de coerções de tipos
 
-**Prioridade: média, com atenção especial ao alterar persistência.**
+**Status: corrigido quanto à superfície pública.**
 
-A implementação SQLite é convertida para o tipo de banco PostgreSQL com `as unknown as Db`. Os construtores de colunas também são expostos com tipos PostgreSQL, mesmo quando a implementação selecionada é SQLite.
+`CompatibleDb` deixou de ser um alias do banco PostgreSQL completo. Agora é uma interface limitada às operações efetivamente compartilhadas pela aplicação: consultas relacionais, `select`, `selectDistinct`, `insert`, `update`, `delete`, `execute` e transações. Recursos específicos dos drivers, como `$with`, `$count`, `all` e `run`, não aparecem no contrato consumido pelos serviços.
 
-Essa decisão reduz duplicação e está documentada, mas o compilador não garante que todas as operações permitidas pelo tipo tenham o mesmo comportamento nos dois motores. Uma mudança pode compilar e falhar apenas em um deles. Os testes nos dois bancos mitigam esse risco, sem eliminar a fragilidade do contrato.
+Os construtores retornam os tipos nativos de PostgreSQL e libSQL. Uma única ponte interna converte a conexão escolhida para a superfície compatível; o acesso nativo necessário às migrations é discriminado por dialeto e protegido por teste arquitetural. A aplicação não importa diretamente os drivers.
 
-**Melhoria sugerida:** delimitar explicitamente a superfície de operações compatíveis, concentrar coerções no adaptador e manter testes de contrato nos dois bancos para cada nova operação relevante.
+Os testes de contrato agora cobrem valores opcionais, chaves estrangeiras, datas, booleanos, JSON e as operações comuns de atualização, seleção e exclusão. Eles passaram integralmente em PostgreSQL e SQLite. A ponte dos builders em `schema/columns.ts` continua necessária porque o Drizzle não oferece um schema genérico comum aos dois dialetos; ela permanece confinada à infraestrutura e apoiada pelos testes de paridade.
 
-Referências: [banco da API](apps/api/src/db/index.ts), especialmente `createSqliteDb`, e [construtores de colunas](apps/api/src/db/schema/columns.ts).
+Referências: [banco da API](apps/api/src/db/index.ts), [migrations](apps/api/src/db/migrate.ts), [construtores de colunas](apps/api/src/db/schema/columns.ts), [testes de contrato](apps/api/test/db/databaseContract.integration.test.ts), [teste arquitetural](apps/api/test/architecture/layering.test.ts).
 
 ### D05 — Uso de `any` em contratos centrais de sincronização
 
-**Status: resolvido.**
+**Status: corrigido.**
 
-Os contratos de sincronização agora usam registros persistidos derivados dos schemas Zod de cada handler e `unknown` nas fronteiras realmente dinâmicas. O registro de tabelas do Drizzle possui um adaptador estrutural próprio, sem propagar tipos abertos para os serviços.
+Os contratos agora usam `SyncEntity`, `SyncStoredEntity`, tipos derivados dos schemas Zod e `unknown` nas fronteiras dinâmicas. O ESLint proíbe `any` explícito em `apps/api/src`, e um teste de arquitetura verifica a árvore sintática dos arquivos.
 
-`@typescript-eslint/no-explicit-any` está ativo para todo `apps/api/src`, sem exceções. Um teste de arquitetura percorre a árvore sintática de todos os arquivos da aplicação e falha diante de qualquer `any` explícito, evitando tanto regressões quanto falsos positivos em comentários e textos.
+O registro de tabelas escolhido em runtime mantém uma coerção localizada, necessária para apagar diferenças entre dezenas de tipos concretos do Drizzle. Essa fronteira não usa `any`, não vaza para os contratos do protocolo e tem testes que verificam cobertura de todas as entidades sincronizadas, auditáveis e exportáveis. Ela é uma decisão de infraestrutura documentada, não uma permissão para coerções nos consumidores.
 
-Referências: [BaseSyncEntityHandler.ts](apps/api/src/services/entity-sync-handlers/BaseSyncEntityHandler.ts), [registro de tabelas](apps/api/src/services/entity-solvers/ApiEntityTableRegistry.ts), [ESLint da API](apps/api/eslint.config.mjs) e [testes de arquitetura](apps/api/test/architecture/layering.test.ts).
+Referências: [BaseSyncEntityHandler.ts](apps/api/src/services/entity-sync-handlers/BaseSyncEntityHandler.ts), [registro de tabelas](apps/api/src/services/entity-solvers/ApiEntityTableRegistry.ts), [ESLint da API](apps/api/eslint.config.mjs), [testes de arquitetura](apps/api/test/architecture/layering.test.ts).
 
 ### D06 — Contexto transacional implícito exige conhecimento de convenções
 
-**Prioridade: média.**
+**Status: contrato explícito e garantias preservadas.**
 
-Um `Proxy` com `AsyncLocalStorage` faz o objeto `db` resolver para a conexão normal ou para a transação ativa. A solução é centralizada e documentada, mas uma chamada isolada não revela qual contexto será usado.
+`withTransaction` agora entrega a transação ativa ao callback. Chamadas aninhadas recebem a mesma sessão, enquanto uma chamada explícita a `db.transaction` dentro do contexto continua representando um savepoint. O coordenador de push já usa o parâmetro explícito para suas consultas locais.
 
-O próprio código informa que `withTransaction` abre uma nova transação e não reconhece aninhamento, enquanto `db.transaction` dentro do contexto segue outro comportamento. Essa distinção aumenta o cuidado necessário ao compor serviços.
+`Proxy` e `AsyncLocalStorage` permanecem como camada de compatibilidade para handlers existentes que importam `db`, mas já não são a única forma de consumir o contexto. Testes executados em PostgreSQL e SQLite verificam a identidade da transação aninhada, o rollback externo e o rollback isolado do savepoint.
 
-**Melhoria sugerida:** tornar o contrato de aninhamento explícito e testado; considerar contexto transacional passado explicitamente nas operações mais críticas ou uma API que impeça usos ambíguos.
+Novos consumidores transacionais devem preferir o parâmetro entregue pelo callback. A migração dos handlers pode continuar incrementalmente quando houver benefício local, sem exigir uma alteração ampla e arriscada apenas para remover a camada de compatibilidade.
 
-Referência: [banco da API](apps/api/src/db/index.ts), especialmente `withTransaction` e o `Proxy` exportado como `db`.
+Referências: [banco da API](apps/api/src/db/index.ts), [teste de contexto transacional](apps/api/test/db/transactionContext.integration.test.ts).
 
 ### D07 — Exigência de cobertura desigual entre núcleo e cliente completo
 
-**Prioridade: média.**
+**Status: melhora localizada; avaliação global inalterada. Prioridade: média.**
 
-Os pisos configurados para o cliente completo são 40,2% de linhas e 30% de branches. Para o núcleo de sincronização do cliente são 91,9% e 81,5%, respectivamente.
+Os pisos do cliente completo continuam em 40,2% de linhas e 30% de branches; os do núcleo de sincronização continuam em 91,9% e 81,5%. São limites configurados, não cobertura medida nesta avaliação.
 
-A priorização do núcleo é positiva, mas o piso global ainda admite bastante código sem cobertura. Isso dá menos proteção a mudanças na interface e em sua coordenação de estado e persistência.
+O commit adicionou testes de coordenação do salvamento, indexação, contrato de banco e transações. Isso melhora a proteção de comportamentos específicos. Os testes do coordenador verificam conclusão e propagação de falha, mas não rollback nem uma nova tentativa após falha parcial.
 
-**Esses valores são limites configurados, não cobertura medida nesta avaliação.**
+**Próximo passo:** testar a recuperação descrita em D09 e ampliar testes de fluxos relevantes antes de perseguir uma porcentagem arbitrária.
 
-**Melhoria sugerida:** ampliar testes de comportamentos relevantes dos fluxos de edição e salvamento, incluindo falhas, antes de perseguir uma porcentagem global arbitrária.
-
-Referências: [pisos de cobertura](scripts/coverage-thresholds.json), [configuração Jest do cliente](apps/client/jest.config.js).
+Referências: [pisos de cobertura](scripts/coverage-thresholds.json), [testes do coordenador](apps/client/test/services/SceneSaveCoordinator.test.ts), [testes de indexação](apps/client/test/services/SceneIndexing.test.ts).
 
 ### D08 — Comentários redundantes e idioma inconsistente
 
-**Prioridade: baixa.**
+**Status: limpeza parcial. Prioridade: baixa.**
 
-Embora vários comentários expliquem decisões úteis, outros repetem o código, como `Import useChapterStore` e `State for selected chapter`. Há também mistura de português e inglês nos comentários. Isso adiciona ruído e reduz a uniformidade da leitura.
+Foram removidos alguns comentários redundantes, mas ainda há exemplos como `// Import Zod` no handler base e mistura de português e inglês. Os exemplos antigos associados aos imports dos stores não devem ser tratados como evidência atual após a extração dos hooks.
 
-**Melhoria sugerida:** remover comentários que apenas narram a instrução e adotar uma convenção de idioma para novos comentários. Preservar explicações de decisões, invariantes e limitações.
+**Próximo passo:** remover comentários que apenas narram a instrução e adotar uma convenção de idioma para novos comentários, preservando explicações de decisões e invariantes.
 
-Referência: [SceneFormScreen.tsx](apps/client/src/screens/narrative-elements/scenes/SceneFormScreen.tsx).
+Referências: [BaseSyncEntityHandler.ts](apps/api/src/services/entity-sync-handlers/BaseSyncEntityHandler.ts), [construtores de colunas](apps/api/src/db/schema/columns.ts).
+
+### D09 — Repetir salvamento após falha pode criar outra cena
+
+**Status: corrigido.**
+
+`SceneSaveCoordinator` agora comunica o ID persistido imediatamente após criar ou atualizar a cena, antes de iniciar relações e atributos. A tela retém esse ID mesmo quando uma etapa secundária falha.
+
+Uma nova tentativa usa o ID retido e atualiza a cena existente. Testes simulam falhas tanto nas relações quanto nos atributos e verificam que `createScene` é chamado uma única vez, enquanto a retomada conclui por `updateScene`.
+
+Referências: [SceneSaveCoordinator.ts](apps/client/src/services/storymanagement/SceneSaveCoordinator.ts), [SceneFormScreen.tsx](apps/client/src/screens/narrative-elements/scenes/SceneFormScreen.tsx), [testes do coordenador](apps/client/test/services/SceneSaveCoordinator.test.ts).
 
 ## Ordem sugerida de melhorias
 
-1. Corrigir o momento da mensagem de sucesso e extrair a coordenação de salvar cena e relações — D01 e D02.
-2. Reduzir `any` nos contratos centrais de sincronização — D05.
-3. Injetar dependências de notificações e contexto no coordenador de sincronização — D03.
-4. Explicitar e testar os contratos de compatibilidade entre bancos e de transações — D04 e D06.
-5. Ampliar testes de comportamento dos fluxos do cliente alterados — D07.
-6. Limpar comentários redundantes durante a manutenção dos arquivos — D08.
+1. Ampliar testes de comportamento dos fluxos alterados e medir a cobertura antes de reavaliar o panorama global — D07.
+2. Limpar comentários redundantes e consolidar a convenção de idioma — D08.
+
+D01, D02, D03, D04, D05 e D06 não devem continuar listados como correções pendentes.
 
 ## Validação realizada e limitações
 
-- Foram examinados a estrutura, configurações, pipeline e arquivos representativos; não todos os fluxos do produto.
-- Foram executados os testes de arquitetura da API: **3 arquivos e 9 testes passaram**.
-- A suíte completa, a cobertura e os testes de integração não foram executados nesta avaliação.
-- A nota não certifica ausência de bugs nem desempenho, segurança ou correção de todos os fluxos.
-- Nenhum código de aplicação foi alterado durante a análise.
-- Números de linhas e observações refletem o estado inspecionado em 6 de setembro de 2026 e podem mudar com a evolução do repositório.
+- A revisão compara `b26c5ca7` com `cc13b6e9` e examina os arquivos atuais relacionados aos achados; não é uma auditoria exaustiva dos 84 arquivos alterados.
+- Na avaliação inicial, passaram 3 arquivos e 9 testes de arquitetura da API.
+- Após o commit, passaram **3 arquivos e 12 testes de arquitetura da API**.
+- Após a correção de D09, passaram os **4 testes de `SceneSaveCoordinator`**, incluindo repetição após falhas em relações e atributos sem criação duplicada.
+- Após a correção de D03, passaram o lint, o typecheck e a suíte completa do cliente: **254 arquivos e 2.388 testes**.
+- Após a correção de D01, passaram o lint, o typecheck, os **19 testes focados** e a suíte completa do cliente: **255 arquivos e 2.391 testes**.
+- O teste de arquitetura do cliente protege a composição externa do `SyncEngineService` e a ausência de singleton e dependências globais dentro da classe.
+- Após D04 e D06, passaram typecheck, lint e **35 arquivos com 212 testes unitários da API**.
+- A integração completa passou em SQLite com **55 arquivos e 610 testes**, e em PostgreSQL com **54 arquivos e 608 testes**, além de 1 arquivo e 2 testes condicionais ignorados nesse motor.
+- Os contratos específicos de banco e transação passaram nos dois motores.
+- A cobertura não foi medida nesta revisão.
+- D09 agora possui testes de repetição após falhas nas relações e nos atributos.
+- A nota é qualitativa e não certifica ausência de bugs nem desempenho, segurança ou correção de todos os fluxos.
+- As mudanças posteriores à revisão estão registradas nos status de D01, D03, D04, D05, D06 e D09 e foram validadas pelas verificações descritas acima.
+- Números de linhas e observações refletem o commit inspecionado e podem mudar com a evolução do repositório.

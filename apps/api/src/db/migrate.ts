@@ -2,8 +2,7 @@ import { migrate as migrateLibsql } from 'drizzle-orm/libsql/migrator';
 import { migrate as migratePostgres } from 'drizzle-orm/node-postgres/migrator';
 import { migrationsFolder } from '../config/resourceRoot';
 import { logger } from '../utils/logger';
-import { usingSqlite } from './dialect';
-import { db } from './index';
+import { databaseMigrationTarget } from './index';
 
 /**
  * Applies any pending SQL migrations before the app accepts traffic - without this, a brand
@@ -19,12 +18,12 @@ import { db } from './index';
 export async function runMigrations(): Promise<void> {
   // Each engine has its own set: the generated SQL differs from dialect to dialect (column types, ENUMs
   // that only Postgres has), so there are two folders, not one shared.
-  const folder = migrationsFolder(usingSqlite);
+  const folder = migrationsFolder(databaseMigrationTarget.dialect === 'sqlite');
   logger.info(`Applying database migrations from ${folder}...`);
-  if (usingSqlite) {
-    await migrateLibsql(db as never, { migrationsFolder: folder });
+  if (databaseMigrationTarget.dialect === 'sqlite') {
+    await migrateLibsql(databaseMigrationTarget.connection, { migrationsFolder: folder });
   } else {
-    await migratePostgres(db, { migrationsFolder: folder });
+    await migratePostgres(databaseMigrationTarget.connection, { migrationsFolder: folder });
   }
   logger.info('Database migrations up to date.');
 }

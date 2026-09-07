@@ -29,6 +29,10 @@ export class SyncScheduler {
 
   public constructor(private readonly options: SyncSchedulerOptions) {}
 
+  public get isRunning(): boolean {
+    return this.running;
+  }
+
   public start(intervalTimeMs?: number): void {
     if (this.running) {
       console.log('Sync engine already running.');
@@ -37,17 +41,17 @@ export class SyncScheduler {
 
     const readiness = this.options.readiness();
     if (!readiness.storyId) {
-      console.log('Cannot start sync: storyId is not set. Call configure() first.');
+      console.log('Cannot start sync: storyId is not set. Activate a story first.');
       return;
     }
     if (!readiness.hasServer) {
       console.log(
-        'Cannot start sync: server URL is not set. Call configure() with a valid serverUrl.',
+        'Cannot start sync: server URL is not set. Activate a story with a valid server.',
       );
       return;
     }
     if (!readiness.hasDatabase) {
-      console.log('Cannot start sync: Drizzle client (db) is not set. Call setDbInstance() first.');
+      console.log('Cannot start sync: Drizzle client (db) is not bound.');
       return;
     }
 

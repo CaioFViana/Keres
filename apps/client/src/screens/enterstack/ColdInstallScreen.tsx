@@ -9,7 +9,7 @@ import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { setAuthDb } from '../../services/AuthTokenManager';
 import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
-import { SyncEngineService } from '../../services/SyncEngineService';
+import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useNotificationStore } from '../../state/notificationStore'; // Import useNotificationStore
 import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -94,7 +94,7 @@ const ColdInstallScreen = () => {
     // erased. Reattach them as soon as the fresh schema exists, before server registration
     // can attempt to persist tokens or start its first synchronization.
     setAuthDb(drizzleDb);
-    SyncEngineService.getInstance().setDbInstance(drizzleDb);
+    syncEngine.bindDatabase(drizzleDb);
 
     // Create initial client settings in SQLite
     await createClientSettings(drizzleDb, {

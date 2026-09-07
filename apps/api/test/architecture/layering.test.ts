@@ -150,3 +150,45 @@ describe('API explicit any boundary', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('database portability boundary', () => {
+  it('exports only the database operations covered by the shared contract', () => {
+    const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
+
+    expect(databaseModule).toContain('export interface CompatibleDb extends CommonDatabaseOperations');
+    expect(databaseModule).toContain(
+      "'query' | 'select' | 'selectDistinct' | 'insert' | 'update' | 'delete' | 'execute'",
+    );
+    expect(databaseModule).not.toMatch(/export type CompatibleDb\s*=\s*NodePgDatabase/);
+    expect(databaseModule.match(/as unknown as CompatibleDb/g)).toHaveLength(1);
+  });
+
+  it('keeps native driver access inside database infrastructure', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !sourceRelativeOf(file).startsWith('db/'))
+      .filter((file) => /drizzle-orm\/(?:node-postgres|libsql)/.test(readFileSync(file, 'utf8')))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('reserves the native migration target for the migration adapter', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !['db/index.ts', 'db/migrate.ts'].includes(sourceRelativeOf(file)))
+      .filter((file) => readFileSync(file, 'utf8').includes('databaseMigrationTarget'))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('makes the active transaction available to withTransaction callbacks', () => {
+    const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
+
+    expect(databaseModule).toContain(
+      'withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>)',
+    );
+    expect(databaseModule).toContain('return fn(activeTransaction)');
+  });
+});

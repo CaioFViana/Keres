@@ -18,7 +18,7 @@ import { servers } from '../../db/schema';
 import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { mediaFileService } from '../../services/MediaFileService';
-import { SyncEngineService } from '../../services/SyncEngineService'; // Import SyncEngineService
+import { syncEngine } from '../../services/sync/appSyncEngine';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -116,7 +116,7 @@ const SettingsScreen = () => {
               // Clearing the user first prevents SyncInitializer effects from rebuilding a
               // WebSocket while the remaining asynchronous cleanup is still in progress.
               resetSettings();
-              await Promise.all([realtimeShutdown, SyncEngineService.getInstance().reset()]);
+              await Promise.all([realtimeShutdown, syncEngine.reset()]);
               await authTokenManager.clearAllAuth(serverIds);
               setAuthDb(null);
               await mediaFileService.deleteAllMedia();

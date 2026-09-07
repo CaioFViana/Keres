@@ -47,6 +47,7 @@ import { createFavoriteService } from '../../src/services/storymanagement/Favori
 import { createServerService } from '../../src/services/ServerService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
 import { SyncEngineService } from '../../src/services/SyncEngineService';
+import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -162,15 +163,14 @@ beforeEach(async () => {
   };
   installAdapter();
 
-  engine = SyncEngineService.getInstance();
-  engine.setDbInstance(database.db);
+  engine = createAppSyncEngine();
+  engine.bindDatabase(database.db);
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(async () => {
-  engine.stopSync();
-  await engine.configure(undefined, null);
+  engine.deactivateStory();
   delete (axios.defaults as any).adapter;
   database.close();
   jest.restoreAllMocks();

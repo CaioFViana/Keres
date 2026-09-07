@@ -8,7 +8,7 @@ import { createServerService } from '../../../services/ServerService';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
 import type { ServerStoryPreview } from '../../../services/SyncEngineService';
-import { SyncEngineService } from '../../../services/SyncEngineService';
+import { syncEngine } from '../../../services/sync/appSyncEngine';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryListStore } from '../../../state/storyListStore';
 import { useStoryStore } from '../../../state/storyStore'; // Import useStoryStore
@@ -67,7 +67,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       return false;
     }
 
-    SyncEngineService.getInstance().setDbInstance(drizzleClient);
+    syncEngine.bindDatabase(drizzleClient);
     setAuthDb(drizzleClient); // Ensure authDb is set, especially if drizzleClient changes
 
     const serverService = createServerService(drizzleClient);
@@ -102,7 +102,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         await friendshipService.syncFriendshipsWithServer(userId, server); // Call friendship sync
 
         const serverStoryPreviews =
-          await SyncEngineService.getInstance().fetchServerStoryPreviews(server);
+          await syncEngine.fetchServerStoryPreviews(server);
 
         const localStoryIds = new Set(localStories.map((s) => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(
@@ -116,7 +116,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
               `  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`,
             );
             try {
-              await SyncEngineService.getInstance().downloadAndImportStory(
+              await syncEngine.downloadAndImportStory(
                 server.id,
                 storyPreview.storyId,
                 server.idUser,
@@ -199,7 +199,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       const servers = await createServerService(drizzleClient).getAllServers();
       if (disposed) return;
       for (const server of servers) {
-        const realtime = new ServerRealtimeService(drizzleClient, server, server.idUser);
+        const realtime = new ServerRealtimeService(drizzleClient, server, server.idUser, syncEngine);
         realtimeConnections.set(server.id, realtime);
         realtime.start(server.id === selectedStory?.serverId ? selectedStory.id : undefined);
       }
@@ -226,7 +226,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   useEffect(() => {
     const pushLocalChange = (storyId: string) => {
       if (storyId === selectedStory?.id) {
-        SyncEngineService.getInstance().requestSync('local-change');
+        syncEngine.requestSync('local-change');
       }
     };
     entityEventEmitter.on('operation_log_updated', pushLocalChange);
@@ -268,7 +268,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         console.log(
           'SyncInitializer: No active story or DB/ServerService, stopping sync for selected story.',
         );
-        SyncEngineService.getInstance().stopSync();
+        syncEngine.deactivateStory();
         useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         return;
       }
@@ -281,21 +281,21 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             console.log(
               `SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`,
             );
-            SyncEngineService.getInstance().configure(selectedStory.id, server);
-            SyncEngineService.getInstance().requestSync('initial');
+            syncEngine.activateStory(selectedStory.id, server);
+            syncEngine.requestSync('initial');
             // Without this, the only way to synchronize was a local event or a WebSocket
             // message - a missed disconnection or an app in the background for a while left
             // the local state stuck, with no periodic reconciliation to fall back on (see the
             // sync/conflicts fix plan). `startSync` is a no-op if it is already
             // running, so it is safe to call again on every story/server change.
-            SyncEngineService.getInstance().startSync();
+            syncEngine.startSync();
             realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {
             console.warn(
               `SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`,
             );
-            SyncEngineService.getInstance().stopSync();
+            syncEngine.deactivateStory();
             useUserSettingsStore.getState().clearActiveServer(); // Clear active server
           }
         } catch (error) {
@@ -304,14 +304,14 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             error,
           );
           showNotification(t('failed_to_sync_with_server') + `: ${selectedStory.id}`, 'error');
-          SyncEngineService.getInstance().stopSync();
+          syncEngine.deactivateStory();
           useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         }
       } else {
         console.log(
           `SyncInitializer: Selected story ${selectedStory.id} is not linked to a server. Stopping sync.`,
         );
-        SyncEngineService.getInstance().stopSync();
+        syncEngine.deactivateStory();
         useUserSettingsStore.getState().clearActiveServer(); // Clear active server
       }
     };
@@ -327,7 +327,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     // Cleanup function: stop sync when component unmounts or dependencies change
     return () => {
       console.log('SyncInitializer: Cleaning up story sync. Stopping sync engine.');
-      SyncEngineService.getInstance().stopSync();
+      syncEngine.deactivateStory();
       useUserSettingsStore.getState().clearActiveServer(); // Clear active server on unmount/dependency change
     };
     // serverId matters as much as id here: linking an existing story to a server changes

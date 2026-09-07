@@ -9,9 +9,6 @@ jest.mock('../../src/services/apiClient', () => ({
 }));
 jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
 jest.mock('../../src/services/FriendshipService', () => ({ createFriendshipService: jest.fn() }));
-jest.mock('../../src/services/SyncEngineService', () => ({
-  SyncEngineService: { getInstance: jest.fn() },
-}));
 jest.mock('../../src/services/storymanagement/StoryService', () => ({
   createStoryService: jest.fn(),
 }));
@@ -22,7 +19,6 @@ jest.mock('../../src/state/storyListStore', () => ({
 import { createKeresAxiosInstance } from '../../src/services/apiClient';
 import { createFriendshipService } from '../../src/services/FriendshipService';
 import { ServerRealtimeService } from '../../src/services/ServerRealtimeService';
-import { SyncEngineService } from '../../src/services/SyncEngineService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
 import { useStoryListStore } from '../../src/state/storyListStore';
 
@@ -69,7 +65,6 @@ beforeEach(() => {
   mockClient.post.mockResolvedValue({ data: { ticket: 'ticket with space' } });
   mockFriendshipService.syncFriendshipsWithServer.mockResolvedValue(undefined);
   (createFriendshipService as jest.Mock).mockReturnValue(mockFriendshipService);
-  (SyncEngineService.getInstance as jest.Mock).mockReturnValue(mockSyncEngine);
   mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([]);
   mockSyncEngine.downloadAndImportStory.mockResolvedValue(undefined);
   (createStoryService as jest.Mock).mockReturnValue(mockStoryService);
@@ -83,7 +78,7 @@ afterEach(() => {
 });
 
 it('subscribes after connecting and requests a sync for a changed story notification', async () => {
-  const service = new ServerRealtimeService({} as any, server, 'me');
+  const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
   service.start('story');
   await flush();
 
@@ -106,7 +101,7 @@ it('requests a catch-up sync on every (re)connect, so events missed while offlin
   // The server's eventManager is in memory, not a durable queue - any event emitted while this client was
   // disconnected is never redelivered. Without this, the story only synchronized again on the next local
   // edit.
-  const service = new ServerRealtimeService({} as any, server, 'me');
+  const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
   service.start('story');
   await flush();
 
@@ -118,7 +113,7 @@ it('requests a catch-up sync on every (re)connect, so events missed while offlin
 });
 
 it('does not request a sync on connect when not subscribed to any story yet', async () => {
-  const service = new ServerRealtimeService({} as any, server, 'me');
+  const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
   service.start(); // no storyId
   await flush();
 
@@ -144,11 +139,11 @@ describe('stories.catalog-changed', () => {
       },
     };
     mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([
-      { storyId: 'existing', role: 'owner' },
-      { storyId: 'new-story', role: 'reader' },
+      { storyId: 'existing', role: 'owner', lastOperationVersion: 0 },
+      { storyId: 'new-story', role: 'reader', lastOperationVersion: 0 },
     ]);
 
-    const service = new ServerRealtimeService(mockDb as any, server, 'me');
+    const service = new ServerRealtimeService(mockDb as any, server, 'me', mockSyncEngine);
     service.start('existing');
     await flush();
 
@@ -177,10 +172,10 @@ describe('stories.catalog-changed', () => {
       },
     };
     mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([
-      { storyId: 'existing', role: 'owner' },
+      { storyId: 'existing', role: 'owner', lastOperationVersion: 0 },
     ]);
 
-    const service = new ServerRealtimeService(mockDb as any, server, 'me');
+    const service = new ServerRealtimeService(mockDb as any, server, 'me', mockSyncEngine);
     service.start('existing');
     await flush();
 

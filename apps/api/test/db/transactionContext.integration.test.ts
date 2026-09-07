@@ -11,16 +11,17 @@ afterEach(async () => {
 describe('withTransaction', () => {
   it('joins an active transaction so an outer rollback also reverts nested work', async () => {
     await expect(
-      withTransaction(async () => {
-        await db.insert(users).values({
+      withTransaction(async (tx) => {
+        await tx.insert(users).values({
           id: 'outer-user',
           username: 'outer-user',
           tag: 'outer-user',
           password: 'secret',
         });
 
-        await withTransaction(async () => {
-          await db.insert(users).values({
+        await withTransaction(async (nestedTx) => {
+          expect(nestedTx).toBe(tx);
+          await nestedTx.insert(users).values({
             id: 'inner-user',
             username: 'inner-user',
             tag: 'inner-user',
@@ -34,5 +35,33 @@ describe('withTransaction', () => {
 
     expect(await db.query.users.findFirst({ where: eq(users.id, 'outer-user') })).toBeUndefined();
     expect(await db.query.users.findFirst({ where: eq(users.id, 'inner-user') })).toBeUndefined();
+  });
+
+  it('keeps an explicit nested db.transaction as a savepoint', async () => {
+    await withTransaction(async (tx) => {
+      await tx.insert(users).values({
+        id: 'outer-user',
+        username: 'outer-user',
+        tag: 'outer-user',
+        password: 'secret',
+      });
+
+      await expect(
+        db.transaction(async (savepoint) => {
+          await savepoint.insert(users).values({
+            id: 'savepoint-user',
+            username: 'savepoint-user',
+            tag: 'savepoint-user',
+            password: 'secret',
+          });
+          throw new Error('abort savepoint');
+        }),
+      ).rejects.toThrow('abort savepoint');
+    });
+
+    expect(await db.query.users.findFirst({ where: eq(users.id, 'outer-user') })).toBeDefined();
+    expect(
+      await db.query.users.findFirst({ where: eq(users.id, 'savepoint-user') }),
+    ).toBeUndefined();
   });
 });

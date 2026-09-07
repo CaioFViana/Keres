@@ -105,9 +105,14 @@ describe('scene form responsibilities', () => {
 
     expect(screen).toContain('useSceneFormResources');
     expect(screen).toContain('useSceneFormState');
-    expect(screen).toContain('saveSceneWithRelations');
+    expect(screen).toContain('useSceneFormActions');
+    expect(screen).toContain('useSceneFormAssociations');
     expect(screen).not.toMatch(/state\/(chapter|character|item|location)Store/);
     expect(screen).not.toMatch(/createSceneService|setDbAndStoryId|initializeService/);
+    expect(screen).not.toMatch(
+      /saveSceneWithRelations|createAttributeValueService|AppAlert|entityEventEmitter/,
+    );
+    expect(screen).not.toMatch(/useEntityEffects|useEntityRelations|useSceneCharacterPresence/);
   });
 });
 

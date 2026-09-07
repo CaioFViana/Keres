@@ -143,3 +143,5 @@ export function useSceneFormState({
     isEditing,
   };
 }
+
+export type SceneFormState = ReturnType<typeof useSceneFormState>;

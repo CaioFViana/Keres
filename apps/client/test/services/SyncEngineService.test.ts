@@ -27,6 +27,7 @@ import {
   SYNC_INTERVAL_MS,
   SyncEngineService,
 } from '../../src/services/SyncEngineService';
+import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -221,15 +222,14 @@ beforeEach(async () => {
   mockShowNotification.mockClear();
   mockSyncStoryMedia.mockClear();
 
-  engine = SyncEngineService.getInstance();
-  engine.setDbInstance(database.db);
+  engine = createAppSyncEngine();
+  engine.bindDatabase(database.db);
   await seedServer();
-  await engine.configure(STORY_ID, { ...SERVER, idUser: 'server-user' } as never);
+  engine.activateStory(STORY_ID, { ...SERVER, idUser: 'server-user' } as never);
 });
 
 afterEach(async () => {
-  engine.stopSync();
-  await engine.configure(undefined, null);
+  engine.deactivateStory();
   delete (axios.defaults as any).adapter;
   database.close();
   jest.restoreAllMocks();
@@ -1073,7 +1073,7 @@ describe('when the server cannot be reached', () => {
 
 describe('guards before a cycle runs', () => {
   it('does nothing without a story', async () => {
-    await engine.configure(undefined, { ...SERVER, idUser: 'server-user' } as never);
+    engine.deactivateStory();
 
     await expect(runOneCycle()).resolves.toBe(false);
     expect(seen).toEqual([]);
@@ -1103,6 +1103,16 @@ describe('guards before a cycle runs', () => {
 });
 
 describe('engine control surface', () => {
+  it('exposes explicit context lifecycle transitions', () => {
+    expect(engine.lifecycle).toBe('active');
+
+    engine.stopSync();
+    expect(engine.lifecycle).toBe('active');
+
+    engine.deactivateStory();
+    expect(engine.lifecycle).toBe('idle');
+  });
+
   it('forwards an explicit sync request to the scheduler', () => {
     const request = jest.spyOn((engine as any).scheduler, 'request');
 
@@ -1251,10 +1261,8 @@ describe('remote-operation safety boundaries', () => {
   });
 
   it('refuses conflict handling before a database is bound', () => {
-    // The singleton constructor is intentionally private; this prototype-only instance reaches the
-    // getter in the same unconfigured state without weakening that production boundary.
-    const unconfigured = Object.create(SyncEngineService.prototype) as SyncEngineService;
-    expect(() => (unconfigured as any).conflictService).toThrow(/before setDbInstance/i);
+    const unconfigured = createAppSyncEngine();
+    expect(() => (unconfigured as any).conflictService).toThrow(/before bindDatabase/i);
   });
 
   it('keeps the pull cursor behind a handler failure and reports one actionable error', async () => {

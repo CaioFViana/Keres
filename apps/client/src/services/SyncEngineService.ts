@@ -11,36 +11,63 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { ServerSelect } from '../db/schema';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import type { KeresAxiosInstance } from './apiClient';
-import { createKeresAxiosInstance, isOfflineError } from './apiClient';
-import { authTokenManager } from './AuthTokenManager';
+import type { KeresAxiosInstance, TokenProvider } from './apiClient';
+import { isOfflineError } from './apiClient';
 import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
-import { createServerService } from './ServerService';
+import type { ServerService } from './ServerService';
 import type { SyncConflictService } from './SyncConflictService';
-import { applyReorderToLocalDb, createSyncConflictService } from './SyncConflictService';
+import { applyReorderToLocalDb } from './SyncConflictService';
 import {
-  downloadAndImportStory,
-  fetchServerStoryPreviews,
   type ServerStoryPreview,
   type StoryUploadResult,
-  uploadNewStoryToServer,
 } from './sync/StoryTransfer';
 import { SyncScheduler } from './sync/SyncScheduler';
-import { registerClientSyncHandlers } from './sync/registerClientSyncHandlers';
 import type { SyncContext } from './sync/SyncContext';
 import { SyncPull } from './sync/SyncPull';
 import { SyncPush } from './sync/SyncPush';
 import { SyncMedia } from './sync/SyncMedia';
-import { createAppSyncNotifier, type SyncNotifier } from './sync/SyncNotifier';
+import type { SyncNotifier } from './sync/SyncNotifier';
 import { protectRemoteUpdate, syncEntityKey } from './sync/syncPure';
 import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './sync/syncEvents';
 
 export type { ServerStoryPreview } from './sync/StoryTransfer';
 export { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from './sync/SyncScheduler';
 
+export type SyncEngineLifecycle = 'unbound' | 'idle' | 'active' | 'running';
+
+export interface SyncEventPublisher {
+  emit(event: string, ...args: unknown[]): void;
+}
+
+export interface SyncTokenProvider extends TokenProvider {
+  setGetServerById(getServerById: ServerService['getServerById']): void;
+}
+
+export interface SyncEngineDependencies {
+  notifier: SyncNotifier;
+  events: SyncEventPublisher;
+  tokenProvider: SyncTokenProvider;
+  createClient(baseURL?: string): KeresAxiosInstance;
+  createEntityHandlers(): Map<string, ClientSyncEntityHandler>;
+  createConflictService(db: AppDrizzleClient): SyncConflictService;
+  createServerService(db: AppDrizzleClient): ServerService;
+  fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]>;
+  downloadAndImportStory(
+    db: AppDrizzleClient | null,
+    queriedServerId: string,
+    storyId: string,
+    userId: string,
+    role: EffectiveStoryRole,
+  ): Promise<void>;
+  uploadNewStoryToServer(
+    db: AppDrizzleClient | null,
+    storyId: string,
+    server: ServerSelect,
+    userId: string,
+  ): Promise<StoryUploadResult>;
+}
+
 export class SyncEngineService {
-  private static instance: SyncEngineService;
   private storyId: string | null = null;
   /**
    * Held because media transfer does not go through Axios (see `MediaSyncService`) and needs the server
@@ -56,8 +83,8 @@ export class SyncEngineService {
   private _conflictService: SyncConflictService | null = null;
   private entityHandlers: Map<string, ClientSyncEntityHandler>;
 
-  private constructor(private readonly notifier: SyncNotifier) {
-    this.client = createKeresAxiosInstance();
+  public constructor(private readonly dependencies: SyncEngineDependencies) {
+    this.client = dependencies.createClient();
     this.scheduler = new SyncScheduler({
       readiness: () => ({
         storyId: this.storyId,
@@ -66,7 +93,7 @@ export class SyncEngineService {
       }),
       performSync: () => this.performSync(),
     });
-    this.entityHandlers = registerClientSyncHandlers();
+    this.entityHandlers = dependencies.createEntityHandlers();
     const syncContext: SyncContext = {
       db: () => {
         if (!this._db) throw new Error('Sync database is not configured.');
@@ -93,40 +120,35 @@ export class SyncEngineService {
     });
   }
 
-  public static getInstance(): SyncEngineService {
-    if (!SyncEngineService.instance) {
-      SyncEngineService.instance = new SyncEngineService(createAppSyncNotifier());
-    }
-    return SyncEngineService.instance;
+  public get lifecycle(): SyncEngineLifecycle {
+    if (!this._db) return 'unbound';
+    if (!this.storyId || !this.activeServer) return 'idle';
+    return this.scheduler.isRunning ? 'running' : 'active';
   }
 
-  public setDbInstance(dbInstance: AppDrizzleClient) {
+  public bindDatabase(dbInstance: AppDrizzleClient): void {
     this._db = dbInstance;
     this._conflictService = null; // Recreated on demand, already bound to the new database.
     // Propagate the db instance to all registered handlers
     this.entityHandlers.forEach((handler) => handler.setDb(dbInstance));
 
-    // Inject getServerById into authTokenManager to break circular dependency
-    const serverService = createServerService(dbInstance);
-    authTokenManager.setGetServerById(serverService.getServerById);
+    // Authentication resolves the server through the database bound to this engine instance.
+    const serverService = this.dependencies.createServerService(dbInstance);
+    this.dependencies.tokenProvider.setGetServerById(serverService.getServerById);
   }
 
-  public async configure(storyId: string | undefined, server: ServerSelect | null) {
-    this.storyId = storyId || null;
-    this.activeServer = server?.url ? server : null;
-    if (server?.url) {
-      this.client = createKeresAxiosInstance({ baseURL: server.url });
-      // Bind this client to the specific server so the request interceptor always attaches
-      // *this* server's token, regardless of what any other concurrent sync/refresh is doing.
-      this.client.setTokenProvider(authTokenManager);
-      this.client.setActiveServer(server);
-      console.log(
-        `SyncEngineService configured for story ${this.storyId} with server: ${server.url}`,
-      );
-    } else {
-      console.log('SyncEngineService configured without a server URL. Sync will be disabled.');
-      this.stopSync();
-    }
+  public activateStory(storyId: string, server: ServerSelect): void {
+    if (!this._db) throw new Error('SyncEngineService: bind the database before activating a story.');
+    if (!storyId) throw new Error('SyncEngineService: a story is required for activation.');
+    if (!server.url) throw new Error('SyncEngineService: a server URL is required for activation.');
+
+    this.stopSync();
+    this.storyId = storyId;
+    this.activeServer = server;
+    this.client = this.dependencies.createClient(server.url);
+    this.client.setTokenProvider(this.dependencies.tokenProvider);
+    this.client.setActiveServer(server);
+    console.log(`SyncEngineService activated for story ${storyId} with server: ${server.url}`);
   }
 
   public startSync(intervalTimeMs?: number): void {
@@ -139,6 +161,10 @@ export class SyncEngineService {
 
   public stopSync(): void {
     this.scheduler.stop();
+  }
+
+  public deactivateStory(): void {
+    this.stopSync();
     this.storyId = null;
     this.activeServer = null;
     this.client.defaults.baseURL = undefined;
@@ -156,7 +182,7 @@ export class SyncEngineService {
   }
 
   public fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]> {
-    return fetchServerStoryPreviews(server);
+    return this.dependencies.fetchServerStoryPreviews(server);
   }
 
   public downloadAndImportStory(
@@ -165,7 +191,13 @@ export class SyncEngineService {
     userId: string,
     role: EffectiveStoryRole,
   ): Promise<void> {
-    return downloadAndImportStory(this._db, queriedServerId, storyId, userId, role);
+    return this.dependencies.downloadAndImportStory(
+      this._db,
+      queriedServerId,
+      storyId,
+      userId,
+      role,
+    );
   }
 
   public uploadNewStoryToServer(
@@ -173,17 +205,17 @@ export class SyncEngineService {
     server: ServerSelect,
     userId: string,
   ): Promise<StoryUploadResult> {
-    return uploadNewStoryToServer(this._db, storyId, server, userId);
+    return this.dependencies.uploadNewStoryToServer(this._db, storyId, server, userId);
   }
 
   private get conflictService(): SyncConflictService {
     if (!this._conflictService) {
       if (!this._db) {
         throw new Error(
-          'SyncEngineService: cannot use the conflict service before setDbInstance().',
+          'SyncEngineService: cannot use the conflict service before bindDatabase().',
         );
       }
-      this._conflictService = createSyncConflictService(this._db);
+      this._conflictService = this.dependencies.createConflictService(this._db);
     }
     return this._conflictService;
   }
@@ -205,13 +237,13 @@ export class SyncEngineService {
 
     if (!this.client.defaults.baseURL) {
       console.log('No server URL set for sync operation.');
-      this.stopSync();
+      this.deactivateStory();
       return false;
     }
 
     if (!this._db) {
       console.log('Drizzle client (db) is not initialized. Cannot perform sync.');
-      this.stopSync();
+      this.deactivateStory();
       return false;
     }
 
@@ -230,7 +262,7 @@ export class SyncEngineService {
 
       if (!localStory) {
         console.log(`Story with ID ${this.storyId} not found locally.`);
-        this.stopSync();
+        this.deactivateStory();
         return false;
       }
 
@@ -406,13 +438,13 @@ export class SyncEngineService {
         // item - a single flaky entity type shouldn't flood the user with a
         // notification for every record it touches.
         if (entitiesUpdated.length > 0) {
-          this.notifier.remoteUpdatesReceived(totalUpdates, entitiesUpdated);
+          this.dependencies.notifier.remoteUpdatesReceived(totalUpdates, entitiesUpdated);
         }
         if (failedEntities.length > 0) {
-          this.notifier.remoteUpdatesFailed(failedEntities);
+          this.dependencies.notifier.remoteUpdatesFailed(failedEntities);
         }
         if (conflictsDetected > 0) {
-          this.notifier.conflictsDetected(conflictsDetected);
+          this.dependencies.notifier.conflictsDetected(conflictsDetected);
         }
         // Emit events after the whole pull so a batch causes one refresh per
         // affected entity type instead of one query per operation.
@@ -426,7 +458,7 @@ export class SyncEngineService {
                 columns: { entityId: true, entityType: true, userId: true },
               });
               if (favorite) {
-                entityEventEmitter.emit(
+                this.dependencies.events.emit(
                   'favorite_changed',
                   this.storyId,
                   favorite.entityType,
@@ -436,13 +468,13 @@ export class SyncEngineService {
               }
               const targetEvent = favorite && FAVORITE_TARGET_EVENTS[favorite.entityType];
               if (targetEvent)
-                entityEventEmitter.emit(targetEvent, this.storyId, favorite.entityId);
+                this.dependencies.events.emit(targetEvent, this.storyId, favorite.entityId);
             } else {
-              entityEventEmitter.emit(eventName, this.storyId, entityId);
+              this.dependencies.events.emit(eventName, this.storyId, entityId);
             }
           }
         }
-        entityEventEmitter.emit('story_data_changed', {
+        this.dependencies.events.emit('story_data_changed', {
           storyId: this.storyId,
           entityTypes: Array.from(changedEntityIds.keys()),
           entityIds: Object.fromEntries(
@@ -455,7 +487,7 @@ export class SyncEngineService {
         });
 
         // Emit event to signal operation log update after applying remote updates
-        entityEventEmitter.emit('operation_log_updated', this.storyId);
+        this.dependencies.events.emit('operation_log_updated', this.storyId);
       } else {
         console.log(
           `No new remote updates for story ${this.storyId} since version ${lastSyncedLog}`,
@@ -496,7 +528,7 @@ export class SyncEngineService {
             favoriteHandler,
           );
 
-          entityEventEmitter.emit(
+          this.dependencies.events.emit(
             'favorite_changed',
             this.storyId,
             favorite.entityType,
@@ -504,7 +536,8 @@ export class SyncEngineService {
             favorite.userId,
           );
           const targetEvent = FAVORITE_TARGET_EVENTS[favorite.entityType];
-          if (targetEvent) entityEventEmitter.emit(targetEvent, this.storyId, favorite.entityId);
+          if (targetEvent)
+            this.dependencies.events.emit(targetEvent, this.storyId, favorite.entityId);
         }
       }
 
@@ -523,7 +556,7 @@ export class SyncEngineService {
           `Error pushing local operations for story ${this.storyId}:`,
           pushError?.message || pushError,
         );
-        this.notifier.pushFailed();
+        this.dependencies.notifier.pushFailed();
       }
 
       // 5. Update local story's lastServerSyncedLog and cached role
@@ -537,14 +570,14 @@ export class SyncEngineService {
         })
         .where(eq(schema.stories.id, this.storyId));
       if (roleChanged) {
-        entityEventEmitter.emit('story_role_changed', this.storyId);
+        this.dependencies.events.emit('story_role_changed', this.storyId);
       }
 
       // Reaching here means the pull round-trip against the server succeeded, so this is
       // a real "last synced" timestamp - not just when the server was registered (which is
       // all `servers.lastSyncDate` ever reflected before, since nothing else touched it).
       if (this.activeServer) {
-        const serverService = createServerService(this._db);
+        const serverService = this.dependencies.createServerService(this._db);
         await serverService.updateServer(this.activeServer.id, { lastSyncDate: new Date() });
       }
 
@@ -560,7 +593,7 @@ export class SyncEngineService {
         return true;
       }
       console.log('Error during sync operation:', error?.message || error);
-      this.notifier.syncFailed();
+      this.dependencies.notifier.syncFailed();
       return false;
     }
   }

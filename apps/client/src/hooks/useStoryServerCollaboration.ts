@@ -9,7 +9,7 @@ import { createServerService } from '../services/ServerService';
 import { createStoryService } from '../services/storymanagement/StoryService';
 import type { StoryCollaborator } from '../services/StoryPermissionService';
 import { storyPermissionApi } from '../services/StoryPermissionService';
-import { SyncEngineService } from '../services/SyncEngineService';
+import { syncEngine } from '../services/sync/appSyncEngine';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { AppAlert } from '../utils/AppAlert';
@@ -134,7 +134,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     if (!targetServer) return;
     setServerActionLoading(true);
     try {
-      const result = await SyncEngineService.getInstance().uploadNewStoryToServer(
+      const result = await syncEngine.uploadNewStoryToServer(
         storyId,
         targetServer,
         userId,

@@ -132,6 +132,27 @@ const PRESENTATIONAL_SEEDS = [
 ];
 
 describe('import boundaries', () => {
+  it('keeps sync engine policy in the application composition root', () => {
+    const engine = readFileSync(join(SOURCE_ROOT, 'services/SyncEngineService.ts'), 'utf8');
+    const composition = readFileSync(
+      join(SOURCE_ROOT, 'services/sync/appSyncEngine.ts'),
+      'utf8',
+    );
+    const realtime = readFileSync(join(SOURCE_ROOT, 'services/ServerRealtimeService.ts'), 'utf8');
+
+    expect(engine).toContain('public constructor(private readonly dependencies: SyncEngineDependencies)');
+    expect(engine).toContain('public activateStory(');
+    expect(engine).toContain('public deactivateStory(');
+    expect(engine).toContain('public get lifecycle()');
+    expect(engine).not.toMatch(/static\s+(?:instance|getInstance)/);
+    expect(engine).not.toMatch(/entityEventEmitter|authTokenManager|createAppSyncNotifier/);
+
+    expect(composition).toContain('new SyncEngineService(createAppSyncEngineDependencies())');
+    expect(composition).toContain('export const syncEngine = createAppSyncEngine()');
+    expect(realtime).toContain('private readonly syncEngine: RealtimeSyncEngine');
+    expect(realtime).not.toContain("from './sync/appSyncEngine'");
+  });
+
   it('has no import cycles', () => {
     const state = new Map<string, 'visiting' | 'done'>();
     const cycles: string[] = [];

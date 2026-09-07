@@ -110,17 +110,17 @@ beforeEach(() => {
   tagRelationService.getTagsForEntity.mockResolvedValue([TAGS[0]]);
   noteService.getNotesByStoryId.mockResolvedValue(NOTES);
   storedRelations = [RELATION];
-  noteRelationService.saveNoteRelation.mockImplementation(async (_userId: string, relation: any) => {
-    const saved = { ...RELATION, ...relation, id: relation.id ?? RELATION.id };
-    const index = storedRelations.findIndex((stored) => stored.id === saved.id);
-    storedRelations =
-      index > -1
-        ? storedRelations.map((stored, storedIndex) =>
-            storedIndex === index ? saved : stored,
-          )
-        : [...storedRelations, saved];
-    return saved;
-  });
+  noteRelationService.saveNoteRelation.mockImplementation(
+    async (_userId: string, relation: any) => {
+      const saved = { ...RELATION, ...relation, id: relation.id ?? RELATION.id };
+      const index = storedRelations.findIndex((stored) => stored.id === saved.id);
+      storedRelations =
+        index > -1
+          ? storedRelations.map((stored, storedIndex) => (storedIndex === index ? saved : stored))
+          : [...storedRelations, saved];
+      return saved;
+    },
+  );
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -284,12 +284,19 @@ describe('note relations', () => {
       }
     });
     expect(persistenceError).toEqual(new Error('second relation failed'));
-    expect(view.result.current.noteRelations.map((relation) => relation.noteId)).toEqual(['n2']);
+    expect(view.result.current.noteRelations.map((relation) => relation.noteId)).toEqual([
+      'n1',
+      'n2',
+    ]);
+    expect(view.result.current.noteRelations[0].id).toBe('saved-n1');
 
     failSecond = false;
     await act(async () => view.result.current.persistNoteRelations('new-rule'));
 
-    expect(view.result.current.noteRelations).toEqual([]);
+    expect(view.result.current.noteRelations.map((relation) => relation.id)).toEqual([
+      'saved-n1',
+      'saved-n2',
+    ]);
     expect(
       noteRelationService.saveNoteRelation.mock.calls.map(([, relation]) => relation.noteId),
     ).toEqual(['n1', 'n2', 'n2']);
@@ -468,5 +475,84 @@ describe('reacting to changes elsewhere in the app', () => {
     entityEventEmitter.emit('tag_changed', STORY_ID);
 
     expect(tagService.getTagsByStoryId).not.toHaveBeenCalled();
+  });
+});
+
+describe('creation form after a partial save', () => {
+  async function openDraft() {
+    storedRelations = [];
+    let entityId: string | undefined;
+    const view = await renderHook(() =>
+      useEntityRelations({
+        entityType: ENTITY_TYPE,
+        entityId,
+        preserveDraftOnEntityCreation: true,
+      } as never),
+    );
+    await waitFor(() => expect(view.result.current.allNotes).toEqual(NOTES));
+    return {
+      ...view,
+      retainId: async () => {
+        entityId = ENTITY_ID;
+        await view.rerender({});
+      },
+    };
+  }
+
+  it('shows and deletes a relation saved after the entity acquired its id', async () => {
+    const view = await openDraft();
+    await view.retainId();
+    await act(async () => {
+      await view.result.current.saveNoteRelation({ noteId: 'n1', relationId: ENTITY_ID } as never);
+    });
+    expect(view.result.current.noteRelations).toEqual([
+      expect.objectContaining({ id: 'r1', noteId: 'n1' }),
+    ]);
+    await act(async () => view.result.current.deleteNoteRelation('r1'));
+    expect(noteRelationService.deleteNoteRelation).toHaveBeenCalledWith(USER_ID, 'r1');
+    expect(view.result.current.noteRelations).toEqual([]);
+  });
+
+  it('edits and deletes unpersisted drafts locally even after the entity acquired its id', async () => {
+    const view = await openDraft();
+    await act(async () => view.result.current.saveNoteRelation({ noteId: 'n1' } as never));
+    const draftId = view.result.current.noteRelations[0].id;
+    await view.retainId();
+    await act(async () =>
+      view.result.current.saveNoteRelation({ id: draftId, noteId: 'n2' } as never),
+    );
+    expect(view.result.current.noteRelations).toEqual([
+      expect.objectContaining({ id: draftId, noteId: 'n2' }),
+    ]);
+    expect(noteRelationService.saveNoteRelation).not.toHaveBeenCalled();
+    await act(async () => view.result.current.deleteNoteRelation(draftId));
+    expect(view.result.current.noteRelations).toEqual([]);
+    expect(noteRelationService.deleteNoteRelation).not.toHaveBeenCalled();
+    await act(async () => view.result.current.persistNoteRelations(ENTITY_ID));
+    expect(noteRelationService.saveNoteRelation).not.toHaveBeenCalled();
+  });
+
+  it('keeps saved relations and tag drafts visible through refreshes after a secondary failure', async () => {
+    const view = await openDraft();
+    await act(async () => {
+      view.result.current.setSelectedTagIds(['t2']);
+      await view.result.current.saveNoteRelation({ noteId: 'n1' } as never);
+    });
+    await view.retainId();
+    await act(async () => view.result.current.persistNoteRelations(ENTITY_ID));
+    // The next form stage (attributes, for example) can fail while this hook stays mounted.
+    await act(async () => {
+      entityEventEmitter.emit('note_relation_changed', STORY_ID);
+      entityEventEmitter.emit('tag_relation_changed', STORY_ID);
+      await view.result.current.refresh();
+    });
+    expect(view.result.current.selectedTagIds).toEqual(['t2']);
+    expect(view.result.current.noteRelations).toEqual([
+      expect.objectContaining({ id: 'r1', noteId: 'n1' }),
+    ]);
+    await act(async () => view.result.current.persistNoteRelations(ENTITY_ID));
+    expect(noteRelationService.saveNoteRelation).toHaveBeenCalledTimes(1);
+    await act(async () => view.result.current.deleteNoteRelation('r1'));
+    expect(view.result.current.noteRelations).toEqual([]);
   });
 });

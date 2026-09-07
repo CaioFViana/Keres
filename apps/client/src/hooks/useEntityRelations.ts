@@ -49,9 +49,8 @@ export function useEntityRelations({
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const initialEntityIdRef = useRef(entityId);
-  const hydrationEntityId = preserveDraftOnEntityCreation
-    ? initialEntityIdRef.current
-    : entityId;
+  const preservesCreationDraft = preserveDraftOnEntityCreation && !initialEntityIdRef.current;
+  const hydrationEntityId = preserveDraftOnEntityCreation ? initialEntityIdRef.current : entityId;
 
   // Services are cheap factories over a stable db handle, so a memo replaces the
   // ref-plus-init-effect dance the screens were doing.
@@ -88,6 +87,7 @@ export function useEntityRelations({
   }, [services, storyId]);
 
   const refreshSelectedTags = useCallback(async () => {
+    if (preservesCreationDraft) return;
     if (!services || !storyId || !hydrationEntityId) {
       setSelectedTagIds([]);
       return;
@@ -102,7 +102,7 @@ export function useEntityRelations({
     } catch (err) {
       console.error(`Failed to fetch tags for ${entityType}:`, err);
     }
-  }, [services, storyId, hydrationEntityId, entityType]);
+  }, [services, storyId, hydrationEntityId, entityType, preservesCreationDraft]);
 
   const refreshNotes = useCallback(async () => {
     if (!services || !storyId || !withNotes) {
@@ -117,6 +117,9 @@ export function useEntityRelations({
   }, [services, storyId, withNotes]);
 
   const refreshNoteRelations = useCallback(async () => {
+    // This form owns its draft until remount. Successful writes update the local persisted
+    // list directly; a refresh must not replace it or the remaining draft after a partial save.
+    if (preservesCreationDraft) return;
     if (!services || !storyId || !hydrationEntityId || !withNotes) {
       setNoteRelations([]);
       return;
@@ -131,7 +134,7 @@ export function useEntityRelations({
     } catch (err) {
       console.error(`Failed to fetch note relations for ${entityType}:`, err);
     }
-  }, [services, storyId, hydrationEntityId, entityType, withNotes]);
+  }, [services, storyId, hydrationEntityId, entityType, withNotes, preservesCreationDraft]);
 
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -220,6 +223,14 @@ export function useEntityRelations({
 
   const saveNoteRelation = useCallback(
     async (relation: SaveNoteRelation) => {
+      const pending = pendingNoteRelations.find((item) => item.id === relation.id);
+      if (pending) {
+        setPendingNoteRelations((current) =>
+          current.map((item) => (item.id === pending.id ? { ...item, ...relation } : item)),
+        );
+        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        return;
+      }
       if (!entityId) {
         // Still creating - it is held locally with a synthetic id just so the UI (list, key, remove) behaves
         // the same; the real `relationId` only exists during the replay.
@@ -253,12 +264,12 @@ export function useEntityRelations({
         AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
       }
     },
-    [services, storyId, userId, entityId, t],
+    [services, storyId, userId, entityId, t, pendingNoteRelations],
   );
 
   const deleteNoteRelation = useCallback(
     async (relationId: string) => {
-      if (!entityId) {
+      if (!entityId || pendingNoteRelations.some((relation) => relation.id === relationId)) {
         setPendingNoteRelations((prev) => prev.filter((r) => r.id !== relationId));
         AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
         return;
@@ -281,7 +292,7 @@ export function useEntityRelations({
         AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
       }
     },
-    [services, storyId, userId, entityId, t],
+    [services, storyId, userId, entityId, t, pendingNoteRelations],
   );
 
   /**
@@ -295,12 +306,16 @@ export function useEntityRelations({
         return;
       }
       for (const pending of pendingNoteRelations) {
-        await services.noteRelation.saveNoteRelation(userId, {
+        const saved = await services.noteRelation.saveNoteRelation(userId, {
           storyId,
           noteId: pending.noteId,
           relationId: targetEntityId,
           relationType: pending.relationType,
         });
+        setNoteRelations((current) => [
+          ...current.filter((relation) => relation.id !== saved.id),
+          saved,
+        ]);
         setPendingNoteRelations((current) =>
           current.filter((relation) => relation.id !== pending.id),
         );
@@ -325,9 +340,8 @@ export function useEntityRelations({
     setSelectedTagIds,
     selectedTags,
     allNotes,
-    // With no entity yet, the fetched `noteRelations` is always empty - it shows the local buffer instead,
-    // transparently to the consumer (NoteRelationManager cannot tell the difference).
-    noteRelations: hydrationEntityId ? noteRelations : pendingNoteRelations,
+    // A partial save can leave both persisted relations and drafts in the same form.
+    noteRelations: [...noteRelations, ...pendingNoteRelations],
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,

@@ -347,7 +347,7 @@
     "items": {
       "narrative-elements": {
         "title": "Capítulos e cenas",
-        "body": "A lista onde você passa a maior parte do tempo: os capítulos em ordem, as cenas dentro deles e o que ainda falta em cada uma."
+        "body": "A lista onde você passa a maior parte do tempo: abra um capítulo ali mesmo para ver as cenas debaixo dele, ainda em ordem."
       },
       "story-map": {
         "title": "Mapa da história",
@@ -368,6 +368,10 @@
       "character-list": {
         "title": "Seu elenco",
         "body": "Busque, filtre e ordene o elenco; abra um nome ali mesmo para ver o papel, a descrição e os laços, sem sair da lista."
+      },
+      "character-detail": {
+        "title": "A ficha de um personagem",
+        "body": "A tela de detalhe do dia a dia: biografia, traços e nomes no texto que ligam a outras pessoas do universo quando os auto-links estão ligados."
       },
       "relation-map": {
         "title": "Quem conhece quem",

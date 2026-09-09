@@ -347,7 +347,7 @@
     "items": {
       "narrative-elements": {
         "title": "Chapters and scenes",
-        "body": "The list you spend most of your time in: chapters in order, the scenes inside them, and what each scene still needs."
+        "body": "The list you spend most of your time in: open a chapter where it sits to see its scenes underneath, still in order."
       },
       "story-map": {
         "title": "Story map",
@@ -368,6 +368,10 @@
       "character-list": {
         "title": "Your cast",
         "body": "Search, filter and sort the cast; open a name where it sits to see the role, the description and the ties, without leaving the list."
+      },
+      "character-detail": {
+        "title": "A character record",
+        "body": "The everyday detail screen: biography, traits, and names in the text that link to other people in the universe when auto-links are on."
       },
       "relation-map": {
         "title": "Who knows whom",

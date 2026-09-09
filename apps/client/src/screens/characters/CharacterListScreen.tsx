@@ -25,6 +25,7 @@ import { createCharacterRelationService } from '../../services/storymanagement/C
 import { useCharacterStore } from '../../state/characterStore';
 import { useStoryStore } from '../../state/storyStore';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
+import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
@@ -153,6 +154,25 @@ const CharactersScreen = () => {
     },
     [navigation],
   );
+
+  // Showcase capture: open a named character's detail after install remaps ids.
+  useEffect(() => {
+    const request = readShowcaseRequest();
+    if (
+      !request ||
+      request.stack !== 'CharactersStack' ||
+      request.screen !== 'CharacterDetail' ||
+      !request.focusName ||
+      characters.length === 0
+    ) {
+      return;
+    }
+    const match = characters.find(
+      (character) => character.name === request.focusName && !character.isDeleted,
+    );
+    if (!match) return;
+    navigation.replace('CharacterDetail', { characterId: match.id });
+  }, [characters, navigation]);
 
   const memoizedRenderItem = useCallback(
     ({ item }: { item: CharacterWithTags }) => (

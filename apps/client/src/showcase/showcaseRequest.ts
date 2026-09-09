@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 /**
  * Showcase mode: the app opens straight into a specific screen, with an example story installed, in
  * the requested theme and language.
@@ -9,7 +7,8 @@ import { Platform } from 'react-native';
  * installing the example, drawer, screen - a dozen steps that break whenever a label changes. Here the
  * capture becomes "open a URL and wait".
  *
- * It only exists on the web and only with the parameter in the URL: on any other path, `null`.
+ * It only exists where `window.location` is available and only with the parameter in the URL:
+ * on any other path, `null`.
  */
 export interface ShowcaseRequest {
   /** The story's folder in `exampleStories/content`. */
@@ -18,15 +17,26 @@ export interface ShowcaseRequest {
   stack: string;
   /** Tela dentro daquela pilha, ex.: `PlotProgress`. Ausente = a raiz da pilha. */
   screen?: string;
+  /**
+   * Display name of an entity to open after the list loads (ids are remapped on install).
+   * Used with `screen: 'CharacterDetail'`: the list stays the initial route, then replaces
+   * into the detail once this name resolves.
+   */
+  focusName?: string;
   theme: 'light' | 'dark';
   language: string;
 }
 
 let cached: ShowcaseRequest | null | undefined;
 
+/** Clears the memoized URL parse so tests can change `window.location.search`. */
+export function resetShowcaseRequestCacheForTests(): void {
+  cached = undefined;
+}
+
 export function readShowcaseRequest(): ShowcaseRequest | null {
   if (cached !== undefined) return cached;
-  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+  if (typeof window === 'undefined' || typeof window.location === 'undefined') {
     cached = null;
     return cached;
   }
@@ -40,6 +50,7 @@ export function readShowcaseRequest(): ShowcaseRequest | null {
     story,
     stack: params.get('stack') ?? 'MainDashboard',
     screen: params.get('screen') ?? undefined,
+    focusName: params.get('focus') ?? undefined,
     theme: params.get('theme') === 'dark' ? 'dark' : 'light',
     language: params.get('lang') ?? 'en',
   };
@@ -57,5 +68,7 @@ export function readShowcaseRequest(): ShowcaseRequest | null {
 export function showcaseInitialRoute<T extends string>(stack: string, fallback: T): T {
   const request = readShowcaseRequest();
   if (!request || request.stack !== stack || !request.screen) return fallback;
+  // Detail routes need a remapped entity id. Open the list first; the list navigates by `focusName`.
+  if (request.screen === 'CharacterDetail') return fallback;
   return request.screen as T;
 }

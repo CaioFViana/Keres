@@ -312,12 +312,19 @@ export async function pressControl(
   const point = await win.webContents.executeJavaScript(`
     (() => {
       const rotulo = ${JSON.stringify(label)};
+      const isVisible = (no) => {
+        const r = no.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return false;
+        const style = window.getComputedStyle(no);
+        return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0;
+      };
       // Accessibility label first; then visible text, which is how a list item (a character, a scene)
-      // is found without inventing identifiers just for the photo.
+      // is found without inventing identifiers just for the photo. Skip opacity-0 measurement
+      // clones that GenericListItem keeps in the DOM for expand animation.
       const alvo =
-        document.querySelector('[aria-label="' + rotulo + '"]') ??
+        Array.from(document.querySelectorAll('[aria-label="' + rotulo + '"]')).find(isVisible) ??
         Array.from(document.querySelectorAll('div,span,a,button')).find(
-          (no) => no.textContent?.trim() === rotulo && no.getBoundingClientRect().height > 0,
+          (no) => no.textContent?.trim() === rotulo && isVisible(no),
         );
       if (!alvo) return null;
       const r = alvo.getBoundingClientRect();

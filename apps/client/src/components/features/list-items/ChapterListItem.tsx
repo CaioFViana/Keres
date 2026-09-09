@@ -99,6 +99,12 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
     </View>
   );
 
+  const rowLabel = isUnchapteredGroup(chapter.id)
+    ? chapter.name
+    : chapter.type === 'event'
+      ? chapter.name
+      : `${chapter.index}. ${chapter.name}`;
+
   return (
     <GenericExpandedListItemWithActions
       item={chapter}
@@ -110,6 +116,7 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
       initialExpanded={initialExpanded}
+      accessibilityLabel={rowLabel}
     />
   );
 };

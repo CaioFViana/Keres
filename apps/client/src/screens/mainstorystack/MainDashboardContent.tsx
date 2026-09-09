@@ -89,7 +89,11 @@ export function MainDashboardContent({
   const resolvedLanguage = languageLabel(t, story?.language);
 
   return (
-    <DetailContainer title={story?.title || t('no_story_selected')} width="reading">
+    <DetailContainer
+      title={story?.title || t('no_story_selected')}
+      // Match the pre-redesign dashboard column (1280), not Detail's reading width (960).
+      contentContainerStyle={{ maxWidth: 1280 }}
+    >
       {!!story?.id && <SyncConflictBanner count={conflictCount} onPress={onOpenConflictSheet} />}
 
       {!!story && (

@@ -114,6 +114,27 @@ export function useCharacterFormAssociations({
     };
   }, [storyId, initialCharacterId, onSecondaryDraftRestored]);
 
+  // Pending rows created before identity retention use '' for this character's side.
+  // Rewrite them as soon as the real id exists so the manager filter keeps them visible.
+  useEffect(() => {
+    if (!currentCharacterId) return;
+    setPendingCharacterRelations((prev) => {
+      let changed = false;
+      const next = prev.map((relation) => {
+        if (relation.character1Id !== '' && relation.character2Id !== '') return relation;
+        changed = true;
+        return {
+          ...relation,
+          character1Id:
+            relation.character1Id === '' ? currentCharacterId : relation.character1Id,
+          character2Id:
+            relation.character2Id === '' ? currentCharacterId : relation.character2Id,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [currentCharacterId]);
+
   const handleTagSelectionChange = useCallback(
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
@@ -124,13 +145,9 @@ export function useCharacterFormAssociations({
   const syncPendingCharacterRelationsToDraft = useCallback(
     async (nextPending: CharacterRelation[]) => {
       if (!storyId || !currentCharacterId) return;
-      try {
-        await patchEntityFormSecondaryDraft(storyId, 'Character', currentCharacterId, {
-          pendingEntityRelations: nextPending,
-        });
-      } catch (error) {
-        console.error('Failed to sync pending character relations to secondary draft:', error);
-      }
+      await patchEntityFormSecondaryDraft(storyId, 'Character', currentCharacterId, {
+        pendingEntityRelations: nextPending,
+      });
     },
     [storyId, currentCharacterId],
   );
@@ -138,6 +155,7 @@ export function useCharacterFormAssociations({
   const handleSaveRelation = async (relation: CharacterRelation) => {
     const pending = pendingCharacterRelations.find((item) => item.id === relation.id);
     if (pending || !currentCharacterId) {
+      const previous = pendingCharacterRelations;
       const nextPending = (() => {
         const existingIndex = pendingCharacterRelations.findIndex((r) => r.id === relation.id);
         return existingIndex > -1
@@ -145,8 +163,14 @@ export function useCharacterFormAssociations({
           : [...pendingCharacterRelations, relation];
       })();
       setPendingCharacterRelations(nextPending);
-      await syncPendingCharacterRelationsToDraft(nextPending);
-      AppAlert.alert(t('success'), t('relation_saved_successfully'));
+      try {
+        await syncPendingCharacterRelationsToDraft(nextPending);
+        AppAlert.alert(t('success'), t('relation_saved_successfully'));
+      } catch (error) {
+        setPendingCharacterRelations(previous);
+        AppAlert.alert(t('error'), t('failed_to_save_relation'));
+        console.error('Failed to save pending character relation draft:', error);
+      }
       return;
     }
     if (!characterRelationServiceRef.current || !storyId || !userId) {
@@ -178,10 +202,17 @@ export function useCharacterFormAssociations({
       !currentCharacterId ||
       pendingCharacterRelations.some((relation) => relation.id === relationId)
     ) {
+      const previous = pendingCharacterRelations;
       const nextPending = pendingCharacterRelations.filter((r) => r.id !== relationId);
       setPendingCharacterRelations(nextPending);
-      await syncPendingCharacterRelationsToDraft(nextPending);
-      AppAlert.alert(t('success'), t('relation_deleted_successfully'));
+      try {
+        await syncPendingCharacterRelationsToDraft(nextPending);
+        AppAlert.alert(t('success'), t('relation_deleted_successfully'));
+      } catch (error) {
+        setPendingCharacterRelations(previous);
+        AppAlert.alert(t('error'), t('failed_to_delete_relation'));
+        console.error('Failed to delete pending character relation draft:', error);
+      }
       return;
     }
     if (!characterRelationServiceRef.current || !storyId || !userId) {
@@ -233,7 +264,20 @@ export function useCharacterFormAssociations({
     handleTagSelectionChange,
     allCharacters,
     // Persisted and pending queues stay visible together after identity retention / draft restore.
-    characterRelations: [...characterRelations, ...pendingCharacterRelations],
+    characterRelations: [
+      ...characterRelations,
+      ...pendingCharacterRelations.map((relation) =>
+        currentCharacterId
+          ? {
+              ...relation,
+              character1Id:
+                relation.character1Id === '' ? currentCharacterId : relation.character1Id,
+              character2Id:
+                relation.character2Id === '' ? currentCharacterId : relation.character2Id,
+            }
+          : relation,
+      ),
+    ],
     pendingCharacterRelations,
     handleSaveRelation,
     handleDeleteRelation,

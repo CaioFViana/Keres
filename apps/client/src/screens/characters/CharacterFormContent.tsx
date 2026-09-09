@@ -2,7 +2,9 @@ import Button from '@/src/components/common/controls/Button/Button';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import CustomAttributeFields, {
+  type CustomAttributeValues,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -10,13 +12,97 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import React from 'react';
-import { View } from 'react-native';
+import SeeAlsoManager, {
+  type SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { TFunction } from 'i18next';
+import React, { type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-native';
+import type { CharacterSelect } from '../../db/schemas/characters';
+import type { ModeSelect } from '../../db/schemas/modes';
+import type { StorySchemaFieldSelect, TagSelect } from '../../db/schema';
+import type { StoryStatsData } from '../../hooks/useStoryStats';
+import type { ModeService } from '../../services/storymanagement/ModeService';
+import type { SaveNoteRelation } from '../../services/storymanagement/NoteRelationService';
+import type { StatRelationService } from '../../services/storymanagement/StatRelationService';
 
-export function CharacterFormContent(props: any) {
+type CharacterFormCopy = {
+  saveLabel: string;
+  deleteLabel: string;
+  formDescription?: string;
+};
+
+export type CharacterFormContentProps = {
+  formTitle: string;
+  formDescription?: string;
+  copy: CharacterFormCopy;
+  handleSave: () => void;
+  saving: boolean;
+  deleting: boolean;
+  isEditing: boolean;
+  handleDelete: () => void;
+  colors: { error: string; primaryContainer: string };
+  t: TFunction;
+  name: string;
+  setName: (value: string) => void;
+  title: string | null;
+  setTitle: (value: string) => void;
+  description: string | null;
+  setDescription: (value: string) => void;
+  gender: string | null;
+  setGender: (value: string) => void;
+  race: string | null;
+  setRace: (value: string) => void;
+  subrace: string | null;
+  setSubrace: (value: string) => void;
+  personality: string | null;
+  setPersonality: (value: string) => void;
+  motivation: string | null;
+  setMotivation: (value: string) => void;
+  qualities: string | null;
+  setQualities: (value: string) => void;
+  weaknesses: string | null;
+  setWeaknesses: (value: string) => void;
+  biography: string | null;
+  setBiography: (value: string) => void;
+  plannedTimeline: string | null;
+  setPlannedTimeline: (value: string) => void;
+  isFavorite: boolean;
+  setIsFavorite: (value: boolean) => void;
+  extraNotes: string | null;
+  setExtraNotes: (value: string) => void;
+  commonInputStyles: { input: StyleProp<TextStyle>; multiline: StyleProp<TextStyle> };
+  selectedStory: { id: string; statSystem?: boolean | null } | null | undefined;
+  customFields: StorySchemaFieldSelect[];
+  customValues: CustomAttributeValues;
+  setCustomValues: Dispatch<SetStateAction<CustomAttributeValues>>;
+  styles: { tagSection: StyleProp<ViewStyle>; noteSection: StyleProp<ViewStyle> };
+  availableTags: TagSelect[];
+  selectedTagIds: string[];
+  handleTagSelectionChange: (tagIds: string[]) => void;
+  currentCharacterId: string | undefined;
+  characterModes: ModeSelect[];
+  modeService: () => ModeService;
+  userId: string | null | undefined;
+  statData: StoryStatsData;
+  statRelationService: () => StatRelationService;
+  characterRelations: CharacterRelation[];
+  allCharacters: CharacterSelect[];
+  handleSaveRelation: (relation: CharacterRelation) => void | Promise<void>;
+  handleDeleteRelation: (relationId: string) => void | Promise<void>;
+  characterNoteRelations: NoteRelation[];
+  allNotes: Note[];
+  saveNoteRelation: (relation: SaveNoteRelation) => Promise<void>;
+  deleteNoteRelation: (relationId: string) => Promise<void>;
+  seeAlsoManagerRef: RefObject<SeeAlsoManagerHandle | null>;
+};
+
+export function CharacterFormContent(props: CharacterFormContentProps) {
   const {
     formTitle,
+    formDescription,
     copy,
     handleSave,
     saving,
@@ -81,7 +167,7 @@ export function CharacterFormContent(props: any) {
   return (
     <EntityFormContainer
       title={formTitle}
-      description={props.formDescription}
+      description={formDescription}
       actions={
         <>
           <Button onPress={handleSave} disabled={saving || deleting}>
@@ -264,13 +350,13 @@ export function CharacterFormContent(props: any) {
         fields={customFields}
         values={customValues}
         onChange={(fieldId, value) =>
-          setCustomValues((prev: any) => ({ ...prev, [fieldId]: value }))
+          setCustomValues((prev) => ({ ...prev, [fieldId]: value }))
         }
       />
 
       <View style={styles.tagSection}>
         <MultiSelectPill
-          options={availableTags.map((tag: any) => ({
+          options={availableTags.map((tag) => ({
             label: tag.name,
             value: tag.id,
             color: tag.color || colors.primaryContainer,
@@ -294,7 +380,7 @@ export function CharacterFormContent(props: any) {
                 ...mode,
                 // The highest + 1: counting would repeat an existing mode's number after a deletion in the middle of
                 // the list.
-                order: Math.max(0, ...characterModes.map((existing: any) => existing.order + 1)),
+                order: Math.max(0, ...characterModes.map((existing) => existing.order + 1)),
               });
             }}
             onUpdate={(modeId, mode) => modeService().updateMode(userId!, modeId, mode)}
@@ -336,7 +422,7 @@ export function CharacterFormContent(props: any) {
             characters={allCharacters}
             onSave={handleSaveRelation}
             onDelete={handleDeleteRelation}
-            editable={true} // Editable in form screen
+            editable={true}
             currentStoryId={selectedStory.id}
             currentCharacterId={currentCharacterId ?? ''}
           />
@@ -348,8 +434,12 @@ export function CharacterFormContent(props: any) {
           <NoteManager
             noteRelations={characterNoteRelations}
             availableNotes={allNotes}
-            onSave={saveNoteRelation}
-            onDelete={deleteNoteRelation}
+            onSave={async (relation) => {
+              await saveNoteRelation(relation);
+            }}
+            onDelete={async (relationId) => {
+              await deleteNoteRelation(relationId);
+            }}
             editable={true}
             currentStoryId={selectedStory.id}
             currentEntityId={currentCharacterId ?? ''}

@@ -1160,6 +1160,46 @@ describe('engine control surface', () => {
     expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
   });
 
+  it('keeps an abandoned cycle on its original story after stopAndWait times out', async () => {
+    let finishCycle!: () => void;
+    const boundStories: string[] = [];
+    jest.spyOn(engine as any, 'performSync').mockImplementation(async function (this: any) {
+      this.cycleBinding = {
+        storyId: this.storyId,
+        db: this._db,
+        client: this.client,
+        activeServer: this.activeServer,
+      };
+      const binding = this.cycleBinding;
+      boundStories.push(binding.storyId);
+      await new Promise<void>((resolve) => {
+        finishCycle = resolve;
+      });
+      boundStories.push(this.cycleBinding?.storyId ?? 'missing');
+      boundStories.push(this.storyId);
+      if (this.cycleBinding === binding) this.cycleBinding = null;
+      return false;
+    });
+    jest.spyOn((engine as any).scheduler, 'stopAndWait').mockResolvedValue('timed_out');
+
+    engine.startSync();
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    const transition = engine.activateStory('story-2', {
+      ...SERVER,
+      id: 'server-2',
+      idUser: 'server-user',
+      url: 'http://servidor-2',
+    } as never);
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    expect((engine as any).storyId).toBe('story-2');
+    finishCycle();
+    await transition;
+
+    expect(boundStories).toEqual([STORY_ID, STORY_ID, 'story-2']);
+  });
+
   it('reset clears every connection-bound dependency so a later story cannot inherit it', async () => {
     const stopScheduler = jest
       .spyOn((engine as any).scheduler, 'stopAndWait')

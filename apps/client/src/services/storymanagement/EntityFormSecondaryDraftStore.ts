@@ -24,6 +24,27 @@ export type EntityFormSecondaryDraft = {
 const storageKey = (storyId: string, entityType: string, entityId: string) =>
   `keres:entity-secondary-draft:${storyId}:${entityType}:${entityId}`;
 
+/** Serializes read-modify-write per draft key so concurrent patches cannot clobber each other. */
+const draftLocks = new Map<string, Promise<unknown>>();
+
+function withDraftLock<T>(key: string, task: () => Promise<T>): Promise<T> {
+  const previous = draftLocks.get(key) ?? Promise.resolve();
+  const run = previous.catch(() => undefined).then(task);
+  draftLocks.set(
+    key,
+    run.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return run;
+}
+
+/** Test helper: drop queued draft locks so a hung suite cannot poison later cases. */
+export function resetEntityFormSecondaryDraftLocksForTests(): void {
+  draftLocks.clear();
+}
+
 export async function readEntityFormSecondaryDraft(
   storyId: string,
   entityType: string,
@@ -58,17 +79,20 @@ export async function writeEntityFormSecondaryDraft(
   entityId: string,
   draft: Omit<EntityFormSecondaryDraft, 'updatedAt'>,
 ): Promise<void> {
-  try {
-    const payload: EntityFormSecondaryDraft = {
-      ...draft,
-      pendingEntityRelations: draft.pendingEntityRelations ?? [],
-      updatedAt: new Date().toISOString(),
-    };
-    await AsyncStorage.setItem(storageKey(storyId, entityType, entityId), JSON.stringify(payload));
-  } catch (error) {
-    console.error('Failed to write entity secondary draft:', error);
-    throw error;
-  }
+  const key = storageKey(storyId, entityType, entityId);
+  await withDraftLock(key, async () => {
+    try {
+      const payload: EntityFormSecondaryDraft = {
+        ...draft,
+        pendingEntityRelations: draft.pendingEntityRelations ?? [],
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(key, JSON.stringify(payload));
+    } catch (error) {
+      console.error('Failed to write entity secondary draft:', error);
+      throw error;
+    }
+  });
 }
 
 export async function clearEntityFormSecondaryDraft(
@@ -76,17 +100,21 @@ export async function clearEntityFormSecondaryDraft(
   entityType: string,
   entityId: string,
 ): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(storageKey(storyId, entityType, entityId));
-  } catch (error) {
-    console.error('Failed to clear entity secondary draft:', error);
-    throw error;
-  }
+  const key = storageKey(storyId, entityType, entityId);
+  await withDraftLock(key, async () => {
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error) {
+      console.error('Failed to clear entity secondary draft:', error);
+      throw error;
+    }
+  });
 }
 
 /**
  * Patches an existing durable draft in place. No-ops when nothing is stored yet so
  * mid-session queue edits do not invent a draft before the save coordinator does.
+ * Serialized with write/clear for the same key.
  */
 export async function patchEntityFormSecondaryDraft(
   storyId: string,
@@ -94,12 +122,22 @@ export async function patchEntityFormSecondaryDraft(
   entityId: string,
   patch: Partial<Omit<EntityFormSecondaryDraft, 'updatedAt'>>,
 ): Promise<void> {
-  const current = await readEntityFormSecondaryDraft(storyId, entityType, entityId);
-  if (!current) return;
-  await writeEntityFormSecondaryDraft(storyId, entityType, entityId, {
-    selectedTagIds: patch.selectedTagIds ?? current.selectedTagIds,
-    pendingNoteRelations: patch.pendingNoteRelations ?? current.pendingNoteRelations,
-    customValues: patch.customValues ?? current.customValues,
-    pendingEntityRelations: patch.pendingEntityRelations ?? current.pendingEntityRelations,
+  const key = storageKey(storyId, entityType, entityId);
+  await withDraftLock(key, async () => {
+    const current = await readEntityFormSecondaryDraft(storyId, entityType, entityId);
+    if (!current) return;
+    try {
+      const payload: EntityFormSecondaryDraft = {
+        selectedTagIds: patch.selectedTagIds ?? current.selectedTagIds,
+        pendingNoteRelations: patch.pendingNoteRelations ?? current.pendingNoteRelations,
+        customValues: patch.customValues ?? current.customValues,
+        pendingEntityRelations: patch.pendingEntityRelations ?? current.pendingEntityRelations,
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(key, JSON.stringify(payload));
+    } catch (error) {
+      console.error('Failed to patch entity secondary draft:', error);
+      throw error;
+    }
   });
 }

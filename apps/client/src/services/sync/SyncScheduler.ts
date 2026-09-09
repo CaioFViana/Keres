@@ -111,12 +111,16 @@ export class SyncScheduler {
   /**
    * Stops accepting work and resolves after the active cycle finishes, or after
    * `timeoutMs` so a hung request cannot block context switches forever.
-   * The in-flight cycle may still complete in the background; generation bumping
-   * already prevents it from scheduling further work.
+   *
+   * Returns `'timed_out'` when the cycle is still running: the caller must keep that
+   * cycle bound to its original story/server so a later context change cannot mix work.
+   * Generation bumping already prevents it from scheduling further work.
    */
-  public async stopAndWait(timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS): Promise<void> {
+  public async stopAndWait(
+    timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS,
+  ): Promise<'idle' | 'timed_out'> {
     this.stop();
-    await this.waitForIdle(timeoutMs);
+    return this.waitForIdle(timeoutMs);
   }
 
   /** Allows explicit requests again after the owning context has been configured. */
@@ -130,16 +134,18 @@ export class SyncScheduler {
 
   private async runExclusive(): Promise<boolean> {
     if (this.inFlight) {
-      this.queued = true;
+      // A stopped/suspended scheduler must not coalesce follow-up work onto the abandoned cycle.
+      if (!this.suspended) this.queued = true;
       return false;
     }
     this.inFlight = true;
+    const generation = this.generation;
     try {
       let wasOffline = false;
       do {
         this.queued = false;
         wasOffline = await this.options.performSync();
-      } while (this.queued);
+      } while (this.queued && this.generation === generation && !this.suspended);
       return wasOffline;
     } finally {
       this.inFlight = false;
@@ -148,16 +154,22 @@ export class SyncScheduler {
     }
   }
 
-  private async waitForIdle(timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS): Promise<void> {
-    if (!this.inFlight) return;
-    await new Promise<void>((resolve) => {
-      const finish = () => {
+  private async waitForIdle(
+    timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS,
+  ): Promise<'idle' | 'timed_out'> {
+    if (!this.inFlight) return 'idle';
+    return new Promise<'idle' | 'timed_out'>((resolve) => {
+      let settled = false;
+      const finish = (result: 'idle' | 'timed_out') => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timer);
-        this.idleResolvers.delete(finish);
-        resolve();
+        this.idleResolvers.delete(onIdle);
+        resolve(result);
       };
-      const timer = setTimeout(finish, timeoutMs);
-      this.idleResolvers.add(finish);
+      const onIdle = () => finish('idle');
+      const timer = setTimeout(() => finish('timed_out'), timeoutMs);
+      this.idleResolvers.add(onIdle);
     });
   }
 }

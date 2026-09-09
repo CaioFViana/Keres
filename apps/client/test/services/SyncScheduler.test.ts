@@ -167,6 +167,21 @@ describe('SyncScheduler', () => {
 
     const stopped = scheduler.stopAndWait(20);
     await jest.advanceTimersByTimeAsync(20);
-    await expect(stopped).resolves.toBeUndefined();
+    await expect(stopped).resolves.toBe('timed_out');
+  });
+
+  it('does not coalesce queued work onto a cycle that was stopped', async () => {
+    let finish!: (offline: boolean) => void;
+    performSync.mockImplementation(() => new Promise<boolean>((resolve) => (finish = resolve)));
+    scheduler.start();
+    await flush();
+
+    const stopped = scheduler.stopAndWait();
+    scheduler.request();
+    finish(false);
+    await expect(stopped).resolves.toBe('idle');
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
   });
 });

@@ -93,28 +93,34 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     [allLocationRelations],
   );
 
+  // Empty sides are provisional placeholders from creation-time drafts for this form.
+  const isCurrentSide = useCallback(
+    (sideId: string) => sideId === currentLocationId || sideId === '',
+    [currentLocationId],
+  );
+
   const parentRelation = useMemo(
     () =>
       liveRelations.find(
-        (r) => r.relationType === 'contains' && r.locationBId === currentLocationId,
+        (r) => r.relationType === 'contains' && isCurrentSide(r.locationBId),
       ),
-    [liveRelations, currentLocationId],
+    [liveRelations, isCurrentSide],
   );
   const childRelations = useMemo(
     () =>
       liveRelations.filter(
-        (r) => r.relationType === 'contains' && r.locationAId === currentLocationId,
+        (r) => r.relationType === 'contains' && isCurrentSide(r.locationAId),
       ),
-    [liveRelations, currentLocationId],
+    [liveRelations, isCurrentSide],
   );
   const connectionRelations = useMemo(
     () =>
       liveRelations.filter(
         (r) =>
           r.relationType === 'connected_to' &&
-          (r.locationAId === currentLocationId || r.locationBId === currentLocationId),
+          (isCurrentSide(r.locationAId) || isCurrentSide(r.locationBId)),
       ),
-    [liveRelations, currentLocationId],
+    [liveRelations, isCurrentSide],
   );
 
   const ancestorIds = useMemo(

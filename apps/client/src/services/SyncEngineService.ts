@@ -81,6 +81,16 @@ export class SyncEngineService {
   private entityHandlers: Map<string, ClientSyncEntityHandler>;
   private contextTransition: Promise<void> = Promise.resolve();
   private pendingContextTransitions = 0;
+  /**
+   * Bindings captured at the start of an active cycle. Context switches after a
+   * `stopAndWait` timeout must not redirect an in-flight cycle onto another story.
+   */
+  private cycleBinding: {
+    storyId: string;
+    db: AppDrizzleClient;
+    client: KeresAxiosInstance;
+    activeServer: ServerSelect | null;
+  } | null = null;
 
   public constructor(private readonly dependencies: SyncEngineDependencies) {
     this.client = dependencies.createClient();
@@ -94,15 +104,9 @@ export class SyncEngineService {
     });
     this.entityHandlers = dependencies.createEntityHandlers();
     const syncContext: SyncContext = {
-      db: () => {
-        if (!this._db) throw new Error('Sync database is not configured.');
-        return this._db;
-      },
-      storyId: () => {
-        if (!this.storyId) throw new Error('Sync story is not configured.');
-        return this.storyId;
-      },
-      client: () => this.client,
+      db: () => this.resolveCycleDb(),
+      storyId: () => this.resolveCycleStoryId(),
+      client: () => this.resolveCycleClient(),
       conflictService: () => this.conflictService,
       notifier: () => this.dependencies.notifier,
     };
@@ -113,11 +117,27 @@ export class SyncEngineService {
         this.push.rebasePendingOperations(operations, version),
     });
     this.media = new SyncMedia({
-      db: () => this._db,
-      storyId: () => this.storyId,
-      server: () => this.activeServer,
-      client: () => this.client,
+      db: () => this.cycleBinding?.db ?? this._db,
+      storyId: () => this.cycleBinding?.storyId ?? this.storyId,
+      server: () => this.cycleBinding?.activeServer ?? this.activeServer,
+      client: () => this.resolveCycleClient(),
     });
+  }
+
+  private resolveCycleDb(): AppDrizzleClient {
+    const db = this.cycleBinding?.db ?? this._db;
+    if (!db) throw new Error('Sync database is not configured.');
+    return db;
+  }
+
+  private resolveCycleStoryId(): string {
+    const storyId = this.cycleBinding?.storyId ?? this.storyId;
+    if (!storyId) throw new Error('Sync story is not configured.');
+    return storyId;
+  }
+
+  private resolveCycleClient(): KeresAxiosInstance {
+    return this.cycleBinding?.client ?? this.client;
   }
 
   public get lifecycle(): SyncEngineLifecycle {
@@ -230,6 +250,8 @@ export class SyncEngineService {
     this.scheduler.stop();
     this.pendingContextTransitions += 1;
     const transition = this.contextTransition.then(async () => {
+      // Even on timeout the in-flight cycle keeps `cycleBinding` and finishes against
+      // the story it started with; only the live pointers move in `change()`.
       await this.scheduler.stopAndWait();
       change();
     });
@@ -278,10 +300,19 @@ export class SyncEngineService {
       return false;
     }
 
+    const binding = {
+      storyId: this.storyId,
+      db: this._db,
+      client: this.client,
+      activeServer: this.activeServer,
+    };
+    this.cycleBinding = binding;
+    const { storyId, db, client } = binding;
+
     try {
       // 1. Get local story details and initial server max operation version
-      const localStory = await this._db.query.stories.findFirst({
-        where: eq(schema.stories.id, this.storyId),
+      const localStory = await db.query.stories.findFirst({
+        where: eq(schema.stories.id, storyId),
         columns: {
           id: true,
           version: true,
@@ -292,7 +323,7 @@ export class SyncEngineService {
       });
 
       if (!localStory) {
-        console.log(`Story with ID ${this.storyId} not found locally.`);
+        console.log(`Story with ID ${storyId} not found locally.`);
         this.deactivateStoryFromActiveCycle();
         return false;
       }
@@ -303,21 +334,19 @@ export class SyncEngineService {
       // 2. Pull remote updates first (since the latest known server version).
       // The server returns at most MAX_SYNC_PULL_BATCH ops; we repeat until a page comes back incomplete, so
       // as not to leave a large backlog for the next cycle.
-      console.log(
-        `Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`,
-      );
+      console.log(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
       const remoteUpdates: StoryUpdate[] = [];
       let publicFavorites: Favorite[] = [];
       let myRole: 'owner' | 'writer' | 'reader' = localStory.myRole || 'reader';
       let pullCursor = lastSyncedLog;
       for (let page = 0; page < 20; page += 1) {
-        const pullResponse = await this.client.get<{
+        const pullResponse = await client.get<{
           updates: StoryUpdate[];
           publicFavorites?: Favorite[];
           serverMaxOperationVersion: number;
           role: 'owner' | 'writer' | 'reader';
         }>(
-          `/sync/${this.storyId}/pull?lastOperationVersion=${pullCursor}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
+          `/sync/${storyId}/pull?lastOperationVersion=${pullCursor}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
         );
         const pageUpdates = pullResponse.data.updates ?? [];
         publicFavorites = pullResponse.data.publicFavorites ?? publicFavorites;
@@ -389,8 +418,8 @@ export class SyncEngineService {
             break;
           }
 
-          if (update.entity === 'Story' && update.type === 'create' && update.id !== this.storyId) {
-            console.warn(`Ignoring Story create for ${update.id} while syncing ${this.storyId}.`);
+          if (update.entity === 'Story' && update.type === 'create' && update.id !== storyId) {
+            console.warn(`Ignoring Story create for ${update.id} while syncing ${storyId}.`);
             await this.pull.recordRemoteOperationLocally(rawUpdate);
             markRemoteOperationApplied(rawUpdate);
             continue;
@@ -425,9 +454,9 @@ export class SyncEngineService {
             if (update.type === 'create') {
               await this.pull.applyRemoteCreate(update, handler);
             } else if (update.type === 'update') {
-              await handler.applyUpdate(this.storyId, update);
+              await handler.applyUpdate(storyId, update);
             } else if (update.type === 'delete') {
-              await handler.applyDelete(this.storyId, update);
+              await handler.applyDelete(storyId, update);
             } else if (update.type === 'reorder') {
               const reorderUpdate = update as
                 | ChapterReorderingStoryUpdate
@@ -441,7 +470,7 @@ export class SyncEngineService {
                 break;
               }
 
-              await applyReorderToLocalDb(this._db, reorderUpdate, new Date(update.operationTime!));
+              await applyReorderToLocalDb(db, reorderUpdate, new Date(update.operationTime!));
             }
             markEntityUpdated(update.entity, update.id);
 
@@ -484,14 +513,14 @@ export class SyncEngineService {
           if (!eventName) continue;
           for (const entityId of ids) {
             if (entity === 'Favorite') {
-              const favorite = await this._db.query.favorites.findFirst({
+              const favorite = await db.query.favorites.findFirst({
                 where: eq(schema.favorites.id, entityId),
                 columns: { entityId: true, entityType: true, userId: true },
               });
               if (favorite) {
                 this.dependencies.events.emit(
                   'favorite_changed',
-                  this.storyId,
+                  storyId,
                   favorite.entityType,
                   favorite.entityId,
                   favorite.userId,
@@ -499,14 +528,14 @@ export class SyncEngineService {
               }
               const targetEvent = favorite && FAVORITE_TARGET_EVENTS[favorite.entityType];
               if (targetEvent)
-                this.dependencies.events.emit(targetEvent, this.storyId, favorite.entityId);
+                this.dependencies.events.emit(targetEvent, storyId, favorite.entityId);
             } else {
-              this.dependencies.events.emit(eventName, this.storyId, entityId);
+              this.dependencies.events.emit(eventName, storyId, entityId);
             }
           }
         }
         this.dependencies.events.emit('story_data_changed', {
-          storyId: this.storyId,
+          storyId,
           entityTypes: Array.from(changedEntityIds.keys()),
           entityIds: Object.fromEntries(
             Array.from(changedEntityIds.entries()).map(([entity, ids]) => [
@@ -518,11 +547,9 @@ export class SyncEngineService {
         });
 
         // Emit event to signal operation log update after applying remote updates
-        this.dependencies.events.emit('operation_log_updated', this.storyId);
+        this.dependencies.events.emit('operation_log_updated', storyId);
       } else {
-        console.log(
-          `No new remote updates for story ${this.storyId} since version ${lastSyncedLog}`,
-        );
+        console.log(`No new remote updates for story ${storyId} since version ${lastSyncedLog}`);
       }
 
       // The public snapshot is the authoritative source for collaborators' favourites. It closes gaps left by
@@ -561,14 +588,13 @@ export class SyncEngineService {
 
           this.dependencies.events.emit(
             'favorite_changed',
-            this.storyId,
+            storyId,
             favorite.entityType,
             favorite.entityId,
             favorite.userId,
           );
           const targetEvent = FAVORITE_TARGET_EVENTS[favorite.entityType];
-          if (targetEvent)
-            this.dependencies.events.emit(targetEvent, this.storyId, favorite.entityId);
+          if (targetEvent) this.dependencies.events.emit(targetEvent, storyId, favorite.entityId);
         }
       }
 
@@ -580,11 +606,11 @@ export class SyncEngineService {
         }
       } catch (pushError: any) {
         if (isOfflineError(pushError)) {
-          console.log(`Push skipped for story ${this.storyId}: server unreachable.`);
+          console.log(`Push skipped for story ${storyId}: server unreachable.`);
           return true;
         }
         console.log(
-          `Error pushing local operations for story ${this.storyId}:`,
+          `Error pushing local operations for story ${storyId}:`,
           pushError?.message || pushError,
         );
         this.dependencies.notifier.pushFailed();
@@ -592,24 +618,24 @@ export class SyncEngineService {
 
       // 5. Update local story's lastServerSyncedLog and cached role
       const roleChanged = myRole && myRole !== localStory.myRole;
-      await this._db
+      await db
         .update(schema.stories)
         .set({
           lastServerSyncedLog: highestAppliedRemoteVersion,
           lastPublicFavoriteLog: highestAppliedPublicFavoriteVersion,
           myRole,
         })
-        .where(eq(schema.stories.id, this.storyId));
+        .where(eq(schema.stories.id, storyId));
       if (roleChanged) {
-        this.dependencies.events.emit('story_role_changed', this.storyId);
+        this.dependencies.events.emit('story_role_changed', storyId);
       }
 
       // Reaching here means the pull round-trip against the server succeeded, so this is
       // a real "last synced" timestamp - not just when the server was registered (which is
       // all `servers.lastSyncDate` ever reflected before, since nothing else touched it).
-      if (this.activeServer) {
-        const serverService = this.dependencies.createServerService(this._db);
-        await serverService.updateServer(this.activeServer.id, { lastSyncDate: new Date() });
+      if (binding.activeServer) {
+        const serverService = this.dependencies.createServerService(db);
+        await serverService.updateServer(binding.activeServer.id, { lastSyncDate: new Date() });
       }
 
       // 6. Reconcile media files. It runs after the metadata on purpose: a media file can only be downloaded
@@ -620,12 +646,16 @@ export class SyncEngineService {
       if (isOfflineError(error)) {
         // Offline-first: an unreachable server is expected, not a failure worth
         // interrupting the user for. Retried on a shorter delay.
-        console.log(`Sync skipped for story ${this.storyId}: server unreachable.`);
+        console.log(`Sync skipped for story ${storyId}: server unreachable.`);
         return true;
       }
       console.log('Error during sync operation:', error?.message || error);
       this.dependencies.notifier.syncFailed();
       return false;
+    } finally {
+      if (this.cycleBinding === binding) {
+        this.cycleBinding = null;
+      }
     }
   }
 }

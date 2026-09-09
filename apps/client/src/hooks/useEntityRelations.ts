@@ -135,18 +135,14 @@ export function useEntityRelations({
   const syncPendingNotesToDurableDraft = useCallback(
     async (nextPending: NoteRelation[]) => {
       if (!storyId || !entityId) return;
-      try {
-        await patchEntityFormSecondaryDraft(storyId, entityType, entityId, {
+      await patchEntityFormSecondaryDraft(storyId, entityType, entityId, {
+        pendingNoteRelations: nextPending,
+      });
+      if (durableDraftSessionRef.current.draft) {
+        durableDraftSessionRef.current.draft = {
+          ...durableDraftSessionRef.current.draft,
           pendingNoteRelations: nextPending,
-        });
-        if (durableDraftSessionRef.current.draft) {
-          durableDraftSessionRef.current.draft = {
-            ...durableDraftSessionRef.current.draft,
-            pendingNoteRelations: nextPending,
-          };
-        }
-      } catch (error) {
-        console.error('Failed to sync pending note relations to secondary draft:', error);
+        };
       }
     },
     [storyId, entityType, entityId],
@@ -338,12 +334,19 @@ export function useEntityRelations({
     async (relation: SaveNoteRelation) => {
       const pending = pendingNoteRelations.find((item) => item.id === relation.id);
       if (pending) {
+        const previous = pendingNoteRelations;
         const nextPending = pendingNoteRelations.map((item) =>
           item.id === pending.id ? { ...item, ...relation } : item,
         );
         setPendingNoteRelations(nextPending);
-        await syncPendingNotesToDurableDraft(nextPending);
-        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        try {
+          await syncPendingNotesToDurableDraft(nextPending);
+          AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        } catch (error) {
+          setPendingNoteRelations(previous);
+          console.error('Failed to sync pending note relation draft:', error);
+          AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
+        }
         return;
       }
       if (!entityId) {
@@ -385,10 +388,17 @@ export function useEntityRelations({
   const deleteNoteRelation = useCallback(
     async (relationId: string) => {
       if (!entityId || pendingNoteRelations.some((relation) => relation.id === relationId)) {
+        const previous = pendingNoteRelations;
         const nextPending = pendingNoteRelations.filter((r) => r.id !== relationId);
         setPendingNoteRelations(nextPending);
-        await syncPendingNotesToDurableDraft(nextPending);
-        AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
+        try {
+          await syncPendingNotesToDurableDraft(nextPending);
+          AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
+        } catch (error) {
+          setPendingNoteRelations(previous);
+          console.error('Failed to sync pending note relation draft delete:', error);
+          AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
+        }
         return;
       }
       if (!services || !storyId || !userId) {

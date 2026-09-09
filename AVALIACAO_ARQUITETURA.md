@@ -4,7 +4,51 @@ Análise inicial: 6 de setembro de 2026.
 
 Reavaliações anteriores: 7 de setembro de 2026 (commits `d21ff776` e correção `90e92735`); 9 de setembro de 2026 (auditoria ampla).
 
-**Atualização desta versão: 9 de setembro de 2026** — resolução das pendências P01–P10 sobre o commit de trabalho atual (base `90e92735` + alterações desta sessão).
+**Atualização desta versão: 9 de setembro de 2026** — revisão do commit `7e1c81dc`, comparado a `b32b14a9`. As validações históricas abaixo pertencem às respectivas passagens; a seção seguinte registra o estado atual.
+
+## Estado atual — revisão de `7e1c81dc`
+
+A estrutura continua adequada: monorepo organizado por aplicações, cliente offline-first dividido por funcionalidades e responsabilidades, API em camadas e núcleo compartilhado. Não há motivo demonstrado para migrar tudo para outra arquitetura. Entretanto, ainda existem falhas de consistência em sincronização e recuperação de rascunhos. Não considero o trabalho encerrado, independentemente da porcentagem de cobertura.
+
+### Correções confirmadas nesta passagem
+
+- O provedor de autenticação agora pertence a cada instância HTTP, sem compartilhar a variável global anterior.
+- Os clientes HTTP recebem timeout padrão. Isso limita cada requisição, mas não garante o encerramento de um ciclo inteiro de sync.
+- Gravação e remoção do rascunho propagam erros ao coordenador de salvamento. Os caminhos de edição incremental ainda têm o problema R04 abaixo.
+- A hidratação de notas pendentes passou a ocorrer uma vez por sessão, evitando que um refresh normal reaplique a cópia antiga após exclusão.
+- Character/Location passaram a persistir relações específicas e a tratar exclusão de pendentes pelo ID da relação. A apresentação dessas relações ainda está incompleta: R03.
+- Os canais de mídia do desktop agora verificam o renderer autorizado.
+- O typecheck do cliente passou; o erro anterior no teste do coordenador não permanece.
+
+### O que resta fazer, em ordem de prioridade
+
+| ID | Prioridade | Pendência | Evidência |
+| --- | --- | --- | --- |
+| R01 | Alta | Impedir troca de contexto enquanto o ciclo anterior ainda pode produzir efeitos | Reproduzida em teste isolado do engine com relógio simulado |
+| R02 | Alta | Serializar alterações duráveis por chave de rascunho | Reproduzida em teste isolado com dois patches concorrentes |
+| R03 | Alta | Resolver IDs provisórios na apresentação e edição das relações recuperadas | Confirmada por leitura conjunta de hooks, conteúdo e componentes; sem reprodução visual nesta passagem |
+| R04 | Média | Comunicar falhas de persistência também nas edições incrementais | Confirmada por leitura dos caminhos de erro |
+| R05 | Média | Substituir contratos `props: any` nas fronteiras entre telas e conteúdo | Ocorrências verificadas no código; dívida de manutenção, sem bug específico atribuído |
+
+**R01 — Timeout de parada não equivale a cancelamento.** Em `apps/client/src/services/sync/SyncScheduler.ts:117`, `stopAndWait` resolve ao terminar o ciclo **ou** ao expirar 45 segundos. Em `apps/client/src/services/SyncEngineService.ts:229`, `transitionContext` então troca história, cliente ou banco. O ciclo antigo continua vivo, e seus serviços consultam dependências mutáveis. No teste adicional, o mesmo ciclo observou `[história original, story-2]` antes/depois da espera. A troca de geração impede reagendamento, mas não efeitos do trabalho em andamento. O timeout HTTP por requisição também não limita um ciclo com várias páginas, push e mídia. Corrigir com cancelamento propagado e encerramento efetivo antes da troca, ou rejeitar a transição ao expirar o prazo mantendo o contexto estável. Se permitir trabalho antigo em background, será necessário isolar todas as dependências por ciclo e impedir qualquer efeito obsoleto. Validar troca de história, banco e reset após o prazo, não só o retorno de `stopAndWait`.
+
+**R02 — Patches podem perder alterações.** `patchEntityFormSecondaryDraft` em `apps/client/src/services/storymanagement/EntityFormSecondaryDraftStore.ts` faz leitura, merge e gravação sem exclusão mútua. Notas e relações específicas usam a mesma chave. Dois patches podem ler a mesma versão e a última gravação restaurar dados removidos pelo primeiro. O teste executou simultaneamente remoção de notas pendentes e remoção de relações específicas: a nota antiga voltou ao armazenamento. Serializar por chave a operação completa, incluindo sua interação com gravação integral e limpeza; testar também patch concorrente com conclusão do salvamento para evitar recriar um rascunho já eliminado.
+
+**R03 — Concatenar listas não resolve a identidade provisória.** `useCharacterFormAssociations` e `useLocationFormAssociations` retornam listas persistidas + pendentes, mas as pendentes criadas antes da entidade conservam `''` em uma extremidade. `CharacterFormContent`/`LocationFormContent` passam o ID definitivo aos managers. `CharacterRelationManager.tsx:56` e `LocationRelationManager.tsx:96` filtram pela igualdade com esse ID, excluindo as pendentes ao reter o ID ou reabrir o formulário. Resolver o ID na projeção usada pela interface, preservando a identificação de pendente. Em Location, revisar também `handleSetParent`: após existir ID ele grava diretamente, sem substituir a intenção de pai ainda pendente; o replay pode reaplicar o pai antigo. Validar criação → falha secundária → edição/exclusão → reabertura → novo salvamento nos dois formulários.
+
+**R04 — Persistência incremental ainda pode anunciar sucesso indevido.** Embora o store agora lance erros de escrita, `syncPendingNotesToDurableDraft` em `useEntityRelations.ts:135` captura e apenas registra a exceção; os handlers seguintes exibem sucesso. Os helpers equivalentes de Character/Location também absorvem o erro. Além disso, a leitura do store transforma erro de acesso em `null`, fazendo `patch` terminar como se não existisse rascunho. Uma alteração pode ficar só em memória e a versão antiga voltar após reinício. Distinguir ausência, conteúdo inválido e erro de acesso; preservar a edição em memória, indicar que a persistência falhou e permitir nova tentativa. Testar falhas de leitura/escrita nos handlers, além do contrato isolado do store.
+
+**R05 — Contratos de apresentação ainda não tipados.** Há `props: any` em `CharacterFormContent`, `LocationFormContent`, `CharacterDetailContent`, `SceneDetailContent`, `ChoiceViewContent`, `createChapterListItemRenderer` e `createCharacterDetailMutations`. A extração estrutural melhorou a leitura, mas esses contratos deixam renomeações e propriedades ausentes escaparem do compilador. Definir interfaces explícitas ou derivadas dos hooks, com apenas os dados e ações necessários. Isso não exige outra camada nem reescrita dos formulários.
+
+### Validação desta revisão
+
+- Cliente: 8 suítes existentes, **150 testes aprovados** (engine, scheduler, HTTP, store, coordenador, relações e actions de Character/Location).
+- Desktop: 7 arquivos, **101 testes aprovados**.
+- Typecheck do cliente: **aprovado**.
+- Dois testes temporários adicionais: **2 falhas esperadas que reproduziram R01 e R02**. Os arquivos temporários foram removidos após a análise; devem virar testes permanentes junto das correções.
+- Não foram reexecutados nesta continuação o lint global, toda a suíte do monorepo, integrações PostgreSQL/SQLite ou testes visuais do produto. Os resultados históricos abaixo não equivalem a nova execução sobre este commit.
+
+As notas numéricas abaixo são históricas e qualitativas; não devem ser interpretadas como aprovação dos fluxos afetados por R01–R04. A prioridade agora é fechar esses contratos de consistência e completar a tipagem das fronteiras. A interseção Drizzle permanece uma limitação consciente mitigada por contratos, sem necessidade demonstrada de reescrita.
 
 ## Escopo e resultado
 
@@ -34,7 +78,7 @@ Não há indicação de necessidade de reescrever a arquitetura.
 
 ## Pendências
 
-**Todas as pendências P01–P10 desta avaliação foram resolvidas nesta sessão.** Trabalho residual natural (outros formulários além de Character/Location no padrão Scene, rotas que usam `set.status` + return sem throw, medição Postgres nesta máquina) não reabre os itens fechados abaixo.
+**Os itens históricos P01–P10 foram encerrados nas passagens anteriores.** Isso não encerra os achados atuais R01–R05 listados no início deste documento. As extrações de formulários, padronização HTTP e validações de banco posteriores estão registradas abaixo.
 
 | ID | Status | O que foi feito |
 | --- | --- | --- |
@@ -53,7 +97,8 @@ Não há indicação de necessidade de reescrever a arquitetura.
 
 | Ponto | Situação atual |
 | --- | --- |
-| D01–D03, D05, D09–D11, D13 | Corrigidos (avaliações anteriores) |
+| D01–D03, D05, D09, D11, D13 | Corrigidos nas avaliações anteriores; observar os novos achados de recuperação acima |
+| D10 | A estabilidade do contexto precisa de nova correção devido ao timeout de parada: R01 |
 | D04 | Limitação tipada residual mitigada: documentação + checks + contrato revalidado em PostgreSQL e SQLite (9/9) |
 | D06 | Resolvido: handlers + push/recovery com `tx` explícito; `db` sem Proxy ALS |
 | D07 | Medição atual registrada; pisos elevados onde a margem permitiu |

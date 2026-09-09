@@ -6,6 +6,7 @@ import {
   clearEntityFormSecondaryDraft,
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
+  resetEntityFormSecondaryDraftLocksForTests,
   writeEntityFormSecondaryDraft,
 } from '../../src/services/storymanagement/EntityFormSecondaryDraftStore';
 
@@ -14,6 +15,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 beforeEach(async () => {
+  resetEntityFormSecondaryDraftLocksForTests();
   await AsyncStorage.clear();
 });
 
@@ -105,5 +107,29 @@ describe('EntityFormSecondaryDraftStore', () => {
     expect(draft?.customValues).toEqual({ field: 'value' });
     expect(draft?.pendingEntityRelations).toEqual([]);
     expect(draft?.pendingNoteRelations).toHaveLength(1);
+  });
+
+  it('serializes concurrent patches so later writes cannot clobber earlier ones', async () => {
+    await writeEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+      selectedTagIds: [],
+      pendingNoteRelations: [],
+      customValues: {},
+      pendingEntityRelations: [],
+    });
+
+    await Promise.all([
+      patchEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+        selectedTagIds: ['tag-a'],
+      }),
+      patchEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+        pendingEntityRelations: [{ id: 'rel-b' }],
+      }),
+    ]);
+
+    const draft = await readEntityFormSecondaryDraft('story-1', 'Character', 'char-1');
+    // Without a per-key lock, both patches can read the empty draft and the last writer
+    // drops the other field. Serialization applies both updates.
+    expect(draft?.selectedTagIds).toEqual(['tag-a']);
+    expect(draft?.pendingEntityRelations).toEqual([{ id: 'rel-b' }]);
   });
 });

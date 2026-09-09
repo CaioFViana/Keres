@@ -30,13 +30,17 @@ const draftLocks = new Map<string, Promise<unknown>>();
 function withDraftLock<T>(key: string, task: () => Promise<T>): Promise<T> {
   const previous = draftLocks.get(key) ?? Promise.resolve();
   const run = previous.catch(() => undefined).then(task);
-  draftLocks.set(
-    key,
-    run.then(
-      () => undefined,
-      () => undefined,
-    ),
+  const tracked = run.then(
+    () => undefined,
+    () => undefined,
   );
+  draftLocks.set(key, tracked);
+  // Drop the entry once this operation is the latest completed one for the key.
+  void tracked.then(() => {
+    if (draftLocks.get(key) === tracked) {
+      draftLocks.delete(key);
+    }
+  });
   return run;
 }
 
@@ -50,9 +54,15 @@ export async function readEntityFormSecondaryDraft(
   entityType: string,
   entityId: string,
 ): Promise<EntityFormSecondaryDraft | null> {
+  let raw: string | null;
   try {
-    const raw = await AsyncStorage.getItem(storageKey(storyId, entityType, entityId));
-    if (!raw) return null;
+    raw = await AsyncStorage.getItem(storageKey(storyId, entityType, entityId));
+  } catch (error) {
+    console.error('Failed to read entity secondary draft:', error);
+    throw error;
+  }
+  if (!raw) return null;
+  try {
     const parsed = JSON.parse(raw) as Partial<EntityFormSecondaryDraft>;
     if (!parsed || typeof parsed !== 'object') return null;
     return {
@@ -68,7 +78,7 @@ export async function readEntityFormSecondaryDraft(
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Failed to read entity secondary draft:', error);
+    console.error('Corrupt entity secondary draft ignored:', error);
     return null;
   }
 }

@@ -22,6 +22,16 @@ dotenv.config({ path: '../.env' });
  * `withTransaction` below, which is the backbone of synchronization. libSQL speaks SQLite through an
  * async API, so none of that had to change.
  *
+ * ## Application contract vs driver types
+ *
+ * Services import `CompatibleDb` / `db` — never `NodePgDatabase` or `LibSQLDatabase`. That keeps
+ * engine work localized to this module.
+ *
+ * To add another engine later (not in scope): create the connection, cover dialect gaps in
+ * `sqlOperators.ts` / `withWriteTransaction` / migrations, pass it through `exposeCompatibleDb`,
+ * and extend the dual-engine contract tests. Do not widen the app by intersecting more Drizzle
+ * driver generics into call sites outside `db/`.
+ *
  * The exported contract contains only operations exercised against both drivers. Driver-specific
  * capabilities stay behind this module.
  */
@@ -38,9 +48,10 @@ dotenv.config({ path: '../.env' });
  * `db/` dialect adapters (`sqlOperators.ts`, migrations) or must not be used.
  *
  * Add a new shared operation only with (1) signatures from both drivers and (2) a contract
- * test that runs on PostgreSQL and SQLite. Intersecting native overloads keeps call-site
- * ergonomics; it is not, by itself, proof that every accepted call is portable — the
- * contract tests and the forbidden-key checks are the real gate.
+ * test that runs on PostgreSQL and SQLite.
+ *
+ * Policy (closed): intersecting native overloads keeps call-site ergonomics; intersection ≠
+ * portability proof. The contract tests and the forbidden-key checks are the real gate.
  */
 type PostgresDb = NodePgDatabase<typeof schema>;
 type SqliteDb = LibSQLDatabase<typeof schema>;
@@ -65,14 +76,21 @@ type CommonDatabaseOperations = {
   [Operation in CommonOperation]: PostgresDb[Operation] & SqliteDb[Operation];
 };
 
+declare const keresCompatibleDbBrand: unique symbol;
+
+/**
+ * Branded application database handle. A raw `NodePgDatabase` / `LibSQLDatabase` is not
+ * assignable without `exposeCompatibleDb`, so services cannot bypass the portability boundary.
+ */
 export type CompatibleDb = CommonDatabaseOperations & {
   transaction<T>(work: (tx: CompatibleDb) => Promise<T>): Promise<T>;
+  readonly [keresCompatibleDbBrand]: true;
 };
 
 /**
  * The schemas use equivalent runtime modes for every shared column (Date, boolean, JSON and number).
  * Drizzle models the two drivers with unrelated generic types, so this is the one deliberate bridge
- * from libSQL to the application's compatible surface.
+ * from a native adapter (or its transaction) onto the application's compatible surface.
  */
 function exposeCompatibleDb(database: unknown): CompatibleDb {
   return database as unknown as CompatibleDb;

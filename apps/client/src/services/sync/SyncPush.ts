@@ -44,6 +44,7 @@ export class SyncPush {
       const pushResponse = await this.context.client().post<SyncPushResult>(
         `/sync/${this.context.storyId()}`,
         prepared.map((entry) => entry.update),
+        { signal: this.context.abortSignal() },
       );
       const summary = await this.applyPushResult(
         pushResponse.data,

@@ -28,7 +28,7 @@ describe('createCharacterDetailMutations', () => {
       characterSceneServiceRef: { current: characterSceneService },
       character: { storyId: 'story-1' },
       userId: 'user-1',
-      t: (key: string) => key,
+      t: ((key: string) => key) as never,
       characterId: 'character-1',
       setCharacterRelations,
       setCharacterSceneRelations,

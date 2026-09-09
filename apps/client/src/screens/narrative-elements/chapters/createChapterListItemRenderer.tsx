@@ -31,7 +31,30 @@ export const scenesShownForChapter = (
   return matchingScenes.length > 0 ? matchingScenes : chapterScenes;
 };
 
-export const createChapterListItemRenderer = (props: any) => {
+export type ChapterListItemRendererProps = {
+  activeSort: string | null;
+  activeTagIds: string[];
+  advancedMatches: AdvancedNarrativeMatches | null | undefined;
+  canEdit: boolean;
+  choices: ChoiceSelect[];
+  favoriteFilterState: string;
+  handleAddScene: (chapterId: string) => void;
+  handleOpenScene: (sceneId: string) => void;
+  handleToggleFavorite: (chapterId: string, isFavorite: boolean) => void | Promise<void>;
+  handleToggleSceneFavorite: (sceneId: string, isFavorite: boolean) => void | Promise<void>;
+  handleViewDetails: (chapterId: string) => void;
+  scenesWithFavoriteState: Array<SceneSelect & { isFavorite?: boolean }>;
+  searchQuery: string;
+  selectedStory: { type?: 'linear' | 'branching' | null } | null | undefined;
+  sortDirection: 'asc' | 'desc' | string;
+  tagsByChapterId: Map<string, TagSelect[]>;
+  tagsBySceneId: Map<string, TagSelect[]>;
+  setReorderChapterId: (chapterId: string | null) => void;
+};
+
+// `activeSort` stays a plain string: the list screen owns the sort vocabulary.
+
+export const createChapterListItemRenderer = (props: ChapterListItemRendererProps) => {
   const {
     activeSort,
     activeTagIds,
@@ -54,24 +77,22 @@ export const createChapterListItemRenderer = (props: any) => {
 
   return function ChapterListItemRenderer({ item }: { item: ChapterSelect }) {
     const query = searchQuery.trim().toLocaleLowerCase();
-    const allChapterScenes = scenesWithFavoriteState.filter((scene: SceneSelect) =>
+    const allChapterScenes = scenesWithFavoriteState.filter((scene) =>
       sceneBelongsToGroup(scene, item.id),
     );
     const queryScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
     const choiceMatchedSceneIds = new Set(
       choices
-        .filter((choice: ChoiceSelect) => matchesChoiceQuery(choice, query))
-        .map((choice: ChoiceSelect) => choice.sceneId),
+        .filter((choice) => matchesChoiceQuery(choice, query))
+        .map((choice) => choice.sceneId),
     );
-    const chapterHasMatchingTag = (tagsByChapterId.get(item.id) ?? []).some((tag: TagSelect) =>
+    const chapterHasMatchingTag = (tagsByChapterId.get(item.id) ?? []).some((tag) =>
       activeTagIds.includes(tag.id),
     );
     const filteredByTag =
       activeTagIds.length > 0 && !chapterHasMatchingTag
         ? queryScenes.filter((scene) =>
-            (tagsBySceneId.get(scene.id) ?? []).some((tag: TagSelect) =>
-              activeTagIds.includes(tag.id),
-            ),
+            (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
           )
         : queryScenes;
     const filteredByFavorite =
@@ -91,10 +112,15 @@ export const createChapterListItemRenderer = (props: any) => {
         : filteredByFavorite;
     const hasSceneMatch = query
       ? scenesWithFavoriteState.some(
-          (scene: SceneSelect) =>
-            sceneBelongsToGroup(scene, item.id) && matchesSceneQuery(scene, query),
+          (scene) => sceneBelongsToGroup(scene, item.id) && matchesSceneQuery(scene, query),
         ) || choiceMatchedSceneIds.size > 0
       : chapterScenes.length !== allChapterScenes.length;
+
+    const storyType =
+      selectedStory?.type === 'linear' || selectedStory?.type === 'branching'
+        ? selectedStory.type
+        : undefined;
+    const direction = sortDirection === 'desc' ? 'desc' : 'asc';
 
     return (
       <ChapterListItem
@@ -105,7 +131,7 @@ export const createChapterListItemRenderer = (props: any) => {
         tags={tagsByChapterId.get(item.id)}
         renderScenes={({ expandedSceneIds, onSceneExpandedChange }) => (
           <ChapterScenesList
-            storyType={selectedStory?.type}
+            storyType={storyType}
             scenes={chapterScenes}
             allChapterScenes={allChapterScenes}
             choices={choices}
@@ -116,7 +142,7 @@ export const createChapterListItemRenderer = (props: any) => {
             onReorderScenes={() => props.setReorderChapterId(item.id)}
             unchaptered={isUnchapteredGroup(item.id)}
             sortBy={activeSort}
-            sortDirection={sortDirection}
+            sortDirection={direction}
             expandedSceneIds={expandedSceneIds}
             onSceneExpandedChange={onSceneExpandedChange}
             tagsBySceneId={tagsBySceneId}

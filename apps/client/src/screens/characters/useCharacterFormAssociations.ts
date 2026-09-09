@@ -114,26 +114,8 @@ export function useCharacterFormAssociations({
     };
   }, [storyId, initialCharacterId, onSecondaryDraftRestored]);
 
-  // Pending rows created before identity retention use '' for this character's side.
-  // Rewrite them as soon as the real id exists so the manager filter keeps them visible.
-  useEffect(() => {
-    if (!currentCharacterId) return;
-    setPendingCharacterRelations((prev) => {
-      let changed = false;
-      const next = prev.map((relation) => {
-        if (relation.character1Id !== '' && relation.character2Id !== '') return relation;
-        changed = true;
-        return {
-          ...relation,
-          character1Id:
-            relation.character1Id === '' ? currentCharacterId : relation.character1Id,
-          character2Id:
-            relation.character2Id === '' ? currentCharacterId : relation.character2Id,
-        };
-      });
-      return changed ? next : prev;
-    });
-  }, [currentCharacterId]);
+  // Provisional '' sides stay in pending state until persist; the merged list below
+  // rewrites them only for display so CharacterRelationManager keeps them visible.
 
   const handleTagSelectionChange = useCallback(
     (newSelection: string[]) => {

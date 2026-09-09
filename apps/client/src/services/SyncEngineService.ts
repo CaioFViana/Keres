@@ -12,7 +12,7 @@ import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { ServerSelect } from '../db/schema';
 import type { KeresAxiosInstance, TokenProvider } from './apiClient';
-import { isOfflineError } from './apiClient';
+import { isAbortError, isOfflineError } from './apiClient';
 import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import type { ServerService } from './ServerService';
 import type { SyncConflictService } from './SyncConflictService';
@@ -90,6 +90,7 @@ export class SyncEngineService {
     db: AppDrizzleClient;
     client: KeresAxiosInstance;
     activeServer: ServerSelect | null;
+    signal: AbortSignal;
   } | null = null;
 
   public constructor(private readonly dependencies: SyncEngineDependencies) {
@@ -100,7 +101,7 @@ export class SyncEngineService {
         hasServer: Boolean(this.client.defaults.baseURL),
         hasDatabase: Boolean(this._db),
       }),
-      performSync: () => this.performSync(),
+      performSync: (signal) => this.performSync(signal),
     });
     this.entityHandlers = dependencies.createEntityHandlers();
     const syncContext: SyncContext = {
@@ -109,6 +110,12 @@ export class SyncEngineService {
       client: () => this.resolveCycleClient(),
       conflictService: () => this.conflictService,
       notifier: () => this.dependencies.notifier,
+      abortSignal: () => {
+        if (!this.cycleBinding) {
+          throw new Error('Sync abort signal is not available outside an active cycle.');
+        }
+        return this.cycleBinding.signal;
+      },
     };
     this.push = new SyncPush(syncContext);
     this.pull = new SyncPull({
@@ -150,7 +157,7 @@ export class SyncEngineService {
     if (this._db === dbInstance && this.pendingContextTransitions === 0) {
       return Promise.resolve();
     }
-    return this.transitionContext(() => {
+    return this.applyContextTransition(() => {
       this._db = dbInstance;
       this._conflictService = null; // Recreated on demand, already bound to the new database.
       // Propagate the db instance to all registered handlers
@@ -166,7 +173,7 @@ export class SyncEngineService {
     if (!storyId) throw new Error('SyncEngineService: a story is required for activation.');
     if (!server.url) throw new Error('SyncEngineService: a server URL is required for activation.');
 
-    return this.transitionContext(() => {
+    return this.applyContextTransition(() => {
       if (!this._db) {
         throw new Error('SyncEngineService: bind the database before activating a story.');
       }
@@ -193,11 +200,11 @@ export class SyncEngineService {
   }
 
   public deactivateStory(): Promise<void> {
-    return this.transitionContext(() => this.clearStoryContext());
+    return this.applyContextTransition(() => this.clearStoryContext());
   }
 
   public reset(): Promise<void> {
-    return this.transitionContext(() => {
+    return this.applyContextTransition(() => {
       this.clearStoryContext();
       this._db = null;
       this._conflictService = null;
@@ -245,19 +252,40 @@ export class SyncEngineService {
     return this._conflictService;
   }
 
-  /** Serializes context mutations and keeps the active cycle on one stable set of dependencies. */
-  private transitionContext(change: () => void): Promise<void> {
+  /**
+   * Serializes context mutations and keeps the active cycle on one stable set of dependencies.
+   * Returns false when `stopAndWait` times out: live pointers stay put so an abandoned cycle
+   * cannot observe a newer story/server/database. Callers can retry after the cycle ends.
+   */
+  private transitionContext(change: () => void): Promise<boolean> {
     this.scheduler.stop();
     this.pendingContextTransitions += 1;
-    const transition = this.contextTransition.then(async () => {
-      // Even on timeout the in-flight cycle keeps `cycleBinding` and finishes against
-      // the story it started with; only the live pointers move in `change()`.
-      await this.scheduler.stopAndWait();
+    const run = (async () => {
+      await this.contextTransition.catch(() => undefined);
+      const stopResult = await this.scheduler.stopAndWait();
+      if (stopResult === 'timed_out') {
+        this.scheduler.resume();
+        return false;
+      }
       change();
-    });
-    this.contextTransition = transition.catch(() => {});
-    return transition.finally(() => {
+      return true;
+    })();
+    this.contextTransition = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run.finally(() => {
       this.pendingContextTransitions -= 1;
+    });
+  }
+
+  private applyContextTransition(change: () => void): Promise<void> {
+    return this.transitionContext(change).then((applied) => {
+      if (!applied) {
+        throw new Error(
+          'SyncEngineService: context transition timed out while a sync cycle was still running.',
+        );
+      }
     });
   }
 
@@ -267,8 +295,18 @@ export class SyncEngineService {
     this.client.defaults.baseURL = undefined;
   }
 
-  /** Used only by the active cycle itself; awaiting its own idle state would deadlock. */
-  private deactivateStoryFromActiveCycle(): void {
+  /**
+   * Used only by the active cycle itself; awaiting its own idle state would deadlock.
+   * When an abandoned cycle (still bound to an older story after a timed-out context
+   * switch) decides to stop, it must not clear the newly activated story.
+   */
+  private deactivateStoryFromActiveCycle(cycleStoryId?: string): void {
+    if (cycleStoryId && this.storyId && this.storyId !== cycleStoryId) {
+      console.log(
+        `Sync cycle for ${cycleStoryId} ending without clearing active story ${this.storyId}.`,
+      );
+      return;
+    }
     this.scheduler.stop();
     this.clearStoryContext();
   }
@@ -281,8 +319,16 @@ export class SyncEngineService {
    * version it holds now that it discovers whether somebody wrote in between. Sending the result (as used
    * to happen) made the check always pass.
    */
+  private throwIfCycleAborted(signal: AbortSignal): void {
+    if (signal.aborted) {
+      const error = new Error('Sync cycle aborted.');
+      error.name = 'AbortError';
+      throw error;
+    }
+  }
+
   /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
-  private async performSync(): Promise<boolean> {
+  private async performSync(signal: AbortSignal): Promise<boolean> {
     if (!this.storyId) {
       console.log('No storyId set for sync operation.');
       return false;
@@ -290,13 +336,13 @@ export class SyncEngineService {
 
     if (!this.client.defaults.baseURL) {
       console.log('No server URL set for sync operation.');
-      this.deactivateStoryFromActiveCycle();
+      this.deactivateStoryFromActiveCycle(this.storyId);
       return false;
     }
 
     if (!this._db) {
       console.log('Drizzle client (db) is not initialized. Cannot perform sync.');
-      this.deactivateStoryFromActiveCycle();
+      this.deactivateStoryFromActiveCycle(this.storyId);
       return false;
     }
 
@@ -305,11 +351,13 @@ export class SyncEngineService {
       db: this._db,
       client: this.client,
       activeServer: this.activeServer,
+      signal,
     };
     this.cycleBinding = binding;
     const { storyId, db, client } = binding;
 
     try {
+      this.throwIfCycleAborted(signal);
       // 1. Get local story details and initial server max operation version
       const localStory = await db.query.stories.findFirst({
         where: eq(schema.stories.id, storyId),
@@ -324,7 +372,7 @@ export class SyncEngineService {
 
       if (!localStory) {
         console.log(`Story with ID ${storyId} not found locally.`);
-        this.deactivateStoryFromActiveCycle();
+        this.deactivateStoryFromActiveCycle(storyId);
         return false;
       }
 
@@ -340,6 +388,7 @@ export class SyncEngineService {
       let myRole: 'owner' | 'writer' | 'reader' = localStory.myRole || 'reader';
       let pullCursor = lastSyncedLog;
       for (let page = 0; page < 20; page += 1) {
+        this.throwIfCycleAborted(signal);
         const pullResponse = await client.get<{
           updates: StoryUpdate[];
           publicFavorites?: Favorite[];
@@ -347,6 +396,7 @@ export class SyncEngineService {
           role: 'owner' | 'writer' | 'reader';
         }>(
           `/sync/${storyId}/pull?lastOperationVersion=${pullCursor}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
+          { signal },
         );
         const pageUpdates = pullResponse.data.updates ?? [];
         publicFavorites = pullResponse.data.publicFavorites ?? publicFavorites;
@@ -599,12 +649,14 @@ export class SyncEngineService {
       }
 
       // 3-4. Push pending local operations in batches the server will accept.
+      this.throwIfCycleAborted(signal);
       try {
         const pushed = await this.push.pushPendingOperations();
         if (pushed.offline) {
           return true;
         }
       } catch (pushError: any) {
+        if (isAbortError(pushError)) throw pushError;
         if (isOfflineError(pushError)) {
           console.log(`Push skipped for story ${storyId}: server unreachable.`);
           return true;
@@ -616,6 +668,7 @@ export class SyncEngineService {
         this.dependencies.notifier.pushFailed();
       }
 
+      this.throwIfCycleAborted(signal);
       // 5. Update local story's lastServerSyncedLog and cached role
       const roleChanged = myRole && myRole !== localStory.myRole;
       await db
@@ -638,11 +691,16 @@ export class SyncEngineService {
         await serverService.updateServer(binding.activeServer.id, { lastSyncDate: new Date() });
       }
 
+      this.throwIfCycleAborted(signal);
       // 6. Reconcile media files. It runs after the metadata on purpose: a media file can only be downloaded
       // after the row describing it has arrived, and can only be uploaded after the server has accepted that
       // same row.
       return await this.media.sync();
     } catch (error: any) {
+      if (isAbortError(error)) {
+        console.log(`Sync cycle for story ${storyId} aborted.`);
+        return false;
+      }
       if (isOfflineError(error)) {
         // Offline-first: an unreachable server is expected, not a failure worth
         // interrupting the user for. Retried on a shorter delay.

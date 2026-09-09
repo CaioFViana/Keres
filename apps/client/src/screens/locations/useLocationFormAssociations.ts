@@ -30,6 +30,21 @@ const makePendingLocationRelation = (
   deletedAt: null,
 });
 
+/** Pending parent edges use '' (pre-id) or the retained id as locationBId. */
+export function withoutPendingParentEdges(
+  pending: LocationRelationSelect[],
+  currentLocationId?: string,
+): LocationRelationSelect[] {
+  return pending.filter(
+    (relation) =>
+      !(
+        relation.relationType === 'contains' &&
+        (relation.locationBId === '' ||
+          (!!currentLocationId && relation.locationBId === currentLocationId))
+      ),
+  );
+}
+
 type UseLocationFormAssociationsOptions = {
   /** Route id when opening an existing location — used to restore durable pending relations. */
   initialLocationId?: string;
@@ -113,23 +128,9 @@ export function useLocationFormAssociations({
     };
   }, [storyId, initialLocationId, onSecondaryDraftRestored]);
 
-  // Pending rows created before identity retention use '' for this location's side.
-  useEffect(() => {
-    if (!currentLocationId) return;
-    setPendingLocationRelations((prev) => {
-      let changed = false;
-      const next = prev.map((relation) => {
-        if (relation.locationAId !== '' && relation.locationBId !== '') return relation;
-        changed = true;
-        return {
-          ...relation,
-          locationAId: relation.locationAId === '' ? currentLocationId : relation.locationAId,
-          locationBId: relation.locationBId === '' ? currentLocationId : relation.locationBId,
-        };
-      });
-      return changed ? next : prev;
-    });
-  }, [currentLocationId]);
+  // Keep provisional '' sides in pending state until persist — rewriting them in place
+  // makes `persistPendingLocationRelations` treat a child edge as setParent(self, self).
+  // Display normalization below is enough for the manager filters.
 
   const handleTagSelectionChange = useCallback(
     (newSelection: string[]) => {
@@ -152,9 +153,7 @@ export function useLocationFormAssociations({
     async (newParentId: string | null) => {
       if (!currentLocationId) {
         setPendingLocationRelations((prev) => {
-          const withoutParent = prev.filter(
-            (r) => !(r.relationType === 'contains' && r.locationBId === ''),
-          );
+          const withoutParent = withoutPendingParentEdges(prev);
           return newParentId === null
             ? withoutParent
             : [
@@ -165,6 +164,9 @@ export function useLocationFormAssociations({
         return;
       }
       if (!locationRelationServiceRef.current || !storyId || !userId) return;
+      const previousPending = pendingLocationRelations;
+      // Drop any creation-time parent intent so persist cannot reapply an older parent.
+      const nextPending = withoutPendingParentEdges(pendingLocationRelations, currentLocationId);
       try {
         await locationRelationServiceRef.current.setParent(
           userId,
@@ -172,8 +174,11 @@ export function useLocationFormAssociations({
           currentLocationId,
           newParentId,
         );
+        setPendingLocationRelations(nextPending);
+        await syncPendingLocationRelationsToDraft(nextPending);
         void fetchAllLocationRelationsInStory();
       } catch (err) {
+        setPendingLocationRelations(previousPending);
         AppAlert.alert(
           t('error'),
           err instanceof Error ? err.message : t('failed_to_save_relation'),
@@ -187,6 +192,8 @@ export function useLocationFormAssociations({
       t,
       fetchAllLocationRelationsInStory,
       locationRelationServiceRef,
+      pendingLocationRelations,
+      syncPendingLocationRelationsToDraft,
     ],
   );
 

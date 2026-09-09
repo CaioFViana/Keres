@@ -1,4 +1,4 @@
-import { isOfflineError } from '../apiClient';
+import { isAbortError, isOfflineError } from '../apiClient';
 
 /** Normal cadence while the server is responding. */
 export const SYNC_INTERVAL_MS = 30_000;
@@ -19,7 +19,8 @@ interface SyncReadiness {
 
 interface SyncSchedulerOptions {
   readiness: () => SyncReadiness;
-  performSync: () => Promise<boolean>;
+  /** Receives the cycle AbortSignal; aborted when `stop` / `stopAndWait` runs. */
+  performSync: (signal: AbortSignal) => Promise<boolean>;
 }
 
 /** Owns cycle scheduling and guarantees that timer and on-demand cycles never overlap. */
@@ -32,6 +33,7 @@ export class SyncScheduler {
   private generation = 0;
   private suspended = false;
   private intervalTimeMs = SYNC_INTERVAL_MS;
+  private cycleAbort: AbortController | null = null;
 
   public constructor(private readonly options: SyncSchedulerOptions) {}
 
@@ -72,7 +74,9 @@ export class SyncScheduler {
       try {
         wasOffline = await this.runExclusive();
       } catch (error) {
-        if (isOfflineError(error)) {
+        if (isAbortError(error)) {
+          console.log('SyncEngineService: sync cycle aborted.');
+        } else if (isOfflineError(error)) {
           console.log('SyncEngineService: sync cycle skipped, server unreachable.');
           wasOffline = true;
         } else {
@@ -101,6 +105,7 @@ export class SyncScheduler {
     this.running = false;
     this.generation += 1;
     this.queued = false;
+    this.cycleAbort?.abort();
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -140,14 +145,20 @@ export class SyncScheduler {
     }
     this.inFlight = true;
     const generation = this.generation;
+    const abort = new AbortController();
+    this.cycleAbort = abort;
     try {
       let wasOffline = false;
       do {
         this.queued = false;
-        wasOffline = await this.options.performSync();
+        if (abort.signal.aborted || this.suspended || this.generation !== generation) {
+          break;
+        }
+        wasOffline = await this.options.performSync(abort.signal);
       } while (this.queued && this.generation === generation && !this.suspended);
       return wasOffline;
     } finally {
+      if (this.cycleAbort === abort) this.cycleAbort = null;
       this.inFlight = false;
       for (const resolve of this.idleResolvers) resolve();
       this.idleResolvers.clear();

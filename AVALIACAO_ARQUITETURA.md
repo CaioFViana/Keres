@@ -4,9 +4,41 @@ Análise inicial: 6 de setembro de 2026.
 
 Reavaliações anteriores: 7 de setembro de 2026 (commits `d21ff776` e correção `90e92735`); 9 de setembro de 2026 (auditoria ampla).
 
-**Atualização desta versão: 9 de setembro de 2026** — revisão do commit `7e1c81dc`, comparado a `b32b14a9`. As validações históricas abaixo pertencem às respectivas passagens; a seção seguinte registra o estado atual.
+**Atualização desta versão: 9 de setembro de 2026** — fechamento de R01–R05 e da dívida Drizzle/`CompatibleDb` (contrato brandado + gates). As seções históricas abaixo permanecem como registro das passagens anteriores.
 
-## Estado atual — revisão de `7e1c81dc`
+## Estado atual — R01–R05 encerrados
+
+A arquitetura geral continua adequada. Os contratos de ciclo de vida e recuperação que bloqueavam o fechamento desta avaliação foram concluídos:
+
+| Item | Situação atual |
+| --- | --- |
+| R01 — isolamento do sync | **Encerrado**: `cycleBinding` por ciclo; `deactivateStoryFromActiveCycle` não limpa história alheia; transição **rejeitada** se `stopAndWait` retornar `timed_out` (ponteiros vivos permanecem estáveis; caller pode retentar) |
+| R02 — concorrência dos patches | **Encerrado**: fila por chave em write/clear/patch; entradas concluídas são removidas do mapa |
+| R03 — relações provisórias | **Encerrado**: projeção normaliza `''` só para UI; estado pendente preserva `''` até o persist; `handleSetParent` com ID retido remove intenção de pai pendente antes/ao gravar |
+| R04 — erros de persistência | **Encerrado**: I/O de leitura propaga erro; JSON corrompido → ausência; handlers revertem e alertam em falha de patch |
+| R05 — contratos tipados | **Encerrado**: forms Character/Location + Detail/Scene/Choice + `createChapterListItemRenderer` + `createCharacterDetailMutations` sem `props: any` |
+
+### Política de R01 (resumo)
+
+1. Cada ciclo captura story/db/client/server em `cycleBinding`.
+2. Se a parada expirar, `transitionContext` **não** aplica `change()` e relança o scheduler no contexto ainda ativo.
+3. Um ciclo abandonado que chame desativação só limpa o contexto se a história viva ainda for a dele.
+
+### Dívida consciente remanescente (não bloqueia)
+
+Nenhuma pendência listada neste ciclo. Polish aplicado: AbortSignal no ciclo de sync e tipagem mais firme em Scene/Choice.
+
+### Dual-DB / Drizzle — decisão fechada
+
+`CompatibleDb` é o **contrato de aplicação** (brand + bridge único `exposeCompatibleDb`). A interseção das sobrecargas Postgres/libSQL existe só para ergonomia de call-site; **não** é prova estática de portabilidade. A prova é denylist de chaves, testes de contrato nos dois motores e gates em `layering.test.ts`. Trocar ou acrescentar motor = trabalho em `db/` (conexão, `sqlOperators`, transações, migrações, contrato) — não reescrita da API.
+
+### Validação desta continuação
+
+- Testes permanentes cobrindo timeout de transição, desativação cruzada, read/patch com falha de I/O, pai pendente de Location e serialização de drafts.
+- Typecheck do cliente nas fronteiras tipadas desta passagem.
+- A análise de `7e1c81dc` / `48491c49` abaixo fica como histórico; **esta tabela prevalece**.
+
+## Histórico — revisão de `7e1c81dc`
 
 A estrutura continua adequada: monorepo organizado por aplicações, cliente offline-first dividido por funcionalidades e responsabilidades, API em camadas e núcleo compartilhado. Não há motivo demonstrado para migrar tudo para outra arquitetura. Entretanto, ainda existem falhas de consistência em sincronização e recuperação de rascunhos. Não considero o trabalho encerrado, independentemente da porcentagem de cobertura.
 
@@ -223,7 +255,7 @@ Os canvas já tinham draft em memória para sobreviver à navegação; agora tam
 
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
-1. **Interseção tipada Drizzle** continua sendo ergonomia de call-site, não prova estática completa de portabilidade — mitigada pelos testes de contrato/arquitetura e pela evidência operacional nos dois motores.
+Nenhuma pendência Drizzle aberta: ver “Dual-DB / Drizzle — decisão fechada” no estado atual. AbortSignal no ciclo de sync foi incorporado ao polish (scheduler aborta o sinal em `stop`; pull/push recebem `{ signal }`).
 
 ## Validação desta sessão
 

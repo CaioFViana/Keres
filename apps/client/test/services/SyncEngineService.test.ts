@@ -196,7 +196,7 @@ const readStory = () =>
  * that `startSync` uses to choose between the normal cadence and the fast-retry one.
  */
 async function runOneCycle(): Promise<boolean> {
-  return (engine as any).performSync();
+  return (engine as any).performSync(new AbortController().signal);
 }
 
 beforeEach(async () => {
@@ -1160,50 +1160,46 @@ describe('engine control surface', () => {
     expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
   });
 
-  it('keeps an abandoned cycle on its original story after stopAndWait times out', async () => {
-    let finishCycle!: () => void;
-    const boundStories: string[] = [];
-    jest.spyOn(engine as any, 'performSync').mockImplementation(async function (this: any) {
-      this.cycleBinding = {
-        storyId: this.storyId,
-        db: this._db,
-        client: this.client,
-        activeServer: this.activeServer,
-      };
-      const binding = this.cycleBinding;
-      boundStories.push(binding.storyId);
-      await new Promise<void>((resolve) => {
-        finishCycle = resolve;
-      });
-      boundStories.push(this.cycleBinding?.storyId ?? 'missing');
-      boundStories.push(this.storyId);
-      if (this.cycleBinding === binding) this.cycleBinding = null;
-      return false;
-    });
-    jest.spyOn((engine as any).scheduler, 'stopAndWait').mockResolvedValue('timed_out');
+  it('rejects a context transition when stopAndWait times out and keeps the live story', async () => {
+    const stopAndWait = jest
+      .spyOn((engine as any).scheduler, 'stopAndWait')
+      .mockResolvedValue('timed_out');
+    const resume = jest.spyOn((engine as any).scheduler, 'resume');
+    const previousBaseUrl = (engine as any).client.defaults.baseURL;
 
-    engine.startSync();
-    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+    const outcome = await engine.deactivateStory().then(
+      () => 'applied',
+      (error: Error) => error.message,
+    );
 
-    const transition = engine.activateStory('story-2', {
+    expect(outcome).toMatch(/context transition timed out/);
+    expect((engine as any).storyId).toBe(STORY_ID);
+    expect((engine as any).client.defaults.baseURL).toBe(previousBaseUrl);
+    expect(resume).toHaveBeenCalled();
+
+    // Restore before afterEach's deactivateStory(), which needs a normal idle stop.
+    stopAndWait.mockResolvedValue('idle');
+  });
+
+  it('does not let an abandoned cycle deactivate a different active story', () => {
+    (engine as any).storyId = 'story-2';
+    (engine as any).activeServer = {
       ...SERVER,
       id: 'server-2',
-      idUser: 'server-user',
       url: 'http://servidor-2',
-    } as never);
-    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+    };
+    (engine as any).client.defaults.baseURL = 'http://servidor-2/api';
+
+    (engine as any).deactivateStoryFromActiveCycle(STORY_ID);
 
     expect((engine as any).storyId).toBe('story-2');
-    finishCycle();
-    await transition;
-
-    expect(boundStories).toEqual([STORY_ID, STORY_ID, 'story-2']);
+    expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
   });
 
   it('reset clears every connection-bound dependency so a later story cannot inherit it', async () => {
     const stopScheduler = jest
       .spyOn((engine as any).scheduler, 'stopAndWait')
-      .mockResolvedValue(undefined);
+      .mockResolvedValue('idle');
     const resetMedia = jest.spyOn((engine as any).media, 'reset');
 
     await engine.reset();

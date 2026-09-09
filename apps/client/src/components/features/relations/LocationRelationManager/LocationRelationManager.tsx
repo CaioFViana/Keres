@@ -93,9 +93,11 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     [allLocationRelations],
   );
 
-  // Empty sides are provisional placeholders from creation-time drafts for this form.
+  // Empty sides are provisional placeholders only while this form has no id yet.
+  // After identity retention the parent form normalizes '' → currentLocationId for display.
   const isCurrentSide = useCallback(
-    (sideId: string) => sideId === currentLocationId || sideId === '',
+    (sideId: string) =>
+      currentLocationId ? sideId === currentLocationId : sideId === '',
     [currentLocationId],
   );
 

@@ -13,12 +13,78 @@ import SceneNavigationControls from '@/src/components/features/scenes/SceneNavig
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { Ionicons } from '@expo/vector-icons';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
+import type { TFunction } from 'i18next';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import type {
+  CharacterSelect,
+  ChoiceSelect,
+  ItemJourneySelect,
+  ItemSelect,
+  LocationSelect,
+  SceneSelect,
+  TagSelect,
+} from '../../../db/schema';
+import type { SaveNoteRelation } from '../../../services/storymanagement/NoteRelationService';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
 
-export function SceneDetailContent(props: any) {
+/**
+ * Presentation contract for the scene detail screen.
+ * Callbacks use method syntax so existing screen handlers remain assignable (bivariant).
+ */
+export interface SceneDetailContentProps {
+  scene: SceneSelect;
+  navigation: { goBack(): void; navigate(screen: string, params?: object): void };
+  t: TFunction;
+  styles: {
+    subTitle?: StyleProp<TextStyle>;
+    locationLink?: StyleProp<ViewStyle>;
+    card?: StyleProp<ViewStyle>;
+    checkRow?: StyleProp<TextStyle>;
+  };
+  selectedStory:
+    | { id: string; type?: string | null; normalizeSceneTiming?: boolean }
+    | null
+    | undefined;
+  chapter: { name: string; index: number } | null | undefined;
+  sceneTags: TagSelect[];
+  commentField(field: string, value: string): Omit<CommentableDetailFieldProps, 'label'>;
+  dateForScene(scene: SceneSelect):
+    | { date: string; gapRange?: unknown; durationEnd?: unknown }
+    | null
+    | undefined;
+  calendar: unknown;
+  locationCopy: { entity: string };
+  location: (LocationSelect & { description?: string | null }) | null | undefined;
+  handleLocationPress(): void;
+  colors: ThemeColors;
+  openGalleryMediaViewer(galleryId: string): void;
+  canEdit: boolean;
+  characterSceneRelations: CharacterScene[];
+  characters: CharacterSelect[];
+  itemJourneys: ItemJourneySelect[];
+  allItems: ItemSelect[];
+  sceneNoteRelations: NoteRelation[];
+  allNotes: Note[];
+  saveNoteRelation(relation: SaveNoteRelation): Promise<void>;
+  deleteNoteRelation(relationId: string): Promise<void>;
+  sceneId: string;
+  previousScene: SceneSelect | null | undefined;
+  nextScene: SceneSelect | null | undefined;
+  choicesForScene: ChoiceSelect[];
+  incomingChoicesForScene: ChoiceSelect[];
+  sceneNamesById: Record<string, string>;
+  isBranching: boolean;
+  sceneEffects: unknown[];
+  describeEffect(effect: never): string;
+}
+
+export function SceneDetailContent(props: SceneDetailContentProps) {
   const {
     scene,
     navigation,
@@ -83,14 +149,14 @@ export function SceneDetailContent(props: any) {
         label={t('gap')}
         value={`${formatSceneGap(scene, t, {
           normalize: selectedStory?.normalizeSceneTiming,
-          calendar,
+          calendar: calendar as never,
         })}${dateForScene(scene)?.gapRange ? ` · ${dateForScene(scene)?.gapRange}` : ''}`}
       />
       <DetailField
         label={t('in_universe_duration')}
         value={`${formatSceneUniverseDuration(scene, t, {
           normalize: selectedStory?.normalizeSceneTiming,
-          calendar,
+          calendar: calendar as never,
         })}${dateForScene(scene)?.durationEnd ? ` · ${dateForScene(scene)?.durationEnd}` : ''}`}
       />
 
@@ -135,7 +201,7 @@ export function SceneDetailContent(props: any) {
 
       <SceneCharacterManager
         characterRelations={characterSceneRelations}
-        availableCharacters={characters.filter((char: any) => !char.isDeleted)}
+        availableCharacters={characters.filter((char) => !char.isDeleted)}
         onSave={() => Promise.resolve()}
         onDelete={() => Promise.resolve()}
         editable={false}
@@ -145,8 +211,8 @@ export function SceneDetailContent(props: any) {
 
       <ItemSceneManager
         itemJourneys={itemJourneys}
-        allItems={allItems.filter((item: any) => !item.isDeleted)}
-        allCharacters={characters.filter((char: any) => !char.isDeleted)}
+        allItems={allItems.filter((item) => !item.isDeleted)}
+        allCharacters={characters.filter((char) => !char.isDeleted)}
         currentSceneId={sceneId}
       />
 
@@ -162,9 +228,13 @@ export function SceneDetailContent(props: any) {
       />
 
       <SceneNavigationControls
-        storyType={selectedStory?.type}
-        previousScene={previousScene}
-        nextScene={nextScene}
+        storyType={
+          selectedStory?.type === 'linear' || selectedStory?.type === 'branching'
+            ? selectedStory.type
+            : undefined
+        }
+        previousScene={previousScene ?? undefined}
+        nextScene={nextScene ?? undefined}
         choicesForScene={choicesForScene}
         incomingChoicesForScene={incomingChoicesForScene}
         sceneNamesById={sceneNamesById}
@@ -180,8 +250,10 @@ export function SceneDetailContent(props: any) {
           )}
           {sceneEffects.length > 0 && (
             <View style={styles.card}>
-              {sceneEffects.map((effect: any) => (
-                <Text key={effect.id} style={styles.checkRow}>{`• ${describeEffect(effect)}`}</Text>
+              {sceneEffects.map((effect) => (
+                <Text key={(effect as { id: string }).id} style={styles.checkRow}>
+                  {`• ${describeEffect(effect as never)}`}
+                </Text>
               ))}
             </View>
           )}

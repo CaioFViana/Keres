@@ -1,5 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
+import type { TFunction } from 'i18next';
+import React, { useMemo, type RefObject } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,7 +18,9 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
+import StoryGraphCanvas, {
+  type StoryGraphCanvasHandle,
+} from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import {
   formatSceneGap,
@@ -24,7 +29,45 @@ import {
   hasSceneUniverseDuration,
 } from '../../../utils/sceneTiming';
 
-export function ChoiceViewContent(props: any) {
+/**
+ * Presentation contract for the choice graph screen.
+ * Callbacks use method syntax so existing screen handlers remain assignable (bivariant).
+ */
+export interface ChoiceViewContentProps {
+  t: TFunction;
+  colors: ThemeColors;
+  calendar: unknown;
+  navigation: { goBack(): void };
+  canvasRef: RefObject<StoryGraphCanvasHandle | null>;
+  selectedStory: {
+    id?: string;
+    name?: string | null;
+    title?: string | null;
+    normalizeSceneTiming?: boolean;
+  } | null | undefined;
+  plots: Array<{ id: string; name: string }>;
+  selectedPlotIds: string[];
+  setSelectedPlotIds(ids: string[]): void;
+  layout: StoryGraphLayout;
+  showEdgeLabels: boolean;
+  highlightedNodeIds?: ReadonlySet<string>;
+  selectedNodeId: string | null;
+  setSelectedNodeId(id: string | null): void;
+  handleSelectNode(node: GraphNode): void;
+  setLabelsOverride(value: boolean): void;
+  exporting: boolean;
+  handleExport(): void | Promise<void>;
+  selectedNode: GraphNode | null;
+  selectedSceneEffects: unknown[];
+  itemNamesById: Record<string, string>;
+  connections: { outgoing: unknown[]; incoming: unknown[] };
+  handleOpenScene(sceneId: string): void;
+  mapSubtitle: string;
+  loading: boolean;
+  error: string | null | undefined;
+}
+
+export function ChoiceViewContent(props: ChoiceViewContentProps) {
   const {
     t,
     colors,
@@ -338,7 +381,7 @@ export function ChoiceViewContent(props: any) {
                       hasSceneGap(selectedNode.scene)
                         ? `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, {
                             normalize: selectedStory?.normalizeSceneTiming,
-                            calendar,
+                            calendar: calendar as never,
                           })}`
                         : null,
                       hasSceneUniverseDuration(selectedNode.scene)
@@ -347,7 +390,7 @@ export function ChoiceViewContent(props: any) {
                             t,
                             {
                               normalize: selectedStory?.normalizeSceneTiming,
-                              calendar,
+                              calendar: calendar as never,
                             },
                           )}`
                         : null,

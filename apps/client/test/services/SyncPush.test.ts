@@ -72,6 +72,7 @@ beforeEach(async () => {
     client: () => ({ post }) as never,
     conflictService: () => ({ recordConflict }) as never,
     notifier: () => notifier,
+    abortSignal: () => new AbortController().signal,
   });
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -498,6 +499,7 @@ describe('push loop', () => {
           data: expect.objectContaining({ routeId: 'route-1', sceneId: 'scene-1' }),
         }),
       ]),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(
       (await database.db.query.operationLogs.findMany()).every((entry) => entry.isSynced),

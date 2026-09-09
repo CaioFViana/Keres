@@ -2,7 +2,9 @@ import Button from '@/src/components/common/controls/Button/Button';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager';
-import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import CommentableDetailField, {
+  type CommentableDetailFieldProps,
+} from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
@@ -11,17 +13,75 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import ScenePresenceList from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import ScenePresenceList, {
+  type ScenePresenceEntry,
+} from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import { CharacterStatPanel } from '@/src/components/features/stats/CharacterStatPanel/CharacterStatPanel';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import TagList from '@/src/components/common/display/TagList/TagList';
-import React from 'react';
-import { Text } from 'react-native';
+import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
+import type { TFunction } from 'i18next';
+import React from 'react';
+import { Text, type StyleProp, type TextStyle } from 'react-native';
+import type { CharacterSelect } from '../../db/schemas/characters';
+import type { ModeSelect } from '../../db/schemas/modes';
+import type {
+  ItemJourneySelect,
+  ItemSelect,
+  SceneSelect,
+  StoryArcSelect,
+  TagSelect,
+} from '../../db/schema';
+import type { StoryStatsData } from '../../hooks/useStoryStats';
+import type { SaveNoteRelation } from '../../services/storymanagement/NoteRelationService';
 
-export function CharacterDetailContent(props: any) {
+export type CharacterDetailContentProps = {
+  character: CharacterSelect;
+  navigation: {
+    goBack: () => void;
+    navigate: (stack: string, params: Record<string, unknown>) => void;
+  };
+  t: TFunction;
+  characterTags: TagSelect[];
+  styles: { subTitle: StyleProp<TextStyle> };
+  commentField: (
+    field: string,
+    value: string,
+  ) => Omit<CommentableDetailFieldProps, 'label'>;
+  characterId: string;
+  openGalleryMediaViewer: (galleryId: string) => void;
+  canEdit: boolean;
+  statSystemEnabled: boolean;
+  statData: StoryStatsData;
+  selectedStory: { statNotation?: string | null } | null | undefined;
+  characterModes: ModeSelect[];
+  noopModeWrite: (...args: never[]) => Promise<void>;
+  characterRelations: CharacterRelation[];
+  allCharacters: CharacterSelect[];
+  handleSaveRelation: (relation: CharacterRelation) => Promise<void>;
+  handleDeleteRelation: (relationId: string) => Promise<void>;
+  characterSceneRelations: CharacterScene[];
+  allScenes: SceneSelect[];
+  handleSaveCharacterScene: (characterScene: CharacterScene) => Promise<void>;
+  handleDeleteCharacterScene: (characterSceneId: string) => Promise<void>;
+  allItems: ItemSelect[];
+  allItemJourneys: ItemJourneySelect[];
+  characterLocationEntries: ScenePresenceEntry<{ id: string; name: string }>[];
+  locationCopy: { entities: string };
+  sceneCopy: { entity: string };
+  characterNoteRelations: NoteRelation[];
+  allNotes: Note[];
+  saveNoteRelation: (relation: SaveNoteRelation) => Promise<void>;
+  deleteNoteRelation: (relationId: string) => Promise<void>;
+  appearingArcs: StoryArcSelect[];
+};
+
+export function CharacterDetailContent(props: CharacterDetailContentProps) {
   const {
     character,
     navigation,
@@ -156,9 +216,9 @@ export function CharacterDetailContent(props: any) {
       <ModeManager
         modes={characterModes}
         editable={false}
-        onCreate={noopModeWrite}
-        onUpdate={noopModeWrite}
-        onDelete={noopModeWrite}
+        onCreate={noopModeWrite as never}
+        onUpdate={noopModeWrite as never}
+        onDelete={noopModeWrite as never}
       />
 
       <CharacterRelationManager

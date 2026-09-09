@@ -42,6 +42,16 @@ export function isOfflineError(error: unknown): boolean {
   );
 }
 
+/** True when a request or sync cycle was cancelled via AbortSignal. */
+export function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const name = (error as { name?: string }).name;
+  const code = (error as AxiosError).code;
+  return name === 'AbortError' || name === 'CanceledError' || code === 'ERR_CANCELED';
+}
+
 // Define the structure for how the API client obtains and manages tokens
 export interface TokenProvider {
   getAccessToken(): string | null;

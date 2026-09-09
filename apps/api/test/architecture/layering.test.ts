@@ -195,6 +195,11 @@ describe('database portability boundary', () => {
 
     expect(databaseModule).toContain('PostgresDb[Operation] & SqliteDb[Operation]');
     expect(databaseModule).toContain('export type CompatibleDb = CommonDatabaseOperations');
+    expect(databaseModule).toContain('keresCompatibleDbBrand');
+    expect(databaseModule).toContain('function exposeCompatibleDb');
+    expect(databaseModule).toContain('intersection ≠');
+    expect(databaseModule).toContain('portability proof');
+    expect(databaseModule).toContain('Do not widen the app by intersecting more Drizzle');
     expect(databaseModule).toContain("'select'");
     expect(databaseModule).toContain("'selectDistinct'");
     expect(databaseModule).toContain("'insert'");

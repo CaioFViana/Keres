@@ -127,6 +127,7 @@ describe('chapter list query helpers', () => {
       activeSort: 'name',
       activeTagIds: [],
       advancedMatches: {
+        chapterIds: new Set(['chapter-1']),
         sceneIds: new Set(['matching']),
         choiceSourceSceneIds: new Set(['matching']),
       },

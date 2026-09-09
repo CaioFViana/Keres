@@ -72,6 +72,28 @@ describe('EntityFormSecondaryDraftStore', () => {
     );
   });
 
+  it('surfaces read failures instead of treating them as a missing draft', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('disk unavailable'));
+
+    await expect(readEntityFormSecondaryDraft('story-1', 'Character', 'char-1')).rejects.toThrow(
+      'disk unavailable',
+    );
+
+    await writeEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+      selectedTagIds: ['tag-a'],
+      pendingNoteRelations: [],
+      customValues: {},
+      pendingEntityRelations: [],
+    });
+    jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('disk unavailable'));
+    await expect(
+      patchEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+        selectedTagIds: ['tag-b'],
+      }),
+    ).rejects.toThrow('disk unavailable');
+  });
+
   it('patches an existing draft and no-ops when nothing is stored', async () => {
     await patchEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
       pendingEntityRelations: [{ id: 'rel-x' }],

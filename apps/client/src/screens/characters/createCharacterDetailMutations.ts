@@ -1,9 +1,24 @@
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { TFunction } from 'i18next';
+import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
+import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
-export function createCharacterDetailMutations(props: any) {
+export type CharacterDetailMutationsProps = {
+  characterRelationServiceRef: RefObject<CharacterRelationServiceInterface | null>;
+  characterSceneServiceRef: RefObject<CharacterSceneServiceInterface | null>;
+  character: { storyId: string } | null | undefined;
+  userId: string | null | undefined;
+  t: TFunction;
+  characterId: string;
+  setCharacterRelations: Dispatch<SetStateAction<CharacterRelation[]>>;
+  setCharacterSceneRelations: Dispatch<SetStateAction<CharacterScene[]>>;
+};
+
+export function createCharacterDetailMutations(props: CharacterDetailMutationsProps) {
   const {
     characterRelationServiceRef,
     characterSceneServiceRef,
@@ -24,14 +39,12 @@ export function createCharacterDetailMutations(props: any) {
         userId,
         relation,
       );
-      // Update local state and emit event
-      setCharacterRelations((prev: any) => {
-        const existingIndex = prev.findIndex((r: any) => r.id === savedRelation.id);
+      setCharacterRelations((prev) => {
+        const existingIndex = prev.findIndex((r) => r.id === savedRelation.id);
         if (existingIndex > -1) {
-          return prev.map((r: any, index: number) => (index === existingIndex ? savedRelation : r));
-        } else {
-          return [...prev, savedRelation];
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
         }
+        return [...prev, savedRelation];
       });
       entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
       AppAlert.alert(t('success'), t('relation_saved_successfully'));
@@ -43,7 +56,6 @@ export function createCharacterDetailMutations(props: any) {
 
   const handleDeleteRelation = async (relationId: string) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
-      // Added !userId check
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
@@ -51,9 +63,9 @@ export function createCharacterDetailMutations(props: any) {
       const success = await characterRelationServiceRef.current.deleteCharacterRelation(
         userId,
         relationId,
-      ); // Pass userId
+      );
       if (success) {
-        setCharacterRelations((prev: any) => prev.filter((r: any) => r.id !== relationId));
+        setCharacterRelations((prev) => prev.filter((r) => r.id !== relationId));
         entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
         AppAlert.alert(t('success'), t('relation_deleted_successfully'));
       } else {
@@ -75,15 +87,12 @@ export function createCharacterDetailMutations(props: any) {
         userId,
         characterScene,
       );
-      setCharacterSceneRelations((prev: any) => {
-        const existingIndex = prev.findIndex((cs: any) => cs.id === savedCharacterScene.id);
+      setCharacterSceneRelations((prev) => {
+        const existingIndex = prev.findIndex((cs) => cs.id === savedCharacterScene.id);
         if (existingIndex > -1) {
-          return prev.map((cs: any, index: number) =>
-            index === existingIndex ? savedCharacterScene : cs,
-          );
-        } else {
-          return [...prev, savedCharacterScene];
+          return prev.map((cs, index) => (index === existingIndex ? savedCharacterScene : cs));
         }
+        return [...prev, savedCharacterScene];
       });
       entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
       AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
@@ -104,9 +113,7 @@ export function createCharacterDetailMutations(props: any) {
         characterSceneId,
       );
       if (success) {
-        setCharacterSceneRelations((prev: any) =>
-          prev.filter((cs: any) => cs.id !== characterSceneId),
-        );
+        setCharacterSceneRelations((prev) => prev.filter((cs) => cs.id !== characterSceneId));
         entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
         AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
       } else {

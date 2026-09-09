@@ -10,4 +10,6 @@ export interface SyncContext {
   client: () => KeresAxiosInstance;
   conflictService: () => SyncConflictService;
   notifier: () => SyncNotifier;
+  /** Aborted when the scheduler stops the active cycle (context switch / stopAndWait). */
+  abortSignal: () => AbortSignal;
 }

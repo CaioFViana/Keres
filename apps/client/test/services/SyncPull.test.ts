@@ -71,6 +71,7 @@ beforeEach(async () => {
       storyId: () => STORY_ID,
       client: jest.fn() as never,
       conflictService: () => ({ recordConflict }) as never,
+      abortSignal: () => new AbortController().signal,
       notifier: () =>
         ({
           remoteUpdatesReceived: jest.fn(),

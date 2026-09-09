@@ -154,6 +154,7 @@ export * from './utils/storyZip';
 export * from './utils/syncOperationCodec';
 export * from './utils/reviveDates';
 export * from './theme/ThemeColors';
+export * from './theme/getOnColorForFill';
 export * from './theme/palettes';
 export * from './graphs/spatialCanvas';
 

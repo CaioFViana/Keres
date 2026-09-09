@@ -19,7 +19,7 @@ import MultiSelectPill, {
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
-import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
+import { getOnColorForFill, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 
 import type { FavoriteFilterState } from '../../../../types/entityFilters';
 
@@ -200,6 +200,10 @@ const GenericFilterSortList = <T,>({
     return colors.primary;
   };
 
+  const favoriteFilterFill = getFavoriteButtonColor();
+  const onPrimaryFill = getOnColorForFill(colors, colors.primary);
+  const favoriteFilterIconColor = getOnColorForFill(colors, favoriteFilterFill);
+
   const handleOpenAdvancedSearchModal = useCallback(() => {
     if (hasAdvancedSearchFields) {
       // Only open if there are fields
@@ -281,7 +285,7 @@ const GenericFilterSortList = <T,>({
             <Ionicons
               name="search-outline"
               size={24}
-              color={hasAdvancedSearchFields ? colors.text : colors.textSecondary}
+              color={hasAdvancedSearchFields ? onPrimaryFill : colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -300,11 +304,11 @@ const GenericFilterSortList = <T,>({
               onPress={handleFavoriteFilterToggle}
               style={[
                 styles(colors).favoriteFilterButton,
-                { backgroundColor: getFavoriteButtonColor() },
+                { backgroundColor: favoriteFilterFill },
                 { marginRight: 10 },
               ]}
             >
-              <Ionicons name={getFavoriteButtonIcon()} size={24} color={colors.text} />
+              <Ionicons name={getFavoriteButtonIcon()} size={24} color={favoriteFilterIconColor} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -314,7 +318,7 @@ const GenericFilterSortList = <T,>({
             <Ionicons
               name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
               size={24}
-              color={colors.text}
+              color={onPrimaryFill}
             />
           </TouchableOpacity>
         </View>

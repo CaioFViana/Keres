@@ -21,6 +21,8 @@ const lightColors: ThemeColors = {
   border: '#C5C7D5',
   notification: '#805B00',
   accent: '#71578A',
+  onAccent: '#FFFFFF',
+  onNotification: '#FFFFFF',
   star: '#8A6500',
   shadow: '#000000',
 };
@@ -46,6 +48,8 @@ const darkColors: ThemeColors = {
   border: '#454551',
   notification: '#FFD166',
   accent: '#DABCEB',
+  onAccent: '#1A1A1A',
+  onNotification: '#1A1A1A',
   star: '#FFD166',
   shadow: '#000000',
 };

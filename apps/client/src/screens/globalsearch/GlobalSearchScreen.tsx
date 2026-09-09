@@ -1,5 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { getOnColorForFill } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
@@ -169,6 +170,7 @@ const GlobalSearchScreen = () => {
       : favoriteFilterState === 'not-favorite'
         ? colors.notification
         : colors.primary;
+  const favoriteFilterIconColor = getOnColorForFill(colors, favoriteFilterColor);
 
   const handleResultPress = useCallback(
     (result: GlobalSearchResult) => {
@@ -196,7 +198,7 @@ const GlobalSearchScreen = () => {
             onPress={handleFavoriteFilterToggle}
             style={[styles(colors).favoriteFilterButton, { backgroundColor: favoriteFilterColor }]}
           >
-            <Ionicons name={favoriteFilterIcon} size={24} color={colors.text} />
+            <Ionicons name={favoriteFilterIcon} size={24} color={favoriteFilterIconColor} />
           </TouchableOpacity>
         </View>
       </View>

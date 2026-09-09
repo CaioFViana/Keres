@@ -18,7 +18,11 @@ export interface ThemeColors {
   card: string;
   border: string;
   notification: string;
+  /** Foreground for content drawn on `notification`. */
+  onNotification: string;
   accent: string;
+  /** Foreground for content drawn on `accent`. */
+  onAccent: string;
   star: string;
   shadow: string; // Added shadow property
 }

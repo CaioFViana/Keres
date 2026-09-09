@@ -87,7 +87,7 @@ const AppAlertHost: React.FC = () => {
       fontWeight: 'bold',
     },
     destructiveButtonText: {
-      color: colors.onPrimary,
+      color: colors.onError,
       fontSize: 15,
       fontWeight: 'bold',
     },

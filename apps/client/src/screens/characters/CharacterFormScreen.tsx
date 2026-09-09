@@ -1,4 +1,5 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -40,6 +41,9 @@ const styles = StyleSheet.create({
 });
 
 const CharacterFormScreen = () => {
+  // Registers the nested-stack back action for the Drawer header (and hardware back).
+  // Without this, Detail's action is cleared on blur and the form has nothing to pop with.
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<CharacterFormScreenNavigationProp>();
   const route = useRoute<CharacterFormScreenRouteProp>();

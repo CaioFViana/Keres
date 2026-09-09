@@ -58,6 +58,8 @@ const StorySettingsScreen = () => {
   const [converting, setConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const applyStoryIdentity = identity.applyStoryIdentity;
+
   useEffect(() => {
     if (!storyId) {
       setLoading(false);
@@ -71,7 +73,7 @@ const StorySettingsScreen = () => {
           setError(t('story_not_found'));
           return;
         }
-        identity.applyStoryIdentity(fetchedStory);
+        applyStoryIdentity(fetchedStory);
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
         setAllowReaderComments(fetchedStory.allowReaderComments);
         setAutoLinkMentions(fetchedStory.autoLinkMentions);
@@ -83,7 +85,9 @@ const StorySettingsScreen = () => {
       }
     };
     void loadStory();
-  }, [storyId, storyService, userId, t, identity.applyStoryIdentity, identity]);
+    // Do not depend on `identity`: it is a new object each render and would re-fetch + reset
+    // every keystroke. `applyStoryIdentity` is stable (useCallback []).
+  }, [storyId, storyService, userId, t, applyStoryIdentity]);
 
   const handleSave = () =>
     runSave(async () => {

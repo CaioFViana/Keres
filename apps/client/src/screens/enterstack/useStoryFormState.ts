@@ -23,6 +23,8 @@ export function useStoryFormState({
   const [error, setError] = useState<string | null>(null);
   const isEditing = !!initialStoryId;
 
+  const applyStoryIdentity = identity.applyStoryIdentity;
+
   useEffect(() => {
     const loadStory = async () => {
       if (initialStoryId) {
@@ -37,7 +39,7 @@ export function useStoryFormState({
             userId ?? undefined,
           );
           if (fetchedStory) {
-            identity.applyStoryIdentity(fetchedStory);
+            applyStoryIdentity(fetchedStory);
           } else {
             setError(t('story_not_found'));
           }
@@ -52,7 +54,8 @@ export function useStoryFormState({
       }
     };
     void loadStory();
-  }, [initialStoryId, storyServiceRef, userId, t, identity.applyStoryIdentity, identity]);
+    // `identity` itself is a new object every render; only the stable apply callback belongs here.
+  }, [initialStoryId, storyServiceRef, userId, t, applyStoryIdentity]);
 
   return {
     initialStoryId,

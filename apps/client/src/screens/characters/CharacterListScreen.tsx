@@ -168,7 +168,8 @@ const CharactersScreen = () => {
       return;
     }
     const match = characters.find(
-      (character) => character.name === request.focusName && !character.isDeleted,
+      (character: CharacterWithTags) =>
+        character.name === request.focusName && !character.isDeleted,
     );
     if (!match) return;
     navigation.replace('CharacterDetail', { characterId: match.id });
